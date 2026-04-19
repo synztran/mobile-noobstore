@@ -1,0 +1,21 @@
+{
+  "name": "ile-noobstore",
+  "private": true,
+  "packageManager": "yarn@4.3.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.3"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.10.0"
+  }
+}

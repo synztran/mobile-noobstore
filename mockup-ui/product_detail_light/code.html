@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MONOLITH - Custom Mechanical Keyboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#2e3034",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#d8ceff",
+                    "primary-fixed-dim": "#cabeff",
+                    "surface-container-high": "#e8e8ed",
+                    "secondary": "#605693",
+                    "primary-container": "#5d3fd3",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed": "#e6deff",
+                    "inverse-on-surface": "#f0f0f5",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#f9f9fe",
+                    "on-surface-variant": "#484554",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "tertiary": "#713300",
+                    "outline": "#797586",
+                    "surface-variant": "#e2e2e7",
+                    "on-secondary-container": "#504682",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed-variant": "#4723be",
+                    "surface-bright": "#f9f9fe",
+                    "secondary-fixed-dim": "#cabeff",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed": "#1c104c",
+                    "on-background": "#1a1c1f",
+                    "on-secondary-fixed-variant": "#483e7a",
+                    "tertiary-fixed": "#ffdbc8",
+                    "primary": "#451ebb",
+                    "error-container": "#ffdad6",
+                    "outline-variant": "#c9c4d7",
+                    "tertiary-container": "#954500",
+                    "on-primary-fixed": "#1c0062",
+                    "secondary-fixed": "#e6deff",
+                    "surface-container-low": "#f3f3f8",
+                    "surface-dim": "#d9dade",
+                    "on-surface": "#1a1c1f",
+                    "secondary-container": "#c4b8fd",
+                    "tertiary-fixed-dim": "#ffb68b",
+                    "on-tertiary-fixed": "#321300",
+                    "surface-container": "#ededf2",
+                    "background": "#f9f9fe",
+                    "inverse-primary": "#cabeff",
+                    "surface-tint": "#6042d6",
+                    "surface-container-highest": "#e2e2e7",
+                    "on-tertiary-container": "#ffc9ab",
+                    "on-tertiary-fixed-variant": "#743400"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Space Grotesk"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl fixed top-0 w-full z-50 shadow-sm shadow-indigo-900/5">
+<div class="flex justify-between items-center px-6 h-16 w-full relative">
+<button class="text-on-surface active:scale-95 transition-transform material-symbols-outlined" data-icon="menu">menu</button>
+<h1 class="font-space-grotesk tracking-[0.2em] text-lg font-bold text-[#451ebb] uppercase">MONOLITH</h1>
+<div class="flex items-center gap-4">
+<button class="text-on-surface active:scale-95 transition-transform material-symbols-outlined" data-icon="shopping_cart">shopping_cart</button>
+</div>
+<div class="bg-surface-container-high h-[1px] w-full absolute bottom-0 left-0"></div>
+</div>
+</header>
+<main class="pt-16 pb-32">
+<!-- Variant Slider -->
+<section class="relative">
+<div class="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
+<div class="flex-none w-full snap-center p-6">
+<div class="aspect-square bg-surface-container-low rounded-xl overflow-hidden relative group">
+<img class="w-full h-full object-cover mix-blend-multiply opacity-90" data-alt="Premium mechanical keyboard with brushed aluminum chassis and purple keycaps in professional studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwOGuVsKYN4yD5wQOATHovMzfOtcGGSf0xeM-kyySVnNN_UC-vydKHFkLRHC22moW4QybHAAp9RUc0BiuJ8Br45_xoAoOwFyod21lt3arm7WZbt7Yd4G4QVHnO6GriB7E3J1e-LTx9oojoBRqL_cbZG7D4Dhmryv_H5YyiRSYkD0snn2k8wkcqH2YG-hFHux6eAPkX9Smz76thFnDqaKu67fOgLXo-jYtJH7D7kGkjmLJVwAebRsWicKQXvp8lhI0VRfzWjErjHhI"/>
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent"></div>
+</div>
+</div>
+<div class="flex-none w-full snap-center p-6">
+<div class="aspect-square bg-surface-container-low rounded-xl overflow-hidden">
+<img class="w-full h-full object-cover mix-blend-multiply opacity-90" data-alt="Top down macro view of mechanical keyboard switches and high quality PBT keycaps on a desk mat" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2ZyWcb9Pe_vb4QljDOLTqpe0uEzKJGJyYbgi_RPJ_DdB5IsqdVpO5iOErGbf7NGRNMuaG7pmEtnQ94vgtBz2jfbCIkumiZ1PH8y9adnMF1ELs4553EPn7FxI2UZjFun7c4Pf7rF2dplXyS625SCu1XGhL2dnM1Bg64m6KYIrUdR87uh0ddXDCAt99lZ9X6GKQSq4qHbcK7NYvtk0AZdDduHzGNwHYyAAGG_U4TyOtKbJK5JUB09ZSaXA1YckfESDKoQgDwRILeuo"/>
+</div>
+</div>
+</div>
+<div class="flex justify-center gap-2 mt-2">
+<div class="w-8 h-1 bg-primary rounded-full"></div>
+<div class="w-2 h-1 bg-outline-variant rounded-full"></div>
+<div class="w-2 h-1 bg-outline-variant rounded-full"></div>
+</div>
+</section>
+<!-- Product Identity -->
+<section class="px-6 mt-8">
+<div class="flex gap-2 mb-3">
+<span class="font-label text-[10px] tracking-widest text-on-surface-variant bg-surface-container-high px-2 py-1 uppercase">CUSTOM EDITION</span>
+<span class="font-label text-[10px] tracking-widest text-on-primary bg-primary px-2 py-1 uppercase">PRE-ORDER</span>
+</div>
+<p class="font-label text-sm text-primary tracking-widest uppercase mb-1">MONOLITH HARDWARE</p>
+<h2 class="font-headline text-3xl font-bold tracking-tight leading-none text-on-surface">
+                SERIES-01 TACTILE<br/>ARCHITECT BUNDLE
+            </h2>
+<div class="mt-4 flex items-baseline gap-2">
+<span class="text-2xl font-headline font-bold text-on-surface">$429.00</span>
+<span class="text-sm font-body text-on-surface-variant line-through opacity-50">$499.00</span>
+</div>
+</section>
+<!-- Configuration -->
+<section class="px-6 mt-10 space-y-8">
+<!-- Chassis Selection -->
+<div>
+<label class="font-label text-[10px] tracking-[0.15em] text-on-surface-variant uppercase mb-4 block">Chassis: Anodized Silver</label>
+<div class="flex gap-4">
+<button class="w-12 h-12 rounded-lg bg-[#E2E2E7] border-2 border-primary shadow-sm flex items-center justify-center transition-all">
+<span class="w-8 h-8 rounded-full bg-slate-300 shadow-inner"></span>
+</button>
+<button class="w-12 h-12 rounded-lg bg-surface-container-high border-2 border-transparent hover:border-outline-variant flex items-center justify-center transition-all">
+<span class="w-8 h-8 rounded-full bg-slate-800 shadow-inner"></span>
+</button>
+<button class="w-12 h-12 rounded-lg bg-surface-container-high border-2 border-transparent hover:border-outline-variant flex items-center justify-center transition-all">
+<span class="w-8 h-8 rounded-full bg-[#5D3FD3] shadow-inner opacity-80"></span>
+</button>
+</div>
+</div>
+<!-- Switch Selection -->
+<div>
+<div class="flex justify-between items-end mb-4">
+<label class="font-label text-[10px] tracking-[0.15em] text-on-surface-variant uppercase block">Switch Type</label>
+<span class="font-label text-[10px] text-primary underline">SPEC SHEET</span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex flex-col p-4 bg-surface-container-lowest border border-primary rounded-lg text-left shadow-sm">
+<span class="font-label text-[11px] font-bold tracking-wider text-primary uppercase">GAZELLE TACTILE</span>
+<span class="text-[10px] text-on-surface-variant mt-1">62g Weighted Peak</span>
+</button>
+<button class="flex flex-col p-4 bg-surface-container-low border border-transparent rounded-lg text-left hover:bg-surface-container-high transition-colors">
+<span class="font-label text-[11px] font-bold tracking-wider text-on-surface uppercase">VOID LINEAR</span>
+<span class="text-[10px] text-on-surface-variant mt-1">45g Silent Travel</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Spec Grid (Editorial Style) -->
+<section class="mt-12 px-6">
+<div class="bg-surface-container-low p-8 rounded-0">
+<h3 class="font-label text-xs tracking-[0.2em] text-on-surface font-bold uppercase mb-6">TECHNICAL SPECIFICATIONS</h3>
+<div class="grid grid-cols-2 gap-y-6 gap-x-4">
+<div>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mb-1">Weight</p>
+<p class="font-body text-sm font-semibold">1.85kg (Milled Aluminum)</p>
+</div>
+<div>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mb-1">Polling Rate</p>
+<p class="font-body text-sm font-semibold">8000Hz (Ultra-Low Latency)</p>
+</div>
+<div>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mb-1">Mounting</p>
+<p class="font-body text-sm font-semibold">Gasket Mount (Silicone)</p>
+</div>
+<div>
+<p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wider mb-1">Connectivity</p>
+<p class="font-body text-sm font-semibold">USB-C / 2.4Ghz / BT 5.2</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Description -->
+<section class="px-6 mt-12 mb-12">
+<h3 class="font-headline text-xl font-bold mb-4">Precision Engineered for the Modern Architect.</h3>
+<p class="text-on-surface-variant leading-relaxed mb-6 font-light">
+                The Series-01 is not just a keyboard; it's a precision instrument. Each chassis is CNC-milled from a solid block of 6063 aerospace-grade aluminum, then hand-finished to ensure a tactile experience that defies the digital age.
+            </p>
+<div class="relative w-full aspect-video rounded-xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="Close up of a CNC milling machine carving a metal keyboard frame with water cooling spray" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk5A9fGwoTc3yoXZigztxDdBV7wFQKQu2zPIrO3Hmx1Y7qWTjI949CEGCFaKMOgKrOXeV-YUTcpHfp5B2OkKjdImfXWZJR8bjEBmkwdPNiW6efhh4NoYD0ugtrFERwLK5eR4Z0rqcRmi5V0nxWHWZlboaLowvR6BISjbVfZ8QFKjXL6UorUwjKY3mZtVL0GlLjucr1x20EIzR42perrlLWDiTaCCcmJ5VbzYRppdlOoc5pSKiVu0j3_aVFotfhoqWtzl4Pu8a53XM"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-5xl opacity-80" data-icon="play_circle">play_circle</span>
+</div>
+</div>
+<p class="text-on-surface-variant leading-relaxed font-light">
+                Our proprietary "Gazelle" tactile switches provide a distinct mechanical bump that mimics the feel of a vintage typewriter but with the speed of 21st-century electronics. 
+            </p>
+</section>
+</main>
+<!-- Sticky Footer CTA -->
+<footer class="fixed bottom-0 left-0 w-full z-50">
+<div class="bg-white/90 backdrop-blur-md px-6 py-4 pb-8 flex items-center gap-4 shadow-[0_-4px_24px_rgba(26,28,31,0.06)] border-t border-slate-200/50">
+<button class="w-14 h-14 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+<button class="flex-1 h-14 bg-gradient-to-r from-primary to-primary-container text-white rounded-lg font-label font-bold tracking-widest text-sm flex items-center justify-center shadow-lg shadow-indigo-500/20 active:translate-y-0.5 transition-all">
+                ADD TO CART
+            </button>
+</div>
+<!-- Shared BottomNavBar Placeholder Logic (Hidden for Detail Page as per instructions) -->
+</footer>
+<!-- BottomNavBar (Hidden but structure included for completeness as a "Shell") -->
+<nav class="hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-[0_-4px_24px_rgba(26,28,31,0.06)] border-t border-slate-200/50 z-[60]">
+<div class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium uppercase mt-1">HOME</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#451ebb] bg-[#5d3fd3]/5 rounded-xl px-3 py-1 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined" data-icon="grid_view" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium uppercase mt-1">SHOP</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium uppercase mt-1">SERVICE</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 active:translate-y-0.5 transition-all">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium uppercase mt-1">ACCOUNT</span>
+</div>
+</nav>
+</body></html>

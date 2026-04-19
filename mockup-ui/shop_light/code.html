@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2e3034",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#d8ceff",
+                        "primary-fixed-dim": "#cabeff",
+                        "surface-container-high": "#e8e8ed",
+                        "secondary": "#605693",
+                        "primary-container": "#5d3fd3",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#e6deff",
+                        "inverse-on-surface": "#f0f0f5",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f9f9fe",
+                        "on-surface-variant": "#484554",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "tertiary": "#713300",
+                        "outline": "#797586",
+                        "surface-variant": "#e2e2e7",
+                        "on-secondary-container": "#504682",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#4723be",
+                        "surface-bright": "#f9f9fe",
+                        "secondary-fixed-dim": "#cabeff",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed": "#1c104c",
+                        "on-background": "#1a1c1f",
+                        "on-secondary-fixed-variant": "#483e7a",
+                        "tertiary-fixed": "#ffdbc8",
+                        "primary": "#451ebb",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#c9c4d7",
+                        "tertiary-container": "#954500",
+                        "on-primary-fixed": "#1c0062",
+                        "secondary-fixed": "#e6deff",
+                        "surface-container-low": "#f3f3f8",
+                        "surface-dim": "#d9dade",
+                        "on-surface": "#1a1c1f",
+                        "secondary-container": "#c4b8fd",
+                        "tertiary-fixed-dim": "#ffb68b",
+                        "on-tertiary-fixed": "#321300",
+                        "surface-container": "#ededf2",
+                        "background": "#f9f9fe",
+                        "inverse-primary": "#cabeff",
+                        "surface-tint": "#6042d6",
+                        "surface-container-highest": "#e2e2e7",
+                        "on-tertiary-container": "#ffc9ab",
+                        "on-tertiary-fixed-variant": "#743400"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9fe;
+        }
+        .font-space-grotesk {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl fixed top-0 w-full z-50 shadow-sm shadow-indigo-900/5">
+<div class="flex justify-between items-center px-6 h-16 w-full relative">
+<button class="active:scale-95 transition-transform text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-space-grotesk text-lg font-bold tracking-[0.2em] text-[#451ebb] dark:text-[#5D3FD3] uppercase">MONOLITH</h1>
+<button class="active:scale-95 transition-transform text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+</button>
+<div class="bg-surface-container-high h-[1px] w-full absolute bottom-0 left-0"></div>
+</div>
+</header>
+<main class="pt-24 pb-24 px-4 max-w-screen-md mx-auto">
+<!-- Editorial Header -->
+<section class="mb-8">
+<h2 class="font-headline text-[3.5rem] leading-none font-bold tracking-[-0.02em] text-on-surface mb-2">CURATED</h2>
+<p class="font-label text-[0.75rem] uppercase tracking-[0.1em] text-on-surface-variant">SHOP / MECHANICAL KEYBOARDS</p>
+</section>
+<!-- Filter & Sort Bar (Sticky-ish) -->
+<div class="flex gap-2 mb-8">
+<button class="flex-1 flex items-center justify-center gap-2 bg-surface-container-high py-3 px-4 rounded-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+<span class="font-label text-xs font-bold tracking-widest uppercase">FILTER</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 bg-surface-container-high py-3 px-4 rounded-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="sort">sort</span>
+<span class="font-label text-xs font-bold tracking-widest uppercase">SORT</span>
+</button>
+</div>
+<!-- Product Grid (2-Column) -->
+<div class="grid grid-cols-2 gap-x-3 gap-y-10">
+<!-- Product Card 1 -->
+<div class="flex flex-col gap-4">
+<div class="relative aspect-square bg-surface-container-low group overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="top-down professional shot of a white minimalist mechanical keyboard with lavender accents on a clean light desk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCEnnUfxaWPwg_4DqLlNSIh8AbVBY08-x7j31FBSwGIngNGhm7UV1Imn4JQETsUG5hphcfL5UDeGcFFW6EDMl-zCnh8qokREQJN1qJuOIh1gweTnlWrcPKUGJugiHmVyxpx5g2FQtAAznbvmWWSeZEoeEX4kAelfI2W9Szo-bkaHn2njYqGPFFCYv4OWqBb7p5FogVdS7SrmmVzlDCVq_XyrFJqYlbn6BNaeCU2dQGnRsgdOQp6ehfzERKj5MgJAws5-PnRl6chi0"/>
+<div class="absolute top-0 left-0 p-4">
+<span class="bg-surface-container-lowest px-2 py-1 font-label text-[10px] font-bold tracking-wider text-primary uppercase">IN STOCK</span>
+</div>
+<div class="absolute top-0 right-0 p-2">
+<span class="bg-primary text-white px-2 py-1 font-label text-[10px] font-bold">-15%</span>
+</div>
+</div>
+<div class="flex flex-col px-1">
+<p class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase mb-1">MODE / SIXTYFIVE</p>
+<h3 class="font-headline text-sm font-medium leading-tight line-clamp-2 text-on-surface mb-2">CNC Milled Aluminum Custom Keyboard Kit</h3>
+<div class="flex items-center gap-2 mb-2">
+<div class="flex text-primary-container">
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star_half">star_half</span>
+</div>
+<span class="font-label text-[10px] text-on-surface-variant">(48)</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline font-bold text-primary text-lg">$289.00</span>
+<span class="font-label text-xs text-on-surface-variant line-through">$340.00</span>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="flex flex-col gap-4">
+<div class="relative aspect-square bg-surface-container-low group overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="close up of premium keycaps with japanese sub-legends in a cool gray and teal color palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCy5PTqOMLdgYxKlq7qORvsoqslsPMaMDfEugfKHYL-OfH-FCC_v2omZObTWgJQ8pqsJzv_1ckuqsSxTQXennhraJMPxp55UN5ADdbabRkk25E5yvO-tvh5VKBaeqzEjB2DCyWmHp_8guo0Yt2XDpS3W5TIAIEQhLmiCmtRqiIHb6yAzPSECJf3Q2wXvAUuRlt3OfKZrD34FDGTubeAaW4I1FtTaRIbuBWQL2y2RtAB7UPVb-gQLluKYv_w0ZIKPZVHSrwPloVex5Y"/>
+<div class="absolute top-0 left-0 p-4">
+<span class="bg-surface-container-lowest px-2 py-1 font-label text-[10px] font-bold tracking-wider text-primary uppercase">LIMITED</span>
+</div>
+</div>
+<div class="flex flex-col px-1">
+<p class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase mb-1">GMK / NORDIC</p>
+<h3 class="font-headline text-sm font-medium leading-tight line-clamp-2 text-on-surface mb-2">Nordic Dye-Sub PBT Keycap Set</h3>
+<div class="flex items-center gap-2 mb-2">
+<div class="flex text-primary-container">
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<span class="font-label text-[10px] text-on-surface-variant">(122)</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline font-bold text-on-surface text-lg">$135.00</span>
+</div>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="flex flex-col gap-4">
+<div class="relative aspect-square bg-surface-container-low group overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="macro shot of linear mechanical keyboard switches showing the internal copper leaves and clear housing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsoOV9Kojv81vlaoN64KInlq1LLqMLx7ZcqEVH-SN3cyHIVivgitjBBn6zNMOx0RrFj_mKN7T5lbduER2wqMju5J5GigQLgDp3qIlNJV7LiJiG22yzdG3NAGDodIWSC9JMoGn7dgLaiHBOHIXN_q1mErJX1xVsdEHvrgS4ymnyLYujoSru1Ftl-o0lCexGe8J1gr3O8CsK4OCLONKN0nT4ZrfWeOsmRW0dK-54hMilGzkS6sXeCRPi6p0hTCCfcsN2BynRMQn4vTE"/>
+<div class="absolute top-0 left-0 p-4">
+<span class="bg-surface-container-lowest px-2 py-1 font-label text-[10px] font-bold tracking-wider text-primary uppercase">SALE</span>
+</div>
+<div class="absolute top-0 right-0 p-2">
+<span class="bg-primary text-white px-2 py-1 font-label text-[10px] font-bold">-20%</span>
+</div>
+</div>
+<div class="flex flex-col px-1">
+<p class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase mb-1">DUROCK / LINEAR</p>
+<h3 class="font-headline text-sm font-medium leading-tight line-clamp-2 text-on-surface mb-2">L7 Smoky Linear Switches (Pack of 70)</h3>
+<div class="flex items-center gap-2 mb-2">
+<div class="flex text-primary-container">
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star">star</span>
+</div>
+<span class="font-label text-[10px] text-on-surface-variant">(210)</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline font-bold text-primary text-lg">$44.00</span>
+<span class="font-label text-xs text-on-surface-variant line-through">$55.00</span>
+</div>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="flex flex-col gap-4">
+<div class="relative aspect-square bg-surface-container-low group overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="custom mechanical keyboard coiled cable with aviator connector in a vibrant purple and blue color" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHEPx80OaPgVYoejO9mRUJJVLrSwUPyXFjFKd138YNXW8TDHL5YmNr4SXc6-0V13N6xBxPJ8eMN0hDGnbR8TWrba3IdD5zbSqzeFzP-z7_2h0WlOmWUXGpOvSeF_rPHlLt37AzmYYIjoKHT6sKf3kbrDxSJrjZ2iXxwN6HYfY5BkEFJU4X1Q0mvIfi5hqv1YnIXVZ2b21gYhT0atvwpSVamadb83nnx_PcrMhhFWCGSXo46SWCCmmRCjNZ-XwjjviCMbryXv3pYEk"/>
+<div class="absolute top-0 left-0 p-4">
+<span class="bg-surface-container-lowest px-2 py-1 font-label text-[10px] font-bold tracking-wider text-primary uppercase">NEW</span>
+</div>
+</div>
+<div class="flex flex-col px-1">
+<p class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase mb-1">MONOLITH / CABLES</p>
+<h3 class="font-headline text-sm font-medium leading-tight line-clamp-2 text-on-surface mb-2">Double-Sleeved Coiled Aviator Cable</h3>
+<div class="flex items-center gap-2 mb-2">
+<div class="flex text-primary-container">
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-xs" data-icon="star_half">star_half</span>
+</div>
+<span class="font-label text-[10px] text-on-surface-variant">(15)</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline font-bold text-on-surface text-lg">$65.00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Featured Section (Bento Style) -->
+<section class="mt-16 pt-16 border-t border-surface-container-high">
+<h4 class="font-label text-[0.75rem] font-bold tracking-[0.2em] uppercase text-on-surface-variant mb-6 text-center">THE VAULT</h4>
+<div class="grid grid-cols-6 gap-3 auto-rows-[100px]">
+<div class="col-span-4 row-span-2 relative bg-surface-container-low rounded-lg overflow-hidden p-6 flex flex-col justify-end">
+<img class="absolute inset-0 w-full h-full object-cover opacity-50" data-alt="atmospheric photo of high-end brass keyboard weights and brass internal components for a custom build" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoZS5zAwystKcHMmOI3SG872EengvBYd6G_rM5fkxCUqPy9yVyrnuSNqkkDLmOP2Hr4z-MPqxYg3ZL4J9ahg5r4GDPMVXtkOMBikVNaPiK6CusDYYa4lyJDdHxrpY54BIkemYzIEtuXWaG-GSNLO3eEKHyIl4WlhXqObaUp0LpNkHieH3B4ZEu0NQ5Y31oMurXEG6hut0FAD0mLcFRNASLFpbhS4TWKG6mhFihVQe4V4xSK9pVBjfwi2sfvy7VB4Lp_esYMZUIQIo"/>
+<p class="font-label text-[10px] tracking-widest text-primary font-bold z-10">CURATED KIT</p>
+<h5 class="font-headline text-xl font-bold z-10 leading-none">BRASS SERIES</h5>
+</div>
+<div class="col-span-2 row-span-3 bg-primary-container rounded-lg p-4 flex flex-col justify-center items-center text-center gap-4">
+<span class="material-symbols-outlined text-white text-4xl" data-icon="auto_awesome">auto_awesome</span>
+<p class="font-label text-[10px] text-white font-bold tracking-widest leading-snug">JOIN THE WAITLIST</p>
+</div>
+<div class="col-span-4 row-span-1 bg-surface-container-high rounded-lg flex items-center px-6">
+<p class="font-label text-xs tracking-widest text-on-surface font-medium uppercase">VIEW ARCHIVE</p>
+<span class="material-symbols-outlined ml-auto" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-50 border-t border-slate-200/50 flex justify-around items-center px-4 py-3 pb-safe shadow-[0_-4px_24px_rgba(26,28,31,0.06)]">
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 transition-opacity hover:opacity-80 active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium mt-1">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#451ebb] bg-[#5d3fd3]/5 rounded-xl px-3 py-1 transition-opacity hover:opacity-80 active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium mt-1">SHOP</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 transition-opacity hover:opacity-80 active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium mt-1">SERVICE</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 transition-opacity hover:opacity-80 active:translate-y-0.5" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium mt-1">ACCOUNT</span>
+</a>
+</nav>
+</body></html>

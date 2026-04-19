@@ -1,0 +1,209 @@
+"use client";
+
+import { updateProfileName } from "@/app/actions/profile";
+import Icon from "@/components/ui/Icon";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { toast } from "@/lib/toast";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+
+const NAV_ITEMS = [
+	{
+		icon: "shopping_bag",
+		label: "Đơn hàng của tôi",
+		href: "/profile/orders",
+	},
+	// { icon: "favorite", label: "Sản phẩm yêu thích" },
+	// { icon: "location_on", label: "Địa chỉ" },
+	// { icon: "payment", label: "Phương thức thanh toán" },
+	// { icon: "notifications", label: "Thông báo" },
+	{
+		icon: "help",
+		label: "Trợ giúp & Hỗ trợ",
+		href: "https://zalo.me/0000000000",
+	},
+];
+
+export default function ProfilePage() {
+	const router = useRouter();
+	const { user, profile, loading, signOut, refreshProfile } = useAuth();
+
+	const [editing, setEditing] = useState(false);
+	const [saving, setSaving] = useState(false);
+	const [fullName, setFullName] = useState("");
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		if (profile?.first_name) {
+			const name = [profile.first_name, profile.last_name]
+				.filter(Boolean)
+				.join(" ");
+			setFullName(name);
+		}
+	}, [profile]);
+
+	const handleSignOut = async () => {
+		await signOut();
+		toast.success("Signed out");
+		router.push("/login");
+	};
+
+	const handleSave = async () => {
+		if (!fullName.trim()) return;
+		setSaving(true);
+		const { error } = await updateProfileName(fullName);
+		setSaving(false);
+		if (error) {
+			toast.error("Could not save profile");
+			return;
+		}
+		await refreshProfile();
+		toast.success("Profile updated");
+		setEditing(false);
+	};
+
+	const handleEditToggle = () => {
+		setEditing((v) => {
+			if (!v) setTimeout(() => inputRef.current?.focus(), 50);
+			return !v;
+		});
+	};
+
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center h-64">
+				<span className="loading loading-spinner loading-lg text-primary" />
+			</div>
+		);
+	}
+
+	const displayName =
+		([profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ||
+			user?.email?.split("@")[0]) ??
+		"User";
+	const initials = displayName
+		.split(" ")
+		.map((n: string) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+
+	return (
+		<div className="px-6 pt-4">
+			{/* Avatar & name */}
+			<div
+				className={`flex items-center gap-4 mb-8 ${!user ? "justify-center" : ""}`}>
+				<div className="w-16 h-16 rounded-full primary-gradient flex items-center justify-center flex-shrink-0">
+					<span className="text-white font-black text-xl">
+						{initials}
+					</span>
+				</div>
+				<div className="flex-1 min-w-0">
+					{editing ? (
+						<input
+							ref={inputRef}
+							value={fullName}
+							onChange={(e) => setFullName(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") handleSave();
+								if (e.key === "Escape") setEditing(false);
+							}}
+							className="w-full bg-surface-container rounded-xl px-3 py-1.5 text-xl font-black text-on-surface outline-none border-2 border-primary"
+							placeholder="Your name"
+						/>
+					) : (
+						<h2 className="text-2xl font-black text-on-surface truncate">
+							{displayName}
+						</h2>
+					)}
+					<p className="text-on-surface-variant text-sm mt-0.5">
+						{user ? user.email : "Thành viên NoobStore"}
+					</p>
+				</div>
+				{/* {user && (
+					<div className="flex gap-2 flex-shrink-0">
+						{editing ? (
+							<>
+								<button
+									onClick={handleSave}
+									disabled={saving}
+									className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center active:scale-90 transition-transform disabled:opacity-50">
+									{saving ? (
+										<span className="loading loading-spinner loading-xs text-white" />
+									) : (
+										<Icon
+											name="check"
+											className="text-white text-lg"
+										/>
+									)}
+								</button>
+								<button
+									onClick={() => setEditing(false)}
+									className="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center active:scale-90 transition-transform">
+									<Icon
+										name="close"
+										className="text-on-surface text-lg"
+									/>
+								</button>
+							</>
+						) : (
+							<button
+								onClick={handleEditToggle}
+								className="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center active:scale-90 transition-transform">
+								<Icon
+									name="edit"
+									className="text-on-surface text-lg"
+								/>
+							</button>
+						)}
+					</div>
+				)} */}
+			</div>
+
+			{/* Menu items */}
+			<div className={`space-y-3 ${!user ? "sr-only" : ""}`}>
+				{NAV_ITEMS.map(({ icon, label, href }) => (
+					<Link
+						key={label}
+						href={href}
+						className="w-full flex items-center gap-4 bg-surface-container-lowest rounded-2xl px-5 py-4 shadow-ambient-sm hover:bg-surface-container-low transition-colors">
+						<Icon name={icon} className="text-primary" />
+						<span className="font-semibold text-on-surface">
+							{label}
+						</span>
+						<Icon
+							name="chevron_right"
+							className="text-outline-variant ml-auto"
+						/>
+					</Link>
+				))}
+			</div>
+
+			{/* Auth CTA */}
+			<div className="mt-8 space-y-3">
+				{user ? (
+					<button
+						onClick={handleSignOut}
+						className="btn w-full bg-surface-container text-error border-0 rounded-2xl normal-case font-bold h-auto py-4">
+						<Icon name="logout" className="mr-2" />
+						Đăng xuất
+					</button>
+				) : (
+					<>
+						<Link
+							href="/login"
+							className="btn w-full primary-gradient text-white border-0 rounded-2xl normal-case font-bold h-auto py-4">
+							Đăng nhập
+						</Link>
+						<Link
+							href="/register"
+							className="btn w-full bg-surface-container text-on-surface border-0 rounded-2xl normal-case font-bold h-auto py-4">
+							Tạo tài khoản
+						</Link>
+					</>
+				)}
+			</div>
+		</div>
+	);
+}

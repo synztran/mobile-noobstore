@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-surface": "#2e3034",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#d8ceff",
+                    "primary-fixed-dim": "#cabeff",
+                    "surface-container-high": "#e8e8ed",
+                    "secondary": "#605693",
+                    "primary-container": "#5d3fd3",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed": "#e6deff",
+                    "inverse-on-surface": "#f0f0f5",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#f9f9fe",
+                    "on-surface-variant": "#484554",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "tertiary": "#713300",
+                    "outline": "#797586",
+                    "surface-variant": "#e2e2e7",
+                    "on-secondary-container": "#504682",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed-variant": "#4723be",
+                    "surface-bright": "#f9f9fe",
+                    "secondary-fixed-dim": "#cabeff",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed": "#1c104c",
+                    "on-background": "#1a1c1f",
+                    "on-secondary-fixed-variant": "#483e7a",
+                    "tertiary-fixed": "#ffdbc8",
+                    "primary": "#451ebb",
+                    "error-container": "#ffdad6",
+                    "outline-variant": "#c9c4d7",
+                    "tertiary-container": "#954500",
+                    "on-primary-fixed": "#1c0062",
+                    "secondary-fixed": "#e6deff",
+                    "surface-container-low": "#f3f3f8",
+                    "surface-dim": "#d9dade",
+                    "on-surface": "#1a1c1f",
+                    "secondary-container": "#c4b8fd",
+                    "tertiary-fixed-dim": "#ffb68b",
+                    "on-tertiary-fixed": "#321300",
+                    "surface-container": "#ededf2",
+                    "background": "#f9f9fe",
+                    "inverse-primary": "#cabeff",
+                    "surface-tint": "#6042d6",
+                    "surface-container-highest": "#e2e2e7",
+                    "on-tertiary-container": "#ffc9ab",
+                    "on-tertiary-fixed-variant": "#743400"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Space Grotesk"],
+                    "body": ["Inter"],
+                    "label": ["Space Grotesk"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-label { font-family: 'Space Grotesk', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface mb-20 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl fixed top-0 w-full z-50 shadow-sm shadow-indigo-900/5">
+<div class="flex justify-between items-center px-6 h-16 w-full relative">
+<button class="active:scale-95 transition-transform hover:bg-surface-container-low transition-colors duration-300 p-2 rounded-lg">
+<span class="material-symbols-outlined text-on-surface" data-icon="menu">menu</span>
+</button>
+<span class="text-lg font-bold tracking-[0.2em] text-[#451ebb] font-headline uppercase">MONOLITH</span>
+<div class="flex items-center gap-2">
+<button class="active:scale-95 transition-transform hover:bg-surface-container-low transition-colors duration-300 p-2 rounded-lg">
+<span class="material-symbols-outlined text-on-surface" data-icon="shopping_cart">shopping_cart</span>
+</button>
+</div>
+<div class="bg-surface-container-high h-[1px] w-full absolute bottom-0 left-0"></div>
+</div>
+</header>
+<main class="pt-16">
+<!-- Hero Slider (Single Focus for Mobile) -->
+<section class="relative h-[707px] flex flex-col justify-end p-8 overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img alt="Premium mechanical keyboard" class="w-full h-full object-cover" data-alt="Close-up of a premium aluminum mechanical keyboard with white keycaps and purple backlight, sharp focus, technical industrial lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDva_45nSGDicEx_fEZ0bwK6sip9lQEJCc3TThFGgc9KR0uzMqsbcxEpquoDes4R1BNIufmFftnc9WqRHzyGpF4FbIWcb79CJ61Lw-BS_UtkL4_KMvKVzveSzA9ctX4d2fAH9FpQeyWTf9gmh0gYh4rKYO031I8CO7Q9XQsfnzSijuq5TcaaWK_l2YTjDkJ295fDbcqzebTnRqEyxnATCgaXmyKA1GqxTiOVXmTCaZMB99PJj2qNAwDsXQtXlsI4VmYz6Fk5tnNcc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 flex flex-col gap-4">
+<p class="font-label text-[10px] tracking-[0.2em] text-primary font-bold">SERIES 01 // AVAILABLE NOW</p>
+<h1 class="text-4xl font-extrabold tracking-tighter uppercase leading-none">MACHINED PRECISION</h1>
+<p class="text-sm text-on-surface-variant max-w-[280px]">CNC-milled from 6061 grade aluminum. Tactile excellence for the modern curator.</p>
+<button class="mt-4 bg-gradient-to-br from-primary to-primary-container text-white px-6 py-4 rounded-md font-label text-xs tracking-widest font-bold shadow-lg shadow-primary/20 flex items-center justify-between w-full">
+<span>EXPLORE COLLECTION</span>
+<span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- Category Shortcuts (Tonal Grid) -->
+<section class="p-6 bg-surface-container-low">
+<div class="grid grid-cols-2 gap-4">
+<div class="col-span-2 bg-surface-container-lowest p-6 rounded-xl relative overflow-hidden group">
+<div class="relative z-10">
+<p class="font-label text-[10px] tracking-widest text-on-surface-variant">01</p>
+<h3 class="font-headline font-bold text-xl">KEYBOARDS</h3>
+</div>
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-8xl opacity-5 text-on-background" data-icon="keyboard">keyboard</span>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl relative overflow-hidden">
+<p class="font-label text-[10px] tracking-widest text-on-surface-variant">02</p>
+<h3 class="font-headline font-bold text-lg">SWITCHES</h3>
+<span class="material-symbols-outlined absolute -right-2 -bottom-2 text-6xl opacity-5 text-on-background" data-icon="settings_input_component">settings_input_component</span>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl relative overflow-hidden">
+<p class="font-label text-[10px] tracking-widest text-on-surface-variant">03</p>
+<h3 class="font-headline font-bold text-lg">ADD-ONS</h3>
+<span class="material-symbols-outlined absolute -right-2 -bottom-2 text-6xl opacity-5 text-on-background" data-icon="palette">palette</span>
+</div>
+</div>
+</section>
+<!-- New Arrivals (Asymmetric Layout) -->
+<section class="py-12 px-6">
+<div class="flex items-baseline justify-between mb-8">
+<h2 class="text-2xl font-black tracking-tight uppercase">New Arrivals</h2>
+<span class="text-[10px] font-label font-bold text-primary underline underline-offset-4">VIEW ALL</span>
+</div>
+<div class="flex flex-col gap-12">
+<!-- Product 01 -->
+<div class="flex flex-col gap-4">
+<div class="bg-surface-container-high aspect-square relative flex items-center justify-center p-8 overflow-hidden">
+<img alt="Titan Pro Keyboard" class="w-full h-full object-contain mix-blend-multiply" data-alt="Minimalist mechanical keyboard with grey keycaps on a grey stone background, top-down view, clinical high-end photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEAcz93OPy3UWWNE_NeVXvjSLZcmZQZ4Og_Sc0QT7v3i2GiAOSERmwUCtX6HrSRW31WwRkyQtdGcv-BWdEUGRLBMSSo6s2Sf0XsdswhmW7dYLWg7tFex4NCeUiyEP67mNaORGZiD8EhVtr_Xr-qiG_5xYpYNyDnmmX4A651LzXq4rV_fB9DPHMG5rJZm2GQMi_5RkuYiogTbES_49fiumJbmE_G5XsTIb04ibH5RA0bhJ6lfiso1pAJvQCrTiYBdYn6hV-l6JGLOY"/>
+<div class="absolute top-4 left-4 bg-primary text-white text-[8px] font-bold px-2 py-1 tracking-tighter">PRE-ORDER</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline font-bold text-lg uppercase tracking-tight">TITAN PRO V2</h4>
+<p class="text-xs text-on-surface-variant uppercase font-label">HHKB LAYOUT / SILVER</p>
+</div>
+<span class="font-headline font-bold text-primary">$349.00</span>
+</div>
+</div>
+<!-- Product 02 -->
+<div class="flex flex-col gap-4 ml-8">
+<div class="bg-surface-container-low aspect-[4/5] relative flex items-center justify-center p-12 overflow-hidden">
+<img alt="Linear Switches" class="w-full h-full object-contain" data-alt="A handful of violet mechanical keyboard switches scattered on a white textured surface, macro photography, soft purple shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDk97URrfLZzwnrcpXi4ZyInUDfPxMLP3jak3l6aDbXznaBv1pde3bRQgimAgwtTQxv-e86DDpvSlkOXDqBlsiL5Y2MGj3dqP_TrT6Rc_-jLV7jvqbRZlRFjMsrTuyiHvIK9z-p0Ddo2BAWPwhFvQM9EKq2U-M9r8zdL6ewv3IpusLnqnXJd5EwynK8oj2flKLpdXb0USIVFeTwI3EGZCX4DPgRCEPN7Tk0bogMRF0uVjDtmU-4QXFDdBaVfKnRKYJNCc8Jjjzdd-M"/>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline font-bold text-lg uppercase tracking-tight">VIOLET LINEARS</h4>
+<p class="text-xs text-on-surface-variant uppercase font-label">67G / FACTORY LUBED</p>
+</div>
+<span class="font-headline font-bold text-primary">$45.00</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Trust / Value Props (Horizontal Tonal Shifts) -->
+<section class="bg-on-background text-surface py-12 px-8 flex flex-col gap-8">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-primary-container text-3xl" data-icon="local_shipping">local_shipping</span>
+<div>
+<h5 class="font-label text-xs font-bold tracking-widest uppercase">GLOBAL LOGISTICS</h5>
+<p class="text-xs text-outline-variant mt-1 leading-relaxed">Insured worldwide shipping from our Singapore fulfillment center.</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-primary-container text-3xl" data-icon="verified">verified</span>
+<div>
+<h5 class="font-label text-xs font-bold tracking-widest uppercase">LIFETIME SUPPORT</h5>
+<p class="text-xs text-outline-variant mt-1 leading-relaxed">Hardware warranty covering all CNC defects and PCB issues.</p>
+</div>
+</div>
+</section>
+<!-- Built by Community (Bento Grid) -->
+<section class="py-16 px-6">
+<h2 class="text-2xl font-black tracking-tight uppercase mb-8">BUILD LOGS</h2>
+<div class="grid grid-cols-2 gap-2">
+<div class="aspect-square bg-surface-container-high">
+<img alt="Community build 1" class="w-full h-full object-cover" data-alt="Minimalist workspace with a white mechanical keyboard and a green plant, bright natural window lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApkuArAiiORB8Lw9Sejdih12A0-AKrVNgNcgfDDOUNgNmIPoSR2nk_dKiMBTufS3jT7nDy6qhV0mh-hfK6sEl-B57vUAyTcDkv37HduoSuel3h-UtIVFbHwn92xNQdIuZGZY3_kV-KsjlgYIWbs05cq3rACxaTmDqJq4YznijB99BiW68ibXLzfseg3-8zOggGjMLt97FAQ8XPL7G9Hz33Kycg8WjMFujx_gul-3iO4OPH57Z4AnOUGX99-eWqSsxTGH8w_baBopg"/>
+</div>
+<div class="aspect-[1/2] grid-rows-2 row-span-2 bg-surface-container-high">
+<img alt="Community build 2" class="w-full h-full object-cover" data-alt="Extreme close up of mechanical keyboard keycaps with intricate legends, shallow depth of field, warm indoor lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzj829CUhc8b2Z1s6j-HkUv2Vk83LXycqsezbfd4XaAV2Z8w0MTCec-B_67Ft68Ig-C778Q5qJy9f37WKchHfUnNT9kL3AMvt_JfDQf-iFgI9sXYYda87IPXdkCeURiFN4hbn4-_D7gnH_Zk2NV40EU4Nv1afMh4wS4rPzjgsu7jVbVOGwkJ-8h442-nVVkx7J5zw1NHgFtI_TT6VH3PdpknNkx4Rki88QggC-j3skUWDmJ03mDo3dHURYTyxo5mix6TsPLsG3q9k"/>
+</div>
+<div class="aspect-square bg-surface-container-high">
+<img alt="Community build 3" class="w-full h-full object-cover" data-alt="Dusk photography of a glowing mechanical keyboard on a wooden desk, atmospheric blue and purple lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXIssWwq-BES6y7x6c1ucBgdT-hTsvCJJjAIJ74SyUDzSBCFSWpMP1x8esnuwUkPMkSNmzpqbjgovBKM_lA7KQq6etPo7hO8wTam6ZaPPoUme9hcs0NNS6xcwBVOO5NzwcR5_vnLSit9DMt1qRirb8L8gqhMSRcLoQVoasiVl_CqjBo5h53tTAVYp45xSFB9D5Zo8qoy8pstypwVIf6zh-3v6RXNskQk6cijnPPdb3p7xUgr_1FF70bLHcXwP5e6ucnVKKd0jZ1o4"/>
+</div>
+</div>
+<p class="text-center mt-6 text-[10px] font-label text-on-surface-variant tracking-[0.2em] uppercase">TAG @MONOLITH TO BE FEATURED</p>
+</section>
+<!-- Social / Owner Profiles (Glassmorphism) -->
+<section class="px-6 pb-24">
+<div class="bg-surface-container-low p-8 rounded-3xl relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="font-headline font-bold text-xl uppercase mb-6">THE CURATORS</h3>
+<div class="flex flex-col gap-6">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-primary-container">
+<img alt="Curator" class="w-full h-full object-cover grayscale" data-alt="Portrait of a male designer with minimalist glasses, neutral studio lighting, high-end editorial style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMyZg4oq8PLEevZmYBXT5QRQ-Lrcg2cbRlTX5n8AT52gv4ZoBkHQa91-_9DHf7Yb5ihp2Mb2dWlbf23SW7COy1yvmq6paXy2kcxxiiufO30oHkA_8cJAptIyxwhPiYjzksaCYqib1vHODGuzBz_-i-TwLaRPBIu8YW6ruyS_Wmw-YljACxb38Fjs2eBJSWQ67FLJHte2qhu2PWg8_h4-J3GqKudKCELTp_Of4ZXDZEidW_HOaOW7Hq9ukkgCWTSK1pqCA26xJWejo"/>
+</div>
+<div>
+<p class="text-sm font-bold uppercase tracking-tight">ALEX R.</p>
+<p class="text-[10px] font-label text-on-surface-variant uppercase">LEAD ENGINEER</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-primary" data-icon="alternate_email">alternate_email</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-secondary-container">
+<img alt="Curator" class="w-full h-full object-cover grayscale" data-alt="Portrait of a female creative director, professional soft lighting, minimalist aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCBcW8sc6MNa0Ae0AAqcwjpsaj9IzqTVR6jgcNeAjnYlgQBk2aoZcvIGnWtxFHjBPz8BO6sZgvM2TK2_CuDkrdcttq-sQq7TaFHiMuNBjWud7EvIY637YvrWFHg0qTga92WSKwTp6S312jImVz2lbUxqJDowABUMdXUw_jkOvwj8VBw9sgUGR-RfphZoYyqie7KOoL2nd9WtLk5bLIug2LGg4v8MPiePfG_BgNu3udDW918NQKhrC9D1zrBfRoYhDmwJ9jkrAKaRk"/>
+</div>
+<div>
+<p class="text-sm font-bold uppercase tracking-tight">SARA M.</p>
+<p class="text-[10px] font-label text-on-surface-variant uppercase">CREATIVE DESIGN</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-primary" data-icon="alternate_email">alternate_email</span>
+</div>
+</div>
+</div>
+<div class="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl"></div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-white/90 dark:bg-slate-900/90 backdrop-blur-md z-50 border-t border-slate-200/50 shadow-[0_-4px_24px_rgba(26,28,31,0.06)]">
+<a class="flex flex-col items-center justify-center text-[#451ebb] bg-[#5d3fd3]/5 rounded-xl px-3 py-1 active:translate-y-0.5 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium mt-1 uppercase">HOME</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 active:translate-y-0.5 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium mt-1 uppercase">SHOP</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 active:translate-y-0.5 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium mt-1 uppercase">SERVICE</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 active:translate-y-0.5 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-space-grotesk text-[10px] tracking-[0.1em] font-medium mt-1 uppercase">ACCOUNT</span>
+</a>
+</nav>
+</body></html>
