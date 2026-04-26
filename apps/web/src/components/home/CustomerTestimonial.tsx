@@ -1,62 +1,107 @@
-import { AtSign } from "lucide-react";
-import Image from "next/image";
+"use client";
 
-const CURATORS = [
-	{
-		name: "ALEX R.",
-		role: "KỸ SƯ TRƯỞNG",
-		bgClass: "bg-primary-container",
-		src: "https://lh3.googleusercontent.com/aida-public/AB6AXuBMyZg4oq8PLEevZmYBXT5QRQ-Lrcg2cbRlTX5n8AT52gv4ZoBkHQa91-_9DHf7Yb5ihp2Mb2dWlbf23SW7COy1yvmq6paXy2kcxxiiufO30oHkA_8cJAptIyxwhPiYjzksaCYqib1vHODGuzBz_-i-TwLaRPBIu8YW6ruyS_Wmw-YljACxb38Fjs2eBJSWQ67FLJHte2qhu2PWg8_h4-J3GqKudKCELTp_Of4ZXDZEidW_HOaOW7Hq9ukkgCWTSK1pqCA26xJWejo",
-	},
-	{
-		name: "SARA M.",
-		role: "THIẾT KẾ SÁNG TẠO",
-		bgClass: "bg-secondary-container",
-		src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDCBcW8sc6MNa0Ae0AAqcwjpsaj9IzqTVR6jgcNeAjnYlgQBk2aoZcvIGnWtxFHjBPz8BO6sZgvM2TK2_CuDkrdcttq-sQq7TaFHiMuNBjWud7EvrWFHg0qTga92WSKwTp6S312jImVz2lbUxqJDowABUMdXUw_jkOvwj8VBw9sgUGR-RfphZoYyqie7YOoL2nd9WtLk5bLIug2LGg4v8MPiePfG_BgNu3udDW918NQKhrC9D1zrBfRoYhDmwJ9jkrAKaRk",
-	},
-];
+import type { Creator } from "@/app/api/home/creators/route";
+import { Sparkles } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+
+const COLOR_CLASSES: Record<string, string> = {
+	"bg-primary-container": "from-primary/20 to-primary/5",
+	"bg-secondary-container": "from-secondary/20 to-secondary/5",
+	"bg-tertiary-container": "from-tertiary/20 to-tertiary/5",
+	"bg-error-container": "from-error/20 to-error/5",
+};
 
 export function CustomerTestimonial() {
+	const [creators, setCreators] = useState<Creator[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		fetch("/api/home/creators")
+			.then((r) => r.json())
+			.then((d) => setCreators(d))
+			.catch(() => setCreators([]))
+			.finally(() => setIsLoading(false));
+	}, []);
+
+	if (isLoading) {
+		return (
+			<section className="px-6 pb-24">
+				<div className="bg-surface-container-low p-8 rounded-3xl animate-pulse space-y-6">
+					<div className="h-8 bg-surface-container rounded-lg w-1/2" />
+					{[1, 2, 3, 4].map((i) => (
+						<div key={i} className="flex gap-4 items-center">
+							<div className="w-12 h-12 bg-surface-container rounded-full" />
+							<div className="flex-1 space-y-2">
+								<div className="h-4 bg-surface-container rounded w-3/4" />
+								<div className="h-3 bg-surface-container rounded w-1/2" />
+							</div>
+						</div>
+					))}
+				</div>
+			</section>
+		);
+	}
+
+	if (creators.length === 0) {
+		return null;
+	}
+
 	return (
 		<section className="px-6 pb-24">
-			<div className="bg-surface-container-low p-8 rounded-3xl relative overflow-hidden">
+			<div className="bg-gradient-to-br from-surface-container-low to-surface-container p-8 rounded-3xl relative overflow-hidden group">
+				{/* Animated background */}
+				<div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors" />
+				<div className="absolute -bottom-20 -left-20 w-52 h-52 bg-secondary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-secondary/10 transition-colors" />
+
 				<div className="relative z-10">
-					<h3 className="font-extrabold text-xl uppercase tracking-tight mb-6">
-						NHỮNG NGƯỜI SÁNG TẠO
+					<div className="flex items-center gap-2 mb-2">
+						<Sparkles size={18} className="text-primary" />
+						<p className="text-[10px] font-black uppercase tracking-widest text-primary">
+							Cộng đồng
+						</p>
+					</div>
+
+					<h3 className="font-black text-2xl uppercase tracking-tight mb-8">
+						Những Người Sáng Tạo
 					</h3>
-					<div className="flex flex-col gap-6">
-						{CURATORS.map((curator) => (
-							<div
-								key={curator.name}
-								className="flex items-center gap-4">
-								<div
-									className={`w-12 h-12 rounded-full overflow-hidden flex-shrink-0 ${curator.bgClass}`}>
+
+					<div className="grid grid-cols-2 gap-3">
+						{creators.map((creator) => (
+							<a
+								key={creator.id}
+								href={`https://instagram.com/${creator.social_handle.replace("@", "")}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className={`bg-gradient-to-br ${COLOR_CLASSES[creator.color_theme] || "from-primary/20 to-primary/5"} rounded-2xl p-4 flex flex-col items-center text-center hover:shadow-lg transition-shadow group/card cursor-pointer`}>
+								<div className="w-14 h-14 rounded-full overflow-hidden mb-3 ring-2 ring-on-surface/10 group-hover/card:ring-primary/30 transition-all">
 									<Image
-										src={curator.src}
-										alt={curator.name}
-										width={48}
-										height={48}
-										className="w-full h-full object-cover grayscale"
+										src={creator.image_url}
+										alt={creator.name}
+										width={56}
+										height={56}
+										className="w-full h-full object-cover"
 										unoptimized
 									/>
 								</div>
-								<div>
-									<p className="text-sm font-bold uppercase tracking-tight">
-										{curator.name}
+								<p className="font-bold text-xs uppercase tracking-tight leading-tight">
+									{creator.name}
+								</p>
+								<p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">
+									{creator.role}
+								</p>
+								{creator.bio && (
+									<p className="text-[9px] text-on-surface-variant mt-2 line-clamp-2">
+										{creator.bio}
 									</p>
-									<p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-										{curator.role}
-									</p>
-								</div>
-								<AtSign
-									size={20}
-									className="ml-auto text-primary"
-								/>
-							</div>
+								)}
+								<p className="text-primary text-[10px] font-bold uppercase mt-2">
+									{creator.social_handle}
+								</p>
+							</a>
 						))}
 					</div>
 				</div>
-				<div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 			</div>
 		</section>
 	);

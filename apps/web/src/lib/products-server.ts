@@ -3,8 +3,9 @@
  * Mirrors the shaping logic in /api/products/route.ts.
  */
 
+import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
-import type { ShopProduct } from "@/app/api/products/route";
+import type { ITag, ShopProduct } from "@/app/api/products/route";
 import { getPublicClient } from "@/lib/supabase/public";
 
 export type { ProductDetail };
@@ -43,6 +44,7 @@ type RawVariantRow = {
 	variant_name: string;
 	price_adjustment: number;
 	thumbnail: string | null;
+	stock_quantity: number;
 };
 
 type RawListRow = {
@@ -53,6 +55,7 @@ type RawListRow = {
 	stock_quantity: number;
 	thumbnail: string | null;
 	images: unknown;
+	product_type: string;
 	categories: { id: string; name: string } | null;
 	product_variants: RawVariantRow[] | null;
 };
@@ -66,6 +69,7 @@ function shapeRow(p: RawListRow): ShopProduct {
 		price_adjustment: Number(v.price_adjustment),
 		effective_price: Number(p.base_price) + Number(v.price_adjustment),
 		thumbnail: v.thumbnail,
+		stock_quantity: Number(v.stock_quantity ?? 0),
 	}));
 
 	const minPrice =
@@ -73,17 +77,47 @@ function shapeRow(p: RawListRow): ShopProduct {
 			? Math.min(...variants.map((v) => v.effective_price))
 			: Number(p.base_price);
 
+	const productType = (p.product_type ??
+		"standard") as ShopProduct["product_type"];
+	let effectiveStock: number;
+	if (productType === "kit") {
+		effectiveStock =
+			variants.length > 0
+				? Math.min(...variants.map((v) => v.stock_quantity))
+				: Number(p.stock_quantity ?? 0);
+	} else if (productType === "component") {
+		effectiveStock = variants.reduce(
+			(sum, variant) => sum + variant.stock_quantity,
+			0,
+		);
+	} else {
+		effectiveStock = Number(p.stock_quantity ?? 0);
+	}
+
+	const tags =
+		effectiveStock === 0
+			? [
+					{
+						label: "Hết hàng",
+						id: 1,
+						value: "sold_out",
+					},
+				]
+			: [];
+
 	return {
 		id: p.id,
 		slug: p.slug,
 		name: p.name,
 		category: p.categories?.name ?? "Unknown",
 		base_price: Number(p.base_price),
-		stock_quantity: p.stock_quantity,
+		stock_quantity: effectiveStock,
 		thumbnail: p.thumbnail,
 		images: Array.isArray(p.images) ? (p.images as string[]) : null,
+		product_type: productType,
 		variants,
 		min_price: minPrice,
+		tags: [],
 	};
 }
 
@@ -96,6 +130,21 @@ export interface GetProductsParams {
 	priceMax?: number;
 	sort?: "newest" | "price_asc" | "price_desc";
 	limit?: number;
+}
+
+export interface GetQuickPickDataParams {
+	categorySlug?: string;
+	productId?: string;
+	search?: string;
+	limit?: number;
+	sort?: "newest" | "price_asc" | "price_desc";
+}
+
+export interface QuickPickData {
+	products: ShopProduct[];
+	configuratorByProductId: Record<string, ConfiguratorGroup[]>;
+	activeProduct: ShopProduct | null;
+	total: number;
 }
 
 /**
@@ -131,11 +180,12 @@ export async function getProducts(
 		let query = supabase
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, thumbnail, images,
+				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
 			 categories(id, name),
-			 product_variants(id, variant_name, price_adjustment, thumbnail)`,
+			 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 			)
-			.not("category_id", "is", null);
+			.not("category_id", "is", null)
+			.in("product_type", ["standard", "kit"]);
 
 		if (search) query = query.ilike("name", `%${search}%`);
 		if (categoryId !== null) query = query.eq("category_id", categoryId);
@@ -146,7 +196,103 @@ export async function getProducts(
 			return { products: [], total: 0 };
 		}
 
-		let products = ((data ?? []) as unknown as RawListRow[]).map(shapeRow);
+		const rows = (data ?? []) as unknown as RawListRow[];
+
+		// For kits, compute effective stock from required child components:
+		// parent kit stock = MIN(child component product stock), where
+		// child component product stock = SUM(child product_variants.stock_quantity).
+		const kitIds = rows
+			.filter((row) => row.product_type === "kit")
+			.map((row) => row.id);
+
+		const kitStockById = new Map<string, number>();
+		if (kitIds.length > 0) {
+			const { data: componentLinks, error: linkError } = await supabase
+				.from("product_components")
+				.select("parent_product_id, component_product_id, is_required")
+				.in("parent_product_id", kitIds)
+				.eq("is_required", true);
+
+			if (linkError) {
+				console.error(
+					"[getProducts] product_components error:",
+					linkError.message,
+				);
+			} else {
+				type ComponentLink = {
+					parent_product_id: string;
+					component_product_id: string;
+					is_required: boolean;
+				};
+
+				const links = (componentLinks ?? []) as ComponentLink[];
+				const componentProductIds = Array.from(
+					new Set(links.map((l) => l.component_product_id)),
+				);
+
+				const componentStockById = new Map<string, number>();
+				if (componentProductIds.length > 0) {
+					const { data: componentRows, error: componentRowsError } =
+						await supabase
+							.from("products")
+							.select("id, product_variants(stock_quantity)")
+							.in("id", componentProductIds);
+
+					if (componentRowsError) {
+						console.error(
+							"[getProducts] component stock rows error:",
+							componentRowsError.message,
+						);
+					} else {
+						type ComponentRow = {
+							id: string;
+							product_variants?: Array<{
+								stock_quantity?: number;
+							}> | null;
+						};
+
+						for (const row of (componentRows ??
+							[]) as ComponentRow[]) {
+							const stock = (row.product_variants ?? []).reduce(
+								(sum, v) => sum + Number(v.stock_quantity ?? 0),
+								0,
+							);
+							componentStockById.set(row.id, stock);
+						}
+					}
+				}
+
+				const childrenByParent = new Map<string, string[]>();
+				for (const l of links) {
+					const arr = childrenByParent.get(l.parent_product_id) ?? [];
+					arr.push(l.component_product_id);
+					childrenByParent.set(l.parent_product_id, arr);
+				}
+
+				for (const [parentId, childIds] of childrenByParent) {
+					const childStocks = childIds.map(
+						(childId) => componentStockById.get(childId) ?? 0,
+					);
+					const parentStock =
+						childStocks.length > 0 ? Math.min(...childStocks) : 0;
+					kitStockById.set(parentId, parentStock);
+				}
+			}
+		}
+
+		let products = rows.map((row) => {
+			const shaped = shapeRow(row);
+			if (row.product_type === "kit") {
+				shaped.stock_quantity =
+					kitStockById.get(row.id) ?? shaped.stock_quantity;
+				const tags = getTagsLogical(shaped);
+				return {
+					...shaped,
+					tags,
+				};
+			}
+			return shaped;
+		});
 
 		// JS-level price filter
 		if (priceMin > 0 || priceMax > 0) {
@@ -171,6 +317,152 @@ export async function getProducts(
 }
 
 /**
+ * Unified QuickPick data loader.
+ * Returns product list + all configurator groups needed by QuickPickDrawer
+ * in one server call so the client doesn't need to chain product + configurator fetches.
+ */
+export async function getQuickPickData(
+	params: GetQuickPickDataParams = {},
+): Promise<QuickPickData> {
+	const {
+		categorySlug = "",
+		productId,
+		search = "",
+		limit,
+		sort = "newest",
+	} = params;
+
+	try {
+		const shouldFetchProductList = Boolean(categorySlug || search || limit);
+		const result = shouldFetchProductList
+			? await getProducts({
+					categorySlug,
+					search,
+					limit,
+					sort,
+				})
+			: { products: [] as ShopProduct[], total: 0 };
+
+		const products = [...result.products];
+		const productIds = new Set(products.map((p) => p.id));
+
+		let activeProduct: ShopProduct | null = null;
+		if (productId) {
+			activeProduct = products.find((p) => p.id === productId) ?? null;
+
+			if (!activeProduct) {
+				const { data, error } = await getPublicClient()
+					.from("products")
+					.select(
+						`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
+						 categories(id, name),
+						 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
+					)
+					.eq("id", productId)
+					.in("product_type", ["standard", "kit"])
+					.maybeSingle();
+
+				if (!error && data) {
+					activeProduct = shapeRow(data as unknown as RawListRow);
+					products.push(activeProduct);
+					productIds.add(activeProduct.id);
+				}
+			}
+		}
+
+		const configuratorByProductId: Record<string, ConfiguratorGroup[]> = {};
+		const ids = Array.from(productIds);
+		if (ids.length > 0) {
+			const { data: componentRows, error: componentError } =
+				await getPublicClient()
+					.from("product_components")
+					.select(
+						`parent_product_id, component_group, is_required,
+						 products!product_components_component_product_id_fkey(
+							product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)
+						 )`,
+					)
+					.in("parent_product_id", ids)
+					.order("component_group");
+
+			if (componentError) {
+				console.error(
+					"[getQuickPickData] product_components error:",
+					componentError.message,
+				);
+			} else {
+				type ComponentRow = {
+					parent_product_id: string;
+					component_group: string;
+					is_required: boolean;
+					products?: {
+						product_variants?: Array<{
+							id: string;
+							variant_name: string;
+							price_adjustment: number;
+							thumbnail: string | null;
+							stock_quantity: number;
+						}> | null;
+					} | null;
+				};
+
+				const parentMap = new Map<
+					string,
+					Map<string, ConfiguratorGroup>
+				>();
+
+				for (const row of (componentRows ?? []) as ComponentRow[]) {
+					if (!parentMap.has(row.parent_product_id)) {
+						parentMap.set(row.parent_product_id, new Map());
+					}
+
+					const groups = parentMap.get(row.parent_product_id)!;
+					if (!groups.has(row.component_group)) {
+						groups.set(row.component_group, {
+							component_group: row.component_group,
+							is_required: row.is_required,
+							variants: [],
+						});
+					}
+
+					const group = groups.get(row.component_group)!;
+					for (const v of row.products?.product_variants ?? []) {
+						group.variants.push({
+							id: v.id,
+							variant_name: v.variant_name,
+							price_adjustment: Number(v.price_adjustment),
+							thumbnail: v.thumbnail ?? null,
+							stock_quantity: Number(v.stock_quantity ?? 0),
+						});
+					}
+				}
+
+				for (const [parentId, groups] of parentMap) {
+					configuratorByProductId[parentId] = Array.from(
+						groups.values(),
+					);
+				}
+			}
+		}
+
+		return {
+			products,
+			configuratorByProductId,
+			activeProduct,
+			total: products.length,
+		};
+	} catch (err) {
+		console.error("[getQuickPickData] Unexpected error:", err);
+		return {
+			products: [],
+			configuratorByProductId: {},
+			activeProduct: null,
+			total: 0,
+		};
+	}
+}
+
+/**
  * Fetch the N newest products for use in server components.
  */
 export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
@@ -178,10 +470,11 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
 		const { data, error } = await getPublicClient()
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, thumbnail, images,
+				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
 				 categories(id, name),
-				 product_variants(id, variant_name, price_adjustment, thumbnail)`,
+				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 			)
+			.in("product_type", ["standard", "kit"])
 			.limit(limit);
 
 		if (error) {
@@ -197,6 +490,103 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
 }
 
 /**
+ * Fetch a product by slug with its selectable component groups for the
+ * interactive product detail page.
+ *
+ * Three-step query:
+ *   1. Parent product by slug  (via getProductBySlug)
+ *   2. Child products where product_type = 'component', linked via product_components
+ *   3. product_variants for each child product (fetched in step 2)
+ *
+ * Returns { product, componentGroups } ready for ProductView.
+ */
+export async function getProductDetail(slug: string): Promise<{
+	product: ProductDetail;
+	componentGroups: ConfiguratorGroup[];
+} | null> {
+	try {
+		// Step 1: Get parent product (reuses existing fetcher)
+		const product = await getProductBySlug(slug);
+		if (!product) return null;
+
+		const compIds = product.components.map((c) => c.component_product.id);
+		if (compIds.length === 0) {
+			return { product, componentGroups: [] };
+		}
+
+		// Steps 2 & 3: Query child products filtered to product_type = 'component',
+		// including their product_variants in the same call.
+		type ChildRow = {
+			id: string;
+			product_variants: Array<{
+				id: string;
+				variant_name: string;
+				price_adjustment: number;
+				thumbnail: string | null;
+				stock_quantity: number;
+			}>;
+		};
+
+		const { data: childRows, error } = await getPublicClient()
+			.from("products")
+			.select(
+				`id,
+				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
+			)
+			.in("id", compIds)
+			.eq("product_type", "component");
+
+		if (error) {
+			console.error(
+				"[getProductDetail] child products error:",
+				error.message,
+			);
+			return { product, componentGroups: [] };
+		}
+
+		const childById = new Map<string, ChildRow>(
+			((childRows ?? []) as unknown as ChildRow[]).map((r) => [r.id, r]),
+		);
+
+		// Group component links by component_group, collecting selectable variants
+		// from each matched child product.
+		const groupMap = new Map<string, ConfiguratorGroup>();
+
+		for (const comp of product.components) {
+			const child = childById.get(comp.component_product.id);
+			if (!child) continue; // not a 'component' type product — skip
+
+			if (!groupMap.has(comp.component_group)) {
+				groupMap.set(comp.component_group, {
+					component_group: comp.component_group,
+					is_required: comp.is_required,
+					variants: [],
+				});
+			}
+
+			const group = groupMap.get(comp.component_group)!;
+			for (const v of child.product_variants ?? []) {
+				group.variants.push({
+					id: v.id,
+					variant_name: v.variant_name,
+					price_adjustment: Number(v.price_adjustment),
+					thumbnail: v.thumbnail ?? null,
+					stock_quantity: Number(v.stock_quantity ?? 0),
+				});
+			}
+		}
+
+		return {
+			product,
+			componentGroups: Array.from(groupMap.values()),
+		};
+	} catch (err) {
+		console.error("[getProductDetail] Unexpected error:", err);
+		return null;
+	}
+}
+
+/**
  * Fetch a single product by slug for the product detail page.
  */
 export async function getProductBySlug(
@@ -208,7 +598,7 @@ export async function getProductBySlug(
 			.select(
 				`id, slug, name, base_price, stock_quantity, category_id, thumbnail, images,
 				 categories(id, name),
-				 product_variants(id, variant_name, price_adjustment, thumbnail),
+				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity),
 				 product_components!product_components_parent_product_id_fkey(
 				 	id, component_group, is_required, component_product_id
 				 )`,
@@ -237,6 +627,7 @@ export async function getProductBySlug(
 			effective_price:
 				Number(raw.base_price) + Number(v.price_adjustment),
 			thumbnail: v.thumbnail,
+			stock_quantity: Number(v.stock_quantity ?? 0),
 		}));
 
 		const minPrice =
@@ -253,9 +644,9 @@ export async function getProductBySlug(
 			const { data: compData } = await getPublicClient()
 				.from("products")
 				.select(
-					`id, slug, name, base_price, stock_quantity, thumbnail, images,
+					`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
 					 categories(id, name),
-					 product_variants(id, variant_name, price_adjustment, thumbnail)`,
+					 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 				)
 				.in("id", compIds);
 			if (compData) {
@@ -264,6 +655,21 @@ export async function getProductBySlug(
 				);
 			}
 		}
+
+		// Compute effective stock for kit products from required child component stocks.
+		// Mirrors the logic in getProducts().
+		const requiredComponentIds = new Set(
+			(raw.product_components ?? [])
+				.filter((c) => c.is_required)
+				.map((c) => c.component_product_id),
+		);
+		const requiredChildStocks = componentProducts
+			.filter((cp) => requiredComponentIds.has(cp.id))
+			.map((cp) => cp.stock_quantity);
+		const effectiveStock =
+			raw.product_type === "kit" && requiredChildStocks.length > 0
+				? Math.min(...requiredChildStocks)
+				: Number(raw.stock_quantity ?? 0);
 
 		const components = (raw.product_components ?? []).map((c) => {
 			const cp = componentProducts.find(
@@ -302,9 +708,11 @@ export async function getProductBySlug(
 			category: raw.categories?.name ?? "Unknown",
 			category_id: raw.category_id,
 			base_price: Number(raw.base_price),
-			stock_quantity: raw.stock_quantity,
+			stock_quantity: effectiveStock,
 			thumbnail: raw.thumbnail,
 			images: Array.isArray(raw.images) ? (raw.images as string[]) : null,
+			product_type: (raw.product_type ??
+				"standard") as ProductDetail["product_type"],
 			variants,
 			components,
 			min_price: minPrice,
@@ -314,3 +722,18 @@ export async function getProductBySlug(
 		return null;
 	}
 }
+
+const getTagsLogical = (shape: ShopProduct) => {
+	const tags: ITag[] = [];
+	if (shape.stock_quantity === 0) {
+		tags.push({
+			label: "Hết hàng",
+			id: 1,
+			value: "sold_out",
+			textColor: "text-white",
+			bgColor: "bg-red-400",
+		});
+	}
+
+	return tags;
+};

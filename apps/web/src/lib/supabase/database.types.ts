@@ -46,24 +46,42 @@ export interface Database {
 					user_id: string | null;
 					address_line: string;
 					city: string;
+					city_code: string;
 					country: string;
 					is_default: boolean;
+					full_name: string;
+					address: string;
+					phone_number: string;
+					ward_district: string;
+					ward_district_code: string;
 				};
 				Insert: {
 					id: string;
 					user_id?: string | null;
 					address_line: string;
 					city: string;
+					city_code: string;
 					country: string;
 					is_default?: boolean;
+					full_name: string;
+					address: string;
+					phone_number: string;
+					ward_district: string;
+					ward_district_code: string;
 				};
 				Update: {
 					id?: never;
 					user_id?: string | null;
 					address_line?: string;
 					city?: string;
+					city_code?: string;
 					country?: string;
 					is_default?: boolean;
+					full_name?: string;
+					address?: string;
+					phone_number?: string;
+					ward_district?: string;
+					ward_district_code?: string;
 				};
 				Relationships: [];
 			};
@@ -103,6 +121,7 @@ export interface Database {
 					stock_quantity: number;
 					thumbnail: string | null;
 					images: Json | null;
+					product_type: "standard" | "kit" | "component";
 				};
 				Insert: {
 					id: string;
@@ -113,6 +132,7 @@ export interface Database {
 					stock_quantity?: number;
 					thumbnail?: string | null;
 					images?: Json | null;
+					product_type?: "standard" | "kit" | "component";
 				};
 				Update: {
 					id?: never;
@@ -123,6 +143,7 @@ export interface Database {
 					stock_quantity?: number;
 					thumbnail?: string | null;
 					images?: Json | null;
+					product_type?: "standard" | "kit" | "component";
 				};
 				Relationships: [];
 			};
@@ -228,12 +249,14 @@ export interface Database {
 					order_number: string;
 					status: string;
 					total_price: number;
+					shipping_fee: number | null;
 				};
 				Insert: {
 					id: string;
 					user_id?: string | null;
 					order_number: string;
 					status?: string;
+					shipping_fee?: number | null;
 					total_price: number;
 				};
 				Update: {
@@ -242,6 +265,7 @@ export interface Database {
 					order_number?: string;
 					status?: string;
 					total_price?: number;
+					shipping_fee?: number | null;
 				};
 				Relationships: [];
 			};
@@ -254,6 +278,7 @@ export interface Database {
 					product_name: string;
 					unit_price: number;
 					quantity: number;
+					thumbnail: string | null;
 				};
 				Insert: {
 					id: string;
@@ -262,6 +287,7 @@ export interface Database {
 					product_name: string;
 					unit_price: number;
 					quantity: number;
+					thumbnail?: string | null;
 				};
 				Update: {
 					id?: never;
@@ -270,10 +296,44 @@ export interface Database {
 					product_name?: string;
 					unit_price?: number;
 					quantity?: number;
+					thumbnail?: string | null;
 				};
 				Relationships: [];
 			};
 
+			order_item_components: {
+				Row: {
+					id: string;
+					order_item_id: string;
+					variant_id: string;
+					variant_name: string;
+					component_group: string;
+					price_adjustment: number | null;
+					thumbnail: string | null;
+					created_at: string;
+				};
+				Insert: {
+					id?: string;
+					order_item_id: string;
+					variant_id: string;
+					variant_name: string;
+					component_group: string;
+					price_adjustment?: number | null;
+					thumbnail?: string | null;
+					created_at?: string;
+				};
+				Update: {
+					id?: never;
+					order_item_id?: string;
+					variant_id?: string;
+					variant_name?: string;
+					component_group?: string;
+					price_adjustment?: number | null;
+					thumbnail?: string | null;
+					created_at?: never;
+				};
+				Relationships: [];
+			};
 			order_services: {
 				Row: {
 					id: string;
@@ -294,6 +354,7 @@ export interface Database {
 					price?: number;
 				};
 				Relationships: [];
+				shipping_fee?: number | null;
 			};
 
 			services: {
@@ -326,6 +387,14 @@ export interface Database {
 export type User = Database["public"]["Tables"]["users"]["Row"];
 export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
 export type UserUpdate = Database["public"]["Tables"]["users"]["Update"];
+
+// Order Item Components
+export type OrderItemComponent =
+	Database["public"]["Tables"]["order_item_components"]["Row"];
+export type OrderItemComponentInsert =
+	Database["public"]["Tables"]["order_item_components"]["Insert"];
+export type OrderItemComponentUpdate =
+	Database["public"]["Tables"]["order_item_components"]["Update"];
 
 // User Addresses
 export type UserAddress = Database["public"]["Tables"]["user_addresses"]["Row"];

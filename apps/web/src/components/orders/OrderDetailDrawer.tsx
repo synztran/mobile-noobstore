@@ -10,6 +10,7 @@ import {
 	Truck,
 	X,
 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const STATUS_CONFIG: Record<
@@ -66,7 +67,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 		setLoading(true);
 		fetch(`/api/user/orders/${orderId}`)
 			.then((r) => r.json())
-			.then((d) => setDetail(d))
+			.then((d) => setDetail(d?.error ? null : d))
 			.catch(() => {})
 			.finally(() => setLoading(false));
 	}, [orderId, isOpen]);
@@ -170,17 +171,59 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 									{detail.items.map((item) => (
 										<div
 											key={item.id}
-											className="bg-surface-container-lowest rounded-2xl p-3 flex gap-3 items-center">
-											<div className="w-16 h-16 bg-surface-container rounded-xl flex-shrink-0 flex items-center justify-center">
-												<PackageCheck
-													size={24}
-													className="text-outline-variant"
-												/>
+											className="bg-surface-container-lowest rounded-2xl p-3 flex gap-3 items-start">
+											<div className="w-16 h-16 bg-surface-container rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative">
+												{item.thumbnail ? (
+													<Image
+														src={item.thumbnail}
+														alt={item.product_name}
+														fill
+														className="object-cover"
+														unoptimized
+													/>
+												) : (
+													<PackageCheck
+														size={24}
+														className="text-outline-variant"
+													/>
+												)}
 											</div>
 											<div className="flex-1 min-w-0">
 												<p className="font-bold text-on-surface text-sm truncate">
 													{item.product_name}
 												</p>
+												{item.components.length > 0 && (
+													<div className="mt-1 space-y-1">
+														{item.components.map(
+															(component) => (
+																<p
+																	key={`${item.id}-${component.variant_id}`}
+																	className="text-[11px] text-on-surface-variant leading-snug truncate">
+																	{
+																		component.component_group
+																	}
+																	:{" "}
+																	<span className="font-semibold text-on-surface">
+																		{
+																			component.variant_name
+																		}
+																	</span>
+																	{component.price_adjustment !==
+																		0 && (
+																		<span>
+																			{" "}
+																			(
+																			{formatVND(
+																				component.price_adjustment,
+																			)}
+																			)
+																		</span>
+																	)}
+																</p>
+															),
+														)}
+													</div>
+												)}
 												<div className="flex items-center justify-between mt-1.5">
 													<span className="text-xs text-on-surface-variant">
 														x{item.quantity}

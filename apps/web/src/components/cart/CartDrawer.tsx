@@ -2,10 +2,21 @@
 
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
+import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { formatVND } from "@/lib/currency";
+import type { CartItem } from "@/lib/data";
 import { useCartStore } from "@/store";
+import { Trash } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useRef, useState } from "react";
+
+function itemUnitPrice(item: CartItem) {
+	const base = item.variant?.effective_price ?? item.product.base_price;
+	const components =
+		item.components?.reduce((s, c) => s + c.price_adjustment, 0) ?? 0;
+	return base + components;
+}
 
 export function CartDrawer() {
 	const mounted = useIsMounted();
@@ -15,15 +26,39 @@ export function CartDrawer() {
 	const visibleItems = mounted ? items : [];
 	const drawerOpen = mounted && isOpen;
 
-	useEffect(() => {
-		if (drawerOpen) {
-			document.body.style.overflow = "hidden";
-		}
+	const [pendingRemoval, setPendingRemoval] = useState<{
+		productId: string;
+		variantId: string | null;
+	} | null>(null);
+	const confirmDialogRef = useRef<HTMLDialogElement>(null);
 
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, [drawerOpen]);
+	const handleRemoveClick = (productId: string, variantId: string | null) => {
+		setPendingRemoval({ productId, variantId });
+		confirmDialogRef.current?.showModal();
+	};
+
+	const confirmRemove = () => {
+		if (pendingRemoval) {
+			removeItem(pendingRemoval.productId, pendingRemoval.variantId);
+			setPendingRemoval(null);
+		}
+		confirmDialogRef.current?.close();
+	};
+
+	const cancelRemove = () => {
+		setPendingRemoval(null);
+		confirmDialogRef.current?.close();
+	};
+
+	const handleMinus = (item: CartItem) => {
+		if (item.quantity === 1) {
+			handleRemoveClick(item.product.id, item.variant?.id ?? null);
+		} else {
+			updateQty(item.product.id, item.variant?.id ?? null, -1);
+		}
+	};
+
+	usePreventScroll(drawerOpen);
 
 	return (
 		<>
@@ -74,13 +109,36 @@ export function CartDrawer() {
 						visibleItems.map((item) => (
 							<div
 								key={`${item.product.id}-${item.variant?.id ?? "base"}`}
-								className="flex gap-4 items-center bg-surface-container-low rounded-3xl p-3">
-								{/* Placeholder icon */}
-								<div className="w-20 h-20 rounded-2xl overflow-hidden bg-surface-container flex-shrink-0 flex items-center justify-center">
-									<Icon
-										name="inventory_2"
-										className="text-3xl text-outline-variant"
-									/>
+								className="relative flex gap-4 items-center bg-surface-container-low rounded-3xl p-3">
+								{/* Remove button */}
+								<button
+									onClick={() =>
+										handleRemoveClick(
+											item.product.id,
+											item.variant?.id ?? null,
+										)
+									}
+									className="absolute top-2 right-2 w-7 h-7 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform z-10">
+									<Trash className="text-red-400" size={14} />
+								</button>
+								{/* Thumbnail */}
+								<div className="w-20 h-20 rounded-2xl overflow-hidden bg-surface-container flex-shrink-0 relative">
+									{item.product.thumbnail ? (
+										<Image
+											src={item.product.thumbnail}
+											alt={item.product.name}
+											fill
+											className="object-cover"
+											unoptimized
+										/>
+									) : (
+										<div className="absolute inset-0 flex items-center justify-center">
+											<Icon
+												name="inventory_2"
+												className="text-3xl text-outline-variant"
+											/>
+										</div>
+									)}
 								</div>
 								<div className="flex-1 min-w-0">
 									<p className="font-bold text-on-surface text-base leading-tight truncate">
@@ -91,16 +149,26 @@ export function CartDrawer() {
 											{item.variant.variant_name}
 										</p>
 									)}
+									{item.components &&
+										item.components.length > 0 && (
+											<div className="flex flex-wrap gap-1 mt-1">
+												{item.components.map((c) => (
+													<span
+														key={c.variant_id}
+														className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-surface-container text-on-surface-variant rounded-full px-2 py-0.5">
+														{c.component_group}:{" "}
+														<strong>
+															{c.variant_name}
+														</strong>
+													</span>
+												))}
+											</div>
+										)}
 									<div className="flex items-center justify-between mt-2">
 										<div className="flex items-center gap-3 bg-surface-container rounded-full px-3 py-1.5">
 											<button
 												onClick={() =>
-													updateQty(
-														item.product.id,
-														item.variant?.id ??
-															null,
-														-1,
-													)
+													handleMinus(item)
 												}
 												className="text-on-surface font-bold text-base leading-none active:scale-90 transition-transform">
 												−
@@ -121,14 +189,14 @@ export function CartDrawer() {
 												+
 											</button>
 										</div>
-										<p className="text-primary font-black">
-											{formatVND(
-												(item.variant
-													?.effective_price ??
-													item.product.base_price) *
-													item.quantity,
-											)}
-										</p>
+										<div className="flex items-center gap-2">
+											<p className="text-primary font-black">
+												{formatVND(
+													itemUnitPrice(item) *
+														item.quantity,
+												)}
+											</p>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -154,7 +222,7 @@ export function CartDrawer() {
 				{visibleItems.length > 0 && (
 					<div className="px-6 py-4 border-t border-outline-variant/20 bg-surface">
 						<div className="space-y-2 mb-4">
-							<div className="flex justify-between">
+							<div className="flex justify-between items-center">
 								<span className="text-on-surface-variant text-sm">
 									Tạm tính
 								</span>
@@ -162,12 +230,12 @@ export function CartDrawer() {
 									{formatVND(subtotal)}
 								</span>
 							</div>
-							<div className="flex justify-between">
+							<div className="flex justify-between items-center">
 								<span className="text-on-surface-variant text-sm">
 									Phí vận chuyển dự kiến
 								</span>
-								<span className="font-semibold text-secondary">
-									Miễn phí
+								<span className="font-semibold text-secondary text-xs">
+									Chi tiết ở bước thanh toán
 								</span>
 							</div>
 							<div className="flex justify-between pt-2">
@@ -183,7 +251,7 @@ export function CartDrawer() {
 						<Link
 							href="/checkout/shipping"
 							onClick={closeCart}
-							className="btn w-full primary-gradient text-white border-0 rounded-full normal-case font-bold tracking-widest uppercase py-4 h-auto text-base shadow-ambient-sm active:scale-[0.98] transition-transform">
+							className="btn w-full primary-gradient text-white border-0 rounded-full font-bold tracking-widest uppercase py-4 h-auto text-base shadow-ambient-sm active:scale-[0.98] transition-transform">
 							THANH TOÁN →
 						</Link>
 						<p className="text-center text-xs text-on-surface-variant mt-3 font-semibold uppercase tracking-widest">
@@ -192,6 +260,32 @@ export function CartDrawer() {
 					</div>
 				)}
 			</div>
+
+			{/* Confirmation Modal */}
+			<dialog
+				ref={confirmDialogRef}
+				className="modal modal-bottom sm:modal-middle backdrop-blur-sm">
+				<div className="modal-box bg-surface">
+					<h3 className="font-black text-lg text-on-surface mb-2">
+						Xóa sản phẩm?
+					</h3>
+					<p className="text-sm text-on-surface-variant font-semibold mb-6">
+						Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?
+					</p>
+					<div className="modal-action flex gap-3">
+						<button
+							onClick={cancelRemove}
+							className="btn bg-surface-container text-on-surface border-outline-variant hover:bg-surface-container-high rounded-full normal-case font-bold">
+							Hủy
+						</button>
+						<button
+							onClick={confirmRemove}
+							className="btn bg-error text-white border-0 hover:bg-error/90 rounded-full normal-case font-bold">
+							Xóa
+						</button>
+					</div>
+				</div>
+			</dialog>
 		</>
 	);
 }

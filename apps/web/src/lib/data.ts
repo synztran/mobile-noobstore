@@ -45,9 +45,38 @@ export interface ShippingDetails {
 	streetAddress: string;
 	apartment: string;
 	city: string;
+	cityCode: string;
+	wardDistrict: string;
+	wardDistrictCode: string;
 	postalCode: string;
 	phoneNumber: string;
 	deliverySpeed: "standard" | "express" | "shipment";
+}
+
+export interface ProfileAddress {
+	id: string;
+	user_id: string;
+	full_name: string;
+	address: string;
+	phone_number: string;
+	city: string;
+	city_code: string;
+	ward_district: string;
+	ward_district_code: string;
+	is_default: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface ProfileAddressInput {
+	fullName: string;
+	address: string;
+	phoneNumber: string;
+	city: string;
+	cityCode: string;
+	wardDistrict: string;
+	wardDistrictCode: string;
+	isDefault?: boolean;
 }
 
 export const CATEGORIES = ["Keyboards", "Switches", "Add-Ons", "Cables"];

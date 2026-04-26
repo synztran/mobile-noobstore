@@ -1,9 +1,9 @@
 "use client";
 
+import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
 import Icon from "@/components/ui/Icon";
-import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export interface FilterState {
 	category: string | null;
@@ -17,17 +17,8 @@ const DEFAULT_FILTER_STATE: FilterState = {
 	priceMax: 0,
 };
 
-// Price steps in VND (0 = no limit)
-const PRICE_OPTIONS = [
-	{ label: "Tất cả", max: 0 },
-	{ label: "Dưới 500K", max: 500_000 },
-	{ label: "Dưới 1 triệu", max: 1_000_000 },
-	{ label: "Dưới 2 triệu", max: 2_000_000 },
-	{ label: "Dưới 5 triệu", max: 5_000_000 },
-	{ label: "Trên 5 triệu", max: 99_999_999 },
-];
-
 interface FilterOverlayProps {
+	isOpen: boolean;
 	onClose: () => void;
 	onApply?: (state: FilterState) => void;
 	initialState?: Partial<FilterState>;
@@ -35,6 +26,7 @@ interface FilterOverlayProps {
 }
 
 export function FilterOverlay({
+	isOpen,
 	onClose,
 	onApply,
 	initialState,
@@ -44,26 +36,32 @@ export function FilterOverlay({
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(
 		init.category,
 	);
+	const [selectedPriceMin, setSelectedPriceMin] = useState<number>(
+		init.priceMin,
+	);
 	const [selectedPriceMax, setSelectedPriceMax] = useState<number>(
 		init.priceMax,
 	);
 
-	useEffect(() => {
-		document.body.style.overflow = "hidden";
-		return () => {
-			document.body.style.overflow = "";
-		};
-	}, []);
-
 	return (
 		<>
+			{/* Backdrop */}
 			<div
-				className="fixed inset-0 bg-on-surface/30 backdrop-blur-sm z-[60]"
+				className={`fixed inset-0 bg-on-surface/30 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
+					isOpen
+						? "opacity-100 pointer-events-auto"
+						: "opacity-0 pointer-events-none"
+				}`}
 				onClick={onClose}
 			/>
-			<div className="fixed inset-x-4 top-16 bottom-4 z-[70] bg-white rounded-3xl overflow-y-auto shadow-2xl hide-scrollbar">
+
+			{/* Panel — slides from top */}
+			<div
+				className={`fixed left-0 right-0 z-[70] bg-white rounded-b-3xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ease-out ${
+					isOpen ? "top-0 bottom-[10vh]" : "top-[-110%] bottom-[110%]"
+				}`}>
 				{/* Header */}
-				<div className="sticky top-0 bg-white flex justify-between items-center px-6 py-5 border-b border-outline-variant/20">
+				<div className="flex-none flex justify-between items-center px-6 py-5 border-b border-outline-variant/20">
 					<h2 className="text-xl font-black text-on-surface">
 						Lọc sản phẩm
 					</h2>
@@ -77,7 +75,7 @@ export function FilterOverlay({
 					</button>
 				</div>
 
-				<div className="px-6 py-4 space-y-6 pb-28">
+				<div className="flex-1 overflow-y-auto hide-scrollbar px-6 py-4 space-y-6 pb-4">
 					{/* Category */}
 					{categories.length > 0 && (
 						<section>
@@ -123,36 +121,23 @@ export function FilterOverlay({
 						<h3 className="font-black text-on-surface text-base mb-3">
 							Khoảng giá
 						</h3>
-						<div className="grid grid-cols-2 gap-2">
-							{PRICE_OPTIONS.map((opt) => (
-								<button
-									key={opt.max}
-									onClick={() =>
-										setSelectedPriceMax(opt.max)
-									}
-									className={clsx(
-										"px-4 py-3 rounded-xl text-sm font-bold transition-all text-left",
-										selectedPriceMax === opt.max
-											? "bg-primary text-on-primary"
-											: "bg-surface-container text-on-surface",
-									)}>
-									{opt.label}
-									{opt.max > 0 && opt.max < 99_999_999 && (
-										<span className="block text-xs font-normal opacity-70">
-											≤ {formatVND(opt.max)}
-										</span>
-									)}
-								</button>
-							))}
-						</div>
+						<DualRangeSlider
+							min={selectedPriceMin}
+							max={selectedPriceMax}
+							onChange={(min, max) => {
+								setSelectedPriceMin(min);
+								setSelectedPriceMax(max);
+							}}
+						/>
 					</section>
 				</div>
 
 				{/* Footer */}
-				<div className="absolute w-full bottom-0 bg-white border-t border-outline-variant/20 flex items-center justify-between px-6 py-4">
+				<div className="flex-none bg-white border-t border-outline-variant/20 flex items-center justify-between px-6 py-4">
 					<button
 						onClick={() => {
 							setSelectedCategory(null);
+							setSelectedPriceMin(0);
 							setSelectedPriceMax(0);
 						}}
 						className="font-bold text-on-surface text-sm">
@@ -162,7 +147,7 @@ export function FilterOverlay({
 						onClick={() => {
 							onApply?.({
 								category: selectedCategory,
-								priceMin: 0,
+								priceMin: selectedPriceMin,
 								priceMax: selectedPriceMax,
 							});
 							onClose();

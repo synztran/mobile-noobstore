@@ -27,6 +27,7 @@ interface CartStore {
 	openCart: () => void;
 	closeCart: () => void;
 	total: () => number;
+	subtotal: () => number;
 	itemCount: () => number;
 }
 
@@ -117,6 +118,18 @@ export const useCartStore = create<CartStore>()(
 					return sum + (basePrice + componentsTotal) * i.quantity;
 				}, 0),
 
+			subtotal: () =>
+				get().items.reduce((sum, i) => {
+					const componentsTotal = (i.components ?? []).reduce(
+						(s, c) => s + c.price_adjustment,
+						0,
+					);
+					return (
+						sum +
+						(i.product.base_price + componentsTotal) * i.quantity
+					);
+				}, 0),
+
 			itemCount: () =>
 				get().items.reduce((sum, i) => sum + i.quantity, 0),
 		}),
@@ -126,11 +139,12 @@ export const useCartStore = create<CartStore>()(
 
 interface CheckoutStore {
 	shipping: ShippingDetails | null;
+	shippingCost: number;
 	orderId: string | null;
 	orderNumber: string | null;
 	totalPrice: number;
 	orderedItems: CartItem[];
-	setShipping: (data: ShippingDetails) => void;
+	setShipping: (data: ShippingDetails, cost: number) => void;
 	setOrder: (
 		id: string,
 		orderNumber: string,
@@ -144,16 +158,19 @@ export const useCheckoutStore = create<CheckoutStore>()(
 	persist(
 		(set) => ({
 			shipping: null,
+			shippingCost: 0,
 			orderId: null,
 			orderNumber: null,
 			totalPrice: 0,
 			orderedItems: [],
-			setShipping: (data) => set({ shipping: data }),
+			setShipping: (data, cost) =>
+				set({ shipping: data, shippingCost: cost }),
 			setOrder: (id, orderNumber, totalPrice, orderedItems) =>
 				set({ orderId: id, orderNumber, totalPrice, orderedItems }),
 			clearCheckout: () =>
 				set({
 					shipping: null,
+					shippingCost: 0,
 					orderId: null,
 					orderNumber: null,
 					totalPrice: 0,

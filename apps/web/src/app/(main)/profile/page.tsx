@@ -15,7 +15,11 @@ const NAV_ITEMS = [
 		href: "/profile/orders",
 	},
 	// { icon: "favorite", label: "Sản phẩm yêu thích" },
-	// { icon: "location_on", label: "Địa chỉ" },
+	{
+		icon: "location_on",
+		label: "Địa chỉ giao hàng",
+		href: "/profile/addresses",
+	},
 	// { icon: "payment", label: "Phương thức thanh toán" },
 	// { icon: "notifications", label: "Thông báo" },
 	{
@@ -114,7 +118,9 @@ export default function ProfilePage() {
 						/>
 					) : (
 						<h2 className="text-2xl font-black text-on-surface truncate">
-							{displayName}
+							{user?.user_metadata.full_name ||
+								user?.email ||
+								"NoobStore Member"}
 						</h2>
 					)}
 					<p className="text-on-surface-variant text-sm mt-0.5">

@@ -1,6 +1,6 @@
-import { ProductView } from "@/components/product/ProductView";
 import { TopNav } from "@/components/layout/TopNav";
-import { getProductBySlug } from "@/lib/products-server";
+import { ProductView } from "@/components/product/ProductView";
+import { getProductDetail } from "@/lib/products-server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -8,7 +8,7 @@ function ProductDetailSkeleton() {
 	return (
 		<>
 			<TopNav showBack backHref="/shop" showCart showFavorite />
-			<main className="pt-20 pb-32 animate-pulse">
+			<main className="animate-pulse">
 				<div className="mx-6 mb-10 aspect-square bg-surface-container rounded-5xl" />
 				<div className="px-6 space-y-8">
 					<div className="space-y-3">
@@ -39,9 +39,14 @@ function ProductDetailSkeleton() {
 }
 
 async function ProductLoader({ slug }: { slug: string }) {
-	const product = await getProductBySlug(slug);
-	if (!product) notFound();
-	return <ProductView product={product} />;
+	const result = await getProductDetail(slug);
+	if (!result) notFound();
+	return (
+		<ProductView
+			product={result.product}
+			componentGroups={result.componentGroups}
+		/>
+	);
 }
 
 export default async function ProductPage({

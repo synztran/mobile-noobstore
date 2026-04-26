@@ -22,9 +22,9 @@ export default function CheckoutLayout({
 			step: 1,
 		},
 		{
-			href: cartId ? `/checkout/payment/${cartId}` : "/checkout/payment",
-			icon: "payments",
-			label: "Thanh toán",
+			href: "/checkout/summary",
+			icon: "summary",
+			label: "Tổng kết",
 			step: 2,
 		},
 		{
@@ -32,7 +32,7 @@ export default function CheckoutLayout({
 				? `/checkout/checking/${orderId}`
 				: "/checkout/checking",
 			icon: "rate_review",
-			label: "Tổng kết",
+			label: "Xác nhận",
 			step: 3,
 		},
 	];
@@ -100,7 +100,7 @@ export default function CheckoutLayout({
 				</div>
 			</nav>
 
-			<main className="mt-[12rem] pb-18 px-4 w-full mx-auto">{children}</main>
+			<main className="mt-40 pb-18 px-4 w-full mx-auto">{children}</main>
 		</div>
 	);
 }

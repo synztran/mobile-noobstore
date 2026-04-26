@@ -1,22 +1,17 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
-import { VIETNAM_CITIES } from "@/constants/vietnam-cities";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { formatVND } from "@/lib/currency";
-import { toast } from "@/lib/toast";
-import { useCartStore, useCheckoutStore } from "@/store";
-import clsx from "clsx";
 import {
-	Building2,
-	Mailbox,
-	MapPinHouse,
-	Motorbike,
-	Phone,
-	Truck,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+	CitySearchInput,
+	DistrictSearchInput,
+} from "@/components/ui/CityDistrictSelect";
+import Icon from "@/components/ui/Icon";
+import { DELIVERY_OPTIONS, mappingDisplayPrice } from "@/constants";
+import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
+import { useShippingForm } from "@/hooks/useShippingForm";
+import { formatVND } from "@/lib/currency";
+import clsx from "clsx";
+import { Mailbox, MapPinHouse, Phone, Truck } from "lucide-react";
+import { useMemo } from "react";
 
 const FIELDS = [
 	{
@@ -61,136 +56,38 @@ const FIELDS = [
 		placeholder: "0901 234 567",
 		icon: <Phone size={20} />,
 		type: "tel",
-		required: false,
+		required: true,
 		colSpan: 1,
 	},
 ] as const;
 
-const mappingDisplayPrice = {
-	0: "Miễn phí",
-	null: "Cập nhật sau",
-};
-
 type FieldName = (typeof FIELDS)[number]["name"];
-type FormData = Record<FieldName, string> & { city: string };
-
-const HCM_CITY = "TP. Hồ Chí Minh";
-
-const DELIVERY_OPTIONS = [
-	{
-		id: "standard" as const,
-		label: "Tiêu chuẩn",
-		sublabel: "12-24 giờ xử lý",
-		icon: Motorbike,
-		price: 0,
-		tag: null,
-		isHidden: false,
-	},
-	{
-		id: "express" as const,
-		label: "Hỏa tốc",
-		sublabel: "2-4 giờ xử lý",
-		icon: "bolt",
-		price: null as number | null, // resolved dynamically from fees
-		tag: "NHANH",
-		isHidden: false,
-	},
-	{
-		id: "shipment" as const,
-		label: "Đơn vị vận chuyển",
-		sublabel: "Giao bởi đơn vị vận chuyển",
-		icon: Truck,
-		price: null as number | null, // resolved dynamically from fees
-		isHidden: true,
-	},
-];
 
 export default function ShippingPage() {
-	const router = useRouter();
-	const { setShipping } = useCheckoutStore();
-	const { total, cartId } = useCartStore();
-	const { shipping } = useCheckoutStore();
-	const { profile } = useAuth();
-	const [mounted, setMounted] = useState(false);
-	const [delivery, setDelivery] = useState<
-		"standard" | "express" | "shipment"
-	>("standard");
+	const {
+		form,
+		setForm,
+		cityTouched,
+		setCityTouched,
+		delivery,
+		setDelivery,
+		handleChange,
+		handleBlur,
+		handleCityChange,
+		isInvalid,
+		handleSubmit,
+		isHCM,
+		subtotal,
+		shippingCost,
+		orderTotal,
+		immediateFee,
+		basicFee,
+	} = useShippingForm();
 
-	useEffect(() => {
-		setMounted(true);
-	}, []);
-
-	useEffect(() => {
-		setForm((f) => ({
-			...f,
-			fullName:
-				shipping?.fullName ??
-				[profile?.first_name, profile?.last_name]
-					.filter(Boolean)
-					.join(" ") ??
-				"",
-			phoneNumber: shipping?.phoneNumber ?? profile?.phone_number ?? "",
-			city: shipping?.city ?? "",
-			apartment: shipping?.apartment ?? "",
-			postalCode: shipping?.postalCode ?? "",
-			streetAddress: shipping?.streetAddress ?? "",
-			deliverySpeed: shipping?.deliverySpeed ?? "standard",
-		}));
-	}, [profile, shipping]);
-	const [form, setForm] = useState<FormData>({
-		fullName:
-			[profile?.first_name, profile?.last_name]
-				.filter(Boolean)
-				.join(" ") ?? "",
-		streetAddress: "",
-		apartment: "",
-		city: "",
-		postalCode: "",
-		phoneNumber: profile?.phone_number ?? "",
-	});
-
-	const [cityTouched, setCityTouched] = useState(false);
-
-	const [touched, setTouched] = useState<Partial<Record<FieldName, boolean>>>(
-		{},
+	const cityCode = useMemo(
+		() => VIETNAM_CITIES.find((c) => c.name === form.city)?.code ?? null,
+		[form.city],
 	);
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setForm({ ...form, [e.target.name]: e.target.value });
-	};
-
-	const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-		setTouched({ ...touched, [e.target.name]: true });
-	};
-
-	const isInvalid = (field: (typeof FIELDS)[number]) =>
-		field.required && touched[field.name] && !form[field.name].trim();
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		const allTouched = Object.fromEntries(
-			FIELDS.map((f) => [f.name, true]),
-		) as Record<FieldName, boolean>;
-		setTouched(allTouched);
-		setCityTouched(true);
-
-		if (!form.fullName || !form.streetAddress || !form.city) {
-			toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
-			return;
-		}
-		setShipping({ ...form, deliverySpeed: delivery });
-		router.push(
-			cartId ? `/checkout/payment/${cartId}` : "/checkout/payment",
-		);
-	};
-
-	const immediateFee = 0;
-	const basicFee = 0;
-	const subtotal = mounted ? total() : 0;
-
-	const isHCM = form.city && form.city === HCM_CITY;
-	const shippingCost = delivery === "express" ? immediateFee : basicFee;
-	const orderTotal = subtotal + shippingCost;
 
 	const mappingFees: Record<"express" | "standard", number> = {
 		express: immediateFee,
@@ -199,10 +96,10 @@ export default function ShippingPage() {
 
 	const deliveryOptions = useMemo(() => {
 		return DELIVERY_OPTIONS.map((opt) => {
-			const hasFee = opt.id in mappingFees;
-			const fee = hasFee
-				? mappingFees[opt.id as keyof typeof mappingFees]
-				: opt.price;
+			const fee =
+				opt.id === "express" || opt.id === "standard"
+					? mappingFees[opt.id]
+					: opt.price;
 			return {
 				...opt,
 				price: fee,
@@ -219,10 +116,7 @@ export default function ShippingPage() {
 				<div className="absolute -bottom-6 -left-6 w-24 h-24 bg-secondary/10 rounded-full blur-xl pointer-events-none" />
 				<div className="relative flex items-center gap-4">
 					<div className="w-14 h-14 rounded-2xl primary-gradient flex items-center justify-center shadow-ambient-sm flex-shrink-0">
-						<Icon
-							name="local_shipping"
-							className="text-white text-2xl"
-						/>
+						<Truck className="text-white text-2xl" />
 					</div>
 					<div>
 						<p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-0.5">
@@ -264,7 +158,7 @@ export default function ShippingPage() {
 							<div
 								className={clsx(
 									"flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-3.5 border-2 transition-all",
-									isInvalid(field)
+									isInvalid(field.name, field.required)
 										? "border-error"
 										: "border-transparent focus-within:border-primary",
 								)}>
@@ -273,7 +167,10 @@ export default function ShippingPage() {
 										name={String(field.icon)}
 										className={clsx(
 											"text-xl flex-shrink-0 transition-colors",
-											isInvalid(field)
+											isInvalid(
+												field.name,
+												field.required,
+											)
 												? "text-error"
 												: "text-outline-variant",
 										)}
@@ -282,7 +179,10 @@ export default function ShippingPage() {
 									<div
 										className={clsx(
 											"text-xl flex-shrink-0 transition-colors",
-											isInvalid(field)
+											isInvalid(
+												field.name,
+												field.required,
+											)
 												? "text-error"
 												: "text-outline-variant",
 										)}>
@@ -299,14 +199,15 @@ export default function ShippingPage() {
 									autoComplete="off"
 									className="flex-1 bg-transparent outline-none text-on-surface placeholder:text-on-surface-variant/40 font-medium text-sm min-w-0"
 								/>
-								{form[field.name] && !isInvalid(field) && (
-									<Icon
-										name="check_circle"
-										className="text-base text-primary flex-shrink-0"
-									/>
-								)}
+								{form[field.name] &&
+									!isInvalid(field.name, field.required) && (
+										<Icon
+											name="check_circle"
+											className="text-base text-primary flex-shrink-0"
+										/>
+									)}
 							</div>
-							{isInvalid(field) && (
+							{isInvalid(field.name, field.required) && (
 								<p className="text-error text-[10px] font-bold mt-1 ml-1">
 									Trường này là bắt buộc
 								</p>
@@ -321,59 +222,54 @@ export default function ShippingPage() {
 						Tỉnh / Thành phố
 						<span className="text-primary ml-0.5">*</span>
 					</label>
-					<div
-						className={clsx(
-							"flex items-center gap-3 bg-surface-container rounded-2xl px-4 py-3.5 border-2 transition-all",
-							cityTouched && !form.city
-								? "border-error"
-								: "border-transparent focus-within:border-primary",
-						)}>
-						<Building2
-							className={clsx(
-								"text-xl flex-shrink-0 transition-colors",
-								cityTouched && !form.city
-									? "text-error"
-									: "text-outline-variant",
-							)}
-						/>
-						<select
-							value={form.city}
-							onChange={(e) => {
-								const city = e.target.value;
-								setForm({ ...form, city });
-								if (city !== HCM_CITY) {
-									setDelivery("shipment");
-								} else if (delivery === "shipment") {
-									setDelivery("standard");
-								}
-							}}
-							onBlur={() => setCityTouched(true)}
-							className="flex-1 bg-transparent outline-none text-on-surface font-medium text-sm appearance-none cursor-pointer">
-							<option value="" disabled>
-								Chọn tỉnh / thành phố
-							</option>
-							{VIETNAM_CITIES.map((c) => (
-								<option key={c.code} value={c.name}>
-									{c.name}
-								</option>
-							))}
-						</select>
-						{form.city && (
-							<Icon
-								name="check_circle"
-								className="text-base text-primary flex-shrink-0"
-							/>
-						)}
-					</div>
+					<CitySearchInput
+						value={form.city}
+						onChange={handleCityChange}
+						onBlur={() => setCityTouched(true)}
+						disabled={false}
+						hasError={cityTouched && !form.city}
+					/>
 					{cityTouched && !form.city && (
 						<p className="text-error text-[10px] font-bold mt-1 ml-1">
 							Vui lòng chọn tỉnh / thành phố
 						</p>
 					)}
-					{form.city && form.city !== HCM_CITY && (
+					{form.city && form.city !== "Thành phố Hồ Chí Minh" && (
 						<p className="text-xs font-bold mt-1 ml-1 text-on-surface-variant">
 							⚠️ Khu vực ngoài TP.HCM — chỉ giao hàng bởi đơn vị
 							vận chuyển
+						</p>
+					)}
+				</div>
+
+				{/* ── Ward / District ─────────────────────────────────── */}
+				<div>
+					<label className="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 ml-1">
+						Phường / Quận / Huyện
+						<span className="text-primary ml-0.5">*</span>
+					</label>
+					<DistrictSearchInput
+						value={form.wardDistrict}
+						onChange={(district) => {
+							const districtCode = cityCode
+								? ((DISTRICT_MAP[cityCode] ?? []).find(
+										(d) => d.name === district,
+									)?.code ?? "")
+								: "";
+							setForm((prev) => ({
+								...prev,
+								wardDistrict: district,
+								wardDistrictCode: districtCode,
+							}));
+						}}
+						onBlur={() => {}}
+						disabled={false}
+						hasError={cityTouched && !form.wardDistrict}
+						cityCode={cityCode}
+					/>
+					{cityTouched && !form.wardDistrict && (
+						<p className="text-error text-[10px] font-bold mt-1 ml-1">
+							Vui lòng chọn phường / quận / huyện
 						</p>
 					)}
 				</div>

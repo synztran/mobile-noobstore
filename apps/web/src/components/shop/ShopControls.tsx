@@ -6,91 +6,27 @@ import {
 	type FilterState,
 } from "@/components/product/FilterOverlay";
 import Icon from "@/components/ui/Icon";
+import { formatVND } from "@/lib/currency";
 import type { CategoryItem } from "@/lib/products-server";
-import { ArrowDown01, ArrowDown10, CalendarArrowUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ReactElement, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { SORT_OPTIONS, SortSheet } from "./SortSheet";
 
-// ─── Sort options ─────────────────────────────────────────────────────────────
-
-export const SORT_OPTIONS: {
-	value: SortOption;
-	label: string;
-	icon: ReactElement;
-}[] = [
-	{ value: "newest", label: "Mới nhất", icon: <CalendarArrowUp size={16} /> },
-	{
-		value: "price_asc",
-		label: "Giá: Thấp đến Cao",
-		icon: <ArrowDown01 size={16} />,
-	},
-	{
-		value: "price_desc",
-		label: "Giá: Cao đến Thấp",
-		icon: <ArrowDown10 size={16} />,
-	},
-];
-
-// ─── Sort sheet ───────────────────────────────────────────────────────────────
-
-function SortSheet({
-	current,
-	onSelect,
-	onClose,
-}: {
-	current: SortOption;
-	onSelect: (v: SortOption) => void;
-	onClose: () => void;
-}) {
-	return (
-		<>
-			<div
-				className="fixed inset-0 bg-on-surface/30 backdrop-blur-sm z-[60]"
-				onClick={onClose}
-			/>
-			<div className="fixed inset-x-4 bottom-4 z-[70] bg-white rounded-3xl shadow-2xl overflow-hidden">
-				<div className="flex justify-between items-center px-6 py-5 border-b border-outline-variant/20">
-					<h2 className="text-lg font-black text-on-surface">
-						Sắp xếp theo
-					</h2>
-					<button
-						onClick={onClose}
-						className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center">
-						<Icon
-							name="close"
-							className="text-on-surface text-xl"
-						/>
-					</button>
-				</div>
-				<div className="p-4 space-y-2 pb-8">
-					{SORT_OPTIONS.map((opt) => (
-						<button
-							key={opt.value}
-							onClick={() => {
-								onSelect(opt.value);
-								onClose();
-							}}
-							className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-colors ${
-								current === opt.value
-									? "bg-primary/10 text-primary"
-									: "bg-surface-container-low text-on-surface hover:bg-surface-container"
-							}`}>
-							{opt.icon}
-							<span className="font-bold text-sm">
-								{opt.label}
-							</span>
-							{current === opt.value && (
-								<Icon
-									name="check_circle"
-									className="text-primary ml-auto text-xl"
-								/>
-							)}
-						</button>
-					))}
-				</div>
-			</div>
-		</>
-	);
+function formatFilterPills(filters: FilterState): string[] {
+	const pills: string[] = [];
+	if (filters.category) pills.push(filters.category);
+	const hasMin = filters.priceMin > 0;
+	const hasMax = filters.priceMax > 0;
+	if (hasMin && hasMax) {
+		pills.push(
+			`${formatVND(filters.priceMin)} – ${formatVND(filters.priceMax)}`,
+		);
+	} else if (hasMin) {
+		pills.push(`Từ ${formatVND(filters.priceMin)}`);
+	} else if (hasMax) {
+		pills.push(`Đến ${formatVND(filters.priceMax)}`);
+	}
+	return pills;
 }
 
 // ─── Controls ─────────────────────────────────────────────────────────────────
@@ -240,20 +176,13 @@ export function ShopControls({
 			{/* Active filter pills */}
 			{filterApplied && (
 				<div className="flex items-center gap-2 flex-wrap mb-4">
-					{[
-						filters.category,
-						filters.priceMax > 0
-							? `≤ ${filters.priceMax.toLocaleString("vi-VN")}đ`
-							: null,
-					]
-						.filter(Boolean)
-						.map((p) => (
-							<span
-								key={p}
-								className="text-[10px] font-bold bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-wide">
-								{p}
-							</span>
-						))}
+					{formatFilterPills(filters).map((p) => (
+						<span
+							key={p}
+							className="text-[10px] font-bold bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-wide">
+							{p}
+						</span>
+					))}
 					<button
 						onClick={handleClearFilters}
 						className="text-[10px] font-bold text-outline underline">
@@ -262,22 +191,20 @@ export function ShopControls({
 				</div>
 			)}
 
-			{showFilter && (
-				<FilterOverlay
-					onClose={() => setShowFilter(false)}
-					onApply={handleApplyFilter}
-					initialState={filters}
-					categories={categories}
-				/>
-			)}
+			<FilterOverlay
+				isOpen={showFilter}
+				onClose={() => setShowFilter(false)}
+				onApply={handleApplyFilter}
+				initialState={filters}
+				categories={categories}
+			/>
 
-			{showSort && (
-				<SortSheet
-					current={sort}
-					onSelect={handleSort}
-					onClose={() => setShowSort(false)}
-				/>
-			)}
+			<SortSheet
+				isOpen={showSort}
+				current={sort}
+				onSelect={handleSort}
+				onClose={() => setShowSort(false)}
+			/>
 		</>
 	);
 }

@@ -6,7 +6,9 @@ import { formatVND } from "@/lib/currency";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import ProductComponentTags from "./ProductComponentTags";
 import { QuickPickDrawer } from "./QuickPickDrawer";
+import { StockIndicator } from "./StockIndicator";
 
 // ─── Skeleton ─────────────────────────────────────────────────────────
 
@@ -43,19 +45,22 @@ export function ProductCard({ product }: ProductCardProps) {
 			<Link href={`/shop/${product.slug}`} className="group block">
 				{/* ── Image box ─────────────────────────────────────────────── */}
 				<div
-					className="relative aspect-[4/5] bg-surface-container rounded-xl mb-3 overflow-hidden"
+					className="relative aspect-[4/4] bg-surface-container rounded-xl mb-3 overflow-hidden"
 					style={{
 						boxShadow: "0 20px 40px -15px rgba(155,63,28,0.08)",
 					}}>
 					{/* Thumbnail or placeholder */}
 					{product.thumbnail ? (
-						<Image
-							src={product.thumbnail}
-							alt={product.name}
-							fill
-							className="object-cover"
-							unoptimized
-						/>
+						<>
+							{/* Skeleton shimmer — hidden once image loads */}
+							<Image
+								src={product.thumbnail}
+								alt={product.name}
+								fill
+								objectFit="cover"
+								unoptimized
+							/>
+						</>
 					) : (
 						<div className="absolute inset-0 flex items-center justify-center">
 							<Icon
@@ -73,6 +78,8 @@ export function ProductCard({ product }: ProductCardProps) {
 						</span>
 					)}
 
+					<ProductComponentTags horizontalTags={product?.tags} />
+
 					{/* Quick-add button */}
 					<button
 						onClick={handleQuickAdd}
@@ -87,17 +94,16 @@ export function ProductCard({ product }: ProductCardProps) {
 
 				{/* ── Details ─────────────────────────────────────────────── */}
 				<div className="space-y-1">
-					<p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary leading-none">
+					<p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary leading-none">
 						{product.category}
 					</p>
-					<h3 className="text-sm font-bold leading-tight text-on-surface uppercase line-clamp-2 min-h-[35px]">
+					<h3 className="text-sm font-bold text-on-surface capitalize line-clamp-2 min-h-[35px]">
 						{product.name}
 					</h3>
-					<div className="flex items-baseline justify-end gap-2 pt-0.5">
-						<span className="text-base font-extrabold text-on-surface">
-							{formatVND(product.min_price)}
-						</span>
+					<div className="text-base font-extrabold text-on-surface text-right">
+						{formatVND(product.min_price)}
 					</div>
+					<StockIndicator stockQuantity={product.stock_quantity} />
 				</div>
 			</Link>
 

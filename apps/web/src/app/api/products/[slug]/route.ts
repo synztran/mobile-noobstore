@@ -11,6 +11,7 @@ export interface ShopVariantDetail {
 	price_adjustment: number;
 	effective_price: number;
 	thumbnail: string | null;
+	stock_quantity: number;
 }
 
 export interface ComponentProductDetail {
@@ -30,6 +31,8 @@ export interface ProductComponentDetail {
 	component_product: ComponentProductDetail;
 }
 
+export type ProductType = "standard" | "kit" | "component";
+
 export interface ProductDetail {
 	id: string;
 	slug: string;
@@ -40,6 +43,7 @@ export interface ProductDetail {
 	stock_quantity: number;
 	thumbnail: string | null;
 	images: string[] | null;
+	product_type: ProductType;
 	variants: ShopVariantDetail[];
 	components: ProductComponentDetail[];
 	min_price: number;
@@ -74,8 +78,9 @@ export async function GET(
 				category_id,
 				thumbnail,
 				images,
+				product_type,
 				categories(id, name),
-				product_variants(id, variant_name, price_adjustment, thumbnail),
+				product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity),
 				product_components!product_components_parent_product_id_fkey(
 					id,
 					component_group,
@@ -110,6 +115,7 @@ export async function GET(
 				effective_price:
 					Number(p.base_price) + Number(v.price_adjustment),
 				thumbnail: v.thumbnail ?? null,
+				stock_quantity: Number(v.stock_quantity ?? 0),
 			}),
 		);
 
@@ -135,7 +141,7 @@ export async function GET(
 			const { data: compProducts } = await supabase
 				.from("products")
 				.select(
-					"id, name, slug, base_price, thumbnail, images, product_variants(id, variant_name, price_adjustment, thumbnail)",
+					"id, name, slug, base_price, thumbnail, images, product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)",
 				)
 				.in("id", componentProductIds);
 
@@ -152,6 +158,7 @@ export async function GET(
 					effective_price:
 						Number(cpAny.base_price) + Number(v.price_adjustment),
 					thumbnail: v.thumbnail ?? null,
+					stock_quantity: Number(v.stock_quantity ?? 0),
 				}));
 				componentProductMap.set(cpAny.id, {
 					id: cpAny.id,
@@ -192,6 +199,7 @@ export async function GET(
 			stock_quantity: p.stock_quantity,
 			thumbnail: p.thumbnail ?? null,
 			images: Array.isArray(p.images) ? (p.images as string[]) : null,
+			product_type: (p.product_type ?? "standard") as ProductType,
 			variants,
 			components,
 			min_price: minPrice,

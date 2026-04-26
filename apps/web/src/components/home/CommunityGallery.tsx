@@ -1,59 +1,97 @@
-import Image from "next/image";
+"use client";
 
-const BUILD_PHOTOS = [
-	{
-		src: "https://lh3.googleusercontent.com/aida-public/AB6AXuApkuArAiiORB8Lw9Sejdih12A0-AKrVNgNcgfDDOUNgNmIPoSR2nk_dKiMBTufS3jT7nDy6qhV0mh-hfK6sEl-B57vUAyTcDkv37HduoSuel3h-UtIVFbHwn92xNQdIuZGZY3_kV-KsjlgYIWbs05cq3rACxaTmDqJq4YznijB99BiW68ibXLzfseg3-8zOggGjMLt97FAQ8XPL7G9Hz33Kycg8WjMFujx_gul-3iO4OPH57Z4AnOUGX99-eWqSsxTGH8w_baBopg",
-		alt: "Community build 1 — minimal desk setup",
-	},
-	{
-		src: "https://lh3.googleusercontent.com/aida-public/AB6AXuCzj829CUhc8b2Z1s6j-HkUv2Vk83LXycqsezbfd4XaAV2Z8w0MTCec-B_67Ft68Ig-C778Q5qJy9f37WKchHfUnNT9kL3AMvt_JfDQf-iFgI9sXYYda87IPXdkCeURiFN4hbn4-_D7gnH_Zk2NV40EU4Nv1afMh4wS4rPzjgsu7jVbVOGwkJ-8h442-nVVkx7J5zw1NHgFtI_TT6VH3PdpknNkx4Rki88QggC-j3skUWDmJ03mDo3dHURYTyxo5mix6TsPLsG3q9k",
-		alt: "Community build 2 — keycap detail",
-	},
-	{
-		src: "https://lh3.googleusercontent.com/aida-public/AB6AXuAXIssWwq-BES6y7x6c1ucBgdT-hTsvCJJjAIJ74SyUDzSBCFSWpMP1x8esnuwUkPMkSNmzpbjgovBKM_lA7KQq6etPo7hO8wTam6ZaPPoUme9hcs0NNS6xcwBVOO5NzwcR5_vnLSit9DMt1qRirb8L8gqhMSRcLoQVoasiVl_CqjBo5h53tTAVYp45xSFB9D5Zo8qoy8pstypwVIf6zh-3v6RXNskQk6cijnPPdb3p7xUgr_1FF70bLHcXwP5e6ucnVKKd0jZ1o4",
-		alt: "Community build 3 — atmospheric lighting",
-	},
-];
+import type { CommunityPhoto } from "@/app/api/home/community-gallery/route";
+import { Heart } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export function CommunityGallery() {
+	const [photos, setPhotos] = useState<CommunityPhoto[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		fetch("/api/home/community-gallery")
+			.then((r) => r.json())
+			.then((d) => setPhotos(d))
+			.catch(() => setPhotos([]))
+			.finally(() => setIsLoading(false));
+	}, []);
+
+	if (isLoading) {
+		return (
+			<section className="py-16 px-6">
+				<div className="h-8 bg-surface-container rounded-lg mb-8 animate-pulse" />
+				<div className="grid grid-cols-2 gap-2">
+					<div className="aspect-square bg-surface-container rounded-lg animate-pulse" />
+					<div className="row-span-2 bg-surface-container rounded-lg animate-pulse" />
+					<div className="aspect-square bg-surface-container rounded-lg animate-pulse" />
+				</div>
+			</section>
+		);
+	}
+
+	if (photos.length === 0) {
+		return null;
+	}
+
 	return (
 		<section className="py-16 px-6">
-			<h2 className="text-2xl font-black tracking-tight uppercase mb-8">
-				NHẬT KÝ BUILD
-			</h2>
+			<div className="mb-8">
+				<div className="flex items-center gap-2 mb-2">
+					<Heart size={20} className="text-primary" />
+					<span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+						Cộng đồng
+					</span>
+				</div>
+				<h2 className="text-3xl font-black tracking-tight uppercase">
+					NHẬT KÝ BUILD
+				</h2>
+				<p className="text-xs text-on-surface-variant mt-2">
+					Khám phá những setup độc đáo từ cộng đồng
+				</p>
+			</div>
+
 			{/* Bento grid: left col = 2 squares, right col = 1 tall spanning both rows */}
 			<div className="grid grid-cols-2 gap-2">
-				<div className="relative aspect-square overflow-hidden bg-surface-container-high">
-					<Image
-						src={BUILD_PHOTOS[0].src}
-						alt={BUILD_PHOTOS[0].alt}
-						fill
-						className="object-cover"
-						unoptimized
-					/>
-				</div>
-				<div className="relative row-span-2 overflow-hidden bg-surface-container-high">
-					<Image
-						src={BUILD_PHOTOS[1].src}
-						alt={BUILD_PHOTOS[1].alt}
-						fill
-						className="object-cover"
-						unoptimized
-					/>
-				</div>
-				<div className="relative aspect-square overflow-hidden bg-surface-container-high">
-					<Image
-						src={BUILD_PHOTOS[2].src}
-						alt={BUILD_PHOTOS[2].alt}
-						fill
-						className="object-cover"
-						unoptimized
-					/>
-				</div>
+				{photos.map((photo, idx) =>
+					idx === 1 ? (
+						<div
+							key={photo.id}
+							className="relative row-span-2 overflow-hidden bg-surface-container-high rounded-lg group cursor-pointer">
+							<Image
+								src={photo.image_url}
+								alt={photo.alt_text}
+								fill
+								className="object-cover group-hover:scale-105 transition-transform duration-300"
+								unoptimized
+							/>
+							<div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+						</div>
+					) : (
+						<div
+							key={photo.id}
+							className="relative aspect-square overflow-hidden bg-surface-container-high rounded-lg group cursor-pointer">
+							<Image
+								src={photo.image_url}
+								alt={photo.alt_text}
+								fill
+								className="object-cover group-hover:scale-105 transition-transform duration-300"
+								unoptimized
+							/>
+							<div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+						</div>
+					),
+				)}
 			</div>
-			<p className="text-center mt-6 text-[10px] font-bold text-on-surface-variant tracking-[0.2em] uppercase">
-				TAG @NOOBSTORE ĐỂ ĐƯỢC ĐĂNG LÊN
-			</p>
+
+			<div className="mt-8 bg-primary/5 border border-primary/20 rounded-xl p-4 text-center">
+				<p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">
+					✨ TAG @NOOBSTORE ĐỂ ĐƯỢC ĐĂNG LÊN ✨
+				</p>
+				<p className="text-xs text-on-surface-variant mt-1">
+					Hãy chia sẻ setup của bạn trên mạng xã hội
+				</p>
+			</div>
 		</section>
 	);
 }

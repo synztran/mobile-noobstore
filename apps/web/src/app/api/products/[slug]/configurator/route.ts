@@ -10,6 +10,7 @@ export interface ConfiguratorVariant {
 	variant_name: string;
 	price_adjustment: number;
 	thumbnail: string | null;
+	stock_quantity: number;
 }
 
 export interface ConfiguratorGroup {
@@ -27,11 +28,14 @@ export type ConfiguratorResponse = ConfiguratorGroup[];
 
 export async function GET(
 	_req: NextRequest,
-	{ params }: { params: Promise<{ id: string }> },
+	{ params }: { params: Promise<{ slug: string }> },
 ) {
-	const { id } = await params;
-	if (!id) {
-		return NextResponse.json({ error: "id is required" }, { status: 400 });
+	const { slug } = await params;
+	if (!slug) {
+		return NextResponse.json(
+			{ error: "slug is required" },
+			{ status: 400 },
+		);
 	}
 
 	try {
@@ -47,11 +51,11 @@ export async function GET(
 				is_required,
 				component_product_id,
 				products!product_components_component_product_id_fkey(
-					product_variants(id, variant_name, price_adjustment, thumbnail)
+					product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)
 				)
 			`,
 			)
-			.eq("parent_product_id", id)
+			.eq("parent_product_id", slug)
 			.order("component_group");
 
 		if (error) {
@@ -76,6 +80,7 @@ export async function GET(
 				variant_name: string;
 				price_adjustment: number;
 				thumbnail: string | null;
+				stock_quantity: number;
 			}> = rowAny.products?.product_variants ?? [];
 
 			if (!groupMap.has(key)) {
@@ -93,6 +98,7 @@ export async function GET(
 					variant_name: v.variant_name,
 					price_adjustment: Number(v.price_adjustment),
 					thumbnail: v.thumbnail ?? null,
+					stock_quantity: Number(v.stock_quantity ?? 0),
 				});
 			}
 		}

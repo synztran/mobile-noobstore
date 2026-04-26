@@ -1,8 +1,13 @@
+import type { ToastOptions } from "gooey-toast";
 import { gooeyToast } from "gooey-toast";
 
 export const toast = {
-	success: (message: string) => gooeyToast.success({ title: message }),
-	error: (message: string) => gooeyToast.error({ title: message }),
-	info: (message: string) => gooeyToast.info({ title: message }),
-	warning: (message: string) => gooeyToast.warning({ title: message }),
+	success: (message: string, options?: Omit<ToastOptions, "type">) =>
+		gooeyToast.success({ title: message, ...options }),
+	error: (message: string, options?: Omit<ToastOptions, "type">) =>
+		gooeyToast.error({ title: message, ...options }),
+	info: (message: string, options?: Omit<ToastOptions, "type">) =>
+		gooeyToast.info({ title: message, ...options }),
+	warning: (message: string, options?: Omit<ToastOptions, "type">) =>
+		gooeyToast.warning({ title: message, ...options }),
 };
