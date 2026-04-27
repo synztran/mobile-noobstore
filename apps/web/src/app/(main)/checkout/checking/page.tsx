@@ -4,31 +4,18 @@ import { OrderItemsList } from "@/components/checkout/OrderItemsList";
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
+import type { PaymentInformation } from "@/lib/payment-information";
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
 import Image from "next/image";
-import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-const BANK_INFO = [
-	{
-		label: "Ngân hàng",
-		value: "",
-		icon: "/logo/vietinbank_logo.png",
-		id: "bank_name",
-	},
-	{
-		id: "bank_account_number",
-		label: "Số tài khoản",
-		value: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NUMBER ?? "N/a",
-	},
-	{
-		id: "bank_account_name",
-		label: "Chủ tài khoản",
-		value: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME ?? "N/a",
-	},
-	{ id: "payment_content", label: "Nội dung", value: "{t}" },
-];
+type BankInfoRow = {
+	id: string;
+	label: string;
+	value: string;
+	copyable?: boolean;
+};
 
 function copyToClipboard(value: string, label: string) {
 	navigator.clipboard.writeText(value).then(() => {
@@ -38,10 +25,10 @@ function copyToClipboard(value: string, label: string) {
 
 export default function CheckingPage() {
 	const mounted = useIsMounted();
-	const params = useParams();
-	// const orderId = params.id as string;
 	const [orderStatus, setOrderStatus] = useState<string | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
+	const [paymentMethods, setPaymentMethods] = useState<PaymentInformation[]>(
+		[],
+	);
 
 	const { orderNumber, totalPrice, orderedItems, shippingCost } =
 		useCheckoutStore();
@@ -56,6 +43,40 @@ export default function CheckingPage() {
 			return sum + (i.product.base_price + componentsTotal) * i.quantity;
 		}, 0);
 	}, [orderedItems]);
+
+	const bankMethod = useMemo(
+		() =>
+			paymentMethods.find((method) => method.platform_type === "bank") ??
+			null,
+		[paymentMethods],
+	);
+
+	const bankInfoRows = useMemo<BankInfoRow[]>(
+		() => [
+			{
+				id: "bank_name",
+				label: "Ngân hàng",
+				value: bankMethod?.platform_name ?? "N/a",
+				copyable: false,
+			},
+			{
+				id: "bank_account_number",
+				label: "Số tài khoản",
+				value: bankMethod?.account_number ?? "N/a",
+			},
+			{
+				id: "bank_account_name",
+				label: "Chủ tài khoản",
+				value: bankMethod?.account_name ?? "N/a",
+			},
+			{
+				id: "payment_content",
+				label: "Nội dung",
+				value: orderNumber ?? "",
+			},
+		],
+		[bankMethod, orderNumber],
+	);
 
 	// Fetch order status
 	useEffect(() => {
@@ -74,8 +95,6 @@ export default function CheckingPage() {
 				setOrderStatus(data.status);
 			} catch {
 				setOrderStatus("pending");
-			} finally {
-				setIsLoading(false);
 			}
 		};
 
@@ -88,6 +107,23 @@ export default function CheckingPage() {
 		return () => clearInterval(interval);
 	}, [orderNumber, mounted]);
 
+	useEffect(() => {
+		if (!mounted) return;
+
+		fetch("/api/payment-information")
+			.then((res) => {
+				if (!res.ok) throw new Error("Failed to load payment info");
+				return res.json() as Promise<{
+					methods?: PaymentInformation[];
+				}>;
+			})
+			.then((data) => setPaymentMethods(data.methods ?? []))
+			.catch(() => {
+				setPaymentMethods([]);
+				toast.error("Không thể tải thông tin thanh toán");
+			});
+	}, [mounted]);
+
 	if (!mounted) {
 		return (
 			<div className="animate-pulse space-y-5">
@@ -99,7 +135,17 @@ export default function CheckingPage() {
 	}
 
 	const buildQRBank = (message: string, paymentPrice: number) => {
-		return `https://qr.sepay.vn/img?acc=${process.env.NEXT_PUBLIC_BANK_ACCOUNT_NUMBER}&bank=${process.env.NEXT_PUBLIC_BANK_NAME}&amount=${paymentPrice}&des=${message}&template=compact`;
+		if (!bankMethod) return "";
+
+		const query = new URLSearchParams({
+			acc: bankMethod.account_number,
+			bank: bankMethod.platform_name,
+			amount: String(paymentPrice),
+			des: message,
+			template: "compact",
+		});
+
+		return `https://qr.sepay.vn/img?${query.toString()}`;
 	};
 
 	return (
@@ -138,18 +184,26 @@ export default function CheckingPage() {
 			{/* QR Scan Section */}
 			<section className="mb-8">
 				<div className="bg-surface-container-lowest rounded-2xl p-4 flex flex-col items-center shadow-ambient relative overflow-hidden group">
-					<div className="bg-white p-4 rounded-2xl mb-2 relative z-10 w-full h-64">
-						<Image
-							src={buildQRBank(
-								`${orderNumber} - ${orderedItems.length} items`,
-								totalPrice,
-							)}
-							alt="Payment QR Code"
-							objectFit="contain"
-							fill
-							unoptimized
-						/>
-					</div>
+					{bankMethod ? (
+						<div className="bg-white p-4 rounded-2xl mb-2 relative z-10 w-full h-64">
+							<Image
+								src={buildQRBank(
+									`${orderNumber} - ${orderedItems.length} items`,
+									totalPrice,
+								)}
+								alt="Payment QR Code"
+								objectFit="contain"
+								fill
+								unoptimized
+							/>
+						</div>
+					) : (
+						<div className="bg-surface-container rounded-2xl mb-2 relative z-10 w-full h-64 flex items-center justify-center">
+							<p className="text-sm font-semibold text-on-surface-variant text-center px-6">
+								Chưa có cấu hình thanh toán ngân hàng.
+							</p>
+						</div>
+					)}
 					<p className="text-on-surface font-bold text-lg mb-1 relative z-10">
 						Quét để thanh toán
 					</p>
@@ -197,7 +251,7 @@ export default function CheckingPage() {
 			{/* Bank Transfer */}
 			<section className="mb-8">
 				<div className="bg-surface-container-low rounded-2xl p-4 flex flex-wrap gap-3">
-					{BANK_INFO.map(({ id, label, value }) => (
+					{bankInfoRows.map(({ id, label, value, copyable }) => (
 						// Keep account number and account name on the same row.
 						// Other fields remain full-width rows.
 						<div
@@ -216,22 +270,21 @@ export default function CheckingPage() {
 											height={60}
 										/>
 									) : null}
-									{id === "payment_content"
-										? value.replace(
-												"{t}",
-												orderNumber ?? "",
-											)
-										: value}
+									{value}
 								</div>
 							</div>
-							<button
-								onClick={() => copyToClipboard(value, label)}
-								className={`w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform hover:bg-surface-container-high ${id === "bank_name" ? "sr-only" : ""} `}>
-								<Icon
-									name="content_copy"
-									className="text-primary text-xl"
-								/>
-							</button>
+							{copyable === false ? null : (
+								<button
+									onClick={() =>
+										copyToClipboard(value, label)
+									}
+									className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform hover:bg-surface-container-high">
+									<Icon
+										name="content_copy"
+										className="text-primary text-xl"
+									/>
+								</button>
+							)}
 						</div>
 					))}
 				</div>
