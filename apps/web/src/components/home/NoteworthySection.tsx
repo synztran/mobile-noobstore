@@ -51,12 +51,12 @@ function ProductCard({ product }: { product: ShopProduct }) {
 					</div>
 				)}
 			</div>
-			<h4 className="font-bold text-sm uppercase tracking-tight leading-tight line-clamp-2">
-				{product.name}
-			</h4>
 			<p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-widest mt-1">
 				{product.category}
 			</p>
+			<h4 className="font-bold text-sm uppercase tracking-tight leading-tight line-clamp-2 min-h-[35px]">
+				{product.name}
+			</h4>
 			<p className="font-extrabold text-primary text-sm mt-1">
 				{formatVND(product.min_price)}
 			</p>
@@ -75,26 +75,54 @@ function ProductSkeleton() {
 	);
 }
 
+async function fetchNoteworthyProducts(categorySlug: string) {
+	const query = new URLSearchParams({
+		limit: "8",
+		...(categorySlug ? { category: categorySlug } : {}),
+	});
+
+	const response = await fetch(
+		`/api/products/noteworthy?${query.toString()}`,
+	);
+	if (!response.ok) throw new Error("Failed to fetch noteworthy products");
+
+	const data = (await response.json()) as { products?: ShopProduct[] };
+	return data.products ?? [];
+}
+
 export function NoteworthySection() {
 	const [activeCategory, setActiveCategory] = useState("");
 	const [products, setProducts] = useState<ShopProduct[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
+		let cancelled = false;
+
 		setIsLoading(true);
-		const url = activeCategory
-			? `/api/products?category=${activeCategory}&productType=standard,kit&limit=8`
-			: `/api/products?productType=standard,kit&limit=8`;
-		fetch(url)
-			.then((r) => r.json())
-			.then((d) => setProducts(d.products ?? []))
-			.catch(() => setProducts([]))
-			.finally(() => setIsLoading(false));
+		fetchNoteworthyProducts(activeCategory)
+			.then((nextProducts) => {
+				if (!cancelled) setProducts(nextProducts);
+			})
+			.catch(() => {
+				if (!cancelled) setProducts([]);
+			})
+			.finally(() => {
+				if (!cancelled) setIsLoading(false);
+			});
+
+		return () => {
+			cancelled = true;
+		};
 	}, [activeCategory]);
 
 	const shopHref = activeCategory
 		? `/shop?category=${activeCategory}`
 		: "/shop";
+	const activeCategoryLabel =
+		CATEGORIES.find((cat) => cat.slug === activeCategory)?.label ??
+		"BỘ LỌC HIỆN TẠI";
+
+	console.log("product", products);
 
 	return (
 		<section className="py-12 bg-surface">
@@ -136,6 +164,22 @@ export function NoteworthySection() {
 					: products.map((product) => (
 							<ProductCard key={product.id} product={product} />
 						))}
+				{!isLoading && products.length === 0 && (
+					<div className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-5 py-6 text-center">
+						<p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant">
+							Không có sản phẩm phù hợp
+						</p>
+						<p className="mt-2 text-sm font-semibold text-on-surface">
+							Hiện chưa có sản phẩm cho {activeCategoryLabel}.
+						</p>
+						<Link
+							href="/shop"
+							className="mt-4 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary hover:gap-2 transition-all">
+							Xem toàn bộ cửa hàng
+							<ArrowRight size={10} />
+						</Link>
+					</div>
+				)}
 				{!isLoading && products.length > 0 && (
 					<Link
 						href={shopHref}

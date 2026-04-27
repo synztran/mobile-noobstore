@@ -138,10 +138,10 @@ export function ProductConfigurator({
 										) : v.price_adjustment !== 0 ? (
 											<p
 												className={clsx(
-													"text-xs mt-0.5",
-													selected
-														? "opacity-80"
-														: "opacity-60",
+													"text-xs mt-0.5 text-red-400",
+													// selected
+													// 	? "opacity-80"
+													// 	: "opacity-60",
 												)}>
 												+{formatVND(v.price_adjustment)}
 											</p>

@@ -5,7 +5,8 @@
 
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
-import type { ITag, ShopProduct } from "@/app/api/products/route";
+import type { ShopProduct } from "@/app/api/products/route";
+import { getProductListByFilters } from "@/lib/product-query-service";
 import { getPublicClient } from "@/lib/supabase/public";
 
 export type { ProductDetail };
@@ -132,6 +133,11 @@ export interface GetProductsParams {
 	limit?: number;
 }
 
+export interface GetNoteworthyProductsParams {
+	categorySlug?: string;
+	limit?: number;
+}
+
 export interface GetQuickPickDataParams {
 	categorySlug?: string;
 	productId?: string;
@@ -163,155 +169,51 @@ export async function getProducts(
 	} = params;
 
 	try {
-		const supabase = getPublicClient();
-
-		// Resolve category slug → id
-		let categoryId: string | null = null;
-		if (categorySlug) {
-			const { data: catRow } = await supabase
-				.from("categories")
-				.select("id")
-				.eq("slug", categorySlug)
-				.maybeSingle();
-			if (!catRow) return { products: [], total: 0 };
-			categoryId = (catRow as { id: string }).id;
-		}
-
-		let query = supabase
-			.from("products")
-			.select(
-				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
-			 categories(id, name),
-			 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
-			)
-			.not("category_id", "is", null)
-			.in("product_type", ["standard", "kit"]);
-
-		if (search) query = query.ilike("name", `%${search}%`);
-		if (categoryId !== null) query = query.eq("category_id", categoryId);
-
-		const { data, error } = await query;
-		if (error) {
-			console.error("[getProducts] Supabase error:", error.message);
-			return { products: [], total: 0 };
-		}
-
-		const rows = (data ?? []) as unknown as RawListRow[];
-
-		// For kits, compute effective stock from required child components:
-		// parent kit stock = MIN(child component product stock), where
-		// child component product stock = SUM(child product_variants.stock_quantity).
-		const kitIds = rows
-			.filter((row) => row.product_type === "kit")
-			.map((row) => row.id);
-
-		const kitStockById = new Map<string, number>();
-		if (kitIds.length > 0) {
-			const { data: componentLinks, error: linkError } = await supabase
-				.from("product_components")
-				.select("parent_product_id, component_product_id, is_required")
-				.in("parent_product_id", kitIds)
-				.eq("is_required", true);
-
-			if (linkError) {
-				console.error(
-					"[getProducts] product_components error:",
-					linkError.message,
-				);
-			} else {
-				type ComponentLink = {
-					parent_product_id: string;
-					component_product_id: string;
-					is_required: boolean;
-				};
-
-				const links = (componentLinks ?? []) as ComponentLink[];
-				const componentProductIds = Array.from(
-					new Set(links.map((l) => l.component_product_id)),
-				);
-
-				const componentStockById = new Map<string, number>();
-				if (componentProductIds.length > 0) {
-					const { data: componentRows, error: componentRowsError } =
-						await supabase
-							.from("products")
-							.select("id, product_variants(stock_quantity)")
-							.in("id", componentProductIds);
-
-					if (componentRowsError) {
-						console.error(
-							"[getProducts] component stock rows error:",
-							componentRowsError.message,
-						);
-					} else {
-						type ComponentRow = {
-							id: string;
-							product_variants?: Array<{
-								stock_quantity?: number;
-							}> | null;
-						};
-
-						for (const row of (componentRows ??
-							[]) as ComponentRow[]) {
-							const stock = (row.product_variants ?? []).reduce(
-								(sum, v) => sum + Number(v.stock_quantity ?? 0),
-								0,
-							);
-							componentStockById.set(row.id, stock);
-						}
-					}
-				}
-
-				const childrenByParent = new Map<string, string[]>();
-				for (const l of links) {
-					const arr = childrenByParent.get(l.parent_product_id) ?? [];
-					arr.push(l.component_product_id);
-					childrenByParent.set(l.parent_product_id, arr);
-				}
-
-				for (const [parentId, childIds] of childrenByParent) {
-					const childStocks = childIds.map(
-						(childId) => componentStockById.get(childId) ?? 0,
-					);
-					const parentStock =
-						childStocks.length > 0 ? Math.min(...childStocks) : 0;
-					kitStockById.set(parentId, parentStock);
-				}
-			}
-		}
-
-		let products = rows.map((row) => {
-			const shaped = shapeRow(row);
-			if (row.product_type === "kit") {
-				shaped.stock_quantity =
-					kitStockById.get(row.id) ?? shaped.stock_quantity;
-				const tags = getTagsLogical(shaped);
-				return {
-					...shaped,
-					tags,
-				};
-			}
-			return shaped;
+		const result = await getProductListByFilters({
+			search,
+			categorySlug,
+			priceMin,
+			priceMax,
+			sort,
+			limit,
+			productTypes: ["standard", "kit"],
+			excludeUncategorized: true,
 		});
 
-		// JS-level price filter
-		if (priceMin > 0 || priceMax > 0) {
-			products = products.filter(
-				(p) =>
-					p.min_price >= priceMin &&
-					(priceMax === 0 || p.min_price <= priceMax),
-			);
-		}
-
-		if (sort === "price_asc")
-			products.sort((a, b) => a.min_price - b.min_price);
-		else if (sort === "price_desc")
-			products.sort((a, b) => b.min_price - a.min_price);
-
-		const sliced = limit && limit > 0 ? products.slice(0, limit) : products;
-		return { products: sliced, total: sliced.length };
+		return {
+			products: result.products as ShopProduct[],
+			total: result.total,
+		};
 	} catch (err) {
 		console.error("[getProducts] Unexpected error:", err);
+		return { products: [], total: 0 };
+	}
+}
+
+/**
+ * Product feed for the home Noteworthy section.
+ * Uses shared product query logic to keep API and server rendering consistent.
+ */
+export async function getNoteworthyProducts(
+	params: GetNoteworthyProductsParams = {},
+): Promise<{ products: ShopProduct[]; total: number }> {
+	const { categorySlug = "", limit = 8 } = params;
+
+	try {
+		const result = await getProductListByFilters({
+			categorySlug,
+			limit,
+			sort: "newest",
+			productTypes: ["standard", "kit"],
+			excludeUncategorized: true,
+		});
+
+		return {
+			products: result.products as ShopProduct[],
+			total: result.total,
+		};
+	} catch (err) {
+		console.error("[getNoteworthyProducts] Unexpected error:", err);
 		return { products: [], total: 0 };
 	}
 }
@@ -722,18 +624,3 @@ export async function getProductBySlug(
 		return null;
 	}
 }
-
-const getTagsLogical = (shape: ShopProduct) => {
-	const tags: ITag[] = [];
-	if (shape.stock_quantity === 0) {
-		tags.push({
-			label: "Hết hàng",
-			id: 1,
-			value: "sold_out",
-			textColor: "text-white",
-			bgColor: "bg-red-400",
-		});
-	}
-
-	return tags;
-};
