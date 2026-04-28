@@ -7,8 +7,9 @@ import { formatVND } from "@/lib/currency";
 import type { PaymentInformation } from "@/lib/payment-information";
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 type BankInfoRow = {
 	id: string;
@@ -25,13 +26,39 @@ function copyToClipboard(value: string, label: string) {
 
 export default function CheckingPage() {
 	const mounted = useIsMounted();
-	const [orderStatus, setOrderStatus] = useState<string | null>(null);
-	const [paymentMethods, setPaymentMethods] = useState<PaymentInformation[]>(
-		[],
-	);
 
 	const { orderNumber, totalPrice, orderedItems, shippingCost } =
 		useCheckoutStore();
+
+	const orderStatusQuery = useQuery({
+		queryKey: ["order-status", orderNumber],
+		enabled: mounted && !!orderNumber,
+		queryFn: async () => {
+			const res = await fetch(`/api/orders/${orderNumber}`, {
+				method: "GET",
+			});
+			if (!res.ok) return "";
+			const data = await res.json();
+			return (data.status as string) ?? "pending";
+		},
+		refetchInterval: 5000,
+	});
+
+	const paymentMethodsQuery = useQuery({
+		queryKey: ["payment-information"],
+		enabled: mounted,
+		queryFn: async () => {
+			const res = await fetch("/api/payment-information");
+			if (!res.ok) throw new Error("Failed to load payment info");
+			const data = (await res.json()) as {
+				methods?: PaymentInformation[];
+			};
+			return data.methods ?? [];
+		},
+	});
+
+	const orderStatus = orderStatusQuery.data ?? null;
+	const paymentMethods = paymentMethodsQuery.data ?? [];
 
 	// Calculate subtotal from ordered items
 	const subtotal = useMemo(() => {
@@ -78,51 +105,11 @@ export default function CheckingPage() {
 		[bankMethod, orderNumber],
 	);
 
-	// Fetch order status
 	useEffect(() => {
-		if (!orderNumber || !mounted) return;
-
-		const fetchOrderStatus = async () => {
-			try {
-				const res = await fetch(`/api/orders/${orderNumber}`, {
-					method: "GET",
-				});
-				if (!res.ok) {
-					setOrderStatus("");
-					return;
-				}
-				const data = await res.json();
-				setOrderStatus(data.status);
-			} catch {
-				setOrderStatus("pending");
-			}
-		};
-
-		// Initial fetch
-		fetchOrderStatus();
-
-		// Poll every 5 seconds
-		const interval = setInterval(fetchOrderStatus, 5000);
-
-		return () => clearInterval(interval);
-	}, [orderNumber, mounted]);
-
-	useEffect(() => {
-		if (!mounted) return;
-
-		fetch("/api/payment-information")
-			.then((res) => {
-				if (!res.ok) throw new Error("Failed to load payment info");
-				return res.json() as Promise<{
-					methods?: PaymentInformation[];
-				}>;
-			})
-			.then((data) => setPaymentMethods(data.methods ?? []))
-			.catch(() => {
-				setPaymentMethods([]);
-				toast.error("Không thể tải thông tin thanh toán");
-			});
-	}, [mounted]);
+		if (paymentMethodsQuery.isError) {
+			toast.error("Không thể tải thông tin thanh toán");
+		}
+	}, [paymentMethodsQuery.isError]);
 
 	if (!mounted) {
 		return (

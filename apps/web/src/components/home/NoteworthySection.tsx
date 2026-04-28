@@ -2,10 +2,11 @@
 
 import type { ShopProduct } from "@/app/api/products/route";
 import { formatVND } from "@/lib/currency";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const CATEGORIES = [
 	{ label: "MỚI NHẤT", slug: "" },
@@ -92,28 +93,11 @@ async function fetchNoteworthyProducts(categorySlug: string) {
 
 export function NoteworthySection() {
 	const [activeCategory, setActiveCategory] = useState("");
-	const [products, setProducts] = useState<ShopProduct[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		let cancelled = false;
-
-		setIsLoading(true);
-		fetchNoteworthyProducts(activeCategory)
-			.then((nextProducts) => {
-				if (!cancelled) setProducts(nextProducts);
-			})
-			.catch(() => {
-				if (!cancelled) setProducts([]);
-			})
-			.finally(() => {
-				if (!cancelled) setIsLoading(false);
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	}, [activeCategory]);
+	const { data: products = [], isLoading } = useQuery({
+		queryKey: ["home-noteworthy-products", activeCategory],
+		queryFn: () => fetchNoteworthyProducts(activeCategory),
+	});
 
 	const shopHref = activeCategory
 		? `/shop?category=${activeCategory}`
@@ -121,8 +105,6 @@ export function NoteworthySection() {
 	const activeCategoryLabel =
 		CATEGORIES.find((cat) => cat.slug === activeCategory)?.label ??
 		"BỘ LỌC HIỆN TẠI";
-
-	console.log("product", products);
 
 	return (
 		<section className="py-12 bg-surface">

@@ -52,6 +52,7 @@ type RawListRow = {
 	id: string;
 	slug: string;
 	name: string;
+	description: string;
 	base_price: number;
 	stock_quantity: number;
 	thumbnail: string | null;
@@ -111,6 +112,7 @@ function shapeRow(p: RawListRow): ShopProduct {
 		slug: p.slug,
 		name: p.name,
 		category: p.categories?.name ?? "Unknown",
+		description: p.description ?? "",
 		base_price: Number(p.base_price),
 		stock_quantity: effectiveStock,
 		thumbnail: p.thumbnail,
@@ -256,7 +258,7 @@ export async function getQuickPickData(
 				const { data, error } = await getPublicClient()
 					.from("products")
 					.select(
-						`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
+						`id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type,
 						 categories(id, name),
 						 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 					)
@@ -372,8 +374,7 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
 		const { data, error } = await getPublicClient()
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
-				 categories(id, name),
+				`id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type,
 				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 			)
 			.in("product_type", ["standard", "kit"])

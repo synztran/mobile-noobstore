@@ -84,7 +84,7 @@ export function ProductConfigurator({
 	}
 
 	return (
-		<div className="space-y-5">
+		<div className="flex flex-wrap gap-4 overflow-y-auto">
 			{/* Component group selectors */}
 			{groups.map((group) => (
 				<div key={group.component_group} className={`space-y-2`}>

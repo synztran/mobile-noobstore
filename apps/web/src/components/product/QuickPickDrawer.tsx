@@ -19,9 +19,10 @@ import type { SelectedComponent } from "@/lib/data";
 import type { CategoryItem } from "@/lib/products-server";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import clsx from "clsx";
 import Image from "next/image";
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useMemo, useReducer } from "react";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -50,9 +51,6 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 	const [state, dispatch] = useReducer(reduce, INITIAL_STATE);
 	const { addItem, openCart } = useCartStore();
 
-	// ref to avoid duplicate fetches for the same subject
-	const fetchedRequestKey = useRef<string | null>(null);
-
 	type QuickPickResponse = {
 		products: ShopProduct[];
 		configuratorByProductId: Record<string, ConfiguratorGroup[]>;
@@ -60,69 +58,88 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 		total: number;
 	};
 
-	// ── Unified quick-pick fetch (products + configurators) ──────────────
+	const view: DrawerView = isCategoryMode ? "product-list" : "configurator";
+	const requestKey = isCategoryMode
+		? `category:${propCategory?.slug ?? ""}`
+		: `product:${propProduct?.id ?? ""}`;
+	const canFetchQuickPick = isOpen && !requestKey.endsWith(":");
+
+	const quickPickQuery = useQuery({
+		queryKey: ["quick-pick", requestKey],
+		enabled: canFetchQuickPick,
+		queryFn: async (): Promise<QuickPickResponse> => {
+			const query = new URLSearchParams();
+			if (isCategoryMode && propCategory?.slug) {
+				query.set("categorySlug", propCategory.slug);
+			}
+			if (!isCategoryMode && propProduct?.id) {
+				query.set("productId", propProduct.id);
+			}
+
+			const res = await fetch(
+				`/api/products/quick-pick?${query.toString()}`,
+			);
+			if (!res.ok) throw new Error("Failed to fetch quick pick data");
+			return (await res.json()) as QuickPickResponse;
+		},
+		staleTime: 30_000,
+	});
+
 	useEffect(() => {
-		if (!isOpen) return;
-
-		const view: DrawerView = isCategoryMode
-			? "product-list"
-			: "configurator";
-		const requestKey = isCategoryMode
-			? `category:${propCategory?.slug ?? ""}`
-			: `product:${propProduct?.id ?? ""}`;
-
-		if (requestKey.endsWith(":")) return;
-		if (fetchedRequestKey.current === requestKey) return;
-
-		fetchedRequestKey.current = requestKey;
+		if (!canFetchQuickPick) return;
 		dispatch({ type: "LOAD_QUICK_PICK_START", view });
+	}, [canFetchQuickPick, requestKey, view]);
 
-		const query = new URLSearchParams();
-		if (isCategoryMode && propCategory?.slug) {
-			query.set("categorySlug", propCategory.slug);
-		}
-		if (!isCategoryMode && propProduct?.id) {
-			query.set("productId", propProduct.id);
-		}
+	useEffect(() => {
+		if (!isOpen || !quickPickQuery.data) return;
+		dispatch({
+			type: "LOAD_QUICK_PICK_DONE",
+			products: quickPickQuery.data.products ?? [],
+			configuratorByProductId:
+				quickPickQuery.data.configuratorByProductId ?? {},
+			activeProduct: isCategoryMode
+				? null
+				: (quickPickQuery.data.activeProduct ?? propProduct ?? null),
+			view,
+		});
+	}, [isOpen, quickPickQuery.data, isCategoryMode, propProduct, view]);
 
-		fetch(`/api/products/quick-pick?${query.toString()}`)
-			.then((r) => r.json())
-			.then((res: QuickPickResponse) => {
-				dispatch({
-					type: "LOAD_QUICK_PICK_DONE",
-					products: res.products ?? [],
-					configuratorByProductId: res.configuratorByProductId ?? {},
-					activeProduct: isCategoryMode
-						? null
-						: (res.activeProduct ?? propProduct ?? null),
-					view,
-				});
-			})
-			.catch(() => {
-				dispatch({
-					type: "LOAD_QUICK_PICK_DONE",
-					products: [],
-					configuratorByProductId: {},
-					activeProduct: isCategoryMode
-						? null
-						: (propProduct ?? null),
-					view,
-				});
-				toast.error(
-					isCategoryMode
-						? "Không thể tải sản phẩm"
-						: "Không thể tải cấu hình sản phẩm",
-				);
-			});
-	}, [isOpen, isCategoryMode, propCategory?.slug, propProduct?.id]);
+	useEffect(() => {
+		if (!quickPickQuery.isError) return;
+		dispatch({
+			type: "LOAD_QUICK_PICK_DONE",
+			products: [],
+			configuratorByProductId: {},
+			activeProduct: isCategoryMode ? null : (propProduct ?? null),
+			view,
+		});
+		toast.error(
+			isCategoryMode
+				? "Không thể tải sản phẩm"
+				: "Không thể tải cấu hình sản phẩm",
+		);
+	}, [quickPickQuery.isError, isCategoryMode, propProduct, view]);
 
 	// ── Reset when closed ────────────────────────────────────────────────
 	useEffect(() => {
 		if (!isOpen) {
-			fetchedRequestKey.current = null;
 			dispatch({ type: "RESET" });
 		}
 	}, [isOpen]);
+
+	const addToCartMutation = useMutation({
+		mutationFn: async (body: AddToCartRequest) => {
+			const res = await fetch("/api/cart/add", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+
+			if (!res.ok) {
+				throw new Error("Failed to add cart item");
+			}
+		},
+	});
 
 	// ── Escape key ───────────────────────────────────────────────────────
 	useEffect(() => {
@@ -156,6 +173,12 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 		.filter((g) => g.is_required && !state.selections[g.component_group])
 		.map((g) => g.component_group);
 	const canAdd = missingRequired.length === 0;
+	const isSubmitting = useMemo(
+		() => state.submitting || addToCartMutation.isPending,
+		[state.submitting, addToCartMutation.isPending],
+	);
+	const isFetchingVariants =
+		quickPickQuery.isFetching || state.loadingConfigurator;
 
 	// ── Add to cart ───────────────────────────────────────────────────────
 	const handleAdd = async () => {
@@ -190,11 +213,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				parent_product_id: activeProduct.id,
 				selected_variant_ids: components.map((c) => c.variant_id),
 			};
-			await fetch("/api/cart/add", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(body),
-			});
+			await addToCartMutation.mutateAsync(body);
 		} catch {
 			console.warn("[QuickPickDrawer] cart/add API failed");
 		}
@@ -419,15 +438,17 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 							type="button"
 							onClick={handleAdd}
 							disabled={
-								state.submitting || (!canAdd && hasComponents)
+								isSubmitting ||
+								isFetchingVariants ||
+								(!canAdd && hasComponents)
 							}
 							className={clsx(
 								"flex-1 h-14 text-white rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-all",
-								canAdd && !state.submitting
+								canAdd && !isSubmitting && !isFetchingVariants
 									? "bg-gradient-to-r from-primary to-primary-container"
 									: "bg-outline/30 cursor-not-allowed",
 							)}>
-							{state.submitting ? (
+							{isSubmitting || isFetchingVariants ? (
 								<span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
 							) : (
 								<>

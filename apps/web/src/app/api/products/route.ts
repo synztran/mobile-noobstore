@@ -38,6 +38,7 @@ export interface ShopProduct {
 	slug: string;
 	name: string;
 	category: string;
+	description: string;
 	base_price: number;
 	stock_quantity: number;
 	thumbnail: string | null;

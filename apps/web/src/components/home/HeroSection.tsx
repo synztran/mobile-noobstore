@@ -1,6 +1,7 @@
 "use client";
 
 import type { HeroCampaign } from "@/app/api/home/hero/route";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,19 +10,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const SLIDE_DURATION = 5000;
 
 export function HeroSection() {
-	const [slides, setSlides] = useState<HeroCampaign[]>([]);
 	const [current, setCurrent] = useState(0);
-	const [isLoading, setIsLoading] = useState(true);
 	const [isPaused, setIsPaused] = useState(false);
 	const touchStartX = useRef<number | null>(null);
 
-	useEffect(() => {
-		fetch("/api/home/hero")
-			.then((r) => r.json())
-			.then((d) => setSlides(Array.isArray(d) ? d : []))
-			.catch(() => setSlides([]))
-			.finally(() => setIsLoading(false));
-	}, []);
+	const { data: slides = [], isLoading } = useQuery({
+		queryKey: ["home-hero-campaigns"],
+		queryFn: async (): Promise<HeroCampaign[]> => {
+			const res = await fetch("/api/home/hero");
+			if (!res.ok) return [];
+			const data = await res.json();
+			return Array.isArray(data) ? data : [];
+		},
+	});
 
 	const goTo = useCallback(
 		(idx: number) => {
@@ -54,7 +55,36 @@ export function HeroSection() {
 
 	if (isLoading) {
 		return (
-			<section className="relative h-[680px] bg-surface-container animate-pulse" />
+			<section className="relative h-[680px] overflow-hidden bg-surface-container animate-pulse">
+				<div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-surface-container-high" />
+
+				<div className="absolute inset-0 flex flex-col justify-end p-8 z-10">
+					<div className="flex flex-col gap-4">
+						<div className="flex items-center gap-2">
+							<div className="w-1 h-5 rounded-full bg-primary/40" />
+							<div className="h-3 w-40 rounded bg-surface-container-high" />
+						</div>
+
+						<div className="space-y-3">
+							<div className="h-10 w-5/6 rounded bg-surface-container-high" />
+							<div className="h-10 w-2/3 rounded bg-surface-container-high" />
+						</div>
+
+						<div className="space-y-2">
+							<div className="h-3 w-3/4 rounded bg-surface-container-high" />
+							<div className="h-3 w-2/3 rounded bg-surface-container-high" />
+						</div>
+
+						<div className="mt-2 h-12 w-full rounded-xl bg-surface-container-high" />
+					</div>
+
+					<div className="flex items-center justify-center gap-2 mt-6">
+						<div className="w-6 h-1.5 rounded-full bg-surface-container-high" />
+						<div className="w-1.5 h-1.5 rounded-full bg-surface-container-high" />
+						<div className="w-1.5 h-1.5 rounded-full bg-surface-container-high" />
+					</div>
+				</div>
+			</section>
 		);
 	}
 

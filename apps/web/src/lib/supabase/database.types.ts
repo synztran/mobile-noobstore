@@ -122,6 +122,7 @@ export interface Database {
 					thumbnail: string | null;
 					images: Json | null;
 					product_type: "standard" | "kit" | "component";
+					description: string;
 				};
 				Insert: {
 					id: string;
@@ -133,6 +134,7 @@ export interface Database {
 					thumbnail?: string | null;
 					images?: Json | null;
 					product_type?: "standard" | "kit" | "component";
+					description?: string;
 				};
 				Update: {
 					id?: never;
@@ -144,6 +146,7 @@ export interface Database {
 					thumbnail?: string | null;
 					images?: Json | null;
 					product_type?: "standard" | "kit" | "component";
+					description?: string;
 				};
 				Relationships: [];
 			};

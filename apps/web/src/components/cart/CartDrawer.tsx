@@ -73,7 +73,7 @@ export function CartDrawer() {
 
 			{/* Drawer */}
 			<div
-				className={`fixed left-0 right-0 z-[999] bg-surface rounded-t-5xl max-h-[80vh] h-full flex flex-col transition-all duration-250 ease-out ${
+				className={`fixed left-0 right-0 z-[999] bg-surface rounded-t-5xl max-h-[80dvh] h-full flex flex-col transition-all duration-250 ease-out ${
 					drawerOpen ? "top-[20vh]" : "top-[110vh]"
 				}`}>
 				{/* Handle */}
@@ -155,7 +155,7 @@ export function CartDrawer() {
 												{item.components.map((c) => (
 													<span
 														key={c.variant_id}
-														className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-surface-container text-on-surface-variant rounded-full px-2 py-0.5">
+														className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-on-surface-variant rounded-full px-2 py-0.5">
 														{c.component_group}:{" "}
 														<strong>
 															{c.variant_name}
@@ -220,7 +220,12 @@ export function CartDrawer() {
 
 				{/* Footer */}
 				{visibleItems.length > 0 && (
-					<div className="px-6 py-4 border-t border-outline-variant/20 bg-surface">
+					<div
+						className="px-6 pt-4 pb-8 border-t border-outline-variant/20 bg-surface"
+						style={{
+							paddingBottom:
+								"max(2rem, env(safe-area-inset-bottom))",
+						}}>
 						<div className="space-y-2 mb-4">
 							<div className="flex justify-between items-center">
 								<span className="text-on-surface-variant text-sm">

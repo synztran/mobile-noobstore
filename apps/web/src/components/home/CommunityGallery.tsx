@@ -1,21 +1,20 @@
 "use client";
 
 import type { CommunityPhoto } from "@/app/api/home/community-gallery/route";
+import { useQuery } from "@tanstack/react-query";
 import { Heart } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 
 export function CommunityGallery() {
-	const [photos, setPhotos] = useState<CommunityPhoto[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-
-	useEffect(() => {
-		fetch("/api/home/community-gallery")
-			.then((r) => r.json())
-			.then((d) => setPhotos(d))
-			.catch(() => setPhotos([]))
-			.finally(() => setIsLoading(false));
-	}, []);
+	const { data: photos = [], isLoading } = useQuery({
+		queryKey: ["home-community-gallery"],
+		queryFn: async (): Promise<CommunityPhoto[]> => {
+			const res = await fetch("/api/home/community-gallery");
+			if (!res.ok) return [];
+			const data = await res.json();
+			return Array.isArray(data) ? data : [];
+		},
+	});
 
 	if (isLoading) {
 		return (

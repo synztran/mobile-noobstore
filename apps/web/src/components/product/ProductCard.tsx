@@ -32,6 +32,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+	console.log(product);
 	const [drawerOpen, setDrawerOpen] = useState(false);
 
 	const handleQuickAdd = (e: React.MouseEvent) => {
@@ -87,9 +88,12 @@ export function ProductCard({ product }: ProductCardProps) {
 						<p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary leading-none">
 							{product.category}
 						</p>
-						<h3 className="text-sm font-bold text-on-surface capitalize line-clamp-2 min-h-[35px]">
+						<h3 className="text-sm font-bold text-on-surface capitalize line-clamp-1">
 							{product.name}
 						</h3>
+						<p className="text-xs tracking-wide line-clamp-2">
+							{product.description}
+						</p>
 						<div className="text-base font-extrabold text-on-surface text-right">
 							{formatVND(product.min_price)}
 						</div>
@@ -103,7 +107,8 @@ export function ProductCard({ product }: ProductCardProps) {
 					type="button"
 					onClick={handleQuickAdd}
 					aria-label={`Quick add ${product.name}`}
-					className="mt-auto w-full h-10 rounded-xl bg-on-surface text-surface font-black text-[10px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-all hover:bg-on-surface/90 active:scale-[0.98]">
+					disabled={product.stock_quantity === 0}
+					className="mt-auto w-full h-10 rounded-xl bg-on-surface text-surface font-black text-[10px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-all hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50">
 					<Icon name="add_shopping_cart" className="text-[16px]" />
 					Mua ngay
 				</button>

@@ -1,3 +1,4 @@
+import { ReactQueryProvider } from "@/components/ui/ReactQueryProvider";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
@@ -40,9 +41,11 @@ export default function RootLayout({
 		<html lang="en" data-theme="giraffelab">
 			<body className="bg-background font-sans text-on-surface antialiased">
 				<AuthProvider>
-					{children}
-					<ToastProvider />
-					<StoreHydrator />
+					<ReactQueryProvider>
+						{children}
+						<ToastProvider />
+						<StoreHydrator />
+					</ReactQueryProvider>
 				</AuthProvider>
 			</body>
 		</html>

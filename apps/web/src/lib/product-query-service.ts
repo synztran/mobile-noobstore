@@ -26,6 +26,7 @@ export interface ProductListItem {
 	slug: string;
 	name: string;
 	category: string;
+	description: string;
 	base_price: number;
 	stock_quantity: number;
 	thumbnail: string | null;
@@ -49,6 +50,7 @@ type RawListRow = {
 	id: string;
 	slug: string;
 	name: string;
+	description: string;
 	base_price: number;
 	stock_quantity: number;
 	thumbnail: string | null;
@@ -126,6 +128,7 @@ function shapeRow(row: RawListRow): ProductListItem {
 		slug: row.slug,
 		name: row.name,
 		category: row.categories?.name ?? "Unknown",
+		description: row.description ?? "",
 		base_price: Number(row.base_price),
 		stock_quantity: effectiveStock,
 		thumbnail: row.thumbnail,
@@ -254,7 +257,7 @@ export async function getProductListByFilters(
 		let query = supabase
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
+				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, description,
 				 categories(id, name),
 				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 			)
