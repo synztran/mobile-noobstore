@@ -46,6 +46,7 @@ export interface ShopProduct {
 	product_type: "standard" | "kit" | "component";
 	variants: ShopVariant[];
 	min_price: number;
+	is_used: boolean;
 	tags: ITag[];
 }
 

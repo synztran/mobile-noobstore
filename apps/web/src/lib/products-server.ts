@@ -58,6 +58,7 @@ type RawListRow = {
 	thumbnail: string | null;
 	images: unknown;
 	product_type: string;
+	is_used: boolean;
 	categories: { id: string; name: string } | null;
 	product_variants: RawVariantRow[] | null;
 };
@@ -96,16 +97,29 @@ function shapeRow(p: RawListRow): ShopProduct {
 		effectiveStock = Number(p.stock_quantity ?? 0);
 	}
 
-	const tags =
-		effectiveStock === 0
-			? [
-					{
-						label: "Hết hàng",
-						id: 1,
-						value: "sold_out",
-					},
-				]
-			: [];
+	const tags: {
+		id: number;
+		label: string;
+		value: string;
+		textColor?: string;
+		bgColor?: string;
+	}[] = [];
+
+	if (effectiveStock === 0) {
+		tags.push({
+			label: "Hết hàng",
+			id: 1,
+			value: "sold_out",
+		});
+	}
+
+	if (p.is_used) {
+		tags.push({
+			label: "sản phẩm 2nd",
+			id: 2,
+			value: "used_product",
+		});
+	}
 
 	return {
 		id: p.id,
@@ -120,7 +134,8 @@ function shapeRow(p: RawListRow): ShopProduct {
 		product_type: productType,
 		variants,
 		min_price: minPrice,
-		tags: [],
+		is_used: p.is_used ?? false,
+		tags,
 	};
 }
 
@@ -258,13 +273,10 @@ export async function getQuickPickData(
 				const { data, error } = await getPublicClient()
 					.from("products")
 					.select(
-						`id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type,
-						 categories(id, name),
-						 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
-					)
-					.eq("id", productId)
-					.in("product_type", ["standard", "kit"])
-					.maybeSingle();
+						`id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used,
+					 categories(id, name),
+					 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
+					);
 
 				if (!error && data) {
 					activeProduct = shapeRow(data as unknown as RawListRow);
@@ -374,7 +386,7 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
 		const { data, error } = await getPublicClient()
 			.from("products")
 			.select(
-				`id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type,
+				`id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used,
 				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 			)
 			.in("product_type", ["standard", "kit"])
@@ -499,7 +511,7 @@ export async function getProductBySlug(
 		const { data: product, error } = await getPublicClient()
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, category_id, thumbnail, images,
+				`id, slug, name, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used,
 				 categories(id, name),
 				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity),
 				 product_components!product_components_parent_product_id_fkey(
@@ -547,7 +559,7 @@ export async function getProductBySlug(
 			const { data: compData } = await getPublicClient()
 				.from("products")
 				.select(
-					`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type,
+					`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, is_used,
 					 categories(id, name),
 					 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 				)
@@ -619,6 +631,7 @@ export async function getProductBySlug(
 			variants,
 			components,
 			min_price: minPrice,
+			is_used: raw.is_used ?? false,
 		};
 	} catch (err) {
 		console.error("[getProductBySlug] Unexpected error:", err);

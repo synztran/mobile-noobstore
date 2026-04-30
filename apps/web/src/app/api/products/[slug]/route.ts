@@ -47,6 +47,7 @@ export interface ProductDetail {
 	variants: ShopVariantDetail[];
 	components: ProductComponentDetail[];
 	min_price: number;
+	is_used: boolean;
 }
 
 // ─── GET /api/products/[slug] ─────────────────────────────────────────────────
@@ -79,6 +80,7 @@ export async function GET(
 				thumbnail,
 				images,
 				product_type,
+				is_used,
 				categories(id, name),
 				product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity),
 				product_components!product_components_parent_product_id_fkey(
@@ -203,6 +205,7 @@ export async function GET(
 			variants,
 			components,
 			min_price: minPrice,
+			is_used: p.is_used ?? false,
 		};
 
 		return NextResponse.json(result);

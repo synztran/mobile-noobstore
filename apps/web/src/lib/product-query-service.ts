@@ -34,6 +34,7 @@ export interface ProductListItem {
 	product_type: ProductType;
 	variants: ProductVariant[];
 	min_price: number;
+	is_used: boolean;
 	tags: ProductTag[];
 }
 
@@ -56,6 +57,7 @@ type RawListRow = {
 	thumbnail: string | null;
 	images: unknown;
 	product_type: string;
+	is_used: boolean;
 	categories: { id: string; name: string } | null;
 	product_variants: VariantRow[] | null;
 };
@@ -77,19 +79,27 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 function getTags(product: ProductListItem): ProductTag[] {
+	const tags: ProductTag[] = [];
+
 	if (product.stock_quantity === 0) {
-		return [
-			{
-				label: "Hết hàng",
-				id: 1,
-				value: "sold_out",
-				textColor: "text-white",
-				bgColor: "bg-red-400",
-			},
-		];
+		tags.push({
+			label: "Hết hàng",
+			id: 1,
+			value: "sold_out",
+			textColor: "text-white",
+			bgColor: "bg-red-400",
+		});
 	}
 
-	return [];
+	if (product.is_used) {
+		tags.push({
+			label: "sản phẩm 2nd",
+			id: 2,
+			value: "used_product",
+		});
+	}
+
+	return tags;
 }
 
 function shapeRow(row: RawListRow): ProductListItem {
@@ -136,6 +146,7 @@ function shapeRow(row: RawListRow): ProductListItem {
 		product_type: productType,
 		variants,
 		min_price: minPrice,
+		is_used: row.is_used ?? false,
 		tags: [],
 	};
 
@@ -257,7 +268,7 @@ export async function getProductListByFilters(
 		let query = supabase
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, description,
+				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, description, is_used,
 				 categories(id, name),
 				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 			)
