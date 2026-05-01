@@ -1,6 +1,7 @@
 "use client";
 
 import type { SubmitOrderResponse } from "@/app/api/checkout/submit/route";
+import type { ValidateStockResponse } from "@/app/api/checkout/validate-stock/route";
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
@@ -12,22 +13,24 @@ import { useState } from "react";
 
 export default function SummaryPage() {
 	const router = useRouter();
-	const params = useParams();
 	const mounted = useIsMounted();
-	const summaryId = params.id as string;
 	const [submitting, setSubmitting] = useState(false);
+	const [oosProductIds, setOosProductIds] = useState<Set<string>>(new Set());
 
 	const {
 		items: rawItems,
 		cartId,
 		subtotal: getSubtotal,
 		clearCart,
+		removeItem,
 	} = useCartStore();
 	const { shippingCost, shipping, setOrder } = useCheckoutStore();
 
 	const items = mounted ? rawItems : [];
 	const subtotal = mounted ? getSubtotal() : 0;
 	const orderTotal = subtotal + shippingCost;
+
+  console.log("items",items, oosProductIds)
 
 	if (!mounted) {
 		return (
@@ -51,6 +54,39 @@ export default function SummaryPage() {
 	const handleConfirmOrder = async () => {
 		setSubmitting(true);
 		try {
+			// ── Pre-check: validate stock before deducting ──────────────────
+			const stockRes = await fetch("/api/checkout/validate-stock", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					items: items.map((i) => ({
+						product_id: i.product.id,
+						product_name: i.product.name,
+						variant_id: i.variant?.id ?? null,
+						quantity: i.quantity,
+            components: i.components
+					})),
+				}),
+			});
+			const stockData: ValidateStockResponse = await stockRes.json();
+
+			if (!stockData.valid) {
+				setOosProductIds(new Set(stockData.oos_items.map((o) => o.product_id)));
+				for (const oos of stockData.oos_items) {
+					if (oos.available === 0) {
+						toast.error(`"${oos.product_name}" đã hết hàng`);
+					} else {
+						toast.warning(
+							`"${oos.product_name}" chỉ còn ${oos.available} sản phẩm (bạn đang đặt ${oos.requested})`,
+						);
+					}
+				}
+				setSubmitting(false);
+				return;
+			}
+			// Clear any previous OOS markers on successful validation
+			setOosProductIds(new Set());
+			// ────────────────────────────────────────────────────────────────
 			const res = await fetch("/api/checkout/submit", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -129,7 +165,18 @@ export default function SummaryPage() {
 
 			{/* ── Order Items ──────────────────────────────────────── */}
 			<div className="space-y-4">
-				<OrderItemsList items={items} />
+				<OrderItemsList
+					items={items}
+					oosProductIds={oosProductIds}
+					onRemove={(productId, variantId) => {
+						removeItem(productId, variantId);
+						setOosProductIds((prev) => {
+							const next = new Set(prev);
+							next.delete(productId);
+							return next;
+						});
+					}}
+				/>
 			</div>
 
 			{/* ── Shipping Information ──────────────────────────────── */}

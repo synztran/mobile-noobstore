@@ -16,7 +16,7 @@ const nextConfig = {
 			},
 		],
 	},
-	transpilePackages: [],
+	transpilePackages: ["gooey-toast"],
 };
 
 module.exports = nextConfig;

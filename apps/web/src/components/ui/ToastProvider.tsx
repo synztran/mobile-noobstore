@@ -1,7 +1,6 @@
 "use client";
 
 import { mountToaster, unmountToaster } from "gooey-toast";
-import "gooey-toast/styles.css";
 import { useEffect } from "react";
 
 export function ToastProvider() {

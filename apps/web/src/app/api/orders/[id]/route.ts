@@ -34,7 +34,7 @@ export async function GET(
 		}
 
 		const mappinStatus = {
-			pending: "Đang chờ xác nhận",
+			pending: "Đang kiểm tra",
 			confirmed: "Đã xác nhận",
 			preparing: "Đang chuẩn bị hàng",
 			delivering: "Đang giao hàng",

@@ -4,11 +4,12 @@ import Icon from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { toast } from "@/lib/toast";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { signIn, signInWithGoogle } = useAuth();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -29,7 +30,9 @@ export default function LoginPage() {
 			return;
 		}
 		toast.success("Chào mừng trở lại!");
-		router.push("/");
+		const next = searchParams.get("next") ?? "/";
+		router.refresh(); // bust stale prefetch cache so middleware re-checks cookies
+		router.push(next);
 	};
 
 	const handleGoogleSignIn = async () => {

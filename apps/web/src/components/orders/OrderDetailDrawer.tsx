@@ -18,7 +18,7 @@ const STATUS_CONFIG: Record<
 	{ label: string; Icon: React.ElementType; color: string; bg: string }
 > = {
 	pending: {
-		label: "Chờ xác nhận",
+		label: "Đang kiểm tra",
 		Icon: HourglassIcon,
 		color: "text-amber-600",
 		bg: "bg-amber-50",
@@ -193,7 +193,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 													{item.product_name}
 												</p>
 												{item.components.length > 0 && (
-													<div className="mt-1 flex items-center gap-2">
+													<div className="mt-1 flex flew-wrap items-center gap-2">
 														{item.components.map(
 															(component) => (
 																<p

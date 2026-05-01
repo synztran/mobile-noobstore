@@ -4,6 +4,7 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "gooey-toast/styles.css";
 
 export const metadata: Metadata = {
 	title: "NoobStore",

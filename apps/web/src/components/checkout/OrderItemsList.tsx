@@ -6,9 +6,11 @@ import Image from "next/image";
 
 interface OrderItemsListProps {
 	items: CartItem[];
+	oosProductIds?: Set<string>;
+	onRemove?: (productId: string, variantId: string | null) => void;
 }
 
-export function OrderItemsList({ items }: OrderItemsListProps) {
+export function OrderItemsList({ items, oosProductIds, onRemove }: OrderItemsListProps) {
 	if (items.length === 0) {
 		return null;
 	}
@@ -19,12 +21,38 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 				Đơn hàng của bạn
 			</h2>
 			<div className="space-y-3">
-				{items.map((item) => (
+				{items.map((item) => {
+					const isOos = oosProductIds?.has(item.product.id) ?? false;
+					return (
 					<div
 						key={`${item.product.id}-${item.variant?.id ?? "base"}`}
-						className="bg-surface-container-lowest p-4 rounded-3xl overflow-hidden">
+						className={`relative p-4 rounded-3xl overflow-hidden transition-colors ${
+							isOos
+								? "bg-error/10 ring-1 ring-error/40"
+								: "bg-surface-container-lowest"
+						}`}>
+						{/* OOS banner */}
+						{isOos && (
+							<div className="flex items-center justify-between mb-3">
+								<span className="text-[10px] font-black uppercase tracking-widest text-error">
+									Hết hàng
+								</span>
+								{onRemove && (
+									<button
+										onClick={() =>
+											onRemove(
+												item.product.id,
+												item.variant?.id ?? null,
+											)
+										}
+										className="text-[10px] font-black uppercase tracking-widest text-error underline underline-offset-2 active:opacity-70">
+										Xoá
+									</button>
+								)}
+							</div>
+						)}
 						{/* Product info */}
-						<div className="flex gap-4 items-start">
+						<div className={`flex gap-4 items-start ${isOos ? "opacity-50" : ""}`}>
 							{/* Product thumbnail */}
 							<div className="relative w-16 h-16 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden">
 								{item.product.thumbnail ? (
@@ -120,7 +148,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 								);
 							})()}
 					</div>
-				))}
+				); })}
 			</div>
 		</section>
 	);
