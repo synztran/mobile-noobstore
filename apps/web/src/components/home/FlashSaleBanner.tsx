@@ -57,7 +57,7 @@ export function FlashSaleBanner() {
 							<h5 className="text-xs font-black tracking-widest uppercase leading-tight">
 								{heading}
 							</h5>
-							<p className="text-xs text-outline mt-2 leading-relaxed">
+							<p className="text-xs text-outline text-gray-200 mt-2 leading-relaxed">
 								{body}
 							</p>
 						</div>

@@ -48,7 +48,7 @@ export function CustomerTestimonial() {
 
 	return (
 		<section className="px-6 pb-24">
-			<div className="bg-gradient-to-br from-surface-container-low to-surface-container p-8 rounded-3xl relative overflow-hidden group">
+			<div className="bg-gradient-to-br from-surface-container-low to-surface-container p-6 rounded-3xl relative overflow-hidden group">
 				{/* Animated background */}
 				<div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors" />
 				<div className="absolute -bottom-20 -left-20 w-52 h-52 bg-secondary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-secondary/10 transition-colors" />
@@ -61,7 +61,7 @@ export function CustomerTestimonial() {
 						</p>
 					</div>
 
-					<h3 className="font-black text-2xl uppercase tracking-tight mb-8">
+					<h3 className="font-black text-2xl uppercase tracking-tight mb-6">
 						Những Người Sáng Tạo
 					</h3>
 
@@ -72,7 +72,7 @@ export function CustomerTestimonial() {
 								href={`https://instagram.com/${creator.social_handle.replace("@", "")}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								className={`bg-gradient-to-br ${COLOR_CLASSES[creator.color_theme] || "from-primary/20 to-primary/5"} rounded-2xl p-4 flex flex-col items-center text-center hover:shadow-lg transition-shadow group/card cursor-pointer`}>
+								className={`bg-gradient-to-br ${COLOR_CLASSES[creator.color_theme] || "from-primary/20 to-primary/5"} rounded-2xl px-2 py-4 flex flex-col items-center text-center hover:shadow-lg transition-shadow group/card cursor-pointer`}>
 								<div className="w-14 h-14 rounded-full overflow-hidden mb-3 ring-2 ring-on-surface/10 group-hover/card:ring-primary/30 transition-all">
 									<Image
 										src={creator.image_url}

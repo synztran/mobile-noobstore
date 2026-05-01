@@ -11,6 +11,7 @@ export interface ConfiguratorVariant {
 	price_adjustment: number;
 	thumbnail: string | null;
 	stock_quantity: number;
+  sale_price_percent?: number;
 }
 
 export interface ConfiguratorGroup {

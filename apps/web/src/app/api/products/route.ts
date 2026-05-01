@@ -33,6 +33,16 @@ export interface ITag {
 	bgColor?: string;
 }
 
+/** Config stored in the `pre_order_config` JSONB column. */
+export interface PreOrderConfig {
+	/** Human-readable shipping estimate, e.g. "2–3 tuần" */
+	estimate: string;
+	/** ISO date string for expected stock arrival, e.g. "2026-07-01" */
+	available_date?: string | null;
+	/** Optional note shown to the customer */
+	notes?: string | null;
+}
+
 export interface ShopProduct {
 	id: string;
 	slug: string;
@@ -47,6 +57,8 @@ export interface ShopProduct {
 	variants: ShopVariant[];
 	min_price: number;
 	is_used: boolean;
+	is_pre_order: boolean;
+	pre_order_config: PreOrderConfig | null;
 	tags: ITag[];
 }
 

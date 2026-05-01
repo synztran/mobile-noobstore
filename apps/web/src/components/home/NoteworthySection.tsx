@@ -12,12 +12,13 @@ const CATEGORIES = [
 	{ label: "MỚI NHẤT", slug: "" },
 	{ label: "BÀN PHÍM", slug: "keyboards" },
 	{ label: "SWITCH", slug: "switches" },
-	{ label: "PHỤ KIỆN", slug: "add-ons" },
+	{ label: "PHỤ KIỆN", slug: "accessories" },
+  { label: "GIÀY", slug: "sneakers" }
 ];
 
 function ProductCard({ product }: { product: ShopProduct }) {
 	const isNew = product.tags?.some((t) => t.value === "new");
-	const isSoldOut = product.tags?.some((t) => t.value === "sold_out");
+	const isSoldOut = product.stock_quantity === 0;
 
 	return (
 		<Link

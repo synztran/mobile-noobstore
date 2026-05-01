@@ -87,18 +87,22 @@ export const useCartStore = create<CartStore>()(
 			updateQty: (productId, variantId, delta) => {
 				set((state) => ({
 					items: state.items
-						.map((i) =>
-							i.product.id === productId &&
-							(i.variant?.id ?? null) === variantId
-								? {
-										...i,
-										quantity: Math.max(
-											0,
-											i.quantity + delta,
-										),
-									}
-								: i,
-						)
+						.map((i) => {
+							if (
+								i.product.id === productId &&
+								(i.variant?.id ?? null) === variantId
+							) {
+								const newQty =
+									delta > 0
+										? Math.min(
+												i.quantity + delta,
+												i.product.stock_quantity,
+											)
+										: Math.max(0, i.quantity + delta);
+								return { ...i, quantity: newQty };
+							}
+							return i;
+						})
 						.filter((i) => i.quantity > 0),
 				}));
 			},

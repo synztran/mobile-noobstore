@@ -29,14 +29,28 @@ function formatFilterPills(filters: FilterState): string[] {
 	return pills;
 }
 
+// ─── Skeleton for controls while loading ─────────────────────────────────────
+function ResultSkeleton() {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="h-[16px] w-24 bg-surface-container rounded-md" />
+      <div className="h-[32px] w-32 bg-surface-container rounded-md" />
+    </div>
+  );
+}
+
 // ─── Controls ─────────────────────────────────────────────────────────────────
 
 export function ShopControls({
 	total,
 	categories = [],
+	startTransition: externalStartTransition,
+  isLoading = false,
 }: {
 	total: number;
 	categories?: CategoryItem[];
+	startTransition?: (fn: () => void) => void;
+  isLoading?: boolean;
 }) {
 	const router = useRouter();
 	const sp = useSearchParams();
@@ -55,21 +69,31 @@ export function ShopControls({
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const isFirstRender = useRef(true);
 
+	const navigate = (fn: () => void) => {
+		if (externalStartTransition) {
+			externalStartTransition(fn);
+		} else {
+			fn();
+		}
+	};
+
 	// Push all state to URL — server re-renders with new data
 	const pushParams = (
 		newSearch: string,
 		newSort: SortOption,
 		newFilters: FilterState,
 	) => {
-		const params = new URLSearchParams();
-		if (newSearch) params.set("search", newSearch);
-		if (newSort !== "newest") params.set("sort", newSort);
-		if (newFilters.category) params.set("category", newFilters.category);
-		if (newFilters.priceMin > 0)
-			params.set("priceMin", String(newFilters.priceMin));
-		if (newFilters.priceMax > 0)
-			params.set("priceMax", String(newFilters.priceMax));
-		router.push(`/shop?${params.toString()}`);
+		navigate(() => {
+			const params = new URLSearchParams();
+			if (newSearch) params.set("search", newSearch);
+			if (newSort !== "newest") params.set("sort", newSort);
+			if (newFilters.category) params.set("category", newFilters.category);
+			if (newFilters.priceMin > 0)
+				params.set("priceMin", String(newFilters.priceMin));
+			if (newFilters.priceMax > 0)
+				params.set("priceMax", String(newFilters.priceMax));
+			router.push(`/shop?${params.toString()}`);
+		});
 	};
 
 	// Debounced search
@@ -134,25 +158,29 @@ export function ShopControls({
 					onChange={(e) => setSearch(e.target.value)}
 					className="flex-1 bg-transparent text-on-surface placeholder:text-outline font-medium outline-none"
 				/>
-				{search && (
+				{/* {search && (
 					<button
 						onClick={() => setSearch("")}
 						className="text-outline">
 						<Icon name="close" className="text-sm" />
 					</button>
-				)}
+				)} */}
 			</div>
 
 			{/* Header row */}
 			<div className="flex justify-between items-center mb-4">
-				<div>
-					<p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">
-						Bộ sưu tập
-					</p>
-					<h2 className="text-2xl font-black tracking-tighter">
-						{total} kết quả
-					</h2>
-				</div>
+        {
+          isLoading ? <ResultSkeleton /> : (
+            <div>
+              <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">
+                Bộ sưu tập
+              </p>
+              <h2 className="text-2xl font-black tracking-tighter">
+                {total} kết quả
+              </h2>
+            </div>
+          )
+        }
 				<div className="flex gap-2">
 					<button
 						onClick={() => setShowFilter(true)}

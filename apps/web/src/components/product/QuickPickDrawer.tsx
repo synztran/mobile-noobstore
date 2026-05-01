@@ -24,6 +24,63 @@ import clsx from "clsx";
 import Image from "next/image";
 import { useEffect, useMemo, useReducer } from "react";
 
+// ─── Add to Cart Button ─────────────────────────────────────────────────────
+
+type AddToCartButtonProps = {
+	isSubmitting: boolean;
+	isFetchingVariants: boolean;
+	canAdd: boolean;
+	hasComponents: boolean;
+	isInvalidPrice: boolean;
+	onClick: () => void;
+};
+
+function AddToCartButton({
+	isSubmitting,
+	isFetchingVariants,
+	canAdd,
+	hasComponents,
+	isInvalidPrice,
+	onClick,
+}: AddToCartButtonProps) {
+	const isLoading = isSubmitting || isFetchingVariants;
+	const isDisabled = isLoading || isInvalidPrice || (!canAdd && hasComponents);
+	const isActive = !isDisabled;
+
+	function renderLabel() {
+		if (isLoading) {
+			return <span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />;
+		}
+		if (isInvalidPrice) {
+			return "Chưa có giá";
+		}
+		if (!canAdd && hasComponents) {
+			return "Vui lòng chọn";
+		}
+		return (
+			<>
+				<Icon name="add_shopping_cart" className="text-xl" />
+				THÊM VÀO GIỎ
+			</>
+		);
+	}
+
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			disabled={isDisabled}
+			className={clsx(
+				"flex-1 h-14 text-white rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-all",
+				isActive
+					? "bg-gradient-to-r from-primary to-primary-container"
+					: "bg-outline/30 cursor-not-allowed",
+			)}>
+			{renderLabel()}
+		</button>
+	);
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 type QuickPickDrawerProps = {
@@ -49,7 +106,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 		: (props.product ?? null);
 
 	const [state, dispatch] = useReducer(reduce, INITIAL_STATE);
-	const { addItem, openCart } = useCartStore();
+	const { addItem, openCart, items: cartItems } = useCartStore();
 
 	type QuickPickResponse = {
 		products: ShopProduct[];
@@ -99,9 +156,12 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				quickPickQuery.data.configuratorByProductId ?? {},
 			activeProduct: isCategoryMode
 				? null
-				: (quickPickQuery.data.activeProduct ?? propProduct ?? null),
+				: (quickPickQuery.data.activeProduct?.id
+						? quickPickQuery.data.activeProduct
+						: propProduct) ?? null,
 			view,
 		});
+
 	}, [isOpen, quickPickQuery.data, isCategoryMode, propProduct, view]);
 
 	useEffect(() => {
@@ -180,11 +240,32 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 	const isFetchingVariants =
 		quickPickQuery.isFetching || state.loadingConfigurator;
 
+	const isInvalidPrice = totalPrice <= 0;
+
 	// ── Add to cart ───────────────────────────────────────────────────────
 	const handleAdd = async () => {
-		if (!activeProduct || !canAdd) {
-			if (!canAdd)
-				toast.error(`Vui lòng chọn: ${missingRequired.join(", ")}`);
+		if (isInvalidPrice) {
+			toast.error(
+				"Sản phẩm chưa được cập nhật giá, vui lòng liên hệ shop",
+			);
+			return;
+		}
+		if (!activeProduct) return;
+		if (!canAdd) {
+			toast.error(`Vui lòng chọn: ${missingRequired.join(", ")}`);
+			return;
+		}
+
+		const existingCartItem = cartItems.find(
+			(i) =>
+				i.product.id === activeProduct.id &&
+				(i.variant?.id ?? null) === null,
+		);
+		const currentQty = existingCartItem?.quantity ?? 0;
+		if (currentQty + 1 > activeProduct.stock_quantity) {
+			toast.warning(
+				`Chỉ còn ${activeProduct.stock_quantity} sản phẩm trong kho`,
+			);
 			return;
 		}
 
@@ -345,6 +426,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				variants={activeProduct?.variants ?? []}
 				selections={state.selections}
 				loadingConfigurator={state.loadingConfigurator}
+				basePrice={activeProduct?.base_price}
 				onSelect={(group, variantId) =>
 					dispatch({ type: "SELECT", group, variantId })
 				}
@@ -382,7 +464,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				</div>
 
 				{/* Header */}
-				<div className="flex-shrink-0 px-6 pt-2 pb-3">
+				<div className="flex-shrink-0 px-4 pt-2 pb-3">
 					<div className="flex items-center justify-between gap-3">
 						{/* Back button (category mode → configurator view) */}
 						{isCategoryMode && state.view === "configurator" && (
@@ -417,7 +499,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				</div>
 
 				{/* Scrollable body */}
-				<div className="overflow-y-auto flex-1 px-6 pb-4 hide-scrollbar">
+				<div className="overflow-y-auto flex-1 px-4 pb-4 hide-scrollbar">
 					{isCategoryMode && state.view === "product-list"
 						? renderProductList()
 						: renderConfigurator()}
@@ -425,41 +507,23 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 
 				{/* Sticky footer (only in configurator view) */}
 				{state.view === "configurator" && (
-					<div className="flex-shrink-0 px-6 pb-8 pt-4 border-t border-outline-variant/20 flex items-center gap-8">
+					<div className="flex-shrink-0 px-4 pb-8 pt-4 border-t border-outline-variant/20 flex items-center gap-8">
 						<div>
 							<p className="text-base text-on-surface-variant font-semibold">
-								Tổng
+								Tạm tính
 							</p>
 							<p className="text-xl font-black text-primary">
 								{formatVND(totalPrice)}
 							</p>
 						</div>
-						<button
-							type="button"
+						<AddToCartButton
+							isSubmitting={isSubmitting}
+							isFetchingVariants={isFetchingVariants}
+							canAdd={canAdd}
+							hasComponents={hasComponents}
+							isInvalidPrice={isInvalidPrice}
 							onClick={handleAdd}
-							disabled={
-								isSubmitting ||
-								isFetchingVariants ||
-								(!canAdd && hasComponents)
-							}
-							className={clsx(
-								"flex-1 h-14 text-white rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-all",
-								canAdd && !isSubmitting && !isFetchingVariants
-									? "bg-gradient-to-r from-primary to-primary-container"
-									: "bg-outline/30 cursor-not-allowed",
-							)}>
-							{isSubmitting || isFetchingVariants ? (
-								<span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
-							) : (
-								<>
-									<Icon
-										name="add_shopping_cart"
-										className="text-xl"
-									/>
-									THÊM VÀO GIỎ
-								</>
-							)}
-						</button>
+						/>
 					</div>
 				)}
 			</div>

@@ -5,7 +5,7 @@
 
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
-import type { ShopProduct } from "@/app/api/products/route";
+import type { PreOrderConfig, ShopProduct } from "@/app/api/products/route";
 import { getProductListByFilters } from "@/lib/product-query-service";
 import { getPublicClient } from "@/lib/supabase/public";
 
@@ -61,6 +61,8 @@ type RawListRow = {
 	is_used: boolean;
 	categories: { id: string; name: string } | null;
 	product_variants: RawVariantRow[] | null;
+  is_pre_order: boolean;
+  pre_order_config: PreOrderConfig;
 };
 
 // ─── Shared shaping logic ─────────────────────────────────────────────────────
@@ -136,6 +138,8 @@ function shapeRow(p: RawListRow): ShopProduct {
 		min_price: minPrice,
 		is_used: p.is_used ?? false,
 		tags,
+    is_pre_order: p.is_pre_order ?? false, // not included in this query — default to false
+    pre_order_config: p.pre_order_config,
 	};
 }
 
@@ -276,7 +280,9 @@ export async function getQuickPickData(
 						`id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used,
 					 categories(id, name),
 					 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
-					);
+					)
+					.eq("id", productId)
+					.single();
 
 				if (!error && data) {
 					activeProduct = shapeRow(data as unknown as RawListRow);
@@ -343,12 +349,19 @@ export async function getQuickPickData(
 
 					const group = groups.get(row.component_group)!;
 					for (const v of row.products?.product_variants ?? []) {
+            const sale_price_percent = Number(v.price_adjustment) < 0
+              ? Math.round(
+                  (1 - (Number(v.price_adjustment) + Number(activeProduct?.base_price ?? 0)) / Number(activeProduct?.base_price ?? 1)) * 100,
+                )
+              : undefined;
+            console.log("sale_price_percent", sale_price_percent)
 						group.variants.push({
 							id: v.id,
 							variant_name: v.variant_name,
 							price_adjustment: Number(v.price_adjustment),
 							thumbnail: v.thumbnail ?? null,
 							stock_quantity: Number(v.stock_quantity ?? 0),
+              sale_price_percent,
 						});
 					}
 				}
@@ -359,6 +372,36 @@ export async function getQuickPickData(
 					);
 				}
 			}
+		}
+
+		// ── Recompute kit stock from component variant data ─────────────
+		// shapeRow falls back to products.stock_quantity for kits with no
+		// direct product_variants, which may be stale/wrong. Recompute
+		// using the same logic as getProductListByFilters/computeKitStockById.
+		for (const product of products) {
+			if (product.product_type !== "kit") continue;
+			const groups = configuratorByProductId[product.id];
+			if (!groups || groups.length === 0) continue;
+
+			const requiredGroups = groups.filter((g) => g.is_required);
+			if (requiredGroups.length === 0) continue;
+
+			const groupStocks = requiredGroups.map((g) =>
+				g.variants.reduce((sum, v) => sum + v.stock_quantity, 0),
+			);
+			product.stock_quantity = Math.min(...groupStocks);
+
+			// Keep sold_out tag in sync
+			product.tags = product.tags.filter((t) => t.value !== "sold_out");
+			if (product.stock_quantity === 0) {
+				product.tags.unshift({ id: 1, label: "Hết hàng", value: "sold_out" });
+			}
+		}
+
+		// Sync activeProduct reference after stock recomputation
+		if (activeProduct) {
+			const refreshed = products.find((p) => p.id === activeProduct!.id);
+			if (refreshed) activeProduct = refreshed;
 		}
 
 		return {

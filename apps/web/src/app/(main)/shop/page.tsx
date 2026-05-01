@@ -3,7 +3,7 @@ import {
 	ProductCard,
 	ProductCardSkeleton,
 } from "@/components/product/ProductCard";
-import { ShopControls } from "@/components/shop/ShopControls";
+import { ShopPageClient } from "@/components/shop/ShopPageClient";
 import Icon from "@/components/ui/Icon";
 import { getCategories, getProducts } from "@/lib/products-server";
 import { Suspense } from "react";
@@ -80,19 +80,25 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 		getCategories(),
 	]);
 
+	const grid = (
+		<Suspense fallback={<ShopPageSkeleton />}>
+			<ProductGrid
+				search={sp.search}
+				categorySlug={sp.category}
+				priceMin={sp.priceMin ? Number(sp.priceMin) : 0}
+				priceMax={sp.priceMax ? Number(sp.priceMax) : 0}
+				sort={(sp.sort as SortOption) ?? "newest"}
+			/>
+		</Suspense>
+	);
+
 	return (
 		<div className="px-4 py-4">
 			<Suspense fallback={null}>
-				<ShopControls total={total} categories={categories} />
-			</Suspense>
-
-			<Suspense fallback={<ShopPageSkeleton />}>
-				<ProductGrid
-					search={sp.search}
-					categorySlug={sp.category}
-					priceMin={sp.priceMin ? Number(sp.priceMin) : 0}
-					priceMax={sp.priceMax ? Number(sp.priceMax) : 0}
-					sort={(sp.sort as SortOption) ?? "newest"}
+				<ShopPageClient
+					total={total}
+					categories={categories}
+					grid={grid}
 				/>
 			</Suspense>
 		</div>

@@ -81,15 +81,15 @@ const MAX_LIMIT = 100;
 function getTags(product: ProductListItem): ProductTag[] {
 	const tags: ProductTag[] = [];
 
-	if (product.stock_quantity === 0) {
-		tags.push({
-			label: "Hết hàng",
-			id: 1,
-			value: "sold_out",
-			textColor: "text-white",
-			bgColor: "bg-red-400",
-		});
-	}
+	// if (product.stock_quantity === 0) {
+	// 	tags.push({
+	// 		label: "Hết hàng",
+	// 		id: 1,
+	// 		value: "sold_out",
+	// 		textColor: "text-white",
+	// 		bgColor: "bg-red-400",
+	// 	});
+	// }
 
 	if (product.is_used) {
 		tags.push({

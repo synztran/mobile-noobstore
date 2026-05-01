@@ -5,6 +5,7 @@ import type { ShopVariant } from "@/app/api/products/route";
 import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
+import { group } from "console";
 import Image from "next/image";
 
 // ─── Thumbnail ────────────────────────────────────────────────────────────────
@@ -26,7 +27,7 @@ export function Thumbnail({
 					src={src}
 					alt={alt}
 					fill
-					className="object-cover mix-blend-darken"
+					className="object-contain mix-blend-darken"
 					unoptimized
 				/>
 			) : (
@@ -48,6 +49,7 @@ export type ProductConfiguratorProps = {
 	variants: ShopVariant[];
 	selections: Record<string, string>;
 	loadingConfigurator: boolean;
+	basePrice?: number;
 	onSelect: (group: string, variantId: string) => void;
 	isHideComppGroup?: boolean;
 };
@@ -59,8 +61,10 @@ export function ProductConfigurator({
 	variants,
 	selections,
 	loadingConfigurator,
+	basePrice,
 	onSelect,
 }: ProductConfiguratorProps) {
+  console.log("group", groups)
 	const hasComponents = groups.length > 0;
 
 	if (loadingConfigurator) {
@@ -94,7 +98,7 @@ export function ProductConfigurator({
 							{group.component_group}
 						</p>
 						{group.is_required && (
-							<span className="text-[10px] font-black text-error bg-error/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
+							<span className="text-[8px] font-black text-error bg-error/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
 								Bắt buộc
 							</span>
 						)}
@@ -113,7 +117,7 @@ export function ProductConfigurator({
 										onSelect(group.component_group, v.id)
 									}
 									className={clsx(
-										"flex items-center gap-2 py-2 px-3 rounded-xl text-sm font-bold transition-all border",
+										"relative flex items-center gap-2 py-2 px-3 rounded-xl text-sm font-bold transition-all border",
 										soldOut
 											? "opacity-40 cursor-not-allowed bg-surface-container border-transparent"
 											: selected
@@ -127,8 +131,8 @@ export function ProductConfigurator({
 											className="w-12 h-12 rounded-lg"
 										/>
 									)}
-									<div className="text-left">
-										<p className="font-black text-sm leading-none">
+									<div className="text-left max-w-20">
+										<p className="font-black text-xs leading-none line-clamp-2">
 											{v.variant_name}
 										</p>
 										{soldOut ? (
@@ -139,14 +143,16 @@ export function ProductConfigurator({
 											<p
 												className={clsx(
 													"text-xs mt-0.5 text-red-400",
-													// selected
-													// 	? "opacity-80"
-													// 	: "opacity-60",
 												)}>
-												+{formatVND(v.price_adjustment)}
+												{formatVND(v.price_adjustment)}
 											</p>
 										) : null}
 									</div>
+                  {v.sale_price_percent ? (
+                    <strong className="absolute -top-2 right-1 text-[10px] rounded-md bg-red-600 text-white px-2 py-0.25">
+                      Giảm {v.sale_price_percent}%
+                    </strong>
+                  ) : null}
 								</button>
 							);
 						})}

@@ -224,6 +224,7 @@ export function ProductView({
 									variants={variants}
 									selections={selections}
 									loadingConfigurator={loadingConfigurator}
+									basePrice={product.base_price}
 									onSelect={select}
 									isHideComppGroup
 								/>

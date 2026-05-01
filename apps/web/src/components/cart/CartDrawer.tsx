@@ -5,6 +5,7 @@ import { useIsMounted } from "@/hooks/useIsMounted";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { formatVND } from "@/lib/currency";
 import type { CartItem } from "@/lib/data";
+import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
 import { Trash } from "lucide-react";
 import Image from "next/image";
@@ -56,6 +57,16 @@ export function CartDrawer() {
 		} else {
 			updateQty(item.product.id, item.variant?.id ?? null, -1);
 		}
+	};
+
+	const handlePlus = (item: CartItem) => {
+		if (item.quantity >= item.product.stock_quantity) {
+			toast.warning(
+				`Chỉ còn ${item.product.stock_quantity} sản phẩm trong kho`,
+			);
+			return;
+		}
+		updateQty(item.product.id, item.variant?.id ?? null, 1);
 	};
 
 	usePreventScroll(drawerOpen);
@@ -177,14 +188,7 @@ export function CartDrawer() {
 												{item.quantity}
 											</span>
 											<button
-												onClick={() =>
-													updateQty(
-														item.product.id,
-														item.variant?.id ??
-															null,
-														1,
-													)
-												}
+												onClick={() => handlePlus(item)}
 												className="text-on-surface font-bold text-base leading-none active:scale-90 transition-transform">
 												+
 											</button>
@@ -280,12 +284,12 @@ export function CartDrawer() {
 					<div className="modal-action flex gap-3">
 						<button
 							onClick={cancelRemove}
-							className="btn bg-surface-container text-on-surface border-outline-variant hover:bg-surface-container-high rounded-full normal-case font-bold">
+							className="btn bg-surface-container text-on-surface border-outline-variant hover:bg-surface-container-high rounded-full normal-case font-bold min-w-32">
 							Hủy
 						</button>
 						<button
 							onClick={confirmRemove}
-							className="btn bg-error text-white border-0 hover:bg-error/90 rounded-full normal-case font-bold">
+							className="btn bg-error text-white border-0 hover:bg-error/90 rounded-full normal-case font-bold min-w-32">
 							Xóa
 						</button>
 					</div>
