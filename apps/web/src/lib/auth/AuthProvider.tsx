@@ -1,8 +1,10 @@
 "use client";
 
-import type { User as AppUser } from "@/lib/supabase/database.types";
 import { createBrowserClient } from "@supabase/ssr";
 import type { Session, User } from "@supabase/supabase-js";
+import type { Tables } from "@/lib/supabase/database.types";
+
+type AppUser = Tables<"users">;
 import {
 	createContext,
 	useCallback,

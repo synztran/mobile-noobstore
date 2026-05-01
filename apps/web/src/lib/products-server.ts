@@ -354,7 +354,6 @@ export async function getQuickPickData(
                   (1 - (Number(v.price_adjustment) + Number(activeProduct?.base_price ?? 0)) / Number(activeProduct?.base_price ?? 1)) * 100,
                 )
               : undefined;
-            console.log("sale_price_percent", sale_price_percent)
 						group.variants.push({
 							id: v.id,
 							variant_name: v.variant_name,

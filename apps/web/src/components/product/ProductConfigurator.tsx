@@ -64,7 +64,6 @@ export function ProductConfigurator({
 	basePrice,
 	onSelect,
 }: ProductConfiguratorProps) {
-  console.log("group", groups)
 	const hasComponents = groups.length > 0;
 
 	if (loadingConfigurator) {
@@ -91,7 +90,7 @@ export function ProductConfigurator({
 		<div className="flex flex-wrap gap-4 overflow-y-auto">
 			{/* Component group selectors */}
 			{groups.map((group) => (
-				<div key={group.component_group} className={`space-y-2`}>
+				<div key={group.component_group} className={`space-y-3`}>
 					<div className="flex items-center gap-2">
 						<p
 							className={`text-xs font-black uppercase tracking-widest text-on-surface-variant`}>

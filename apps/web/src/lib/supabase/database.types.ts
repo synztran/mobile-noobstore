@@ -391,7 +391,7 @@ export type Database = {
           id: string
           order_number: string
           shipping_fee: number | null
-          status: string | null
+          status: string
           total_price: number
           updated_at: string | null
           user_id: string | null
@@ -401,7 +401,7 @@ export type Database = {
           id: string
           order_number: string
           shipping_fee?: number | null
-          status?: string | null
+          status?: string
           total_price: number
           updated_at?: string | null
           user_id?: string | null
@@ -411,7 +411,7 @@ export type Database = {
           id?: string
           order_number?: string
           shipping_fee?: number | null
-          status?: string | null
+          status?: string
           total_price?: number
           updated_at?: string | null
           user_id?: string | null
@@ -543,8 +543,8 @@ export type Database = {
           description: string | null
           id: string
           images: Json | null
-          is_pre_order: boolean
-          is_used: boolean
+          is_pre_order: boolean | null
+          is_used: boolean | null
           name: string
           pre_order_config: Json | null
           product_type: string
@@ -558,8 +558,8 @@ export type Database = {
           description?: string | null
           id?: string
           images?: Json | null
-          is_pre_order?: boolean
-          is_used?: boolean
+          is_pre_order?: boolean | null
+          is_used?: boolean | null
           name: string
           pre_order_config?: Json | null
           product_type?: string
@@ -573,8 +573,8 @@ export type Database = {
           description?: string | null
           id?: string
           images?: Json | null
-          is_pre_order?: boolean
-          is_used?: boolean
+          is_pre_order?: boolean | null
+          is_used?: boolean | null
           name?: string
           pre_order_config?: Json | null
           product_type?: string
