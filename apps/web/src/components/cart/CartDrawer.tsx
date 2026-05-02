@@ -9,7 +9,7 @@ import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
 import { Trash } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 function itemUnitPrice(item: CartItem) {
@@ -20,6 +20,7 @@ function itemUnitPrice(item: CartItem) {
 }
 
 export function CartDrawer() {
+	const router = useRouter();
 	const mounted = useIsMounted();
 	const { items, isOpen, closeCart, updateQty, removeItem, total } =
 		useCartStore();
@@ -31,6 +32,7 @@ export function CartDrawer() {
 		productId: string;
 		variantId: string | null;
 	} | null>(null);
+	const [checkingOut, setCheckingOut] = useState(false);
 	const confirmDialogRef = useRef<HTMLDialogElement>(null);
 
 	const handleRemoveClick = (productId: string, variantId: string | null) => {
@@ -67,6 +69,14 @@ export function CartDrawer() {
 			return;
 		}
 		updateQty(item.product.id, item.variant?.id ?? null, 1);
+	};
+
+	const handleCheckout = async () => {
+		if (checkingOut) return;
+		setCheckingOut(true);
+		await router.push("/checkout/shipping");
+		closeCart();
+		setCheckingOut(false);
 	};
 
 	usePreventScroll(drawerOpen);
@@ -257,12 +267,16 @@ export function CartDrawer() {
 							</div>
 						</div>
 
-						<Link
-							href="/checkout/shipping"
-							onClick={closeCart}
-							className="btn w-full primary-gradient text-white border-0 rounded-full font-bold tracking-widest uppercase py-4 h-auto text-base shadow-ambient-sm active:scale-[0.98] transition-transform">
-							THANH TOÁN →
-						</Link>
+						<button
+							onClick={handleCheckout}
+							disabled={checkingOut}
+							className="btn w-full primary-gradient text-white border-0 rounded-full font-bold tracking-widest uppercase py-4 h-auto text-base shadow-ambient-sm active:scale-[0.98] transition-transform disabled:opacity-70 disabled:scale-100">
+							{checkingOut ? (
+								<span className="loading loading-spinner loading-sm" />
+							) : (
+								"THANH TOÁN →"
+							)}
+						</button>
 						<p className="text-center text-xs text-on-surface-variant mt-3 font-semibold uppercase tracking-widest">
 							Thanh toán bảo mật & mã hóa
 						</p>

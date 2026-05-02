@@ -30,8 +30,6 @@ export default function SummaryPage() {
 	const subtotal = mounted ? getSubtotal() : 0;
 	const orderTotal = subtotal + shippingCost;
 
-  console.log("items",items, oosProductIds)
-
 	if (!mounted) {
 		return (
 			<div className="animate-pulse space-y-6">

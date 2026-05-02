@@ -1,6 +1,7 @@
 "use client";
 
 import Icon from "@/components/ui/Icon";
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore, useCheckoutStore } from "@/store";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,6 +12,7 @@ export default function CheckoutLayout({
 	children: React.ReactNode;
 }) {
 	const pathname = usePathname();
+	const mounted = useIsMounted();
 	const cartId = useCartStore((s) => s.cartId);
 	const orderId = useCheckoutStore((s) => s.orderId);
 
@@ -63,40 +65,46 @@ export default function CheckoutLayout({
 
 				{/* DaisyUI Steps bar */}
 				<div className="glass-nav border-t border-outline-variant/10 px-4 py-2">
-					<ul className="steps steps-horizontal w-full">
-						{steps.map(({ href, label, step, icon }) => {
-							const idx = step - 1;
-							const isPast = idx < currentStep;
-							const isActive = idx === currentStep;
-							const canNavigate = isPast && currentStep !== 3;
+					{!mounted ? (
+						<div className="flex justify-around w-full py-1 animate-pulse">
+							{[1, 2, 3].map((i) => (
+								<div key={i} className="h-4 w-16 bg-surface-container rounded-full" />
+							))}
+						</div>
+					) : (
+						<ul className="steps steps-horizontal w-full">
+							{steps.map(({ href, label, step }) => {
+								const idx = step - 1;
+								const isPast = idx < currentStep;
+								const isActive = idx === currentStep;
+								const canNavigate = isPast && currentStep !== 3;
 
-							return (
-								<li
-									key={href}
-									data-content={isPast ? "✓" : String(step)}
-									className={[
-										"step text-[10px] font-bold uppercase tracking-widest",
-										isPast || isActive
-											? "step-primary"
-											: "",
-									]
-										.filter(Boolean)
-										.join(" ")}>
-									{canNavigate ? (
-										<Link
-											href={href}
-											className="flex flex-col items-center gap-0.5">
-											{label}
-										</Link>
-									) : (
-										<span className="flex flex-col items-center gap-0.5">
-											{label}
-										</span>
-									)}
-								</li>
-							);
-						})}
-					</ul>
+								return (
+									<li
+										key={href}
+										data-content={isPast ? "✓" : String(step)}
+										className={[
+											"step text-[10px] font-bold uppercase tracking-widest",
+											isPast || isActive ? "step-primary" : "",
+										]
+											.filter(Boolean)
+											.join(" ")}>
+										{canNavigate ? (
+											<Link
+												href={href}
+												className="flex flex-col items-center gap-0.5">
+												{label}
+											</Link>
+										) : (
+											<span className="flex flex-col items-center gap-0.5">
+												{label}
+											</span>
+										)}
+									</li>
+								);
+							})}
+						</ul>
+					)}
 				</div>
 			</nav>
 

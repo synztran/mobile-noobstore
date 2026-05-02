@@ -1,13 +1,32 @@
 "use client";
 
-import CheckingPageContent from "@/app/(main)/checkout/checking/page";
-import { use } from "react";
+import CheckingPageContent from "@/components/checkout/CheckingPageContent";
+import { toast } from "@/lib/toast";
+import { useCheckoutStore } from "@/store";
+import { useRouter } from "next/navigation";
+import { use, useEffect } from "react";
 
 export default function CheckingWithOrderId({
 	params,
 }: {
 	params: Promise<{ order_id: string }>;
 }) {
-	void use(params).order_id;
+	const { order_id } = use(params);
+	const router = useRouter();
+	const orderNumber = useCheckoutStore((s) => s.orderNumber);
+
+	useEffect(() => {
+		if (!order_id && !orderNumber) {
+			toast.error("Không tìm thấy đơn hàng. Vui lòng thử lại.");
+			router.replace("/shop");
+		}
+	}, [order_id, orderNumber, router]);
+
+  console.log(order_id, orderNumber)
+
+	if (!order_id && !orderNumber) {
+		return null;
+	}
+
 	return <CheckingPageContent />;
 }

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -115,6 +116,22 @@ export async function POST(req: NextRequest) {
 				await supabase.from("order_services").insert(orderServices);
 			}
 		}
+
+		// Fire-and-forget Telegram notification — must not block the response
+		const customerName =
+			user?.user_metadata?.full_name ??
+			user?.email ??
+			"Khách";
+		const itemCount = body.items.reduce((sum, i) => sum + i.quantity, 0);
+		notifyNewOrder(
+			result.order_number,
+			customerName,
+			body.total_price,
+			undefined,
+			itemCount,
+		).catch(() => {
+			// Notification failure must never break the order flow
+		});
 
 		return NextResponse.json({
 			order_id: result.order_id,

@@ -10,6 +10,7 @@ import { useCheckoutStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 
 type BankInfoRow = {
 	id: string;
@@ -26,9 +27,18 @@ function copyToClipboard(value: string, label: string) {
 
 export default function CheckingPage() {
 	const mounted = useIsMounted();
+	const router = useRouter();
 
 	const { orderNumber, totalPrice, orderedItems, shippingCost } =
 		useCheckoutStore();
+
+	// Guard: redirect to shop if there is no active order
+	useEffect(() => {
+		if (mounted && !orderNumber) {
+			toast.error("Không tìm thấy đơn hàng. Vui lòng thử lại.");
+			router.replace("/shop");
+		}
+	}, [mounted, orderNumber, router]);
 
 	const orderStatusQuery = useQuery({
 		queryKey: ["order-status", orderNumber],
@@ -41,7 +51,13 @@ export default function CheckingPage() {
 			const data = await res.json();
 			return (data.status as string) ?? "pending";
 		},
-		refetchInterval: 5000,
+		// Stop polling once the order reaches a terminal status
+		refetchInterval: (query) => {
+			const status = query.state.data;
+			const terminal = ["confirmed", "cancelled", "failed", "completed"];
+			if (status && terminal.includes(status)) return false;
+			return 5000;
+		},
 	});
 
 	const paymentMethodsQuery = useQuery({

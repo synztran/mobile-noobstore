@@ -3,6 +3,7 @@
 import Icon from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { toast } from "@/lib/toast";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -49,11 +50,8 @@ function LoginForm() {
 		<div className="flex-1 flex flex-col px-8 pt-20 pb-12">
 			{/* Logo */}
 			<div className="flex flex-col items-center mb-12">
-				<div className="flex items-center gap-2 mb-2">
-					<Icon
-						name="sprint"
-						className="text-5xl text-on-surface icon-filled"
-					/>
+				<div className="w-48 h-32 relative flex items-center gap-2 mb-2 ">
+					<Image src="/logo/noob-store.png" alt="NoobStore Logo" objectFit="contain" fill className="rounded-xl" />
 				</div>
 				<h1 className="text-2xl font-black tracking-tighter text-on-surface font-sans">
 					NoobStore
