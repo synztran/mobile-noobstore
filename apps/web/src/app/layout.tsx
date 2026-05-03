@@ -1,10 +1,11 @@
 import { ReactQueryProvider } from "@/components/ui/ReactQueryProvider";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { MobileViewportGuard } from "@/components/warning-modal/MobileViewportGuard";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
+import "gooey-toast/styles.css";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import "gooey-toast/styles.css";
 
 export const metadata: Metadata = {
 	title: "NoobStore",
@@ -44,6 +45,7 @@ export default function RootLayout({
 				<AuthProvider>
 					<ReactQueryProvider>
 						{children}
+						<MobileViewportGuard />
 						<ToastProvider />
 						<StoreHydrator />
 					</ReactQueryProvider>
