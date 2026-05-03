@@ -92,7 +92,20 @@ export function reduce(state: DrawerState, action: DrawerAction): DrawerState {
 				groups: [],
 				selections: {},
 			};
-		case "SELECT":
+		case "SELECT": {
+			const isAlreadySelected =
+				state.selections[action.group] === action.variantId;
+			const group = state.groups.find(
+				(g) => g.component_group === action.group,
+			);
+			const isRequired = group?.is_required ?? true;
+
+			if (isAlreadySelected && !isRequired) {
+				const next = { ...state.selections };
+				delete next[action.group];
+				return { ...state, selections: next };
+			}
+
 			return {
 				...state,
 				selections: {
@@ -100,6 +113,7 @@ export function reduce(state: DrawerState, action: DrawerAction): DrawerState {
 					[action.group]: action.variantId,
 				},
 			};
+		}
 		case "SUBMIT_START":
 			return { ...state, submitting: true };
 		case "SUBMIT_DONE":

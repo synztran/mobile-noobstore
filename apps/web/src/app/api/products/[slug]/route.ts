@@ -12,6 +12,8 @@ export interface ShopVariantDetail {
 	effective_price: number;
 	thumbnail: string | null;
 	stock_quantity: number;
+	is_pre_order: boolean;
+	pre_order_config: { estimate: string; available_date?: string | null; notes?: string | null } | null;
 }
 
 export interface ComponentProductDetail {
@@ -48,6 +50,8 @@ export interface ProductDetail {
 	components: ProductComponentDetail[];
 	min_price: number;
 	is_used: boolean;
+	/** True when at least one variant is pre-order */
+	is_pre_order: boolean;
 }
 
 // ─── GET /api/products/[slug] ─────────────────────────────────────────────────
@@ -82,7 +86,7 @@ export async function GET(
 				product_type,
 				is_used,
 				categories(id, name),
-				product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity),
+				product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config),
 				product_components!product_components_parent_product_id_fkey(
 					id,
 					component_group,
@@ -118,6 +122,8 @@ export async function GET(
 					Number(p.base_price) + Number(v.price_adjustment),
 				thumbnail: v.thumbnail ?? null,
 				stock_quantity: Number(v.stock_quantity ?? 0),
+				is_pre_order: v.is_pre_order ?? false,
+				pre_order_config: v.pre_order_config ?? null,
 			}),
 		);
 
@@ -206,6 +212,7 @@ export async function GET(
 			components,
 			min_price: minPrice,
 			is_used: p.is_used ?? false,
+			is_pre_order: variants.some((v) => v.is_pre_order),
 		};
 
 		return NextResponse.json(result);

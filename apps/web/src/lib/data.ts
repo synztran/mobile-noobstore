@@ -15,6 +15,7 @@ export interface ProductVariant {
 	price_adjustment: number;
 	effective_price: number;
 	thumbnail?: string | null;
+	is_pre_order?: boolean;
 }
 
 /**
@@ -30,6 +31,7 @@ export interface SelectedComponent {
 	component_group: string;
 	price_adjustment: number;
 	thumbnail: string | null;
+  is_pre_order?: boolean;
 }
 
 export interface CartItem {

@@ -22,6 +22,8 @@ export interface ShopVariant {
 	effective_price: number;
 	thumbnail: string | null;
 	stock_quantity: number;
+	is_pre_order: boolean;
+	pre_order_config: PreOrderConfig | null;
 }
 
 export interface ITag {
@@ -58,7 +60,6 @@ export interface ShopProduct {
 	min_price: number;
 	is_used: boolean;
 	is_pre_order: boolean;
-	pre_order_config: PreOrderConfig | null;
 	tags: ITag[];
 }
 

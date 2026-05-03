@@ -90,13 +90,11 @@ export default function SummaryPage() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					cart_id: cartId,
-					total_price: orderTotal,
 					shipping_cost: shippingCost,
 					items: items.map((i) => ({
 						product_id: i.product.id,
 						product_name: i.product.name,
-						unit_price:
-							i.variant?.effective_price ?? i.product.base_price,
+						variant_id: i.variant?.id ?? null,
 						thumbnail:
 							i.variant?.thumbnail ??
 							i.components?.find((c) => c.thumbnail)?.thumbnail ??
@@ -107,7 +105,6 @@ export default function SummaryPage() {
 							variant_id: c.variant_id,
 							variant_name: c.variant_name,
 							component_group: c.component_group,
-							price_adjustment: c.price_adjustment,
 							thumbnail: c.thumbnail,
 						})),
 					})),

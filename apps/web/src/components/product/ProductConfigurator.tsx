@@ -27,7 +27,7 @@ export function Thumbnail({
 					src={src}
 					alt={alt}
 					fill
-					className="object-contain mix-blend-darken"
+					className="object-cover mix-blend-darken"
 					unoptimized
 				/>
 			) : (
@@ -131,17 +131,21 @@ export function ProductConfigurator({
 										/>
 									)}
 									<div className="text-left max-w-20">
-										<p className="font-black text-xs leading-none line-clamp-2">
+										<p className="font-black text-xs leading-none line-clamp-2 break-words">
 											{v.variant_name}
 										</p>
 										{soldOut ? (
 											<p className="text-[10px] font-black text-error uppercase tracking-wide mt-0.5">
 												Hết hàng
 											</p>
+										) : v.is_pre_order ? (
+											<p className="text-[10px] font-black text-violet-400 uppercase tracking-wide mt-0.5">
+												Đặt trước
+											</p>
 										) : v.price_adjustment !== 0 ? (
 											<p
 												className={clsx(
-													"text-xs mt-0.5 text-red-400",
+													"text-xs mt-0.5 text-green-600",
 												)}>
 												{formatVND(v.price_adjustment)}
 											</p>
@@ -192,6 +196,10 @@ export function ProductConfigurator({
 									{soldOut ? (
 										<p className="text-[10px] font-black text-error mt-0.5 uppercase tracking-wide">
 											Hết hàng
+										</p>
+									) : v.is_pre_order ? (
+										<p className="text-[10px] font-black text-violet-400 mt-0.5 uppercase tracking-wide">
+											Đặt trước
 										</p>
 									) : (
 										<p className="text-xs opacity-70 mt-0.5">

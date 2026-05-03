@@ -10,7 +10,7 @@ import { useCartStore } from "@/store";
 import { Trash } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 
 function itemUnitPrice(item: CartItem) {
 	const base = item.variant?.effective_price ?? item.product.base_price;
@@ -19,13 +19,124 @@ function itemUnitPrice(item: CartItem) {
 	return base + components;
 }
 
+// ─── Cart Item Row ────────────────────────────────────────────────────────────
+
+type CartItemRowProps = {
+	item: CartItem;
+	onRemove: (productId: string, variantId: string | null) => void;
+	onMinus: (item: CartItem) => void;
+	onPlus: (item: CartItem) => void;
+};
+
+const CartItemRow = memo(function CartItemRow({
+	item,
+	onRemove,
+	onMinus,
+	onPlus,
+}: CartItemRowProps) {
+	const unitTotal = useMemo(
+		() => itemUnitPrice(item) * item.quantity,
+		[item],
+	);
+	const isPreOrderComponent = useMemo(
+		() => item.components?.some((c) => c.is_pre_order) ?? false,
+		[item.components],
+	);
+
+	return (
+		<div className="relative flex gap-2 items-center bg-surface-container-low rounded-3xl p-2">
+			{/* Remove button */}
+			<button
+				onClick={() => onRemove(item.product.id, item.variant?.id ?? null)}
+				className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-400 flex items-center justify-center active:scale-90 transition-transform z-10">
+				<Trash className="text-white" size={14} />
+			</button>
+			{/* Thumbnail */}
+			<div className="w-20 h-20 bg-surface-container flex-shrink-0 relative">
+				{item.product.thumbnail ? (
+					<Image
+						src={item.product.thumbnail}
+						alt={item.product.name}
+						fill
+						className="object-cover rounded-lg"
+						unoptimized
+					/>
+				) : (
+					<div className="absolute inset-0 flex items-center justify-center">
+						<Icon
+							name="inventory_2"
+							className="text-3xl text-outline-variant"
+						/>
+					</div>
+				)}
+				{isPreOrderComponent && (
+					<span className="absolute max-w-max text-nowrap -top-2 left-1/2 transform -translate-x-1/2 text-[9px] font-black uppercase text-white bg-violet-500 rounded-sm px-1 py-0.5">
+						Pre-order
+					</span>
+				)}
+			</div>
+			<div className="flex-1 min-w-0">
+				<p className="font-bold text-on-surface text-base leading-tight truncate line-clamp-1 mr-6">
+					{item.product.name}
+				</p>
+				{item.variant && (
+					<p className="text-sm text-on-surface-variant font-semibold tracking-wide mt-0.5">
+						{item.variant.variant_name}
+					</p>
+				)}
+				{item.variant?.is_pre_order && (
+					<span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white bg-violet-500 rounded-full px-2 py-0.5 mt-1">
+						<Icon name="schedule" className="text-xs" />
+						Đặt trước
+					</span>
+				)}
+				{item.components && item.components.length > 0 && (
+					<div className="flex flex-wrap gap-1 mt-1">
+						{item.components.map((c) => (
+							<span
+								key={c.variant_id}
+								className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-on-surface-variant rounded-full px-2 py-0.5">
+								{c.component_group}:{" "}
+								<strong>{c.variant_name}</strong>
+							</span>
+						))}
+					</div>
+				)}
+				<div className="flex items-center justify-between mt-2">
+					<div className="flex items-center gap-3 bg-surface-container rounded-full px-3 py-1.5">
+						<button
+							onClick={() => onMinus(item)}
+							className="text-on-surface font-bold text-base leading-none active:scale-90 transition-transform">
+							−
+						</button>
+						<span className="text-sm font-bold text-on-surface w-4 text-center">
+							{item.quantity}
+						</span>
+						<button
+							onClick={() => onPlus(item)}
+							className="text-on-surface font-bold text-base leading-none active:scale-90 transition-transform">
+							+
+						</button>
+					</div>
+					<p className="text-primary font-black">{formatVND(unitTotal)}</p>
+				</div>
+			</div>
+		</div>
+	);
+});
+
+// ─── Cart Drawer ──────────────────────────────────────────────────────────────
+
 export function CartDrawer() {
 	const router = useRouter();
 	const mounted = useIsMounted();
 	const { items, isOpen, closeCart, updateQty, removeItem, total } =
 		useCartStore();
-	const subtotal = mounted ? total() : 0;
-	const visibleItems = mounted ? items : [];
+
+	const visibleItems = useMemo(() => (mounted ? items : []), [mounted, items]);
+	// `total` is a stable fn ref in Zustand — `items` must be in deps so this
+	// recomputes whenever the cart contents change.
+	const subtotal = useMemo(() => (mounted ? total() : 0), [mounted, total, items]);
 	const drawerOpen = mounted && isOpen;
 
 	const [pendingRemoval, setPendingRemoval] = useState<{
@@ -35,49 +146,68 @@ export function CartDrawer() {
 	const [checkingOut, setCheckingOut] = useState(false);
 	const confirmDialogRef = useRef<HTMLDialogElement>(null);
 
-	const handleRemoveClick = (productId: string, variantId: string | null) => {
-		setPendingRemoval({ productId, variantId });
-		confirmDialogRef.current?.showModal();
-	};
+	const hasPreOrderItem = useMemo(
+		() =>
+			visibleItems.some(
+				(i) =>
+					i.components?.some((c) => c.is_pre_order) ||
+					i.variant?.is_pre_order,
+			),
+		[visibleItems],
+	);
 
-	const confirmRemove = () => {
+	const handleRemoveClick = useCallback(
+		(productId: string, variantId: string | null) => {
+			setPendingRemoval({ productId, variantId });
+			confirmDialogRef.current?.showModal();
+		},
+		[],
+	);
+
+	const confirmRemove = useCallback(() => {
 		if (pendingRemoval) {
 			removeItem(pendingRemoval.productId, pendingRemoval.variantId);
 			setPendingRemoval(null);
 		}
 		confirmDialogRef.current?.close();
-	};
+	}, [pendingRemoval, removeItem]);
 
-	const cancelRemove = () => {
+	const cancelRemove = useCallback(() => {
 		setPendingRemoval(null);
 		confirmDialogRef.current?.close();
-	};
+	}, []);
 
-	const handleMinus = (item: CartItem) => {
-		if (item.quantity === 1) {
-			handleRemoveClick(item.product.id, item.variant?.id ?? null);
-		} else {
-			updateQty(item.product.id, item.variant?.id ?? null, -1);
-		}
-	};
+	const handleMinus = useCallback(
+		(item: CartItem) => {
+			if (item.quantity === 1) {
+				handleRemoveClick(item.product.id, item.variant?.id ?? null);
+			} else {
+				updateQty(item.product.id, item.variant?.id ?? null, -1);
+			}
+		},
+		[handleRemoveClick, updateQty],
+	);
 
-	const handlePlus = (item: CartItem) => {
-		if (item.quantity >= item.product.stock_quantity) {
-			toast.warning(
-				`Chỉ còn ${item.product.stock_quantity} sản phẩm trong kho`,
-			);
-			return;
-		}
-		updateQty(item.product.id, item.variant?.id ?? null, 1);
-	};
+	const handlePlus = useCallback(
+		(item: CartItem) => {
+			if (item.quantity >= item.product.stock_quantity) {
+				toast.warning(
+					`Chỉ còn ${item.product.stock_quantity} sản phẩm trong kho`,
+				);
+				return;
+			}
+			updateQty(item.product.id, item.variant?.id ?? null, 1);
+		},
+		[updateQty],
+	);
 
-	const handleCheckout = async () => {
+	const handleCheckout = useCallback(async () => {
 		if (checkingOut) return;
 		setCheckingOut(true);
 		await router.push("/checkout/shipping");
 		closeCart();
 		setCheckingOut(false);
-	};
+	}, [checkingOut, router, closeCart]);
 
 	usePreventScroll(drawerOpen);
 
@@ -114,6 +244,16 @@ export function CartDrawer() {
 					</button>
 				</div>
 
+				{/* Pre-order notice */}
+				{hasPreOrderItem && (
+					<div className="mx-6 mb-2 flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-2xl px-4 py-2.5">
+						<Icon name="schedule" className="text-violet-400 text-base shrink-0" />
+						<p className="text-xs font-black uppercase tracking-widest text-violet-400">
+							Giỏ hàng có sản phẩm đặt trước
+						</p>
+					</div>
+				)}
+
 				{/* Items */}
 				<div className="flex-1 overflow-y-auto px-6 space-y-4 pb-4">
 					{visibleItems.length === 0 ? (
@@ -127,94 +267,20 @@ export function CartDrawer() {
 							</p>
 						</div>
 					) : (
-						visibleItems.map((item) => (
-							<div
-								key={`${item.product.id}-${item.variant?.id ?? "base"}`}
-								className="relative flex gap-4 items-center bg-surface-container-low rounded-3xl p-3">
-								{/* Remove button */}
-								<button
-									onClick={() =>
-										handleRemoveClick(
-											item.product.id,
-											item.variant?.id ?? null,
-										)
-									}
-									className="absolute top-2 right-2 w-7 h-7 rounded-full bg-surface-container flex items-center justify-center active:scale-90 transition-transform z-10">
-									<Trash className="text-red-400" size={14} />
-								</button>
-								{/* Thumbnail */}
-								<div className="w-20 h-20 rounded-2xl overflow-hidden bg-surface-container flex-shrink-0 relative">
-									{item.product.thumbnail ? (
-										<Image
-											src={item.product.thumbnail}
-											alt={item.product.name}
-											fill
-											className="object-cover"
-											unoptimized
-										/>
-									) : (
-										<div className="absolute inset-0 flex items-center justify-center">
-											<Icon
-												name="inventory_2"
-												className="text-3xl text-outline-variant"
-											/>
-										</div>
-									)}
-								</div>
-								<div className="flex-1 min-w-0">
-									<p className="font-bold text-on-surface text-base leading-tight truncate">
-										{item.product.name}
-									</p>
-									{item.variant && (
-										<p className="text-sm text-on-surface-variant font-semibold tracking-wide mt-0.5">
-											{item.variant.variant_name}
-										</p>
-									)}
-									{item.components &&
-										item.components.length > 0 && (
-											<div className="flex flex-wrap gap-1 mt-1">
-												{item.components.map((c) => (
-													<span
-														key={c.variant_id}
-														className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-on-surface-variant rounded-full px-2 py-0.5">
-														{c.component_group}:{" "}
-														<strong>
-															{c.variant_name}
-														</strong>
-													</span>
-												))}
-											</div>
-										)}
-									<div className="flex items-center justify-between mt-2">
-										<div className="flex items-center gap-3 bg-surface-container rounded-full px-3 py-1.5">
-											<button
-												onClick={() =>
-													handleMinus(item)
-												}
-												className="text-on-surface font-bold text-base leading-none active:scale-90 transition-transform">
-												−
-											</button>
-											<span className="text-sm font-bold text-on-surface w-4 text-center">
-												{item.quantity}
-											</span>
-											<button
-												onClick={() => handlePlus(item)}
-												className="text-on-surface font-bold text-base leading-none active:scale-90 transition-transform">
-												+
-											</button>
-										</div>
-										<div className="flex items-center gap-2">
-											<p className="text-primary font-black">
-												{formatVND(
-													itemUnitPrice(item) *
-														item.quantity,
-												)}
-											</p>
-										</div>
-									</div>
-								</div>
-							</div>
-						))
+						visibleItems.map((item) => {
+							const itemKey = item.components?.length
+								? `${item.product.id}-kit-${item.components.map((c) => c.variant_id).join("+")}`
+								: `${item.product.id}-${item.variant?.id ?? "base"}`;
+							return (
+								<CartItemRow
+									key={itemKey}
+									item={item}
+									onRemove={handleRemoveClick}
+									onMinus={handleMinus}
+									onPlus={handlePlus}
+								/>
+							);
+						})
 					)}
 
 					{/* Sustainable packaging badge */}

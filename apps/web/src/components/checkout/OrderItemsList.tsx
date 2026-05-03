@@ -23,9 +23,12 @@ export function OrderItemsList({ items, oosProductIds, onRemove }: OrderItemsLis
 			<div className="space-y-3">
 				{items.map((item) => {
 					const isOos = oosProductIds?.has(item.product.id) ?? false;
+          const itemKey = item.components?.length
+								? `${item.product.id}-kit-${item.components.map((c) => c.variant_id).join("+")}`
+								: `${item.product.id}-${item.variant?.id ?? "base"}`;
 					return (
 					<div
-						key={`${item.product.id}-${item.variant?.id ?? "base"}`}
+						key={itemKey}
 						className={`relative p-4 rounded-3xl overflow-hidden transition-colors ${
 							isOos
 								? "bg-error/10 ring-1 ring-error/40"
@@ -89,6 +92,13 @@ export function OrderItemsList({ items, oosProductIds, onRemove }: OrderItemsLis
 											item.product.base_price,
 									)}
 								</p>
+                <div className="inline-flex items-center gap-2">
+                  {item.components?.some((c) => c.is_pre_order) && (
+                    <span className="text-[10px] font-black uppercase text-white bg-violet-500 rounded-sm px-1 py-0.5">
+                      Pre-order
+                    </span>
+                  )}
+                </div>
 							</div>
 							<span className="text-xs font-bold text-on-surface-variant bg-surface-container rounded-full px-2.5 py-1 flex-shrink-0">
 								x{item.quantity}

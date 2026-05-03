@@ -1,6 +1,6 @@
 import type { AddToCartRequest } from "@/app/api/cart/add/route";
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
-import type { ProductDetail } from "@/app/api/products/[slug]/route";
+import type { ProductDetail, ShopVariantDetail } from "@/app/api/products/[slug]/route";
 import type { ShopVariant } from "@/app/api/products/route";
 import type { Product, SelectedComponent } from "@/lib/data";
 import { toast } from "@/lib/toast";
@@ -13,6 +13,7 @@ export type UseProductViewDataReturn = {
 	selections: Record<string, string>;
 	select: (group: string, variantId: string) => void;
 	selectedVariant: ShopVariant | null;
+	selectedPreOrderConfig: ShopVariantDetail["pre_order_config"];
 	loadingVariants: boolean;
 	loadingConfigurator: boolean;
 	missingVariantSelection: boolean;
@@ -63,10 +64,30 @@ export function useProductViewData(
 					effective_price: product.base_price + v.price_adjustment,
 					thumbnail: v.thumbnail,
 					stock_quantity: v.stock_quantity,
+					is_pre_order: v.is_pre_order,
+					pre_order_config: v.pre_order_config,
 				})),
 			),
 		[initialGroups, product.base_price],
 	);
+
+	// Resolve pre-order config for the currently selected variant
+	const selectedPreOrderConfig = useMemo<ShopVariantDetail["pre_order_config"]>(() => {
+		// Simple variant path
+		const simpleId = selections["__variant__"];
+		if (simpleId) {
+			const v = product.variants.find((v) => v.id === simpleId);
+			if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+		}
+		// Component group path — first pre-order selected variant wins
+		for (const group of initialGroups) {
+			const selectedId = selections[group.component_group];
+			if (!selectedId) continue;
+			const v = group.variants.find((gv) => gv.id === selectedId);
+			if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+		}
+		return null;
+	}, [product.variants, initialGroups, selections]);
 
 	// Derive selectedVariant only for simple variant products (not component-group kits)
 	const selectedVariant = useMemo<ShopVariant | null>(() => {
@@ -185,6 +206,7 @@ export function useProductViewData(
 		selections,
 		select,
 		selectedVariant,
+		selectedPreOrderConfig,
 		loadingVariants: false,
 		loadingConfigurator: false,
 		missingVariantSelection,

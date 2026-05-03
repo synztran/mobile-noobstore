@@ -22,8 +22,6 @@ export default function CheckingWithOrderId({
 		}
 	}, [order_id, orderNumber, router]);
 
-  console.log(order_id, orderNumber)
-
 	if (!order_id && !orderNumber) {
 		return null;
 	}

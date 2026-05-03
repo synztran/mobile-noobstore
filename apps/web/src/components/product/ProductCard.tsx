@@ -80,13 +80,24 @@ export function ProductCard({ product }: ProductCardProps) {
 						)}
 
 						<ProductComponentTags horizontalTags={product?.tags} />
-            {!product.stock_quantity && (
-              <div className="absolute inset-0 bg-surface/70 flex items-center justify-center rounded-2xl">
-                <p className="text-sm font-black uppercase tracking-[0.15em] text-on-surface-variant">
-                  Hết hàng
-                </p>
-              </div>
-            )}
+
+						{/* Pre-order banner */}
+						{product.is_pre_order && !!product.stock_quantity && (
+							<div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-1.5 py-2 bg-violet-600/90 backdrop-blur-sm">
+								<Icon name="schedule" className="text-white text-sm" />
+								<p className="text-[10px] font-black uppercase tracking-[0.18em] text-white">
+									Đặt trước
+								</p>
+							</div>
+						)}
+
+						{!product.stock_quantity && (
+							<div className="absolute inset-0 bg-surface/70 flex items-center justify-center rounded-xl">
+								<p className="text-sm font-black uppercase tracking-[0.15em] text-on-surface-variant">
+									Hết hàng
+								</p>
+							</div>
+						)}
 					</div>
 
 					{/* ── Details ─────────────────────────────────────────────── */}
@@ -94,7 +105,7 @@ export function ProductCard({ product }: ProductCardProps) {
 						<p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary leading-none">
 							{product.category}
 						</p>
-						<h3 className="text-sm font-bold text-on-surface capitalize line-clamp-1">
+						<h3 className="text-sm font-bold text-on-surface capitalize line-clamp-2 min-h-[40px]">
 							{product.name}
 						</h3>
 						<p className="text-xs tracking-wide line-clamp-2 min-h-[32px]">

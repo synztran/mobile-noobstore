@@ -28,6 +28,7 @@ export function ProductView({
 		selections,
 		select,
 		selectedVariant,
+		selectedPreOrderConfig,
 		loadingVariants,
 		loadingConfigurator,
 		missingVariantSelection,
@@ -233,6 +234,33 @@ export function ProductView({
 					</section>
 				)}
 
+				{/* ── Pre-order Info Banner ── */}
+				{selectedPreOrderConfig && (
+					<section className="px-6">
+						<div className="flex items-start gap-3 bg-violet-500/10 border border-violet-500/30 rounded-2xl p-4">
+							<Icon name="schedule" className="text-violet-400 text-2xl mt-0.5 shrink-0" />
+							<div className="space-y-1">
+								<p className="text-xs font-black uppercase tracking-widest text-violet-400">
+									Sản phẩm đặt trước
+								</p>
+								<p className="text-sm font-bold text-on-surface">
+									Thời gian giao hàng dự kiến: {selectedPreOrderConfig.estimate}
+								</p>
+								{selectedPreOrderConfig.available_date && (
+									<p className="text-xs text-on-surface-variant">
+										Dự kiến có hàng: {selectedPreOrderConfig.available_date}
+									</p>
+								)}
+								{selectedPreOrderConfig.notes && (
+									<p className="text-xs text-on-surface-variant">
+										{selectedPreOrderConfig.notes}
+									</p>
+								)}
+							</div>
+						</div>
+					</section>
+				)}
+
 				{/* ── Specs ── */}
 				<section className="px-6">
 					<div className="bg-surface-container-low p-8 rounded-none">
@@ -314,6 +342,7 @@ export function ProductView({
 					missingVariantSelection={missingVariantSelection}
 					missingConfiguration={missingConfiguration}
 					isLoading={isLoadingAddToCart}
+					isPreOrder={selectedPreOrderConfig !== null}
 					onClick={handleAddToCart}
 				/>
 			</div>

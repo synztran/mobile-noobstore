@@ -4,7 +4,7 @@
  */
 
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
-import type { ProductDetail } from "@/app/api/products/[slug]/route";
+import type { ProductDetail, ShopVariantDetail } from "@/app/api/products/[slug]/route";
 import type { PreOrderConfig, ShopProduct } from "@/app/api/products/route";
 import { getProductListByFilters } from "@/lib/product-query-service";
 import { getPublicClient } from "@/lib/supabase/public";
@@ -46,6 +46,8 @@ type RawVariantRow = {
 	price_adjustment: number;
 	thumbnail: string | null;
 	stock_quantity: number;
+	is_pre_order: boolean;
+	pre_order_config: unknown;
 };
 
 type RawListRow = {
@@ -61,8 +63,6 @@ type RawListRow = {
 	is_used: boolean;
 	categories: { id: string; name: string } | null;
 	product_variants: RawVariantRow[] | null;
-  is_pre_order: boolean;
-  pre_order_config: PreOrderConfig;
 };
 
 // ─── Shared shaping logic ─────────────────────────────────────────────────────
@@ -75,6 +75,8 @@ function shapeRow(p: RawListRow): ShopProduct {
 		effective_price: Number(p.base_price) + Number(v.price_adjustment),
 		thumbnail: v.thumbnail,
 		stock_quantity: Number(v.stock_quantity ?? 0),
+		is_pre_order: v.is_pre_order ?? false,
+		pre_order_config: (v.pre_order_config as import("@/app/api/products/route").ShopVariant["pre_order_config"]) ?? null,
 	}));
 
 	const minPrice =
@@ -138,8 +140,7 @@ function shapeRow(p: RawListRow): ShopProduct {
 		min_price: minPrice,
 		is_used: p.is_used ?? false,
 		tags,
-    is_pre_order: p.is_pre_order ?? false, // not included in this query — default to false
-    pre_order_config: p.pre_order_config,
+		is_pre_order: variants.some((v) => v.is_pre_order),
 	};
 }
 
@@ -279,7 +280,7 @@ export async function getQuickPickData(
 					.select(
 						`id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used,
 					 categories(id, name),
-					 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
+					 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)`,
 					)
 					.eq("id", productId)
 					.single();
@@ -301,7 +302,7 @@ export async function getQuickPickData(
 					.select(
 						`parent_product_id, component_group, is_required,
 						 products!product_components_component_product_id_fkey(
-							product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)
+							product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
 						 )`,
 					)
 					.in("parent_product_id", ids)
@@ -324,6 +325,8 @@ export async function getQuickPickData(
 							price_adjustment: number;
 							thumbnail: string | null;
 							stock_quantity: number;
+							is_pre_order: boolean;
+							pre_order_config: unknown;
 						}> | null;
 					} | null;
 				};
@@ -360,8 +363,8 @@ export async function getQuickPickData(
 							price_adjustment: Number(v.price_adjustment),
 							thumbnail: v.thumbnail ?? null,
 							stock_quantity: Number(v.stock_quantity ?? 0),
-              sale_price_percent,
-						});
+              sale_price_percent,								is_pre_order: v.is_pre_order ?? false,
+								pre_order_config: (v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ?? null,						});
 					}
 				}
 
@@ -481,6 +484,8 @@ export async function getProductDetail(slug: string): Promise<{
 				price_adjustment: number;
 				thumbnail: string | null;
 				stock_quantity: number;
+				is_pre_order: boolean;
+				pre_order_config: unknown;
 			}>;
 		};
 
@@ -488,7 +493,7 @@ export async function getProductDetail(slug: string): Promise<{
 			.from("products")
 			.select(
 				`id,
-				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
+				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)`,
 			)
 			.in("id", compIds)
 			.eq("product_type", "component");
@@ -529,6 +534,9 @@ export async function getProductDetail(slug: string): Promise<{
 					price_adjustment: Number(v.price_adjustment),
 					thumbnail: v.thumbnail ?? null,
 					stock_quantity: Number(v.stock_quantity ?? 0),
+					sale_price_percent: undefined,
+					is_pre_order: v.is_pre_order ?? false,
+					pre_order_config: (v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ?? null,
 				});
 			}
 		}
@@ -553,9 +561,9 @@ export async function getProductBySlug(
 		const { data: product, error } = await getPublicClient()
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used,
-				 categories(id, name),
-				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity),
+			`id, slug, name, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used,
+			 categories(id, name),
+			 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config),
 				 product_components!product_components_parent_product_id_fkey(
 				 	id, component_group, is_required, component_product_id
 				 )`,
@@ -585,6 +593,8 @@ export async function getProductBySlug(
 				Number(raw.base_price) + Number(v.price_adjustment),
 			thumbnail: v.thumbnail,
 			stock_quantity: Number(v.stock_quantity ?? 0),
+			is_pre_order: v.is_pre_order ?? false,
+			pre_order_config: (v.pre_order_config as ShopVariantDetail["pre_order_config"]) ?? null,
 		}));
 
 		const minPrice =
@@ -674,6 +684,7 @@ export async function getProductBySlug(
 			components,
 			min_price: minPrice,
 			is_used: raw.is_used ?? false,
+			is_pre_order: variants.some((v) => v.is_pre_order),
 		};
 	} catch (err) {
 		console.error("[getProductBySlug] Unexpected error:", err);

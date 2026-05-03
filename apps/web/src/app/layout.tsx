@@ -39,7 +39,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en" data-theme="giraffelab">
+		<html lang="en" data-theme="noobstore">
 			<body className="bg-background font-sans text-on-surface antialiased">
 				<AuthProvider>
 					<ReactQueryProvider>

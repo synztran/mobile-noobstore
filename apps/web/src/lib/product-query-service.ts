@@ -12,6 +12,12 @@ export interface ProductTag {
 	bgColor?: string;
 }
 
+export interface PreOrderConfig {
+	estimate: string;
+	available_date?: string | null;
+	notes?: string | null;
+}
+
 export interface ProductVariant {
 	id: string;
 	variant_name: string;
@@ -19,6 +25,8 @@ export interface ProductVariant {
 	effective_price: number;
 	thumbnail: string | null;
 	stock_quantity: number;
+	is_pre_order: boolean;
+	pre_order_config: PreOrderConfig | null;
 }
 
 export interface ProductListItem {
@@ -35,6 +43,8 @@ export interface ProductListItem {
 	variants: ProductVariant[];
 	min_price: number;
 	is_used: boolean;
+	/** True when at least one variant is on pre-order (denormalized from DB trigger) */
+	is_pre_order: boolean;
 	tags: ProductTag[];
 }
 
@@ -45,6 +55,8 @@ type VariantRow = {
 	price_adjustment: number;
 	thumbnail: string | null;
 	stock_quantity: number;
+	is_pre_order: boolean;
+	pre_order_config: unknown;
 };
 
 type RawListRow = {
@@ -81,15 +93,15 @@ const MAX_LIMIT = 100;
 function getTags(product: ProductListItem): ProductTag[] {
 	const tags: ProductTag[] = [];
 
-	// if (product.stock_quantity === 0) {
-	// 	tags.push({
-	// 		label: "Hết hàng",
-	// 		id: 1,
-	// 		value: "sold_out",
-	// 		textColor: "text-white",
-	// 		bgColor: "bg-red-400",
-	// 	});
-	// }
+	if (product.is_pre_order) {
+		tags.push({
+			id: 3,
+			label: "Đặt trước",
+			value: "pre_order",
+			textColor: "text-white",
+			bgColor: "bg-violet-500",
+		});
+	}
 
 	if (product.is_used) {
 		tags.push({
@@ -111,6 +123,8 @@ function shapeRow(row: RawListRow): ProductListItem {
 			Number(row.base_price) + Number(variant.price_adjustment),
 		thumbnail: variant.thumbnail,
 		stock_quantity: Number(variant.stock_quantity ?? 0),
+		is_pre_order: variant.is_pre_order ?? false,
+		pre_order_config: (variant.pre_order_config as PreOrderConfig | null) ?? null,
 	}));
 
 	const minPrice =
@@ -147,6 +161,7 @@ function shapeRow(row: RawListRow): ProductListItem {
 		variants,
 		min_price: minPrice,
 		is_used: row.is_used ?? false,
+		is_pre_order: variants.some((v) => v.is_pre_order),
 		tags: [],
 	};
 
@@ -270,7 +285,7 @@ export async function getProductListByFilters(
 			.select(
 				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, description, is_used,
 				 categories(id, name),
-				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
+				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)`,
 			)
 			.in("product_type", productTypes);
 

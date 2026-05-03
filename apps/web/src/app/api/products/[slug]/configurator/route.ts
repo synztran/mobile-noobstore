@@ -11,6 +11,8 @@ export interface ConfiguratorVariant {
 	price_adjustment: number;
 	thumbnail: string | null;
 	stock_quantity: number;
+	is_pre_order: boolean;
+	pre_order_config: { estimate: string; available_date?: string | null; notes?: string | null } | null;
   sale_price_percent?: number;
 }
 
@@ -52,7 +54,7 @@ export async function GET(
 				is_required,
 				component_product_id,
 				products!product_components_component_product_id_fkey(
-					product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)
+					product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
 				)
 			`,
 			)
@@ -82,6 +84,8 @@ export async function GET(
 				price_adjustment: number;
 				thumbnail: string | null;
 				stock_quantity: number;
+				is_pre_order: boolean;
+				pre_order_config: unknown;
 			}> = rowAny.products?.product_variants ?? [];
 
 			if (!groupMap.has(key)) {
@@ -100,6 +104,8 @@ export async function GET(
 					price_adjustment: Number(v.price_adjustment),
 					thumbnail: v.thumbnail ?? null,
 					stock_quantity: Number(v.stock_quantity ?? 0),
+					is_pre_order: v.is_pre_order ?? false,
+					pre_order_config: (v.pre_order_config as ConfiguratorVariant["pre_order_config"]) ?? null,
 				});
 			}
 		}

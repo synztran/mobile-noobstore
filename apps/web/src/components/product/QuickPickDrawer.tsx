@@ -32,6 +32,7 @@ type AddToCartButtonProps = {
 	canAdd: boolean;
 	hasComponents: boolean;
 	isInvalidPrice: boolean;
+	isPreOrder: boolean;
 	onClick: () => void;
 };
 
@@ -41,6 +42,7 @@ function AddToCartButton({
 	canAdd,
 	hasComponents,
 	isInvalidPrice,
+	isPreOrder,
 	onClick,
 }: AddToCartButtonProps) {
 	const isLoading = isSubmitting || isFetchingVariants;
@@ -56,6 +58,14 @@ function AddToCartButton({
 		}
 		if (!canAdd && hasComponents) {
 			return "Vui lòng chọn";
+		}
+		if (isPreOrder) {
+			return (
+				<>
+					<Icon name="schedule" className="text-xl" />
+					ĐẶT TRƯỚC
+				</>
+			);
 		}
 		return (
 			<>
@@ -242,6 +252,27 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 
 	const isInvalidPrice = totalPrice <= 0;
 
+	// ── Pre-order: resolve config for the currently selected variant ─────
+	// For simple variants: check __variant__ selection against product.variants
+	// For component groups: check if any selected group variant is pre-order
+	const selectedPreOrderConfig = useMemo(() => {
+		if (!activeProduct) return null;
+		// Simple variant path
+		const simpleSelectedId = state.selections["__variant__"];
+		if (simpleSelectedId) {
+			const v = activeProduct.variants.find((v) => v.id === simpleSelectedId);
+			if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+		}
+		// Component group path — return config of first pre-order selected variant
+		for (const group of state.groups) {
+			const selectedId = state.selections[group.component_group];
+			if (!selectedId) continue;
+			const v = group.variants.find((gv) => gv.id === selectedId);
+			if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+		}
+		return null;
+	}, [activeProduct, state.selections, state.groups]);
+
 	// ── Add to cart ───────────────────────────────────────────────────────
 	const handleAdd = async () => {
 		if (isInvalidPrice) {
@@ -256,17 +287,61 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 			return;
 		}
 
-		const existingCartItem = cartItems.find(
-			(i) =>
-				i.product.id === activeProduct.id &&
-				(i.variant?.id ?? null) === null,
-		);
-		const currentQty = existingCartItem?.quantity ?? 0;
-		if (currentQty + 1 > activeProduct.stock_quantity) {
-			toast.warning(
-				`Chỉ còn ${activeProduct.stock_quantity} sản phẩm trong kho`,
+		const selectedVariantId = state.selections["__variant__"] ?? null;
+		const isKit = activeProduct.product_type === "kit";
+
+		// Resolve the selected simple variant early — needed for variant-level stock check
+		const selectedSimpleVariant = !hasComponents
+			? (activeProduct.variants.find((v) => v.id === selectedVariantId) ?? null)
+			: null;
+
+		// ── Stock validation ─────────────────────────────────────────────
+		if (isKit) {
+			// For kit products: validate each selected component variant against
+			// how many times that variant is already used across all cart kit items.
+			const insufficientComponents: string[] = [];
+			for (const group of state.groups) {
+				const selectedId = state.selections[group.component_group];
+				if (!selectedId) continue;
+				const v = group.variants.find((gv) => gv.id === selectedId);
+				if (!v) continue;
+
+				// Count how many of this component variant are already in the cart
+				const usedQty = cartItems.reduce((sum, cartItem) => {
+					return (
+						sum +
+						(cartItem.components ?? []).filter(
+							(c) => c.variant_id === v.id,
+						).length
+					);
+				}, 0);
+
+				if (usedQty + 1 > v.stock_quantity) {
+					insufficientComponents.push(
+						`"${v.variant_name}" (còn ${v.stock_quantity})`,
+					);
+				}
+			}
+			if (insufficientComponents.length > 0) {
+				toast.warning(
+					`Không đủ hàng: ${insufficientComponents.join(", ")}`,
+				);
+				return;
+			}
+		} else {
+			// For standard products: check variant-level stock
+			const availableStock =
+				selectedSimpleVariant?.stock_quantity ?? activeProduct.stock_quantity;
+			const existingCartItem = cartItems.find(
+				(i) =>
+					i.product.id === activeProduct.id &&
+					(i.variant?.id ?? null) === selectedVariantId,
 			);
-			return;
+			const currentQty = existingCartItem?.quantity ?? 0;
+			if (currentQty + 1 > availableStock) {
+				toast.warning(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+				return;
+			}
 		}
 
 		dispatch({ type: "SUBMIT_START" });
@@ -284,6 +359,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 						component_group: group.component_group,
 						price_adjustment: v.price_adjustment,
 						thumbnail: v.thumbnail,
+            is_pre_order: v.is_pre_order ?? false,
 					},
 				];
 			},
@@ -308,7 +384,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				stock_quantity: activeProduct.stock_quantity,
 				thumbnail: activeProduct.thumbnail,
 			},
-			null,
+			selectedSimpleVariant,
 			hasComponents ? components : undefined,
 		);
 
@@ -412,7 +488,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 						className="w-20 h-20 rounded-xl"
 					/>
 					<div className="flex-1 min-w-0">
-						<p className="font-black text-on-surface uppercase leading-tight line-clamp-1">
+						<p className="font-black text-on-surface uppercase leading-tight line-clamp-2">
 							{activeProduct.name}
 						</p>
 						<p className="text-sm font-bold text-primary mt-0.5">
@@ -431,6 +507,30 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 					dispatch({ type: "SELECT", group, variantId })
 				}
 			/>
+			{/* Pre-order info banner — shown when a pre-order variant is selected */}
+			{selectedPreOrderConfig && (
+				<div className="flex items-start gap-3 bg-violet-500/10 border border-violet-500/30 rounded-2xl p-4">
+					<Icon name="schedule" className="text-violet-400 text-xl mt-0.5 shrink-0" />
+					<div className="space-y-0.5">
+						<p className="text-xs font-black uppercase tracking-widest text-violet-400">
+							Sản phẩm đặt trước
+						</p>
+						<p className="text-sm font-bold text-on-surface">
+							Thời gian giao hàng dự kiến: {selectedPreOrderConfig.estimate}
+						</p>
+						{selectedPreOrderConfig.available_date && (
+							<p className="text-xs text-on-surface-variant">
+								Dự kiến có hàng: {selectedPreOrderConfig.available_date}
+							</p>
+						)}
+						{selectedPreOrderConfig.notes && (
+							<p className="text-xs text-on-surface-variant">
+								{selectedPreOrderConfig.notes}
+							</p>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 
@@ -522,6 +622,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 							canAdd={canAdd}
 							hasComponents={hasComponents}
 							isInvalidPrice={isInvalidPrice}
+							isPreOrder={selectedPreOrderConfig !== null}
 							onClick={handleAdd}
 						/>
 					</div>

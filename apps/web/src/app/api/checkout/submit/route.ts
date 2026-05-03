@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 
 export interface SubmitOrderRequestItem {
 	product_id: string;
+	/** Optional — present for standard products with a selected variant */
+	variant_id?: string | null;
 	product_name: string;
-	unit_price: number;
 	thumbnail?: string | null;
 	quantity: number;
 	/** For kit items: the resolved component selections */
@@ -15,14 +16,13 @@ export interface SubmitOrderRequestItem {
 		variant_id: string;
 		variant_name: string;
 		component_group: string;
-		price_adjustment: number;
 		thumbnail: string | null;
 	}>;
 }
 
 export interface SubmitOrderRequest {
 	cart_id: string;
-	total_price: number;
+	/** Client-computed shipping cost — capped server-side to prevent manipulation */
 	shipping_cost: number;
 	items: SubmitOrderRequestItem[];
 	service_ids?: string[];
@@ -51,29 +51,106 @@ export async function POST(req: NextRequest) {
 			data: { user },
 		} = await supabase.auth.getUser();
 
+		// ── Server-side price recalculation ──────────────────────────────────
+		// NEVER trust unit_price or total_price from the client.
+		// Fetch authoritative prices from the database.
+
+		const productIds = [...new Set(body.items.map((i) => i.product_id))];
+		const itemVariantIds = body.items
+			.filter((i) => i.variant_id)
+			.map((i) => i.variant_id!);
+		const componentVariantIds = body.items
+			.flatMap((i) => i.components ?? [])
+			.map((c) => c.variant_id);
+		const allVariantIds = [
+			...new Set([...itemVariantIds, ...componentVariantIds]),
+		];
+
+		const [{ data: productRows, error: productErr }, { data: variantRows, error: variantErr }] =
+			await Promise.all([
+				supabase
+					.from("products")
+					.select("id, base_price")
+					.in("id", productIds),
+				allVariantIds.length > 0
+					? supabase
+							.from("product_variants")
+							.select("id, price_adjustment")
+							.in("id", allVariantIds)
+					: Promise.resolve({ data: [] as { id: string; price_adjustment: number }[], error: null }),
+			]);
+
+		if (productErr || variantErr) {
+			return NextResponse.json(
+				{ error: "Failed to verify product prices" },
+				{ status: 500 },
+			);
+		}
+
+		const productPriceMap = new Map<string, number>(
+			(productRows ?? []).map((p) => [p.id, Number(p.base_price)]),
+		);
+		const variantAdjMap = new Map<string, number>(
+			(variantRows ?? []).map((v) => [v.id, Number(v.price_adjustment)]),
+		);
+
+		// Build the items payload with server-verified prices
+		const rpcItems = body.items.map((i) => {
+			const basePrice = productPriceMap.get(i.product_id);
+			if (basePrice === undefined) {
+				throw new Error(`Product not found: ${i.product_id}`);
+			}
+
+			let unitPrice: number;
+			if (i.variant_id) {
+				// Standard product with a selected variant
+				unitPrice = basePrice + (variantAdjMap.get(i.variant_id) ?? 0);
+			} else {
+				// Kit product: base_price + sum of component price_adjustments from DB
+				const compAdj = (i.components ?? []).reduce(
+					(sum, c) => sum + (variantAdjMap.get(c.variant_id) ?? 0),
+					0,
+				);
+				unitPrice = basePrice + compAdj;
+			}
+
+			return {
+				product_id: i.product_id,
+				product_name: i.product_name,
+				unit_price: unitPrice,
+				thumbnail: i.thumbnail ?? null,
+				quantity: i.quantity,
+				// Each component consumes 1 unit per kit ordered (quantity field)
+				components:
+					i.components?.map((c) => ({
+						variant_id: c.variant_id,
+						variant_name: c.variant_name,
+						component_group: c.component_group,
+						// Server-fetched price_adjustment, not client-supplied
+						price_adjustment: variantAdjMap.get(c.variant_id) ?? 0,
+						thumbnail: c.thumbnail,
+						quantity: 1,
+					})) ?? [],
+			};
+		});
+
+		// Recalculate total from server-verified item prices.
+		// Clamp shipping_cost to a safe ceiling — it is client-computed due to
+		// time/district surcharges, but we prevent unreasonable manipulation.
+		const MAX_SHIPPING_VND = 500_000;
+		const safeShippingCost = Math.min(
+			Math.max(0, Number(body.shipping_cost) || 0),
+			MAX_SHIPPING_VND,
+		);
+		const recalculatedTotal = rpcItems.reduce(
+			(sum, i) => sum + i.unit_price * i.quantity,
+			0,
+		) + safeShippingCost;
+
 		// Generate IDs server-side so they're in the response even if the RPC
 		// call is retried (idempotent on the same p_order_id).
 		const orderId = crypto.randomUUID();
 		const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-		// Build the items payload — combines stock-deduction data with order data
-		const rpcItems = body.items.map((i) => ({
-			product_id: i.product_id,
-			product_name: i.product_name,
-			unit_price: i.unit_price,
-			thumbnail: i.thumbnail ?? null,
-			quantity: i.quantity,
-			// Each component consumes 1 unit per kit ordered (quantity field)
-			components:
-				i.components?.map((c) => ({
-					variant_id: c.variant_id,
-					variant_name: c.variant_name,
-					component_group: c.component_group,
-					price_adjustment: c.price_adjustment,
-					thumbnail: c.thumbnail,
-					quantity: 1,
-				})) ?? [],
-		}));
 
 		// ── Single atomic transaction: lock → validate → deduct → create order ──
 		// submit_order uses SELECT … FOR UPDATE to prevent the race condition where
@@ -87,8 +164,8 @@ export async function POST(req: NextRequest) {
 			p_order_id: orderId,
 			p_user_id: user?.id ?? null,
 			p_order_number: orderNumber,
-			p_total_price: body.total_price,
-			p_shipping_cost: body.shipping_cost,
+			p_total_price: recalculatedTotal,
+			p_shipping_cost: safeShippingCost,
 			p_items: rpcItems,
 		});
 
@@ -126,7 +203,7 @@ export async function POST(req: NextRequest) {
 		notifyNewOrder(
 			result.order_number,
 			customerName,
-			body.total_price,
+			recalculatedTotal,
 			undefined,
 			itemCount,
 		).catch(() => {

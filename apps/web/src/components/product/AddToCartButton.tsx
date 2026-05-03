@@ -8,6 +8,7 @@ interface AddToCartButtonProps {
 	missingVariantSelection: boolean;
 	missingConfiguration: boolean;
 	isLoading: boolean;
+	isPreOrder?: boolean;
 	onClick: () => void | Promise<void>;
 }
 
@@ -16,6 +17,7 @@ export function AddToCartButton({
 	missingVariantSelection,
 	missingConfiguration,
 	isLoading,
+	isPreOrder = false,
 	onClick,
 }: AddToCartButtonProps) {
 	const isDisabled =
@@ -29,7 +31,14 @@ export function AddToCartButton({
 		if (missingVariantSelection || missingConfiguration)
 			return "Vui lòng lựa chọn";
 		if (isOutOfStock) return "Hết hàng";
+		if (isPreOrder) return "ĐẶT TRƯỚC";
 		return "Thêm vào giỏ hàng";
+	};
+
+	const getIcon = () => {
+		if (isLoading) return "hourglass_top";
+		if (isPreOrder) return "schedule";
+		return "shopping_bag";
 	};
 
 	return (
@@ -40,7 +49,7 @@ export function AddToCartButton({
 			className={clsx(
 				"flex-1 h-14 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98] transition-transform bg-gradient-to-r from-primary to-primary-container",
 				isDisabled
-					? "opacity-50 cursor-not-allowed bg-surface text-on-surface text-white"
+					? "opacity-50 cursor-not-allowed text-white"
 					: "text-white",
 			)}>
 			{isLoading ? (

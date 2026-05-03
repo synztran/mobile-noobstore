@@ -502,6 +502,8 @@ export type Database = {
         Row: {
           attributes: Json | null
           id: string
+          is_pre_order: boolean
+          pre_order_config: Json | null
           price_adjustment: number | null
           product_id: string | null
           stock_quantity: number | null
@@ -511,6 +513,8 @@ export type Database = {
         Insert: {
           attributes?: Json | null
           id: string
+          is_pre_order?: boolean
+          pre_order_config?: Json | null
           price_adjustment?: number | null
           product_id?: string | null
           stock_quantity?: number | null
@@ -520,6 +524,8 @@ export type Database = {
         Update: {
           attributes?: Json | null
           id?: string
+          is_pre_order?: boolean
+          pre_order_config?: Json | null
           price_adjustment?: number | null
           product_id?: string | null
           stock_quantity?: number | null
@@ -543,10 +549,8 @@ export type Database = {
           description: string | null
           id: string
           images: Json | null
-          is_pre_order: boolean | null
           is_used: boolean | null
           name: string
-          pre_order_config: Json | null
           product_type: string
           slug: string
           stock_quantity: number | null
@@ -558,10 +562,8 @@ export type Database = {
           description?: string | null
           id?: string
           images?: Json | null
-          is_pre_order?: boolean | null
           is_used?: boolean | null
           name: string
-          pre_order_config?: Json | null
           product_type?: string
           slug: string
           stock_quantity?: number | null
@@ -573,10 +575,8 @@ export type Database = {
           description?: string | null
           id?: string
           images?: Json | null
-          is_pre_order?: boolean | null
           is_used?: boolean | null
           name?: string
-          pre_order_config?: Json | null
           product_type?: string
           slug?: string
           stock_quantity?: number | null
@@ -733,6 +733,17 @@ export type Database = {
     Functions: {
       generate_id: { Args: never; Returns: string }
       get_kit_stock: { Args: { kit_id: string }; Returns: number }
+      submit_order: {
+        Args: {
+          p_items: Json
+          p_order_id: string
+          p_order_number: string
+          p_shipping_cost: number
+          p_total_price: number
+          p_user_id: string
+        }
+        Returns: Json
+      }
       validate_and_deduct_stock: { Args: { p_items: Json }; Returns: Json }
     }
     Enums: {

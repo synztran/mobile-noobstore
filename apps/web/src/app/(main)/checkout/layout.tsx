@@ -20,13 +20,13 @@ export default function CheckoutLayout({
 		{
 			href: "/checkout/shipping",
 			icon: "local_shipping",
-			label: "Thiết lập",
+			label: "Vận chuyển",
 			step: 1,
 		},
 		{
 			href: "/checkout/summary",
 			icon: "summary",
-			label: "Tổng kết",
+			label: "Kiểm tra",
 			step: 2,
 		},
 		{
