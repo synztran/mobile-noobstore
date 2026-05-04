@@ -27,6 +27,10 @@ export interface OrderDetail {
 	status: string;
 	total_price: number;
 	shipping_fee: number;
+	voucher_code: string | null;
+	voucher_discount_amount: number;
+	shipping_discount_amount: number;
+	voucher_snapshot: unknown | null;
 	created_at: string | null;
 	updated_at: string | null;
 	items: OrderItemDetail[];
@@ -38,6 +42,10 @@ interface RawOrderRow {
 	status: string;
 	total_price: number;
 	shipping_fee: number | null;
+	voucher_code: string | null;
+	voucher_discount_amount: number | string | null;
+	shipping_discount_amount: number | string | null;
+	voucher_snapshot: unknown | null;
 	created_at: string | null;
 	updated_at: string | null;
 }
@@ -70,7 +78,7 @@ export async function GET(
 		const { data: order, error: orderError } = (await supabase
 			.from("orders")
 			.select(
-				"id, order_number, status, total_price, shipping_fee, created_at, updated_at",
+				"id, order_number, status, total_price, shipping_fee, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, created_at, updated_at",
 			)
 			.eq("id", id)
 			.eq("user_id", user.id)
@@ -166,7 +174,7 @@ export async function GET(
 				id: row.id,
 				product_id: row.product_id,
 				product_name: row.product_name,
-				unit_price: Number(row.unit_price) + componentsTotal,
+				unit_price: Number(row.unit_price),
 				quantity: row.quantity,
 				thumbnail:
 					row.thumbnail ??
@@ -184,6 +192,12 @@ export async function GET(
 			status: order.status,
 			total_price: Number(order.total_price),
 			shipping_fee: Number(order.shipping_fee ?? 0),
+			voucher_code: order.voucher_code ?? null,
+			voucher_discount_amount: Number(order.voucher_discount_amount ?? 0),
+			shipping_discount_amount: Number(
+				order.shipping_discount_amount ?? 0,
+			),
+			voucher_snapshot: order.voucher_snapshot ?? null,
 			created_at: order.created_at ?? null,
 			updated_at: order.updated_at ?? null,
 			items,

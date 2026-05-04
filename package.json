@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.0",
-    "motion": "^12.38.0"
+    "motion": "^12.38.0",
+    "supabase": "2.98.1"
   }
 }

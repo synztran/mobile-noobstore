@@ -388,33 +388,51 @@ export type Database = {
       orders: {
         Row: {
           created_at: string | null
+          gift_items_snapshot: Json | null
           id: string
           order_number: string
+          shipping_discount_amount: number
           shipping_fee: number | null
           status: string
           total_price: number
           updated_at: string | null
           user_id: string | null
+          voucher_code: string | null
+          voucher_discount_amount: number
+          voucher_id: string | null
+          voucher_snapshot: Json | null
         }
         Insert: {
           created_at?: string | null
+          gift_items_snapshot?: Json | null
           id: string
           order_number: string
+          shipping_discount_amount?: number
           shipping_fee?: number | null
           status?: string
           total_price: number
           updated_at?: string | null
           user_id?: string | null
+          voucher_code?: string | null
+          voucher_discount_amount?: number
+          voucher_id?: string | null
+          voucher_snapshot?: Json | null
         }
         Update: {
           created_at?: string | null
+          gift_items_snapshot?: Json | null
           id?: string
           order_number?: string
+          shipping_discount_amount?: number
           shipping_fee?: number | null
           status?: string
           total_price?: number
           updated_at?: string | null
           user_id?: string | null
+          voucher_code?: string | null
+          voucher_discount_amount?: number
+          voucher_id?: string | null
+          voucher_snapshot?: Json | null
         }
         Relationships: [
           {
@@ -422,6 +440,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
             referencedColumns: ["id"]
           },
         ]
@@ -726,6 +751,124 @@ export type Database = {
         }
         Relationships: []
       }
+      vouchers: {
+        Row: {
+          amount_off: number | null
+          applies_to_category_slugs: string[] | null
+          applies_to_product_ids: string[] | null
+          code: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          end_at: string | null
+          excluded_product_ids: string[] | null
+          gift_product_id: string | null
+          gift_quantity: number | null
+          gift_variant_id: string | null
+          id: string
+          max_discount_amount: number | null
+          metadata: Json
+          min_item_quantity: number | null
+          min_order_amount: number
+          name: string
+          percent_off: number | null
+          reward_type: Database["public"]["Enums"]["voucher_reward_type"]
+          scope_type: Database["public"]["Enums"]["voucher_scope_type"]
+          stackable: boolean
+          start_at: string | null
+          status: Database["public"]["Enums"]["voucher_status"]
+          updated_at: string
+          usage_limit_per_user: number | null
+          usage_limit_total: number | null
+          used_count: number
+        }
+        Insert: {
+          amount_off?: number | null
+          applies_to_category_slugs?: string[] | null
+          applies_to_product_ids?: string[] | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_at?: string | null
+          excluded_product_ids?: string[] | null
+          gift_product_id?: string | null
+          gift_quantity?: number | null
+          gift_variant_id?: string | null
+          id?: string
+          max_discount_amount?: number | null
+          metadata?: Json
+          min_item_quantity?: number | null
+          min_order_amount?: number
+          name: string
+          percent_off?: number | null
+          reward_type: Database["public"]["Enums"]["voucher_reward_type"]
+          scope_type?: Database["public"]["Enums"]["voucher_scope_type"]
+          stackable?: boolean
+          start_at?: string | null
+          status?: Database["public"]["Enums"]["voucher_status"]
+          updated_at?: string
+          usage_limit_per_user?: number | null
+          usage_limit_total?: number | null
+          used_count?: number
+        }
+        Update: {
+          amount_off?: number | null
+          applies_to_category_slugs?: string[] | null
+          applies_to_product_ids?: string[] | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          end_at?: string | null
+          excluded_product_ids?: string[] | null
+          gift_product_id?: string | null
+          gift_quantity?: number | null
+          gift_variant_id?: string | null
+          id?: string
+          max_discount_amount?: number | null
+          metadata?: Json
+          min_item_quantity?: number | null
+          min_order_amount?: number
+          name?: string
+          percent_off?: number | null
+          reward_type?: Database["public"]["Enums"]["voucher_reward_type"]
+          scope_type?: Database["public"]["Enums"]["voucher_scope_type"]
+          stackable?: boolean
+          start_at?: string | null
+          status?: Database["public"]["Enums"]["voucher_status"]
+          updated_at?: string
+          usage_limit_per_user?: number | null
+          usage_limit_total?: number | null
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_gift_product_id_fkey"
+            columns: ["gift_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_gift_variant_id_fkey"
+            columns: ["gift_variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -747,7 +890,17 @@ export type Database = {
       validate_and_deduct_stock: { Args: { p_items: Json }; Returns: Json }
     }
     Enums: {
-      [_ in never]: never
+      voucher_reward_type:
+        | "amount_off"
+        | "percent_off"
+        | "free_shipping"
+        | "gift_item"
+      voucher_scope_type:
+        | "order_total"
+        | "shipping_fee"
+        | "product"
+        | "category"
+      voucher_status: "draft" | "active" | "scheduled" | "expired" | "disabled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -874,6 +1027,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      voucher_reward_type: [
+        "amount_off",
+        "percent_off",
+        "free_shipping",
+        "gift_item",
+      ],
+      voucher_scope_type: [
+        "order_total",
+        "shipping_fee",
+        "product",
+        "category",
+      ],
+      voucher_status: ["draft", "active", "scheduled", "expired", "disabled"],
+    },
   },
 } as const

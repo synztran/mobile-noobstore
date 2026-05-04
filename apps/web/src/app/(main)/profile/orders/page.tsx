@@ -211,10 +211,26 @@ export default function OrdersPage() {
 							className="w-full text-left bg-surface-container-lowest rounded-3xl p-4 space-y-3 shadow-ambient-sm active:scale-[0.99] transition-transform">
 							{/* Row 1: order number + status */}
 							<div className="flex items-center justify-between gap-2">
-								<span className="font-black text-primary tracking-widest text-sm">
-									{order.order_number ?? `#${order.id}`}
-								</span>
-								<StatusBadge status={order.status} />
+								<div className="flex flex-col gap-2">
+									<div className="flex items-center gap-2">
+										<span className="font-black text-primary tracking-widest text-sm">
+											{order.order_number ??
+												`#${order.id}`}
+										</span>
+										<StatusBadge status={order.status} />
+									</div>
+									<span className="text-xs text-on-surface-variant">
+										{new Date(
+											order.created_at,
+										).toLocaleDateString("vi-VN", {
+											day: "2-digit",
+											month: "2-digit",
+											year: "2-digit",
+											hour: "2-digit",
+											minute: "2-digit",
+										})}
+									</span>
+								</div>
 							</div>
 
 							{/* Row 2: items count + total */}

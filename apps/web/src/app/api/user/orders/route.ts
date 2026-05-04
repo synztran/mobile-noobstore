@@ -9,6 +9,10 @@ export interface OrderSummary {
 	status: string;
 	total_price: number;
 	item_count: number;
+	created_at: string;
+	voucher_code: string | null;
+	voucher_discount_amount: number;
+	shipping_discount_amount: number;
 }
 
 export interface OrdersResponse {
@@ -40,12 +44,13 @@ export async function GET(req: NextRequest) {
 		let query = supabase
 			.from("orders")
 			.select(
-				"id, order_number, status, total_price, order_items(count)",
+				"id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(count), created_at",
 				{
 					count: "exact",
 				},
 			)
 			.eq("user_id", user.id)
+			.order("created_at", { ascending: false })
 			.range(offset, offset + limit - 1);
 
 		if (q) {
@@ -60,7 +65,11 @@ export async function GET(req: NextRequest) {
 				order_number: string;
 				status: string;
 				total_price: number;
+				voucher_code: string | null;
+				voucher_discount_amount: number | string | null;
+				shipping_discount_amount: number | string | null;
 				order_items: Array<{ count: number }>;
+				created_at: string;
 			}> | null;
 			error: { message: string } | null;
 			count: number | null;
@@ -76,6 +85,10 @@ export async function GET(req: NextRequest) {
 			status: row.status,
 			total_price: Number(row.total_price),
 			item_count: row.order_items?.[0]?.count ?? 0,
+			created_at: row.created_at,
+			voucher_code: row.voucher_code ?? null,
+			voucher_discount_amount: Number(row.voucher_discount_amount ?? 0),
+			shipping_discount_amount: Number(row.shipping_discount_amount ?? 0),
 		}));
 
 		return NextResponse.json({

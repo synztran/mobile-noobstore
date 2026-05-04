@@ -1,5 +1,8 @@
+import { getAdminClient } from "@/lib/supabase/admin";
+import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
+import type { AppliedVoucherSummary } from "@/types/voucher";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -26,12 +29,45 @@ export interface SubmitOrderRequest {
 	shipping_cost: number;
 	items: SubmitOrderRequestItem[];
 	service_ids?: string[];
+	vouchers?: {
+		voucher_id?: string | null;
+		voucher_code?: string | null;
+		voucher_discount_amount?: number;
+		shipping_discount_amount?: number;
+		voucher_snapshot?: AppliedVoucherSummary | null;
+		gift_items_snapshot?: Array<{
+			product_id: string;
+			variant_id: string | null;
+			quantity: number;
+		}> | null;
+	}[];
 }
 
 export interface SubmitOrderResponse {
 	order_id: string;
 	order_number: string;
 	status: string;
+}
+
+function toNumber(value: unknown, fallback = 0): number {
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+
+	if (typeof value === "string") {
+		const parsed = Number.parseFloat(value);
+		return Number.isFinite(parsed) ? parsed : fallback;
+	}
+
+	return fallback;
+}
+
+function toJson(value: unknown): Json | null {
+	if (value === null || typeof value === "undefined") {
+		return null;
+	}
+
+	return JSON.parse(JSON.stringify(value)) as Json;
 }
 
 export async function POST(req: NextRequest) {
@@ -66,19 +102,24 @@ export async function POST(req: NextRequest) {
 			...new Set([...itemVariantIds, ...componentVariantIds]),
 		];
 
-		const [{ data: productRows, error: productErr }, { data: variantRows, error: variantErr }] =
-			await Promise.all([
-				supabase
-					.from("products")
-					.select("id, base_price")
-					.in("id", productIds),
-				allVariantIds.length > 0
-					? supabase
-							.from("product_variants")
-							.select("id, price_adjustment")
-							.in("id", allVariantIds)
-					: Promise.resolve({ data: [] as { id: string; price_adjustment: number }[], error: null }),
-			]);
+		const [
+			{ data: productRows, error: productErr },
+			{ data: variantRows, error: variantErr },
+		] = await Promise.all([
+			supabase
+				.from("products")
+				.select("id, base_price")
+				.in("id", productIds),
+			allVariantIds.length > 0
+				? supabase
+						.from("product_variants")
+						.select("id, price_adjustment")
+						.in("id", allVariantIds)
+				: Promise.resolve({
+						data: [] as { id: string; price_adjustment: number }[],
+						error: null,
+					}),
+		]);
 
 		if (productErr || variantErr) {
 			return NextResponse.json(
@@ -134,7 +175,7 @@ export async function POST(req: NextRequest) {
 			};
 		});
 
-		// Recalculate total from server-verified item prices.
+		// Recalculate totals from server-verified item prices.
 		// Clamp shipping_cost to a safe ceiling — it is client-computed due to
 		// time/district surcharges, but we prevent unreasonable manipulation.
 		const MAX_SHIPPING_VND = 500_000;
@@ -142,10 +183,44 @@ export async function POST(req: NextRequest) {
 			Math.max(0, Number(body.shipping_cost) || 0),
 			MAX_SHIPPING_VND,
 		);
-		const recalculatedTotal = rpcItems.reduce(
+		const subtotal = rpcItems.reduce(
 			(sum, i) => sum + i.unit_price * i.quantity,
 			0,
-		) + safeShippingCost;
+		);
+
+		const vouchers = body.vouchers ?? [];
+		const primaryVoucher =
+			vouchers.find(
+				(v) =>
+					Boolean(v.voucher_id) ||
+					Boolean(v.voucher_code) ||
+					Boolean(v.voucher_snapshot) ||
+					Boolean(v.gift_items_snapshot),
+			) ?? vouchers[0];
+		const requestedVoucherDiscount = vouchers.reduce(
+			(sum, v) => sum + toNumber(v.voucher_discount_amount, 0),
+			0,
+		);
+		const requestedShippingDiscount = vouchers.reduce(
+			(sum, v) => sum + toNumber(v.shipping_discount_amount, 0),
+			0,
+		);
+
+		const safeVoucherDiscount = Math.min(
+			Math.max(0, requestedVoucherDiscount),
+			subtotal,
+		);
+		const safeShippingDiscount = Math.min(
+			Math.max(0, requestedShippingDiscount),
+			safeShippingCost,
+		);
+		const recalculatedTotal = Math.max(
+			0,
+			subtotal +
+				safeShippingCost -
+				safeVoucherDiscount -
+				safeShippingDiscount,
+		);
 
 		// Generate IDs server-side so they're in the response even if the RPC
 		// call is retried (idempotent on the same p_order_id).
@@ -174,7 +249,82 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: error.message }, { status: 400 });
 		}
 
-		const result = data as { order_id: string; order_number: string; status: string };
+		const result = data as {
+			order_id: string;
+			order_number: string;
+			status: string;
+		};
+
+		// Persist voucher fields on order after atomic submit_order RPC insert.
+		if (
+			primaryVoucher?.voucher_id ||
+			primaryVoucher?.voucher_code ||
+			safeVoucherDiscount > 0 ||
+			safeShippingDiscount > 0 ||
+			primaryVoucher?.voucher_snapshot ||
+			primaryVoucher?.gift_items_snapshot
+		) {
+			const voucherSnapshotJson = toJson(
+				primaryVoucher?.voucher_snapshot,
+			);
+			const giftItemsSnapshotJson = toJson(
+				primaryVoucher?.gift_items_snapshot,
+			);
+			const orderVoucherUpdate = {
+				voucher_id: primaryVoucher?.voucher_id ?? null,
+				voucher_code: primaryVoucher?.voucher_code ?? null,
+				voucher_discount_amount: safeVoucherDiscount,
+				shipping_discount_amount: safeShippingDiscount,
+				voucher_snapshot: voucherSnapshotJson,
+				gift_items_snapshot: giftItemsSnapshotJson,
+			};
+
+			const { error: updateOrderError } = await supabase
+				.from("orders")
+				.update(orderVoucherUpdate)
+				.eq("id", result.order_id);
+
+			let voucherPersisted = !updateOrderError;
+			if (updateOrderError) {
+				const admin = getAdminClient();
+				const { error: adminUpdateOrderError } = await admin
+					.from("orders")
+					.update(orderVoucherUpdate)
+					.eq("id", result.order_id);
+
+				if (adminUpdateOrderError) {
+					voucherPersisted = false;
+					console.error(
+						"[submit] failed to persist voucher fields (user+admin):",
+						{ updateOrderError, adminUpdateOrderError },
+					);
+				} else {
+					voucherPersisted = true;
+				}
+			}
+
+			if (voucherPersisted && primaryVoucher?.voucher_id) {
+				const admin = getAdminClient();
+				const { error: incrementUsageError } = await (
+					admin.rpc as unknown as (
+						fn: string,
+						args: Record<string, unknown>,
+					) => Promise<{
+						data: unknown;
+						error: { message: string } | null;
+					}>
+				)("increment_voucher_used_count", {
+					p_voucher_id: primaryVoucher.voucher_id,
+				});
+
+				if (incrementUsageError) {
+					console.error(
+						"[submit] failed to increment voucher used_count:",
+						incrementUsageError,
+					);
+				}
+			}
+		}
 
 		// ── Optional: attach services ─────────────────────────────────────────
 		if (body.service_ids?.length) {
@@ -196,9 +346,7 @@ export async function POST(req: NextRequest) {
 
 		// Fire-and-forget Telegram notification — must not block the response
 		const customerName =
-			user?.user_metadata?.full_name ??
-			user?.email ??
-			"Khách";
+			user?.user_metadata?.full_name ?? user?.email ?? "Khách";
 		const itemCount = body.items.reduce((sum, i) => sum + i.quantity, 0);
 		notifyNewOrder(
 			result.order_number,

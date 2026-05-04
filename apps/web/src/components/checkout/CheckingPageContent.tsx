@@ -9,8 +9,8 @@ import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
-import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
 
 type BankInfoRow = {
 	id: string;
@@ -47,9 +47,21 @@ export default function CheckingPageContent() {
 			const res = await fetch(`/api/orders/${orderNumber}`, {
 				method: "GET",
 			});
-			if (!res.ok) return "";
+			if (!res.ok) {
+				return {
+					status: "",
+					voucher_discount_amount: 0,
+					shipping_discount_amount: 0,
+				};
+			}
 			const data = await res.json();
-			return (data.status as string) ?? "pending";
+			return {
+				status: (data.status as string) ?? "pending",
+				voucher_discount_amount:
+					Number(data.voucher_discount_amount ?? 0) || 0,
+				shipping_discount_amount:
+					Number(data.shipping_discount_amount ?? 0) || 0,
+			};
 		},
 		refetchInterval: 5000,
 	});
@@ -67,7 +79,11 @@ export default function CheckingPageContent() {
 		},
 	});
 
-	const orderStatus = orderStatusQuery.data ?? null;
+	const orderStatus = orderStatusQuery.data?.status ?? null;
+	const orderVoucherDiscount =
+		orderStatusQuery.data?.voucher_discount_amount ?? 0;
+	const orderShippingDiscount =
+		orderStatusQuery.data?.shipping_discount_amount ?? 0;
 	const paymentMethods = paymentMethodsQuery.data ?? [];
 
 	// Calculate subtotal from ordered items
@@ -149,7 +165,7 @@ export default function CheckingPageContent() {
 		<div className="space-y-4">
 			{/* ── Order Status ───────────────────────────────────── */}
 			<section className="">
-				<div className="bg-surface-container-lowest rounded-2xl p-4 flex flex-col items-center text-center gap-4">
+				<div className="bg-surface-container-low rounded-2xl p-4 flex flex-col items-center text-center gap-4">
 					{/* Animated status badge */}
 					<div className="relative">
 						<div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -180,9 +196,9 @@ export default function CheckingPageContent() {
 
 			{/* QR Scan Section */}
 			<section className="mb-8">
-				<div className="bg-surface-container-lowest rounded-2xl p-4 flex flex-col items-center shadow-ambient relative overflow-hidden group">
+				<div className="bg-surface-container-low rounded-2xl p-4 flex flex-col items-center shadow-ambient relative overflow-hidden group">
 					{bankMethod ? (
-						<div className="bg-white p-4 rounded-2xl mb-2 relative z-10 w-full h-64">
+						<div className="bg-surface-container p-4 rounded-2xl mb-2 relative z-10 w-full h-64 border border-outline-variant/30">
 							<Image
 								src={buildQRBank(
 									`${orderNumber} - ${orderedItems.length} items`,
@@ -205,7 +221,7 @@ export default function CheckingPageContent() {
 						Quét để thanh toán
 					</p>
 					{/* Amount breakdown */}
-					<div className="w-full bg-surface-container rounded-2xl p-4 mt-3 relative z-10 space-y-2">
+					<div className="w-full bg-surface-container-high rounded-2xl p-4 mt-3 relative z-10 space-y-2">
 						<div className="flex justify-between text-sm">
 							<span className="text-on-surface-variant">
 								Tạm tính
@@ -229,6 +245,26 @@ export default function CheckingPageContent() {
 									: formatVND(shippingCost)}
 							</span>
 						</div>
+						{orderVoucherDiscount > 0 ? (
+							<div className="flex justify-between text-sm">
+								<span className="text-on-surface-variant">
+									Giảm giá voucher
+								</span>
+								<span className="font-bold text-secondary">
+									-{formatVND(orderVoucherDiscount)}
+								</span>
+							</div>
+						) : null}
+						{orderShippingDiscount > 0 ? (
+							<div className="flex justify-between text-sm">
+								<span className="text-on-surface-variant">
+									Giảm phí vận chuyển
+								</span>
+								<span className="font-bold text-secondary">
+									-{formatVND(orderShippingDiscount)}
+								</span>
+							</div>
+						) : null}
 						<div className="h-px bg-outline-variant/30" />
 						<div className="flex justify-between">
 							<span className="font-black text-on-surface">
@@ -247,7 +283,7 @@ export default function CheckingPageContent() {
 
 			{/* Bank Transfer */}
 			<section className="mb-8">
-				<div className="bg-surface-container-low rounded-2xl p-4 flex flex-wrap gap-3">
+				<div className="bg-surface-container rounded-2xl p-4 flex flex-wrap gap-3">
 					{bankInfoRows.map(({ id, label, value, copyable }) => (
 						// Keep account number and account name on the same row.
 						// Other fields remain full-width rows.
@@ -288,7 +324,7 @@ export default function CheckingPageContent() {
 			</section>
 
 			{/* Notice */}
-			<div className="bg-primary-fixed/20 rounded-2xl p-4 mb-8 flex gap-2 border border-primary-fixed/30">
+			<div className="bg-primary-fixed/12 rounded-2xl p-4 mb-8 flex gap-2 border border-primary-fixed/20">
 				<div className="bg-primary-container text-white w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center">
 					<Icon
 						name="info"

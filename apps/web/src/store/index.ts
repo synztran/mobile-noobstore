@@ -7,6 +7,7 @@ import type {
 } from "@/lib/data";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+export { useDiscountStore } from "./useDiscount";
 
 interface CartStore {
 	items: CartItem[];
@@ -38,19 +39,19 @@ export const useCartStore = create<CartStore>()(
 			cartId: null,
 			isOpen: false,
 
-				addItem: (product, variant, components) => {
-					set((state) => {
-						const cartId = state.cartId ?? crypto.randomUUID();
-						// Kit items (have components) are always standalone — never merged.
-						const isKit = (components?.length ?? 0) > 0;
-						const existing = !isKit
-							? state.items.find(
-									(i) =>
-										i.product.id === product.id &&
-										i.variant?.id === variant?.id,
-							  )
-							: undefined;
-						if (existing) {
+			addItem: (product, variant, components) => {
+				set((state) => {
+					const cartId = state.cartId ?? crypto.randomUUID();
+					// Kit items (have components) are always standalone — never merged.
+					const isKit = (components?.length ?? 0) > 0;
+					const existing = !isKit
+						? state.items.find(
+								(i) =>
+									i.product.id === product.id &&
+									i.variant?.id === variant?.id,
+							)
+						: undefined;
+					if (existing) {
 						return {
 							cartId,
 							items: state.items.map((i) =>

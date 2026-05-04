@@ -1,6 +1,7 @@
 "use client";
 
 import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
+import { VoucherInfo } from "@/components/voucher/VoucherInfo";
 import { formatVND } from "@/lib/currency";
 import {
 	CheckCircle2,
@@ -82,6 +83,11 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 	const cfg = detail
 		? (STATUS_CONFIG[detail.status] ?? STATUS_CONFIG.pending)
 		: null;
+	const voucherDiscount = detail?.voucher_discount_amount ?? 0;
+	const shippingDiscount = detail?.shipping_discount_amount ?? 0;
+	const totalDiscount = voucherDiscount + shippingDiscount;
+
+	console.log("detail", detail);
 
 	return (
 		<>
@@ -188,17 +194,17 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 													/>
 												)}
 											</div>
-											<div className="flex-1 min-w-0">
+											<div className="flex-1 min-w-0 space-y-1">
 												<p className="font-bold text-on-surface text-sm truncate">
 													{item.product_name}
 												</p>
 												{item.components.length > 0 && (
-													<div className="mt-1 flex flew-wrap items-center gap-2">
+													<div className="flex flex-wrap items-center gap-2">
 														{item.components.map(
 															(component) => (
 																<p
 																	key={`${item.id}-${component.variant_id}`}
-																	className="text-[11px] max-w-max text-on-surface-variant leading-snug truncate rounded-md bg-gray-200 px-2 py-1">
+																	className="text-[11px] text-on-surface-variant leading-snug truncate rounded-md bg-gray-200 px-2 py-1">
 																	{
 																		component.component_group
 																	}
@@ -230,6 +236,15 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 								</div>
 							)}
 
+							{/* Voucher Info */}
+							{(detail.voucher_code || totalDiscount > 0) && (
+								<VoucherInfo
+									voucherCode={detail.voucher_code}
+									discountAmount={voucherDiscount}
+									shippingDiscountAmount={shippingDiscount}
+								/>
+							)}
+
 							{/* Price summary */}
 							<div className="bg-surface-container rounded-2xl px-4 py-3 space-y-2">
 								<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">
@@ -250,24 +265,52 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 										)}
 									</span>
 								</div>
-                <div className="flex justify-between text-sm">
+								<div className="flex justify-between text-sm">
 									<span className="text-on-surface-variant">
 										Vận chuyển
 									</span>
 									<span className="font-bold text-on-surface">
-										{formatVND(
-											detail.shipping_fee,
-										)}
+										{formatVND(detail.shipping_fee)}
 									</span>
 								</div>
+								{voucherDiscount > 0 ? (
+									<div className="flex justify-between text-sm">
+										<span className="text-on-surface-variant">
+											Giảm giá voucher
+										</span>
+										<span className="font-bold text-secondary">
+											-{formatVND(voucherDiscount)}
+										</span>
+									</div>
+								) : null}
+								{shippingDiscount > 0 ? (
+									<div className="flex justify-between text-sm">
+										<span className="text-on-surface-variant">
+											Giảm phí vận chuyển
+										</span>
+										<span className="font-bold text-secondary">
+											-{formatVND(shippingDiscount)}
+										</span>
+									</div>
+								) : null}
 								<div className="h-px bg-outline-variant/30" />
 								<div className="flex justify-between">
 									<span className="font-black text-on-surface">
 										Tổng đơn hàng
 									</span>
-									<span className="font-black text-primary text-base">
-										{formatVND(detail.total_price)}
-									</span>
+									<div className="text-right">
+										<span className="font-black text-primary text-base block">
+											{formatVND(detail.total_price)}
+										</span>
+										{totalDiscount > 0 ? (
+											<span className="text-xs text-on-surface-variant line-through">
+												{formatVND(
+													detail.total_price +
+														totalDiscount,
+												)}
+											</span>
+										) : null}
+									</div>
 								</div>
 							</div>
 

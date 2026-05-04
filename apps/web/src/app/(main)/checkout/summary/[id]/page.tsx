@@ -1,14 +1,15 @@
 "use client";
 
-import type { SubmitOrderResponse } from "@/app/api/checkout/submit/route";
+import { SubmitOrderResponse } from "@/app/api/checkout/submit/route";
 import type { ValidateStockResponse } from "@/app/api/checkout/validate-stock/route";
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
+import VoucherComponent from "@/components/voucher/VoucherComponent";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
 import { toast } from "@/lib/toast";
-import { useCartStore, useCheckoutStore } from "@/store";
+import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { ArrowRight, ShoppingBag, Truck } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function SummaryPage() {
@@ -25,10 +26,19 @@ export default function SummaryPage() {
 		removeItem,
 	} = useCartStore();
 	const { shippingCost, shipping, setOrder } = useCheckoutStore();
+	const {
+		discountAmount,
+		shippingDiscountAmount,
+		appliedVoucher,
+		giftItems,
+	} = useDiscountStore();
+
+	console.log("discountAmount", discountAmount);
 
 	const items = mounted ? rawItems : [];
 	const subtotal = mounted ? getSubtotal() : 0;
-	const orderTotal = subtotal + shippingCost;
+	const orderTotal =
+		subtotal + shippingCost - discountAmount - shippingDiscountAmount;
 
 	if (!mounted) {
 		return (
@@ -62,14 +72,16 @@ export default function SummaryPage() {
 						product_name: i.product.name,
 						variant_id: i.variant?.id ?? null,
 						quantity: i.quantity,
-            components: i.components
+						components: i.components,
 					})),
 				}),
 			});
 			const stockData: ValidateStockResponse = await stockRes.json();
 
 			if (!stockData.valid) {
-				setOosProductIds(new Set(stockData.oos_items.map((o) => o.product_id)));
+				setOosProductIds(
+					new Set(stockData.oos_items.map((o) => o.product_id)),
+				);
 				for (const oos of stockData.oos_items) {
 					if (oos.available === 0) {
 						toast.error(`"${oos.product_name}" đã hết hàng`);
@@ -84,32 +96,47 @@ export default function SummaryPage() {
 			}
 			// Clear any previous OOS markers on successful validation
 			setOosProductIds(new Set());
+			console.log("appliedVoucher", appliedVoucher);
+
+			const payloadCheckoutSubmit = {
+				cart_id: cartId,
+				shipping_cost: shippingCost,
+				vouchers: [
+					{
+						voucher_id: appliedVoucher?.voucher_id ?? null,
+						voucher_code: appliedVoucher?.voucher_code ?? null,
+						voucher_discount_amount: discountAmount,
+						shipping_discount_amount: shippingDiscountAmount,
+						voucher_snapshot: appliedVoucher,
+						gift_items_snapshot: giftItems,
+					},
+				],
+				items: items.map((i) => ({
+					product_id: i.product.id,
+					product_name: i.product.name,
+					variant_id: i.variant?.id ?? null,
+					thumbnail:
+						i.variant?.thumbnail ??
+						i.components?.find((c) => c.thumbnail)?.thumbnail ??
+						i.product.thumbnail ??
+						null,
+					quantity: i.quantity,
+					components: i.components?.map((c) => ({
+						variant_id: c.variant_id,
+						variant_name: c.variant_name,
+						component_group: c.component_group,
+						thumbnail: c.thumbnail,
+					})),
+				})),
+			};
+			console.log("payloadCheckoutSubmit", payloadCheckoutSubmit);
 			// ────────────────────────────────────────────────────────────────
 			const res = await fetch("/api/checkout/submit", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					cart_id: cartId,
-					shipping_cost: shippingCost,
-					items: items.map((i) => ({
-						product_id: i.product.id,
-						product_name: i.product.name,
-						variant_id: i.variant?.id ?? null,
-						thumbnail:
-							i.variant?.thumbnail ??
-							i.components?.find((c) => c.thumbnail)?.thumbnail ??
-							i.product.thumbnail ??
-							null,
-						quantity: i.quantity,
-						components: i.components?.map((c) => ({
-							variant_id: c.variant_id,
-							variant_name: c.variant_name,
-							component_group: c.component_group,
-							thumbnail: c.thumbnail,
-						})),
-					})),
-				}),
+				body: JSON.stringify(payloadCheckoutSubmit),
 			});
+			console.log("res", res)
 			const data = await res.json();
 			if (!res.ok) {
 				toast.error(data.error ?? "Không thể tạo đơn hàng");
@@ -174,20 +201,25 @@ export default function SummaryPage() {
 				/>
 			</div>
 
-			{/* ── Shipping Information ──────────────────────────────── */}
-			<div className="bg-surface-container-low rounded-3xl p-4 space-y-4">
-				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-							<Truck className="text-primary text-lg" />
+			{/* ── Voucher / Discount ───────────────────────────────── */}
+			<div>
+				<VoucherComponent subtotal={subtotal} />
+			</div>
+
+			{/* ── Shipping Method ──────────────────────────────────── */}
+			<div className="rounded-3xl overflow-hidden bg-surface-container-low">
+				<div className="px-4 py-4 flex items-center justify-between">
+					<div className="flex items-center gap-3 flex-1">
+						<div className="w-10 h-10 rounded-xl primary-gradient flex items-center justify-center flex-shrink-0">
+							<Truck className="text-white text-lg" />
 						</div>
 						<div>
 							<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-								Phương thức giao hàng
+								Vận chuyển
 							</p>
 							<p className="text-sm font-bold text-on-surface">
 								{shipping?.deliverySpeed === "express"
-									? "Giao hàng hỏa tốc"
+									? "Giao hàng nhanh"
 									: "Giao hàng tiêu chuẩn"}
 							</p>
 						</div>
@@ -228,13 +260,35 @@ export default function SummaryPage() {
 							</span>
 						</div>
 
+						{discountAmount > 0 && (
+							<div className="flex justify-between items-center text-sm">
+								<span className="text-on-surface-variant">
+									Giảm giá voucher
+								</span>
+								<span className="font-bold text-emerald-600">
+									-{formatVND(discountAmount)}
+								</span>
+							</div>
+						)}
+
+						{shippingDiscountAmount > 0 && (
+							<div className="flex justify-between items-center text-sm">
+								<span className="text-on-surface-variant">
+									Giảm phí vận chuyển
+								</span>
+								<span className="font-bold text-emerald-600">
+									-{formatVND(shippingDiscountAmount)}
+								</span>
+							</div>
+						)}
+
 						<div className="h-px bg-outline-variant/30" />
 
-						<div className="flex justify-between items-center">
-							<span className="font-black text-on-surface">
+						<div className="flex justify-between items-center text-base">
+							<span className="font-bold text-on-surface">
 								Tổng cộng
 							</span>
-							<span className="text-2xl font-black text-on-surface">
+							<span className="font-black text-lg text-primary">
 								{formatVND(orderTotal)}
 							</span>
 						</div>
