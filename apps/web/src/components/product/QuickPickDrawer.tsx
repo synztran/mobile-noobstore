@@ -13,7 +13,6 @@ import {
 	type DrawerView,
 } from "@/components/product/quick-pick/quickPickDrawerReducer";
 import Icon from "@/components/ui/Icon";
-import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { formatVND } from "@/lib/currency";
 import type { SelectedComponent } from "@/lib/data";
 import type { CategoryItem } from "@/lib/products-server";
@@ -46,12 +45,15 @@ function AddToCartButton({
 	onClick,
 }: AddToCartButtonProps) {
 	const isLoading = isSubmitting || isFetchingVariants;
-	const isDisabled = isLoading || isInvalidPrice || (!canAdd && hasComponents);
+	const isDisabled =
+		isLoading || isInvalidPrice || (!canAdd && hasComponents);
 	const isActive = !isDisabled;
 
 	function renderLabel() {
 		if (isLoading) {
-			return <span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />;
+			return (
+				<span className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+			);
 		}
 		if (isInvalidPrice) {
 			return "Chưa có giá";
@@ -166,12 +168,11 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				quickPickQuery.data.configuratorByProductId ?? {},
 			activeProduct: isCategoryMode
 				? null
-				: (quickPickQuery.data.activeProduct?.id
+				: ((quickPickQuery.data.activeProduct?.id
 						? quickPickQuery.data.activeProduct
-						: propProduct) ?? null,
+						: propProduct) ?? null),
 			view,
 		});
-
 	}, [isOpen, quickPickQuery.data, isCategoryMode, propProduct, view]);
 
 	useEffect(() => {
@@ -222,7 +223,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 	}, [isOpen, onClose]);
 
 	// ── Prevent body scroll when drawer is open ───────────────────────────
-	usePreventScroll(isOpen);
+	// usePreventScroll(isOpen);
 
 	// ── Active product (product mode uses prop, category mode uses state) ─
 	const activeProduct =
@@ -260,15 +261,19 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 		// Simple variant path
 		const simpleSelectedId = state.selections["__variant__"];
 		if (simpleSelectedId) {
-			const v = activeProduct.variants.find((v) => v.id === simpleSelectedId);
-			if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+			const v = activeProduct.variants.find(
+				(v) => v.id === simpleSelectedId,
+			);
+			if (v?.is_pre_order && v.pre_order_config)
+				return v.pre_order_config;
 		}
 		// Component group path — return config of first pre-order selected variant
 		for (const group of state.groups) {
 			const selectedId = state.selections[group.component_group];
 			if (!selectedId) continue;
 			const v = group.variants.find((gv) => gv.id === selectedId);
-			if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+			if (v?.is_pre_order && v.pre_order_config)
+				return v.pre_order_config;
 		}
 		return null;
 	}, [activeProduct, state.selections, state.groups]);
@@ -292,7 +297,8 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 
 		// Resolve the selected simple variant early — needed for variant-level stock check
 		const selectedSimpleVariant = !hasComponents
-			? (activeProduct.variants.find((v) => v.id === selectedVariantId) ?? null)
+			? (activeProduct.variants.find((v) => v.id === selectedVariantId) ??
+				null)
 			: null;
 
 		// ── Stock validation ─────────────────────────────────────────────
@@ -331,7 +337,8 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 		} else {
 			// For standard products: check variant-level stock
 			const availableStock =
-				selectedSimpleVariant?.stock_quantity ?? activeProduct.stock_quantity;
+				selectedSimpleVariant?.stock_quantity ??
+				activeProduct.stock_quantity;
 			const existingCartItem = cartItems.find(
 				(i) =>
 					i.product.id === activeProduct.id &&
@@ -359,7 +366,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 						component_group: group.component_group,
 						price_adjustment: v.price_adjustment,
 						thumbnail: v.thumbnail,
-            is_pre_order: v.is_pre_order ?? false,
+						is_pre_order: v.is_pre_order ?? false,
 					},
 				];
 			},
@@ -478,7 +485,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 	);
 
 	const renderConfigurator = () => (
-		<div className="space-y-5">
+		<div className="min-h-0 flex flex-col gap-3">
 			{/* Selected product header */}
 			{activeProduct && (
 				<div className="flex gap-3 items-center bg-surface-container rounded-2xl p-3">
@@ -497,40 +504,47 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 					</div>
 				</div>
 			)}
-			<ProductConfigurator
-				groups={state.groups}
-				variants={activeProduct?.variants ?? []}
-				selections={state.selections}
-				loadingConfigurator={state.loadingConfigurator}
-				basePrice={activeProduct?.base_price}
-				onSelect={(group, variantId) =>
-					dispatch({ type: "SELECT", group, variantId })
-				}
-			/>
-			{/* Pre-order info banner — shown when a pre-order variant is selected */}
-			{selectedPreOrderConfig && (
-				<div className="flex items-start gap-3 bg-violet-500/10 border border-violet-500/30 rounded-2xl p-4">
-					<Icon name="schedule" className="text-violet-400 text-xl mt-0.5 shrink-0" />
-					<div className="space-y-0.5">
-						<p className="text-xs font-black uppercase tracking-widest text-violet-400">
-							Sản phẩm đặt trước
-						</p>
-						<p className="text-sm font-bold text-on-surface">
-							Thời gian giao hàng dự kiến: {selectedPreOrderConfig.estimate}
-						</p>
-						{selectedPreOrderConfig.available_date && (
-							<p className="text-xs text-on-surface-variant">
-								Dự kiến có hàng: {selectedPreOrderConfig.available_date}
+			<div className="min-h-0 flex flex-col gap-4 pb-2">
+				<ProductConfigurator
+					groups={state.groups}
+					variants={activeProduct?.variants ?? []}
+					selections={state.selections}
+					loadingConfigurator={state.loadingConfigurator}
+					basePrice={activeProduct?.base_price}
+					onSelect={(group, variantId) =>
+						dispatch({ type: "SELECT", group, variantId })
+					}
+				/>
+				{/* Pre-order info banner — shown when a pre-order variant is selected */}
+				{selectedPreOrderConfig && (
+					<div className="flex items-start gap-3 bg-violet-500/10 border border-violet-500/30 rounded-2xl p-4">
+						<Icon
+							name="schedule"
+							className="text-violet-400 text-xl mt-0.5 shrink-0"
+						/>
+						<div className="space-y-0.5">
+							<p className="text-xs font-black uppercase tracking-widest text-violet-400">
+								Sản phẩm đặt trước
 							</p>
-						)}
-						{selectedPreOrderConfig.notes && (
-							<p className="text-xs text-on-surface-variant">
-								{selectedPreOrderConfig.notes}
+							<p className="text-sm font-bold text-on-surface">
+								Thời gian giao hàng dự kiến:{" "}
+								{selectedPreOrderConfig.estimate}
 							</p>
-						)}
+							{selectedPreOrderConfig.available_date && (
+								<p className="text-xs text-on-surface-variant">
+									Dự kiến có hàng:{" "}
+									{selectedPreOrderConfig.available_date}
+								</p>
+							)}
+							{selectedPreOrderConfig.notes && (
+								<p className="text-xs text-on-surface-variant">
+									{selectedPreOrderConfig.notes}
+								</p>
+							)}
+						</div>
 					</div>
-				</div>
-			)}
+				)}
+			</div>
 		</div>
 	);
 
@@ -555,7 +569,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 			{/* Drawer */}
 			<div
 				className={clsx(
-					"fixed left-0 right-0 z-[999] bg-surface rounded-t-3xl transition-all duration-300 ease-out max-h-[90dvh] flex flex-col",
+					"fixed left-0 right-0 z-[999] bg-surface rounded-t-3xl transition-all duration-300 ease-out max-h-[80dvh] flex flex-col",
 					isOpen ? "bottom-0" : "-bottom-full",
 				)}>
 				{/* Handle */}
@@ -564,7 +578,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				</div>
 
 				{/* Header */}
-				<div className="flex-shrink-0 px-4 pt-2 pb-3">
+				<div className="flex-shrink-0 px-4 py-2">
 					<div className="flex items-center justify-between gap-3">
 						{/* Back button (category mode → configurator view) */}
 						{isCategoryMode && state.view === "configurator" && (
@@ -599,7 +613,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				</div>
 
 				{/* Scrollable body */}
-				<div className="overflow-y-auto flex-1 px-4 pb-4 hide-scrollbar">
+				<div className="flex-1 px-4 pb-4 min-h-0 max-h-full overflow-y-auto overscroll-contain">
 					{isCategoryMode && state.view === "product-list"
 						? renderProductList()
 						: renderConfigurator()}
@@ -607,7 +621,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 
 				{/* Sticky footer (only in configurator view) */}
 				{state.view === "configurator" && (
-					<div className="flex-shrink-0 px-4 pb-8 pt-4 border-t border-outline-variant/20 flex items-center gap-8">
+					<div className="flex-shrink-0 px-4 py-4 border-t border-outline-variant/20 flex items-center gap-8">
 						<div>
 							<p className="text-base text-on-surface-variant font-semibold">
 								Tạm tính

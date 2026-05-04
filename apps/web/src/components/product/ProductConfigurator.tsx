@@ -5,7 +5,6 @@ import type { ShopVariant } from "@/app/api/products/route";
 import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
-import { group } from "console";
 import Image from "next/image";
 
 // ─── Thumbnail ────────────────────────────────────────────────────────────────
@@ -87,7 +86,7 @@ export function ProductConfigurator({
 	}
 
 	return (
-		<div className="flex flex-wrap gap-4 overflow-y-auto">
+		<div className="flex flex-wrap gap-4 min-h-0">
 			{/* Component group selectors */}
 			{groups.map((group) => (
 				<div key={group.component_group} className={`space-y-3`}>
@@ -151,11 +150,11 @@ export function ProductConfigurator({
 											</p>
 										) : null}
 									</div>
-                  {v.sale_price_percent ? (
-                    <strong className="absolute -top-2 right-1 text-[10px] rounded-md bg-red-600 text-white px-2 py-0.25">
-                      Giảm {v.sale_price_percent}%
-                    </strong>
-                  ) : null}
+									{v.sale_price_percent ? (
+										<strong className="absolute -top-2 right-1 text-[10px] rounded-md bg-red-600 text-white px-2 py-0.25">
+											Giảm {v.sale_price_percent}%
+										</strong>
+									) : null}
 								</button>
 							);
 						})}
