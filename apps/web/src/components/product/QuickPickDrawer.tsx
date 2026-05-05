@@ -13,6 +13,7 @@ import {
 	type DrawerView,
 } from "@/components/product/quick-pick/quickPickDrawerReducer";
 import Icon from "@/components/ui/Icon";
+import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { formatVND } from "@/lib/currency";
 import type { SelectedComponent } from "@/lib/data";
 import type { CategoryItem } from "@/lib/products-server";
@@ -223,7 +224,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 	}, [isOpen, onClose]);
 
 	// ── Prevent body scroll when drawer is open ───────────────────────────
-	// usePreventScroll(isOpen);
+	usePreventScroll(isOpen);
 
 	// ── Active product (product mode uses prop, category mode uses state) ─
 	const activeProduct =
@@ -613,7 +614,9 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 				</div>
 
 				{/* Scrollable body */}
-				<div className="flex-1 px-4 pb-4 min-h-0 max-h-full overflow-y-auto overscroll-contain">
+				<div
+					data-allow-scroll
+					className="flex-1 px-4 pb-4 min-h-0 max-h-full overflow-y-auto overscroll-contain">
 					{isCategoryMode && state.view === "product-list"
 						? renderProductList()
 						: renderConfigurator()}

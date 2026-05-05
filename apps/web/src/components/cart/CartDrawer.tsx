@@ -44,15 +44,17 @@ const CartItemRow = memo(function CartItemRow({
 	);
 
 	return (
-		<div className="relative flex gap-2 items-center bg-surface-container-low rounded-3xl p-2">
+		<div className="relative flex gap-2 items-start bg-surface-container-low rounded-3xl p-2">
 			{/* Remove button */}
 			<button
-				onClick={() => onRemove(item.product.id, item.variant?.id ?? null)}
+				onClick={() =>
+					onRemove(item.product.id, item.variant?.id ?? null)
+				}
 				className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-400 flex items-center justify-center active:scale-90 transition-transform z-10">
 				<Trash className="text-white" size={14} />
 			</button>
 			{/* Thumbnail */}
-			<div className="w-20 h-20 bg-surface-container flex-shrink-0 relative">
+			<div className="w-20 h-20 bg-surface-container flex-shrink-0 relative mt-2">
 				{item.product.thumbnail ? (
 					<Image
 						src={item.product.thumbnail}
@@ -70,7 +72,7 @@ const CartItemRow = memo(function CartItemRow({
 					</div>
 				)}
 				{isPreOrderComponent && (
-					<span className="absolute max-w-max text-nowrap -top-2 left-1/2 transform -translate-x-1/2 text-[9px] font-black uppercase text-white bg-violet-500 rounded-sm px-1 py-0.5">
+					<span className="absolute min-w-16 text-center text-nowrap -top-2 left-1/2 transform -translate-x-1/2 text-[8px] font-black uppercase text-white bg-violet-500 rounded-sm px-1 py-0.5 truncate">
 						Pre-order
 					</span>
 				)}
@@ -80,7 +82,7 @@ const CartItemRow = memo(function CartItemRow({
 					{item.product.name}
 				</p>
 				{item.variant && (
-					<p className="text-sm text-on-surface-variant font-semibold tracking-wide mt-0.5">
+					<p className="text-xs text-on-surface-variant font-semibold tracking-wide mt-0.5">
 						{item.variant.variant_name}
 					</p>
 				)}
@@ -95,7 +97,7 @@ const CartItemRow = memo(function CartItemRow({
 						{item.components.map((c) => (
 							<span
 								key={c.variant_id}
-								className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-on-surface-variant rounded-full px-2 py-0.5">
+								className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-gray-200 text-on-surface-variant rounded-full px-2 py-0.5">
 								{c.component_group}:{" "}
 								<strong>{c.variant_name}</strong>
 							</span>
@@ -103,7 +105,7 @@ const CartItemRow = memo(function CartItemRow({
 					</div>
 				)}
 				<div className="flex items-center justify-between mt-2">
-					<div className="flex items-center gap-3 bg-surface-container rounded-full px-3 py-1.5">
+					<div className="flex items-center gap-3 bg-gray-200 rounded-full px-3 py-1.5">
 						<button
 							onClick={() => onMinus(item)}
 							className="text-on-surface font-bold text-base leading-none active:scale-90 transition-transform">
@@ -118,7 +120,9 @@ const CartItemRow = memo(function CartItemRow({
 							+
 						</button>
 					</div>
-					<p className="text-primary font-black">{formatVND(unitTotal)}</p>
+					<p className="text-primary font-black">
+						{formatVND(unitTotal)}
+					</p>
 				</div>
 			</div>
 		</div>
@@ -133,10 +137,16 @@ export function CartDrawer() {
 	const { items, isOpen, closeCart, updateQty, removeItem, total } =
 		useCartStore();
 
-	const visibleItems = useMemo(() => (mounted ? items : []), [mounted, items]);
+	const visibleItems = useMemo(
+		() => (mounted ? items : []),
+		[mounted, items],
+	);
 	// `total` is a stable fn ref in Zustand — `items` must be in deps so this
 	// recomputes whenever the cart contents change.
-	const subtotal = useMemo(() => (mounted ? total() : 0), [mounted, total, items]);
+	const subtotal = useMemo(
+		() => (mounted ? total() : 0),
+		[mounted, total, items],
+	);
 	const drawerOpen = mounted && isOpen;
 
 	const [pendingRemoval, setPendingRemoval] = useState<{
@@ -224,8 +234,8 @@ export function CartDrawer() {
 
 			{/* Drawer */}
 			<div
-				className={`fixed left-0 right-0 z-[999] bg-surface rounded-t-5xl max-h-[80dvh] h-full flex flex-col transition-all duration-250 ease-out ${
-					drawerOpen ? "top-[20vh]" : "top-[110vh]"
+				className={`fixed left-0 right-0 z-[999] bg-surface rounded-t-5xl max-h-[90dvh] h-full flex flex-col transition-all duration-250 ease-out ${
+					drawerOpen ? "top-[10vh]" : "top-[110vh]"
 				}`}>
 				{/* Handle */}
 				<div className="flex justify-center pt-3 pb-2">
@@ -233,7 +243,7 @@ export function CartDrawer() {
 				</div>
 
 				{/* Header */}
-				<div className="flex justify-between items-center px-6 py-4">
+				<div className="flex justify-between items-center px-4 py-2">
 					<h2 className="text-xl font-black tracking-tight text-on-surface">
 						Giỏ hàng của bạn
 					</h2>
@@ -245,17 +255,22 @@ export function CartDrawer() {
 				</div>
 
 				{/* Pre-order notice */}
-				{hasPreOrderItem && (
-					<div className="mx-6 mb-2 flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-2xl px-4 py-2.5">
-						<Icon name="schedule" className="text-violet-400 text-base shrink-0" />
+				{/* {hasPreOrderItem && (
+					<div className="mx-4 mb-2 flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-2xl px-4 py-2.5">
+						<Icon
+							name="schedule"
+							className="text-violet-400 text-base shrink-0"
+						/>
 						<p className="text-xs font-black uppercase tracking-widest text-violet-400">
 							Giỏ hàng có sản phẩm đặt trước
 						</p>
 					</div>
-				)}
+				)} */}
 
 				{/* Items */}
-				<div className="flex-1 overflow-y-auto px-6 space-y-4 pb-4">
+				<div
+					data-allow-scroll
+					className="flex-1 overflow-y-auto px-4 space-y-4 pb-4 overscroll-contain min-h-0 max-h-full">
 					{visibleItems.length === 0 ? (
 						<div className="text-center py-12">
 							<Icon
@@ -301,12 +316,12 @@ export function CartDrawer() {
 				{/* Footer */}
 				{visibleItems.length > 0 && (
 					<div
-						className="px-6 pt-4 pb-8 border-t border-outline-variant/20 bg-surface"
+						className="px-4 pt-4 border-t border-outline-variant/20 bg-surface space-y-2"
 						style={{
 							paddingBottom:
 								"max(2rem, env(safe-area-inset-bottom))",
 						}}>
-						<div className="space-y-2 mb-4">
+						<div className="space-y-1">
 							<div className="flex justify-between items-center">
 								<span className="text-on-surface-variant text-sm">
 									Tạm tính
@@ -315,15 +330,15 @@ export function CartDrawer() {
 									{formatVND(subtotal)}
 								</span>
 							</div>
-							<div className="flex justify-between items-center">
+							{/* <div className="flex justify-between items-center">
 								<span className="text-on-surface-variant text-sm">
 									Phí vận chuyển dự kiến
 								</span>
 								<span className="font-semibold text-secondary text-xs">
 									Chi tiết ở bước thanh toán
 								</span>
-							</div>
-							<div className="flex justify-between pt-2">
+							</div> */}
+							<div className="flex justify-between">
 								<span className="font-bold text-on-surface">
 									Tổng cộng
 								</span>
@@ -336,14 +351,14 @@ export function CartDrawer() {
 						<button
 							onClick={handleCheckout}
 							disabled={checkingOut}
-							className="btn w-full primary-gradient text-white border-0 rounded-full font-bold tracking-widest uppercase py-4 h-auto text-base shadow-ambient-sm active:scale-[0.98] transition-transform disabled:opacity-70 disabled:scale-100">
+							className="btn btn-md w-full primary-gradient text-white border-0 rounded-full font-bold tracking-widest uppercase !h-[40px] !min-h-[40px] text-xs shadow-ambient-sm active:scale-[0.98] transition-transform disabled:opacity-70 disabled:scale-100">
 							{checkingOut ? (
 								<span className="loading loading-spinner loading-sm" />
 							) : (
 								"THANH TOÁN →"
 							)}
 						</button>
-						<p className="text-center text-xs text-on-surface-variant mt-3 font-semibold uppercase tracking-widest">
+						<p className="text-center text-[10px] text-on-surface-variant mt-2 font-semibold uppercase tracking-widest">
 							Thanh toán bảo mật & mã hóa
 						</p>
 					</div>

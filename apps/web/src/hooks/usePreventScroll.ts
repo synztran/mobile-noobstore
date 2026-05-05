@@ -13,19 +13,28 @@ export function usePreventScroll(isOpen: boolean) {
 		// Prevent scroll on body (desktop)
 		document.body.style.overflow = "hidden";
 
-		// Prevent touchmove on body (iOS)
+		// Prevent background touch scroll on iOS, but keep drawer/content scrollable.
 		const preventScroll = (e: TouchEvent) => {
-			e.preventDefault();
+			const target = e.target as Element | null;
+			const isInsideScrollableArea = Boolean(
+				target?.closest(
+					"[data-allow-scroll], .overflow-y-auto, .overflow-auto",
+				),
+			);
+
+			if (!isInsideScrollableArea) {
+				e.preventDefault();
+			}
 		};
 
-		document.body.addEventListener("touchmove", preventScroll, {
+		document.addEventListener("touchmove", preventScroll, {
 			passive: false,
 		});
 
 		// Cleanup
 		return () => {
 			document.body.style.overflow = "";
-			document.body.removeEventListener("touchmove", preventScroll);
+			document.removeEventListener("touchmove", preventScroll);
 		};
 	}, [isOpen]);
 }

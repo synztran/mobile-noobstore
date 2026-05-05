@@ -11,7 +11,9 @@ const API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 async function sendMessage(text: string): Promise<void> {
 	if (!BOT_TOKEN || !CHAT_ID) {
-		console.warn("[Telegram] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set.");
+		console.warn(
+			"[Telegram] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set.",
+		);
 		return;
 	}
 
@@ -55,7 +57,7 @@ export async function notifyNewUserRegistered(
 		`👤 <b>Họ tên:</b> ${escapeHtml(payload.fullName)}`,
 		`📧 <b>Email:</b> ${escapeHtml(payload.email)}`,
 		`🕐 <b>Thời gian:</b> ${time}`,
-    `🛜 <b>Nguồn:</b> mobile web`,
+		`🛜 <b>Nguồn:</b> mobile web`,
 	].join("\n");
 
 	await sendMessage(text);
@@ -66,27 +68,39 @@ export async function notifyNewUserRegistered(
  * Notify when a new order is placed.
  */
 export async function notifyNewOrder(
-  orderNumber: string,
-  customerName: string,
-  totalPrice: number,
-  orderTime?: string,
-  itemCount?: number,
+	orderNumber: string,
+	customerName: string,
+	totalPrice: number,
+	orderTime?: string,
+	itemCount?: number,
+	vouchers?: Array<{
+		voucher_code?: string | null;
+		voucher_discount_amount?: number;
+		shipping_discount_amount?: number;
+	}>,
 ): Promise<void> {
-  const time =
-    orderTime ??
-    new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+	const time =
+		orderTime ??
+		new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 
-  const text = [
-    `🛒 <b>Đơn hàng mới! Vui lòng kiểm tra</b>`,
-    ``,
-    `📦 <b>Mã đơn:</b> ${escapeHtml(orderNumber)}`,
-    `👤 <b>Khách hàng:</b> ${escapeHtml(customerName)}`,
-    `💰 <b>Tổng tiền:</b> ${totalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}`,
-    `🕐 <b>Thời gian:</b> ${time}`,
-    itemCount !== undefined ? `📦 <b>Số lượng sản phẩm:</b> ${itemCount}` : undefined,
-  ].filter(Boolean).join("\n");
+	const text = [
+		`🛒 <b>Đơn hàng mới! Vui lòng kiểm tra</b>`,
+		``,
+		`📦 <b>Mã đơn:</b> ${escapeHtml(orderNumber)}`,
+		`👤 <b>Khách hàng:</b> ${escapeHtml(customerName)}`,
+		`💰 <b>Tổng tiền:</b> ${totalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}`,
+		`🕐 <b>Thời gian:</b> ${time}`,
+		itemCount !== undefined
+			? `📦 <b>Số lượng sản phẩm:</b> ${itemCount}`
+			: undefined,
+		vouchers && vouchers.length > 0
+			? `🏷️ <b>Voucher:</b> ${vouchers.map((v) => `${v.voucher_code ?? ""} (-${v.voucher_discount_amount?.toLocaleString("vi-VN", { style: "currency", currency: "VND" })})`).join(", ")}`
+			: undefined,
+	]
+		.filter(Boolean)
+		.join("\n");
 
-  await sendMessage(text);
+	await sendMessage(text);
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────

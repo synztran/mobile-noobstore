@@ -9,6 +9,24 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 export { useDiscountStore } from "./useDiscount";
 
+function generateId(): string {
+	const globalCrypto = globalThis.crypto;
+
+	if (typeof globalCrypto?.randomUUID === "function") {
+		return globalCrypto.randomUUID();
+	}
+
+	if (typeof globalCrypto?.getRandomValues === "function") {
+		const bytes = globalCrypto.getRandomValues(new Uint8Array(16));
+		bytes[6] = (bytes[6] & 0x0f) | 0x40;
+		bytes[8] = (bytes[8] & 0x3f) | 0x80;
+		const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
+		return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10, 16).join("")}`;
+	}
+
+	return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 interface CartStore {
 	items: CartItem[];
 	cartId: string | null;
@@ -41,7 +59,7 @@ export const useCartStore = create<CartStore>()(
 
 			addItem: (product, variant, components) => {
 				set((state) => {
-					const cartId = state.cartId ?? crypto.randomUUID();
+					const cartId = state.cartId ?? generateId();
 					// Kit items (have components) are always standalone — never merged.
 					const isKit = (components?.length ?? 0) > 0;
 					const existing = !isKit

@@ -189,20 +189,32 @@ export async function POST(req: NextRequest) {
 		);
 
 		const vouchers = body.vouchers ?? [];
-		const primaryVoucher =
-			vouchers.find(
-				(v) =>
-					Boolean(v.voucher_id) ||
-					Boolean(v.voucher_code) ||
-					Boolean(v.voucher_snapshot) ||
-					Boolean(v.gift_items_snapshot),
-			) ?? vouchers[0];
-		const requestedVoucherDiscount = vouchers.reduce(
-			(sum, v) => sum + toNumber(v.voucher_discount_amount, 0),
+		const appliedVouchers = vouchers.filter(
+			(v) =>
+				Boolean(v.voucher_id) ||
+				Boolean(v.voucher_code) ||
+				Boolean(v.voucher_snapshot) ||
+				Boolean(v.gift_items_snapshot) ||
+				toNumber(v.voucher_discount_amount, 0) > 0 ||
+				toNumber(v.shipping_discount_amount, 0) > 0,
+		);
+		const usedVoucherCount = appliedVouchers.length;
+		const hasMultipleVouchers = usedVoucherCount > 1;
+
+		if (hasMultipleVouchers) {
+			return NextResponse.json(
+				{ error: "Only one voucher can be applied per order" },
+				{ status: 400 },
+			);
+		}
+
+		const primaryVoucher = appliedVouchers[0] ?? vouchers[0];
+		const requestedVoucherDiscount = toNumber(
+			primaryVoucher?.voucher_discount_amount,
 			0,
 		);
-		const requestedShippingDiscount = vouchers.reduce(
-			(sum, v) => sum + toNumber(v.shipping_discount_amount, 0),
+		const requestedShippingDiscount = toNumber(
+			primaryVoucher?.shipping_discount_amount,
 			0,
 		);
 
@@ -344,7 +356,7 @@ export async function POST(req: NextRequest) {
 			}
 		}
 
-		// Fire-and-forget Telegram notification — must not block the response
+		// Send Telegram notification without breaking checkout on failure
 		const customerName =
 			user?.user_metadata?.full_name ?? user?.email ?? "Khách";
 		const itemCount = body.items.reduce((sum, i) => sum + i.quantity, 0);
@@ -354,9 +366,8 @@ export async function POST(req: NextRequest) {
 			recalculatedTotal,
 			undefined,
 			itemCount,
-		).catch(() => {
-			// Notification failure must never break the order flow
-		});
+			body.vouchers,
+		);
 
 		return NextResponse.json({
 			order_id: result.order_id,
