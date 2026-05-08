@@ -29,7 +29,7 @@ export function AddToCartButton({
 	const getButtonLabel = () => {
 		if (isLoading) return "Đang thêm sản phẩm...";
 		if (missingVariantSelection || missingConfiguration)
-			return "Vui lòng lựa chọn";
+			return "Vui lòng chọn";
 		if (isOutOfStock) return "Hết hàng";
 		if (isPreOrder) return "ĐẶT TRƯỚC";
 		return "Thêm vào giỏ hàng";

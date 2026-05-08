@@ -49,6 +49,7 @@ export interface ShopProduct {
 	id: string;
 	slug: string;
 	name: string;
+	brand: string | null;
 	category: string;
 	description: string;
 	base_price: number;

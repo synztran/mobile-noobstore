@@ -103,6 +103,87 @@ export async function notifyNewOrder(
 	await sendMessage(text);
 }
 
+/**
+ * Notify store owner that unpaid orders were cancelled after 24h timeout.
+ */
+export async function notifyOrdersCancelled(
+	cancelledCount: number,
+	orderIds: string[],
+): Promise<void> {
+	if (cancelledCount === 0) return;
+
+	const time = new Date().toLocaleString("vi-VN", {
+		timeZone: "Asia/Ho_Chi_Minh",
+	});
+
+	const text = [
+		`🚫 <b>Đơn hàng bị huỷ do quá hạn thanh toán</b>`,
+		``,
+		`📦 <b>Số đơn bị huỷ:</b> ${cancelledCount}`,
+		`🕐 <b>Thời gian:</b> ${time}`,
+		cancelledCount > 0
+			? `🔢 <b>Mã đơn:</b> ${orderIds.map(escapeHtml).join(", ")}`
+			: undefined,
+	]
+		.filter(Boolean)
+		.join("\n");
+
+	await sendMessage(text);
+}
+
+/**
+ * Notify store owner and customer about a pending unpaid order (reminder).
+ */
+export async function notifyPaymentReminder(
+	orderNumber: string,
+	totalPrice: number,
+	hoursElapsed: number,
+): Promise<void> {
+	const time = new Date().toLocaleString("vi-VN", {
+		timeZone: "Asia/Ho_Chi_Minh",
+	});
+
+	const text = [
+		`⏰ <b>Nhắc nhở thanh toán đơn hàng</b>`,
+		``,
+		`📦 <b>Mã đơn:</b> ${escapeHtml(orderNumber)}`,
+		`💰 <b>Tổng tiền:</b> ${totalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}`,
+		`⌛ <b>Đã tạo:</b> ${hoursElapsed} giờ trước`,
+		`🕐 <b>Thời gian nhắc:</b> ${time}`,
+		`⚠️ Đơn hàng sẽ tự động huỷ sau 24 giờ nếu chưa thanh toán.`,
+	].join("\n");
+
+	await sendMessage(text);
+}
+
+/**
+ * Sends a single batch Telegram message listing all orders that are
+ * missing payment. Called once per job run after per-customer emails are sent.
+ */
+export async function notifyPendingPaymentBatch(
+	orderNumbers: string[],
+): Promise<void> {
+	const time = new Date().toLocaleString("vi-VN", {
+		timeZone: "Asia/Ho_Chi_Minh",
+	});
+
+	const orderList = orderNumbers
+		.map((n) => `  • ${escapeHtml(n)}`)
+		.join("\n");
+
+	const text = [
+		`⏰ <b>Nhắc nhở thanh toán — ${orderNumbers.length} đơn hàng</b>`,
+		``,
+		`Các đơn hàng chưa thanh toán (12–20 giờ):`,
+		orderList,
+		``,
+		`🕐 <b>Thời gian:</b> ${time}`,
+		`⚠️ Đơn hàng sẽ tự huỷ sau 24 giờ nếu chưa thanh toán.`,
+	].join("\n");
+
+	await sendMessage(text);
+}
+
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
 function escapeHtml(str: string): string {

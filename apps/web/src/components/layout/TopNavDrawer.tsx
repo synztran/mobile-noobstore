@@ -86,6 +86,27 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
 								Tài khoảng người dùng
 							</Link>
 						</li>
+						<li>
+							<Link
+								href="/wishlist"
+								onClick={onClose}
+								className="flex items-center gap-3 p-2 rounded hover:bg-gray-100">
+								<Icon name="favorite" className="text-[18px]" />
+								Sản phẩm yêu thích
+							</Link>
+						</li>
+						<li>
+							<Link
+								href="/profile/notifications"
+								onClick={onClose}
+								className="flex items-center gap-3 p-2 rounded hover:bg-gray-100">
+								<Icon
+									name="notifications"
+									className="text-[18px]"
+								/>
+								Thông báo
+							</Link>
+						</li>
 					</ul>
 				</nav>
 			</aside>

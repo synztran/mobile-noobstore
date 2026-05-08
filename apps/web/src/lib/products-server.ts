@@ -4,8 +4,11 @@
  */
 
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
-import type { ProductDetail, ShopVariantDetail } from "@/app/api/products/[slug]/route";
-import type { PreOrderConfig, ShopProduct } from "@/app/api/products/route";
+import type {
+	ProductDetail,
+	ShopVariantDetail,
+} from "@/app/api/products/[slug]/route";
+import type { ShopProduct } from "@/app/api/products/route";
 import { getProductListByFilters } from "@/lib/product-query-service";
 import { getPublicClient } from "@/lib/supabase/public";
 
@@ -54,6 +57,7 @@ type RawListRow = {
 	id: string;
 	slug: string;
 	name: string;
+	brand: string | null;
 	description: string;
 	base_price: number;
 	stock_quantity: number;
@@ -76,7 +80,9 @@ function shapeRow(p: RawListRow): ShopProduct {
 		thumbnail: v.thumbnail,
 		stock_quantity: Number(v.stock_quantity ?? 0),
 		is_pre_order: v.is_pre_order ?? false,
-		pre_order_config: (v.pre_order_config as import("@/app/api/products/route").ShopVariant["pre_order_config"]) ?? null,
+		pre_order_config:
+			(v.pre_order_config as import("@/app/api/products/route").ShopVariant["pre_order_config"]) ??
+			null,
 	}));
 
 	const minPrice =
@@ -129,6 +135,7 @@ function shapeRow(p: RawListRow): ShopProduct {
 		id: p.id,
 		slug: p.slug,
 		name: p.name,
+		brand: p.brand,
 		category: p.categories?.name ?? "Unknown",
 		description: p.description ?? "",
 		base_price: Number(p.base_price),
@@ -352,19 +359,34 @@ export async function getQuickPickData(
 
 					const group = groups.get(row.component_group)!;
 					for (const v of row.products?.product_variants ?? []) {
-            const sale_price_percent = Number(v.price_adjustment) < 0
-              ? Math.round(
-                  (1 - (Number(v.price_adjustment) + Number(activeProduct?.base_price ?? 0)) / Number(activeProduct?.base_price ?? 1)) * 100,
-                )
-              : undefined;
+						const sale_price_percent =
+							Number(v.price_adjustment) < 0
+								? Math.round(
+										(1 -
+											(Number(v.price_adjustment) +
+												Number(
+													activeProduct?.base_price ??
+														0,
+												)) /
+												Number(
+													activeProduct?.base_price ??
+														1,
+												)) *
+											100,
+									)
+								: undefined;
 						group.variants.push({
 							id: v.id,
 							variant_name: v.variant_name,
 							price_adjustment: Number(v.price_adjustment),
 							thumbnail: v.thumbnail ?? null,
 							stock_quantity: Number(v.stock_quantity ?? 0),
-              sale_price_percent,								is_pre_order: v.is_pre_order ?? false,
-								pre_order_config: (v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ?? null,						});
+							sale_price_percent,
+							is_pre_order: v.is_pre_order ?? false,
+							pre_order_config:
+								(v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ??
+								null,
+						});
 					}
 				}
 
@@ -396,7 +418,11 @@ export async function getQuickPickData(
 			// Keep sold_out tag in sync
 			product.tags = product.tags.filter((t) => t.value !== "sold_out");
 			if (product.stock_quantity === 0) {
-				product.tags.unshift({ id: 1, label: "Hết hàng", value: "sold_out" });
+				product.tags.unshift({
+					id: 1,
+					label: "Hết hàng",
+					value: "sold_out",
+				});
 			}
 		}
 
@@ -536,7 +562,9 @@ export async function getProductDetail(slug: string): Promise<{
 					stock_quantity: Number(v.stock_quantity ?? 0),
 					sale_price_percent: undefined,
 					is_pre_order: v.is_pre_order ?? false,
-					pre_order_config: (v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ?? null,
+					pre_order_config:
+						(v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ??
+						null,
 				});
 			}
 		}
@@ -561,7 +589,7 @@ export async function getProductBySlug(
 		const { data: product, error } = await getPublicClient()
 			.from("products")
 			.select(
-			`id, slug, name, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used,
+				`id, slug, name, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used,
 			 categories(id, name),
 			 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config),
 				 product_components!product_components_parent_product_id_fkey(
@@ -594,7 +622,9 @@ export async function getProductBySlug(
 			thumbnail: v.thumbnail,
 			stock_quantity: Number(v.stock_quantity ?? 0),
 			is_pre_order: v.is_pre_order ?? false,
-			pre_order_config: (v.pre_order_config as ShopVariantDetail["pre_order_config"]) ?? null,
+			pre_order_config:
+				(v.pre_order_config as ShopVariantDetail["pre_order_config"]) ??
+				null,
 		}));
 
 		const minPrice =

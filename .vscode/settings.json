@@ -3,6 +3,7 @@
     "yarn turbo": true,
     "git push": true,
     "mkdir": true,
-    "mv": true
+    "mv": true,
+    "yarn workspace": true
   }
 }

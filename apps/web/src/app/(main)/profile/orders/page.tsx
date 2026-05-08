@@ -2,6 +2,10 @@
 
 import type { OrderSummary } from "@/app/api/user/orders/route";
 import { OrderDetailDrawer } from "@/components/orders/OrderDetailDrawer";
+import {
+	OrderStatusTabs,
+	type OrderStatusTabOption,
+} from "@/components/orders/OrderStatusTabs";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { formatVND } from "@/lib/currency";
 import {
@@ -9,6 +13,7 @@ import {
 	CheckCircle2,
 	CircleX,
 	HourglassIcon,
+	Loader2,
 	PackageCheck,
 	ReceiptText,
 	Search,
@@ -17,7 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const STATUS_CONFIG: Record<
 	string,
@@ -40,8 +45,26 @@ const STATUS_CONFIG: Record<
 		color: "text-emerald-600",
 		bg: "bg-emerald-50",
 	},
+	confirmed: {
+		label: "Đã xác nhận",
+		Icon: CheckCircle2,
+		color: "text-emerald-600",
+		bg: "bg-emerald-50",
+	},
+	preparing: {
+		label: "Đang chuẩn bị",
+		Icon: PackageCheck,
+		color: "text-sky-700",
+		bg: "bg-sky-50",
+	},
 	shipped: {
 		label: "Đang vận chuyển",
+		Icon: Truck,
+		color: "text-blue-600",
+		bg: "bg-blue-50",
+	},
+	delivering: {
+		label: "Đang giao",
 		Icon: Truck,
 		color: "text-blue-600",
 		bg: "bg-blue-50",
@@ -59,6 +82,15 @@ const STATUS_CONFIG: Record<
 		bg: "bg-error/5",
 	},
 };
+
+const STATUS_TABS: OrderStatusTabOption[] = [
+	{ value: "all", label: "Tất cả" },
+	{ value: "pending", label: "Chờ xác nhận" },
+	{ value: "confirmed", label: "Đã xác nhận" },
+	{ value: "delivering", label: "Đang giao" },
+	{ value: "delivered", label: "Đã giao" },
+	{ value: "cancelled", label: "Đã hủy" },
+];
 
 function StatusBadge({ status }: { status: string }) {
 	const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
@@ -93,16 +125,47 @@ function OrderSkeleton() {
 	);
 }
 
+function LoadMoreSkeleton() {
+	return (
+		<div className="space-y-3">
+			{[1, 2].map((i) => (
+				<div
+					key={i}
+					className="animate-pulse bg-surface-container rounded-3xl p-4 space-y-3">
+					<div className="flex justify-between">
+						<div className="h-4 w-28 bg-surface-container-high rounded-full" />
+						<div className="h-4 w-20 bg-surface-container-high rounded-full" />
+					</div>
+					<div className="h-3 w-40 bg-surface-container-high rounded-full" />
+					<div className="flex justify-between">
+						<div className="h-3 w-24 bg-surface-container-high rounded-full" />
+						<div className="h-3 w-16 bg-surface-container-high rounded-full" />
+					</div>
+				</div>
+			))}
+		</div>
+	);
+}
+
 export default function OrdersPage() {
 	const { user, loading: authLoading } = useAuth();
 	const router = useRouter();
 
 	const [orders, setOrders] = useState<OrderSummary[]>([]);
 	const [total, setTotal] = useState(0);
+	const [statusCounts, setStatusCounts] = useState<Record<string, number>>(
+		{},
+	);
+	const [page, setPage] = useState(1);
+	const [hasNextPage, setHasNextPage] = useState(false);
 	const [loading, setLoading] = useState(true);
+	const [loadingMore, setLoadingMore] = useState(false);
 	const [q, setQ] = useState("");
 	const [debouncedQ, setDebouncedQ] = useState("");
+	const [activeStatus, setActiveStatus] = useState("all");
 	const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+	const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
+	const inFlightRef = useRef(false);
 
 	// Debounce search
 	useEffect(() => {
@@ -111,11 +174,31 @@ export default function OrdersPage() {
 	}, [q]);
 
 	const fetchOrders = useCallback(
-		async (search: string) => {
-			setLoading(true);
+		async ({
+			search,
+			status,
+			nextPage,
+			append,
+		}: {
+			search: string;
+			status: string;
+			nextPage: number;
+			append: boolean;
+		}) => {
+			if (inFlightRef.current) return;
+			inFlightRef.current = true;
+
+			if (append) {
+				setLoadingMore(true);
+			} else {
+				setLoading(true);
+			}
 			try {
 				const params = new URLSearchParams();
 				if (search) params.set("q", search);
+				if (status !== "all") params.set("status", status);
+				params.set("page", String(nextPage));
+				params.set("limit", "10");
 				const res = await fetch(`/api/user/orders?${params}`);
 				if (res.status === 401) {
 					router.push("/login");
@@ -123,10 +206,26 @@ export default function OrdersPage() {
 				}
 				if (!res.ok) return;
 				const data = await res.json();
-				setOrders(data.orders);
+				setOrders((prev) =>
+					append
+						? [...prev, ...(data.orders as OrderSummary[])]
+						: (data.orders as OrderSummary[]),
+				);
 				setTotal(data.total);
+				setPage(data.pagination?.page ?? nextPage);
+				setHasNextPage(Boolean(data.pagination?.has_next_page));
+				if (!append && data.status_counts) {
+					setStatusCounts(
+						data.status_counts as Record<string, number>,
+					);
+				}
 			} finally {
-				setLoading(false);
+				if (append) {
+					setLoadingMore(false);
+				} else {
+					setLoading(false);
+				}
+				inFlightRef.current = false;
 			}
 		},
 		[router],
@@ -140,9 +239,48 @@ export default function OrdersPage() {
 
 	useEffect(() => {
 		if (!authLoading && user) {
-			fetchOrders(debouncedQ);
+			setPage(1);
+			setHasNextPage(false);
+			fetchOrders({
+				search: debouncedQ,
+				status: activeStatus,
+				nextPage: 1,
+				append: false,
+			});
 		}
-	}, [authLoading, user, debouncedQ, fetchOrders]);
+	}, [authLoading, user, debouncedQ, activeStatus, fetchOrders]);
+
+	useEffect(() => {
+		const target = loadMoreTriggerRef.current;
+		if (!target || loading || loadingMore || !hasNextPage) {
+			return;
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const first = entries[0];
+				if (!first.isIntersecting || inFlightRef.current) return;
+				fetchOrders({
+					search: debouncedQ,
+					status: activeStatus,
+					nextPage: page + 1,
+					append: true,
+				});
+			},
+			{ rootMargin: "180px 0px" },
+		);
+
+		observer.observe(target);
+		return () => observer.disconnect();
+	}, [
+		activeStatus,
+		debouncedQ,
+		fetchOrders,
+		hasNextPage,
+		loading,
+		loadingMore,
+		page,
+	]);
 
 	return (
 		<div className="px-4 pt-2 pb-24 space-y-5">
@@ -187,6 +325,15 @@ export default function OrdersPage() {
 				)}
 			</div>
 
+			<OrderStatusTabs
+				value={activeStatus}
+				onChange={setActiveStatus}
+				options={STATUS_TABS.map((tab) => ({
+					...tab,
+					count: statusCounts[tab.value] ?? 0,
+				}))}
+			/>
+
 			{/* List */}
 			{loading || authLoading ? (
 				<OrderSkeleton />
@@ -199,7 +346,9 @@ export default function OrdersPage() {
 						/>
 					</div>
 					<p className="text-on-surface-variant font-semibold text-sm">
-						{q ? "Không tìm thấy đơn hàng" : "Chưa có đơn hàng nào"}
+						{q || activeStatus !== "all"
+							? "Không tìm thấy đơn hàng"
+							: "Chưa có đơn hàng nào"}
 					</p>
 				</div>
 			) : (
@@ -244,6 +393,21 @@ export default function OrdersPage() {
 							</div>
 						</button>
 					))}
+
+					{loadingMore ? <LoadMoreSkeleton /> : null}
+
+					<div
+						ref={loadMoreTriggerRef}
+						aria-hidden="true"
+						className="h-2"
+					/>
+
+					{hasNextPage && !loadingMore ? (
+						<div className="flex items-center justify-center py-2 text-xs text-on-surface-variant">
+							<Loader2 size={14} className="animate-spin mr-2" />
+							Đang tải thêm đơn hàng...
+						</div>
+					) : null}
 				</div>
 			)}
 

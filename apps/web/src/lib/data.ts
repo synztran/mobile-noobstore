@@ -31,7 +31,7 @@ export interface SelectedComponent {
 	component_group: string;
 	price_adjustment: number;
 	thumbnail: string | null;
-  is_pre_order?: boolean;
+	is_pre_order?: boolean;
 }
 
 export interface CartItem {
@@ -79,6 +79,18 @@ export interface ProfileAddressInput {
 	wardDistrict: string;
 	wardDistrictCode: string;
 	isDefault?: boolean;
+}
+
+export interface WishlistItem {
+	id: string;
+	user_id: string;
+	product_id: string;
+	added_at: string;
+	product?: Product;
+}
+
+export interface WishlistItemInput {
+	productId: string;
 }
 
 export const CATEGORIES = ["Keyboards", "Switches", "Add-Ons", "Cables"];

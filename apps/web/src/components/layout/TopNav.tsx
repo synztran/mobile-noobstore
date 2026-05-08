@@ -2,10 +2,12 @@
 
 import TopNavDrawer from "@/components/layout/TopNavDrawer";
 import Icon from "@/components/ui/Icon";
+import WishlistSidebar from "@/components/wishlist/WishlistSidebar";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore } from "@/store";
 import clsx from "clsx";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 interface TopNavProps {
@@ -26,9 +28,12 @@ export function TopNav({
 	className,
 }: TopNavProps) {
 	const mounted = useIsMounted();
+	const pathname = usePathname();
 	const { openCart, itemCount } = useCartStore();
 	const count = mounted ? itemCount() : 0;
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [wishlistOpen, setWishlistOpen] = useState(false);
+	const isCheckoutRoute = pathname?.startsWith("/checkout") ?? false;
 
 	return (
 		<nav
@@ -61,11 +66,13 @@ export function TopNav({
 
 			<div className="flex items-center gap-4 justify-end">
 				{showFavorite && (
-					<button className="text-on-surface hover:opacity-70 transition-opacity active:scale-95 duration-200">
+					<button
+						onClick={() => setWishlistOpen(true)}
+						className="text-on-surface hover:opacity-70 transition-opacity active:scale-95 duration-200">
 						<Icon name="favorite" />
 					</button>
 				)}
-				{showCart && (
+				{showCart && !isCheckoutRoute && (
 					<button
 						onClick={openCart}
 						className="relative text-on-surface hover:opacity-70 transition-opacity active:scale-95 duration-200">
@@ -80,6 +87,12 @@ export function TopNav({
 			</div>
 
 			<TopNavDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
+			{showFavorite ? (
+				<WishlistSidebar
+					drawerOpen={wishlistOpen}
+					onClose={() => setWishlistOpen(false)}
+				/>
+			) : null}
 		</nav>
 	);
 }

@@ -11,7 +11,7 @@ export function StockIndicator({ stockQuantity }: StockIndicatorProps) {
 	}
 
 	return (
-		<div className="text-[8px] font-black uppercase tracking-wide text-warning text-center">
+		<div className="text-[9px] font-black uppercase tracking-wide text-warning text-center">
 			Còn lại {stockQuantity} sản phẩm
 		</div>
 	);

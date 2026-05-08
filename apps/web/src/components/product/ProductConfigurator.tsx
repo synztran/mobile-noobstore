@@ -115,12 +115,12 @@ export function ProductConfigurator({
 										onSelect(group.component_group, v.id)
 									}
 									className={clsx(
-										"relative flex items-center gap-2 py-2 px-3 rounded-xl text-sm font-bold transition-all border",
+										"relative flex items-center gap-2 p-2 rounded-xl text-xs font-bold transition-all border",
 										soldOut
 											? "opacity-40 cursor-not-allowed bg-surface-container border-transparent"
 											: selected
 												? "bg-primary text-white border-primary shadow-lg"
-												: "bg-surface-container text-on-surface border-transparent hover:border-outline-variant",
+												: "bg-gray-200 text-on-surface border-transparent hover:border-outline-variant",
 									)}>
 									{v.thumbnail && (
 										<Thumbnail
@@ -130,7 +130,7 @@ export function ProductConfigurator({
 										/>
 									)}
 									<div className="text-left max-w-20">
-										<p className="font-black text-xs leading-none line-clamp-2 break-words">
+										<p className="font-black text-xs leading-none line-clamp-2">
 											{v.variant_name}
 										</p>
 										{soldOut ? (

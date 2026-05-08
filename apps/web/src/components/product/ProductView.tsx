@@ -6,6 +6,7 @@ import { TopNav } from "@/components/layout/TopNav";
 import { AddToCartButton } from "@/components/product/AddToCartButton";
 import { ProductConfigurator } from "@/components/product/ProductConfigurator";
 import Icon from "@/components/ui/Icon";
+import WishlistButton from "@/components/wishlist/WishlistButton";
 import { useProductViewData } from "@/hooks/useProductViewData";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
@@ -19,7 +20,6 @@ export function ProductView({
 	product: ProductDetail;
 	componentGroups?: ConfiguratorGroup[];
 }) {
-	const [saved, setSaved] = useState(false);
 	const [activeImageIndex, setActiveImageIndex] = useState(0);
 
 	const {
@@ -128,13 +128,13 @@ export function ProductView({
 				{/* ── Hero Image Gallery ── */}
 				<section className="relative">
 					<div className="p-6 pb-4">
-						<div className="relative aspect-square overflow-hidden rounded-xl bg-surface-container-low shadow-[0_20px_48px_-20px_rgba(26,28,31,0.12)]">
+						<div className="relative w-full h-64 overflow-hidden rounded-xl bg-surface-container-low shadow-[0_20px_48px_-20px_rgba(26,28,31,0.12)]">
 							{heroImage ? (
 								<Image
 									src={heroImage}
 									alt={product.name}
 									fill
-									className="object-cover mix-blend-multiply opacity-95"
+									className="object-contain  mix-blend-multiply"
 									unoptimized
 								/>
 							) : (
@@ -209,7 +209,7 @@ export function ProductView({
 					variants.length > 0 ||
 					groups.length > 0) && (
 					<section className="px-6 mt-10">
-						<div className="bg-surface-container-low rounded-2xl p-5 space-y-4">
+						<div className="bg-surface-container-low rounded-2xl p-3 space-y-4">
 							{loadingVariants ? (
 								<div className="grid grid-cols-2 gap-3">
 									{[1, 2].map((i) => (
@@ -238,17 +238,22 @@ export function ProductView({
 				{selectedPreOrderConfig && (
 					<section className="px-6">
 						<div className="flex items-start gap-3 bg-violet-500/10 border border-violet-500/30 rounded-2xl p-4">
-							<Icon name="schedule" className="text-violet-400 text-2xl mt-0.5 shrink-0" />
+							<Icon
+								name="schedule"
+								className="text-violet-400 text-2xl mt-0.5 shrink-0"
+							/>
 							<div className="space-y-1">
 								<p className="text-xs font-black uppercase tracking-widest text-violet-400">
 									Sản phẩm đặt trước
 								</p>
 								<p className="text-sm font-bold text-on-surface">
-									Thời gian giao hàng dự kiến: {selectedPreOrderConfig.estimate}
+									Thời gian giao hàng dự kiến:{" "}
+									{selectedPreOrderConfig.estimate}
 								</p>
 								{selectedPreOrderConfig.available_date && (
 									<p className="text-xs text-on-surface-variant">
-										Dự kiến có hàng: {selectedPreOrderConfig.available_date}
+										Dự kiến có hàng:{" "}
+										{selectedPreOrderConfig.available_date}
 									</p>
 								)}
 								{selectedPreOrderConfig.notes && (
@@ -328,15 +333,11 @@ export function ProductView({
 
 			{/* ── Bottom Action Bar ── */}
 			<div className="fixed bottom-0 left-0 right-0 z-[100] px-6 py-4 bg-surface/95 backdrop-blur-md rounded-tl-3xl rounded-tr-3xl border-t border-outline-variant/20 flex gap-4">
-				<button
-					type="button"
-					onClick={() => setSaved(!saved)}
-					className="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform">
-					<Icon
-						name="bookmark"
-						className={clsx("text-2xl", saved && "text-primary")}
-					/>
-				</button>
+				<WishlistButton
+					productId={product.id}
+					showLabel
+					className="w-32 h-14 rounded-2xl flex-shrink-0"
+				/>
 				<AddToCartButton
 					isOutOfStock={isOutOfStock}
 					missingVariantSelection={missingVariantSelection}

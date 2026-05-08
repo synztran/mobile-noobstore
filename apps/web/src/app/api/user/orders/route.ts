@@ -15,10 +15,32 @@ export interface OrderSummary {
 	shipping_discount_amount: number;
 }
 
+export interface OrdersPagination {
+	page: number;
+	limit: number;
+	total: number;
+	total_pages: number;
+	has_next_page: boolean;
+	has_prev_page: boolean;
+}
+
 export interface OrdersResponse {
 	orders: OrderSummary[];
 	total: number;
+	pagination: OrdersPagination;
+	status_counts: Record<string, number>;
 }
+
+const ALLOWED_STATUS_FILTERS = new Set([
+	"pending",
+	"paid",
+	"confirmed",
+	"preparing",
+	"shipped",
+	"delivering",
+	"delivered",
+	"cancelled",
+]);
 
 export async function GET(req: NextRequest) {
 	try {
@@ -37,8 +59,18 @@ export async function GET(req: NextRequest) {
 
 		const { searchParams } = new URL(req.url);
 		const q = searchParams.get("q")?.trim() ?? "";
-		const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-		const limit = 20;
+		const rawStatus =
+			searchParams.get("status")?.trim().toLowerCase() ?? "";
+		const statusFilter =
+			rawStatus && ALLOWED_STATUS_FILTERS.has(rawStatus)
+				? rawStatus
+				: null;
+		const parsedPage = parseInt(searchParams.get("page") ?? "1", 10);
+		const parsedLimit = parseInt(searchParams.get("limit") ?? "20", 10);
+		const page = Number.isFinite(parsedPage) ? Math.max(1, parsedPage) : 1;
+		const limit = Number.isFinite(parsedLimit)
+			? Math.min(50, Math.max(1, parsedLimit))
+			: 20;
 		const offset = (page - 1) * limit;
 
 		let query = supabase
@@ -56,6 +88,27 @@ export async function GET(req: NextRequest) {
 		if (q) {
 			query = query.ilike("order_number", `%${q}%`);
 		}
+
+		if (statusFilter) {
+			query = query.eq("status", statusFilter);
+		}
+
+		// Lightweight per-status count query (no limit, only fetches status column)
+		const { data: allStatusRows } = await supabase
+			.from("orders")
+			.select("status")
+			.eq("user_id", user.id);
+
+		const statusCounts = (allStatusRows ?? []).reduce<
+			Record<string, number>
+		>((acc, row) => {
+			acc[row.status] = (acc[row.status] ?? 0) + 1;
+			return acc;
+		}, {});
+		statusCounts["all"] = Object.values(statusCounts).reduce(
+			(s, v) => s + v,
+			0,
+		);
 
 		const { data, error, count } = (await (query as ReturnType<
 			typeof query.range
@@ -91,9 +144,22 @@ export async function GET(req: NextRequest) {
 			shipping_discount_amount: Number(row.shipping_discount_amount ?? 0),
 		}));
 
+		const totalOrders = count ?? 0;
+		const totalPages = Math.max(1, Math.ceil(totalOrders / limit));
+		const pagination: OrdersPagination = {
+			page,
+			limit,
+			total: totalOrders,
+			total_pages: totalPages,
+			has_next_page: page < totalPages,
+			has_prev_page: page > 1,
+		};
+
 		return NextResponse.json({
 			orders,
-			total: count ?? 0,
+			total: totalOrders,
+			pagination,
+			status_counts: statusCounts,
 		} satisfies OrdersResponse);
 	} catch (err) {
 		console.error("[orders] unexpected error:", err);

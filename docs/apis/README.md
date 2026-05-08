@@ -16,6 +16,11 @@ All routes live under `apps/web/src/app/api/`. Route handlers export TypeScript 
 | PATCH | [`/api/user/profile`](./user.md#patch-apiuserprofile) | ✓ | Update profile |
 | GET | [`/api/user/orders`](./user.md#get-apiuserorders) | ✓ | List orders (paginated) |
 | GET | [`/api/user/orders/[id]`](./user.md#get-apiuserordersid) | ✓ | Order detail |
+| GET | [`/api/notifications`](./notifications.md#get-apinotifications) | ✓ | List current user notifications |
+| POST | [`/api/notifications/read`](./notifications.md#post-apinotificationsread) | ✓ | Mark one/all notifications as read |
+| POST | [`/api/notifications/subscribe`](./notifications.md#post-apinotificationssubscribe) | ✓ | Save push subscription |
+| POST | [`/api/notifications/unsubscribe`](./notifications.md#post-apinotificationsunsubscribe) | ✓ | Disable push subscription |
+| POST | [`/api/notifications/push-self`](./notifications.md#post-apinotificationspush-self) | ✓ | Create + send a test notification |
 | GET | [`/api/health`](./health.md) | — | DB connectivity check |
 | GET | `/api/fees` | — | **Deprecated** → use `/api/services` |
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
+import { OrderPaymentPanel } from "@/components/orders/OrderPaymentPanel";
 import { VoucherInfo } from "@/components/voucher/VoucherInfo";
 import { formatVND } from "@/lib/currency";
 import {
@@ -23,6 +24,24 @@ const STATUS_CONFIG: Record<
 		Icon: HourglassIcon,
 		color: "text-amber-600",
 		bg: "bg-amber-50",
+	},
+	confirmed: {
+		label: "Đã xác nhận",
+		Icon: CheckCircle2,
+		color: "text-emerald-600",
+		bg: "bg-emerald-50",
+	},
+	preparing: {
+		label: "Đang chuẩn bị hàng",
+		Icon: PackageCheck,
+		color: "text-sky-700",
+		bg: "bg-sky-50",
+	},
+	delivering: {
+		label: "Đang vận chuyển",
+		Icon: Truck,
+		color: "text-blue-600",
+		bg: "bg-blue-50",
 	},
 	paid: {
 		label: "Đã thanh toán",
@@ -86,8 +105,15 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 	const voucherDiscount = detail?.voucher_discount_amount ?? 0;
 	const shippingDiscount = detail?.shipping_discount_amount ?? 0;
 	const totalDiscount = voucherDiscount + shippingDiscount;
-
-	console.log("detail", detail);
+	const cancelledAtLabel = detail?.cancelled_at
+		? new Date(detail.cancelled_at).toLocaleString("vi-VN", {
+				day: "2-digit",
+				month: "2-digit",
+				year: "numeric",
+				hour: "2-digit",
+				minute: "2-digit",
+			})
+		: null;
 
 	return (
 		<>
@@ -168,6 +194,33 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 								);
 							})()}
 
+							{/* Cancelled details */}
+							{detail.status === "cancelled" && (
+								<div className="rounded-2xl border border-error/20 bg-error/5 px-4 py-3 space-y-2">
+									<p className="text-[10px] font-black uppercase tracking-widest text-error">
+										Chi tiết hủy đơn
+									</p>
+									<div className="flex items-start justify-between gap-3 text-sm">
+										<span className="text-on-surface-variant">
+											Thời gian hủy
+										</span>
+										<span className="font-bold text-on-surface text-right">
+											{cancelledAtLabel ??
+												"Không có thông tin"}
+										</span>
+									</div>
+									<div className="space-y-1">
+										<p className="text-sm text-on-surface-variant">
+											Ghi chú hủy
+										</p>
+										<p className="rounded-xl bg-surface px-3 py-2 text-sm text-on-surface leading-relaxed">
+											{detail.cancelled_note?.trim() ||
+												"Không có ghi chú hủy từ hệ thống."}
+										</p>
+									</div>
+								</div>
+							)}
+
 							{/* Order items */}
 							{detail.items.length > 0 && (
 								<div className="space-y-2">
@@ -236,6 +289,17 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 								</div>
 							)}
 
+							{/* Payment panel — only shown for pending (unpaid) orders */}
+							{detail.status === "pending" && (
+								<OrderPaymentPanel
+									orderNumber={detail.order_number}
+									totalPrice={detail.total_price}
+									shippingFee={detail.shipping_fee}
+									voucherDiscount={voucherDiscount}
+									shippingDiscount={shippingDiscount}
+								/>
+							)}
+
 							{/* Voucher Info */}
 							{(detail.voucher_code || totalDiscount > 0) && (
 								<VoucherInfo
@@ -246,73 +310,78 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 							)}
 
 							{/* Price summary */}
-							<div className="bg-surface-container rounded-2xl px-4 py-3 space-y-2">
-								<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">
-									Tổng cộng
-								</p>
-								<div className="flex justify-between text-sm">
-									<span className="text-on-surface-variant">
-										Tạm tính
-									</span>
-									<span className="font-bold text-on-surface">
-										{formatVND(
-											detail.items.reduce(
-												(s, i) =>
-													s +
-													i.unit_price * i.quantity,
-												0,
-											),
-										)}
-									</span>
-								</div>
-								<div className="flex justify-between text-sm">
-									<span className="text-on-surface-variant">
-										Vận chuyển
-									</span>
-									<span className="font-bold text-on-surface">
-										{formatVND(detail.shipping_fee)}
-									</span>
-								</div>
-								{voucherDiscount > 0 ? (
+							{["confirmed", "delivering", "delivered"].includes(
+								detail.status,
+							) && (
+								<div className="bg-surface-container rounded-2xl px-4 py-3 space-y-2">
+									<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-3">
+										Tổng cộng
+									</p>
 									<div className="flex justify-between text-sm">
 										<span className="text-on-surface-variant">
-											Giảm giá voucher
+											Tạm tính
 										</span>
-										<span className="font-bold text-secondary">
-											-{formatVND(voucherDiscount)}
+										<span className="font-bold text-on-surface">
+											{formatVND(
+												detail.items.reduce(
+													(s, i) =>
+														s +
+														i.unit_price *
+															i.quantity,
+													0,
+												),
+											)}
 										</span>
 									</div>
-								) : null}
-								{shippingDiscount > 0 ? (
 									<div className="flex justify-between text-sm">
 										<span className="text-on-surface-variant">
-											Giảm phí vận chuyển
+											Vận chuyển
 										</span>
-										<span className="font-bold text-secondary">
-											-{formatVND(shippingDiscount)}
+										<span className="font-bold text-on-surface">
+											{formatVND(detail.shipping_fee)}
 										</span>
 									</div>
-								) : null}
-								<div className="h-px bg-outline-variant/30" />
-								<div className="flex justify-between">
-									<span className="font-black text-on-surface">
-										Tổng đơn hàng
-									</span>
-									<div className="text-right">
-										<span className="font-black text-primary text-base block">
-											{formatVND(detail.total_price)}
-										</span>
-										{totalDiscount > 0 ? (
-											<span className="text-xs text-on-surface-variant line-through">
-												{formatVND(
-													detail.total_price +
-														totalDiscount,
-												)}
+									{voucherDiscount > 0 ? (
+										<div className="flex justify-between text-sm">
+											<span className="text-on-surface-variant">
+												Giảm giá voucher
 											</span>
-										) : null}
+											<span className="font-bold text-secondary">
+												-{formatVND(voucherDiscount)}
+											</span>
+										</div>
+									) : null}
+									{shippingDiscount > 0 ? (
+										<div className="flex justify-between text-sm">
+											<span className="text-on-surface-variant">
+												Giảm phí vận chuyển
+											</span>
+											<span className="font-bold text-secondary">
+												-{formatVND(shippingDiscount)}
+											</span>
+										</div>
+									) : null}
+									<div className="h-px bg-outline-variant/30" />
+									<div className="flex justify-between">
+										<span className="font-black text-on-surface">
+											Tổng đơn hàng
+										</span>
+										<div className="text-right">
+											<span className="font-black text-primary text-base block">
+												{formatVND(detail.total_price)}
+											</span>
+											{totalDiscount > 0 ? (
+												<span className="text-xs text-on-surface-variant line-through">
+													{formatVND(
+														detail.total_price +
+															totalDiscount,
+													)}
+												</span>
+											) : null}
+										</div>
 									</div>
 								</div>
-							</div>
+							)}
 
 							{/* Order number footer */}
 							<div className="flex items-center gap-2 text-xs text-on-surface-variant pb-4">

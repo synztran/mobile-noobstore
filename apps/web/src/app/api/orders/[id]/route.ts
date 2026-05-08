@@ -34,7 +34,7 @@ export async function GET(
 			await supabase
 				.from("orders")
 				.select(
-					"id, order_number, status, voucher_discount_amount, shipping_discount_amount",
+					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note",
 				)
 				.eq("user_id", user.id)
 				.eq("order_number", identifier)
@@ -58,7 +58,7 @@ export async function GET(
 			const { data: byId, error: byIdError } = await supabase
 				.from("orders")
 				.select(
-					"id, order_number, status, voucher_discount_amount, shipping_discount_amount",
+					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note",
 				)
 				.eq("user_id", user.id)
 				.eq("id", identifier)
@@ -98,6 +98,12 @@ export async function GET(
 			status:
 				mappinStatus[order.status as keyof typeof mappinStatus] ||
 				"Trạng thái không xác định",
+			cancelled_at:
+				(order as { cancelled_at?: string | null }).cancelled_at ??
+				null,
+			cancelled_note:
+				(order as { cancelled_note?: string | null }).cancelled_note ??
+				null,
 			voucher_discount_amount: Number(
 				(order as { voucher_discount_amount?: number | string | null })
 					.voucher_discount_amount ?? 0,

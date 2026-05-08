@@ -33,6 +33,7 @@ export interface ProductListItem {
 	id: string;
 	slug: string;
 	name: string;
+	brand: string | null;
 	category: string;
 	description: string;
 	base_price: number;
@@ -63,6 +64,7 @@ type RawListRow = {
 	id: string;
 	slug: string;
 	name: string;
+	brand: string | null;
 	description: string;
 	base_price: number;
 	stock_quantity: number;
@@ -124,7 +126,8 @@ function shapeRow(row: RawListRow): ProductListItem {
 		thumbnail: variant.thumbnail,
 		stock_quantity: Number(variant.stock_quantity ?? 0),
 		is_pre_order: variant.is_pre_order ?? false,
-		pre_order_config: (variant.pre_order_config as PreOrderConfig | null) ?? null,
+		pre_order_config:
+			(variant.pre_order_config as PreOrderConfig | null) ?? null,
 	}));
 
 	const minPrice =
@@ -151,6 +154,7 @@ function shapeRow(row: RawListRow): ProductListItem {
 		id: row.id,
 		slug: row.slug,
 		name: row.name,
+		brand: row.brand,
 		category: row.categories?.name ?? "Unknown",
 		description: row.description ?? "",
 		base_price: Number(row.base_price),
@@ -283,7 +287,7 @@ export async function getProductListByFilters(
 		let query = supabase
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, description, is_used,
+				`id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used,
 				 categories(id, name),
 				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)`,
 			)

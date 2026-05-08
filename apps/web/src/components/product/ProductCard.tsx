@@ -2,6 +2,7 @@
 
 import type { ShopProduct } from "@/app/api/products/route";
 import Icon from "@/components/ui/Icon";
+import WishlistButton from "@/components/wishlist/WishlistButton";
 import { formatVND } from "@/lib/currency";
 import Image from "next/image";
 import Link from "next/link";
@@ -84,7 +85,10 @@ export function ProductCard({ product }: ProductCardProps) {
 						{/* Pre-order banner */}
 						{product.is_pre_order && !!product.stock_quantity && (
 							<div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-1.5 py-2 bg-violet-600/90 backdrop-blur-sm">
-								<Icon name="schedule" className="text-white text-sm" />
+								<Icon
+									name="schedule"
+									className="text-white text-sm"
+								/>
 								<p className="text-[10px] font-black uppercase tracking-[0.18em] text-white">
 									Đặt trước
 								</p>
@@ -102,8 +106,8 @@ export function ProductCard({ product }: ProductCardProps) {
 
 					{/* ── Details ─────────────────────────────────────────────── */}
 					<div className="space-y-1">
-						<p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary leading-none">
-							{product.category}
+						<p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary leading-none truncate">
+							{product.brand || product.category}
 						</p>
 						<h3 className="text-sm font-bold text-on-surface capitalize line-clamp-2 min-h-[40px]">
 							{product.name}
@@ -117,18 +121,29 @@ export function ProductCard({ product }: ProductCardProps) {
 					</div>
 				</Link>
 
-        <div className="flex flex-col gap-0.5">
-          <StockIndicator stockQuantity={product.stock_quantity} />
-          <button
-            type="button"
-            onClick={handleQuickAdd}
-            aria-label={`Quick add ${product.name}`}
-            disabled={product.stock_quantity === 0}
-            className="mt-auto w-full h-10 rounded-xl bg-on-surface text-surface font-black text-[10px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-all hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50">
-            <Icon name="add_shopping_cart" className="text-[16px]" />
-            Mua ngay
-          </button>
-        </div>
+				<div className="flex flex-col gap-0.5">
+					<StockIndicator stockQuantity={product.stock_quantity} />
+					<div className="mt-auto flex items-center gap-1">
+						<WishlistButton
+							productId={product.id}
+							size="sm"
+							showLabel
+							className="w-[40px] h-full rounded-xl"
+						/>
+						<button
+							type="button"
+							onClick={handleQuickAdd}
+							aria-label={`Quick add ${product.name}`}
+							disabled={product.stock_quantity === 0}
+							className="flex-1 h-10 rounded-xl bg-on-surface text-surface font-black text-[10px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-all hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50">
+							<Icon
+								name="add_shopping_cart"
+								className="text-[16px]"
+							/>
+							Mua ngay
+						</button>
+					</div>
+				</div>
 			</div>
 
 			<QuickPickDrawer

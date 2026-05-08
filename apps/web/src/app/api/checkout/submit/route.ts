@@ -360,14 +360,19 @@ export async function POST(req: NextRequest) {
 		const customerName =
 			user?.user_metadata?.full_name ?? user?.email ?? "Khách";
 		const itemCount = body.items.reduce((sum, i) => sum + i.quantity, 0);
-		notifyNewOrder(
+		void notifyNewOrder(
 			result.order_number,
 			customerName,
 			recalculatedTotal,
 			undefined,
 			itemCount,
 			body.vouchers,
-		);
+		).catch((notifyError) => {
+			console.error(
+				"[submit] failed to send order Telegram notification:",
+				notifyError,
+			);
+		});
 
 		return NextResponse.json({
 			order_id: result.order_id,

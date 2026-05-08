@@ -14,19 +14,27 @@ const NAV_ITEMS = [
 		label: "Đơn hàng của tôi",
 		href: "/profile/orders",
 	},
-	// { icon: "favorite", label: "Sản phẩm yêu thích" },
+	{
+		icon: "favorite",
+		label: "Sản phẩm yêu thích",
+		href: "/wishlist",
+	},
 	{
 		icon: "location_on",
 		label: "Địa chỉ giao hàng",
 		href: "/profile/addresses",
 	},
 	// { icon: "payment", label: "Phương thức thanh toán" },
-	// { icon: "notifications", label: "Thông báo" },
+	{
+		icon: "notifications",
+		label: "Thông báo",
+		href: "/profile/notifications",
+	},
 	{
 		icon: "help",
 		label: "Trợ giúp & Hỗ trợ",
 		href: "https://fb.com/noobassembly",
-    isNewPage: true
+		isNewPage: true,
 	},
 ];
 
@@ -174,7 +182,7 @@ export default function ProfilePage() {
 					<Link
 						key={label}
 						href={href}
-            target={isNewPage ? "_blank" : "_self"}
+						target={isNewPage ? "_blank" : "_self"}
 						className="w-full flex items-center gap-4 bg-surface-container-lowest rounded-2xl px-5 py-4 shadow-ambient-sm hover:bg-surface-container-low transition-colors">
 						<Icon name={icon} className="text-primary" />
 						<span className="font-semibold text-on-surface">

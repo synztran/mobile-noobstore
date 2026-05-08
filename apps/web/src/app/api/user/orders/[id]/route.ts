@@ -24,13 +24,15 @@ export interface OrderItemDetail {
 export interface OrderDetail {
 	id: string;
 	order_number: string;
-	status: string;
+	status: "pending" | "confirmed" | "delivering" | "delivered" | "cancelled";
 	total_price: number;
 	shipping_fee: number;
 	voucher_code: string | null;
 	voucher_discount_amount: number;
 	shipping_discount_amount: number;
 	voucher_snapshot: unknown | null;
+	cancelled_at: string | null;
+	cancelled_note: string | null;
 	created_at: string | null;
 	updated_at: string | null;
 	items: OrderItemDetail[];
@@ -39,13 +41,15 @@ export interface OrderDetail {
 interface RawOrderRow {
 	id: string;
 	order_number: string;
-	status: string;
+	status: "pending" | "confirmed" | "delivering" | "delivered" | "cancelled";
 	total_price: number;
 	shipping_fee: number | null;
 	voucher_code: string | null;
 	voucher_discount_amount: number | string | null;
 	shipping_discount_amount: number | string | null;
 	voucher_snapshot: unknown | null;
+	cancelled_at: string | null;
+	cancelled_note: string | null;
 	created_at: string | null;
 	updated_at: string | null;
 }
@@ -78,7 +82,7 @@ export async function GET(
 		const { data: order, error: orderError } = (await supabase
 			.from("orders")
 			.select(
-				"id, order_number, status, total_price, shipping_fee, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, created_at, updated_at",
+				"id, order_number, status, total_price, shipping_fee, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at",
 			)
 			.eq("id", id)
 			.eq("user_id", user.id)
@@ -198,6 +202,8 @@ export async function GET(
 				order.shipping_discount_amount ?? 0,
 			),
 			voucher_snapshot: order.voucher_snapshot ?? null,
+			cancelled_at: order.cancelled_at ?? null,
+			cancelled_note: order.cancelled_note ?? null,
 			created_at: order.created_at ?? null,
 			updated_at: order.updated_at ?? null,
 			items,

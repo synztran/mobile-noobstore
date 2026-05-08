@@ -387,10 +387,13 @@ export type Database = {
       }
       orders: {
         Row: {
+          cancelled_at: string | null
+          cancelled_note: string | null
           created_at: string | null
           gift_items_snapshot: Json | null
           id: string
           order_number: string
+          payment_reminder_sent_at: string | null
           shipping_discount_amount: number
           shipping_fee: number | null
           status: string
@@ -403,10 +406,13 @@ export type Database = {
           voucher_snapshot: Json | null
         }
         Insert: {
+          cancelled_at?: string | null
+          cancelled_note?: string | null
           created_at?: string | null
           gift_items_snapshot?: Json | null
           id: string
           order_number: string
+          payment_reminder_sent_at?: string | null
           shipping_discount_amount?: number
           shipping_fee?: number | null
           status?: string
@@ -419,10 +425,13 @@ export type Database = {
           voucher_snapshot?: Json | null
         }
         Update: {
+          cancelled_at?: string | null
+          cancelled_note?: string | null
           created_at?: string | null
           gift_items_snapshot?: Json | null
           id?: string
           order_number?: string
+          payment_reminder_sent_at?: string | null
           shipping_discount_amount?: number
           shipping_fee?: number | null
           status?: string
@@ -531,6 +540,7 @@ export type Database = {
           pre_order_config: Json | null
           price_adjustment: number | null
           product_id: string | null
+          product_name: string | null
           stock_quantity: number | null
           thumbnail: string | null
           variant_name: string
@@ -542,6 +552,7 @@ export type Database = {
           pre_order_config?: Json | null
           price_adjustment?: number | null
           product_id?: string | null
+          product_name?: string | null
           stock_quantity?: number | null
           thumbnail?: string | null
           variant_name: string
@@ -553,6 +564,7 @@ export type Database = {
           pre_order_config?: Json | null
           price_adjustment?: number | null
           product_id?: string | null
+          product_name?: string | null
           stock_quantity?: number | null
           thumbnail?: string | null
           variant_name?: string
@@ -570,6 +582,7 @@ export type Database = {
       products: {
         Row: {
           base_price: number
+          brand: string | null
           category_id: string | null
           description: string | null
           id: string
@@ -583,6 +596,7 @@ export type Database = {
         }
         Insert: {
           base_price: number
+          brand?: string | null
           category_id?: string | null
           description?: string | null
           id?: string
@@ -596,6 +610,7 @@ export type Database = {
         }
         Update: {
           base_price?: number
+          brand?: string | null
           category_id?: string | null
           description?: string | null
           id?: string
@@ -616,6 +631,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
@@ -874,8 +919,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_expired_orders: { Args: never; Returns: Json }
       generate_id: { Args: never; Returns: string }
       get_kit_stock: { Args: { kit_id: string }; Returns: number }
+      get_pending_payment_orders: {
+        Args: never
+        Returns: {
+          created_at: string
+          order_id: string
+          order_number: string
+          total_price: number
+          user_email: string
+          user_id: string
+        }[]
+      }
+      increment_voucher_used_count: {
+        Args: { p_voucher_id: string }
+        Returns: undefined
+      }
+      mark_payment_reminder_sent: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
+      process_payment_reminders: { Args: never; Returns: undefined }
       submit_order: {
         Args: {
           p_items: Json
