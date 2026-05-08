@@ -1,14 +1,38 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { BALL_PALETTE, LuckyBall } from "./LuckyBall";
+import { LuckyBall } from "./LuckyBall";
+
+export interface GachaRewardData {
+	id: number;
+	reward_type: "product" | "point" | "puzzle" | "lucky_text";
+	name: string;
+	description: string | null;
+	value: string | null;
+	thumbnail_url: string | null;
+	is_golden: boolean;
+}
+
+const REWARD_TYPE_LABEL: Record<string, string> = {
+	product: "Sản phẩm",
+	point: "Điểm",
+	puzzle: "Mảnh ghép",
+	lucky_text: "Tin nhắn may mắn",
+};
 
 interface RewardRevealProps {
 	rewardIndex: number | null;
+	reward: GachaRewardData | null;
 	onReset: () => void;
 }
 
-export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
+export function RewardReveal({
+	rewardIndex,
+	reward,
+	onReset,
+}: RewardRevealProps) {
+	const isGolden = reward?.is_golden ?? false;
+
 	return (
 		<AnimatePresence>
 			{rewardIndex !== null && (
@@ -18,7 +42,7 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}>
 					{/* ── Golden celebration: screen flash ── */}
-					{BALL_PALETTE[rewardIndex].isGolden && (
+					{isGolden && (
 						<motion.div
 							className="absolute inset-0 pointer-events-none bg-[rgba(255,220,50,0.18)]"
 							initial={{ opacity: 0 }}
@@ -28,7 +52,7 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 					)}
 
 					{/* ── Golden celebration: radiating rays ── */}
-					{BALL_PALETTE[rewardIndex].isGolden &&
+					{isGolden &&
 						[...Array(12)].map((_, i) => (
 							<motion.div
 								key={`ray-${i}`}
@@ -54,15 +78,8 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 						))}
 
 					{/* ── Confetti burst (one-shot) ── */}
-					{[
-						...Array(BALL_PALETTE[rewardIndex].isGolden ? 36 : 20),
-					].map((_, i) => {
-						const angle =
-							(i /
-								(BALL_PALETTE[rewardIndex].isGolden
-									? 36
-									: 20)) *
-							360;
+					{[...Array(isGolden ? 36 : 20)].map((_, i) => {
+						const angle = (i / (isGolden ? 36 : 20)) * 360;
 						const distance = 90 + (i % 5) * 28;
 						const goldenColors = [
 							"#FFE566",
@@ -80,18 +97,16 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 							"#34D399",
 							"#93C5FD",
 						];
-						const colors = BALL_PALETTE[rewardIndex].isGolden
-							? goldenColors
-							: normalColors;
+						const colors = isGolden ? goldenColors : normalColors;
 						return (
 							<motion.div
 								key={`burst-${i}`}
 								className="absolute pointer-events-none top-1/2 left-1/2"
 								style={{
-									width: BALL_PALETTE[rewardIndex].isGolden
+									width: isGolden
 										? 8 + (i % 3) * 4
 										: 6 + (i % 3) * 3,
-									height: BALL_PALETTE[rewardIndex].isGolden
+									height: isGolden
 										? 8 + (i % 3) * 4
 										: 6 + (i % 3) * 3,
 									borderRadius: i % 2 === 0 ? "50%" : 2,
@@ -125,7 +140,7 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 					})}
 
 					{/* ── Golden celebration: looping falling sparkles ── */}
-					{BALL_PALETTE[rewardIndex].isGolden &&
+					{isGolden &&
 						[...Array(18)].map((_, i) => (
 							<motion.div
 								key={`spark-${i}`}
@@ -150,12 +165,12 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 						))}
 
 					<motion.div
-						className="relative flex flex-col items-center gap-5 mx-6 rounded-[28px] py-9 px-10 border-2 border-white/80 min-w-[240px] z-[1]"
+						className="relative flex flex-col items-center gap-5 mx-6 rounded-[28px] p-6 border-2 border-white/80 min-w-[240px] z-[1]"
 						style={{
-							background: BALL_PALETTE[rewardIndex].isGolden
+							background: isGolden
 								? "linear-gradient(155deg, #fffbeb 0%, #fef3c7 100%)"
 								: "linear-gradient(155deg, #fff 0%, #f8f8f8 100%)",
-							boxShadow: BALL_PALETTE[rewardIndex].isGolden
+							boxShadow: isGolden
 								? "0 20px 60px rgba(245,158,11,0.35), 0 0 0 2px #FBBF24"
 								: "0 20px 60px rgba(0,0,0,0.30), 0 0 0 2px rgba(255,255,255,0.8)",
 						}}
@@ -193,12 +208,12 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 						))}
 
 						<p className="font-black uppercase tracking-[0.25em] text-[10px] text-[#aaa]">
-							You got!
+							Bạn nhận được!
 						</p>
 
 						{/* Glowing ball */}
 						<div className="relative flex items-center justify-center">
-							{BALL_PALETTE[rewardIndex].isGolden && (
+							{isGolden && (
 								<motion.div
 									className="absolute rounded-full w-[110px] h-[110px]"
 									style={{
@@ -226,24 +241,38 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 						</div>
 
 						<div className="flex flex-col items-center gap-1">
-							<p className="font-black text-2xl text-[#1a1a1a]">
-								{BALL_PALETTE[rewardIndex].name} Ball
-							</p>
-							<p
-								className="font-semibold px-3 py-0.5 rounded-full text-[10px] tracking-[0.12em]"
-								style={{
-									color: BALL_PALETTE[rewardIndex].isGolden
-										? "#92400e"
-										: "#888",
-									background: BALL_PALETTE[rewardIndex]
-										.isGolden
-										? "rgba(251,191,36,0.2)"
-										: "rgba(0,0,0,0.05)",
-								}}>
-								{BALL_PALETTE[rewardIndex].isGolden
-									? "★ RARE COLLECTIBLE ★"
-									: "Capsule collectible"}
-							</p>
+							{reward === null ? (
+								<span className="loading loading-spinner loading-md text-base-content/40" />
+							) : (
+								<>
+									<p className="font-black text-xl text-[#1a1a1a] text-center">
+										{reward.name}
+									</p>
+									{reward.value && (
+										<p className="font-bold text-sm text-primary text-center">
+											{reward.reward_type === "point"
+												? `+${reward.value} điểm`
+												: reward.value}
+										</p>
+									)}
+									<p
+										className="font-semibold px-3 py-0.5 rounded-full text-[10px] tracking-[0.12em] mt-0.5"
+										style={{
+											color: isGolden
+												? "#92400e"
+												: "#888",
+											background: isGolden
+												? "rgba(251,191,36,0.2)"
+												: "rgba(0,0,0,0.05)",
+										}}>
+										{isGolden
+											? "★ VẬT PHẨM HIẾM ★"
+											: (REWARD_TYPE_LABEL[
+													reward.reward_type
+												] ?? "Vật phẩm capsule")}
+									</p>
+								</>
+							)}
 						</div>
 
 						<motion.button
@@ -256,7 +285,7 @@ export function RewardReveal({ rewardIndex, onReset }: RewardRevealProps) {
 								boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
 							}}
 							whileTap={{ scale: 0.95 }}>
-							🎰 Play again
+							Thử lại
 						</motion.button>
 					</motion.div>
 				</motion.div>

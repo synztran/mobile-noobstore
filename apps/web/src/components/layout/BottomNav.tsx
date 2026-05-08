@@ -6,7 +6,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-	{ href: "/", icon: <House size={16} />, label: "Trang chủ", iconFilled: true },
+	{
+		href: "/",
+		icon: <House size={16} />,
+		label: "Trang chủ",
+		iconFilled: true,
+	},
 	{
 		href: "/shop",
 		icon: <ShoppingBasket size={16} />,
@@ -23,6 +28,8 @@ const navItems = [
 
 export function BottomNav() {
 	const pathname = usePathname();
+
+	if (pathname === "/gacha") return null;
 
 	return (
 		<nav className="fixed bottom-3 left-2 right-2 w-full flex justify-around items-center glass-nav !bg-[rgba(255,255,255,0.5)] rounded-xl z-50 bottom-nav-pad max-w-[80vw] mx-auto">

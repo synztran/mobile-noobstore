@@ -34,6 +34,8 @@ export function TopNav({
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [wishlistOpen, setWishlistOpen] = useState(false);
 	const isCheckoutRoute = pathname?.startsWith("/checkout") ?? false;
+	const pathHideCard = ["/gacha", "/checkout"];
+	const hideCart = pathHideCard.includes(pathname);
 
 	return (
 		<nav
@@ -72,7 +74,7 @@ export function TopNav({
 						<Icon name="favorite" />
 					</button>
 				)}
-				{showCart && !isCheckoutRoute && (
+				{!hideCart && (
 					<button
 						onClick={openCart}
 						className="relative text-on-surface hover:opacity-70 transition-opacity active:scale-95 duration-200">

@@ -1,40 +1,113 @@
 "use client";
 
+import { BookOpen, History, Trophy } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { BallTank } from "./BallTank";
+import { GachaHistoryDrawer } from "./GachaHistoryDrawer";
+import { GachaRewardsDrawer } from "./GachaRewardsDrawer";
+import { GachaRulesDrawer } from "./GachaRulesDrawer";
 import { InsertButton } from "./InsertButton";
 import { BALL_PALETTE } from "./LuckyBall";
 import { MachineHeader } from "./MachineHeader";
 import { MachineStand } from "./MachineStand";
 import { OutputTray } from "./OutputTray";
-import { RewardReveal } from "./RewardReveal";
+import { GachaRewardData, RewardReveal } from "./RewardReveal";
 import { RotaryKnob } from "./RotaryKnob";
 import { TokenSlot } from "./TokenSlot";
+import { WinnerTicker } from "./WinnerTicker";
 
 type Phase = "idle" | "token-inserted" | "dispensing" | "rolling" | "reveal";
 
-export function GachaMachine() {
+interface GachaRewardMeta extends GachaRewardData {
+	weight: number;
+	max_quantity: number | null;
+	claimed_count: number;
+	percent: number;
+}
+
+interface GachaEvent {
+	id: number;
+	name: string;
+}
+
+interface GachaMachineProps {
+	eventId: number;
+}
+
+export function GachaMachine({ eventId }: GachaMachineProps) {
 	const [phase, setPhase] = useState<Phase>("idle");
 	const [rewardIndex, setRewardIndex] = useState<number | null>(null);
+	const [reward, setReward] = useState<GachaRewardData | null>(null);
+	const [tokenCount, setTokenCount] = useState<number | null>(null);
+	const [eventData, setEventData] = useState<GachaEvent | null>(null);
+	const [rewards, setRewards] = useState<GachaRewardMeta[]>([]);
+	const [drawError, setDrawError] = useState<string | null>(null);
+
+	// Drawer states
+	const [historyOpen, setHistoryOpen] = useState(false);
+	const [rewardsOpen, setRewardsOpen] = useState(false);
+	const [rulesOpen, setRulesOpen] = useState(false);
+
+	// Fetch event info + token count on mount
+	useEffect(() => {
+		fetch(`/api/gacha?event_id=${eventId}`)
+			.then((r) => r.json())
+			.then((data) => {
+				if (data.event) setEventData(data.event);
+				if (data.rewards) setRewards(data.rewards);
+				if (typeof data.token_count === "number") {
+					setTokenCount(data.token_count);
+				}
+			})
+			.catch(() => null);
+	}, [eventId]);
 
 	const handleInsertToken = useCallback(() => {
 		if (phase !== "idle") return;
 		setPhase("token-inserted");
 	}, [phase]);
 
-	const handleKnobTurnComplete = useCallback(() => {
+	const handleKnobTurnComplete = useCallback(async () => {
 		if (phase !== "token-inserted") return;
+
+		// Pick a visual color immediately to start animation
 		const idx = Math.floor(Math.random() * BALL_PALETTE.length);
 		setRewardIndex(idx);
+		setReward(null);
+		setDrawError(null);
 		setPhase("dispensing");
-		setTimeout(() => setPhase("rolling"), 1300); // shake ends → ball rolls out
-		setTimeout(() => setPhase("reveal"), 2400); // ball settled → reveal overlay
-	}, [phase]);
+
+		// Start animation timers
+		setTimeout(() => setPhase("rolling"), 1300);
+		setTimeout(() => setPhase("reveal"), 2400);
+
+		// Call API concurrently with animation
+		try {
+			const res = await fetch("/api/gacha", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ event_id: eventId }),
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				setDrawError(data.error ?? "Draw failed");
+			} else if (data.reward) {
+				setReward(data.reward);
+				setTokenCount((prev) =>
+					prev != null ? Math.max(0, prev - 1) : prev,
+				);
+			}
+		} catch {
+			setDrawError("Network error — your token was not spent.");
+		}
+	}, [phase, eventId]);
 
 	const handleReset = useCallback(() => {
 		setPhase("idle");
 		setRewardIndex(null);
+		setReward(null);
+		setDrawError(null);
 	}, []);
 
 	const isTrayOpen = phase === "rolling" || phase === "reveal";
@@ -49,6 +122,11 @@ export function GachaMachine() {
 
 	return (
 		<div className="flex flex-col items-center">
+			{/* Winner ticker above machine */}
+			<div className="w-full mb-1">
+				<WinnerTicker eventId={eventId} />
+			</div>
+
 			{/* ── Machine cabinet ─────────────────────────────── */}
 			<motion.div
 				className="relative flex flex-col items-stretch w-[292px] rounded-t-3xl rounded-b-[6px]"
@@ -166,14 +244,43 @@ export function GachaMachine() {
 					/>
 				</div>
 
+				{/* ── Token count display ── */}
+				<div className="flex items-center justify-center gap-1.5 pt-2 pb-0.5">
+					{/* <Coins size={14} className="text-amber-500" /> */}
+					<span className="font-normal text-base-content/50 text-xs">
+						Bạn hiện có{" "}
+					</span>
+					{tokenCount === null ? (
+						<span className="w-8 h-3 rounded bg-base-300 animate-pulse inline-block" />
+					) : (
+						<span className="text-xs font-black text-amber-600">
+							{tokenCount}{" "}
+							<span className="font-normal text-base-content/50">
+								token{tokenCount !== 1 ? "s" : ""}
+							</span>
+						</span>
+					)}
+				</div>
+
 				{/* ── Insert button ── */}
-				<div className="px-4 py-3">
+				<div className="px-4 py-2">
 					<InsertButton
 						onClick={handleInsertToken}
-						disabled={phase !== "idle"}
+						disabled={
+							phase !== "idle" ||
+							tokenCount === null ||
+							tokenCount === 0
+						}
 						hasToken={phase === "token-inserted"}
 					/>
 				</div>
+
+				{/* ── Draw error notice ── */}
+				{drawError && (
+					<p className="text-[10px] text-error text-center px-4 pb-1">
+						{drawError}
+					</p>
+				)}
 
 				{/* ── Output tray flush at bottom ── */}
 				<div className="flex justify-center pb-8">
@@ -187,10 +294,61 @@ export function GachaMachine() {
 			{/* ── Machine stand ── */}
 			<MachineStand />
 
+			{/* ── Action buttons row ── */}
+			<div className="flex items-center gap-3 mt-4 w-[292px]">
+				<button
+					onClick={() => setHistoryOpen(true)}
+					className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition-colors"
+					aria-label="Lịch sử tham gia">
+					<History size={18} className="text-base-content/60" />
+					<span className="text-[10px] font-semibold text-base-content/50">
+						Lịch sử
+					</span>
+				</button>
+				<button
+					onClick={() => setRewardsOpen(true)}
+					className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition-colors"
+					aria-label="Danh sách phần thưởng">
+					<Trophy size={18} className="text-base-content/60" />
+					<span className="text-[10px] font-semibold text-base-content/50">
+						Phần thưởng
+					</span>
+				</button>
+				<button
+					onClick={() => setRulesOpen(true)}
+					className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition-colors"
+					aria-label="Quy tắc trò chơi">
+					<BookOpen size={18} className="text-base-content/60" />
+					<span className="text-[10px] font-semibold text-base-content/50">
+						Quy tắc
+					</span>
+				</button>
+			</div>
+
 			{/* ── Reward reveal overlay ── */}
 			{phase === "reveal" && (
-				<RewardReveal rewardIndex={rewardIndex} onReset={handleReset} />
+				<RewardReveal
+					rewardIndex={rewardIndex}
+					reward={reward}
+					onReset={handleReset}
+				/>
 			)}
+
+			{/* ── Drawers ── */}
+			<GachaHistoryDrawer
+				open={historyOpen}
+				onClose={() => setHistoryOpen(false)}
+				eventId={eventId}
+			/>
+			<GachaRewardsDrawer
+				open={rewardsOpen}
+				onClose={() => setRewardsOpen(false)}
+				rewards={rewards}
+			/>
+			<GachaRulesDrawer
+				open={rulesOpen}
+				onClose={() => setRulesOpen(false)}
+			/>
 		</div>
 	);
 }

@@ -1,10 +1,8 @@
 "use client";
 
+import type { Tables } from "@/lib/supabase/database.types";
 import { createBrowserClient } from "@supabase/ssr";
 import type { Session, User } from "@supabase/supabase-js";
-import type { Tables } from "@/lib/supabase/database.types";
-
-type AppUser = Tables<"users">;
 import {
 	createContext,
 	useCallback,
@@ -12,6 +10,8 @@ import {
 	useEffect,
 	useState,
 } from "react";
+
+type AppUser = Tables<"users">;
 
 const supabase = createBrowserClient(
 	process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
@@ -102,10 +102,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		initializeAuth();
 
 		// 2. Listen to auth state changes
+		// Skip INITIAL_SESSION — already handled by initializeAuth above
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, newSession) => {
 			if (!mounted) return;
+			if (event === "INITIAL_SESSION") return;
 
 			setSession(newSession);
 			setUser(newSession?.user ?? null);

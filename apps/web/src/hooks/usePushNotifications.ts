@@ -3,7 +3,7 @@
 import { toast } from "@/lib/toast";
 import { useCallback, useMemo, useState } from "react";
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
 	const base64 = (base64String + padding)
 		.replace(/-/g, "+")
@@ -13,7 +13,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 	for (let i = 0; i < rawData.length; i += 1) {
 		output[i] = rawData.charCodeAt(i);
 	}
-	return output;
+	return new Uint8Array(output.buffer.slice(0));
 }
 
 export function usePushNotifications() {

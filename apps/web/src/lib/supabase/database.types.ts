@@ -204,6 +204,198 @@ export type Database = {
         }
         Relationships: []
       }
+      gacha_event_blocked_users: {
+        Row: {
+          event_id: number
+          user_id: string
+        }
+        Insert: {
+          event_id: number
+          user_id: string
+        }
+        Update: {
+          event_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gacha_event_blocked_users_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "gacha_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gacha_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_at: string
+          free_token_interval_days: number | null
+          free_tokens_per_grant: number
+          id: number
+          is_active: boolean
+          name: string
+          start_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_at: string
+          free_token_interval_days?: number | null
+          free_tokens_per_grant?: number
+          id?: number
+          is_active?: boolean
+          name: string
+          start_at: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_at?: string
+          free_token_interval_days?: number | null
+          free_tokens_per_grant?: number
+          id?: number
+          is_active?: boolean
+          name?: string
+          start_at?: string
+        }
+        Relationships: []
+      }
+      gacha_history: {
+        Row: {
+          event_id: number
+          id: number
+          played_at: string
+          reward_id: number
+          user_id: string
+        }
+        Insert: {
+          event_id: number
+          id?: number
+          played_at?: string
+          reward_id: number
+          user_id: string
+        }
+        Update: {
+          event_id?: number
+          id?: number
+          played_at?: string
+          reward_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gacha_history_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "gacha_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gacha_history_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "gacha_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gacha_missions: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_id: number
+          id: number
+          mission_type: string
+          name: string
+          requirement: Json
+          token_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_id: number
+          id?: number
+          mission_type: string
+          name: string
+          requirement?: Json
+          token_reward?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_id?: number
+          id?: number
+          mission_type?: string
+          name?: string
+          requirement?: Json
+          token_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gacha_missions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "gacha_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gacha_rewards: {
+        Row: {
+          claimed_count: number
+          created_at: string
+          description: string | null
+          event_id: number
+          id: number
+          is_golden: boolean
+          max_quantity: number | null
+          name: string
+          reward_type: string
+          thumbnail_url: string | null
+          value: string | null
+          weight: number
+        }
+        Insert: {
+          claimed_count?: number
+          created_at?: string
+          description?: string | null
+          event_id: number
+          id?: number
+          is_golden?: boolean
+          max_quantity?: number | null
+          name: string
+          reward_type: string
+          thumbnail_url?: string | null
+          value?: string | null
+          weight?: number
+        }
+        Update: {
+          claimed_count?: number
+          created_at?: string
+          description?: string | null
+          event_id?: number
+          id?: number
+          is_golden?: boolean
+          max_quantity?: number | null
+          name?: string
+          reward_type?: string
+          thumbnail_url?: string | null
+          value?: string | null
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gacha_rewards_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "gacha_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hero_campaigns: {
         Row: {
           created_at: string | null
@@ -662,6 +854,53 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          device_platform: string | null
+          endpoint: string
+          id: string
+          is_active: boolean
+          last_seen_at: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          device_platform?: string | null
+          endpoint: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          device_platform?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           base_price: number
@@ -759,6 +998,114 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_addresses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_event_tokens: {
+        Row: {
+          event_id: number
+          id: number
+          last_free_token_at: string | null
+          token_count: number
+          user_id: string
+        }
+        Insert: {
+          event_id: number
+          id?: number
+          last_free_token_at?: string | null
+          token_count?: number
+          user_id: string
+        }
+        Update: {
+          event_id?: number
+          id?: number
+          last_free_token_at?: string | null
+          token_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_event_tokens_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "gacha_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_mission_progress: {
+        Row: {
+          completed_at: string | null
+          id: number
+          mission_id: number
+          progress: Json
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: number
+          mission_id: number
+          progress?: Json
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: number
+          mission_id?: number
+          progress?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mission_progress_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "gacha_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          deep_link: string | null
+          id: string
+          metadata: Json
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          deep_link?: string | null
+          id?: string
+          metadata?: Json
+          read_at?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          deep_link?: string | null
+          id?: string
+          metadata?: Json
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -910,6 +1257,42 @@ export type Database = {
             columns: ["gift_variant_id"]
             isOneToOne: false
             referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wishlists: {
+        Row: {
+          added_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishlists_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]

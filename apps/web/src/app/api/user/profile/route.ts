@@ -145,7 +145,16 @@ export async function GET() {
 			);
 		}
 
-		return NextResponse.json(withAddressesArray(profile));
+		// Append token balances for all active events this user is part of
+		const { data: eventTokens } = await supabase
+			.from("user_event_tokens")
+			.select("event_id, token_count, last_free_token_at")
+			.eq("user_id", user.id);
+
+		return NextResponse.json({
+			...withAddressesArray(profile),
+			event_tokens: eventTokens ?? [],
+		});
 	} catch (err) {
 		return NextResponse.json(
 			{ error: err instanceof Error ? err.message : "Unknown error" },
