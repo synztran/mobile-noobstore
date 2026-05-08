@@ -8,7 +8,7 @@ interface TokenSlotProps {
 
 export function TokenSlot({ hasToken }: TokenSlotProps) {
 	return (
-		<div className="flex flex-col items-center gap-2">
+		<div className="flex flex-col items-center gap-2 relative">
 			{/* Metallic outer frame */}
 			<div
 				className="relative flex items-center justify-center w-[76px] h-20 border-2 border-[#888]"
@@ -114,16 +114,16 @@ export function TokenSlot({ hasToken }: TokenSlotProps) {
 					)}
 
 					{/* Bottom label */}
-					<div className="absolute bottom-2 left-0 right-0 flex justify-center text-[6px] text-[#444] tracking-[0.22em]">
+					<div className="absolute bottom-2 left-0 right-0 flex justify-center text-[6px] font-bold text-gray-200 tracking-[0.22em]">
 						1 TOKEN
 					</div>
 				</div>
 			</div>
 
 			<p
-				className="text-[9px] font-black uppercase tracking-widest text-center"
+				className="text-[8px] font-black uppercase tracking-widest text-center absolute -bottom-5 left-1/2 -translate-x-1/2 w-full min-w-[120px]"
 				style={{ color: hasToken ? "#22c55e" : "#888" }}>
-				{hasToken ? "Token ready!" : "Coin slot"}
+				{hasToken ? "Token sẵn sàng!" : "Chưa có token"}
 			</p>
 		</div>
 	);

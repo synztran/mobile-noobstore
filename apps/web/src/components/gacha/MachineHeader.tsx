@@ -31,10 +31,10 @@ export function MachineHeader() {
 				/>
 			</div>
 			<span className="font-black tracking-[0.32em] uppercase text-[11px] text-[#777]">
-				✦ Gacha World ✦
+				✦ Gacha Machine ✦
 			</span>
-			<span className="font-semibold text-[9px] text-[#bbb] tracking-[0.18em]">
-				INSERT TOKEN · TURN · WIN
+			<span className="font-semibold text-[10px] text-gray-400 tracking-[0.18em]">
+				Thêm token · Quay số · Nhận thưởng
 			</span>
 		</div>
 	);

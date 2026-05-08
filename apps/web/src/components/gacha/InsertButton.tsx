@@ -80,13 +80,11 @@ export function InsertButton({
 						<div className="absolute inset-x-5 top-1.5 rounded-full h-2 bg-white/30 blur-[2px]" />
 					)}
 					{/* Bottom depth shadow */}
-					{!disabled && (
+					{/* {!disabled && (
 						<div className="absolute inset-x-0 bottom-0 h-1.5 bg-black/[12%] rounded-b-xl" />
-					)}
+					)} */}
 
-					<span>
-						{hasToken ? "Turn the knob to play!" : "Insert Token"}
-					</span>
+					<span>{hasToken ? "Quay thôi" : "Thêm token"}</span>
 				</motion.button>
 			</div>
 		</div>

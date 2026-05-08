@@ -97,12 +97,12 @@ export function RotaryKnob({
 	}, [isHolding, stopRaf, rotationMV]);
 
 	const labelText = disabled
-		? "Need token"
+		? ""
 		: isReversing
-			? "Releasing..."
+			? "Giữ lâu hơn..."
 			: isHolding
-				? "Turning..."
-				: "Hold & turn";
+				? "Đang quay..."
+				: "Giữ để quay";
 
 	const labelColor = disabled
 		? "#bbb"
@@ -113,7 +113,7 @@ export function RotaryKnob({
 				: "#888";
 
 	return (
-		<div className="flex flex-col items-center gap-2 select-none">
+		<div className="flex flex-col items-center gap-2 select-none relative">
 			{/* Arm shaft extending left — connects machine wall to knob */}
 			<div className="relative flex items-center">
 				{/* Shaft */}
@@ -265,7 +265,7 @@ export function RotaryKnob({
 			</div>
 
 			<p
-				className="text-[9px] font-black uppercase tracking-widest text-center"
+				className="text-[8px] font-black uppercase tracking-widest text-center absolute -bottom-5 left-1/2 -translate-x-1/2 w-full"
 				style={{ color: labelColor }}>
 				{labelText}
 			</p>

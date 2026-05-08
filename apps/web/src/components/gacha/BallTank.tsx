@@ -7,43 +7,66 @@ interface BallTankProps {
 	isShaking?: boolean;
 }
 
-// 29 balls — 4 golden scattered for visual drama
-const BALLS = [
-	// Row 1 — top
-	{ colorIndex: 4, x: 14, y: 12, size: 40 }, // gold
-	{ colorIndex: 3, x: 30, y: 6, size: 34 },
-	{ colorIndex: 2, x: 46, y: 10, size: 38 },
-	{ colorIndex: 6, x: 62, y: 8, size: 36 },
-	{ colorIndex: 4, x: 80, y: 14, size: 42 }, // gold
-	// Row 2
-	{ colorIndex: 8, x: 6, y: 26, size: 34 },
-	{ colorIndex: 0, x: 22, y: 30, size: 36 },
-	{ colorIndex: 10, x: 40, y: 24, size: 36 },
-	{ colorIndex: 7, x: 58, y: 28, size: 38 },
-	{ colorIndex: 1, x: 74, y: 24, size: 34 },
-	{ colorIndex: 9, x: 90, y: 32, size: 34 },
-	// Row 3 — middle
-	{ colorIndex: 5, x: 8, y: 46, size: 38 },
-	{ colorIndex: 1, x: 26, y: 44, size: 40 },
-	{ colorIndex: 4, x: 46, y: 50, size: 38 }, // gold
-	{ colorIndex: 5, x: 62, y: 44, size: 36 },
-	{ colorIndex: 8, x: 80, y: 50, size: 34 },
-	{ colorIndex: 6, x: 94, y: 42, size: 34 },
-	// Row 4
-	{ colorIndex: 9, x: 16, y: 62, size: 36 },
-	{ colorIndex: 0, x: 36, y: 60, size: 34 },
-	{ colorIndex: 3, x: 54, y: 66, size: 38 },
-	{ colorIndex: 7, x: 70, y: 60, size: 36 },
-	{ colorIndex: 2, x: 88, y: 64, size: 34 },
-	// Row 5 — bottom
-	{ colorIndex: 10, x: 8, y: 80, size: 36 },
-	{ colorIndex: 2, x: 26, y: 78, size: 34 },
-	{ colorIndex: 4, x: 44, y: 82, size: 40 }, // gold
-	{ colorIndex: 6, x: 62, y: 80, size: 36 },
-	{ colorIndex: 0, x: 80, y: 84, size: 34 },
-	{ colorIndex: 7, x: 20, y: 92, size: 34 },
-	{ colorIndex: 5, x: 56, y: 94, size: 36 },
-];
+// Deterministic seeded LCG — stable across SSR/client, looks random
+function makeLcg(seed: number) {
+	let s = seed >>> 0;
+	return () => {
+		s = Math.imul(s, 1664525) + 1013904223;
+		return (s >>> 0) / 0x100000000;
+	};
+}
+
+function generateBalls() {
+	const rng = makeLcg(0xdeadbeef);
+	const COLOR_COUNT = 11;
+	const GOLD = 4;
+
+	// Hex-grid sized for ~42px balls in a ~340px wide, 220px tall tank
+	// Column spacing ~14% (≈42px), row spacing ~17% (hex-pack vertical)
+	// Odd rows overflow both edges — clipped by overflow-hidden
+	const evenCols = [6, 20, 34, 48, 62, 76, 90]; // 7 cols
+	const oddCols = [-1, 13, 27, 41, 55, 69, 83, 97]; // 8 cols, clips left+right
+	const rowYs = [8, 25, 42, 58, 75, 91]; // 6 rows
+
+	const balls: { colorIndex: number; x: number; y: number; size: number }[] =
+		[];
+
+	const totalSlots =
+		rowYs.length * evenCols.length +
+		Math.floor(rowYs.length / 2) * (oddCols.length - evenCols.length);
+	const goldSet = new Set<number>();
+	while (goldSet.size < 7) {
+		goldSet.add(Math.floor(rng() * totalSlots));
+	}
+
+	let idx = 0;
+	for (let row = 0; row < rowYs.length; row++) {
+		const cols = row % 2 === 0 ? evenCols : oddCols;
+		for (const baseX of cols) {
+			const jx = (rng() - 0.5) * 10; // ±5% jitter — looks organic, not grid
+			const jy = (rng() - 0.5) * 8; // ±4% jitter
+			const size = 38 + Math.round(rng() * 10); // 38–48 px — bigger balls
+			const isGold = goldSet.has(idx);
+			let colorIndex: number;
+			if (isGold) {
+				colorIndex = GOLD;
+			} else {
+				colorIndex = Math.floor(rng() * (COLOR_COUNT - 1));
+				if (colorIndex >= GOLD) colorIndex++;
+			}
+			balls.push({
+				colorIndex,
+				x: Math.round((baseX + jx) * 10) / 10,
+				y: Math.round((rowYs[row] + jy) * 10) / 10,
+				size,
+			});
+			idx++;
+		}
+	}
+	return balls;
+}
+
+const BALLS = generateBalls();
 
 export function BallTank({ isShaking = false }: BallTankProps) {
 	return (
@@ -134,7 +157,7 @@ export function BallTank({ isShaking = false }: BallTankProps) {
 											dy * 0.3,
 											0,
 										],
-								  }
+									}
 								: { x: 0, y: 0 }
 						}
 						transition={
@@ -143,7 +166,7 @@ export function BallTank({ isShaking = false }: BallTankProps) {
 										duration: 0.85 + (i % 6) * 0.07,
 										delay: (i % 7) * 0.045,
 										ease: "easeInOut",
-								  }
+									}
 								: { duration: 0.25 }
 						}>
 						<LuckyBall

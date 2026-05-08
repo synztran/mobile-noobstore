@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BallTank } from "./BallTank";
 import { InsertButton } from "./InsertButton";
 import { BALL_PALETTE } from "./LuckyBall";
@@ -38,6 +38,14 @@ export function GachaMachine() {
 	}, []);
 
 	const isTrayOpen = phase === "rolling" || phase === "reveal";
+
+	useEffect(() => {
+		document.body.style.position = "fixed";
+		document.body.style.width = "100%";
+		return () => {
+			document.body.style.position = "";
+		};
+	}, []);
 
 	return (
 		<div className="flex flex-col items-center">
@@ -138,7 +146,7 @@ export function GachaMachine() {
 
 				{/* ── Controls: knob left, token slot right ── */}
 				<div
-					className="flex items-center justify-between px-4 py-3"
+					className="flex items-center justify-between px-4 py-3 gap-8 pb-8"
 					style={{
 						background:
 							"linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.04) 100%)",
