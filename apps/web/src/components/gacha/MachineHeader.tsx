@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 export function MachineHeader() {
 	return (
 		<div
-			className="flex flex-col items-center pt-3 pb-2.5 gap-1 rounded-t-[22px]"
+			className="flex flex-col items-center py-2 gap-1 rounded-t-[22px]"
 			style={{
 				background: "linear-gradient(180deg, #ffffff 0%, #f4f4f4 100%)",
 				borderBottom: "2px solid #e4e4e4",

@@ -136,7 +136,7 @@ export function RotaryKnob({
 							"linear-gradient(135deg, #e0e0e0 0%, #b8b8b8 50%, #a0a0a0 100%)",
 						boxShadow:
 							"0 6px 16px rgba(0,0,0,0.32), inset 0 2px 4px rgba(255,255,255,0.6), inset 0 -2px 4px rgba(0,0,0,0.15)",
-						outline: "2.5px solid #909090",
+						// outline: "2.5px solid #909090",
 					}}>
 					{/* Housing ring tick marks */}
 					{[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (

@@ -1,6 +1,5 @@
 "use client";
 
-import { BookOpen, History, Trophy } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { BallTank } from "./BallTank";
@@ -9,11 +8,13 @@ import { GachaRewardsDrawer } from "./GachaRewardsDrawer";
 import { GachaRulesDrawer } from "./GachaRulesDrawer";
 import { InsertButton } from "./InsertButton";
 import { BALL_PALETTE } from "./LuckyBall";
+import { MachineActions } from "./MachineActions";
 import { MachineHeader } from "./MachineHeader";
 import { MachineStand } from "./MachineStand";
 import { OutputTray } from "./OutputTray";
 import { GachaRewardData, RewardReveal } from "./RewardReveal";
 import { RotaryKnob } from "./RotaryKnob";
+import { TokenBadge } from "./TokenBadge";
 import { TokenSlot } from "./TokenSlot";
 import { WinnerTicker } from "./WinnerTicker";
 
@@ -112,14 +113,6 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 
 	const isTrayOpen = phase === "rolling" || phase === "reveal";
 
-	useEffect(() => {
-		document.body.style.position = "fixed";
-		document.body.style.width = "100%";
-		return () => {
-			document.body.style.position = "";
-		};
-	}, []);
-
 	return (
 		<div className="flex flex-col items-center">
 			{/* Winner ticker above machine */}
@@ -127,203 +120,168 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 				<WinnerTicker eventId={eventId} />
 			</div>
 
-			{/* ── Machine cabinet ─────────────────────────────── */}
-			<motion.div
-				className="relative flex flex-col items-stretch w-[292px] rounded-t-3xl rounded-b-[6px]"
-				style={{
-					background:
-						"linear-gradient(175deg, #fafafa 0%, #efefef 55%, #e2e2e2 100%)",
-					borderRadius: "24px 24px 6px 6px",
-					border: "2.5px solid #d0d0d0",
-					boxShadow:
-						"0 12px 48px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.9)",
-				}}
-				initial={{ scale: 0.85, opacity: 0, y: 28 }}
-				animate={{ scale: 1, opacity: 1, y: 0 }}
-				transition={{
-					type: "spring",
-					stiffness: 200,
-					damping: 22,
-					delay: 0.1,
-				}}>
-				{/* Side left highlight edge */}
-				<div
-					className="absolute top-6 bottom-6 left-0 rounded-l-3xl pointer-events-none w-[3px]"
-					style={{
-						background:
-							"linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 100%)",
-					}}
-				/>
-				{/* Side right shadow edge */}
-				<div
-					className="absolute top-6 bottom-6 right-0 rounded-r-3xl pointer-events-none w-[3px]"
-					style={{
-						background:
-							"linear-gradient(180deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.06) 100%)",
-					}}
+			{/* ── Machine cabinet + side action icons ─────────── */}
+			<div className="relative">
+				{/* Token badge */}
+				<TokenBadge tokenCount={tokenCount} />
+
+				{/* Side action buttons */}
+				<MachineActions
+					onHistoryOpen={() => setHistoryOpen(true)}
+					onRewardsOpen={() => setRewardsOpen(true)}
+					onRulesOpen={() => setRulesOpen(true)}
 				/>
 
-				{/* Corner bolts */}
-				{[
-					{ top: 10, left: 10 },
-					{ top: 10, right: 10 },
-				].map((pos, i) => (
-					<div
-						key={i}
-						className="absolute rounded-full pointer-events-none w-[7px] h-[7px]"
-						style={{
-							background:
-								"radial-gradient(circle at 35% 35%, #e0e0e0, #a0a0a0)",
-							boxShadow:
-								"inset 0 1px 2px rgba(0,0,0,0.3), 0 1px 1px rgba(255,255,255,0.6)",
-							...pos,
-						}}
-					/>
-				))}
-
-				{/* ── Top header with gradient band ── */}
-				<MachineHeader />
-
-				{/* ── Glass dome frame ── */}
-				<div
-					className="mx-3 mt-2 rounded-t-xl rounded-b-[4px] border-2 border-[#d0d0d0] overflow-hidden"
+				<motion.div
+					className="relative flex flex-col items-stretch w-[292px] rounded-t-3xl rounded-b-[6px] mx-auto"
 					style={{
+						background:
+							"linear-gradient(175deg, #fafafa 0%, #efefef 55%, #e2e2e2 100%)",
+						borderRadius: "24px 24px 6px 6px",
+						border: "2.5px solid #d0d0d0",
 						boxShadow:
-							"inset 0 0 0 1px rgba(255,255,255,0.7), 0 2px 6px rgba(0,0,0,0.10)",
+							"0 12px 48px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.08), inset 0 1px 2px rgba(255,255,255,0.9)",
+					}}
+					initial={{ scale: 0.85, opacity: 0, y: 28 }}
+					animate={{ scale: 1, opacity: 1, y: 0 }}
+					transition={{
+						type: "spring",
+						stiffness: 200,
+						damping: 22,
+						delay: 0.1,
 					}}>
-					<BallTank isShaking={phase === "dispensing"} />
-				</div>
-
-				{/* ── Mid panel with decorative screws ── */}
-				<div className="mx-3 my-2 flex items-center gap-2 h-2">
+					{/* Side left highlight edge */}
 					<div
-						className="rounded-full shrink-0 w-[7px] h-[7px]"
+						className="absolute top-6 bottom-6 left-0 rounded-l-3xl pointer-events-none w-[3px]"
 						style={{
 							background:
-								"radial-gradient(circle at 35% 35%, #e0e0e0, #a0a0a0)",
-							boxShadow: "inset 0 1px 1px rgba(0,0,0,0.25)",
+								"linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 100%)",
 						}}
 					/>
+					{/* Side right shadow edge */}
 					<div
-						className="flex-1 rounded-full h-1"
+						className="absolute top-6 bottom-6 right-0 rounded-r-3xl pointer-events-none w-[3px]"
 						style={{
 							background:
-								"linear-gradient(90deg, #d0d0d0 0%, #e8e8e8 50%, #d0d0d0 100%)",
-							boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+								"linear-gradient(180deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.06) 100%)",
 						}}
 					/>
+
+					{/* Corner bolts */}
+					{[
+						{ top: 8, left: 10 },
+						{ top: 8, right: 10 },
+					].map((pos, i) => (
+						<div
+							key={i}
+							className="absolute rounded-full pointer-events-none w-[7px] h-[7px]"
+							style={{
+								background:
+									"radial-gradient(circle at 35% 35%, #e0e0e0, #a0a0a0)",
+								boxShadow:
+									"inset 0 1px 2px rgba(0,0,0,0.3), 0 1px 1px rgba(255,255,255,0.6)",
+								...pos,
+							}}
+						/>
+					))}
+
+					{/* ── Top header with gradient band ── */}
+					<MachineHeader />
+
+					{/* ── Glass dome frame ── */}
 					<div
-						className="rounded-full shrink-0 w-[7px] h-[7px]"
+						className="mx-3 mt-2 rounded-t-xl rounded-b-[4px] border-2 border-[#d0d0d0] overflow-hidden"
+						style={{
+							boxShadow:
+								"inset 0 0 0 1px rgba(255,255,255,0.7), 0 2px 6px rgba(0,0,0,0.10)",
+						}}>
+						<BallTank isShaking={phase === "dispensing"} />
+					</div>
+
+					{/* ── Mid panel with decorative screws ── */}
+					<div className="mx-3 my-2 flex items-center gap-2 h-2">
+						<div
+							className="rounded-full shrink-0 w-[7px] h-[7px]"
+							style={{
+								background:
+									"radial-gradient(circle at 35% 35%, #e0e0e0, #a0a0a0)",
+								boxShadow: "inset 0 1px 1px rgba(0,0,0,0.25)",
+							}}
+						/>
+						<div
+							className="flex-1 rounded-full h-1"
+							style={{
+								background:
+									"linear-gradient(90deg, #d0d0d0 0%, #e8e8e8 50%, #d0d0d0 100%)",
+								boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+							}}
+						/>
+						<div
+							className="rounded-full shrink-0 w-[7px] h-[7px]"
+							style={{
+								background:
+									"radial-gradient(circle at 35% 35%, #e0e0e0, #a0a0a0)",
+								boxShadow: "inset 0 1px 1px rgba(0,0,0,0.25)",
+							}}
+						/>
+					</div>
+
+					{/* ── Controls: knob left, token slot right ── */}
+					<div
+						className="flex items-center justify-between px-4 pt-2 gap-8 pb-6"
 						style={{
 							background:
-								"radial-gradient(circle at 35% 35%, #e0e0e0, #a0a0a0)",
-							boxShadow: "inset 0 1px 1px rgba(0,0,0,0.25)",
-						}}
-					/>
-				</div>
+								"linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.04) 100%)",
+							borderTop: "1px solid rgba(0,0,0,0.06)",
+							borderBottom: "1px solid rgba(0,0,0,0.06)",
+						}}>
+						<RotaryKnob
+							onTurnComplete={handleKnobTurnComplete}
+							disabled={phase !== "token-inserted"}
+						/>
+						<TokenSlot
+							hasToken={
+								phase === "token-inserted" ||
+								phase === "dispensing" ||
+								phase === "reveal"
+							}
+						/>
+					</div>
 
-				{/* ── Controls: knob left, token slot right ── */}
-				<div
-					className="flex items-center justify-between px-4 py-3 gap-8 pb-8"
-					style={{
-						background:
-							"linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.04) 100%)",
-						borderTop: "1px solid rgba(0,0,0,0.06)",
-						borderBottom: "1px solid rgba(0,0,0,0.06)",
-					}}>
-					<RotaryKnob
-						onTurnComplete={handleKnobTurnComplete}
-						disabled={phase !== "token-inserted"}
-					/>
-					<TokenSlot
-						hasToken={
-							phase === "token-inserted" ||
-							phase === "dispensing" ||
-							phase === "reveal"
-						}
-					/>
-				</div>
+					{/* ── Insert button ── */}
+					<div className="px-4 py-2">
+						<InsertButton
+							onClick={handleInsertToken}
+							disabled={
+								phase !== "idle" ||
+								tokenCount === null ||
+								tokenCount === 0
+							}
+							noTokens={tokenCount === 0}
+							hasToken={phase === "token-inserted"}
+						/>
+					</div>
 
-				{/* ── Token count display ── */}
-				<div className="flex items-center justify-center gap-1.5 pt-2 pb-0.5">
-					{/* <Coins size={14} className="text-amber-500" /> */}
-					<span className="font-normal text-base-content/50 text-xs">
-						Bạn hiện có{" "}
-					</span>
-					{tokenCount === null ? (
-						<span className="w-8 h-3 rounded bg-base-300 animate-pulse inline-block" />
-					) : (
-						<span className="text-xs font-black text-amber-600">
-							{tokenCount}{" "}
-							<span className="font-normal text-base-content/50">
-								token{tokenCount !== 1 ? "s" : ""}
-							</span>
-						</span>
+					{/* ── Draw error notice ── */}
+					{drawError && (
+						<p className="text-[10px] text-error text-center px-4 pb-1">
+							{drawError}
+						</p>
 					)}
-				</div>
 
-				{/* ── Insert button ── */}
-				<div className="px-4 py-2">
-					<InsertButton
-						onClick={handleInsertToken}
-						disabled={
-							phase !== "idle" ||
-							tokenCount === null ||
-							tokenCount === 0
-						}
-						hasToken={phase === "token-inserted"}
-					/>
-				</div>
+					{/* ── Output tray flush at bottom ── */}
+					<div className="flex justify-center pb-6">
+						<OutputTray
+							isOpen={isTrayOpen}
+							rewardColorIndex={rewardIndex}
+						/>
+					</div>
+				</motion.div>
 
-				{/* ── Draw error notice ── */}
-				{drawError && (
-					<p className="text-[10px] text-error text-center px-4 pb-1">
-						{drawError}
-					</p>
-				)}
-
-				{/* ── Output tray flush at bottom ── */}
-				<div className="flex justify-center pb-8">
-					<OutputTray
-						isOpen={isTrayOpen}
-						rewardColorIndex={rewardIndex}
-					/>
-				</div>
-			</motion.div>
-
-			{/* ── Machine stand ── */}
-			<MachineStand />
-
-			{/* ── Action buttons row ── */}
-			<div className="flex items-center gap-3 mt-4 w-[292px]">
-				<button
-					onClick={() => setHistoryOpen(true)}
-					className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition-colors"
-					aria-label="Lịch sử tham gia">
-					<History size={18} className="text-base-content/60" />
-					<span className="text-[10px] font-semibold text-base-content/50">
-						Lịch sử
-					</span>
-				</button>
-				<button
-					onClick={() => setRewardsOpen(true)}
-					className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition-colors"
-					aria-label="Danh sách phần thưởng">
-					<Trophy size={18} className="text-base-content/60" />
-					<span className="text-[10px] font-semibold text-base-content/50">
-						Phần thưởng
-					</span>
-				</button>
-				<button
-					onClick={() => setRulesOpen(true)}
-					className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-2xl border border-base-200 bg-base-100 hover:bg-base-200 transition-colors"
-					aria-label="Quy tắc trò chơi">
-					<BookOpen size={18} className="text-base-content/60" />
-					<span className="text-[10px] font-semibold text-base-content/50">
-						Quy tắc
-					</span>
-				</button>
+				{/* ── Machine stand ── */}
+				<MachineStand />
 			</div>
+			{/* end relative wrapper */}
 
 			{/* ── Reward reveal overlay ── */}
 			{phase === "reveal" && (

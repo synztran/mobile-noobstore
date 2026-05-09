@@ -7,12 +7,14 @@ interface InsertButtonProps {
 	onClick: () => void;
 	disabled?: boolean;
 	hasToken?: boolean;
+	noTokens?: boolean;
 }
 
 export function InsertButton({
 	onClick,
 	disabled = false,
 	hasToken = false,
+	noTokens = false,
 }: InsertButtonProps) {
 	const bg = hasToken
 		? "linear-gradient(145deg, #4ade80 0%, #16a34a 100%)"
@@ -60,7 +62,7 @@ export function InsertButton({
 					type="button"
 					onClick={onClick}
 					disabled={disabled}
-					className={`relative w-full flex items-center justify-center gap-2 font-black text-sm uppercase text-white select-none h-12 rounded-[14px] z-[1] border-0 tracking-[0.12em] ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+					className={`relative w-full flex items-center justify-center gap-2 font-black text-sm uppercase text-white select-none h-10 rounded-[14px] z-[1] border-0 tracking-[0.12em] ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
 					style={{
 						background: disabled
 							? "linear-gradient(145deg, #d0d0d0, #b8b8b8)"
@@ -80,11 +82,21 @@ export function InsertButton({
 						<div className="absolute inset-x-5 top-1.5 rounded-full h-2 bg-white/30 blur-[2px]" />
 					)}
 					{/* Bottom depth shadow */}
-					{/* {!disabled && (
+					{!disabled && (
 						<div className="absolute inset-x-0 bottom-0 h-1.5 bg-black/[12%] rounded-b-xl" />
-					)} */}
+					)}
 
-					<span>{hasToken ? "Quay thôi" : "Thêm token"}</span>
+					<div className="text-xs">
+						{hasToken ? (
+							"Quay thôi"
+						) : noTokens ? (
+							"Không đủ token"
+						) : (
+							<div className="relative flex items-center justify-center">
+								Tham gia
+							</div>
+						)}
+					</div>
 				</motion.button>
 			</div>
 		</div>
