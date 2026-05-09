@@ -120,18 +120,18 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 				<WinnerTicker eventId={eventId} />
 			</div>
 
+			{/* Token badge */}
+			<TokenBadge tokenCount={tokenCount} />
+
+			{/* Side action buttons */}
+			<MachineActions
+				onHistoryOpen={() => setHistoryOpen(true)}
+				onRewardsOpen={() => setRewardsOpen(true)}
+				onRulesOpen={() => setRulesOpen(true)}
+			/>
+
 			{/* ── Machine cabinet + side action icons ─────────── */}
 			<div className="relative">
-				{/* Token badge */}
-				<TokenBadge tokenCount={tokenCount} />
-
-				{/* Side action buttons */}
-				<MachineActions
-					onHistoryOpen={() => setHistoryOpen(true)}
-					onRewardsOpen={() => setRewardsOpen(true)}
-					onRulesOpen={() => setRulesOpen(true)}
-				/>
-
 				<motion.div
 					className="relative flex flex-col items-stretch w-[292px] rounded-t-3xl rounded-b-[6px] mx-auto"
 					style={{

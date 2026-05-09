@@ -49,7 +49,7 @@ export function WinnerTicker({ eventId }: WinnerTickerProps) {
 						ref={trackRef}
 						className="flex gap-6 whitespace-nowrap"
 						style={{
-							animation: `gacha-ticker ${items.length * 3}s linear infinite`,
+							animation: `gacha-ticker ${items.length * 0.5}s linear infinite`,
 						}}>
 						{items.map((w, i) => (
 							<span

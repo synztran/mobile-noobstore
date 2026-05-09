@@ -6,7 +6,7 @@ export function MainContent({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
 	const fixedMain =
 		pathname === "/gacha"
-			? "max-h-screen "
+			? "max-h-screen"
 			: "min-h-screen main-bottom-offset";
 
 	return (

@@ -6,7 +6,7 @@ interface TokenBadgeProps {
 
 export function TokenBadge({ tokenCount }: TokenBadgeProps) {
 	return (
-		<div className="absolute -left-12 top-1/3 flex flex-col items-center gap-1">
+		<div className="absolute left-0 top-1/2 transform -translate-y-1/2 flex flex-col items-center gap-1">
 			<div className="w-9 h-9 rounded-tr-xl rounded-br-xl border border-base-200 shadow-sm flex items-center justify-center">
 				<Image
 					src="/gatcha-machine/token_icon.png"

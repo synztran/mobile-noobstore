@@ -50,7 +50,7 @@ export default async function GachaPage() {
 	}
 
 	return (
-		<div className="max-h-screen py-6 px-4">
+		<div className="max-h-screen px-4">
 			<GachaMachine eventId={event.id} />
 		</div>
 	);

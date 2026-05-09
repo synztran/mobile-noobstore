@@ -78,8 +78,8 @@ export function GachaRewardsDrawer({
 				</div>
 
 				{/* Reward list */}
-				<div className="overflow-y-auto flex-1 px-4 py-3 flex flex-col gap-2.5">
-					{rewards.map((r) => {
+				<div className="overflow-y-auto flex-1 px-3 py-3 grid grid-cols-3 gap-2 content-start">
+					{[...rewards].map((r) => {
 						const typeBadge = TYPE_BADGE[r.reward_type] ?? {
 							label: r.reward_type,
 							color: "badge-ghost",
@@ -93,76 +93,66 @@ export function GachaRewardsDrawer({
 						return (
 							<div
 								key={r.id}
-								className={`flex items-center gap-3 p-3 rounded-xl border ${
+								className={`flex flex-col rounded-2xl border ${
 									r.is_golden
 										? "border-amber-400/60 bg-amber-400/5"
-										: "border-base-200"
+										: "border-base-200 bg-base-100"
 								} ${isExhausted ? "opacity-40" : ""}`}>
-								{/* Icon/thumbnail */}
+								{/* Thumbnail area */}
 								<div
-									className="w-11 h-11 rounded-full shrink-0 flex items-center justify-center text-xl"
+									className="relative w-full h-20 flex items-center justify-center shrink-0 overflow-hidden rounded-t-2xl"
 									style={{
 										background: r.is_golden
-											? "linear-gradient(135deg, #FCD34D, #F59E0B)"
-											: "linear-gradient(135deg, #e5e7eb, #d1d5db)",
+											? "linear-gradient(135deg, #FEF3C7, #FDE68A)"
+											: "linear-gradient(135deg, #f3f4f6, #e5e7eb)",
 									}}>
 									{r.thumbnail_url ? (
 										// eslint-disable-next-line @next/next/no-img-element
 										<img
 											src={r.thumbnail_url}
 											alt=""
-											className="w-full h-full rounded-full object-cover"
+											className="w-full h-full object-cover"
 										/>
 									) : (
-										<span>{r.is_golden ? "★" : "🎱"}</span>
-									)}
-								</div>
-
-								<div className="flex-1 min-w-0">
-									<div className="flex items-center gap-1.5 flex-wrap">
-										<p className="font-bold text-sm">
-											{r.name}
-										</p>
-										{r.is_golden && (
-											<span className="badge badge-warning badge-sm font-black text-white">
-												Giải đặc biệt
-											</span>
-										)}
-									</div>
-									{r.description && (
-										<p className="text-xs text-base-content/80 line-clamp-2">
-											{r.description}
-										</p>
-									)}
-									<div className="flex items-center gap-1.5 mt-1 flex-wrap">
-										<span
-											className={`badge badge-sm ${typeBadge.color}`}>
-											{typeBadge.label}
+										<span className="text-3xl">
+											{r.is_golden ? "★" : "🎱"}
 										</span>
-										{r.value && (
-											<span className="text-[10px] text-base-content/60">
-												{r.reward_type === "point"
-													? `${r.value} điểm`
-													: r.value}
-											</span>
-										)}
-									</div>
-								</div>
-
-								<div className="flex flex-col items-end gap-1 shrink-0">
-									{/* Appearance chance */}
-									<span className="text-sm font-black text-primary">
+									)}
+									{/* Percent overlay */}
+									<span className="absolute top-1 right-1 text-[9px] font-black bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-full px-1.5 py-0.5 leading-none shadow-sm shadow-orange-400/60">
 										{r.percent.toFixed(1)}%
 									</span>
-									{/* Remaining stock */}
+									{/* Remaining overlay */}
 									{remaining != null && (
 										<span
-											className={`text-[10px] ${isExhausted ? "text-error" : "text-base-content/60"}`}>
+											className={`absolute top-1 left-1 text-[9px] font-black rounded-full px-1.5 py-0.5 leading-none shadow-sm ${
+												isExhausted
+													? "bg-red-500/80 text-white"
+													: "bg-black/50 text-white"
+											}`}>
 											{isExhausted
-												? "Hết hàng"
-												: `${remaining} còn lại`}
+												? "Hết"
+												: `Còn ${remaining}`}
 										</span>
 									)}
+								</div>
+
+								{/* Info area */}
+								<div className="flex flex-col gap-0.5 p-1.5 flex-1">
+									<p className="font-bold text-[10px] leading-tight line-clamp-2">
+										{r.name}
+									</p>
+									<div className="flex items-center gap-1 mt-auto pt-1 flex-wrap">
+										<span
+											className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${typeBadge.color}`}>
+											{typeBadge.label}
+										</span>
+										{r.is_golden && (
+											<span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-400 text-white">
+												✦ Đặc biệt
+											</span>
+										)}
+									</div>
 								</div>
 							</div>
 						);

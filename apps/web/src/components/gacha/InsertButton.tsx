@@ -78,13 +78,13 @@ export function InsertButton({
 						damping: 30,
 					}}>
 					{/* Top gloss bar */}
-					{!disabled && (
+					{/* {!disabled && (
 						<div className="absolute inset-x-5 top-1.5 rounded-full h-2 bg-white/30 blur-[2px]" />
-					)}
+					)} */}
 					{/* Bottom depth shadow */}
-					{!disabled && (
+					{/* {!disabled && (
 						<div className="absolute inset-x-0 bottom-0 h-1.5 bg-black/[12%] rounded-b-xl" />
-					)}
+					)} */}
 
 					<div className="text-xs">
 						{hasToken ? (
