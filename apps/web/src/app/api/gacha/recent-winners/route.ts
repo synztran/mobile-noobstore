@@ -1,3 +1,4 @@
+import { getCache, setCache } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -23,11 +24,19 @@ export async function GET(req: NextRequest) {
 
 	const supabase = await createClient();
 
+	// Cache key includes eventId only; limit is normalised to the query above
+	const cacheKey = `gacha:winners:${eventId}`;
+	const cached = await getCache<{ winners: unknown[] }>(cacheKey);
+	if (cached) {
+		return NextResponse.json(cached);
+	}
+
 	// Step 1: fetch history + reward (no join to auth.users — not a public FK)
 	const { data: historyRows, error } = await supabase
 		.from("gacha_history")
 		.select("user_id, played_at, reward:gacha_rewards(name, is_golden)")
 		.eq("event_id", eventId)
+		.neq("reward_id", 5)
 		.order("played_at", { ascending: false })
 		.limit(limit);
 
@@ -64,5 +73,8 @@ export async function GET(req: NextRequest) {
 		};
 	});
 
-	return NextResponse.json({ winners });
+	const response = { winners };
+	// Cache for 30 s — POST /api/gacha invalidates this key after each draw
+	await setCache(cacheKey, response, 30);
+	return NextResponse.json(response);
 }

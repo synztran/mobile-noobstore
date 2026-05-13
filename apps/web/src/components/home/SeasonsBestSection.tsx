@@ -10,7 +10,7 @@ export function SeasonsBestSection() {
 					alt="Summer Series 2024 – seasonal feature"
 					fill
 					className="object-cover mix-blend-multiply opacity-60"
-					unoptimized
+					sizes="(max-width: 640px) 100vw, 50vw"
 				/>
 				<div className="relative z-10">
 					<h3 className="text-3xl font-extrabold tracking-tighter uppercase mb-2">

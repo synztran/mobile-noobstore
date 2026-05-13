@@ -1,15 +1,17 @@
-import { BookOpen, History, Trophy } from "lucide-react";
+import { BookOpen, History, Target, Trophy } from "lucide-react";
 
 interface MachineActionsProps {
 	onHistoryOpen: () => void;
 	onRewardsOpen: () => void;
 	onRulesOpen: () => void;
+	onMissionsOpen: () => void;
 }
 
 export function MachineActions({
 	onHistoryOpen,
 	onRewardsOpen,
 	onRulesOpen,
+	onMissionsOpen,
 }: MachineActionsProps) {
 	return (
 		<div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex flex-col gap-2">
@@ -24,6 +26,12 @@ export function MachineActions({
 				className="w-9 h-9 rounded-tl-xl rounded-bl-xl bg-base-100 border border-base-200 shadow-sm flex items-center justify-center hover:bg-base-200 transition-colors"
 				aria-label="Danh sách phần thưởng">
 				<Trophy size={16} className="text-amber-500" />
+			</button>
+			<button
+				onClick={onMissionsOpen}
+				className="w-9 h-9 rounded-tl-xl rounded-bl-xl bg-base-100 border border-base-200 shadow-sm flex items-center justify-center hover:bg-base-200 transition-colors"
+				aria-label="Nhiệm vụ">
+				<Target size={16} className="text-emerald-500" />
 			</button>
 			<button
 				onClick={onRulesOpen}

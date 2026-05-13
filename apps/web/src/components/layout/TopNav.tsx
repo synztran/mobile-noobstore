@@ -6,8 +6,7 @@ import WishlistSidebar from "@/components/wishlist/WishlistSidebar";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore } from "@/store";
 import clsx from "clsx";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface TopNavProps {
@@ -29,11 +28,17 @@ export function TopNav({
 }: TopNavProps) {
 	const mounted = useIsMounted();
 	const pathname = usePathname();
+	const router = useRouter();
 	const { openCart, itemCount } = useCartStore();
 	const count = mounted ? itemCount() : 0;
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [wishlistOpen, setWishlistOpen] = useState(false);
-	const isCheckoutRoute = pathname?.startsWith("/checkout") ?? false;
+	const [navigating, setNavigating] = useState(false);
+
+	const handleBack = () => {
+		setNavigating(true);
+		router.push(backHref);
+	};
 	const pathHideCard = ["/gacha", "/checkout"];
 	const hideCart = pathHideCard.includes(pathname);
 
@@ -45,11 +50,17 @@ export function TopNav({
 			)}>
 			<div className="flex items-center gap-4 w-10">
 				{showBack ? (
-					<Link
-						href={backHref}
-						className="text-on-surface hover:opacity-70 transition-opacity active:scale-95 duration-200">
-						<Icon name="arrow_back" className="text-[22px]" />
-					</Link>
+					<button
+						aria-label="Go back"
+						disabled={navigating}
+						onClick={handleBack}
+						className="text-on-surface hover:opacity-70 transition-opacity active:scale-95 duration-200 disabled:opacity-40">
+						{navigating ? (
+							<span className="loading loading-spinner loading-xs" />
+						) : (
+							<Icon name="arrow_back" className="text-[22px]" />
+						)}
+					</button>
 				) : (
 					<button
 						aria-label="Open menu"

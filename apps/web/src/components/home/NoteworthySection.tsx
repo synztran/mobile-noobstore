@@ -13,7 +13,7 @@ const CATEGORIES = [
 	{ label: "BÀN PHÍM", slug: "keyboards" },
 	{ label: "SWITCH", slug: "switches" },
 	{ label: "PHỤ KIỆN", slug: "accessories" },
-  { label: "GIÀY", slug: "sneakers" }
+	{ label: "GIÀY", slug: "sneakers" },
 ];
 
 function ProductCard({ product }: { product: ShopProduct }) {
@@ -31,7 +31,7 @@ function ProductCard({ product }: { product: ShopProduct }) {
 						alt={product.name}
 						fill
 						className="object-cover group-hover:scale-105 transition-transform duration-300"
-						unoptimized
+						sizes="180px"
 					/>
 				) : (
 					<div className="w-full h-full flex items-center justify-center">

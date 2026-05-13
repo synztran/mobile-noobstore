@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { House, ShoppingBasket, UserRound } from "lucide-react";
+import { Dices, House, ShoppingBasket, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -19,6 +19,12 @@ const navItems = [
 		iconFilled: false,
 	},
 	{
+		href: "/gacha",
+		icon: <Dices size={16} />,
+		label: "Gacha",
+		iconFilled: false,
+	},
+	{
 		href: "/profile",
 		icon: <UserRound size={16} />,
 		label: "Hồ sơ",
@@ -28,8 +34,6 @@ const navItems = [
 
 export function BottomNav() {
 	const pathname = usePathname();
-
-	if (pathname === "/gacha") return null;
 
 	return (
 		<nav className="fixed bottom-3 left-2 right-2 w-full flex justify-around items-center glass-nav !bg-[rgba(255,255,255,0.5)] rounded-xl z-50 bottom-nav-pad max-w-[80vw] mx-auto">

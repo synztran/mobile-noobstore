@@ -1,14 +1,21 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { LuckyBall } from "./LuckyBall";
+import { BALL_PALETTE, LuckyBall } from "./LuckyBall";
 
 interface OutputTrayProps {
 	isOpen: boolean;
 	rewardColorIndex: number | null;
+	isClickable?: boolean;
+	onBallClick?: () => void;
 }
 
-export function OutputTray({ isOpen, rewardColorIndex }: OutputTrayProps) {
+export function OutputTray({
+	isOpen,
+	rewardColorIndex,
+	isClickable,
+	onBallClick,
+}: OutputTrayProps) {
 	return (
 		<div
 			className="relative flex items-end justify-center overflow-hidden w-[110px] h-28 rounded-b-2xl"
@@ -35,7 +42,7 @@ export function OutputTray({ isOpen, rewardColorIndex }: OutputTrayProps) {
 
 			{/* Door flap — slides open downward */}
 			<motion.div
-				className="absolute left-2 right-2 top-0 origin-top rounded-b-lg h-12"
+				className={`absolute left-2 right-2 top-0 origin-top rounded-b-lg h-12 ${isOpen ? "pointer-events-none" : ""}`}
 				style={{
 					background:
 						"linear-gradient(180deg, #e8e8e8 0%, #c8c8c8 100%)",
@@ -49,7 +56,8 @@ export function OutputTray({ isOpen, rewardColorIndex }: OutputTrayProps) {
 			<AnimatePresence>
 				{isOpen && rewardColorIndex !== null && (
 					<motion.div
-						className="absolute bottom-3"
+						className={`absolute bottom-3 ${isClickable ? "cursor-pointer" : ""}`}
+						onClick={isClickable ? onBallClick : undefined}
 						initial={{
 							y: -140,
 							rotate: -60,
@@ -64,6 +72,29 @@ export function OutputTray({ isOpen, rewardColorIndex }: OutputTrayProps) {
 							damping: 7,
 							delay: 0.1,
 						}}>
+						{/* Pulse ring — appears when API resolved and ball is clickable */}
+						{isClickable && rewardColorIndex !== null && (
+							<motion.div
+								className="absolute inset-0 rounded-full border-2 pointer-events-none"
+								style={{
+									margin: -6,
+									borderColor:
+										BALL_PALETTE[
+											rewardColorIndex %
+												BALL_PALETTE.length
+										].top,
+								}}
+								animate={{
+									scale: [1, 1.7, 1],
+									opacity: [0.9, 0, 0.9],
+								}}
+								transition={{
+									duration: 1,
+									repeat: Infinity,
+									ease: "easeOut",
+								}}
+							/>
+						)}
 						{/* Landing flash — bursts as ball hits the tray floor */}
 						<motion.div
 							className="absolute -inset-4 rounded-full pointer-events-none"

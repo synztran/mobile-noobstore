@@ -1,3 +1,4 @@
+import { getCache, setCache } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -16,6 +17,12 @@ export interface HeroCampaign {
 
 export async function GET() {
 	try {
+		const cacheKey = "home:hero";
+		const cached = await getCache<HeroCampaign[]>(cacheKey);
+		if (cached) {
+			return NextResponse.json(cached);
+		}
+
 		const supabase = await createClient();
 
 		const { data: campaigns, error } = await supabase
@@ -42,6 +49,8 @@ export async function GET() {
 			);
 		}
 
+		// Cache for 5 min — hero campaigns rarely change
+		await setCache(cacheKey, campaigns, 300);
 		return NextResponse.json(campaigns as HeroCampaign[]);
 	} catch (err) {
 		console.error("[hero] error:", err);

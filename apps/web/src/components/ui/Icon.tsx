@@ -6,6 +6,7 @@ type IconProps = {
 	name: string;
 	className?: string;
 	title?: string;
+	fill?: string;
 };
 
 const MANUAL_MAP: Record<string, string> = {
@@ -59,7 +60,7 @@ function toPascalCase(name: string) {
 		.join("");
 }
 
-export function Icon({ name, className, title }: IconProps) {
+export function Icon({ name, className, title, fill }: IconProps) {
 	const lookup = MANUAL_MAP[name] ?? toPascalCase(name);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const Comp = (LucideIcons as any)[lookup] ?? (LucideIcons as any)["Square"];
@@ -71,7 +72,13 @@ export function Icon({ name, className, title }: IconProps) {
 			title={title}>
 			{/* render SVG sized to 1em so it respects font-size utilities */}
 			{/* eslint-disable-next-line react/jsx-props-no-spreading */}
-			<Comp style={{ width: "1em", height: "1em" }} />
+			<Comp
+				style={{
+					width: "1em",
+					height: "1em",
+					fill: fill ?? "transparent",
+				}}
+			/>
 		</span>
 	);
 }

@@ -452,7 +452,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 									alt={p.name}
 									fill
 									className="object-cover"
-									unoptimized
+									sizes="64px"
 								/>
 							) : (
 								<div className="absolute inset-0 flex items-center justify-center">

@@ -238,7 +238,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 														alt={item.product_name}
 														fill
 														className="object-cover"
-														unoptimized
+														sizes="64px"
 													/>
 												) : (
 													<PackageCheck

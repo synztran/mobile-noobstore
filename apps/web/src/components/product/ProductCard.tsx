@@ -59,8 +59,8 @@ export function ProductCard({ product }: ProductCardProps) {
 									src={product.thumbnail}
 									alt={product.name}
 									fill
-									objectFit="cover"
-									unoptimized
+									className="object-cover"
+									sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
 								/>
 							</>
 						) : (
@@ -109,10 +109,10 @@ export function ProductCard({ product }: ProductCardProps) {
 						<p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary leading-none truncate">
 							{product.brand || product.category}
 						</p>
-						<h3 className="text-sm font-bold text-on-surface capitalize line-clamp-2 min-h-[40px]">
+						<h3 className="text-sm font-bold text-on-surface capitalize truncate">
 							{product.name}
 						</h3>
-						<p className="text-xs tracking-wide line-clamp-2 min-h-[32px]">
+						<p className="text-sm tracking-normal line-clamp-3 min-h-[60px]">
 							{product.description}
 						</p>
 						<div className="text-base font-extrabold text-on-surface text-right">

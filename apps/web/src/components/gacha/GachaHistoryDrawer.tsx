@@ -185,9 +185,15 @@ export function GachaHistoryDrawer({
 								</div>
 
 								<div className="flex-1 min-w-0">
-									<p className="font-bold text-sm truncate">
-										{entry.reward?.name ?? "Unknown reward"}
-									</p>
+									<div className="flex items-center justify-between gap-2">
+										<p className="font-bold text-sm truncate">
+											{entry.reward?.name ??
+												"Unknown reward"}
+										</p>
+										<span className="text-xs text-base-content/80 shrink-0">
+											{formatDate(entry.played_at)}
+										</span>
+									</div>
 									<p className="text-xs text-base-content/50">
 										{entry.reward
 											? (REWARD_TYPE_LABEL[
@@ -203,10 +209,6 @@ export function GachaHistoryDrawer({
 											: null}
 									</p>
 								</div>
-
-								<span className="text-xs text-base-content/80 shrink-0">
-									{formatDate(entry.played_at)}
-								</span>
 							</div>
 						))
 					)}

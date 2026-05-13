@@ -134,8 +134,9 @@ export function ProductView({
 									src={heroImage}
 									alt={product.name}
 									fill
-									className="object-contain  mix-blend-multiply"
-									unoptimized
+									className="object-cover mix-blend-multiply"
+									sizes="(max-width: 768px) 100vw, 50vw"
+									priority
 								/>
 							) : (
 								<div className="absolute inset-0 flex items-center justify-center">
@@ -306,7 +307,7 @@ export function ProductView({
 								alt={product.name}
 								fill
 								className="object-cover"
-								unoptimized
+								sizes="(max-width: 768px) 100vw, 50vw"
 							/>
 						) : (
 							<div className="absolute inset-0 flex items-center justify-center">

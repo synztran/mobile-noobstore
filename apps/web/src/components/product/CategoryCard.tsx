@@ -50,7 +50,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
 							alt={category.name}
 							fill
 							className="object-cover"
-							unoptimized
+							sizes="(max-width: 640px) 50vw, 25vw"
 						/>
 					) : (
 						<div className="absolute inset-0 flex items-center justify-center">

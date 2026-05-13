@@ -80,7 +80,6 @@ export function CustomerTestimonial() {
 										width={56}
 										height={56}
 										className="w-full h-full object-cover"
-										unoptimized
 									/>
 								</div>
 								<p className="font-bold text-xs uppercase tracking-tight leading-tight">
@@ -94,7 +93,7 @@ export function CustomerTestimonial() {
 										{creator.bio}
 									</p>
 								)}
-								<p className="text-primary text-[10px] font-bold uppercase mt-2">
+								<p className="text-primary text-[10px] font-bold uppercase mt-auto">
 									{creator.social_handle}
 								</p>
 							</a>

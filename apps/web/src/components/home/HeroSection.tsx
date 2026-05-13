@@ -112,7 +112,7 @@ export function HeroSection() {
 						fill
 						className="object-cover"
 						priority={i === 0}
-						unoptimized
+						sizes="100vw"
 					/>
 					<div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/35 to-transparent" />
 				</div>

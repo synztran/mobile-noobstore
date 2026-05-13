@@ -120,6 +120,8 @@ export type Database = {
       community_gallery: {
         Row: {
           alt_text: string
+          author: string
+          build_info: Json | null
           created_at: string | null
           id: string
           image_url: string
@@ -127,6 +129,8 @@ export type Database = {
         }
         Insert: {
           alt_text: string
+          author?: string
+          build_info?: Json | null
           created_at?: string | null
           id?: string
           image_url: string
@@ -134,6 +138,8 @@ export type Database = {
         }
         Update: {
           alt_text?: string
+          author?: string
+          build_info?: Json | null
           created_at?: string | null
           id?: string
           image_url?: string

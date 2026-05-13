@@ -3,6 +3,7 @@ import {
 	type ProductSortOption,
 	type ProductType,
 } from "@/lib/product-query-service";
+import { getCache, setCache } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -120,6 +121,16 @@ export async function GET(req: NextRequest) {
 	const sort = (sp.get("sort") as ProductSortOption | null) ?? "newest";
 
 	try {
+		// Build a stable cache key from normalized params
+		// Search queries are cached too — useful for repeated searches within 60 s
+		const normalizedTypes = productTypes.sort().join(",");
+		const cacheKey = `products:${search}:${categorySlug}:${normalizedTypes}:${priceMin}:${priceMax}:${sort}:${limit}:${offset}`;
+
+		const cached = await getCache<ProductsResponse>(cacheKey);
+		if (cached) {
+			return NextResponse.json<ProductsResponse>(cached);
+		}
+
 		const { products, total } = await getProductListByFilters({
 			search,
 			categorySlug,
@@ -135,18 +146,16 @@ export async function GET(req: NextRequest) {
 		});
 
 		// Return paginated results with accurate total count
-		return NextResponse.json<ProductsResponse>(
-			{
-				products: products as ShopProduct[],
-				total,
-			},
-			{
-				headers: {
-					"Cache-Control":
-						"public, s-maxage=60, stale-while-revalidate=300",
-				},
-			},
-		);
+		const response: ProductsResponse = {
+			products: products as ShopProduct[],
+			total,
+		};
+
+		// Cache for 60 s — force-dynamic prevents Vercel CDN from honouring s-maxage,
+		// so Redis is the only server-level cache layer available
+		await setCache(cacheKey, response, 60);
+
+		return NextResponse.json<ProductsResponse>(response);
 	} catch (err) {
 		return NextResponse.json(
 			{ error: err instanceof Error ? err.message : "Unknown error" },

@@ -1,9 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { BallTank } from "./BallTank";
 import { GachaHistoryDrawer } from "./GachaHistoryDrawer";
+import { GachaMissionsDrawer } from "./GachaMissionsDrawer";
 import { GachaRewardsDrawer } from "./GachaRewardsDrawer";
 import { GachaRulesDrawer } from "./GachaRulesDrawer";
 import { InsertButton } from "./InsertButton";
@@ -19,6 +21,27 @@ import { TokenSlot } from "./TokenSlot";
 import { WinnerTicker } from "./WinnerTicker";
 
 type Phase = "idle" | "token-inserted" | "dispensing" | "rolling" | "reveal";
+
+// Maps reward type/golden flag to a BALL_PALETTE index so the ball color
+// matches the reward revealed. See docs/features/gacha-ball-color-mapping.md
+function rewardToColorIndex(r: {
+	is_golden: boolean;
+	reward_type: string;
+}): number {
+	if (r.is_golden) return 4; // Gold
+	switch (r.reward_type) {
+		case "product":
+			return 1; // Ocean (blue)
+		case "point":
+			return 3; // Forest (green)
+		case "puzzle":
+			return 2; // Cosmic (purple)
+		case "lucky_text":
+			return 5; // Rose (pink)
+		default:
+			return 0; // Flame (red) — fallback
+	}
+}
 
 interface GachaRewardMeta extends GachaRewardData {
 	weight: number;
@@ -40,29 +63,30 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 	const [phase, setPhase] = useState<Phase>("idle");
 	const [rewardIndex, setRewardIndex] = useState<number | null>(null);
 	const [reward, setReward] = useState<GachaRewardData | null>(null);
-	const [tokenCount, setTokenCount] = useState<number | null>(null);
-	const [eventData, setEventData] = useState<GachaEvent | null>(null);
-	const [rewards, setRewards] = useState<GachaRewardMeta[]>([]);
 	const [drawError, setDrawError] = useState<string | null>(null);
+
+	const { data: gachaData } = useQuery({
+		queryKey: ["gacha-event", eventId],
+		queryFn: () =>
+			fetch(`/api/gacha?event_id=${eventId}`).then((r) => r.json()),
+		staleTime: 60_000,
+	});
+
+	const eventData: GachaEvent | null = gachaData?.event ?? null;
+	const rewards: GachaRewardMeta[] = gachaData?.rewards ?? [];
+	const [tokenCount, setTokenCount] = useState<number | null>(null);
+
+	// Sync token count from query on first load only
+	const fetchedTokenCount: number | undefined = gachaData?.token_count;
+	if (fetchedTokenCount !== undefined && tokenCount === null) {
+		setTokenCount(fetchedTokenCount);
+	}
 
 	// Drawer states
 	const [historyOpen, setHistoryOpen] = useState(false);
 	const [rewardsOpen, setRewardsOpen] = useState(false);
 	const [rulesOpen, setRulesOpen] = useState(false);
-
-	// Fetch event info + token count on mount
-	useEffect(() => {
-		fetch(`/api/gacha?event_id=${eventId}`)
-			.then((r) => r.json())
-			.then((data) => {
-				if (data.event) setEventData(data.event);
-				if (data.rewards) setRewards(data.rewards);
-				if (typeof data.token_count === "number") {
-					setTokenCount(data.token_count);
-				}
-			})
-			.catch(() => null);
-	}, [eventId]);
+	const [missionsOpen, setMissionsOpen] = useState(false);
 
 	const handleInsertToken = useCallback(() => {
 		if (phase !== "idle") return;
@@ -79,11 +103,8 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 		setDrawError(null);
 		setPhase("dispensing");
 
-		// Start animation timers
-		setTimeout(() => setPhase("rolling"), 1300);
-		setTimeout(() => setPhase("reveal"), 2400);
-
-		// Call API concurrently with animation
+		// BallTank keeps shaking while API is in-flight.
+		// Ball drops into tray only after API responds.
 		try {
 			const res = await fetch("/api/gacha", {
 				method: "POST",
@@ -95,12 +116,15 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 				setDrawError(data.error ?? "Draw failed");
 			} else if (data.reward) {
 				setReward(data.reward);
+				setRewardIndex(rewardToColorIndex(data.reward));
 				setTokenCount((prev) =>
 					prev != null ? Math.max(0, prev - 1) : prev,
 				);
 			}
+			setPhase("rolling");
 		} catch {
 			setDrawError("Network error — your token was not spent.");
+			setPhase("rolling");
 		}
 	}, [phase, eventId]);
 
@@ -110,6 +134,15 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 		setReward(null);
 		setDrawError(null);
 	}, []);
+
+	const handleBallClick = useCallback(() => {
+		if (phase !== "rolling") return;
+		if (drawError) {
+			handleReset();
+			return;
+		}
+		setPhase("reveal");
+	}, [phase, drawError, handleReset]);
 
 	const isTrayOpen = phase === "rolling" || phase === "reveal";
 
@@ -128,6 +161,7 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 				onHistoryOpen={() => setHistoryOpen(true)}
 				onRewardsOpen={() => setRewardsOpen(true)}
 				onRulesOpen={() => setRulesOpen(true)}
+				onMissionsOpen={() => setMissionsOpen(true)}
 			/>
 
 			{/* ── Machine cabinet + side action icons ─────────── */}
@@ -228,7 +262,7 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 
 					{/* ── Controls: knob left, token slot right ── */}
 					<div
-						className="flex items-center justify-between px-4 pt-2 gap-8 pb-6"
+						className="flex items-center justify-between p-4 gap-8 "
 						style={{
 							background:
 								"linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.04) 100%)",
@@ -270,10 +304,12 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 					)}
 
 					{/* ── Output tray flush at bottom ── */}
-					<div className="flex justify-center pb-6">
+					<div className="flex justify-center pb-4">
 						<OutputTray
 							isOpen={isTrayOpen}
 							rewardColorIndex={rewardIndex}
+							isClickable={phase === "rolling"}
+							onBallClick={handleBallClick}
 						/>
 					</div>
 				</motion.div>
@@ -306,6 +342,11 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 			<GachaRulesDrawer
 				open={rulesOpen}
 				onClose={() => setRulesOpen(false)}
+			/>
+			<GachaMissionsDrawer
+				open={missionsOpen}
+				onClose={() => setMissionsOpen(false)}
+				eventId={eventId}
 			/>
 		</div>
 	);

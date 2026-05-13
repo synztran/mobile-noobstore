@@ -115,7 +115,7 @@ export function WishlistSidebar({ drawerOpen, onClose }: WishlistSidebarProps) {
 														alt={product.name}
 														fill
 														className="object-cover"
-														unoptimized
+														sizes="64px"
 													/>
 												) : (
 													<div className="w-full h-full flex items-center justify-center">

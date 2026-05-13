@@ -1,3 +1,4 @@
+import { getCache, invalidateCache, setCache } from "@/lib/redis/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -18,56 +19,77 @@ export async function GET(req: NextRequest) {
 	}
 
 	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
 
-	const [eventResult, rewardsResult] = await Promise.all([
-		supabase
-			.from("gacha_events")
-			.select(
-				"id, name, description, start_at, end_at, free_tokens_per_grant, free_token_interval_days, is_active",
-			)
-			.eq("id", eventId)
-			.eq("is_active", true)
-			.maybeSingle(),
-		supabase
-			.from("gacha_rewards")
-			.select(
-				"id, reward_type, name, description, value, thumbnail_url, weight, max_quantity, claimed_count, is_golden",
-			)
-			.eq("event_id", eventId)
-			.order("weight", { ascending: false }),
+	// Auth and cache lookup run in parallel
+	const cacheKey = `gacha:event:${eventId}`;
+	const [
+		{
+			data: { user },
+		},
+		cached,
+	] = await Promise.all([
+		supabase.auth.getUser(),
+		getCache<{ event: unknown; rewards: unknown[] }>(cacheKey),
 	]);
 
-	if (eventResult.error) {
-		return NextResponse.json(
-			{ error: eventResult.error.message },
-			{ status: 500 },
-		);
-	}
-	if (!eventResult.data) {
-		return NextResponse.json(
-			{ error: "Event not found or inactive" },
-			{ status: 404 },
-		);
-	}
-	if (rewardsResult.error) {
-		return NextResponse.json(
-			{ error: rewardsResult.error.message },
-			{ status: 500 },
-		);
-	}
+	let event: unknown;
+	let rewardsWithPercent: unknown[];
 
-	const rewards = rewardsResult.data ?? [];
-	const totalWeight = rewards.reduce((sum, r) => sum + r.weight, 0);
-	const rewardsWithPercent = rewards.map((r) => ({
-		...r,
-		percent:
-			totalWeight > 0
-				? Math.round((r.weight / totalWeight) * 1000) / 10
-				: 0,
-	}));
+	if (cached) {
+		event = cached.event;
+		rewardsWithPercent = cached.rewards;
+	} else {
+		const [eventResult, rewardsResult] = await Promise.all([
+			supabase
+				.from("gacha_events")
+				.select(
+					"id, name, description, start_at, end_at, free_tokens_per_grant, free_token_interval_days, is_active",
+				)
+				.eq("id", eventId)
+				.eq("is_active", true)
+				.maybeSingle(),
+			supabase
+				.from("gacha_rewards")
+				.select(
+					"id, reward_type, name, description, value, thumbnail_url, weight, max_quantity, claimed_count, is_golden",
+				)
+				.eq("event_id", eventId)
+				.order("weight", { ascending: false }),
+		]);
+
+		if (eventResult.error) {
+			return NextResponse.json(
+				{ error: eventResult.error.message },
+				{ status: 500 },
+			);
+		}
+		if (!eventResult.data) {
+			return NextResponse.json(
+				{ error: "Event not found or inactive" },
+				{ status: 404 },
+			);
+		}
+		if (rewardsResult.error) {
+			return NextResponse.json(
+				{ error: rewardsResult.error.message },
+				{ status: 500 },
+			);
+		}
+
+		const rewards = rewardsResult.data ?? [];
+		const totalWeight = rewards.reduce((sum, r) => sum + r.weight, 0);
+		rewardsWithPercent = rewards.map((r) => ({
+			...r,
+			percent:
+				totalWeight > 0
+					? Math.round((r.weight / totalWeight) * 1000) / 10
+					: 0,
+		}));
+		event = eventResult.data;
+
+		// Cache event + rewards for 60 s (token_count is per-user, never cached)
+		await setCache(cacheKey, { event, rewards: rewardsWithPercent }, 60);
+	}
 
 	let tokenCount = 0;
 	if (user) {
@@ -81,7 +103,7 @@ export async function GET(req: NextRequest) {
 	}
 
 	return NextResponse.json({
-		event: eventResult.data,
+		event,
 		rewards: rewardsWithPercent,
 		token_count: tokenCount,
 	});
@@ -164,15 +186,6 @@ export async function POST(req: NextRequest) {
 			{ status: 500 },
 		);
 	}
-
-	console.log(
-		"[gacha POST] user.id:",
-		user.id,
-		"eventId:",
-		eventId,
-		"tokenRow:",
-		tokenRow,
-	);
 
 	const currentTokens = tokenRow?.token_count ?? 0;
 	if (currentTokens <= 0) {
@@ -261,7 +274,7 @@ export async function POST(req: NextRequest) {
 		}
 	}
 
-	// 8. Record history + increment claimed_count (if supply-limited)
+	// 8. Record history + increment claimed_count (if supply-limited) + invalidate cache
 	await Promise.all([
 		supabase.from("gacha_history").insert({
 			user_id: user.id,
@@ -274,6 +287,8 @@ export async function POST(req: NextRequest) {
 					.update({ claimed_count: drawn.claimed_count + 1 })
 					.eq("id", drawn.id)
 			: Promise.resolve(),
+		// Invalidate event cache (claimed_count changed) and recent-winners cache
+		invalidateCache(`gacha:event:${eventId}`, `gacha:winners:${eventId}`),
 	]);
 
 	return NextResponse.json({ reward: drawn });

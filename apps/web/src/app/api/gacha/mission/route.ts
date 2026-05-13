@@ -1,3 +1,4 @@
+import { getCache, setCache } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -17,20 +18,55 @@ export async function GET(req: NextRequest) {
 	}
 
 	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
 
-	const { data: missions, error } = await supabase
-		.from("gacha_missions")
-		.select(
-			"id, name, description, mission_type, requirement, token_reward",
-		)
-		.eq("event_id", eventId)
-		.order("id");
+	// Cache the missions list (not per-user progress) for 5 min
+	// Missions are static per event — they don't change after launch
+	const missionsCacheKey = `gacha:missions:${eventId}`;
+	const [
+		{
+			data: { user },
+		},
+		cachedMissions,
+	] = await Promise.all([
+		supabase.auth.getUser(),
+		getCache<
+			{
+				id: number;
+				name: string;
+				description: string | null;
+				mission_type: string;
+				requirement: unknown;
+				token_reward: number;
+			}[]
+		>(missionsCacheKey),
+	]);
 
-	if (error) {
-		return NextResponse.json({ error: error.message }, { status: 500 });
+	let missions:
+		| {
+				id: number;
+				name: string;
+				description: string | null;
+				mission_type: string;
+				requirement: unknown;
+				token_reward: number;
+		  }[]
+		| null = cachedMissions;
+
+	if (!missions) {
+		const { data, error } = await supabase
+			.from("gacha_missions")
+			.select(
+				"id, name, description, mission_type, requirement, token_reward",
+			)
+			.eq("event_id", eventId)
+			.order("id");
+
+		if (error) {
+			return NextResponse.json({ error: error.message }, { status: 500 });
+		}
+
+		missions = data ?? [];
+		await setCache(missionsCacheKey, missions, 300);
 	}
 
 	if (!user) {

@@ -205,7 +205,7 @@ export default function CheckingPageContent() {
 									totalPrice,
 								)}
 								alt="Payment QR Code"
-								objectFit="contain"
+								className="object-contain"
 								fill
 								unoptimized
 							/>

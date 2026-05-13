@@ -32,7 +32,7 @@ export function LabNotesSection() {
 								alt={article.title}
 								fill
 								className="object-cover"
-								unoptimized
+								sizes="96px"
 							/>
 						</div>
 						<div>

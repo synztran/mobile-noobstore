@@ -264,11 +264,11 @@ export function RotaryKnob({
 				</div>
 			</div>
 
-			<p
+			{/* <p
 				className="text-[8px] font-black uppercase tracking-widest text-center absolute -bottom-5 left-1/2 -translate-x-1/2 w-full"
 				style={{ color: labelColor }}>
 				{labelText}
-			</p>
+			</p> */}
 		</div>
 	);
 }

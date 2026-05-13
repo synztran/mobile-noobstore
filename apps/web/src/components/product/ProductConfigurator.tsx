@@ -27,7 +27,7 @@ export function Thumbnail({
 					alt={alt}
 					fill
 					className="object-cover mix-blend-darken"
-					unoptimized
+					sizes="(max-width: 640px) 50vw, 25vw"
 				/>
 			) : (
 				<div className="absolute inset-0 flex items-center justify-center">

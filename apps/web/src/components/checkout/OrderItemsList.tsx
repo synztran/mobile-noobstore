@@ -63,9 +63,8 @@ export function OrderItemsList({ items, oosProductIds, onRemove }: OrderItemsLis
 										src={item.product.thumbnail}
 										alt={item.product.name}
 										fill
-										objectFit="cover"
-										unoptimized
-										className="rounded-lg"
+										className="object-cover rounded-lg"
+										sizes="64px"
 									/>
 								) : (
 									<div className="w-full h-full flex items-center justify-center text-on-surface-variant">

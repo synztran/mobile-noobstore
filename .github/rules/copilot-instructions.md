@@ -39,6 +39,7 @@ Your tech stack is: Next.js 15 (App Router), Supabase (PostgreSQL), Turborepo, T
 - **Profile Updates:** ALWAYS call `refreshProfile()` immediately after any mutation that updates the `AppUser` profile data.
 - **Cart State:** ALL cart mutations MUST go through `useCartStore` (Zustand). Do not manage cart state locally.
 - **Hydration:** Assume `StoreHydrator` is already handling Zustand localStorage hydration at the root layout. Do not re-implement it.
+- **API Fetching function:** Implement with react-query or useSWR for client components. For server components, fetch directly in the component or via API routes as needed.
 
 ## 5. Domain Knowledge (Data Types)
 

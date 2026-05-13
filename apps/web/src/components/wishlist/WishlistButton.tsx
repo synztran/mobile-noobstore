@@ -17,8 +17,9 @@ export function WishlistButton({
 	showLabel = false,
 	size = "md",
 }: WishlistButtonProps) {
-	const { busy, isInWishlist, toggleWishlist } = useWishlist();
+	const { isInWishlist, isPendingFor, toggleWishlist } = useWishlist();
 	const wished = isInWishlist(productId);
+	const pending = isPendingFor(productId);
 
 	const sizeClass = size === "sm" ? "h-8 px-2 text-xs" : "h-10 px-3 text-sm";
 
@@ -26,21 +27,26 @@ export function WishlistButton({
 		<button
 			type="button"
 			onClick={() => void toggleWishlist(productId)}
-			disabled={busy}
+			disabled={pending}
 			aria-label={wished ? "Remove from wishlist" : "Add to wishlist"}
 			aria-pressed={wished}
 			className={clsx(
 				"inline-flex items-center justify-center gap-2 rounded-xl font-black tracking-wide transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed",
 				sizeClass,
 				wished
-					? "bg-blue-600 text-white"
+					? "border border-primary"
 					: "bg-surface-container text-on-surface",
 				className,
 			)}>
-			<Icon
-				name={wished ? "favorite" : "favorite_border"}
-				className="text-[16px]"
-			/>
+			{pending ? (
+				<span className="loading loading-spinner loading-xs" />
+			) : (
+				<Icon
+					name={wished ? "favorite" : "favorite_border"}
+					className={`text-[20px] ${wished ? "text-primary" : "text-on-surface fill-none"}`}
+					fill={wished ? "currentColor" : "transparent"}
+				/>
+			)}
 		</button>
 	);
 }

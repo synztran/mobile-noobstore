@@ -61,7 +61,7 @@ const CartItemRow = memo(function CartItemRow({
 						alt={item.product.name}
 						fill
 						className="object-cover rounded-lg"
-						unoptimized
+						sizes="80px"
 					/>
 				) : (
 					<div className="absolute inset-0 flex items-center justify-center">

@@ -28,7 +28,7 @@ export function CategoryBrowser({ categories }: CategoryBrowserProps) {
 								alt={cat.name}
 								fill
 								className="object-cover"
-								unoptimized
+								sizes="(max-width: 640px) 50vw, 25vw"
 							/>
 						) : (
 							<div className="absolute inset-0 bg-surface-container-high" />

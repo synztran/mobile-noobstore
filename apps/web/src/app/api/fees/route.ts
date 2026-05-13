@@ -1,3 +1,4 @@
+import { getCache, setCache } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -55,6 +56,20 @@ async function getFeesConfig() {
 }
 
 export async function GET() {
+	const cacheKey = "config:fees";
+	type FeesData = {
+		delivery_immediate_price: number;
+		delivery_basic_price: number;
+		insurance_fee: number;
+		packing_fee: number;
+		handling_fee: number;
+		updated_at: string | null;
+	};
+	const cached = await getCache<FeesData>(cacheKey);
+	if (cached) {
+		return NextResponse.json(cached);
+	}
+
 	const { data, error } = await getFeesConfig();
 
 	if (error || !data) {
@@ -64,5 +79,7 @@ export async function GET() {
 		);
 	}
 
+	// Cache for 10 min — fee config changes only via admin panel
+	await setCache(cacheKey, data, 600);
 	return NextResponse.json(data);
 }

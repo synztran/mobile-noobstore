@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
 
 interface TokenSlotProps {
 	hasToken: boolean;
@@ -90,9 +91,16 @@ export function TokenSlot({ hasToken }: TokenSlotProps) {
 										left: "18%",
 									}}
 								/>
-								{/* Coin "¢" symbol */}
-								<div className="absolute inset-0 flex items-center justify-center font-black text-[9px] text-white/50">
-									✦
+								{/* Coin icon */}
+								<div className="absolute inset-0 flex items-center justify-center">
+									{/* eslint-disable-next-line @next/next/no-img-element */}
+									<Image
+										src="/gacha-machine/token_icon.png"
+										alt=""
+										width={22}
+										height={22}
+										objectFit="contain"
+									/>
 								</div>
 							</motion.div>
 						)}
@@ -120,11 +128,11 @@ export function TokenSlot({ hasToken }: TokenSlotProps) {
 				</div>
 			</div>
 
-			<p
+			{/* <p
 				className="text-[8px] font-black uppercase tracking-widest text-center absolute -bottom-5 left-1/2 -translate-x-1/2 w-full min-w-[120px]"
 				style={{ color: hasToken ? "#22c55e" : "#888" }}>
 				{hasToken ? "Token sẵn sàng!" : "Chưa có token"}
-			</p>
+			</p> */}
 		</div>
 	);
 }
