@@ -1,0 +1,38 @@
+import type { BookingConfigResponse } from "@/app/api/services/booking-config/route";
+import { appQueryKeys } from "@/lib/react-query/root";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+export function useBookingConfig() {
+	return useQuery<BookingConfigResponse>({
+		...appQueryKeys.service.bookingConfig,
+		staleTime: 60_000,
+		queryFn: async () => {
+			const res = await fetch("/api/services/booking-config");
+			if (!res.ok) throw new Error("Không thể tải dữ liệu dịch vụ");
+			return res.json();
+		},
+	});
+}
+
+export function useServiceBookingMutation() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: unknown) => {
+			const res = await fetch("/api/service-bookings", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload),
+			});
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				throw new Error(data.error ?? "Không thể tạo đơn dịch vụ");
+			}
+			return res.json();
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries(
+				appQueryKeys.service.bookingConfig,
+			);
+		},
+	});
+}

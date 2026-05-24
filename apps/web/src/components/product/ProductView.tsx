@@ -11,7 +11,7 @@ import { useProductViewData } from "@/hooks/useProductViewData";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export function ProductView({
 	product,
@@ -21,6 +21,38 @@ export function ProductView({
 	componentGroups?: ConfiguratorGroup[];
 }) {
 	const [activeImageIndex, setActiveImageIndex] = useState(0);
+	const touchStartX = useRef<number | null>(null);
+
+	const mediaImages = useMemo(() => {
+		const all = [product.thumbnail, ...(product.images ?? [])].filter(
+			(img): img is string => Boolean(img),
+		);
+		return Array.from(new Set(all));
+	}, [product.thumbnail, product.images]);
+
+	const goTo = useCallback(
+		(idx: number) => {
+			setActiveImageIndex(
+				(idx + mediaImages.length) % mediaImages.length,
+			);
+		},
+		[mediaImages.length],
+	);
+
+	const handleTouchStart = useCallback((e: React.TouchEvent) => {
+		touchStartX.current = e.touches[0].clientX;
+	}, []);
+
+	const handleTouchEnd = useCallback(
+		(e: React.TouchEvent) => {
+			if (touchStartX.current === null) return;
+			const delta = e.changedTouches[0].clientX - touchStartX.current;
+			if (Math.abs(delta) > 40)
+				goTo(activeImageIndex + (delta < 0 ? 1 : -1));
+			touchStartX.current = null;
+		},
+		[activeImageIndex, goTo],
+	);
 
 	const {
 		variants,
@@ -39,13 +71,6 @@ export function ProductView({
 		isLoadingAddToCart,
 		handleAddToCart,
 	} = useProductViewData(product, componentGroups);
-
-	const mediaImages = useMemo(() => {
-		const all = [product.thumbnail, ...(product.images ?? [])].filter(
-			(img): img is string => Boolean(img),
-		);
-		return Array.from(new Set(all));
-	}, [product.thumbnail, product.images]);
 
 	const minVariantPrice = useMemo(
 		() =>
@@ -77,42 +102,42 @@ export function ProductView({
 	const productLabel =
 		product.product_type === "kit" ? "Curated Build" : "Custom Edition";
 	const statusLabel = isOutOfStock
-		? "Sold Out"
+		? "Hết hàng"
 		: isLowStock
-			? `Only ${effectiveStockQuantity} Left`
+			? `Chỉ còn ${effectiveStockQuantity} sản phẩm`
 			: variants.length > 0
-				? `${variants.length} Options`
-				: "Ready to Ship";
+				? `${variants.length} tùy chọn`
+				: "Sẵn sàng để giao";
 
 	const specItems = [
 		{
-			label: "Product Type",
+			label: "Loại sản phẩm",
 			value:
 				product.product_type === "kit"
-					? "Curated Kit"
+					? "Bộ sưu tập chọn lọc"
 					: product.product_type === "component"
-						? "Modular Part"
-						: "Standalone Item",
+						? "Phần tử module"
+						: "Sản phẩm độc lập",
 		},
 		{
-			label: "Availability",
+			label: "Tình trạng kho",
 			value: isOutOfStock
-				? "Currently unavailable"
-				: `${effectiveStockQuantity} units in stock`,
+				? "Hết hàng"
+				: `${effectiveStockQuantity} sản phẩm có sẵn`,
 		},
 		{
-			label: "Variant Count",
+			label: "Số lượng biến thể",
 			value:
 				variants.length > 0
-					? `${variants.length} selectable options`
-					: "Single configured edition",
+					? `${variants.length} tùy chọn`
+					: "Phiên bản cấu hình đơn",
 		},
 		{
-			label: "Bundle Parts",
+			label: "Số lượng thành phần",
 			value:
 				product.components.length > 0
-					? `${product.components.length} curated components`
-					: "No bundled components",
+					? `${product.components.length} thành phần curated`
+					: "Không có thành phần đi kèm",
 		},
 	];
 
@@ -126,7 +151,10 @@ export function ProductView({
 
 			<main className="my-auto pb-4 space-y-4">
 				{/* ── Hero Image Gallery ── */}
-				<section className="relative">
+				<section
+					className="relative"
+					onTouchStart={handleTouchStart}
+					onTouchEnd={handleTouchEnd}>
 					<div className="p-6 pb-4">
 						<div className="relative w-full h-64 overflow-hidden rounded-xl bg-surface-container-low shadow-[0_20px_48px_-20px_rgba(26,28,31,0.12)]">
 							{heroImage ? (
@@ -172,9 +200,9 @@ export function ProductView({
 				{/* ── Product Info ── */}
 				<section className="px-6 mt-6">
 					<div className="flex flex-wrap gap-2 mb-3">
-						<span className="text-[10px] font-black tracking-widest text-on-surface-variant bg-surface-container-high px-2 py-1 uppercase">
+						{/* <span className="text-[10px] font-black tracking-widest text-on-surface-variant bg-surface-container-high px-2 py-1 uppercase">
 							{productLabel}
-						</span>
+						</span> */}
 						<span
 							className={clsx(
 								"text-[10px] font-black tracking-widest px-2 py-1 uppercase",
@@ -271,7 +299,7 @@ export function ProductView({
 				<section className="px-6">
 					<div className="bg-surface-container-low p-8 rounded-none">
 						<h3 className="text-xs tracking-[0.2em] text-on-surface font-black uppercase mb-6">
-							Technical Specifications
+							Thông số kỹ thuật
 						</h3>
 						<div className="grid grid-cols-2 gap-y-6 gap-x-4">
 							{specItems.map((item) => (
@@ -337,7 +365,7 @@ export function ProductView({
 				<WishlistButton
 					productId={product.id}
 					showLabel
-					className="w-32 h-14 rounded-2xl flex-shrink-0"
+					className="w-14 h-14 rounded-2xl flex-shrink-0"
 				/>
 				<AddToCartButton
 					isOutOfStock={isOutOfStock}

@@ -35,6 +35,10 @@ const navItems = [
 export function BottomNav() {
 	const pathname = usePathname();
 
+	if (pathname === "/services") {
+		return null;
+	}
+
 	return (
 		<nav className="fixed bottom-3 left-2 right-2 w-full flex justify-around items-center glass-nav !bg-[rgba(255,255,255,0.5)] rounded-xl z-50 bottom-nav-pad max-w-[80vw] mx-auto">
 			{navItems.map((item) => {

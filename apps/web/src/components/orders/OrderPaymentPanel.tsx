@@ -1,9 +1,8 @@
 "use client";
 
-import type { PaymentInformationResponse } from "@/app/api/payment-information/route";
 import { formatVND } from "@/lib/currency";
 import type { PaymentInformation } from "@/lib/payment-information";
-import { useQuery } from "@tanstack/react-query";
+import { usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
 import { Check, Copy } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
@@ -66,18 +65,10 @@ export function OrderPaymentPanel({
 	const subtotal =
 		totalPrice - shippingFee + voucherDiscount + shippingDiscount;
 
-	const { data, isLoading } = useQuery<PaymentInformationResponse>({
-		queryKey: ["payment-information"],
-		queryFn: async () => {
-			const res = await fetch("/api/payment-information");
-			if (!res.ok) throw new Error("Failed to load payment info");
-			return res.json();
-		},
-		staleTime: 5 * 60 * 1000,
-	});
+	const { data, isLoading } = usePaymentInformation();
 
 	const bankMethod = useMemo(
-		() => data?.methods?.find((m) => m.platform_type === "bank") ?? null,
+		() => data?.find((m) => m.platform_type === "bank") ?? null,
 		[data],
 	);
 

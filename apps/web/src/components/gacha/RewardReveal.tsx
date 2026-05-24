@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { LuckyBall } from "./LuckyBall";
+import LuckyBall from "./LuckyBall";
 
 export interface GachaRewardData {
 	id: number;
@@ -37,7 +37,7 @@ export function RewardReveal({
 		<AnimatePresence>
 			{rewardIndex !== null && (
 				<motion.div
-					className="fixed inset-0 z-50 flex items-center justify-center bg-black/[72%] backdrop-blur-[6px]"
+					className="fixed inset-0 z-50 flex items-center justify-center !mt-0 bg-black/[72%] backdrop-blur-[6px]"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}>

@@ -2,7 +2,7 @@
 
 import type { ShopProduct } from "@/app/api/products/route";
 import { formatVND } from "@/lib/currency";
-import { useQuery } from "@tanstack/react-query";
+import { useHomeNoteworthy } from "@/lib/react-query/home/api/useHomeQueries";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -77,28 +77,11 @@ function ProductSkeleton() {
 	);
 }
 
-async function fetchNoteworthyProducts(categorySlug: string) {
-	const query = new URLSearchParams({
-		limit: "8",
-		...(categorySlug ? { category: categorySlug } : {}),
-	});
-
-	const response = await fetch(
-		`/api/products/noteworthy?${query.toString()}`,
-	);
-	if (!response.ok) throw new Error("Failed to fetch noteworthy products");
-
-	const data = (await response.json()) as { products?: ShopProduct[] };
-	return data.products ?? [];
-}
-
 export function NoteworthySection() {
 	const [activeCategory, setActiveCategory] = useState("");
 
-	const { data: products = [], isLoading } = useQuery({
-		queryKey: ["home-noteworthy-products", activeCategory],
-		queryFn: () => fetchNoteworthyProducts(activeCategory),
-	});
+	const { data: products = [], isLoading } =
+		useHomeNoteworthy(activeCategory);
 
 	const shopHref = activeCategory
 		? `/shop?category=${activeCategory}`

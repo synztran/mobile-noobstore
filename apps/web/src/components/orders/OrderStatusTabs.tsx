@@ -1,5 +1,7 @@
 "use client";
 
+import { memo } from "react";
+
 export interface OrderStatusTabOption {
 	value: string;
 	label: string;
@@ -12,7 +14,7 @@ interface Props {
 	options: OrderStatusTabOption[];
 }
 
-export function OrderStatusTabs({ value, onChange, options }: Props) {
+const OrderStatusTabs = ({ value, onChange, options }: Props) => {
 	return (
 		<div
 			className="-mx-4 px-4 overflow-x-auto [&::-webkit-scrollbar]:hidden"
@@ -47,4 +49,6 @@ export function OrderStatusTabs({ value, onChange, options }: Props) {
 			</div>
 		</div>
 	);
-}
+};
+
+export default memo(OrderStatusTabs);

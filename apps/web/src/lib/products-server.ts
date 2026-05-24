@@ -160,6 +160,7 @@ export interface GetProductsParams {
 	priceMax?: number;
 	sort?: "newest" | "price_asc" | "price_desc";
 	limit?: number;
+	offset?: number;
 }
 
 export interface GetNoteworthyProductsParams {
@@ -195,6 +196,7 @@ export async function getProducts(
 		priceMax = 0,
 		sort = "newest",
 		limit,
+		offset = 0,
 	} = params;
 
 	try {
@@ -207,6 +209,7 @@ export async function getProducts(
 			limit,
 			productTypes: ["standard", "kit"],
 			excludeUncategorized: true,
+			offset,
 		});
 
 		return {

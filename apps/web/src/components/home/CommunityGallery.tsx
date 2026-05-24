@@ -1,7 +1,7 @@
 "use client";
 
 import type { CommunityPhoto } from "@/app/api/home/community-gallery/route";
-import { useQuery } from "@tanstack/react-query";
+import { useHomeCommunityGallery } from "@/lib/react-query/home/api/useHomeQueries";
 import { Heart } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -11,22 +11,7 @@ const PAGE_SIZE = 5;
 export function CommunityGallery() {
 	const [limit, setLimit] = useState(PAGE_SIZE);
 
-	const { data, isLoading } = useQuery({
-		queryKey: ["home-community-gallery", limit],
-		queryFn: async (): Promise<{
-			photos: CommunityPhoto[];
-			hasMore: boolean;
-		}> => {
-			const res = await fetch(
-				`/api/home/community-gallery?limit=${limit + 1}`,
-			);
-			if (!res.ok) return { photos: [], hasMore: false };
-			const raw = await res.json();
-			const all: CommunityPhoto[] = Array.isArray(raw) ? raw : [];
-			return { photos: all.slice(0, limit), hasMore: all.length > limit };
-		},
-		placeholderData: (prev) => prev,
-	});
+	const { data, isLoading } = useHomeCommunityGallery(limit);
 
 	const photos = data?.photos ?? [];
 	const hasMore = data?.hasMore ?? false;

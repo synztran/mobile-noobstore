@@ -1,4 +1,5 @@
 import { BookOpen, History, Target, Trophy } from "lucide-react";
+import { memo } from "react";
 
 interface MachineActionsProps {
 	onHistoryOpen: () => void;
@@ -7,7 +8,7 @@ interface MachineActionsProps {
 	onMissionsOpen: () => void;
 }
 
-export function MachineActions({
+export const MachineActions = memo(function MachineActions({
 	onHistoryOpen,
 	onRewardsOpen,
 	onRulesOpen,
@@ -41,4 +42,4 @@ export function MachineActions({
 			</button>
 		</div>
 	);
-}
+});

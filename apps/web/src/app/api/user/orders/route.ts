@@ -9,6 +9,7 @@ export interface OrderSummary {
 	status: string;
 	total_price: number;
 	item_count: number;
+	service_line_count: number;
 	created_at: string;
 	voucher_code: string | null;
 	voucher_discount_amount: number;
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest) {
 		let query = supabase
 			.from("orders")
 			.select(
-				"id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(count), created_at",
+				"id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(count), order_services(count), created_at",
 				{
 					count: "exact",
 				},
@@ -122,6 +123,7 @@ export async function GET(req: NextRequest) {
 				voucher_discount_amount: number | string | null;
 				shipping_discount_amount: number | string | null;
 				order_items: Array<{ count: number }>;
+				order_services: Array<{ count: number }>;
 				created_at: string;
 			}> | null;
 			error: { message: string } | null;
@@ -138,6 +140,7 @@ export async function GET(req: NextRequest) {
 			status: row.status,
 			total_price: Number(row.total_price),
 			item_count: row.order_items?.[0]?.count ?? 0,
+			service_line_count: row.order_services?.[0]?.count ?? 0,
 			created_at: row.created_at,
 			voucher_code: row.voucher_code ?? null,
 			voucher_discount_amount: Number(row.voucher_discount_amount ?? 0),

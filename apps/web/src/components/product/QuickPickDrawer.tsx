@@ -19,7 +19,8 @@ import type { SelectedComponent } from "@/lib/data";
 import type { CategoryItem } from "@/lib/products-server";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useAddToCart } from "@/lib/react-query/cart/api/useCartMutations";
+import { useQuickPick } from "@/lib/react-query/product/api/useProductQueries";
 import clsx from "clsx";
 import Image from "next/image";
 import { useEffect, useMemo, useReducer } from "react";
@@ -134,26 +135,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 		: `product:${propProduct?.id ?? ""}`;
 	const canFetchQuickPick = isOpen && !requestKey.endsWith(":");
 
-	const quickPickQuery = useQuery({
-		queryKey: ["quick-pick", requestKey],
-		enabled: canFetchQuickPick,
-		queryFn: async (): Promise<QuickPickResponse> => {
-			const query = new URLSearchParams();
-			if (isCategoryMode && propCategory?.slug) {
-				query.set("categorySlug", propCategory.slug);
-			}
-			if (!isCategoryMode && propProduct?.id) {
-				query.set("productId", propProduct.id);
-			}
-
-			const res = await fetch(
-				`/api/products/quick-pick?${query.toString()}`,
-			);
-			if (!res.ok) throw new Error("Failed to fetch quick pick data");
-			return (await res.json()) as QuickPickResponse;
-		},
-		staleTime: 30_000,
-	});
+	const quickPickQuery = useQuickPick(requestKey, isOpen);
 
 	useEffect(() => {
 		if (!canFetchQuickPick) return;
@@ -199,19 +181,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 		}
 	}, [isOpen]);
 
-	const addToCartMutation = useMutation({
-		mutationFn: async (body: AddToCartRequest) => {
-			const res = await fetch("/api/cart/add", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(body),
-			});
-
-			if (!res.ok) {
-				throw new Error("Failed to add cart item");
-			}
-		},
-	});
+	const addToCartMutation = useAddToCart();
 
 	// ── Escape key ───────────────────────────────────────────────────────
 	useEffect(() => {

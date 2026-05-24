@@ -29,6 +29,16 @@ export interface SubmitOrderRequest {
 	shipping_cost: number;
 	items: SubmitOrderRequestItem[];
 	service_ids?: string[];
+	shipping_method_id?: string | null;
+	delivery_address?: {
+		full_name: string;
+		phone_number: string;
+		street_address: string;
+		apartment?: string | null;
+		ward_district: string;
+		city: string;
+		postal_code?: string | null;
+	} | null;
 	vouchers?: {
 		voucher_id?: string | null;
 		voucher_code?: string | null;
@@ -336,6 +346,32 @@ export async function POST(req: NextRequest) {
 					);
 				}
 			}
+		}
+
+		// ── Persist delivery address + shipping method ────────────────────────
+		if (body.delivery_address || body.shipping_method_id) {
+			const now = new Date();
+			let expectedDeliveryAt: string | null = null;
+			if (body.shipping_method_id === "express") {
+				expectedDeliveryAt = new Date(
+					now.getTime() + 4 * 60 * 60 * 1000,
+				).toISOString();
+			} else if (body.shipping_method_id === "standard") {
+				expectedDeliveryAt = new Date(
+					now.getTime() + 24 * 60 * 60 * 1000,
+				).toISOString();
+			}
+
+			await supabase
+				.from("orders")
+				.update({
+					delivery_address: body.delivery_address
+						? (body.delivery_address as unknown as import("@/lib/supabase/database.types").Json)
+						: null,
+					shipping_method_id: body.shipping_method_id ?? null,
+					expected_delivery_at: expectedDeliveryAt,
+				})
+				.eq("id", result.order_id);
 		}
 
 		// ── Optional: attach services ─────────────────────────────────────────

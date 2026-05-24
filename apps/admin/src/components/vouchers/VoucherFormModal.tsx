@@ -1,0 +1,597 @@
+"use client";
+
+import { X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+type VoucherRewardType =
+	| "amount_off"
+	| "percent_off"
+	| "free_shipping"
+	| "gift_item";
+
+type VoucherStatus = "draft" | "active" | "scheduled" | "expired" | "disabled";
+
+type VoucherRow = {
+	id: string;
+	name: string;
+	code: string;
+	description: string | null;
+	reward_type: VoucherRewardType;
+	percent_off: number | null;
+	amount_off: number | null;
+	usage_limit_total: number | null;
+	usage_limit_per_user: number | null;
+	status: VoucherStatus;
+	min_order_amount: number;
+	start_at: string | null;
+	end_at: string | null;
+	stackable: boolean;
+	created_by: string | null;
+	creator?: {
+		id: string;
+		email: string;
+		first_name: string | null;
+		last_name: string | null;
+	} | null;
+	applied_orders?: {
+		id: string;
+		order_number: string;
+		status: string;
+		total_price: number;
+		created_at: string | null;
+		user_id: string | null;
+		customer?: {
+			id: string;
+			email: string;
+			first_name: string | null;
+			last_name: string | null;
+		} | null;
+	}[];
+};
+
+type Props = {
+	open: boolean;
+	onClose: () => void;
+	mode: "create" | "update";
+	voucher?: VoucherRow;
+};
+
+const REWARD_TYPES: VoucherRewardType[] = [
+	"amount_off",
+	"percent_off",
+	"free_shipping",
+];
+
+const STATUSES: VoucherStatus[] = [
+	"draft",
+	"active",
+	"scheduled",
+	"expired",
+	"disabled",
+];
+
+function toDateTimeLocal(value: string | null) {
+	if (!value) return "";
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return "";
+	const timezoneOffset = date.getTimezoneOffset() * 60000;
+	const local = new Date(date.getTime() - timezoneOffset);
+	return local.toISOString().slice(0, 16);
+}
+
+export default function VoucherFormModal({
+	open,
+	onClose,
+	mode,
+	voucher,
+}: Props) {
+	const router = useRouter();
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+
+	const [name, setName] = useState("");
+	const [code, setCode] = useState("");
+	const [description, setDescription] = useState("");
+	const [rewardType, setRewardType] =
+		useState<VoucherRewardType>("amount_off");
+	const [percentOff, setPercentOff] = useState("");
+	const [amountOff, setAmountOff] = useState("");
+	const [usageLimitTotal, setUsageLimitTotal] = useState("");
+	const [usageLimitPerUser, setUsageLimitPerUser] = useState("");
+	const [status, setStatus] = useState<VoucherStatus>("draft");
+	const [minOrderAmount, setMinOrderAmount] = useState("0");
+	const [startAt, setStartAt] = useState("");
+	const [endAt, setEndAt] = useState("");
+	const [stackable, setStackable] = useState(false);
+
+	useEffect(() => {
+		if (!open) return;
+		setError(null);
+
+		if (mode === "update" && voucher) {
+			setName(voucher.name ?? "");
+			setCode(voucher.code ?? "");
+			setDescription(voucher.description ?? "");
+			setRewardType(voucher.reward_type ?? "amount_off");
+			setPercentOff(
+				voucher.percent_off === null ? "" : String(voucher.percent_off),
+			);
+			setAmountOff(
+				voucher.amount_off === null ? "" : String(voucher.amount_off),
+			);
+			setUsageLimitTotal(
+				voucher.usage_limit_total === null
+					? ""
+					: String(voucher.usage_limit_total),
+			);
+			setUsageLimitPerUser(
+				voucher.usage_limit_per_user === null
+					? ""
+					: String(voucher.usage_limit_per_user),
+			);
+			setStatus(voucher.status ?? "draft");
+			setMinOrderAmount(String(voucher.min_order_amount ?? 0));
+			setStartAt(toDateTimeLocal(voucher.start_at));
+			setEndAt(toDateTimeLocal(voucher.end_at));
+			setStackable(Boolean(voucher.stackable));
+			return;
+		}
+
+		setName("");
+		setCode("");
+		setDescription("");
+		setRewardType("amount_off");
+		setPercentOff("");
+		setAmountOff("");
+		setUsageLimitTotal("");
+		setUsageLimitPerUser("");
+		setStatus("draft");
+		setMinOrderAmount("0");
+		setStartAt("");
+		setEndAt("");
+		setStackable(false);
+	}, [open, mode, voucher]);
+
+	const title = mode === "create" ? "Create New Voucher" : "Update Voucher";
+	const submitLabel = mode === "create" ? "Create Voucher" : "Save Changes";
+
+	const creatorName = useMemo(() => {
+		if (!voucher?.creator) return "Unknown";
+		const firstName = voucher.creator.first_name ?? "";
+		const lastName = voucher.creator.last_name ?? "";
+		const fullName = `${firstName} ${lastName}`.trim();
+		return fullName || voucher.creator.email;
+	}, [voucher]);
+
+	const sortedAppliedOrders = useMemo(() => {
+		const orders = voucher?.applied_orders ?? [];
+		return [...orders].sort((a, b) => {
+			const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+			const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+			return bTime - aTime;
+		});
+	}, [voucher]);
+
+	const discountField = useMemo(() => {
+		if (rewardType === "amount_off") {
+			return (
+				<div>
+					<label className="block text-sm font-medium text-slate-700 mb-1">
+						Amount Off (VND) <span className="text-red-500">*</span>
+					</label>
+					<input
+						type="number"
+						min={1}
+						step="0.01"
+						required
+						value={amountOff}
+						onChange={(e) => setAmountOff(e.target.value)}
+						className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+						placeholder="50000"
+					/>
+				</div>
+			);
+		}
+
+		if (rewardType === "percent_off") {
+			return (
+				<div>
+					<label className="block text-sm font-medium text-slate-700 mb-1">
+						Percent Off (%) <span className="text-red-500">*</span>
+					</label>
+					<input
+						type="number"
+						min={1}
+						max={100}
+						step="0.01"
+						required
+						value={percentOff}
+						onChange={(e) => setPercentOff(e.target.value)}
+						className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+						placeholder="10"
+					/>
+				</div>
+			);
+		}
+
+		return (
+			<div className="text-sm text-slate-500 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+				No discount value required for free shipping.
+			</div>
+		);
+	}, [amountOff, percentOff, rewardType]);
+
+	if (!open) return null;
+
+	async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setError(null);
+		setLoading(true);
+
+		const payload = {
+			name: name.trim(),
+			code: code.trim().toUpperCase(),
+			description: description.trim() || null,
+			reward_type: rewardType,
+			amount_off:
+				rewardType === "amount_off" && amountOff.trim()
+					? Number(amountOff)
+					: null,
+			percent_off:
+				rewardType === "percent_off" && percentOff.trim()
+					? Number(percentOff)
+					: null,
+			usage_limit_total: usageLimitTotal.trim()
+				? Number(usageLimitTotal)
+				: null,
+			usage_limit_per_user: usageLimitPerUser.trim()
+				? Number(usageLimitPerUser)
+				: null,
+			status,
+			min_order_amount: minOrderAmount.trim()
+				? Number(minOrderAmount)
+				: 0,
+			start_at: startAt ? new Date(startAt).toISOString() : null,
+			end_at: endAt ? new Date(endAt).toISOString() : null,
+			stackable,
+			scope_type: "order_total",
+		};
+
+		const url =
+			mode === "create"
+				? "/api/vouchers"
+				: `/api/vouchers/${voucher?.id ?? ""}`;
+		const method = mode === "create" ? "POST" : "PATCH";
+
+		const res = await fetch(url, {
+			method,
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload),
+		});
+
+		const data = await res.json().catch(() => null);
+		setLoading(false);
+
+		if (!res.ok) {
+			setError(data?.error ?? `Failed to ${mode} voucher`);
+			return;
+		}
+
+		onClose();
+		router.refresh();
+	}
+
+	return (
+		<div className="fixed inset-0 z-50 flex items-center justify-center !mt-0">
+			<div className="absolute inset-0 bg-black/50" onClick={onClose} />
+			<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+				<div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+					<h2 className="text-lg font-semibold text-slate-900">
+						{title}
+					</h2>
+					<button
+						type="button"
+						onClick={onClose}
+						className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+						<X className="w-5 h-5 text-slate-500" />
+					</button>
+				</div>
+
+				<form onSubmit={handleSubmit} className="p-6 space-y-4">
+					{error && (
+						<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+							{error}
+						</div>
+					)}
+
+					{mode === "update" && voucher && (
+						<div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-4">
+							<div>
+								<p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
+									Voucher Owner
+								</p>
+								<p className="text-sm font-medium text-slate-900 mt-1">
+									{creatorName}
+								</p>
+								<p className="text-xs text-slate-500">
+									{voucher.creator?.email ??
+										voucher.created_by ??
+										"No creator linked"}
+								</p>
+							</div>
+
+							<div>
+								<div className="flex items-center justify-between gap-2 mb-2">
+									<p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
+										Applied Orders
+									</p>
+									<span className="text-xs text-slate-500">
+										{sortedAppliedOrders.length} orders
+									</span>
+								</div>
+
+								{sortedAppliedOrders.length > 0 ? (
+									<div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+										{sortedAppliedOrders
+											.slice(0, 8)
+											.map((order) => {
+												const customerFirstName =
+													order.customer
+														?.first_name ?? "";
+												const customerLastName =
+													order.customer?.last_name ??
+													"";
+												const customerFullName =
+													`${customerFirstName} ${customerLastName}`.trim();
+												const customerDisplay =
+													customerFullName ||
+													order.customer?.email ||
+													order.user_id ||
+													"Unknown customer";
+
+												return (
+													<div
+														key={order.id}
+														className="rounded border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700">
+														<div className="flex items-center justify-between gap-2">
+															<span className="font-semibold text-slate-900">
+																{
+																	order.order_number
+																}
+															</span>
+															<span className="capitalize text-slate-500">
+																{order.status}
+															</span>
+														</div>
+														<div className="mt-1 text-slate-600">
+															Customer:{" "}
+															{customerDisplay}
+														</div>
+														<div className="text-slate-500">
+															Total:{" "}
+															{order.total_price.toLocaleString(
+																"vi-VN",
+															)}
+															₫
+															{order.created_at && (
+																<span>
+																	{" "}
+																	•{" "}
+																	{new Date(
+																		order.created_at,
+																	).toLocaleDateString(
+																		"vi-VN",
+																	)}
+																</span>
+															)}
+														</div>
+													</div>
+												);
+											})}
+										{sortedAppliedOrders.length > 8 && (
+											<p className="text-xs text-slate-500 text-center pt-1">
+												Showing latest 8 of{" "}
+												{sortedAppliedOrders.length}{" "}
+												orders
+											</p>
+										)}
+									</div>
+								) : (
+									<p className="text-sm text-slate-500">
+										No orders have applied this voucher yet.
+									</p>
+								)}
+							</div>
+						</div>
+					)}
+
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Code <span className="text-red-500">*</span>
+							</label>
+							<input
+								required
+								value={code}
+								onChange={(e) =>
+									setCode(e.target.value.toUpperCase())
+								}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+								placeholder="WELCOME10"
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Name <span className="text-red-500">*</span>
+							</label>
+							<input
+								required
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+								placeholder="Voucher name"
+							/>
+						</div>
+
+						<div className="md:col-span-2">
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Description
+							</label>
+							<textarea
+								rows={2}
+								value={description}
+								onChange={(e) => setDescription(e.target.value)}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+								placeholder="Optional description"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Reward Type{" "}
+								<span className="text-red-500">*</span>
+							</label>
+							<select
+								required
+								value={rewardType}
+								onChange={(e) =>
+									setRewardType(
+										e.target.value as VoucherRewardType,
+									)
+								}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+								{REWARD_TYPES.map((type) => (
+									<option key={type} value={type}>
+										{type}
+									</option>
+								))}
+							</select>
+						</div>
+
+						{discountField}
+
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Status <span className="text-red-500">*</span>
+							</label>
+							<select
+								required
+								value={status}
+								onChange={(e) =>
+									setStatus(e.target.value as VoucherStatus)
+								}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+								{STATUSES.map((statusOption) => (
+									<option
+										key={statusOption}
+										value={statusOption}>
+										{statusOption}
+									</option>
+								))}
+							</select>
+						</div>
+
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Min Order Amount (VND)
+							</label>
+							<input
+								type="number"
+								min={0}
+								step="0.01"
+								value={minOrderAmount}
+								onChange={(e) =>
+									setMinOrderAmount(e.target.value)
+								}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+								placeholder="0"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Usage Limit Total
+							</label>
+							<input
+								type="number"
+								min={1}
+								value={usageLimitTotal}
+								onChange={(e) =>
+									setUsageLimitTotal(e.target.value)
+								}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+								placeholder="Leave blank for unlimited"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Usage Limit Per User
+							</label>
+							<input
+								type="number"
+								min={1}
+								value={usageLimitPerUser}
+								onChange={(e) =>
+									setUsageLimitPerUser(e.target.value)
+								}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+								placeholder="Leave blank for unlimited"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								Start At
+							</label>
+							<input
+								type="datetime-local"
+								value={startAt}
+								onChange={(e) => setStartAt(e.target.value)}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+							/>
+						</div>
+
+						<div>
+							<label className="block text-sm font-medium text-slate-700 mb-1">
+								End At
+							</label>
+							<input
+								type="datetime-local"
+								value={endAt}
+								onChange={(e) => setEndAt(e.target.value)}
+								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+							/>
+						</div>
+					</div>
+
+					<label className="flex items-center gap-2 text-sm text-slate-700">
+						<input
+							type="checkbox"
+							checked={stackable}
+							onChange={(e) => setStackable(e.target.checked)}
+							className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+						/>
+						Stackable with other vouchers
+					</label>
+
+					<div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+						<button
+							type="button"
+							onClick={onClose}
+							className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+							Cancel
+						</button>
+						<button
+							type="submit"
+							disabled={loading}
+							className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors">
+							{loading ? `${submitLabel}...` : submitLabel}
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}

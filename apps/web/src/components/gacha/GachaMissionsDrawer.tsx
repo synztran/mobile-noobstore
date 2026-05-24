@@ -1,7 +1,7 @@
 "use client";
 
 import { TOKEN_ICON } from "@/lib/images";
-import { useQuery } from "@tanstack/react-query";
+import { useGachaMissions } from "@/lib/react-query/gacha/api/useGachaQueries";
 import { CheckCircle2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect } from "react";
@@ -39,15 +39,7 @@ export function GachaMissionsDrawer({
 	onClose,
 	eventId,
 }: GachaMissionsDrawerProps) {
-	const { data, isLoading } = useQuery<{ missions: GachaMission[] }>({
-		queryKey: ["gacha-missions", eventId],
-		queryFn: () =>
-			fetch(`/api/gacha/mission?event_id=${eventId}`).then((r) =>
-				r.json(),
-			),
-		enabled: open,
-		staleTime: 30_000,
-	});
+	const { data, isLoading } = useGachaMissions(eventId);
 
 	const missions = data?.missions ?? [];
 	const loading = isLoading && open;

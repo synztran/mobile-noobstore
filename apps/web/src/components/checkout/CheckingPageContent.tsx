@@ -3,14 +3,17 @@
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
-import { formatVND } from "@/lib/currency";
 import type { PaymentInformation } from "@/lib/payment-information";
+import {
+	useOrderStatus,
+	usePaymentInformation,
+} from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
-import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
+import { QRPaymentSection } from "./QRPaymentSection";
 
 type BankInfoRow = {
 	id: string;
@@ -40,44 +43,13 @@ export default function CheckingPageContent() {
 		}
 	}, [mounted, orderNumber, router]);
 
-	const orderStatusQuery = useQuery({
-		queryKey: ["order-status", orderNumber],
-		enabled: mounted && !!orderNumber,
-		queryFn: async () => {
-			const res = await fetch(`/api/orders/${orderNumber}`, {
-				method: "GET",
-			});
-			if (!res.ok) {
-				return {
-					status: "",
-					voucher_discount_amount: 0,
-					shipping_discount_amount: 0,
-				};
-			}
-			const data = await res.json();
-			return {
-				status: (data.status as string) ?? "pending",
-				voucher_discount_amount:
-					Number(data.voucher_discount_amount ?? 0) || 0,
-				shipping_discount_amount:
-					Number(data.shipping_discount_amount ?? 0) || 0,
-			};
-		},
-		refetchInterval: 5000,
-	});
+	const orderStatusQuery = useOrderStatus(
+		orderNumber,
+		mounted && !!orderNumber,
+		5000,
+	);
 
-	const paymentMethodsQuery = useQuery({
-		queryKey: ["payment-information"],
-		enabled: mounted,
-		queryFn: async () => {
-			const res = await fetch("/api/payment-information");
-			if (!res.ok) throw new Error("Failed to load payment info");
-			const data = (await res.json()) as {
-				methods?: PaymentInformation[];
-			};
-			return data.methods ?? [];
-		},
-	});
+	const paymentMethodsQuery = usePaymentInformation(mounted);
 
 	const orderStatus = orderStatusQuery.data?.status ?? null;
 	const orderVoucherDiscount =
@@ -196,89 +168,15 @@ export default function CheckingPageContent() {
 
 			{/* QR Scan Section */}
 			<section className="mb-8">
-				<div className="bg-surface-container-low rounded-2xl p-4 flex flex-col items-center shadow-ambient relative overflow-hidden group">
-					{bankMethod ? (
-						<div className="bg-surface-container p-4 rounded-2xl mb-2 relative z-10 w-full h-64 border border-outline-variant/30">
-							<Image
-								src={buildQRBank(
-									`${orderNumber} - ${orderedItems.length} items`,
-									totalPrice,
-								)}
-								alt="Payment QR Code"
-								className="object-contain"
-								fill
-								unoptimized
-							/>
-						</div>
-					) : (
-						<div className="bg-surface-container rounded-2xl mb-2 relative z-10 w-full h-64 flex items-center justify-center">
-							<p className="text-sm font-semibold text-on-surface-variant text-center px-6">
-								Chưa có cấu hình thanh toán ngân hàng.
-							</p>
-						</div>
-					)}
-					<p className="text-on-surface font-bold text-lg mb-1 relative z-10">
-						Quét để thanh toán
-					</p>
-					{/* Amount breakdown */}
-					<div className="w-full bg-surface-container-high rounded-2xl p-4 mt-3 relative z-10 space-y-2">
-						<div className="flex justify-between text-sm">
-							<span className="text-on-surface-variant">
-								Tạm tính
-							</span>
-							<span className="font-bold text-on-surface">
-								{formatVND(subtotal)}
-							</span>
-						</div>
-						<div className="flex justify-between text-sm">
-							<span className="text-on-surface-variant">
-								Phí vận chuyển
-							</span>
-							<span
-								className={
-									shippingCost === 0
-										? "font-bold text-secondary"
-										: "font-bold text-on-surface"
-								}>
-								{shippingCost === 0
-									? "Miễn phí"
-									: formatVND(shippingCost)}
-							</span>
-						</div>
-						{orderVoucherDiscount > 0 ? (
-							<div className="flex justify-between text-sm">
-								<span className="text-on-surface-variant">
-									Giảm giá voucher
-								</span>
-								<span className="font-bold text-secondary">
-									-{formatVND(orderVoucherDiscount)}
-								</span>
-							</div>
-						) : null}
-						{orderShippingDiscount > 0 ? (
-							<div className="flex justify-between text-sm">
-								<span className="text-on-surface-variant">
-									Giảm phí vận chuyển
-								</span>
-								<span className="font-bold text-secondary">
-									-{formatVND(orderShippingDiscount)}
-								</span>
-							</div>
-						) : null}
-						<div className="h-px bg-outline-variant/30" />
-						<div className="flex justify-between">
-							<span className="font-black text-on-surface">
-								Tổng cộng
-							</span>
-							<span className="font-black text-primary text-lg">
-								{formatVND(totalPrice)}
-							</span>
-						</div>
-					</div>
-					<p className="text-on-surface-variant text-xs leading-relaxed text-center relative z-10 mt-2">
-						Mở app banking và quét mã để hoàn tất thanh toán.
-					</p>
-				</div>
+				<QRPaymentSection
+					bankMethod={bankMethod}
+					totalPrice={totalPrice}
+					orderNumber={orderNumber}
+					subtotal={subtotal}
+					shippingCost={shippingCost}
+					voucherDiscount={orderVoucherDiscount}
+					shippingDiscount={orderShippingDiscount}
+				/>
 			</section>
 
 			{/* Bank Transfer */}
@@ -297,7 +195,9 @@ export default function CheckingPageContent() {
 								<div className="text-on-surface font-bold text-base flex items-center gap-2">
 									{id === "bank_name" ? (
 										<Image
-											src={"/logo/vietinbank_logo.png"}
+											src={
+												bankMethod?.bank_logo_url ?? ""
+											}
 											alt="bank logo"
 											width={120}
 											height={60}

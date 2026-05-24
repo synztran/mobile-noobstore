@@ -5,8 +5,9 @@ import {
 	motion,
 	useMotionValue,
 	useMotionValueEvent,
+	useTransform,
 } from "motion/react";
-import { useCallback, useRef, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 
 interface RotaryKnobProps {
 	onTurnComplete: () => void;
@@ -17,14 +18,15 @@ const FULL_TURN = 360;
 const SPEED_DEG_PER_FRAME = 9;
 const FRAME_MS = 16;
 
-export function RotaryKnob({
+export const RotaryKnob = ({
 	onTurnComplete,
 	disabled = false,
-}: RotaryKnobProps) {
+}: RotaryKnobProps) => {
 	const [isHolding, setIsHolding] = useState(false);
 	const [isReversing, setIsReversing] = useState(false);
 	const [progress, setProgress] = useState(0);
 	const rotationMV = useMotionValue(0);
+	const displayRotation = useTransform(rotationMV, (v) => v - 90);
 	const rafRef = useRef<number | null>(null);
 	const lastTimeRef = useRef<number | null>(null);
 	const totalRef = useRef(0);
@@ -155,7 +157,7 @@ export function RotaryKnob({
 						className="absolute inset-0"
 						width={82}
 						height={82}
-						style={{ transform: "rotate(-90deg)" }}>
+						style={{ transform: "rotate(-180deg)" }}>
 						<circle
 							cx={41}
 							cy={41}
@@ -205,7 +207,7 @@ export function RotaryKnob({
 					<motion.div
 						className={`relative flex items-center justify-center rounded-full w-[60px] h-[60px] touch-none select-none ${disabled ? "cursor-not-allowed" : "cursor-grab"}`}
 						style={{
-							rotate: rotationMV,
+							rotate: displayRotation,
 							background: isHolding
 								? "linear-gradient(135deg, #e8e8e8 0%, #cccccc 100%)"
 								: "linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%)",
@@ -271,4 +273,6 @@ export function RotaryKnob({
 			</p> */}
 		</div>
 	);
-}
+};
+
+export default memo(RotaryKnob);

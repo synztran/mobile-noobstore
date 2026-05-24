@@ -36,7 +36,7 @@ export function VoucherDrawer({
 	return (
 		<>
 			<div
-				className={`fixed inset-0 bg-on-surface/30 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
+				className={`fixed inset-0 bg-on-surface/30 backdrop-blur-sm z-[60] transition-opacity duration-300 !mt-0 ${
 					drawerOpen
 						? "opacity-100 pointer-events-auto"
 						: "opacity-0 pointer-events-none"
@@ -62,7 +62,7 @@ export function VoucherDrawer({
 						className="text-on-surface hover:opacity-70 transition-opacity active:scale-95"></button>
 				</div>
 				<div className="flex-1 overflow-y-auto px-4 space-y-4 pb-4">
-					<div className="menu bg-base-200 w-full max-w-md h-full rounded-l-3xl flex flex-col p-0 overflow-hidden">
+					<div className="menu bg-base-200 w-full max-w-md h-full rounded-t-2xl flex flex-col p-0 overflow-hidden">
 						{/* Search Header */}
 						<div className="px-4 pt-4 pb-3 border-b border-outline-variant/30">
 							<div className="relative">

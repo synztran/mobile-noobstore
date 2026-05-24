@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+	--on-surface: 33, 37, 41;
+	--surface-container: 247, 250, 252;
+	--surface-dim: 218, 222, 226;
+}
+
+* {
+	@apply box-border;
+}
+
+html {
+	@apply scroll-smooth;
+}
+
+body {
+	@apply bg-slate-50 text-slate-900;
+}

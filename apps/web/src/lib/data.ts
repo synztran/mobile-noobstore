@@ -53,6 +53,8 @@ export interface ShippingDetails {
 	postalCode: string;
 	phoneNumber: string;
 	deliverySpeed: "standard" | "express" | "shipment";
+	/** Matches shipping_methods.id — same value as deliverySpeed for now */
+	shippingMethodId: string;
 }
 
 export interface ProfileAddress {

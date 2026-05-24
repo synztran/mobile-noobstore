@@ -2,9 +2,10 @@
 
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
-import { useCartStore, useCheckoutStore } from "@/store";
+import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 export default function CheckoutLayout({
 	children,
@@ -15,6 +16,14 @@ export default function CheckoutLayout({
 	const mounted = useIsMounted();
 	const cartId = useCartStore((s) => s.cartId);
 	const orderId = useCheckoutStore((s) => s.orderId);
+	const resetDiscount = useDiscountStore((s) => s.resetDiscount);
+
+	// Clear applied voucher when the customer leaves the checkout flow
+	useEffect(() => {
+		return () => {
+			resetDiscount();
+		};
+	}, [resetDiscount]);
 
 	const steps = [
 		{
@@ -68,7 +77,10 @@ export default function CheckoutLayout({
 					{!mounted ? (
 						<div className="flex justify-around w-full py-1 animate-pulse">
 							{[1, 2, 3].map((i) => (
-								<div key={i} className="h-4 w-16 bg-surface-container rounded-full" />
+								<div
+									key={i}
+									className="h-4 w-16 bg-surface-container rounded-full"
+								/>
 							))}
 						</div>
 					) : (
@@ -82,10 +94,14 @@ export default function CheckoutLayout({
 								return (
 									<li
 										key={href}
-										data-content={isPast ? "✓" : String(step)}
+										data-content={
+											isPast ? "✓" : String(step)
+										}
 										className={[
 											"step text-[10px] font-bold uppercase tracking-widest",
-											isPast || isActive ? "step-primary" : "",
+											isPast || isActive
+												? "step-primary"
+												: "",
 										]
 											.filter(Boolean)
 											.join(" ")}>

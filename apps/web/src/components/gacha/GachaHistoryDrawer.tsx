@@ -1,7 +1,9 @@
 "use client";
 
+import { useGachaHistory } from "@/lib/react-query/gacha/api/useGachaQueries";
 import { X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef } from "react";
 
 interface HistoryReward {
 	id: number;
@@ -17,6 +19,11 @@ interface HistoryEntry {
 	id: number;
 	played_at: string;
 	reward: HistoryReward | null;
+}
+
+interface PageResult {
+	history: HistoryEntry[];
+	hasMore: boolean;
 }
 
 interface GachaHistoryDrawerProps {
@@ -46,60 +53,33 @@ export function GachaHistoryDrawer({
 	onClose,
 	eventId,
 }: GachaHistoryDrawerProps) {
-	const [entries, setEntries] = useState<HistoryEntry[]>([]);
-	const [page, setPage] = useState(1);
-	const [hasMore, setHasMore] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const [initialLoad, setInitialLoad] = useState(true);
 	const sentinelRef = useRef<HTMLDivElement>(null);
 
-	const fetchPage = useCallback(
-		async (p: number, reset = false) => {
-			setLoading(true);
-			try {
-				const res = await fetch(
-					`/api/gacha/history?event_id=${eventId}&page=${p}`,
-				);
-				const data = await res.json();
-				if (data.history) {
-					setEntries((prev) =>
-						reset ? data.history : [...prev, ...data.history],
-					);
-					setHasMore(data.hasMore);
-				}
-			} finally {
-				setLoading(false);
-				setInitialLoad(false);
-			}
-		},
-		[eventId],
-	);
+	const {
+		data,
+		isFetching,
+		isFetchingNextPage,
+		fetchNextPage,
+		hasNextPage,
+		status,
+	} = useGachaHistory(eventId, open);
 
-	// Reset and load when drawer opens
-	useEffect(() => {
-		if (!open) return;
-		setEntries([]);
-		setPage(1);
-		setInitialLoad(true);
-		fetchPage(1, true);
-	}, [open, fetchPage]);
+	const entries = data?.pages.flatMap((p) => p.history) ?? [];
+	const isInitialLoad = !data && isFetching;
+	const isLoadingMore = isFetchingNextPage;
 
 	// Infinite scroll via IntersectionObserver
 	useEffect(() => {
-		if (!sentinelRef.current || !hasMore || loading) return;
+		if (!sentinelRef.current || !hasNextPage || isFetching) return;
 		const observer = new IntersectionObserver(
-			(entries) => {
-				if (entries[0].isIntersecting) {
-					const next = page + 1;
-					setPage(next);
-					fetchPage(next);
-				}
+			([entry]) => {
+				if (entry.isIntersecting) fetchNextPage();
 			},
 			{ threshold: 0.1 },
 		);
 		observer.observe(sentinelRef.current);
 		return () => observer.disconnect();
-	}, [hasMore, loading, page, fetchPage]);
+	}, [hasNextPage, isFetching, fetchNextPage]);
 
 	// Trap escape key
 	useEffect(() => {
@@ -123,8 +103,7 @@ export function GachaHistoryDrawer({
 				role="dialog"
 				aria-modal="true"
 				aria-label="Play history"
-				className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-2xl bg-base-100 flex flex-col"
-				style={{ maxHeight: "80vh" }}>
+				className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-2xl bg-base-100 flex flex-col h-[55vh]">
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-base-200">
 					<h2 className="text-base font-black">Lịch sử tham gia</h2>
@@ -137,10 +116,11 @@ export function GachaHistoryDrawer({
 				</div>
 
 				{/* Content */}
-				<div className="overflow-y-auto flex-1 px-4 py-3 flex flex-col gap-2">
-					{initialLoad ? (
+				<div
+					className={`flex-1 px-4 py-3 flex flex-col gap-2 ${isInitialLoad ? "overflow-y-hidden" : "overflow-y-auto"}`}>
+					{isInitialLoad ? (
 						// Skeleton
-						[...Array(5)].map((_, i) => (
+						[...Array(6)].map((_, i) => (
 							<div
 								key={i}
 								className="flex items-center gap-3 p-3 rounded-xl bg-base-200 animate-pulse">
@@ -169,11 +149,11 @@ export function GachaHistoryDrawer({
 											: "linear-gradient(135deg, #e5e7eb, #d1d5db)",
 									}}>
 									{entry.reward?.thumbnail_url ? (
-										// eslint-disable-next-line @next/next/no-img-element
-										<img
+										<Image
 											src={entry.reward.thumbnail_url}
 											alt=""
 											className="w-full h-full rounded-full object-cover"
+											fill
 										/>
 									) : (
 										<span>
@@ -216,13 +196,13 @@ export function GachaHistoryDrawer({
 					{/* Infinite scroll sentinel */}
 					<div ref={sentinelRef} />
 
-					{loading && !initialLoad && (
+					{isLoadingMore && (
 						<div className="flex justify-center py-2">
 							<span className="loading loading-spinner loading-sm" />
 						</div>
 					)}
 
-					{!hasMore && entries.length > 0 && (
+					{!hasNextPage && entries.length > 0 && (
 						<p className="text-center text-xs text-base-content/30 py-3">
 							Đã xem hết!
 						</p>

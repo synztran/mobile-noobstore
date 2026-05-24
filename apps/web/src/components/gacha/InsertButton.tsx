@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useAnimationFrame, useMotionValue } from "motion/react";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 
 interface InsertButtonProps {
 	onClick: () => void;
@@ -10,12 +10,12 @@ interface InsertButtonProps {
 	noTokens?: boolean;
 }
 
-export function InsertButton({
+export const InsertButton = ({
 	onClick,
 	disabled = false,
 	hasToken = false,
 	noTokens = false,
-}: InsertButtonProps) {
+}: InsertButtonProps) => {
 	const bg = hasToken
 		? "linear-gradient(145deg, #4ade80 0%, #16a34a 100%)"
 		: "linear-gradient(145deg, #fbbf24 0%, #d97706 100%)";
@@ -101,4 +101,6 @@ export function InsertButton({
 			</div>
 		</div>
 	);
-}
+};
+
+export default memo(InsertButton);

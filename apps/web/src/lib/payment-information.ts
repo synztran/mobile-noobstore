@@ -8,6 +8,7 @@ export interface PaymentInformation {
 	account_number: string;
 	platform_name: string;
 	account_name: string;
+	bank_logo_url: string | null;
 }
 
 export async function getPaymentInformation(): Promise<PaymentInformation[]> {
@@ -16,7 +17,7 @@ export async function getPaymentInformation(): Promise<PaymentInformation[]> {
 		const { data, error } = await supabase
 			.from("payment_information")
 			.select(
-				"id, platform_type, account_number, platform_name, account_name",
+				"id, platform_type, account_number, platform_name, account_name, bank_logo_url",
 			)
 			.order("created_at", { ascending: true });
 

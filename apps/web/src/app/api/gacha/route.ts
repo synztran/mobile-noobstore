@@ -51,10 +51,10 @@ export async function GET(req: NextRequest) {
 			supabase
 				.from("gacha_rewards")
 				.select(
-					"id, reward_type, name, description, value, thumbnail_url, weight, max_quantity, claimed_count, is_golden",
+					"id, reward_type, name, description, value, thumbnail_url, weight, max_quantity, claimed_count, is_golden, percent_display",
 				)
 				.eq("event_id", eventId)
-				.order("weight", { ascending: false }),
+				.order("percent_display", { ascending: true }),
 		]);
 
 		if (eventResult.error) {
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
 		}
 		if (!eventResult.data) {
 			return NextResponse.json(
-				{ error: "Event not found or inactive" },
+				{ error: "Sự kiện chưa diễn ra" },
 				{ status: 404 },
 			);
 		}
@@ -77,14 +77,29 @@ export async function GET(req: NextRequest) {
 		}
 
 		const rewards = rewardsResult.data ?? [];
-		const totalWeight = rewards.reduce((sum, r) => sum + r.weight, 0);
-		rewardsWithPercent = rewards.map((r) => ({
-			...r,
-			percent:
-				totalWeight > 0
-					? Math.round((r.weight / totalWeight) * 1000) / 10
-					: 0,
-		}));
+		const totalWeight = rewards.reduce(
+			(sum, r) => sum + (r.weight ?? 0),
+			0,
+		);
+		rewardsWithPercent = rewards.map((r) => {
+			// const percent =
+			// 	totalWeight > 0
+			// 		? Math.round(((r.weight ?? 0) / totalWeight) * 1000) / 10
+			// 		: 0;
+			const {
+				id,
+				// is_golden,
+				// max_quantity,
+				// reward_type,
+				weight,
+				percent_display,
+				...rest
+			} = r;
+			return {
+				...rest,
+				percent: r.percent_display,
+			};
+		});
 		event = eventResult.data;
 
 		// Cache event + rewards for 60 s (token_count is per-user, never cached)
@@ -143,7 +158,9 @@ export async function POST(req: NextRequest) {
 	const admin = getAdminClient();
 
 	// 1. Verify event is active and within date range
-	const { data: event, error: eventError } = await admin
+	// Use the authenticated SSR client here — gacha_events is readable by authenticated users via RLS.
+	// The admin client is reserved for operations that bypass RLS (blocked-users check, reward updates).
+	const { data: event, error: eventError } = await supabase
 		.from("gacha_events")
 		.select("id, start_at, end_at, is_active")
 		.eq("id", eventId)
@@ -158,7 +175,7 @@ export async function POST(req: NextRequest) {
 	}
 	if (!event) {
 		return NextResponse.json(
-			{ error: "Event not found or inactive" },
+			{ error: "Sự kiện chưa diễn ra" },
 			{ status: 404 },
 		);
 	}
@@ -166,7 +183,7 @@ export async function POST(req: NextRequest) {
 	const now = new Date();
 	if (now < new Date(event.start_at) || now > new Date(event.end_at)) {
 		return NextResponse.json(
-			{ error: "Event is not currently running" },
+			{ error: "Sự kiện chưa diễn ra" },
 			{ status: 400 },
 		);
 	}
@@ -212,7 +229,7 @@ export async function POST(req: NextRequest) {
 	}
 
 	// 4. Check if user is blocked from golden rewards
-	const { data: blocked } = await admin
+	const { data: blocked } = await supabase
 		.from("gacha_event_blocked_users")
 		.select("user_id")
 		.eq("event_id", eventId)
@@ -222,7 +239,7 @@ export async function POST(req: NextRequest) {
 	const isGoldenBlocked = !!blocked;
 
 	// 5. Fetch all rewards for this event
-	const { data: allRewards, error: rewardsError } = await admin
+	const { data: allRewards, error: rewardsError } = await supabase
 		.from("gacha_rewards")
 		.select(
 			"id, reward_type, name, description, value, thumbnail_url, weight, max_quantity, claimed_count, is_golden",
@@ -263,30 +280,28 @@ export async function POST(req: NextRequest) {
 	}
 
 	// 7. Weighted random draw
-	const totalWeight = eligible.reduce((sum, r) => sum + r.weight, 0);
+	const totalWeight = eligible.reduce((sum, r) => sum + (r.weight ?? 0), 0);
 	let roll = Math.random() * totalWeight;
 	let drawn = eligible[eligible.length - 1]; // safe fallback
 	for (const reward of eligible) {
-		roll -= reward.weight;
+		roll -= reward.weight ?? 0;
 		if (roll <= 0) {
 			drawn = reward;
 			break;
 		}
 	}
 
-	// 8. Record history + increment claimed_count (if supply-limited) + invalidate cache
+	// 8. Record history + increment claimed_count (always) + invalidate cache
 	await Promise.all([
 		supabase.from("gacha_history").insert({
 			user_id: user.id,
 			event_id: eventId,
 			reward_id: drawn.id,
 		}),
-		drawn.max_quantity !== null
-			? admin
-					.from("gacha_rewards")
-					.update({ claimed_count: drawn.claimed_count + 1 })
-					.eq("id", drawn.id)
-			: Promise.resolve(),
+		admin
+			.from("gacha_rewards")
+			.update({ claimed_count: drawn.claimed_count + 1 })
+			.eq("id", drawn.id),
 		// Invalidate event cache (claimed_count changed) and recent-winners cache
 		invalidateCache(`gacha:event:${eventId}`, `gacha:winners:${eventId}`),
 	]);

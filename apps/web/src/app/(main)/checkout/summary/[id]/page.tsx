@@ -101,6 +101,21 @@ export default function SummaryPage() {
 			const payloadCheckoutSubmit = {
 				cart_id: cartId,
 				shipping_cost: shippingCost,
+				shipping_method_id:
+					shipping?.shippingMethodId ??
+					shipping?.deliverySpeed ??
+					null,
+				delivery_address: shipping
+					? {
+							full_name: shipping.fullName,
+							phone_number: shipping.phoneNumber,
+							street_address: shipping.streetAddress,
+							apartment: shipping.apartment || null,
+							ward_district: shipping.wardDistrict,
+							city: shipping.city,
+							postal_code: shipping.postalCode || null,
+						}
+					: null,
 				vouchers: [
 					{
 						voucher_id: appliedVoucher?.voucher_id ?? null,
@@ -136,7 +151,7 @@ export default function SummaryPage() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(payloadCheckoutSubmit),
 			});
-			console.log("res", res)
+			console.log("res", res);
 			const data = await res.json();
 			if (!res.ok) {
 				toast.error(data.error ?? "Không thể tạo đơn hàng");
@@ -206,6 +221,31 @@ export default function SummaryPage() {
 				<VoucherComponent subtotal={subtotal} />
 			</div>
 
+			{/* ── Delivery Address ────────────────────────────── */}
+			{shipping && (
+				<div className="rounded-3xl overflow-hidden bg-surface-container-low px-4 py-4 space-y-1">
+					<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">
+						Địa chỉ nhận hàng
+					</p>
+					<p className="text-sm font-bold text-on-surface">
+						{shipping.fullName}{" "}
+						<span className="font-normal text-on-surface-variant">
+							· {shipping.phoneNumber}
+						</span>
+					</p>
+					<p className="text-sm text-on-surface-variant">
+						{[
+							shipping.streetAddress,
+							shipping.apartment,
+							shipping.wardDistrict,
+							shipping.city,
+						]
+							.filter(Boolean)
+							.join(", ")}
+					</p>
+				</div>
+			)}
+
 			{/* ── Shipping Method ──────────────────────────────────── */}
 			<div className="rounded-3xl overflow-hidden bg-surface-container-low">
 				<div className="px-4 py-4 flex items-center justify-between">
@@ -219,8 +259,13 @@ export default function SummaryPage() {
 							</p>
 							<p className="text-sm font-bold text-on-surface">
 								{shipping?.deliverySpeed === "express"
-									? "Giao hàng nhanh"
-									: "Giao hàng tiêu chuẩn"}
+									? "Hỏa tốc"
+									: "Tiêu chuẩn"}
+							</p>
+							<p className="text-xs text-on-surface-variant mt-0.5">
+								{shipping?.deliverySpeed === "express"
+									? "Dự kiến: 2–4 giờ"
+									: "Dự kiến: 12–24 giờ"}
 							</p>
 						</div>
 					</div>

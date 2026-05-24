@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { memo } from "react";
 
 export const BALL_PALETTE = [
 	{ top: "#FF6B6B", bottom: "#FF3A1A", name: "Flame", glow: "#FF6B6B" },
@@ -29,12 +30,12 @@ interface LuckyBallProps {
 	floatDelay?: number;
 }
 
-export function LuckyBall({
+const LuckyBall = ({
 	colorIndex,
 	size = 42,
 	floating = false,
 	floatDelay = 0,
-}: LuckyBallProps) {
+}: LuckyBallProps) => {
 	const color = BALL_PALETTE[colorIndex % BALL_PALETTE.length];
 	const isGolden = Boolean(color.isGolden);
 
@@ -133,7 +134,6 @@ export function LuckyBall({
 					background: isGolden
 						? "rgba(255,255,240,0.82)"
 						: "rgba(255,255,255,0.58)",
-					filter: "blur(1.5px)",
 				}}
 			/>
 			{/* Small secondary shine */}
@@ -145,7 +145,6 @@ export function LuckyBall({
 					top: "18%",
 					right: "18%",
 					background: "rgba(255,255,255,0.35)",
-					filter: "blur(1px)",
 				}}
 			/>
 
@@ -178,4 +177,6 @@ export function LuckyBall({
 			)}
 		</motion.div>
 	);
-}
+};
+
+export default memo(LuckyBall);

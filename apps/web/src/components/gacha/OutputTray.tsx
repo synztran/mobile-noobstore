@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { BALL_PALETTE, LuckyBall } from "./LuckyBall";
+import LuckyBall, { BALL_PALETTE } from "./LuckyBall";
 
 interface OutputTrayProps {
 	isOpen: boolean;

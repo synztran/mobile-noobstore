@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import { LuckyBall } from "./LuckyBall";
+import { memo } from "react";
+import LuckyBall from "./LuckyBall";
 
 interface BallTankProps {
 	isShaking?: boolean;
@@ -68,11 +69,14 @@ function generateBalls() {
 
 const BALLS = generateBalls();
 
-export function BallTank({ isShaking = false }: BallTankProps) {
+export const BallTank = memo(function BallTank({
+	isShaking = false,
+}: BallTankProps) {
 	return (
 		<div
 			className="relative w-full overflow-hidden h-[220px] rounded-t-2xl rounded-b-[4px]"
 			style={{
+				willChange: "transform",
 				background:
 					"linear-gradient(175deg, rgba(200,230,255,0.28) 0%, rgba(150,200,245,0.18) 60%, rgba(120,180,230,0.12) 100%)",
 				borderRadius: "12px 12px 4px 4px",
@@ -92,18 +96,18 @@ export function BallTank({ isShaking = false }: BallTankProps) {
 
 			{/* Wide left glass streak */}
 			<div
-				className="absolute rounded-full w-[22px] h-[110px] top-1.5 left-2.5 -rotate-[16deg] blur-[6px]"
-				style={{ background: "rgba(255,255,255,0.22)" }}
+				className="absolute rounded-full w-[22px] h-[110px] top-1.5 left-2.5 -rotate-[16deg]"
+				style={{ background: "rgba(255,255,255,0.18)" }}
 			/>
 			{/* Narrow left streak */}
 			<div
-				className="absolute rounded-full w-2 h-[60px] top-3.5 left-8 -rotate-[10deg] blur-[3px]"
-				style={{ background: "rgba(255,255,255,0.18)" }}
+				className="absolute rounded-full w-2 h-[60px] top-3.5 left-8 -rotate-[10deg]"
+				style={{ background: "rgba(255,255,255,0.14)" }}
 			/>
 			{/* Right edge reflection */}
 			<div
-				className="absolute rounded-full w-3 h-[70px] top-2.5 right-4 rotate-[14deg] blur-[5px]"
-				style={{ background: "rgba(255,255,255,0.14)" }}
+				className="absolute rounded-full w-3 h-[70px] top-2.5 right-4 rotate-[14deg]"
+				style={{ background: "rgba(255,255,255,0.11)" }}
 			/>
 			{/* Top rim gloss bar */}
 			<div
@@ -178,4 +182,4 @@ export function BallTank({ isShaking = false }: BallTankProps) {
 			})}
 		</div>
 	);
-}
+});

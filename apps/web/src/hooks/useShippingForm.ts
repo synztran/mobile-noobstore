@@ -340,7 +340,14 @@ export function useShippingForm() {
 				return;
 			}
 
-			setShipping({ ...form, deliverySpeed: delivery }, shippingCost);
+			setShipping(
+				{
+					...form,
+					deliverySpeed: delivery,
+					shippingMethodId: delivery,
+				},
+				shippingCost,
+			);
 			router.push(
 				cartId ? `/checkout/summary/${cartId}` : "/checkout/summary",
 			);

@@ -1,7 +1,7 @@
 "use client";
 
 import type { TrustProp } from "@/app/api/home/trust-props/route";
-import { useQuery } from "@tanstack/react-query";
+import { useHomeTrustProps } from "@/lib/react-query/home/api/useHomeQueries";
 import { Award, ShieldCheck, Truck, Zap } from "lucide-react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -12,15 +12,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 export function FlashSaleBanner() {
-	const { data: props = [], isLoading } = useQuery({
-		queryKey: ["home-trust-props"],
-		queryFn: async (): Promise<TrustProp[]> => {
-			const res = await fetch("/api/home/trust-props");
-			if (!res.ok) return [];
-			const data = await res.json();
-			return Array.isArray(data) ? data : [];
-		},
-	});
+	const { data: props = [], isLoading } = useHomeTrustProps();
 
 	if (isLoading) {
 		return (

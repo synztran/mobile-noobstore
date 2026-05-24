@@ -1,7 +1,7 @@
 "use client";
 
 import type { Creator } from "@/app/api/home/creators/route";
-import { useQuery } from "@tanstack/react-query";
+import { useHomeCreators } from "@/lib/react-query/home/api/useHomeQueries";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
 
@@ -13,15 +13,7 @@ const COLOR_CLASSES: Record<string, string> = {
 };
 
 export function CustomerTestimonial() {
-	const { data: creators = [], isLoading } = useQuery({
-		queryKey: ["home-creators"],
-		queryFn: async (): Promise<Creator[]> => {
-			const res = await fetch("/api/home/creators");
-			if (!res.ok) return [];
-			const data = await res.json();
-			return Array.isArray(data) ? data : [];
-		},
-	});
+	const { data: creators = [], isLoading } = useHomeCreators();
 
 	if (isLoading) {
 		return (

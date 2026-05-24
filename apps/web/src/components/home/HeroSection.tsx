@@ -1,7 +1,7 @@
 "use client";
 
 import type { HeroCampaign } from "@/app/api/home/hero/route";
-import { useQuery } from "@tanstack/react-query";
+import { useHomeHero } from "@/lib/react-query/home/api/useHomeQueries";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,15 +14,7 @@ export function HeroSection() {
 	const [isPaused, setIsPaused] = useState(false);
 	const touchStartX = useRef<number | null>(null);
 
-	const { data: slides = [], isLoading } = useQuery({
-		queryKey: ["home-hero-campaigns"],
-		queryFn: async (): Promise<HeroCampaign[]> => {
-			const res = await fetch("/api/home/hero");
-			if (!res.ok) return [];
-			const data = await res.json();
-			return Array.isArray(data) ? data : [];
-		},
-	});
+	const { data: slides = [], isLoading } = useHomeHero();
 
 	const goTo = useCallback(
 		(idx: number) => {

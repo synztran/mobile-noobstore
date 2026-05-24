@@ -2,12 +2,13 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
+import { memo } from "react";
 
 interface TokenSlotProps {
 	hasToken: boolean;
 }
 
-export function TokenSlot({ hasToken }: TokenSlotProps) {
+export const TokenSlot = memo(function TokenSlot({ hasToken }: TokenSlotProps) {
 	return (
 		<div className="flex flex-col items-center gap-2 relative">
 			{/* Metallic outer frame */}
@@ -135,4 +136,4 @@ export function TokenSlot({ hasToken }: TokenSlotProps) {
 			</p> */}
 		</div>
 	);
-}
+});

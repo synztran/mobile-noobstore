@@ -2,10 +2,10 @@
 
 import type { OrderSummary } from "@/app/api/user/orders/route";
 import { OrderDetailDrawer } from "@/components/orders/OrderDetailDrawer";
-import {
-	OrderStatusTabs,
+import OrderStatusTabs, {
 	type OrderStatusTabOption,
 } from "@/components/orders/OrderStatusTabs";
+import { ServiceOrderDetailDrawer } from "@/components/orders/ServiceOrderDetailDrawer";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { formatVND } from "@/lib/currency";
 import {
@@ -164,6 +164,9 @@ export default function OrdersPage() {
 	const [debouncedQ, setDebouncedQ] = useState("");
 	const [activeStatus, setActiveStatus] = useState("all");
 	const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+	const [selectedServiceOrderId, setSelectedServiceOrderId] = useState<
+		string | null
+	>(null);
 	const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
 	const inFlightRef = useRef(false);
 
@@ -356,7 +359,12 @@ export default function OrdersPage() {
 					{orders.map((order) => (
 						<button
 							key={order.id}
-							onClick={() => setSelectedOrderId(order.id)}
+							onClick={() =>
+								order.service_line_count > 0 &&
+								order.item_count === 0
+									? setSelectedServiceOrderId(order.id)
+									: setSelectedOrderId(order.id)
+							}
 							className="w-full text-left bg-surface-container-lowest rounded-3xl p-4 space-y-3 shadow-ambient-sm active:scale-[0.99] transition-transform">
 							{/* Row 1: order number + status */}
 							<div className="flex items-center justify-between gap-2">
@@ -414,6 +422,10 @@ export default function OrdersPage() {
 			<OrderDetailDrawer
 				orderId={selectedOrderId}
 				onClose={() => setSelectedOrderId(null)}
+			/>
+			<ServiceOrderDetailDrawer
+				orderId={selectedServiceOrderId}
+				onClose={() => setSelectedServiceOrderId(null)}
 			/>
 		</div>
 	);

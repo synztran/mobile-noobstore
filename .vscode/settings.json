@@ -4,6 +4,10 @@
     "git push": true,
     "mkdir": true,
     "mv": true,
-    "yarn workspace": true
+    "yarn workspace": true,
+    "/^python3 - <<'PYEOF'\npath = \"/Users/haritran/source/noobstore/mobile-noobstore/apps/admin/src/components/orders/OrderDetailModal\\.tsx\"\nwith open\\(path\\) as f:\n    lines = f\\.readlines\\(\\)\n\n# lines\\[564\\] = line 565 \\(0-indexed\\): '\\{/\\* Right column \\.\\.\\.'\n# lines\\[672\\] = line 673 \\(0-indexed\\): '\\\\t\\\\t\\\\t\\\\t\\\\t\\)\\}\\\\n'  — closing of the price summary block\nstart = 564  # 0-indexed, inclusive\nend   = 672  # 0-indexed, inclusive\n\nnew_block = \\(\n    \"\\\\t\\\\t\\\\t\\\\t\\\\t\\{/\\* Right column \\\\u2014 Price summary \\*/\\}\\\\n\"\n    \"\\\\t\\\\t\\\\t\\\\t\\{order && !isLoading && \\(\\\\n\"\n    \"\\\\t\\\\t\\\\t\\\\t\\\\t<OrderPriceSummary order=\\{order\\} />\\\\n\"\n    \"\\\\t\\\\t\\\\t\\\\t\\)\\}\\\\n\"\n\\)\n\nlines\\[start:end\\+1\\] = \\[new_block\\]\n\nwith open\\(path, \"w\"\\) as f:\n    f\\.writelines\\(lines\\)\n\nprint\\(\"Done\\. Lines replaced:\", start\\+1, \"to\", end\\+1\\)\nPYEOF$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
   }
 }

@@ -18,6 +18,8 @@ interface ShopPageProps {
 	}>;
 }
 
+const PAGE_SIZE = 12;
+
 // ─── Async product grid (suspendable) ────────────────────────────────────────
 
 async function ProductGrid({
@@ -69,16 +71,19 @@ async function ProductGrid({
 export default async function ShopPage({ searchParams }: ShopPageProps) {
 	const sp = await searchParams;
 
-	const [{ total }, categories] = await Promise.all([
-		getProducts({
-			search: sp.search,
-			categorySlug: sp.category,
-			priceMin: sp.priceMin ? Number(sp.priceMin) : 0,
-			priceMax: sp.priceMax ? Number(sp.priceMax) : 0,
-			sort: (sp.sort as SortOption) ?? "newest",
-		}),
-		getCategories(),
-	]);
+	const [{ products: initialProducts, total }, categories] =
+		await Promise.all([
+			getProducts({
+				search: sp.search,
+				categorySlug: sp.category,
+				priceMin: sp.priceMin ? Number(sp.priceMin) : 0,
+				priceMax: sp.priceMax ? Number(sp.priceMax) : 0,
+				sort: (sp.sort as SortOption) ?? "newest",
+				limit: PAGE_SIZE,
+				offset: 0,
+			}),
+			getCategories(),
+		]);
 
 	const grid = (
 		<Suspense fallback={<ShopPageSkeleton />}>

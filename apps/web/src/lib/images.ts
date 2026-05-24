@@ -1,17 +1,13 @@
 export const TOKEN_ICON = "/gacha-machine/token_icon.png";
 
-// community
-export const GROUP_IMAGE_1 = "/community/1.jpg";
-export const GROUP_IMAGE_2 = "/community/2.jpg";
-export const GROUP_IMAGE_3 = "/community/3.jpg";
-export const GROUP_IMAGE_4 = "/community/4.jpg";
-export const GROUP_IMAGE_5 = "/community/5.jpg";
-export const GROUP_IMAGE_6 = "/community/6.jpg";
-export const GROUP_IMAGE_7 = "/community/7.jpg";
-export const GROUP_IMAGE_8 = "/community/8.jpg";
-export const GROUP_IMAGE_9 = "/community/9.jpg";
-export const GROUP_IMAGE_10 = "/community/10.jpg";
-export const GROUP_IMAGE_11 = "/community/11.jpg";
-export const GROUP_IMAGE_12 = "/community/12.jpg";
-export const GROUP_IMAGE_13 = "/community/13.jpg";
-export const GROUP_IMAGE_14 = "/community/14.jpg";
+// services page
+export const SERVICE_PAGE_HERO_IMAGE = "/services/hero-section/screen.png";
+export const SERVICE_PAGE_SWITCH_SECTION_IMAGE =
+	"/services/sections/switch.webp";
+export const SERVICE_PAGE_STABILIZER_SECTION_IMAGE =
+	"/services/sections/stabilizer.png";
+export const SERVICE_PAGE_PCB_SECTION_IMAGE = "/services/sections/pcb.avif";
+export const SERVICE_PAGE_CLEANING_SECTION_IMAGE =
+	"/services/sections/clean.jpg";
+export const SERVICE_PAGE_KEYCAP_SECTION_IMAGE =
+	"/services/sections/fix_stem.jpg";
