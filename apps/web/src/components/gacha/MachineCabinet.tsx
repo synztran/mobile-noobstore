@@ -59,7 +59,7 @@ export const MachineCabinet = memo(function MachineCabinet({
 	return (
 		<>
 			{/* Winner ticker above machine */}
-			<div className="w-full mb-1">
+			<div className="w-full min-h-[32px]">
 				<WinnerTicker eventId={eventId} />
 			</div>
 

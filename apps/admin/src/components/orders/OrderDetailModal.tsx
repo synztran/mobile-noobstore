@@ -285,8 +285,6 @@ export default function OrderDetailModal({
 		staleTime: 30_000,
 	});
 
-	console.log("order", order);
-
 	const handleUpdated = () => {
 		queryClient.invalidateQueries({ queryKey: ["order-detail", orderId] });
 		onStatusUpdated?.();

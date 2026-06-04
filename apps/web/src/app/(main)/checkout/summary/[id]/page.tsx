@@ -33,8 +33,6 @@ export default function SummaryPage() {
 		giftItems,
 	} = useDiscountStore();
 
-	console.log("discountAmount", discountAmount);
-
 	const items = mounted ? rawItems : [];
 	const subtotal = mounted ? getSubtotal() : 0;
 	const orderTotal =
@@ -96,7 +94,6 @@ export default function SummaryPage() {
 			}
 			// Clear any previous OOS markers on successful validation
 			setOosProductIds(new Set());
-			console.log("appliedVoucher", appliedVoucher);
 
 			const payloadCheckoutSubmit = {
 				cart_id: cartId,
@@ -144,14 +141,12 @@ export default function SummaryPage() {
 					})),
 				})),
 			};
-			console.log("payloadCheckoutSubmit", payloadCheckoutSubmit);
 			// ────────────────────────────────────────────────────────────────
 			const res = await fetch("/api/checkout/submit", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(payloadCheckoutSubmit),
 			});
-			console.log("res", res);
 			const data = await res.json();
 			if (!res.ok) {
 				toast.error(data.error ?? "Không thể tạo đơn hàng");

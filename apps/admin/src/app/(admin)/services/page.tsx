@@ -1,7 +1,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = {
-	title: "Services - Huy Store Admin",
+	title: "Services - NoobStore Admin",
 };
 
 export default async function ServicesPage() {

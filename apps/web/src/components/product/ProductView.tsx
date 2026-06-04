@@ -1,6 +1,6 @@
 "use client";
 
-import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
+import type { ComponentVariantRule, ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
 import { TopNav } from "@/components/layout/TopNav";
 import { AddToCartButton } from "@/components/product/AddToCartButton";
@@ -16,9 +16,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 export function ProductView({
 	product,
 	componentGroups = [],
+	componentRules = [],
 }: {
 	product: ProductDetail;
 	componentGroups?: ConfiguratorGroup[];
+	componentRules?: ComponentVariantRule[];
 }) {
 	const [activeImageIndex, setActiveImageIndex] = useState(0);
 	const touchStartX = useRef<number | null>(null);
@@ -70,7 +72,8 @@ export function ProductView({
 		effectiveStockQuantity,
 		isLoadingAddToCart,
 		handleAddToCart,
-	} = useProductViewData(product, componentGroups);
+		disabledVariantIds,
+	} = useProductViewData(product, componentGroups, componentRules);
 
 	const minVariantPrice = useMemo(
 		() =>
@@ -257,6 +260,7 @@ export function ProductView({
 									basePrice={product.base_price}
 									onSelect={select}
 									isHideComppGroup
+									disabledVariantIds={disabledVariantIds}
 								/>
 							)}
 						</div>

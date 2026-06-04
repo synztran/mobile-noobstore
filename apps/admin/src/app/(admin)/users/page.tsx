@@ -2,7 +2,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import EditUserModal from "@/components/users/EditUserModal";
 
 export const metadata = {
-	title: "Users - Huy Store Admin",
+	title: "Users - NoobStore Admin",
 };
 
 export default async function UsersPage() {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-	title: "Unauthorized - Huy Store Admin",
+	title: "Unauthorized - NoobStore Admin",
 };
 
 export default function UnauthorizedPage() {

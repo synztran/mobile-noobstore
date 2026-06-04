@@ -73,27 +73,14 @@ export function ProductCard({ product }: ProductCardProps) {
 						)}
 
 						{/* Variants badge */}
-						{product.variants.length > 0 && (
+						{/* {product.variants.length > 0 && (
 							<span className="absolute top-3 left-3 z-10 text-[10px] font-black px-2.5 py-1 rounded tracking-tighter bg-surface-container-lowest text-on-surface">
 								{product.variants.length} option
 								{product.variants.length > 1 ? "s" : ""}
 							</span>
-						)}
+						)} */}
 
 						<ProductComponentTags horizontalTags={product?.tags} />
-
-						{/* Pre-order banner */}
-						{product.is_pre_order && !!product.stock_quantity && (
-							<div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-center gap-1.5 py-2 bg-violet-600/90 backdrop-blur-sm">
-								<Icon
-									name="schedule"
-									className="text-white text-sm"
-								/>
-								<p className="text-[10px] font-black uppercase tracking-[0.18em] text-white">
-									Đặt trước
-								</p>
-							</div>
-						)}
 
 						{!product.stock_quantity && (
 							<div className="absolute inset-0 bg-surface/70 flex items-center justify-center rounded-xl">
@@ -106,13 +93,13 @@ export function ProductCard({ product }: ProductCardProps) {
 
 					{/* ── Details ─────────────────────────────────────────────── */}
 					<div className="space-y-1">
-						<p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary leading-none truncate">
+						<p className="text-[12px] font-extrabold uppercase tracking-[0.2em] text-primary leading-none truncate">
 							{product.brand || product.category}
 						</p>
-						<h3 className="text-sm font-bold text-on-surface capitalize truncate">
+						<h3 className="font-bold text-on-surface capitalize truncate">
 							{product.name}
 						</h3>
-						<p className="text-sm tracking-normal line-clamp-3 min-h-[60px]">
+						<p className="text-xs tracking-normal line-clamp-2">
 							{product.description}
 						</p>
 						<div className="text-base font-extrabold text-on-surface text-right">

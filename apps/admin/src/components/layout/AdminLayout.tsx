@@ -1,9 +1,11 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import {
 	ChevronDown,
 	ChevronRight,
+	FerrisWheel,
 	FileText,
 	LayoutDashboard,
 	List,
@@ -70,6 +72,7 @@ const navigation: NavItem[] = [
 	},
 	{ label: "Vouchers", href: "/vouchers", icon: Tickets },
 	{ label: "Content", href: "/content", icon: FileText },
+  { label: "Gacha", href: "/gacha", icon: FerrisWheel },
 ];
 
 export default function AdminLayout({
@@ -100,7 +103,7 @@ export default function AdminLayout({
 	}
 
 	return (
-		<div className="flex h-screen bg-slate-100">
+		<div className="flex h-screen bg-slate-100 dark:bg-slate-900">
 			{/* Sidebar */}
 			<div
 				className={`${
@@ -222,10 +225,11 @@ export default function AdminLayout({
 			{/* Main Content */}
 			<div className="flex-1 flex flex-col overflow-hidden">
 				{/* Top Bar */}
-				<div className="bg-white border-b border-slate-200 px-8 py-4">
-					<h2 className="text-xl font-semibold text-slate-900">
+				<div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-8 py-4 flex items-center justify-between">
+					<h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
 						Admin Dashboard
 					</h2>
+					<ThemeToggle />
 				</div>
 
 				{/* Content */}

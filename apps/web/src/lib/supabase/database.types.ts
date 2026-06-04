@@ -104,6 +104,7 @@ export type Database = {
         Row: {
           id: string
           images: Json | null
+          is_active: boolean
           name: string
           slug: string
           thumbnail: string | null
@@ -111,6 +112,7 @@ export type Database = {
         Insert: {
           id: string
           images?: Json | null
+          is_active?: boolean
           name: string
           slug: string
           thumbnail?: string | null
@@ -118,6 +120,7 @@ export type Database = {
         Update: {
           id?: string
           images?: Json | null
+          is_active?: boolean
           name?: string
           slug?: string
           thumbnail?: string | null
@@ -153,6 +156,96 @@ export type Database = {
           order?: number
         }
         Relationships: []
+      }
+      component_variant_rule_allowed: {
+        Row: {
+          rule_id: string
+          variant_id: string
+        }
+        Insert: {
+          rule_id: string
+          variant_id: string
+        }
+        Update: {
+          rule_id?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "component_variant_rule_allowed_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "component_variant_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_variant_rule_allowed_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "kit_component_variants"
+            referencedColumns: ["product_variant_id"]
+          },
+          {
+            foreignKeyName: "component_variant_rule_allowed_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      component_variant_rules: {
+        Row: {
+          condition_variant_id: string
+          created_at: string
+          id: string
+          kit_product_id: string
+          target_component_product_id: string
+        }
+        Insert: {
+          condition_variant_id: string
+          created_at?: string
+          id?: string
+          kit_product_id: string
+          target_component_product_id: string
+        }
+        Update: {
+          condition_variant_id?: string
+          created_at?: string
+          id?: string
+          kit_product_id?: string
+          target_component_product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "component_variant_rules_condition_variant_id_fkey"
+            columns: ["condition_variant_id"]
+            isOneToOne: false
+            referencedRelation: "kit_component_variants"
+            referencedColumns: ["product_variant_id"]
+          },
+          {
+            foreignKeyName: "component_variant_rules_condition_variant_id_fkey"
+            columns: ["condition_variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_variant_rules_kit_product_id_fkey"
+            columns: ["kit_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_variant_rules_target_component_product_id_fkey"
+            columns: ["target_component_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       creators: {
         Row: {
@@ -889,6 +982,7 @@ export type Database = {
           images: Json | null
           is_used: boolean | null
           name: string
+          parent_product_id: string | null
           product_type: string
           slug: string
           stock_quantity: number | null
@@ -905,6 +999,7 @@ export type Database = {
           images?: Json | null
           is_used?: boolean | null
           name: string
+          parent_product_id?: string | null
           product_type?: string
           slug: string
           stock_quantity?: number | null
@@ -921,6 +1016,7 @@ export type Database = {
           images?: Json | null
           is_used?: boolean | null
           name?: string
+          parent_product_id?: string | null
           product_type?: string
           slug?: string
           stock_quantity?: number | null
@@ -933,6 +1029,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_parent_product_id_fkey"
+            columns: ["parent_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]

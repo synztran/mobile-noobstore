@@ -1,9 +1,9 @@
 import { getAdminClient } from "@/lib/supabase/admin";
-import { Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
-	title: "Content - Huy Store Admin",
+	title: "Content - NoobStore Admin",
 };
 
 export default async function ContentPage() {
@@ -104,13 +104,15 @@ export default async function ContentPage() {
 												campaign.created_at!,
 											).toLocaleDateString("vi-VN")}
 										</td>
-										<td className="px-6 py-4 text-sm space-x-2">
-											<button className="text-blue-600 hover:text-blue-800">
-												Edit
-											</button>
-											<button className="text-red-600 hover:text-red-800">
-												Delete
-											</button>
+										<td className="px-6 py-4 text-sm">
+											<div className="flex items-center gap-2">
+												<button className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors" title="Edit">
+													<Pencil className="w-4 h-4" />
+												</button>
+												<button className="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-colors" title="Delete">
+													<Trash2 className="w-4 h-4" />
+												</button>
+											</div>
 										</td>
 									</tr>
 								))

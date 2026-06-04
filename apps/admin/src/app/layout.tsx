@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-	title: "Huy Store Admin",
-	description: "Admin management for Huy Store",
+	title: "NoobStore Admin",
+	description: "Admin management for NoobStore",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
+		<html lang="en" data-theme="noobstore" suppressHydrationWarning>
 			<body className="antialiased">
 				<QueryProvider>{children}</QueryProvider>
 			</body>

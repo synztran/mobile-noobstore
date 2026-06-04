@@ -1,30 +1,31 @@
+import { TOKEN_ICON } from "@/lib/images";
 import Image from "next/image";
 
 interface TokenBadgeProps {
-	tokenCount: number | null;
+  tokenCount: number | null;
 }
 
 export function TokenBadge({ tokenCount }: TokenBadgeProps) {
-	return (
-		<div className="absolute left-0 top-1/2 transform -translate-y-1/2 flex flex-col items-center gap-1">
-			<div className="w-9 h-9 rounded-tr-xl rounded-br-xl border border-base-200 shadow-sm flex items-center justify-center">
-				<Image
-					src="/gatcha-machine/token_icon.png"
-					alt="token"
-					width={24}
-					height={24}
-					className="object-contain"
-				/>
-			</div>
-			<div className="absolute -top-2 -right-2 bg-gray-100 rounded-full p-1 min-w-5 h-5 flex items-center justify-center border border-base-200 text-center">
-				{tokenCount === null ? (
-					<span className="loading loading-spinner text-warning loading-xs"></span>
-				) : (
-					<span className="text-[8px] font-black text-amber-600">
-						x{tokenCount}
-					</span>
-				)}
-			</div>
-		</div>
-	);
+  return (
+    <div className="absolute left-0 top-1/2 flex -translate-y-1/2 transform flex-col items-center gap-1">
+      <div className="flex h-9 w-9 items-center justify-center rounded-br-xl rounded-tr-xl border border-base-200 shadow-sm">
+        <Image
+          src={TOKEN_ICON}
+          alt="token"
+          width={24}
+          height={24}
+          className="object-contain"
+        />
+      </div>
+      <div className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full border border-base-200 bg-gray-100 p-1 text-center">
+        {tokenCount === null ? (
+          <span className="loading loading-spinner loading-xs text-warning"></span>
+        ) : (
+          <span className="text-[8px] font-black text-amber-600">
+            x{tokenCount}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }

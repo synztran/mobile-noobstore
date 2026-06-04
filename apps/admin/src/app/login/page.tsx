@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-	title: "Admin Login - Huy Store",
+	title: "Admin Login - NoobStore",
 };
 
 export default async function LoginPage() {

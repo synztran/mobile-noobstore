@@ -36,8 +36,6 @@ export async function restoreOrderStock(orderId: string): Promise<void> {
 		.select("product_variant_id")
 		.eq("order_id", orderId);
 
-	console.log("itemComponents", itemComponents);
-
 	if (compErr) throw new Error(compErr.message);
 
 	if (itemComponents && itemComponents.length > 0) {

@@ -109,7 +109,6 @@ export function GachaRewardsDrawer({
 	onClose,
 	rewards,
 }: GachaRewardsDrawerProps) {
-	console.log(rewards);
 	useEffect(() => {
 		if (!open) return;
 		const onKey = (e: KeyboardEvent) => {

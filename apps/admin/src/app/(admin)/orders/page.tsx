@@ -2,7 +2,7 @@ import OrdersClient from "@/components/orders/OrdersClient";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { Suspense } from "react";
 
-export const metadata = { title: "Orders - Huy Store Admin" };
+export const metadata = { title: "Orders - NoobStore Admin" };
 
 const PAGE_SIZE = 20;
 

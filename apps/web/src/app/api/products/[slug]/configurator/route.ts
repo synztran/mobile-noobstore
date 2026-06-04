@@ -12,8 +12,14 @@ export interface ConfiguratorVariant {
 	thumbnail: string | null;
 	stock_quantity: number;
 	is_pre_order: boolean;
-	pre_order_config: { estimate: string; available_date?: string | null; notes?: string | null } | null;
-  sale_price_percent?: number;
+	pre_order_config: {
+		estimate: string;
+		available_date?: string | null;
+		notes?: string | null;
+	} | null;
+	sale_price_percent?: number;
+	/** The component product this variant belongs to (used for rule resolution). */
+	component_product_id?: string;
 }
 
 export interface ConfiguratorGroup {
@@ -22,7 +28,21 @@ export interface ConfiguratorGroup {
 	variants: ConfiguratorVariant[];
 }
 
-export type ConfiguratorResponse = ConfiguratorGroup[];
+/** A single conditional-availability rule for a kit. */
+export interface ComponentVariantRule {
+	id: string;
+	/** The variant that triggers this rule (e.g. case = red). */
+	condition_variant_id: string;
+	/** The component product whose variants get restricted. */
+	target_component_product_id: string;
+	/** Variants that ARE allowed when the rule fires. */
+	allowed_variant_ids: string[];
+}
+
+export type ConfiguratorResponse = {
+	groups: ConfiguratorGroup[];
+	rules: ComponentVariantRule[];
+};
 
 // ─── GET /api/products/[id]/configurator ──────────────────────────────────────
 //
@@ -66,7 +86,10 @@ export async function GET(
 		}
 
 		if (!data || data.length === 0) {
-			return NextResponse.json<ConfiguratorResponse>([]);
+			return NextResponse.json<ConfiguratorResponse>({
+				groups: [],
+				rules: [],
+			});
 		}
 
 		// Aggregate rows into groups (multiple component products can belong
@@ -97,6 +120,7 @@ export async function GET(
 			}
 
 			const group = groupMap.get(key)!;
+			const componentProductId = rowAny.component_product_id as string;
 			for (const v of rawVariants) {
 				group.variants.push({
 					id: v.id,
@@ -105,14 +129,39 @@ export async function GET(
 					thumbnail: v.thumbnail ?? null,
 					stock_quantity: Number(v.stock_quantity ?? 0),
 					is_pre_order: v.is_pre_order ?? false,
-					pre_order_config: (v.pre_order_config as ConfiguratorVariant["pre_order_config"]) ?? null,
+					pre_order_config:
+						(v.pre_order_config as ConfiguratorVariant["pre_order_config"]) ??
+						null,
+					component_product_id: componentProductId,
 				});
 			}
 		}
 
-		return NextResponse.json<ConfiguratorResponse>(
-			Array.from(groupMap.values()),
+		// Fetch conditional variant rules for this kit
+		const { data: ruleRows } = await supabase
+			.from("component_variant_rules")
+			.select(
+				`id, condition_variant_id, target_component_product_id,
+				 component_variant_rule_allowed(variant_id)`,
+			)
+			.eq("kit_product_id", slug);
+
+		const rules: ComponentVariantRule[] = (ruleRows ?? []).map(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(r: any) => ({
+				id: r.id,
+				condition_variant_id: r.condition_variant_id,
+				target_component_product_id: r.target_component_product_id,
+				allowed_variant_ids: (
+					r.component_variant_rule_allowed ?? []
+				).map((a: { variant_id: string }) => a.variant_id),
+			}),
 		);
+
+		return NextResponse.json<ConfiguratorResponse>({
+			groups: Array.from(groupMap.values()),
+			rules,
+		});
 	} catch (err) {
 		console.error("[configurator] unexpected error:", err);
 		return NextResponse.json(

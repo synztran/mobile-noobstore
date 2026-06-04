@@ -1,6 +1,12 @@
 import type { AddToCartRequest } from "@/app/api/cart/add/route";
-import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
-import type { ProductDetail, ShopVariantDetail } from "@/app/api/products/[slug]/route";
+import type {
+	ComponentVariantRule,
+	ConfiguratorGroup,
+} from "@/app/api/products/[slug]/configurator/route";
+import type {
+	ProductDetail,
+	ShopVariantDetail,
+} from "@/app/api/products/[slug]/route";
 import type { ShopVariant } from "@/app/api/products/route";
 import type { Product, SelectedComponent } from "@/lib/data";
 import { toast } from "@/lib/toast";
@@ -24,6 +30,7 @@ export type UseProductViewDataReturn = {
 	isLowStock: boolean;
 	isLoadingAddToCart: boolean;
 	handleAddToCart: () => Promise<void>;
+	disabledVariantIds: Set<string>;
 };
 
 /**
@@ -33,6 +40,7 @@ export type UseProductViewDataReturn = {
 export function useProductViewData(
 	product: ProductDetail,
 	initialGroups: ConfiguratorGroup[] = [],
+	initialRules: ComponentVariantRule[] = [],
 ): UseProductViewDataReturn {
 	const [selections, setSelections] = useState<Record<string, string>>({});
 	const [isLoadingAddToCart, setIsLoadingAddToCart] = useState(false);
@@ -72,19 +80,23 @@ export function useProductViewData(
 	);
 
 	// Resolve pre-order config for the currently selected variant
-	const selectedPreOrderConfig = useMemo<ShopVariantDetail["pre_order_config"]>(() => {
+	const selectedPreOrderConfig = useMemo<
+		ShopVariantDetail["pre_order_config"]
+	>(() => {
 		// Simple variant path
 		const simpleId = selections["__variant__"];
 		if (simpleId) {
 			const v = product.variants.find((v) => v.id === simpleId);
-			if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+			if (v?.is_pre_order && v.pre_order_config)
+				return v.pre_order_config;
 		}
 		// Component group path — first pre-order selected variant wins
 		for (const group of initialGroups) {
 			const selectedId = selections[group.component_group];
 			if (!selectedId) continue;
 			const v = group.variants.find((gv) => gv.id === selectedId);
-			if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+			if (v?.is_pre_order && v.pre_order_config)
+				return v.pre_order_config;
 		}
 		return null;
 	}, [product.variants, initialGroups, selections]);
@@ -127,6 +139,38 @@ export function useProductViewData(
 	const isOutOfStock = effectiveStockQuantity === 0;
 	const isLowStock =
 		effectiveStockQuantity > 0 && effectiveStockQuantity <= 5;
+
+	// Compute variant IDs disabled by conditional rules
+	const disabledVariantIds = useMemo(() => {
+		const disabled = new Set<string>();
+		if (initialRules.length === 0) return disabled;
+		const selectedIds = new Set(Object.values(selections));
+		// Build variant → component_product_id lookup
+		const variantToProduct = new Map<string, string>();
+		for (const group of initialGroups) {
+			for (const v of group.variants) {
+				if (v.component_product_id)
+					variantToProduct.set(v.id, v.component_product_id);
+			}
+		}
+		// Build component_product_id → all variant IDs
+		const productVariants = new Map<string, string[]>();
+		for (const [variantId, productId] of variantToProduct) {
+			if (!productVariants.has(productId))
+				productVariants.set(productId, []);
+			productVariants.get(productId)!.push(variantId);
+		}
+		for (const rule of initialRules) {
+			if (!selectedIds.has(rule.condition_variant_id)) continue;
+			const allVariants =
+				productVariants.get(rule.target_component_product_id) ?? [];
+			const allowed = new Set(rule.allowed_variant_ids);
+			for (const vid of allVariants) {
+				if (!allowed.has(vid)) disabled.add(vid);
+			}
+		}
+		return disabled;
+	}, [initialRules, initialGroups, selections]);
 
 	const handleAddToCart = async () => {
 		if (product.variants.length > 0 && !selectedVariant) {
@@ -217,5 +261,6 @@ export function useProductViewData(
 		isLowStock,
 		isLoadingAddToCart,
 		handleAddToCart,
+		disabledVariantIds,
 	};
 }

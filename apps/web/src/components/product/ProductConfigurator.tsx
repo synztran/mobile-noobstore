@@ -2,215 +2,236 @@
 
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ShopVariant } from "@/app/api/products/route";
-import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
+import { Thumbnail } from "@/components/ui/Thumbnail";
 import clsx from "clsx";
-import Image from "next/image";
 
-// ─── Thumbnail ────────────────────────────────────────────────────────────────
+// ─── VariantStatusBadge ─────────────────────────────────────────────────────────
 
-export function Thumbnail({
-	src,
-	alt,
-	className = "",
-}: {
-	src: string | null | undefined;
-	alt: string;
-	className?: string;
-}) {
-	return (
-		<div
-			className={`relative overflow-hidden bg-surface-container-high flex-shrink-0 ${className}`}>
-			{src ? (
-				<Image
-					src={src}
-					alt={alt}
-					fill
-					className="object-cover mix-blend-darken"
-					sizes="(max-width: 640px) 50vw, 25vw"
-				/>
-			) : (
-				<div className="absolute inset-0 flex items-center justify-center">
-					<Icon
-						name="inventory_2"
-						className="text-2xl text-outline-variant"
-					/>
-				</div>
-			)}
-		</div>
-	);
+type VariantStatusBadgeProps = {
+  soldOut: boolean;
+  ruleDisabled: boolean;
+  isPreOrder: boolean;
+};
+
+const VARIANT_STATUS_BADGE = [
+  {
+    key: "soldOut" as const,
+    label: "Hết hàng",
+    className: "tracking-wide",
+  },
+  {
+    key: "ruleDisabled" as const,
+    label: "Không khả dụng",
+    className: "tracking-wide",
+  },
+  {
+    key: "isPreOrder" as const,
+    label: "Pre-order",
+    className: "tracking-wide bg-violet-400",
+  },
+] satisfies Array<{
+  key: keyof VariantStatusBadgeProps;
+  label: string;
+  className: string;
+}>;
+
+function VariantStatusBadge(props: VariantStatusBadgeProps) {
+  const match = VARIANT_STATUS_BADGE.find((s) => props[s.key]);
+  if (!match) return null;
+  return (
+    <div
+      className={clsx(
+        match.className,
+        `rounded-[4px] px-1 text-[8px] text-white`
+      )}
+    >
+      {match.label}
+    </div>
+  );
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export type ProductConfiguratorProps = {
-	groups: ConfiguratorGroup[];
-	variants: ShopVariant[];
-	selections: Record<string, string>;
-	loadingConfigurator: boolean;
-	basePrice?: number;
-	onSelect: (group: string, variantId: string) => void;
-	isHideComppGroup?: boolean;
+  groups: ConfiguratorGroup[];
+  variants: ShopVariant[];
+  selections: Record<string, string>;
+  loadingConfigurator: boolean;
+  basePrice?: number;
+  onSelect: (group: string, variantId: string) => void;
+  isHideComppGroup?: boolean;
+  /** Variant IDs that are unavailable due to conditional rules. */
+  disabledVariantIds?: Set<string>;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ProductConfigurator({
-	groups,
-	variants,
-	selections,
-	loadingConfigurator,
-	basePrice,
-	onSelect,
+  groups,
+  variants,
+  selections,
+  loadingConfigurator,
+  basePrice,
+  onSelect,
+  disabledVariantIds,
 }: ProductConfiguratorProps) {
-	const hasComponents = groups.length > 0;
+  const hasComponents = groups.length > 0;
 
-	if (loadingConfigurator) {
-		return (
-			<div className="space-y-4">
-				{[1, 2].map((i) => (
-					<div key={i} className="space-y-2 animate-pulse">
-						<div className="h-3 w-32 bg-surface-container rounded-full" />
-						<div className="flex gap-2">
-							{[1, 2, 3].map((j) => (
-								<div
-									key={j}
-									className="h-14 w-24 bg-surface-container rounded-xl"
-								/>
-							))}
-						</div>
-					</div>
-				))}
-			</div>
-		);
-	}
+  if (loadingConfigurator) {
+    return (
+      <div className="space-y-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="animate-pulse space-y-2">
+            <div className="h-3 w-32 rounded-full bg-surface-container" />
+            <div className="flex gap-2">
+              {[1, 2, 3].map((j) => (
+                <div
+                  key={j}
+                  className="h-14 w-24 rounded-xl bg-surface-container"
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
-	return (
-		<div className="flex flex-wrap gap-4 min-h-0">
-			{/* Component group selectors */}
-			{groups.map((group) => (
-				<div key={group.component_group} className={`space-y-3`}>
-					<div className="flex items-center gap-2">
-						<p
-							className={`text-xs font-black uppercase tracking-widest text-on-surface-variant`}>
-							{group.component_group}
-						</p>
-						{group.is_required && (
-							<span className="text-[8px] font-black text-error bg-error/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
-								Bắt buộc
-							</span>
-						)}
-					</div>
-					<div className="flex flex-wrap gap-2">
-						{group.variants.map((v) => {
-							const selected =
-								selections[group.component_group] === v.id;
-							const soldOut = v.stock_quantity === 0;
-							return (
-								<button
-									key={v.id}
-									type="button"
-									disabled={soldOut}
-									onClick={() =>
-										onSelect(group.component_group, v.id)
-									}
-									className={clsx(
-										"relative flex items-center gap-2 p-2 rounded-xl text-xs font-bold transition-all border",
-										soldOut
-											? "opacity-40 cursor-not-allowed bg-surface-container border-transparent"
-											: selected
-												? "bg-primary text-white border-primary shadow-lg"
-												: "bg-gray-200 text-on-surface border-transparent hover:border-outline-variant",
-									)}>
-									{v.thumbnail && (
-										<Thumbnail
-											src={v.thumbnail}
-											alt={v.variant_name}
-											className="w-12 h-12 rounded-lg"
-										/>
-									)}
-									<div className="text-left max-w-20">
-										<p className="font-black text-xs leading-none line-clamp-2">
-											{v.variant_name}
-										</p>
-										{soldOut ? (
-											<p className="text-[10px] font-black text-error uppercase tracking-wide mt-0.5">
-												Hết hàng
-											</p>
-										) : v.is_pre_order ? (
-											<p className="text-[10px] font-black text-violet-400 uppercase tracking-wide mt-0.5">
-												Đặt trước
-											</p>
-										) : v.price_adjustment !== 0 ? (
-											<p
-												className={clsx(
-													"text-xs mt-0.5 text-green-600",
-												)}>
-												{formatVND(v.price_adjustment)}
-											</p>
-										) : null}
-									</div>
-									{v.sale_price_percent ? (
-										<strong className="absolute -top-2 right-1 text-[10px] rounded-md bg-red-600 text-white px-2 py-0.25">
-											Giảm {v.sale_price_percent}%
-										</strong>
-									) : null}
-								</button>
-							);
-						})}
-					</div>
-				</div>
-			))}
+  return (
+    <div className="flex min-h-0 flex-wrap gap-4">
+      {/* Component group selectors */}
+      {groups.map((group) => (
+        <div key={group.component_group} className={`space-y-3`}>
+          <div className="flex items-center gap-2">
+            {group.is_required && (
+              <span className="rounded bg-error/10 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-error">
+                Bắt buộc
+              </span>
+            )}
+            <p
+              className={`text-xs font-black tracking-widest text-on-surface-variant`}
+            >
+              {group.component_group}
+            </p>
 
-			{/* Simple variant selector (non-composite products) */}
-			{!hasComponents && variants.length > 0 && (
-				<div className="space-y-2">
-					<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-						Chọn tùy chọn
-					</p>
-					<div className="grid grid-cols-2 gap-2">
-						{variants.map((v) => {
-							const isSelected =
-								selections["__variant__"] === v.id;
-							const soldOut = v.stock_quantity === 0;
-							return (
-								<button
-									key={v.id}
-									type="button"
-									disabled={soldOut}
-									onClick={() =>
-										onSelect("__variant__", v.id)
-									}
-									className={clsx(
-										"py-3 px-4 rounded-xl text-sm font-bold transition-all text-left",
-										soldOut
-											? "opacity-40 cursor-not-allowed bg-surface-container"
-											: isSelected
-												? "bg-primary text-white shadow-lg"
-												: "bg-surface-container text-on-surface hover:bg-surface-container-high",
-									)}>
-									<p className="font-black truncate">
-										{v.variant_name}
-									</p>
-									{soldOut ? (
-										<p className="text-[10px] font-black text-error mt-0.5 uppercase tracking-wide">
-											Hết hàng
-										</p>
-									) : v.is_pre_order ? (
-										<p className="text-[10px] font-black text-violet-400 mt-0.5 uppercase tracking-wide">
-											Đặt trước
-										</p>
-									) : (
-										<p className="text-xs opacity-70 mt-0.5">
-											{formatVND(v.effective_price)}
-										</p>
-									)}
-								</button>
-							);
-						})}
-					</div>
-				</div>
-			)}
-		</div>
-	);
+          </div>
+          <div className="flex flex-wrap items-start gap-2">
+            {group.variants.map((v) => {
+              const selected = selections[group.component_group] === v.id;
+              const soldOut = v.stock_quantity === 0;
+              const ruleDisabled = disabledVariantIds?.has(v.id) ?? false;
+              const isDisabled = soldOut || ruleDisabled;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => onSelect(group.component_group, v.id)}
+                  className={clsx(
+                    "relative flex items-center gap-2 rounded-md border p-2 text-xs font-bold transition-all min-w-20",
+                    isDisabled
+                      ? "cursor-not-allowed border-transparent bg-surface-container opacity-40"
+                      : selected
+                        ? "border-primary bg-primary text-white shadow-lg"
+                        : "border-transparent bg-gray-200 text-on-surface hover:border-outline-variant"
+                  )}
+                >
+                  {/* {v.thumbnail && (
+                    <div className="relative">
+                      <Thumbnail
+                        src={v.thumbnail}
+                        alt={v.variant_name}
+                        className="h-16 w-20 rounded-lg"
+                      />
+                      <VariantStatusBadge
+                        soldOut={soldOut}
+                        ruleDisabled={ruleDisabled}
+                        isPreOrder={v.is_pre_order}
+                      />
+                    </div>
+                  )} */}
+                  <div className="max-w-26 space-y-1 text-left">
+                    <div className="inline-flex items-center gap-1">
+                      <p className="line-clamp-2 text-sm font-bold">
+                        {v.variant_name}
+                      </p>
+                    </div>
+                    <p
+                      className={clsx(
+                        "mt-0.5 text-right text-xs text-green-600",
+                        v.price_adjustment !== 0 ? "" : "sr-only"
+                      )}
+                    >
+                      {v.price_adjustment &&
+                        (v.price_adjustment > 0 ? "+" : "-")}
+                      {formatVND(v.price_adjustment)}
+                    </p>
+                  </div>
+                  {v.sale_price_percent ? (
+                    <strong className="py-0.25 absolute -top-2 right-1 rounded-md bg-red-600 px-2 text-[10px] text-white">
+                      Giảm {v.sale_price_percent}%
+                    </strong>
+                  ) : null}
+                  <div className="absolute -top-2.5 left-1">
+                    <VariantStatusBadge
+                      soldOut={soldOut}
+                      ruleDisabled={ruleDisabled}
+                      isPreOrder={v.is_pre_order}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Simple variant selector (non-composite products) */}
+      {!hasComponents && variants.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Chọn tùy chọn
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {variants.map((v) => {
+              const isSelected = selections["__variant__"] === v.id;
+              const soldOut = v.stock_quantity === 0;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  disabled={soldOut}
+                  onClick={() => onSelect("__variant__", v.id)}
+                  className={clsx(
+                    "rounded-xl px-4 py-3 text-left text-sm font-bold transition-all",
+                    soldOut
+                      ? "cursor-not-allowed bg-surface-container opacity-40"
+                      : isSelected
+                        ? "bg-primary text-white shadow-lg"
+                        : "bg-surface-container text-on-surface hover:bg-surface-container-high"
+                  )}
+                >
+                  <p className="truncate font-black">{v.variant_name}</p>
+                  {soldOut ? (
+                    <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-error">
+                      Hết hàng
+                    </p>
+                  ) : v.is_pre_order ? (
+                    <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-violet-400">
+                      Đặt trước
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 text-xs opacity-70">
+                      {formatVND(v.effective_price)}
+                    </p>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -3,7 +3,10 @@
  * Mirrors the shaping logic in /api/products/route.ts.
  */
 
-import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
+import type {
+	ComponentVariantRule,
+	ConfiguratorGroup,
+} from "@/app/api/products/[slug]/configurator/route";
 import type {
 	ProductDetail,
 	ShopVariantDetail,
@@ -71,8 +74,8 @@ type RawListRow = {
 
 // ─── Shared shaping logic ─────────────────────────────────────────────────────
 
-function shapeRow(p: RawListRow): ShopProduct {
-	const variants = (p.product_variants ?? []).map((v) => ({
+async function shapeRow(p: RawListRow): Promise<ShopProduct> {
+	let variants = (p.product_variants ?? []).map((v) => ({
 		id: v.id,
 		variant_name: v.variant_name,
 		price_adjustment: Number(v.price_adjustment),
@@ -84,6 +87,40 @@ function shapeRow(p: RawListRow): ShopProduct {
 			(v.pre_order_config as import("@/app/api/products/route").ShopVariant["pre_order_config"]) ??
 			null,
 	}));
+
+	// If kit, merge in all variants from child components
+	if (p.product_type === "kit") {
+		const supabase = getPublicClient();
+		const { data: childComponents, error } = await supabase
+			.from("products")
+			.select(
+				"id, product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)",
+			)
+			.eq("parent_product_id", p.id)
+			.eq("product_type", "component");
+		if (!error && childComponents && childComponents.length > 0) {
+			for (const comp of childComponents) {
+				if (Array.isArray(comp.product_variants)) {
+					for (const v of comp.product_variants) {
+						variants.push({
+							id: v.id,
+							variant_name: v.variant_name,
+							price_adjustment: Number(v.price_adjustment),
+							effective_price:
+								Number(p.base_price) +
+								Number(v.price_adjustment),
+							thumbnail: v.thumbnail,
+							stock_quantity: Number(v.stock_quantity ?? 0),
+							is_pre_order: v.is_pre_order ?? false,
+							pre_order_config:
+								(v.pre_order_config as import("@/app/api/products/route").ShopVariant["pre_order_config"]) ??
+								null,
+						});
+					}
+				}
+			}
+		}
+	}
 
 	const minPrice =
 		variants.length > 0
@@ -179,6 +216,7 @@ export interface GetQuickPickDataParams {
 export interface QuickPickData {
 	products: ShopProduct[];
 	configuratorByProductId: Record<string, ConfiguratorGroup[]>;
+	rulesByProductId: Record<string, ComponentVariantRule[]>;
 	activeProduct: ShopProduct | null;
 	total: number;
 }
@@ -296,9 +334,13 @@ export async function getQuickPickData(
 					.single();
 
 				if (!error && data) {
-					activeProduct = shapeRow(data as unknown as RawListRow);
-					products.push(activeProduct);
-					productIds.add(activeProduct.id);
+					activeProduct = await shapeRow(
+						data as unknown as RawListRow,
+					);
+					if (activeProduct) {
+						products.push(activeProduct);
+						productIds.add(activeProduct.id);
+					}
 				}
 			}
 		}
@@ -310,7 +352,7 @@ export async function getQuickPickData(
 				await getPublicClient()
 					.from("product_components")
 					.select(
-						`parent_product_id, component_group, is_required,
+						`parent_product_id, component_group, is_required, component_product_id,
 						 products!product_components_component_product_id_fkey(
 							product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
 						 )`,
@@ -328,6 +370,7 @@ export async function getQuickPickData(
 					parent_product_id: string;
 					component_group: string;
 					is_required: boolean;
+					component_product_id: string;
 					products?: {
 						product_variants?: Array<{
 							id: string;
@@ -389,6 +432,7 @@ export async function getQuickPickData(
 							pre_order_config:
 								(v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ??
 								null,
+							component_product_id: row.component_product_id,
 						});
 					}
 				}
@@ -435,9 +479,43 @@ export async function getQuickPickData(
 			if (refreshed) activeProduct = refreshed;
 		}
 
+		// Fetch rules for all kit products
+		const kitIds = Object.keys(configuratorByProductId);
+		const rulesByProductId: Record<string, ComponentVariantRule[]> = {};
+		if (kitIds.length > 0) {
+			const { data: ruleRows } = await getPublicClient()
+				.from("component_variant_rules")
+				.select(
+					`id, kit_product_id, condition_variant_id, target_component_product_id,
+					 component_variant_rule_allowed(variant_id)`,
+				)
+				.in("kit_product_id", kitIds);
+
+			for (const r of (ruleRows ?? []) as Array<{
+				id: string;
+				kit_product_id: string;
+				condition_variant_id: string;
+				target_component_product_id: string;
+				component_variant_rule_allowed: Array<{ variant_id: string }>;
+			}>) {
+				if (!rulesByProductId[r.kit_product_id]) {
+					rulesByProductId[r.kit_product_id] = [];
+				}
+				rulesByProductId[r.kit_product_id].push({
+					id: r.id,
+					condition_variant_id: r.condition_variant_id,
+					target_component_product_id: r.target_component_product_id,
+					allowed_variant_ids: r.component_variant_rule_allowed.map(
+						(a) => a.variant_id,
+					),
+				});
+			}
+		}
+
 		return {
 			products,
 			configuratorByProductId,
+			rulesByProductId,
 			activeProduct,
 			total: products.length,
 		};
@@ -446,6 +524,7 @@ export async function getQuickPickData(
 		return {
 			products: [],
 			configuratorByProductId: {},
+			rulesByProductId: {},
 			activeProduct: null,
 			total: 0,
 		};
@@ -471,7 +550,9 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
 			return [];
 		}
 		if (!data) return [];
-		return (data as unknown as RawListRow[]).map(shapeRow);
+		return await Promise.all(
+			(data as unknown as RawListRow[]).map(shapeRow),
+		);
 	} catch (err) {
 		console.error("[getNewestProducts] Unexpected error:", err);
 		return [];
@@ -492,6 +573,7 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
 export async function getProductDetail(slug: string): Promise<{
 	product: ProductDetail;
 	componentGroups: ConfiguratorGroup[];
+	componentRules: ComponentVariantRule[];
 } | null> {
 	try {
 		// Step 1: Get parent product (reuses existing fetcher)
@@ -500,7 +582,7 @@ export async function getProductDetail(slug: string): Promise<{
 
 		const compIds = product.components.map((c) => c.component_product.id);
 		if (compIds.length === 0) {
-			return { product, componentGroups: [] };
+			return { product, componentGroups: [], componentRules: [] };
 		}
 
 		// Steps 2 & 3: Query child products filtered to product_type = 'component',
@@ -532,7 +614,7 @@ export async function getProductDetail(slug: string): Promise<{
 				"[getProductDetail] child products error:",
 				error.message,
 			);
-			return { product, componentGroups: [] };
+			return { product, componentGroups: [], componentRules: [] };
 		}
 
 		const childById = new Map<string, ChildRow>(
@@ -568,13 +650,36 @@ export async function getProductDetail(slug: string): Promise<{
 					pre_order_config:
 						(v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ??
 						null,
+					component_product_id: comp.component_product.id,
 				});
 			}
 		}
 
+		// Fetch conditional variant rules
+		const { data: ruleRows } = await getPublicClient()
+			.from("component_variant_rules")
+			.select(
+				`id, condition_variant_id, target_component_product_id,
+				 component_variant_rule_allowed(variant_id)`,
+			)
+			.eq("kit_product_id", product.id);
+
+		const componentRules: ComponentVariantRule[] = (ruleRows ?? []).map(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(r: any) => ({
+				id: r.id,
+				condition_variant_id: r.condition_variant_id,
+				target_component_product_id: r.target_component_product_id,
+				allowed_variant_ids: (
+					r.component_variant_rule_allowed ?? []
+				).map((a: { variant_id: string }) => a.variant_id),
+			}),
+		);
+
 		return {
 			product,
 			componentGroups: Array.from(groupMap.values()),
+			componentRules,
 		};
 	} catch (err) {
 		console.error("[getProductDetail] Unexpected error:", err);
@@ -645,13 +750,13 @@ export async function getProductBySlug(
 				.from("products")
 				.select(
 					`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, is_used,
-					 categories(id, name),
-					 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
+						categories(id, name),
+						product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity)`,
 				)
 				.in("id", compIds);
 			if (compData) {
-				componentProducts = (compData as unknown as RawListRow[]).map(
-					shapeRow,
+				componentProducts = await Promise.all(
+					(compData as unknown as RawListRow[]).map(shapeRow),
 				);
 			}
 		}

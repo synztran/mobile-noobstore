@@ -1,4 +1,7 @@
-import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
+import type {
+	ComponentVariantRule,
+	ConfiguratorGroup,
+} from "@/app/api/products/[slug]/configurator/route";
 import type { ShopProduct } from "@/app/api/products/route";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 export interface QuickPickResponse {
 	products: ShopProduct[];
 	configuratorByProductId: Record<string, ConfiguratorGroup[]>;
+	rulesByProductId: Record<string, ComponentVariantRule[]>;
 	activeProduct?: ShopProduct | null;
 }
 

@@ -117,11 +117,11 @@ export function HeroSection() {
 					className="flex flex-col gap-4 animate-[fadeSlideUp_0.5s_ease_forwards]">
 					<div className="flex items-center gap-2">
 						<div className="w-1 h-5 bg-primary rounded-full" />
-						<p className="text-[10px] tracking-[0.2em] text-primary font-black uppercase">
+						<p className="text-[10px] tracking-[0.2em] text-on-primary-fixed-variant font-black uppercase">
 							{slide.subtitle}
 						</p>
 					</div>
-					<h1 className="text-5xl font-black tracking-tighter uppercase leading-none text-on-surface">
+					<h1 className="text-5xl font-black tracking-tighter uppercase leading-tight text-on-surface">
 						{slide.title}
 					</h1>
 					<p className="text-sm text-on-surface-variant max-w-xs leading-relaxed">

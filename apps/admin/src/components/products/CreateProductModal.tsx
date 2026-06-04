@@ -1,232 +1,320 @@
 "use client";
 
+import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
+import KitSelector, { type KitOption } from "@/components/ui/KitSelector";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
-	open: boolean;
-	onClose: () => void;
+  open: boolean;
+  onClose: () => void;
 }
 
 const PRODUCT_TYPES = ["standard", "kit", "component"];
 
 export default function CreateProductModal({ open, onClose }: Props) {
-	const router = useRouter();
-	const formRef = useRef<HTMLFormElement>(null);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [productType, setProductType] = useState("standard");
-	const [slug, setSlug] = useState("");
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [productType, setProductType] = useState("standard");
+  const [slug, setSlug] = useState("");
+  const [parentProductId, setParentProductId] = useState("");
+  const [kitOptions, setKitOptions] = useState<KitOption[]>([]);
+  const [kitOptionsLoading, setKitOptionsLoading] = useState(false);
+  const [createdKitId, setCreatedKitId] = useState<string | null>(null);
 
-	function toSlug(value: string) {
-		return value
-			.toLowerCase()
-			.trim()
-			.replace(/[^a-z0-9\s-]/g, "")
-			.replace(/\s+/g, "-");
-	}
+  useEffect(() => {
+    if (!open) return;
+    setCreatedKitId(null);
+    setParentProductId("");
+    setKitOptionsLoading(true);
+    fetch("/api/products?productType=kit")
+      .then((r) => r.json())
+      .then((data) => setKitOptions(Array.isArray(data) ? data : []))
+      .finally(() => setKitOptionsLoading(false));
+  }, [open]);
 
-	const isKit = productType === "kit";
-	if (!open) return null;
+  function toSlug(value: string) {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s]/g, "")
+      .replace(/\s+/g, "-");
+  }
 
-	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		setError(null);
-		setLoading(true);
+  const isKit = productType === "kit";
+  if (!open) return null;
 
-		const fd = new FormData(e.currentTarget);
-		const name = fd.get("name") as string;
-		const slug = fd.get("slug") as string;
-		const base_price = Number(fd.get("base_price"));
-		const product_type = fd.get("product_type") as string;
-		const stock_quantity =
-			product_type === "kit" || !fd.get("stock_quantity")
-				? null
-				: Number(fd.get("stock_quantity"));
-		const brand = (fd.get("brand") as string) || null;
-		const description = (fd.get("description") as string) || null;
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-		const res = await fetch("/api/products", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				name,
-				slug,
-				base_price,
-				stock_quantity,
-				product_type,
-				brand,
-				description,
-			}),
-		});
-		const data = await res.json();
-		const insertError = res.ok ? null : { message: data.error as string };
+    const fd = new FormData(e.currentTarget);
+    const name = fd.get("name") as string;
+    const slug = fd.get("slug") as string;
+    const base_price = Number(fd.get("base_price"));
+    const product_type = fd.get("product_type") as string;
+    const stock_quantity =
+      product_type === "kit" || !fd.get("stock_quantity")
+        ? null
+        : Number(fd.get("stock_quantity"));
+    const brand = (fd.get("brand") as string) || null;
+    const description = (fd.get("description") as string) || null;
+    const parent_product_id =
+      product_type === "component" ? parentProductId || null : null;
 
-		setLoading(false);
+    const res = await fetch("/api/products", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        slug,
+        base_price,
+        stock_quantity,
+        product_type,
+        brand,
+        description,
+        parent_product_id,
+      }),
+    });
+    const data = await res.json();
+    setLoading(false);
 
-		if (insertError) {
-			setError(insertError.message);
-			return;
-		}
+    if (!res.ok) {
+      setError(data.error ?? "Failed to create product");
+      return;
+    }
 
-		formRef.current?.reset();
-		onClose();
-		router.refresh();
-	}
+    formRef.current?.reset();
+    setSlug("");
+    setParentProductId("");
 
-	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center !mt-0">
-			{/* Backdrop */}
-			<div className="absolute inset-0 bg-black/50" onClick={onClose} />
+    if (product_type === "kit" && data.id) {
+      setCreatedKitId(data.id);
+    } else {
+      onClose();
+      router.refresh();
+    }
+  }
 
-			{/* Modal */}
-			<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-				<div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-					<h2 className="text-lg font-semibold text-slate-900">
-						Create New Product
-					</h2>
-					<button
-						onClick={onClose}
-						className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
-						<X className="w-5 h-5 text-slate-500" />
-					</button>
-				</div>
+  function handleDone() {
+    setCreatedKitId(null);
+    router.refresh();
+    onClose();
+  }
 
-				<form
-					ref={formRef}
-					onSubmit={handleSubmit}
-					className="p-6 space-y-4">
-					{error && (
-						<div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
-							{error}
-						</div>
-					)}
+  if (createdKitId) {
+    return (
+      <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/50" onClick={handleDone} />
+        <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Configure Variant Rules
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Optional — restrict which component variants are available for
+                each kit variant.
+              </p>
+            </div>
+            <button
+              onClick={handleDone}
+              className="rounded-lg p-1 transition-colors hover:bg-slate-100"
+            >
+              <X className="h-5 w-5 text-slate-500" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <ComponentRulesEditor kitProductId={createdKitId} />
+          </div>
+          <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
+            <button
+              type="button"
+              onClick={handleDone}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-					<div className="grid grid-cols-2 gap-4">
-						<div className="col-span-2">
-							<label className="block text-sm font-medium text-slate-700 mb-1">
-								Name <span className="text-red-500">*</span>
-							</label>
-							<input
-								name="name"
-								required
-								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-								placeholder="Product name"
-								onChange={(e) =>
-									setSlug(toSlug(e.target.value))
-								}
-							/>
-						</div>
+  return (
+    <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
-						<div className="col-span-2">
-							<label className="block text-sm font-medium text-slate-700 mb-1">
-								Slug <span className="text-red-500">*</span>
-							</label>
-							<input
-								name="slug"
-								required
-								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-								placeholder="product-slug"
-								value={slug}
-								onChange={(e) => setSlug(e.target.value)}
-							/>
-						</div>
+      {/* Modal */}
+      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Create New Product
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 transition-colors hover:bg-slate-100"
+          >
+            <X className="h-5 w-5 text-slate-500" />
+          </button>
+        </div>
 
-						<div>
-							<label className="block text-sm font-medium text-slate-700 mb-1">
-								Base Price (₫){" "}
-								<span className="text-red-500">*</span>
-							</label>
-							<input
-								name="base_price"
-								type="number"
-								required
-								min={0}
-								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-								placeholder="0"
-							/>
-						</div>
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="flex-1 space-y-4 overflow-y-auto p-6">
+            {error && (
+              <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
-						<div>
-							<label className="block text-sm font-medium text-slate-700 mb-1">
-								Product Type{" "}
-								<span className="text-red-500">*</span>
-							</label>
-							<select
-								name="product_type"
-								required
-								value={productType}
-								onChange={(e) => setProductType(e.target.value)}
-								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-								{PRODUCT_TYPES.map((t) => (
-									<option key={t} value={t}>
-										{t}
-									</option>
-								))}
-							</select>
-						</div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="name"
+                  required
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Product name"
+                  onChange={(e) => setSlug(toSlug(e.target.value))}
+                />
+              </div>
 
-						<div>
-							<label
-								className={`block text-sm font-medium mb-1 ${isKit ? "text-slate-400" : "text-slate-700"}`}>
-								Stock Quantity
-								{isKit && (
-									<span className="ml-1 text-xs text-slate-400">
-										(N/A for kit)
-									</span>
-								)}
-							</label>
-							<input
-								name="stock_quantity"
-								type="number"
-								min={0}
-								disabled={isKit}
-								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
-								placeholder={isKit ? "—" : "0"}
-							/>
-						</div>
+              <div className="col-span-2">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Slug <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="slug"
+                  required
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="product-slug"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                />
+              </div>
 
-						<div>
-							<label className="block text-sm font-medium text-slate-700 mb-1">
-								Brand
-							</label>
-							<input
-								name="brand"
-								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-								placeholder="Brand name"
-							/>
-						</div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Base Price (₫) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="base_price"
+                  type="number"
+                  required
+                  min={0}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
 
-						<div className="col-span-2">
-							<label className="block text-sm font-medium text-slate-700 mb-1">
-								Description
-							</label>
-							<textarea
-								name="description"
-								rows={3}
-								className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-								placeholder="Optional description"
-							/>
-						</div>
-					</div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Product Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="product_type"
+                  required
+                  value={productType}
+                  onChange={(e) => setProductType(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {PRODUCT_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-					<div className="flex justify-end gap-3 pt-2">
-						<button
-							type="button"
-							onClick={onClose}
-							className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
-							Cancel
-						</button>
-						<button
-							type="submit"
-							disabled={loading}
-							className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors">
-							{loading ? "Creating…" : "Create Product"}
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	);
+              {productType === "component" && (
+                <div className="col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Parent Kit <span className="text-red-500">*</span>
+                  </label>
+                  <KitSelector
+                    value={parentProductId}
+                    onChange={setParentProductId}
+                    options={kitOptions}
+                    loading={kitOptionsLoading}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label
+                  className={`mb-1 block text-sm font-medium ${isKit ? "text-slate-400" : "text-slate-700"}`}
+                >
+                  Stock Quantity
+                  {isKit && (
+                    <span className="ml-1 text-xs text-slate-400">
+                      (N/A for kit)
+                    </span>
+                  )}
+                </label>
+                <input
+                  name="stock_quantity"
+                  type="number"
+                  min={0}
+                  disabled={isKit}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  placeholder={isKit ? "—" : "0"}
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Brand
+                </label>
+                <input
+                  name="brand"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Brand name"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  rows={3}
+                  className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Optional description"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+            >
+              {loading ? "Creating…" : "Create Product"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }

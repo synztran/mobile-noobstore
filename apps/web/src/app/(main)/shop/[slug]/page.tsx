@@ -45,6 +45,7 @@ async function ProductLoader({ slug }: { slug: string }) {
 		<ProductView
 			product={result.product}
 			componentGroups={result.componentGroups}
+			componentRules={result.componentRules}
 		/>
 	);
 }

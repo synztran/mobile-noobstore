@@ -256,8 +256,9 @@ export default function OrdersClient({
 												onClick={() =>
 													setActiveOrderId(order.id)
 												}
-												className="text-blue-600 hover:text-blue-800 font-medium">
-												View
+												className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
+												title="View">
+												<Search className="w-4 h-4" />
 											</button>
 										</td>
 									</tr>

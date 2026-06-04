@@ -1,4 +1,7 @@
-import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
+import type {
+	ComponentVariantRule,
+	ConfiguratorGroup,
+} from "@/app/api/products/[slug]/configurator/route";
 import type { ShopProduct } from "@/app/api/products/route";
 
 export type DrawerView = "product-list" | "configurator";
@@ -8,7 +11,9 @@ export interface DrawerState {
 	products: ShopProduct[];
 	activeProduct: ShopProduct | null;
 	configuratorByProductId: Record<string, ConfiguratorGroup[]>;
+	rulesByProductId: Record<string, ComponentVariantRule[]>;
 	groups: ConfiguratorGroup[];
+	rules: ComponentVariantRule[];
 	selections: Record<string, string>;
 	loadingProducts: boolean;
 	loadingConfigurator: boolean;
@@ -22,6 +27,7 @@ export type DrawerAction =
 			type: "LOAD_QUICK_PICK_DONE";
 			products: ShopProduct[];
 			configuratorByProductId: Record<string, ConfiguratorGroup[]>;
+			rulesByProductId: Record<string, ComponentVariantRule[]>;
 			activeProduct: ShopProduct | null;
 			view: DrawerView;
 	  }
@@ -36,7 +42,9 @@ export const INITIAL_STATE: DrawerState = {
 	products: [],
 	activeProduct: null,
 	configuratorByProductId: {},
+	rulesByProductId: {},
 	groups: [],
+	rules: [],
 	selections: {},
 	loadingProducts: false,
 	loadingConfigurator: false,
@@ -63,12 +71,17 @@ export function reduce(state: DrawerState, action: DrawerAction): DrawerState {
 				? (action.configuratorByProductId[action.activeProduct.id] ??
 					[])
 				: [];
+			const resolvedRules = action.activeProduct
+				? (action.rulesByProductId[action.activeProduct.id] ?? [])
+				: [];
 			return {
 				...state,
 				products: action.products,
 				configuratorByProductId: action.configuratorByProductId,
+				rulesByProductId: action.rulesByProductId,
 				activeProduct: action.activeProduct,
 				groups: resolvedGroups,
+				rules: resolvedRules,
 				selections: {},
 				loadingProducts: false,
 				loadingConfigurator: false,
@@ -80,6 +93,7 @@ export function reduce(state: DrawerState, action: DrawerAction): DrawerState {
 				...state,
 				activeProduct: action.product,
 				groups: state.configuratorByProductId[action.product.id] ?? [],
+				rules: state.rulesByProductId[action.product.id] ?? [],
 				selections: {},
 				loadingConfigurator: false,
 				view: "configurator",

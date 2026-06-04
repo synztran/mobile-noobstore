@@ -156,7 +156,6 @@ export async function PATCH(
 	}
 
 	// Restore stock when order is cancelled or refunded
-	console.log("body.status", body.status);
 	if (body.status === "cancelled" || body.status === "refunded") {
 		try {
 			await restoreOrderStock(id);

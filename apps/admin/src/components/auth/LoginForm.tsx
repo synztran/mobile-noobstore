@@ -58,7 +58,7 @@ export default function LoginForm() {
 			<div className="w-full max-w-md">
 				<div className="bg-white rounded-lg shadow-xl p-8">
 					<h1 className="text-3xl font-bold text-center mb-8 text-slate-900">
-						Huy Store Admin
+						NoobStore Admin
 					</h1>
 
 					<form onSubmit={handleSubmit} className="space-y-4">

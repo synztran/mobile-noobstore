@@ -51,7 +51,6 @@ function KitComponentBadge({ c }: { c: KitComponent }) {
 }
 
 export default function OrderItemsList({ items }: Props) {
-	console.log(items);
 	if (items.length === 0) return null;
 
 	return (

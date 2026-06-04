@@ -10,7 +10,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
-	title: "Product Components - Huy Store Admin",
+	title: "Product Components - NoobStore Admin",
 };
 
 const PAGE_SIZE = 20;

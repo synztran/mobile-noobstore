@@ -3,7 +3,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { Package, ShoppingCart, Users, Wrench } from "lucide-react";
 
 export const metadata = {
-	title: "Dashboard - Huy Store Admin",
+	title: "Dashboard - NoobStore Admin",
 };
 
 export default async function DashboardPage() {

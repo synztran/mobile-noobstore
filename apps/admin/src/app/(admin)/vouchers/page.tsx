@@ -4,7 +4,7 @@ import InactivateVoucherModal from "@/components/vouchers/InactivateVoucherModal
 import UpdateVoucherModal from "@/components/vouchers/UpdateVoucherModal";
 
 export const metadata = {
-	title: "Vouchers - Huy Store Admin",
+	title: "Vouchers - NoobStore Admin",
 };
 
 export default async function VouchersPage() {

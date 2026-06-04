@@ -141,7 +141,6 @@ export function ServiceEntryCard({
 	onSelectOptionValue,
 	onChangeLineNote,
 }: ServiceEntryCardProps) {
-	console.log("service", service);
 	const previewPrice = computeEntryPreviewPrice(entry, service);
 
 	return (

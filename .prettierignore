@@ -1,0 +1,16 @@
+# Dependencies
+node_modules
+.yarn
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Generated files
+apps/web/src/lib/supabase/database.types.ts
+
+# Misc
+.turbo
+coverage
