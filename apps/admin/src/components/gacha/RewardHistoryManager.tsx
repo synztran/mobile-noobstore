@@ -112,7 +112,6 @@ export function RewardHistoryManager({ eventId }: Props) {
 
   function handleBack() {
     setSelectedUser(null);
-    setPlays([]);
   }
 
   function handlePlayPageChange(newPage: number) {

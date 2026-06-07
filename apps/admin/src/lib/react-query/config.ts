@@ -1,22 +1,22 @@
 import { QueryObserverOptions } from "@tanstack/react-query";
 
-type TQueryConfig =
-  | "eternity"
-  | "longLived"
-  | "shortLived"
-  | "temporary"
-  | "withSocket";
+// type TQueryConfig =
+//   | "eternity"
+//   | "longLived"
+//   | "shortLived"
+//   | "temporary"
+//   | "withSocket";
 
-type QueryPresets = Record<
-  TQueryConfig,
-  {
-    cacheTime: number;
-    staleTime: number;
-    refetchOnMount: boolean | "always";
-    refetchOnWindowFocus: boolean | "always";
-    refetchOnReconnect: boolean | "always";
-  }
->;
+// type QueryPresets = Record<
+//   TQueryConfig,
+//   {
+//     cacheTime: number;
+//     staleTime: number;
+//     refetchOnMount: boolean | "always";
+//     refetchOnWindowFocus: boolean | "always";
+//     refetchOnReconnect: boolean | "always";
+//   }
+// >;
 
 export const queryPresets = Object.freeze({
   /**

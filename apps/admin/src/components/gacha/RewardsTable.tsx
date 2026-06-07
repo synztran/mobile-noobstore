@@ -41,7 +41,7 @@ export default function RewardsTable({ rewards, totalWeight, onEdit, onDelete, o
                             </td>
                             <td className="text-center">{reward.weight}</td>
                             <td className="text-center font-mono">
-                                {totalWeight > 0 ? ((reward.weight / totalWeight) * 100).toFixed(2) : "0"}%
+                                {totalWeight > 0 ? (((reward?.weight || 0) / totalWeight) * 100).toFixed(2) : "0"}%
                             </td>
                             <td className="text-center">
                                 {reward.percent_display != null ? `${reward.percent_display}%` : "—"}

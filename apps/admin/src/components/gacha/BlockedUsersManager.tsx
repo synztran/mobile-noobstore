@@ -69,7 +69,7 @@ export function BlockedUsersManager({ eventId }: Props) {
     queryKey: adminQueryKeys.users.list(searchQuery, 1),
     queryFn: () => fetchUserOptions(searchQuery),
     enabled: true,
-    keepPreviousData: true,
+    // keepPreviousData: true,
   });
 
   function handleSearchChange(value: string) {
@@ -78,7 +78,10 @@ export function BlockedUsersManager({ eventId }: Props) {
     setShowDropdown(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      queryClient.invalidateQueries(adminQueryKeys.users.list(value, 1));
+      // queryClient.invalidateQueries(adminQueryKeys.users.list(value, 1));
+      queryClient.invalidateQueries({
+        queryKey: adminQueryKeys.users.list(value, 1),
+      });
     }, 300);
   }
 

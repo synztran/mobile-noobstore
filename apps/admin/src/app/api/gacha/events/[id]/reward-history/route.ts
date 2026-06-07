@@ -22,7 +22,7 @@ export async function GET(
 	const { data: allHistory, error } = await supabase
 		.from("gacha_history")
 		.select("user_id, reward_id, played_at")
-		.eq("event_id", id);
+		.eq("event_id", Number(id));
 
 	if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

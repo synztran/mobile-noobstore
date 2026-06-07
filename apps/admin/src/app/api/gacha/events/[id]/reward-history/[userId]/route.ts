@@ -21,14 +21,14 @@ export async function GET(
 	const { count } = await supabase
 		.from("gacha_history")
 		.select("*", { count: "exact", head: true })
-		.eq("event_id", id)
+		.eq("event_id", Number(id))
 		.eq("user_id", userId);
 
 	// Get paginated history
 	const { data: history, error } = await supabase
 		.from("gacha_history")
 		.select("*")
-		.eq("event_id", id)
+		.eq("event_id", Number(id))
 		.eq("user_id", userId)
 		.order("played_at", { ascending: false })
 		.range(offset, offset + limit - 1);

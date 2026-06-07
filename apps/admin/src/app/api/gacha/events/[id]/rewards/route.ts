@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 	const { data, error } = await supabase
 		.from("gacha_rewards")
 		.select("*")
-		.eq("event_id", id)
+		.eq("event_id", Number(id))
 		.order("weight", { ascending: false });
 
 	if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
 	const { data, error } = await supabase
 		.from("gacha_rewards")
-		.insert({ ...body, event_id: id })
+		.insert({ ...body, event_id: Number(id) })
 		.select()
 		.single();
 

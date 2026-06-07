@@ -13,7 +13,7 @@ export async function GET(
 	const { data: progress, error } = await supabase
 		.from("user_mission_progress")
 		.select("*")
-		.eq("mission_id", missionId)
+		.eq("mission_id", Number(missionId))
 		.order("id", { ascending: false });
 
 	if (error) return NextResponse.json({ error: error.message }, { status: 500 });

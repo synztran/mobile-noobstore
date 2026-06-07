@@ -11,7 +11,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 	const { data, error } = await supabase
 		.from("gacha_missions")
 		.update(body)
-		.eq("id", missionId)
+		.eq("id", Number(missionId))
 		.select()
 		.single();
 
@@ -23,7 +23,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 	const { missionId } = await params;
 	const supabase = getAdminClient();
 
-	const { error } = await supabase.from("gacha_missions").delete().eq("id", missionId);
+	const { error } = await supabase.from("gacha_missions").delete().eq("id", Number(missionId));
 	if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 	return NextResponse.json({ success: true });
 }

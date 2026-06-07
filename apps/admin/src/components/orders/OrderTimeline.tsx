@@ -1,6 +1,5 @@
 import {
 	BanknoteIcon,
-	CheckCircle2,
 	CircleDashed,
 	PackageCheck,
 	RotateCcw,
