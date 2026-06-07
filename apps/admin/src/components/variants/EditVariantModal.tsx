@@ -31,7 +31,6 @@ interface Props {
 }
 
 export default function EditVariantModal({ variant }: Props) {
-  console.log(variant);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);

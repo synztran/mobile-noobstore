@@ -38,7 +38,6 @@ const GEOCODE_CACHE_TTL = 1000 * 60 * 60 * 24; // 24h
 async function geocodeAddress(query: string) {
   // Check cache first
   const cached = geocodeCache.get(query);
-  console.log("cached", cached);
   if (cached && Date.now() - cached.ts < GEOCODE_CACHE_TTL) {
     return { lat: cached.lat, lon: cached.lon, raw: null };
   }
@@ -278,7 +277,6 @@ export async function POST(req: Request) {
     let googleStatus: string | null = null;
 
     const googleKey = process.env.GOOGLE_DISTANCE_MATRIX_API_KEY;
-    console.log("googleKey", googleKey);
     if (googleKey) {
       const origin = `${storeLat},${storeLon}`;
       const destination = `${Number(lat)},${Number(lon)}`;
@@ -287,7 +285,6 @@ export async function POST(req: Request) {
         destination,
         googleKey
       );
-      console.log("googleDistance", googleDistance);
       if (googleDistance !== null) {
         distanceKm = googleDistance;
         usedGoogle = true;

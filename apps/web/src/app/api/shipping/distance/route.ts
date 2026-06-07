@@ -38,7 +38,6 @@ const GEOCODE_CACHE_TTL = 1000 * 60 * 60 * 24; // 24h
 async function geocodeAddress(query: string) {
   // Check cache first
   const cached = geocodeCache.get(query);
-  console.log("cached", cached);
   if (cached && Date.now() - cached.ts < GEOCODE_CACHE_TTL) {
     return { lat: cached.lat, lon: cached.lon, raw: null };
   }

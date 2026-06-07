@@ -97,7 +97,6 @@ function calculateShippingFeeWithSurcharge(
   surchargeRate: number
 ) {
   if (surchargeRate <= 0) return baseFee;
-  console.log("1", baseFee, surchargeRate);
   return Math.round(baseFee * (1 + surchargeRate));
 }
 
@@ -501,8 +500,6 @@ export function useShippingForm() {
 
   const baseImmediateFee = rawImmediateCost;
   const baseBasicFee = rawBasicCost;
-  console.log("base price", baseImmediateFee, baseBasicFee);
-  console.log("districtSurchargeRate", districtSurchargeRate);
   const immediateFee = calculateShippingFeeWithSurcharge(
     baseImmediateFee,
     districtSurchargeRate + operationalSurchargeRate

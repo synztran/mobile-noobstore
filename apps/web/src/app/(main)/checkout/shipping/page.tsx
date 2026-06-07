@@ -125,8 +125,6 @@ export default function ShippingPage() {
     });
   }, [immediateFee, basicFee, isHCM]);
 
-  console.log("deliveryOptions", deliveryOptions);
-
   return (
     <div className="space-y-8">
       {/* ── Hero header ─────────────────────────────────────────── */}
