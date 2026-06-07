@@ -2,256 +2,296 @@
 
 import type { GachaEvent } from "@/app/(admin)/gacha/page";
 import { ArrowLeft, Pencil, Save, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RewardsManager } from "./RewardsManager";
 import { MissionsManager } from "./MissionsManager";
 import { BlockedUsersManager } from "./BlockedUsersManager";
 import { RewardHistoryManager } from "./RewardHistoryManager";
+import NumberInput from "@/components/ui/NumberInput";
 
 type Tab = "rewards" | "missions" | "history" | "blacklist";
 
 interface Props {
-	event: GachaEvent;
-	onBack: () => void;
-	onUpdate: (event: GachaEvent) => void;
+  event: GachaEvent;
+  onBack: () => void;
+  onUpdate: (event: GachaEvent) => void;
 }
 
 export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
-	const [activeTab, setActiveTab] = useState<Tab>("rewards");
-	const [editing, setEditing] = useState(false);
-	const [form, setForm] = useState({
-		name: event.name,
-		description: event.description ?? "",
-		start_at: event.start_at.slice(0, 16),
-		end_at: event.end_at.slice(0, 16),
-		is_active: event.is_active,
-		free_tokens_per_grant: event.free_tokens_per_grant,
-		free_token_interval_days: event.free_token_interval_days,
-	});
-	const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("rewards");
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<{
+    name: string;
+    description: string;
+    start_at: string;
+    end_at: string;
+    is_active: boolean;
+    free_tokens_per_grant: number | null;
+    free_token_interval_days: number | null;
+  }>({
+    name: event.name,
+    description: event.description ?? "",
+    start_at: event.start_at.slice(0, 16),
+    end_at: event.end_at.slice(0, 16),
+    is_active: event.is_active,
+    free_tokens_per_grant: event.free_tokens_per_grant,
+    free_token_interval_days: event.free_token_interval_days,
+  });
+  const [saving, setSaving] = useState(false);
 
-	async function handleSave() {
-		setSaving(true);
-		const res = await fetch(`/api/gacha/events/${event.id}`, {
-			method: "PATCH",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				...form,
-				start_at: new Date(form.start_at).toISOString(),
-				end_at: new Date(form.end_at).toISOString(),
-			}),
-		});
-		if (res.ok) {
-			const updated = await res.json();
-			onUpdate(updated);
-			setEditing(false);
-		}
-		setSaving(false);
-	}
+  async function handleSave() {
+    setSaving(true);
+    const res = await fetch(`/api/gacha/events/${event.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...form,
+        start_at: new Date(form.start_at).toISOString(),
+        end_at: new Date(form.end_at).toISOString(),
+      }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      onUpdate(updated);
+      setEditing(false);
+    }
+    setSaving(false);
+  }
 
-	const tabs: { key: Tab; label: string }[] = [
-		{ key: "rewards", label: "Rewards" },
-		{ key: "missions", label: "Missions" },
-		{ key: "history", label: "History" },
-		{ key: "blacklist", label: "Blacklist" },
-	];
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "rewards", label: "Rewards" },
+    { key: "missions", label: "Missions" },
+    { key: "history", label: "History" },
+    { key: "blacklist", label: "Blacklist" },
+  ];
 
-	return (
-		<div className="space-y-6">
-			{/* Header */}
-			<div className="flex items-center gap-3">
-				<button
-					onClick={onBack}
-					className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition-colors">
-					<ArrowLeft className="w-5 h-5 text-body" />
-				</button>
-				<div className="flex-1">
-					<h1 className="text-2xl font-bold text-heading">
-						{event.name}
-					</h1>
-					<p className="text-sm text-muted">
-						Event management
-					</p>
-				</div>
-				{!editing ? (
-					<button
-						onClick={() => setEditing(true)}
-					className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-body">
-						<Pencil className="w-4 h-4" />
-						Edit Event
-					</button>
-				) : (
-					<div className="flex gap-2">
-						<button
-							onClick={() => setEditing(false)}
-							className="inline-flex items-center gap-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-body">
-							<X className="w-4 h-4" />
-							Cancel
-						</button>
-						<button
-							onClick={handleSave}
-							disabled={saving}
-							className="inline-flex items-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm font-medium text-white disabled:opacity-50">
-							<Save className="w-4 h-4" />
-							{saving ? "Saving..." : "Save"}
-						</button>
-					</div>
-				)}
-			</div>
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onBack}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+        >
+          <ArrowLeft className="text-body h-5 w-5" />
+        </button>
+        <div className="flex-1">
+          <div className="flex items-center gap-4">
+            <span className="text-heading text-2xl font-bold">
+              {event.name}
+            </span>
+            {!editing && <Countdown endAt={event.end_at} />}
+          </div>
+          <p className="text-muted text-sm">Event management</p>
+        </div>
+        {!editing ? (
+          <button
+            onClick={() => setEditing(true)}
+            className="text-body inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit Event
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setEditing(false)}
+              className="text-body inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+            >
+              <X className="h-4 w-4" />
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        )}
+      </div>
 
-			{/* Event info / edit form */}
-			{editing ? (
-				<div className="card-bg rounded-lg card-shadow p-6 space-y-4">
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label className="block text-sm font-medium text-body mb-1">
-								Name
-							</label>
-							<input
-								type="text"
-								value={form.name}
-								onChange={(e) => setForm({ ...form, name: e.target.value })}
-								className="w-full px-3 py-2 border input-base rounded-lg text-sm"
-							/>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-body mb-1">
-								Active
-							</label>
-							<select
-								value={form.is_active ? "true" : "false"}
-								onChange={(e) =>
-									setForm({ ...form, is_active: e.target.value === "true" })
-								}
-								className="w-full px-3 py-2 border input-base rounded-lg text-sm">
-								<option value="true">Active</option>
-								<option value="false">Inactive</option>
-							</select>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-body mb-1">
-								Start At
-							</label>
-							<input
-								type="datetime-local"
-								value={form.start_at}
-								onChange={(e) => setForm({ ...form, start_at: e.target.value })}
-								className="w-full px-3 py-2 border input-base rounded-lg text-sm"
-							/>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-body mb-1">
-								End At
-							</label>
-							<input
-								type="datetime-local"
-								value={form.end_at}
-								onChange={(e) => setForm({ ...form, end_at: e.target.value })}
-								className="w-full px-3 py-2 border input-base rounded-lg text-sm"
-							/>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-body mb-1">
-								Free Tokens per Grant
-							</label>
-							<input
-								type="number"
-								value={form.free_tokens_per_grant}
-								onChange={(e) =>
-									setForm({ ...form, free_tokens_per_grant: Number(e.target.value) })
-								}
-								className="w-full px-3 py-2 border input-base rounded-lg text-sm"
-							/>
-						</div>
-						<div>
-							<label className="block text-sm font-medium text-body mb-1">
-								Token Interval (days)
-							</label>
-							<input
-								type="number"
-								value={form.free_token_interval_days}
-								onChange={(e) =>
-									setForm({ ...form, free_token_interval_days: Number(e.target.value) })
-								}
-								className="w-full px-3 py-2 border input-base rounded-lg text-sm"
-							/>
-						</div>
-					</div>
-					<div>
-						<label className="block text-sm font-medium text-body mb-1">
-							Description
-						</label>
-						<textarea
-							value={form.description}
-							onChange={(e) => setForm({ ...form, description: e.target.value })}
-							rows={3}
-							className="w-full px-3 py-2 border input-base rounded-lg text-sm"
-						/>
-					</div>
-				</div>
-			) : (
-				<div className="card-bg rounded-lg card-shadow p-6">
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-						<div>
-							<p className="text-muted">Status</p>
-							<p className="font-semibold">
-								{event.is_active ? (
-									<span className="text-green-600">Active</span>
-								) : (
-									<span className="text-muted">Inactive</span>
-								)}
-							</p>
-						</div>
-						<div>
-							<p className="text-muted">Start</p>
-							<p className="font-semibold text-heading">
-								{new Date(event.start_at).toLocaleDateString("vi-VN")}
-							</p>
-						</div>
-						<div>
-							<p className="text-muted">End</p>
-							<p className="font-semibold text-heading">
-								{new Date(event.end_at).toLocaleDateString("vi-VN")}
-							</p>
-						</div>
-						<div>
-							<p className="text-muted">Free Tokens</p>
-							<p className="font-semibold text-heading">
-								{event.free_tokens_per_grant} / {event.free_token_interval_days}d
-							</p>
-						</div>
-					</div>
-					{event.description && (
-						<p className="text-sm text-muted mt-3">
-							{event.description}
-						</p>
-					)}
-				</div>
-			)}
+      {/* Event info / edit form */}
+      {editing ? (
+        <div className="card-bg card-shadow space-y-4 rounded-lg p-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="text-body mb-1 block text-sm font-medium">
+                Name
+              </label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="input-base w-full rounded-lg border px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-body mb-1 block text-sm font-medium">
+                Active
+              </label>
+              <select
+                value={form.is_active ? "true" : "false"}
+                onChange={(e) =>
+                  setForm({ ...form, is_active: e.target.value === "true" })
+                }
+                className="input-base w-full rounded-lg border px-3 py-2 text-sm"
+              >
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-body mb-1 block text-sm font-medium">
+                Start At
+              </label>
+              <input
+                type="datetime-local"
+                value={form.start_at}
+                onChange={(e) => setForm({ ...form, start_at: e.target.value })}
+                className="input-base w-full rounded-lg border px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-body mb-1 block text-sm font-medium">
+                End At
+              </label>
+              <input
+                type="datetime-local"
+                value={form.end_at}
+                onChange={(e) => setForm({ ...form, end_at: e.target.value })}
+                className="input-base w-full rounded-lg border px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-body mb-1 block text-sm font-medium">
+                Free Tokens per Grant
+              </label>
+              <NumberInput
+                value={form.free_tokens_per_grant}
+                onChange={(v) => setForm({ ...form, free_tokens_per_grant: v })}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-body mb-1 block text-sm font-medium">
+                Token Interval (days)
+              </label>
+              <NumberInput
+                value={form.free_token_interval_days}
+                onChange={(v) =>
+                  setForm({ ...form, free_token_interval_days: v })
+                }
+                className="w-full"
+              />
+            </div>
+            <div></div>
+          </div>
+          <div>
+            <label className="text-body mb-1 block text-sm font-medium">
+              Description
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              rows={3}
+              className="input-base w-full rounded-lg border px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="card-bg card-shadow rounded-lg p-6">
+          <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+            <div>
+              <p className="text-muted">Status</p>
+              <p className="font-semibold">
+                {event.is_active ? (
+                  <span className="text-green-600">Active</span>
+                ) : (
+                  <span className="text-muted">Inactive</span>
+                )}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted">Start</p>
+              <p className="text-heading font-semibold">
+                {new Date(event.start_at).toLocaleString("vi-VN")}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted">End</p>
+              <p className="text-heading font-semibold">
+                {new Date(event.end_at).toLocaleString("vi-VN")}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted">Free Tokens</p>
+              <p className="text-heading font-semibold">
+                {event.free_tokens_per_grant} / {event.free_token_interval_days}{" "}
+                days
+              </p>
+            </div>
+          </div>
+          {event.description && (
+            <p className="text-muted mt-3 text-sm">{event.description}</p>
+          )}
+        </div>
+      )}
 
-			{/* Tabs */}
-			<div className="border-b table-border">
-				<nav className="flex gap-6">
-					{tabs.map((tab) => (
-						<button
-							key={tab.key}
-							onClick={() => setActiveTab(tab.key)}
-							className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-								activeTab === tab.key
-									? "border-purple-600 text-purple-600"
-									: "border-transparent text-muted hover:text-heading"
-							}`}>
-							{tab.label}
-						</button>
-					))}
-				</nav>
-			</div>
+      {/* Tabs */}
+      <div className="table-border border-b">
+        <nav className="flex gap-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
+                activeTab === tab.key
+                  ? "border-purple-600 text-purple-600"
+                  : "text-muted hover:text-heading border-transparent"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
-			{/* Tab content */}
-			{activeTab === "rewards" && <RewardsManager eventId={event.id} />}
-			{activeTab === "missions" && <MissionsManager eventId={event.id} />}
-			{activeTab === "history" && <RewardHistoryManager eventId={event.id} />}
-			{activeTab === "blacklist" && <BlockedUsersManager eventId={event.id} />}
-		</div>
-	);
+      {/* Tab content */}
+      {activeTab === "rewards" && <RewardsManager eventId={event.id} />}
+      {activeTab === "missions" && <MissionsManager eventId={event.id} />}
+      {activeTab === "history" && <RewardHistoryManager eventId={event.id} />}
+      {activeTab === "blacklist" && <BlockedUsersManager eventId={event.id} />}
+    </div>
+  );
+}
+
+function Countdown({ endAt }: { endAt: string }) {
+  const [now, setNow] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const end = new Date(endAt);
+  const diff = Math.max(0, end.getTime() - now.getTime());
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  if (diff === 0)
+    return <p className="mt-1 text-sm text-red-600">Event ended</p>;
+
+  return (
+    <p className="mt-1 text-sm text-red-600">
+      Ends in: {days}d {hours}h {minutes}m {seconds}s
+    </p>
+  );
 }

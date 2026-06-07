@@ -9,6 +9,7 @@ import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
 import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import NumberInput from "@/components/ui/NumberInput";
 
 const PRODUCT_TYPES = ["standard", "kit", "component"];
 
@@ -202,12 +203,11 @@ export default function EditProductModal({ product }: Props) {
                     <label className="mb-1 block text-sm font-medium text-slate-700">
                       Base Price (₫) <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="number"
+                    <NumberInput
+                      value={basePrice === "" ? null : Number(basePrice)}
+                      onChange={(v) => setBasePrice(v != null ? String(v) : "")}
                       required
                       min={0}
-                      value={basePrice}
-                      onChange={(e) => setBasePrice(e.target.value)}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -241,12 +241,15 @@ export default function EditProductModal({ product }: Props) {
                         </span>
                       )}
                     </label>
-                    <input
-                      type="number"
+                    <NumberInput
+                      value={
+                        stockQuantity === "" ? null : Number(stockQuantity)
+                      }
+                      onChange={(v) =>
+                        setStockQuantity(v != null ? String(v) : "")
+                      }
                       min={0}
                       disabled={isKit}
-                      value={stockQuantity}
-                      onChange={(e) => setStockQuantity(e.target.value)}
                       placeholder={isKit ? "—" : "0"}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />

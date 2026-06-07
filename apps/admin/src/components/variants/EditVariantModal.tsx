@@ -3,6 +3,7 @@
 import { SingleImageUploader } from "@/components/ui/ImageUploader";
 import VariantRulesEditor from "@/components/variants/VariantRulesEditor";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
+import NumberInput from "@/components/ui/NumberInput";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -137,7 +138,7 @@ export default function EditVariantModal({ variant }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100"
         title="Edit"
       >
         <Pencil className="h-4 w-4" />
@@ -239,10 +240,13 @@ export default function EditVariantModal({ variant }: Props) {
                     <label className="mb-1 block text-sm font-medium text-slate-700">
                       Price Adjustment
                     </label>
-                    <input
-                      type="number"
-                      value={priceAdjustment}
-                      onChange={(e) => setPriceAdjustment(e.target.value)}
+                    <NumberInput
+                      value={
+                        priceAdjustment === "" ? null : Number(priceAdjustment)
+                      }
+                      onChange={(v) =>
+                        setPriceAdjustment(v != null ? String(v) : "")
+                      }
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="0"
                     />
@@ -251,11 +255,14 @@ export default function EditVariantModal({ variant }: Props) {
                     <label className="mb-1 block text-sm font-medium text-slate-700">
                       Stock Quantity
                     </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={stockQuantity}
-                      onChange={(e) => setStockQuantity(e.target.value)}
+                    <NumberInput
+                      value={
+                        stockQuantity === "" ? null : Number(stockQuantity)
+                      }
+                      onChange={(v) =>
+                        setStockQuantity(v != null ? String(v) : "")
+                      }
+                      min={0}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="0"
                     />

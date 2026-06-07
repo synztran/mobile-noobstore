@@ -10,8 +10,9 @@ type UserAddress = {
   address: string;
   phone_number: string;
   city: string;
-  ward_district: string;
   is_default: boolean;
+  district?: string | null;
+  ward?: string | null;
 };
 
 type WishlistItem = {
@@ -99,7 +100,7 @@ export default function EditUserModal({ user }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100"
         title="Edit"
       >
         <Pencil className="h-4 w-4" />
@@ -144,7 +145,7 @@ export default function EditUserModal({ user }: Props) {
                     <input
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full rounded-lg border px-3 py-2 text-sm input-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input-base w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="First name"
                     />
                   </div>
@@ -155,7 +156,7 @@ export default function EditUserModal({ user }: Props) {
                     <input
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="w-full rounded-lg border px-3 py-2 text-sm input-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input-base w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Last name"
                     />
                   </div>
@@ -167,7 +168,7 @@ export default function EditUserModal({ user }: Props) {
                     <input
                       value={user.email}
                       disabled
-                      className="w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-600 px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
+                      className="w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-600 dark:text-slate-400"
                     />
                     <p className="mt-1 text-xs text-slate-500">
                       Email cannot be changed.
@@ -181,7 +182,7 @@ export default function EditUserModal({ user }: Props) {
                     <input
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="w-full rounded-lg border px-3 py-2 text-sm input-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input-base w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Phone number"
                     />
                   </div>
@@ -193,7 +194,7 @@ export default function EditUserModal({ user }: Props) {
                     <select
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="w-full rounded-lg border px-3 py-2 text-sm input-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input-base w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       {USER_ROLES.map((roleOption) => (
                         <option key={roleOption} value={roleOption}>
@@ -210,7 +211,7 @@ export default function EditUserModal({ user }: Props) {
                     <input
                       value={new Date(user.created_at).toLocaleString("vi-VN")}
                       disabled
-                      className="w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-50 dark:bg-slate-600 px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
+                      className="w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-600 dark:text-slate-400"
                     />
                   </div>
                 </div>
@@ -245,8 +246,8 @@ export default function EditUserModal({ user }: Props) {
                             {address.phone_number}
                           </p>
                           <p className="text-xs text-slate-600">
-                            {address.address}, {address.ward_district},{" "}
-                            {address.city}
+                            {address.address}, {address.ward},{" "}
+                            {address.district}, {address.city}
                           </p>
                         </div>
                       ))}

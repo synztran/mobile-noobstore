@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import SearchableProductSelect from "./SearchableProductSelect";
 import type { ProductComponentRow, ProductOption } from "./types";
+import NumberInput from "@/components/ui/NumberInput";
 
 type Mode = "create" | "update";
 
@@ -160,11 +161,10 @@ export default function ProductComponentFormModal({
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Max Quantity
                 </label>
-                <input
-                  type="number"
+                <NumberInput
+                  value={maxQuantity === "" ? null : Number(maxQuantity)}
+                  onChange={(v) => setMaxQuantity(v != null ? String(v) : "")}
                   min={1}
-                  value={maxQuantity}
-                  onChange={(e) => setMaxQuantity(e.target.value)}
                   placeholder="Optional"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />

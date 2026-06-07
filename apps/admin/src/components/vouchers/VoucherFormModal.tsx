@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import NumberInput from "@/components/ui/NumberInput";
 
 type VoucherRewardType =
   | "amount_off"
@@ -179,13 +180,12 @@ export default function VoucherFormModal({
           <label className="mb-1 block text-sm font-medium text-slate-700">
             Amount Off (VND) <span className="text-red-500">*</span>
           </label>
-          <input
-            type="number"
+          <NumberInput
+            value={amountOff === "" ? null : Number(amountOff)}
+            onChange={(v) => setAmountOff(v != null ? String(v) : "")}
             min={1}
             step="0.01"
             required
-            value={amountOff}
-            onChange={(e) => setAmountOff(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="50000"
           />
@@ -199,14 +199,13 @@ export default function VoucherFormModal({
           <label className="mb-1 block text-sm font-medium text-slate-700">
             Percent Off (%) <span className="text-red-500">*</span>
           </label>
-          <input
-            type="number"
+          <NumberInput
+            value={percentOff === "" ? null : Number(percentOff)}
+            onChange={(v) => setPercentOff(v != null ? String(v) : "")}
             min={1}
             max={100}
             step="0.01"
             required
-            value={percentOff}
-            onChange={(e) => setPercentOff(e.target.value)}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="10"
           />
@@ -474,12 +473,13 @@ export default function VoucherFormModal({
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Min Order Amount (VND)
                 </label>
-                <input
-                  type="number"
+                <NumberInput
+                  value={minOrderAmount === "" ? null : Number(minOrderAmount)}
+                  onChange={(v) =>
+                    setMinOrderAmount(v != null ? String(v) : "")
+                  }
                   min={0}
                   step="0.01"
-                  value={minOrderAmount}
-                  onChange={(e) => setMinOrderAmount(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
                 />
@@ -489,11 +489,14 @@ export default function VoucherFormModal({
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Usage Limit Total
                 </label>
-                <input
-                  type="number"
+                <NumberInput
+                  value={
+                    usageLimitTotal === "" ? null : Number(usageLimitTotal)
+                  }
+                  onChange={(v) =>
+                    setUsageLimitTotal(v != null ? String(v) : "")
+                  }
                   min={1}
-                  value={usageLimitTotal}
-                  onChange={(e) => setUsageLimitTotal(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Leave blank for unlimited"
                 />
@@ -503,11 +506,14 @@ export default function VoucherFormModal({
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Usage Limit Per User
                 </label>
-                <input
-                  type="number"
+                <NumberInput
+                  value={
+                    usageLimitPerUser === "" ? null : Number(usageLimitPerUser)
+                  }
+                  onChange={(v) =>
+                    setUsageLimitPerUser(v != null ? String(v) : "")
+                  }
                   min={1}
-                  value={usageLimitPerUser}
-                  onChange={(e) => setUsageLimitPerUser(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Leave blank for unlimited"
                 />

@@ -49,15 +49,15 @@ export function GachaEventCard({ event, onClick }: Props) {
 							{event.description}
 						</p>
 					)}
-					<div className="flex items-center gap-4 text-xs text-muted">
+					<div className="flex flex-col items-start gap-2 text-sm text-muted">
 						<span className="inline-flex items-center gap-1">
 							<Calendar className="w-3.5 h-3.5" />
-							{start.toLocaleDateString("vi-VN")} –{" "}
-							{end.toLocaleDateString("vi-VN")}
+							{start.toLocaleString("vi-VN")} ~{" "}
+							{end.toLocaleString("vi-VN")}
 						</span>
 						<span className="inline-flex items-center gap-1">
 							<Zap className="w-3.5 h-3.5" />
-							{event.free_tokens_per_grant} tokens / {event.free_token_interval_days}d
+							{event.free_tokens_per_grant} tokens / {event.free_token_interval_days} ngày
 						</span>
 					</div>
 				</div>

@@ -2,6 +2,7 @@
 
 import { SingleImageUploader } from "@/components/ui/ImageUploader";
 import { Plus, Trash2, X } from "lucide-react";
+import NumberInput from "@/components/ui/NumberInput";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
@@ -280,9 +281,8 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Price Adjustment (₫)
                 </label>
-                <input
+                <NumberInput
                   name="price_adjustment"
-                  type="number"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
                 />
@@ -291,10 +291,9 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Stock Quantity
                 </label>
-                <input
+                <NumberInput
                   name="stock_quantity"
-                  type="number"
-                  min="0"
+                  min={0}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
                 />

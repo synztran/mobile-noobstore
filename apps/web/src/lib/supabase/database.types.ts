@@ -414,9 +414,11 @@ export type Database = {
           description: string | null
           event_id: number
           id: number
+          is_active: boolean
           mission_type: string
           name: string
           requirement: Json
+          show_trigger: boolean
           token_reward: number
         }
         Insert: {
@@ -424,9 +426,11 @@ export type Database = {
           description?: string | null
           event_id: number
           id?: number
+          is_active?: boolean
           mission_type: string
           name: string
           requirement?: Json
+          show_trigger?: boolean
           token_reward?: number
         }
         Update: {
@@ -434,9 +438,11 @@ export type Database = {
           description?: string | null
           event_id?: number
           id?: number
+          is_active?: boolean
           mission_type?: string
           name?: string
           requirement?: Json
+          show_trigger?: boolean
           token_reward?: number
         }
         Relationships: [
@@ -504,6 +510,138 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      gacha_user_missions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: number
+          is_completed: boolean
+          mission_id: number
+          progress: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: never
+          is_completed?: boolean
+          mission_id: number
+          progress?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: never
+          is_completed?: boolean
+          mission_id?: number
+          progress?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gacha_user_missions_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "gacha_missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gacha_user_missions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_card_redemptions: {
+        Row: {
+          gift_card_id: number
+          id: number
+          points_credited: number
+          redeemed_at: string
+          transaction_id: number | null
+          user_id: string
+        }
+        Insert: {
+          gift_card_id: number
+          id?: number
+          points_credited: number
+          redeemed_at?: string
+          transaction_id?: number | null
+          user_id: string
+        }
+        Update: {
+          gift_card_id?: number
+          id?: number
+          points_credited?: number
+          redeemed_at?: string
+          transaction_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_redemptions_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_card_redemptions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "point_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_cards: {
+        Row: {
+          batch_label: string | null
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: number
+          is_active: boolean
+          issued_to_user_id: string | null
+          note: string | null
+          points_value: number
+          redeemed_at: string | null
+          redeemed_by_user_id: string | null
+        }
+        Insert: {
+          batch_label?: string | null
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: number
+          is_active?: boolean
+          issued_to_user_id?: string | null
+          note?: string | null
+          points_value: number
+          redeemed_at?: string | null
+          redeemed_by_user_id?: string | null
+        }
+        Update: {
+          batch_label?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: number
+          is_active?: boolean
+          issued_to_user_id?: string | null
+          note?: string | null
+          points_value?: number
+          redeemed_at?: string | null
+          redeemed_by_user_id?: string | null
+        }
+        Relationships: []
       }
       hero_campaigns: {
         Row: {
@@ -876,6 +1014,69 @@ export type Database = {
         }
         Relationships: []
       }
+      point_rules: {
+        Row: {
+          description: string | null
+          id: number
+          is_active: boolean
+          rate_type: string
+          rate_value: number
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          id?: number
+          is_active?: boolean
+          rate_type?: string
+          rate_value?: number
+          rule_type: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          id?: number
+          is_active?: boolean
+          rate_type?: string
+          rate_value?: number
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      point_transactions: {
+        Row: {
+          balance_after: number
+          created_at: string
+          delta: number
+          id: number
+          note: string | null
+          source_ref: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          delta: number
+          id?: number
+          note?: string | null
+          source_ref?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          delta?: number
+          id?: number
+          note?: string | null
+          source_ref?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_components: {
         Row: {
           component_group: string
@@ -1039,39 +1240,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string
-          full_name: string | null
-          id: string
-          phone: string | null
-          role: string | null
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email: string
-          full_name?: string | null
-          id: string
-          phone?: string | null
-          role?: string | null
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string
-          full_name?: string | null
-          id?: string
-          phone?: string | null
-          role?: string | null
-          updated_at?: string
-        }
-        Relationships: []
       }
       push_subscriptions: {
         Row: {
@@ -1306,14 +1474,16 @@ export type Database = {
           city_code: string | null
           country: string
           created_at: string
+          district: string | null
+          district_code: string | null
           full_name: string | null
           id: string
           is_default: boolean | null
           phone_number: string | null
           updated_at: string
           user_id: string | null
-          ward_district: string | null
-          ward_district_code: string | null
+          ward: string | null
+          ward_code: string | null
         }
         Insert: {
           address?: string | null
@@ -1322,14 +1492,16 @@ export type Database = {
           city_code?: string | null
           country: string
           created_at?: string
+          district?: string | null
+          district_code?: string | null
           full_name?: string | null
           id: string
           is_default?: boolean | null
           phone_number?: string | null
           updated_at?: string
           user_id?: string | null
-          ward_district?: string | null
-          ward_district_code?: string | null
+          ward?: string | null
+          ward_code?: string | null
         }
         Update: {
           address?: string | null
@@ -1338,14 +1510,16 @@ export type Database = {
           city_code?: string | null
           country?: string
           created_at?: string
+          district?: string | null
+          district_code?: string | null
           full_name?: string | null
           id?: string
           is_default?: boolean | null
           phone_number?: string | null
           updated_at?: string
           user_id?: string | null
-          ward_district?: string | null
-          ward_district_code?: string | null
+          ward?: string | null
+          ward_code?: string | null
         }
         Relationships: [
           {
@@ -1391,6 +1565,7 @@ export type Database = {
       }
       user_mission_progress: {
         Row: {
+          claimed_at: string | null
           completed_at: string | null
           id: number
           mission_id: number
@@ -1398,6 +1573,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          claimed_at?: string | null
           completed_at?: string | null
           id?: number
           mission_id: number
@@ -1405,6 +1581,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          claimed_at?: string | null
           completed_at?: string | null
           id?: number
           mission_id?: number
@@ -1473,6 +1650,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone_number: string | null
+          points_balance: number
           role: string | null
         }
         Insert: {
@@ -1482,6 +1660,7 @@ export type Database = {
           id: string
           last_name?: string | null
           phone_number?: string | null
+          points_balance?: number
           role?: string | null
         }
         Update: {
@@ -1491,6 +1670,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone_number?: string | null
+          points_balance?: number
           role?: string | null
         }
         Relationships: []
@@ -1690,8 +1870,54 @@ export type Database = {
       }
     }
     Functions: {
+      adjust_points: {
+        Args: {
+          p_admin_id: string
+          p_delta: number
+          p_note?: string
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          transaction_id: number
+        }[]
+      }
       cancel_expired_orders: { Args: never; Returns: Json }
+      claim_mission_reward: {
+        Args: { p_event_id: number; p_mission_id: number; p_user_id: string }
+        Returns: Json
+      }
+      compute_points_for_amount: {
+        Args: { p_amount: number; p_rule_type: string }
+        Returns: number
+      }
+      earn_points: {
+        Args: {
+          p_amount?: number
+          p_note?: string
+          p_source_ref?: string
+          p_source_type: string
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          transaction_id: number
+        }[]
+      }
       generate_id: { Args: never; Returns: string }
+      get_gacha_reward_winners: {
+        Args: { event_id: number; reward_id: number }
+        Returns: {
+          history_id: number
+          played_at: string
+          plays_count: number
+          user_email: string
+          user_id: string
+          user_name: string
+          win_rate: number
+          wins_count: number
+        }[]
+      }
       get_kit_stock: { Args: { kit_id: string }; Returns: number }
       get_pending_payment_orders: {
         Args: never
@@ -1704,6 +1930,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_point_rule: {
+        Args: { p_rule_type: string }
+        Returns: {
+          rate_type: string
+          rate_value: number
+        }[]
+      }
       increment_voucher_used_count: {
         Args: { p_voucher_id: string }
         Returns: undefined
@@ -1712,7 +1945,40 @@ export type Database = {
         Args: { p_order_id: string }
         Returns: undefined
       }
+      process_mission_progress: {
+        Args: {
+          p_context?: Json
+          p_event_id: number
+          p_mission_type: string
+          p_user_id: string
+        }
+        Returns: {
+          r_mission_id: number
+          r_newly_completed: boolean
+        }[]
+      }
       process_payment_reminders: { Args: never; Returns: undefined }
+      redeem_gift_card: {
+        Args: { p_code: string; p_user_id: string }
+        Returns: {
+          gift_card_id: number
+          new_balance: number
+          points_credited: number
+        }[]
+      }
+      spend_points: {
+        Args: {
+          p_amount: number
+          p_note?: string
+          p_source_ref?: string
+          p_source_type: string
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          transaction_id: number
+        }[]
+      }
       submit_order: {
         Args: {
           p_items: Json

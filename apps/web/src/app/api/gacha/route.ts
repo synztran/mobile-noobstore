@@ -1,6 +1,7 @@
 import { getCache, invalidateCache, setCache } from "@/lib/redis/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { earnPointsFromGachaReward } from "@/lib/points/service";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -302,6 +303,31 @@ export async function POST(req: NextRequest) {
     console.error("[gacha POST] post-draw side-effects failed:", err);
     // Non-fatal: reward was already drawn and token deducted — do not refund.
   }
+
+  // ── Earn NSP points when reward type is 'point' (fire-and-forget) ──────────
+  if (drawn.reward_type === "point") {
+    const pointValue = Number(drawn.value ?? 0);
+    if (pointValue > 0) {
+      void earnPointsFromGachaReward(
+        admin,
+        user.id,
+        drawn.id,
+        pointValue
+      ).catch((err) =>
+        console.error("[gacha POST] failed to earn points:", err)
+      );
+    }
+  }
+
+  // ── Trigger play_count gacha mission (fire-and-forget) ─────────────────────
+  void (async () => {
+    try {
+      const { triggerMissionServer } = await import("@/lib/gacha/missions");
+      await triggerMissionServer(supabase, user.id, eventId, "play_count");
+    } catch (err) {
+      console.error("[gacha POST] play_count mission trigger failed:", err);
+    }
+  })();
 
   return NextResponse.json({ reward: drawn });
 }
