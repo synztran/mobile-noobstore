@@ -177,14 +177,14 @@ export default function SummaryPage() {
               Kiểm tra đơn hàng
             </h2>
             <p className="mt-0.5 text-xs text-on-surface-variant">
-              Xem lại thông tin trước khi xác nhận
+              Xem lại thông tin trước khi xác nhận đơn hàng
             </p>
           </div>
         </div>
         {/* Progress bar */}
-        <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
+        {/* <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
           <div className="primary-gradient h-full w-2/3 rounded-full" />
-        </div>
+        </div> */}
       </div>
 
       {/* ── Order Items ──────────────────────────────────────── */}
@@ -212,7 +212,7 @@ export default function SummaryPage() {
       {shipping && (
         <div className="space-y-1 overflow-hidden rounded-3xl bg-surface-container-low px-4 py-4">
           <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Địa chỉ nhận hàng
+            Thông tin nhận hàng
           </p>
           <p className="text-sm font-bold text-on-surface">
             {shipping.fullName}{" "}

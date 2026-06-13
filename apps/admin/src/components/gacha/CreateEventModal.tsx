@@ -114,30 +114,22 @@ export function CreateEventModal({ onClose, onCreated }: Props) {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-body mb-1 block text-sm font-medium">
-                Free Tokens per Grant
-              </label>
-              <NumberInput
-                value={form.free_tokens_per_grant}
-                onChange={(v) => setForm({ ...form, free_tokens_per_grant: v })}
-                min={1}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="text-body mb-1 block text-sm font-medium">
-                Token Interval (days)
-              </label>
-              <NumberInput
-                value={form.free_token_interval_days}
-                onChange={(v) =>
-                  setForm({ ...form, free_token_interval_days: v })
-                }
-                min={1}
-                className="w-full"
-              />
-            </div>
+            <NumberInput
+              value={form.free_tokens_per_grant}
+              onChange={(v) => setForm({ ...form, free_tokens_per_grant: v })}
+              min={1}
+              className="w-full"
+              label="Free Tokens per Grant"
+            />
+            <NumberInput
+              value={form.free_token_interval_days}
+              onChange={(v) =>
+                setForm({ ...form, free_token_interval_days: v })
+              }
+              min={1}
+              className="w-full"
+              label="Free Token Interval (days)"
+            />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button

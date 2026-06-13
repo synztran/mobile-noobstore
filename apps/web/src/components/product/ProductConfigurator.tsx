@@ -104,17 +104,16 @@ export function ProductConfigurator({
       {groups.map((group) => (
         <div key={group.component_group} className={`space-y-3`}>
           <div className="flex items-center gap-2">
-            {group.is_required && (
-              <span className="rounded bg-error/10 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-error">
-                Bắt buộc
-              </span>
-            )}
+            <span
+              className={`rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider ${group.is_required ? "bg-error/10 text-error" : "bg-surface-container"}`}
+            >
+              {group.is_required ? "Bắt buộc" : "Tùy chọn"}
+            </span>
             <p
               className={`text-xs font-black tracking-widest text-on-surface-variant`}
             >
               {group.component_group}
             </p>
-
           </div>
           <div className="flex flex-wrap items-start gap-2">
             {group.variants.map((v) => {
@@ -129,7 +128,7 @@ export function ProductConfigurator({
                   disabled={isDisabled}
                   onClick={() => onSelect(group.component_group, v.id)}
                   className={clsx(
-                    "relative flex items-center gap-2 rounded-md border p-2 text-xs font-bold transition-all min-w-20",
+                    "relative flex min-w-20 items-center justify-center gap-2 rounded-md border px-2 py-1.5 font-bold transition-all",
                     isDisabled
                       ? "cursor-not-allowed border-transparent bg-surface-container opacity-40"
                       : selected
@@ -137,29 +136,13 @@ export function ProductConfigurator({
                         : "border-transparent bg-gray-200 text-on-surface hover:border-outline-variant"
                   )}
                 >
-                  {/* {v.thumbnail && (
-                    <div className="relative">
-                      <Thumbnail
-                        src={v.thumbnail}
-                        alt={v.variant_name}
-                        className="h-16 w-20 rounded-lg"
-                      />
-                      <VariantStatusBadge
-                        soldOut={soldOut}
-                        ruleDisabled={ruleDisabled}
-                        isPreOrder={v.is_pre_order}
-                      />
-                    </div>
-                  )} */}
                   <div className="max-w-26 space-y-1 text-left">
-                    <div className="inline-flex items-center gap-1">
-                      <p className="line-clamp-2 text-sm font-bold">
-                        {v.variant_name}
-                      </p>
-                    </div>
+                    <p className="line-clamp-2 text-xs font-bold">
+                      {v.variant_name}
+                    </p>
                     <p
                       className={clsx(
-                        "mt-0.5 text-right text-xs text-green-600",
+                        "text-right text-[10px] text-green-600",
                         v.price_adjustment !== 0 ? "" : "sr-only"
                       )}
                     >

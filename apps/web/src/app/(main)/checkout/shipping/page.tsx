@@ -1,5 +1,7 @@
 "use client";
 
+import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
+import DistanceMap from "@/components/map/distanceMap";
 import {
   CitySearchInput,
   DistrictSearchInput,
@@ -40,17 +42,17 @@ const FIELDS = [
     icon: <MapPinHouse size={20} />,
     type: "text",
     required: false,
-    colSpan: 2,
-  },
-  {
-    name: "postalCode",
-    label: "Mã bưu điện",
-    placeholder: "70000",
-    icon: <Mailbox size={20} />,
-    type: "text",
-    required: false,
     colSpan: 1,
   },
+  // {
+  //   name: "postalCode",
+  //   label: "Mã bưu điện",
+  //   placeholder: "70000",
+  //   icon: <Mailbox size={20} />,
+  //   type: "text",
+  //   required: false,
+  //   colSpan: 1,
+  // },
   {
     name: "phoneNumber",
     label: "Số điện thoại",
@@ -62,9 +64,7 @@ const FIELDS = [
   },
 ] as const;
 
-type FieldName = (typeof FIELDS)[number]["name"];
-
-export default function ShippingPage() {
+const ShippingPage = () => {
   const {
     form,
     setForm,
@@ -86,6 +86,7 @@ export default function ShippingPage() {
     orderTotal,
     immediateFee,
     basicFee,
+    customerLocation,
   } = useShippingForm();
 
   const cityCode = useMemo(
@@ -128,7 +129,7 @@ export default function ShippingPage() {
   return (
     <div className="space-y-8">
       {/* ── Hero header ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-6">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-4">
         <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-secondary/10 blur-xl" />
         <div className="relative flex items-center gap-4">
@@ -148,9 +149,9 @@ export default function ShippingPage() {
           </div>
         </div>
         {/* Progress bar */}
-        <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
+        {/* <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
           <div className="primary-gradient h-full w-1/3 rounded-full" />
-        </div>
+        </div> */}
       </div>
 
       {/* ── Address form ─────────────────────────────────────────── */}
@@ -292,6 +293,8 @@ export default function ShippingPage() {
             </p>
           )}
         </div>
+
+        <DistanceMap targetLocation={customerLocation} />
 
         {/* ── Delivery speed ───────────────────────────────────── */}
         <div className="space-y-3">
@@ -465,4 +468,6 @@ export default function ShippingPage() {
       </form>
     </div>
   );
-}
+};
+
+export default withAuthRedirect(ShippingPage);

@@ -311,59 +311,47 @@ export function RewardsManager({ eventId }: Props) {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="text-body mb-1 block text-sm font-medium">
-                  Weight (probability)
-                </label>
-                <NumberInput
-                  value={form.weight}
-                  onChange={(v) => setForm({ ...form, weight: v })}
-                  min={0}
-                  required
-                  step={1}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="text-body mb-1 block text-sm font-medium">
-                  Max Quantity (empty = unlimited)
-                </label>
-                <NumberInput
-                  value={
-                    form.max_quantity === "" ? null : Number(form.max_quantity)
-                  }
-                  onChange={(v) =>
-                    setForm({
-                      ...form,
-                      max_quantity: v != null ? String(v) : "",
-                    })
-                  }
-                  min={0}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="text-body mb-1 block text-sm font-medium">
-                  Display % (override)
-                </label>
-                <NumberInput
-                  value={
-                    form.percent_display === ""
-                      ? null
-                      : Number(form.percent_display)
-                  }
-                  onChange={(v) =>
-                    setForm({
-                      ...form,
-                      percent_display: v != null ? String(v) : "",
-                    })
-                  }
-                  min={0}
-                  max={100}
-                  step={0.01}
-                  className="w-full"
-                />
-              </div>
+              <NumberInput
+                value={form.weight}
+                onChange={(v) => setForm({ ...form, weight: v })}
+                min={0}
+                required
+                step={1}
+                className="w-full"
+                label="Weight (probability)"
+              />
+              <NumberInput
+                value={
+                  form.max_quantity === "" ? null : Number(form.max_quantity)
+                }
+                onChange={(v) =>
+                  setForm({
+                    ...form,
+                    max_quantity: v != null ? String(v) : "",
+                  })
+                }
+                min={0}
+                className="w-full"
+                label="Max Quantity (empty = unlimited)"
+              />
+              <NumberInput
+                value={
+                  form.percent_display === ""
+                    ? null
+                    : Number(form.percent_display)
+                }
+                onChange={(v) =>
+                  setForm({
+                    ...form,
+                    percent_display: v != null ? String(v) : "",
+                  })
+                }
+                min={0}
+                max={100}
+                step={0.01}
+                className="w-full"
+                label=" Display % (override)"
+              />
             </div>
           </div>
           <div className="flex items-center gap-3">

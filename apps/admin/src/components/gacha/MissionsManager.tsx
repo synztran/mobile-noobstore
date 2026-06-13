@@ -257,19 +257,15 @@ export function MissionsManager({ eventId }: Props) {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="text-body mb-1 block text-sm font-medium">
-                Token Reward
-              </label>
-              <NumberInput
-                value={form.token_reward}
-                onChange={(v) => setForm({ ...form, token_reward: v })}
-                min={1}
-                required
-                step={1}
-                className="w-full"
-              />
-            </div>
+            <NumberInput
+              value={form.token_reward}
+              onChange={(v) => setForm({ ...form, token_reward: v })}
+              min={1}
+              required
+              step={1}
+              className="w-full"
+              label="Token Reward"
+            />
           </div>
           <div className="flex flex-wrap items-center gap-6">
             <label className="flex cursor-pointer select-none items-center gap-2">
@@ -307,9 +303,6 @@ export function MissionsManager({ eventId }: Props) {
           {(form.mission_type === "order_min_price" ||
             form.mission_type === "spend_amount") && (
             <div>
-              <label className="text-body mb-1 block text-sm font-medium">
-                Minimum Order Amount (VND)
-              </label>
               <NumberInput
                 value={form.req_min_price}
                 onChange={(v) => setForm({ ...form, req_min_price: v })}
@@ -317,6 +310,7 @@ export function MissionsManager({ eventId }: Props) {
                 required
                 step={1000}
                 className="w-full"
+                label="Minimum Order Amount (VND)"
               />
               <p className="text-muted mt-1 text-xs">
                 Mission completes when the customer places an order of at least
@@ -326,9 +320,6 @@ export function MissionsManager({ eventId }: Props) {
           )}
           {form.mission_type === "order_count" && (
             <div>
-              <label className="text-body mb-1 block text-sm font-medium">
-                Number of Orders Required
-              </label>
               <NumberInput
                 value={form.req_count}
                 onChange={(v) => setForm({ ...form, req_count: v })}
@@ -336,6 +327,7 @@ export function MissionsManager({ eventId }: Props) {
                 required
                 step={1}
                 className="w-full"
+                label="Number of Orders Required"
               />
               <p className="text-muted mt-1 text-xs">
                 Mission completes when the customer has placed this many orders

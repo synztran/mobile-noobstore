@@ -235,37 +235,27 @@ export default function EditVariantModal({ variant }: Props) {
 
                 {/* Price Adjustment + Stock */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Price Adjustment
-                    </label>
-                    <NumberInput
-                      value={
-                        priceAdjustment === "" ? null : Number(priceAdjustment)
-                      }
-                      onChange={(v) =>
-                        setPriceAdjustment(v != null ? String(v) : "")
-                      }
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Stock Quantity
-                    </label>
-                    <NumberInput
-                      value={
-                        stockQuantity === "" ? null : Number(stockQuantity)
-                      }
-                      onChange={(v) =>
-                        setStockQuantity(v != null ? String(v) : "")
-                      }
-                      min={0}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0"
-                    />
-                  </div>
+                  <NumberInput
+                    value={
+                      priceAdjustment === "" ? null : Number(priceAdjustment)
+                    }
+                    onChange={(v) =>
+                      setPriceAdjustment(v != null ? String(v) : "")
+                    }
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                    label="Price Adjustment (₫)"
+                  />
+                  <NumberInput
+                    value={stockQuantity === "" ? null : Number(stockQuantity)}
+                    onChange={(v) =>
+                      setStockQuantity(v != null ? String(v) : "")
+                    }
+                    min={0}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                    label="Stock Quantity"
+                  />
                 </div>
 
                 {/* Pre-order toggle */}

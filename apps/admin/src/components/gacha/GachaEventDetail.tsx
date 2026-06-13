@@ -165,29 +165,22 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
                 className="input-base w-full rounded-lg border px-3 py-2 text-sm"
               />
             </div>
-            <div>
-              <label className="text-body mb-1 block text-sm font-medium">
-                Free Tokens per Grant
-              </label>
-              <NumberInput
-                value={form.free_tokens_per_grant}
-                onChange={(v) => setForm({ ...form, free_tokens_per_grant: v })}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="text-body mb-1 block text-sm font-medium">
-                Token Interval (days)
-              </label>
-              <NumberInput
-                value={form.free_token_interval_days}
-                onChange={(v) =>
-                  setForm({ ...form, free_token_interval_days: v })
-                }
-                className="w-full"
-              />
-            </div>
-            <div></div>
+
+            <NumberInput
+              value={form.free_tokens_per_grant}
+              onChange={(v) => setForm({ ...form, free_tokens_per_grant: v })}
+              className="w-full"
+              label="Free Tokens per Grant"
+            />
+
+            <NumberInput
+              value={form.free_token_interval_days}
+              onChange={(v) =>
+                setForm({ ...form, free_token_interval_days: v })
+              }
+              className="w-full"
+              label="Free Token Interval (days)"
+            />
           </div>
           <div>
             <label className="text-body mb-1 block text-sm font-medium">

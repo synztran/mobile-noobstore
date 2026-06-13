@@ -277,27 +277,19 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
 
             {/* Price Adjustment + Stock */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Price Adjustment (₫)
-                </label>
-                <NumberInput
-                  name="price_adjustment"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Stock Quantity
-                </label>
-                <NumberInput
-                  name="stock_quantity"
-                  min={0}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
+              <NumberInput
+                name="price_adjustment"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+                label="Price Adjustment (₫)"
+              />
+              <NumberInput
+                name="stock_quantity"
+                min={0}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+                label="Stock Quantity (leave empty for unlimited)"
+              />
             </div>
 
             {/* Pre-order toggle */}

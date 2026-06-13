@@ -6,15 +6,26 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import NumberInput from "@/components/ui/NumberInput";
+import InputSelection from "../ui/InputSelection";
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  categories:
+    | {
+        id: string;
+        name: string;
+      }[]
+    | null;
 }
 
 const PRODUCT_TYPES = ["standard", "kit", "component"];
 
-export default function CreateProductModal({ open, onClose }: Props) {
+export default function CreateProductModal({
+  open,
+  onClose,
+  categories,
+}: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
@@ -25,6 +36,7 @@ export default function CreateProductModal({ open, onClose }: Props) {
   const [kitOptions, setKitOptions] = useState<KitOption[]>([]);
   const [kitOptionsLoading, setKitOptionsLoading] = useState(false);
   const [createdKitId, setCreatedKitId] = useState<string | null>(null);
+  const [categoryType, setCategoryType] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -177,7 +189,29 @@ export default function CreateProductModal({ open, onClose }: Props) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-2">
+                <InputSelection
+                  options={
+                    categories
+                      ? categories.map((c) => ({ value: c.id, label: c.name }))
+                      : []
+                  }
+                  label="Category"
+                  required
+                  value={categoryType}
+                  onChange={(e) => setCategoryType(e.target.value)}
+                />
+              </div>
+              <div className="col-span-2">
+                <InputSelection
+                  options={PRODUCT_TYPES}
+                  label="Product Type"
+                  required
+                  value={productType}
+                  onChange={(e) => setProductType(e.target.value)}
+                />
+              </div>
               <div className="col-span-2">
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Name <span className="text-red-500">*</span>
@@ -205,40 +239,38 @@ export default function CreateProductModal({ open, onClose }: Props) {
                 />
               </div>
 
-              <div>
+              <div className="col-span-2">
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Base Price (₫) <span className="text-red-500">*</span>
+                  Brand
                 </label>
+                <input
+                  name="brand"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Brand name"
+                />
+              </div>
+
+              <div className="col-span-1">
                 <NumberInput
                   name="base_price"
                   required
                   min={0}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
+                  label="Base Price"
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Product Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="product_type"
-                  required
-                  value={productType}
-                  onChange={(e) => setProductType(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {PRODUCT_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <NumberInput
+                name="stock_quantity"
+                min={0}
+                disabled={isKit}
+                placeholder={isKit ? "—" : "0"}
+                label="Stock Quantity"
+              />
 
               {productType === "component" && (
-                <div className="col-span-2">
+                <div className="col-span-4">
                   <label className="mb-1 block text-sm font-medium text-slate-700">
                     Parent Kit <span className="text-red-500">*</span>
                   </label>
@@ -250,37 +282,6 @@ export default function CreateProductModal({ open, onClose }: Props) {
                   />
                 </div>
               )}
-
-              <div>
-                <label
-                  className={`mb-1 block text-sm font-medium ${isKit ? "text-slate-400" : "text-slate-700"}`}
-                >
-                  Stock Quantity
-                  {isKit && (
-                    <span className="ml-1 text-xs text-slate-400">
-                      (N/A for kit)
-                    </span>
-                  )}
-                </label>
-                <NumberInput
-                  name="stock_quantity"
-                  min={0}
-                  disabled={isKit}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                  placeholder={isKit ? "—" : "0"}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Brand
-                </label>
-                <input
-                  name="brand"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Brand name"
-                />
-              </div>
 
               <div className="col-span-2">
                 <label className="mb-1 block text-sm font-medium text-slate-700">

@@ -11,6 +11,8 @@ type NumberInputProps = Omit<
   onChange?: (value: number | null) => void;
   allowClear?: boolean;
   step?: number | string;
+  label: React.ReactNode;
+  subLabel?: React.ReactNode;
 };
 
 export default function NumberInput({
@@ -66,30 +68,40 @@ export default function NumberInput({
   };
 
   return (
-    <div className={`relative ${className}`}>
-      <input
-        ref={inputRef}
-        type="number"
-        inputMode="decimal"
-        step={step ?? "any"}
-        placeholder={placeholder}
-        value={local}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className="input input-bordered max-h-[38px] w-full pr-10 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-        {...rest}
-      />
+    <div className="relative w-full rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
+      <div className="flex items-center justify-between">
+        <label className="mb-1 block text-sm font-medium text-slate-700">
+          {rest.label}
+        </label>
+        {rest.subLabel && (
+          <p className="text-xs text-slate-500">{rest.subLabel}</p>
+        )}
+      </div>
+      <div className={`relative`}>
+        <input
+          ref={inputRef}
+          type="number"
+          inputMode="decimal"
+          step={step ?? "any"}
+          placeholder={placeholder}
+          value={local}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className="input input-bordered max-h-[38px] w-full pr-10 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          {...rest}
+        />
 
-      {allowClear && local !== "" && (
-        <button
-          type="button"
-          onClick={handleClear}
-          aria-label="Clear"
-          className="text-muted absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      )}
+        {allowClear && local !== "" && (
+          <button
+            type="button"
+            onClick={handleClear}
+            aria-label="Clear"
+            className="text-muted absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

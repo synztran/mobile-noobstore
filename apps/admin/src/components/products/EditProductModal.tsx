@@ -10,6 +10,8 @@ import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import NumberInput from "@/components/ui/NumberInput";
+import InputSelection from "../ui/InputSelection";
+import { formatVND } from "@/lib/currency";
 
 const PRODUCT_TYPES = ["standard", "kit", "component"];
 
@@ -25,6 +27,7 @@ type EditableProduct = {
   thumbnail?: string | null;
   images?: string[] | null;
   parent_product_id?: string | null;
+  category_id?: string | null;
 };
 
 type Props = {
@@ -38,7 +41,7 @@ export default function EditProductModal({ product }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(product.name);
   const [slug, setSlug] = useState(product.slug);
-  const [basePrice, setBasePrice] = useState(String(product.base_price));
+  const [basePrice, setBasePrice] = useState(product.base_price);
   const [productType, setProductType] = useState(product.product_type);
   const [stockQuantity, setStockQuantity] = useState(
     product.stock_quantity === null ? "" : String(product.stock_quantity)
@@ -54,13 +57,17 @@ export default function EditProductModal({ product }: Props) {
   );
   const [kitOptions, setKitOptions] = useState<KitOption[]>([]);
   const [kitOptionsLoading, setKitOptionsLoading] = useState(false);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [categoryType, setCategoryType] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     setName(product.name);
     setSlug(product.slug);
-    setBasePrice(String(product.base_price));
+    setBasePrice(product.base_price);
     setProductType(product.product_type);
     setStockQuantity(
       product.stock_quantity === null ? "" : String(product.stock_quantity)
@@ -76,6 +83,11 @@ export default function EditProductModal({ product }: Props) {
       .then((r) => r.json())
       .then((data) => setKitOptions(Array.isArray(data) ? data : []))
       .finally(() => setKitOptionsLoading(false));
+
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Error fetching categories:", err));
   }, [open, product]);
 
   function toSlug(value: string) {
@@ -108,6 +120,7 @@ export default function EditProductModal({ product }: Props) {
       images: images.length > 0 ? images : null,
       parent_product_id:
         productType === "component" && parentProductId ? parentProductId : null,
+      category_id: categoryType || null,
     };
 
     const res = await fetch(`/api/products/${product.id}`, {
@@ -170,7 +183,32 @@ export default function EditProductModal({ product }: Props) {
                 )}
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
+                  <div className="col-span-1">
+                    <InputSelection
+                      label="Category"
+                      options={categories.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                      }))}
+                      value={product.category_id as string}
+                      onChange={(e) => {
+                        setCategoryType(e.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <InputSelection
+                      label="Product Type"
+                      options={PRODUCT_TYPES.map((type) => ({
+                        value: type,
+                        label: type,
+                      }))}
+                      value={productType}
+                      disabled={product.product_type === "kit"}
+                      onChange={(e) => setProductType(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-span-1">
                     <label className="mb-1 block text-sm font-medium text-slate-700">
                       Name <span className="text-red-500">*</span>
                     </label>
@@ -186,7 +224,7 @@ export default function EditProductModal({ product }: Props) {
                     />
                   </div>
 
-                  <div className="col-span-2">
+                  <div className="col-span-1">
                     <label className="mb-1 block text-sm font-medium text-slate-700">
                       Slug <span className="text-red-500">*</span>
                     </label>
@@ -199,63 +237,29 @@ export default function EditProductModal({ product }: Props) {
                     />
                   </div>
 
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Base Price (₫) <span className="text-red-500">*</span>
-                    </label>
-                    <NumberInput
-                      value={basePrice === "" ? null : Number(basePrice)}
-                      onChange={(v) => setBasePrice(v != null ? String(v) : "")}
-                      required
-                      min={0}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  <NumberInput
+                    value={basePrice}
+                    onChange={(v) => setBasePrice(v != null ? v : 0)}
+                    required
+                    min={0}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    label="Base Price"
+                    subLabel={formatVND(basePrice || 0)}
+                  />
 
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Product Type <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      required
-                      value={productType}
-                      onChange={(e) => setProductType(e.target.value)}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {PRODUCT_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <NumberInput
+                    value={stockQuantity === "" ? null : Number(stockQuantity)}
+                    onChange={(v) =>
+                      setStockQuantity(v != null ? String(v) : "")
+                    }
+                    min={0}
+                    disabled={isKit}
+                    placeholder={isKit ? "—" : "0"}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    label="Stock Quantity"
+                  />
 
-                  <div>
-                    <label
-                      className={`mb-1 block text-sm font-medium ${isKit ? "text-slate-400" : "text-slate-700"}`}
-                    >
-                      Stock Quantity
-                      {isKit && (
-                        <span className="ml-1 text-xs text-slate-400">
-                          (N/A for kit)
-                        </span>
-                      )}
-                    </label>
-                    <NumberInput
-                      value={
-                        stockQuantity === "" ? null : Number(stockQuantity)
-                      }
-                      onChange={(v) =>
-                        setStockQuantity(v != null ? String(v) : "")
-                      }
-                      min={0}
-                      disabled={isKit}
-                      placeholder={isKit ? "—" : "0"}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                    />
-                  </div>
-
-                  <div>
+                  <div className="col-span-2">
                     <label className="mb-1 block text-sm font-medium text-slate-700">
                       Brand
                     </label>
@@ -272,7 +276,7 @@ export default function EditProductModal({ product }: Props) {
                       Description
                     </label>
                     <textarea
-                      rows={3}
+                      rows={5}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

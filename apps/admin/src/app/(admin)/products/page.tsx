@@ -50,6 +50,8 @@ export default async function ProductsPage({
     .order("created_at", { ascending: false })
     .range(from, to);
 
+  let categoryQuery = supabase.from("categories").select("id, name");
+
   if (q) {
     query = query.ilike("name", `%${q}%`);
   }
@@ -61,6 +63,7 @@ export default async function ProductsPage({
   const { data: rows, error, count } = await query;
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
+  const { data: categories } = await categoryQuery;
 
   const buildUrl = (p: number) => {
     const params = new URLSearchParams();
@@ -76,7 +79,7 @@ export default async function ProductsPage({
 
   return (
     <div className="space-y-6">
-      <ProductsHeader />
+      <ProductsHeader categories={categories} />
 
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

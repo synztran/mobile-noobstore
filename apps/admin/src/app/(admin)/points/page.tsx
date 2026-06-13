@@ -407,24 +407,20 @@ function RulesTab() {
                   <option value="fixed_per_action">Fixed per Action</option>
                 </select>
               </div>
-              <div>
-                <label className="text-body mb-1 block text-sm font-medium">
-                  {editForm.rate_type === "percentage_of_amount"
+              <NumberInput
+                value={editForm.rate_value}
+                onChange={(v) =>
+                  setEditForm({ ...editForm, rate_value: v ?? 0 })
+                }
+                min={0}
+                step={editForm.rate_type === "percentage_of_amount" ? 0.01 : 1}
+                className="w-full"
+                label={
+                  editForm.rate_type === "percentage_of_amount"
                     ? "Rate (%)  e.g. 0.1 = 0.1%"
-                    : "Points per Action"}
-                </label>
-                <NumberInput
-                  value={editForm.rate_value}
-                  onChange={(v) =>
-                    setEditForm({ ...editForm, rate_value: v ?? 0 })
-                  }
-                  min={0}
-                  step={
-                    editForm.rate_type === "percentage_of_amount" ? 0.01 : 1
-                  }
-                  className="w-full"
-                />
-              </div>
+                    : "Points per Action"
+                }
+              />
               <div>
                 <label className="text-body mb-1 block text-sm font-medium">
                   Description
@@ -709,36 +705,28 @@ function GiftCardsTab() {
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-body mb-1 block text-sm font-medium">
-                      Points Value
-                    </label>
-                    <NumberInput
-                      value={createForm.points_value}
-                      onChange={(v) =>
-                        setCreateForm({ ...createForm, points_value: v })
-                      }
-                      min={0}
-                      step={50}
-                      required
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-body mb-1 block text-sm font-medium">
-                      Quantity
-                    </label>
-                    <NumberInput
-                      value={createForm.quantity}
-                      onChange={(v) =>
-                        setCreateForm({ ...createForm, quantity: v })
-                      }
-                      min={0}
-                      step={1}
-                      required
-                      className="w-full"
-                    />
-                  </div>
+                  <NumberInput
+                    value={createForm.points_value}
+                    onChange={(v) =>
+                      setCreateForm({ ...createForm, points_value: v })
+                    }
+                    min={0}
+                    step={50}
+                    required
+                    className="w-full"
+                    label="Point Value"
+                  />
+                  <NumberInput
+                    value={createForm.quantity}
+                    onChange={(v) =>
+                      setCreateForm({ ...createForm, quantity: v })
+                    }
+                    min={0}
+                    step={1}
+                    required
+                    className="w-full"
+                    label="Quantity"
+                  />
                 </div>
                 <div>
                   <label className="text-body mb-1 block text-sm font-medium">

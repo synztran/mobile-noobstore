@@ -4,6 +4,8 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import NumberInput from "@/components/ui/NumberInput";
+import InputSelection from "../ui/InputSelection";
+import { formatVND } from "@/lib/currency";
 
 type VoucherRewardType =
   | "amount_off"
@@ -58,18 +60,30 @@ type Props = {
   voucher?: VoucherRow;
 };
 
-const REWARD_TYPES: VoucherRewardType[] = [
-  "amount_off",
-  "percent_off",
-  "free_shipping",
+const REWARD_TYPES: {
+  value: VoucherRewardType;
+  label: string;
+}[] = [
+  {
+    value: "amount_off",
+    label: "Giảm giá trực tiếp",
+  },
+  {
+    value: "percent_off",
+    label: "Giảm giá theo phần trăm",
+  },
+  {
+    value: "free_shipping",
+    label: "Free Shipping",
+  },
 ];
 
-const STATUSES: VoucherStatus[] = [
-  "draft",
-  "active",
-  "scheduled",
-  "expired",
-  "disabled",
+const STATUSES: { value: VoucherStatus; label: string }[] = [
+  { value: "draft", label: "Draft" },
+  { value: "active", label: "Active" },
+  { value: "scheduled", label: "Scheduled" },
+  { value: "expired", label: "Expired" },
+  { value: "disabled", label: "Disabled" },
 ];
 
 function toDateTimeLocal(value: string | null) {
@@ -96,11 +110,11 @@ export default function VoucherFormModal({
   const [description, setDescription] = useState("");
   const [rewardType, setRewardType] = useState<VoucherRewardType>("amount_off");
   const [percentOff, setPercentOff] = useState("");
-  const [amountOff, setAmountOff] = useState("");
+  const [amountOff, setAmountOff] = useState<number | null>(null);
   const [usageLimitTotal, setUsageLimitTotal] = useState("");
   const [usageLimitPerUser, setUsageLimitPerUser] = useState("");
   const [status, setStatus] = useState<VoucherStatus>("draft");
-  const [minOrderAmount, setMinOrderAmount] = useState("0");
+  const [minOrderAmount, setMinOrderAmount] = useState<number | null>(null);
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
   const [stackable, setStackable] = useState(false);
@@ -118,7 +132,7 @@ export default function VoucherFormModal({
         voucher.percent_off === null ? "" : String(voucher.percent_off)
       );
       setAmountOff(
-        voucher.amount_off === null ? "" : String(voucher.amount_off)
+        voucher.amount_off === null ? 0 : Number(voucher.amount_off)
       );
       setUsageLimitTotal(
         voucher.usage_limit_total === null
@@ -131,7 +145,7 @@ export default function VoucherFormModal({
           : String(voucher.usage_limit_per_user)
       );
       setStatus(voucher.status ?? "draft");
-      setMinOrderAmount(String(voucher.min_order_amount ?? 0));
+      setMinOrderAmount(voucher.min_order_amount ?? null);
       setStartAt(toDateTimeLocal(voucher.start_at));
       setEndAt(toDateTimeLocal(voucher.end_at));
       setStackable(Boolean(voucher.stackable));
@@ -143,11 +157,11 @@ export default function VoucherFormModal({
     setDescription("");
     setRewardType("amount_off");
     setPercentOff("");
-    setAmountOff("");
+    setAmountOff(null);
     setUsageLimitTotal("");
     setUsageLimitPerUser("");
     setStatus("draft");
-    setMinOrderAmount("0");
+    setMinOrderAmount(null);
     setStartAt("");
     setEndAt("");
     setStackable(false);
@@ -176,20 +190,17 @@ export default function VoucherFormModal({
   const discountField = useMemo(() => {
     if (rewardType === "amount_off") {
       return (
-        <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Amount Off (VND) <span className="text-red-500">*</span>
-          </label>
-          <NumberInput
-            value={amountOff === "" ? null : Number(amountOff)}
-            onChange={(v) => setAmountOff(v != null ? String(v) : "")}
-            min={1}
-            step="0.01"
-            required
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="50000"
-          />
-        </div>
+        <NumberInput
+          value={amountOff}
+          onChange={(v) => setAmountOff(v != null ? Number(v) : 0)}
+          min={1}
+          step="0.01"
+          required
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="50000"
+          label="Amount Off (VND)"
+          subLabel={formatVND(amountOff ?? 0)}
+        />
       );
     }
 
@@ -208,6 +219,8 @@ export default function VoucherFormModal({
             required
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="10"
+            label="Percent Off (%)"
+            subLabel="Enter the percentage to discount"
           />
         </div>
       );
@@ -232,10 +245,7 @@ export default function VoucherFormModal({
       code: code.trim().toUpperCase(),
       description: description.trim() || null,
       reward_type: rewardType,
-      amount_off:
-        rewardType === "amount_off" && amountOff.trim()
-          ? Number(amountOff)
-          : null,
+      amount_off: rewardType === "amount_off" ? Number(amountOff) : null,
       percent_off:
         rewardType === "percent_off" && percentOff.trim()
           ? Number(percentOff)
@@ -247,7 +257,7 @@ export default function VoucherFormModal({
         ? Number(usageLimitPerUser)
         : null,
       status,
-      min_order_amount: minOrderAmount.trim() ? Number(minOrderAmount) : 0,
+      min_order_amount: minOrderAmount ?? null,
       start_at: startAt ? new Date(startAt).toISOString() : null,
       end_at: endAt ? new Date(endAt).toISOString() : null,
       stackable,
@@ -416,108 +426,62 @@ export default function VoucherFormModal({
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Description
-                </label>
-                <textarea
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Optional description"
-                />
-              </div>
-
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Reward Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
+                <InputSelection
+                  label="Reward Type"
+                  options={REWARD_TYPES}
                   value={rewardType}
                   onChange={(e) =>
                     setRewardType(e.target.value as VoucherRewardType)
                   }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {REWARD_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
+                  required
+                />
               </div>
 
               {discountField}
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Status <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
+                <InputSelection
+                  label="Status"
+                  options={STATUSES}
                   value={status}
                   onChange={(e) => setStatus(e.target.value as VoucherStatus)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {STATUSES.map((statusOption) => (
-                    <option key={statusOption} value={statusOption}>
-                      {statusOption}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Min Order Amount (VND)
-                </label>
-                <NumberInput
-                  value={minOrderAmount === "" ? null : Number(minOrderAmount)}
-                  onChange={(v) =>
-                    setMinOrderAmount(v != null ? String(v) : "")
-                  }
-                  min={0}
-                  step="0.01"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
+                  required
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Usage Limit Total
-                </label>
-                <NumberInput
-                  value={
-                    usageLimitTotal === "" ? null : Number(usageLimitTotal)
-                  }
-                  onChange={(v) =>
-                    setUsageLimitTotal(v != null ? String(v) : "")
-                  }
-                  min={1}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Leave blank for unlimited"
-                />
-              </div>
+              <NumberInput
+                value={minOrderAmount}
+                onChange={(v) => setMinOrderAmount(v ?? null)}
+                min={0}
+                step="0.01"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+                label="Min Order Amount (VND)"
+                subLabel={formatVND(minOrderAmount ?? 0)}
+              />
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Usage Limit Per User
-                </label>
-                <NumberInput
-                  value={
-                    usageLimitPerUser === "" ? null : Number(usageLimitPerUser)
-                  }
-                  onChange={(v) =>
-                    setUsageLimitPerUser(v != null ? String(v) : "")
-                  }
-                  min={1}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Leave blank for unlimited"
-                />
-              </div>
+              <NumberInput
+                value={usageLimitTotal === "" ? null : Number(usageLimitTotal)}
+                onChange={(v) => setUsageLimitTotal(v != null ? String(v) : "")}
+                min={1}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Leave blank for unlimited"
+                label="Usage Limit Total"
+              />
+
+              <NumberInput
+                value={
+                  usageLimitPerUser === "" ? null : Number(usageLimitPerUser)
+                }
+                onChange={(v) =>
+                  setUsageLimitPerUser(v != null ? String(v) : "")
+                }
+                min={1}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Leave blank for unlimited"
+                label="Usage Limit Per User"
+              />
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -542,6 +506,19 @@ export default function VoucherFormModal({
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Description
+              </label>
+              <textarea
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Optional description"
+              />
             </div>
 
             <label className="flex items-center gap-2 text-sm text-slate-700">

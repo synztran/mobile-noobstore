@@ -1,6 +1,7 @@
 "use client";
 
 import type { Tables } from "@/lib/supabase/database.types";
+import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { createBrowserClient } from "@supabase/ssr";
 import type { Session, User } from "@supabase/supabase-js";
 import {
@@ -17,6 +18,45 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key"
 );
+
+function clearUserCookie() {
+  if (typeof document === "undefined") return;
+
+  const cookieNames = document.cookie
+    .split(";")
+    .map((cookie) => cookie.trim().split("=")[0])
+    .filter(
+      (name) =>
+        name.startsWith("sb-") &&
+        (name.includes("-auth-token") || name.includes("-auth-token."))
+    );
+
+  const expires = "expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  const maxAge = "max-age=0";
+  const paths = ["/"];
+  const domains = [
+    undefined,
+    window.location.hostname,
+    `.${window.location.hostname}`,
+  ];
+
+  cookieNames.forEach((name) => {
+    paths.forEach((path) => {
+      domains.forEach((domain) => {
+        document.cookie = [
+          `${name}=`,
+          expires,
+          maxAge,
+          `path=${path}`,
+          domain ? `domain=${domain}` : "",
+          "SameSite=Lax",
+        ]
+          .filter(Boolean)
+          .join("; ");
+      });
+    });
+  });
+}
 
 interface AuthContextValue {
   user: User | null;
@@ -179,7 +219,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    clearUserCookie();
+    setSession(null);
+    setUser(null);
     setProfile(null);
+    useDiscountStore.persist.clearStorage();
+    useCartStore.persist.clearStorage();
+    useCheckoutStore.persist.clearStorage();
   };
 
   const signInWithGoogle = async () => {

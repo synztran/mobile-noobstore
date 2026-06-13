@@ -1,3 +1,5 @@
+import { ITag } from "@/app/api/products/route";
+
 export interface Product {
   id: string;
   name: string;
@@ -6,6 +8,8 @@ export interface Product {
   stock_quantity: number;
   thumbnail?: string | null;
   variants?: ProductVariant[];
+  is_used?: boolean;
+  tags?: ITag[];
 }
 
 export interface ProductVariant {

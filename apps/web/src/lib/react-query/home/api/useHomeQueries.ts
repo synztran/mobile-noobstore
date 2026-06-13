@@ -7,72 +7,68 @@ import { appQueryKeys } from "@/lib/react-query/root";
 import { useQuery } from "@tanstack/react-query";
 
 export function useHomeHero() {
-	return useQuery<HeroCampaign[]>({
-		...appQueryKeys.home.hero,
-		queryFn: async () => {
-			const res = await fetch("/api/home/hero");
-			if (!res.ok) return [];
-			const data = await res.json();
-			return Array.isArray(data) ? data : [];
-		},
-	});
+  return useQuery<HeroCampaign[]>({
+    ...appQueryKeys.home.hero,
+    queryFn: async () => {
+      const res = await fetch("/api/home/hero");
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
 }
 
 export function useHomeCommunityGallery(limit: number) {
-	return useQuery<{ photos: CommunityPhoto[]; hasMore: boolean }>({
-		...appQueryKeys.home.communityGallery(limit),
-		queryFn: async () => {
-			const res = await fetch(
-				`/api/home/community-gallery?limit=${limit + 1}`,
-			);
-			if (!res.ok) return { photos: [], hasMore: false };
-			const raw = await res.json();
-			const all: CommunityPhoto[] = Array.isArray(raw) ? raw : [];
-			return {
-				photos: all.slice(0, limit),
-				hasMore: all.length > limit,
-			};
-		},
-		placeholderData: (prev) => prev,
-	});
+  return useQuery<{ photos: CommunityPhoto[]; hasMore: boolean }>({
+    ...appQueryKeys.home.communityGallery(limit),
+    queryFn: async () => {
+      const res = await fetch(`/api/home/community-gallery?limit=${limit + 1}`);
+      if (!res.ok) return { photos: [], hasMore: false };
+      const raw = await res.json();
+      const all: CommunityPhoto[] = Array.isArray(raw) ? raw : [];
+      return {
+        photos: all.slice(0, limit),
+        hasMore: all.length > limit,
+      };
+    },
+    placeholderData: (prev) => prev,
+  });
 }
 
 export function useHomeNoteworthy(categorySlug: string) {
-	return useQuery<ShopProduct[]>({
-		...appQueryKeys.home.noteworthy(categorySlug),
-		queryFn: async () => {
-			const query = new URLSearchParams({ limit: "8" });
-			if (categorySlug) query.set("category", categorySlug);
-			const res = await fetch(
-				`/api/products/noteworthy?${query.toString()}`,
-			);
-			if (!res.ok) throw new Error("Failed to fetch noteworthy products");
-			const data = (await res.json()) as { products?: ShopProduct[] };
-			return data.products ?? [];
-		},
-	});
+  return useQuery<ShopProduct[]>({
+    ...appQueryKeys.home.noteworthy(categorySlug),
+    queryFn: async () => {
+      const query = new URLSearchParams({ limit: "7" });
+      if (categorySlug) query.set("category", categorySlug);
+      const res = await fetch(`/api/products/noteworthy?${query.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch noteworthy products");
+      const data = (await res.json()) as { products?: ShopProduct[] };
+      return data.products ?? [];
+    },
+  });
 }
 
 export function useHomeTrustProps() {
-	return useQuery<TrustProp[]>({
-		...appQueryKeys.home.trustProps,
-		queryFn: async () => {
-			const res = await fetch("/api/home/trust-props");
-			if (!res.ok) return [];
-			const data = await res.json();
-			return Array.isArray(data) ? data : [];
-		},
-	});
+  return useQuery<TrustProp[]>({
+    ...appQueryKeys.home.trustProps,
+    queryFn: async () => {
+      const res = await fetch("/api/home/trust-props");
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
 }
 
 export function useHomeCreators() {
-	return useQuery<Creator[]>({
-		...appQueryKeys.home.creators,
-		queryFn: async () => {
-			const res = await fetch("/api/home/creators");
-			if (!res.ok) return [];
-			const data = await res.json();
-			return Array.isArray(data) ? data : [];
-		},
-	});
+  return useQuery<Creator[]>({
+    ...appQueryKeys.home.creators,
+    queryFn: async () => {
+      const res = await fetch("/api/home/creators");
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
 }

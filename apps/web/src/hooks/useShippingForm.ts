@@ -164,6 +164,11 @@ export function useShippingForm() {
     postalCode: "",
     phoneNumber: profile?.phone_number ?? "",
   });
+  const [customerLocation, setCustomerLocation] = useState<{
+    lat: number;
+    lon: number;
+    label: string;
+  } | null>(null);
 
   const getCityCode = useCallback((cityName: string) => {
     return VIETNAM_CITIES.find((c) => c.name === cityName)?.code ?? "";
@@ -474,6 +479,12 @@ export function useShippingForm() {
           setDistanceKm(
             typeof data.distance_km === "number" ? data.distance_km : null
           );
+          setCustomerLocation({
+            lat: typeof data.lat === "number" ? data.lat : 0,
+            lon: typeof data.lon === "number" ? data.lon : 0,
+            label:
+              `${form.streetAddress}, ${form.ward ? form.ward + ", " : ""}${form.district ? form.district + ", " : ""}${form.city}`.trim(),
+          });
         }
       } catch (err) {
         if (!cancelled) {
@@ -540,5 +551,6 @@ export function useShippingForm() {
     baseBasicFee,
     immediateFee,
     basicFee,
+    customerLocation,
   };
 }

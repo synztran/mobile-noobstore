@@ -157,18 +157,14 @@ export default function ProductComponentFormModal({
                 />
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Max Quantity
-                </label>
-                <NumberInput
-                  value={maxQuantity === "" ? null : Number(maxQuantity)}
-                  onChange={(v) => setMaxQuantity(v != null ? String(v) : "")}
-                  min={1}
-                  placeholder="Optional"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <NumberInput
+                value={maxQuantity === "" ? null : Number(maxQuantity)}
+                onChange={(v) => setMaxQuantity(v != null ? String(v) : "")}
+                min={1}
+                placeholder="Optional"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                label="Max Quantity (empty = unlimited)"
+              />
             </div>
 
             <label className="flex items-center gap-2 text-sm text-slate-700">
