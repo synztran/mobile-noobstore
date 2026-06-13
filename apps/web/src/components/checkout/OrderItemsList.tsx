@@ -59,7 +59,7 @@ export function OrderItemsList({
               )}
               {/* Product info */}
               <div
-                className={`flex items-start gap-4 ${isOos ? "opacity-50" : ""}`}
+                className={`flex items-start gap-2 ${isOos ? "opacity-50" : ""}`}
               >
                 {/* Product thumbnail */}
                 <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-surface-container">
@@ -100,7 +100,7 @@ export function OrderItemsList({
                     )}
                   </div>
                 </div>
-                <span className="flex-shrink-0 rounded-full bg-surface-container px-2.5 py-1 text-xs font-bold text-on-surface-variant">
+                <span className="flex-shrink-0 rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">
                   x{item.quantity}
                 </span>
               </div>

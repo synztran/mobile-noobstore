@@ -40,7 +40,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="glass-nav fixed bottom-3 left-2 right-2 z-50 mx-auto flex w-full max-w-[70vw] items-center justify-between rounded-xl !bg-[rgba(255,255,255,0.5)] p-2">
+    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[70vw] items-center justify-between rounded-xl !bg-[rgba(255,255,255,0.5)] p-2">
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         return (

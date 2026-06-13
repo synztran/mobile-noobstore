@@ -107,7 +107,7 @@ const CartItemRow = memo(function CartItemRow({
             ))}
           </div>
         )}
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-3 rounded-full bg-gray-200 px-2 py-1">
             <button
               onClick={() => onMinus(item)}
@@ -213,7 +213,7 @@ export function CartDrawer() {
 
   const handleCheckout = useCallback(() => {
     if (checkingOut) return;
-    if (user) {
+    if (user == null) {
       toast.warning("Cần đăng nhập để thanh toán!");
       router.push("/login");
     }
@@ -221,7 +221,7 @@ export function CartDrawer() {
     router.push("/checkout/shipping");
     closeCart();
     setCheckingOut(false);
-  }, [checkingOut, router, closeCart]);
+  }, [checkingOut, router, closeCart, user]);
 
   usePreventScroll(drawerOpen);
 

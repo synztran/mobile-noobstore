@@ -130,8 +130,8 @@ export function VoucherCard({
       <div
         className={`border-b border-primary/10 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.16),transparent_42%),linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,247,255,0.96))] p-4 ${!isValid ? "bg-opacity-50" : ""}`}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-start gap-2">
             <div
               className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-primary text-white shadow-lg shadow-primary/20 ${!isValid ? "opacity-50" : ""}`}
             >
@@ -175,19 +175,19 @@ export function VoucherCard({
           </div>
           <div className="flex items-center gap-2">
             <div className="w-full rounded-2xl bg-surface-container px-3 py-2.5">
-              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
-                Đơn hàng tối thiểu
+              <p className="text-[8px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
+                Đơn tối thiểu
               </p>
               <p className="mt-1 text-sm font-bold text-on-surface">
                 {voucher.min_order_amount > 0
                   ? formatVND(voucher.min_order_amount)
-                  : "Khong yeu cau"}
+                  : "Không yêu cầu"}
               </p>
             </div>
             {voucher.max_discount_amount &&
             parseFloat(String(voucher.max_discount_amount)) > 0 ? (
               <div className="w-full rounded-2xl bg-surface-container px-3 py-2.5">
-                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
+                <p className="text-[8px] font-black uppercase tracking-[0.22em] text-on-surface-variant">
                   Giảm tối đa
                 </p>
                 <p className="mt-1 text-sm font-bold text-on-surface">

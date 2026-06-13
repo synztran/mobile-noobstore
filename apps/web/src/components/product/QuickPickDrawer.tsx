@@ -473,11 +473,11 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     <div className="flex min-h-0 flex-col gap-3">
       {/* Selected product header */}
       {activeProduct && (
-        <div className="flex items-center gap-3 rounded-2xl bg-surface-container p-3">
+        <div className="flex items-center gap-2 rounded-2xl bg-surface-container p-2">
           <Thumbnail
             src={activeProduct.thumbnail}
             alt={activeProduct.name}
-            className="h-20 w-20 rounded-xl"
+            className="h-20 w-24 rounded-xl"
           />
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 font-black uppercase leading-tight text-on-surface">
@@ -582,8 +582,8 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 
         {/* Sticky footer (only in configurator view) */}
         {state.view === "configurator" && (
-          <div className="flex flex-shrink-0 items-center gap-8 border-t border-outline-variant/20 px-4 py-4">
-            <div>
+          <div className="grid grid-cols-[1fr_1fr] items-center gap-4 border-t border-outline-variant/20 px-4 py-4">
+            <div className="w-full">
               <p className="text-base font-semibold text-on-surface-variant">
                 Tạm tính
               </p>

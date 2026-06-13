@@ -324,7 +324,7 @@ export default function SummaryPage() {
         <button
           onClick={handleConfirmOrder}
           disabled={submitting}
-          className="primary-gradient flex w-full items-center justify-center gap-2 py-4 text-sm font-black uppercase tracking-widest text-white transition-opacity active:opacity-90 disabled:opacity-60"
+          className="primary-gradient flex w-full items-center justify-center gap-2 rounded-b-3xl py-4 text-sm font-black uppercase tracking-widest text-white transition-opacity active:opacity-90 disabled:opacity-60"
         >
           {submitting ? (
             <span className="loading loading-spinner loading-sm" />

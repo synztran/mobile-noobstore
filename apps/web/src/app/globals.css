@@ -105,6 +105,14 @@
   }
 }
 
+@layer components {
+  /* Target the gooey-toast wrapper, specifically when it's positioned at the top */
+  section[data-gooey-viewport][data-position*="top"] {
+    /* Push the container down by the height of the notch */
+    padding-top: env(safe-area-inset-top, 20px) !important;
+  }
+}
+
 @layer utilities {
   /* Material Symbols font removed — using lucide-react SVG icons instead */
 
