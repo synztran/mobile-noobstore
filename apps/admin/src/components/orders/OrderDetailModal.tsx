@@ -44,7 +44,7 @@ interface OrderService {
   services: { base_price: number } | null;
 }
 
-interface OrderDetail {
+export interface OrderDetail {
   id: string;
   order_number: string;
   status: string;
@@ -387,7 +387,8 @@ export default function OrderDetailModal({
             {/* Actions — pinned at bottom of left column */}
             {order && !isLoading && (
               <OrderActionBar
-                orderId={order.id}
+                // orderId={order.id}
+                order={order}
                 currentStatus={order.status}
                 onUpdated={handleUpdated}
               />
