@@ -192,6 +192,7 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
         tokenCount={tokenCount}
         eventId={eventId}
         onInsertToken={handleInsertToken}
+        onInsert10xTokens={handleInsert10xTokens}
         onKnobTurnComplete={handleKnobTurnComplete}
         onBallClick={handleBallClick}
         onReset={handleReset}
