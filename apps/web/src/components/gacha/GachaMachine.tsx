@@ -85,6 +85,42 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
     setPhase("token-inserted");
   }, [phase]);
 
+  const handleInsert10xTokens = useCallback(() => {
+    if (phase !== "idle") return;
+    if (tokenCount === null || tokenCount < 10) return;
+    
+    const newPhase = tokenCount >= 10 ? "dispensing" : "token-inserted";
+    setPhase(newPhase);
+    setTokenCount((prev) => (prev !== null ? Math.max(0, prev - 10) : prev));
+    
+    // If we have enough tokens, start the draw immediately
+    if (tokenCount >= 10) {
+      const idx = Math.floor(Math.random() * BALL_PALETTE.length);
+      setRewardIndex(idx);
+      setReward(null);
+      setDrawError(null);
+      
+      drawMutation.mutate(eventId, {
+        onSuccess: (data) => {
+          if (data.reward) {
+            setReward(data.reward);
+            setRewardIndex(rewardToColorIndex(data.reward));
+            setTokenCount((prev) =>
+              prev != null ? Math.max(0, prev - 1) : prev
+            );
+            setPhase("rolling");
+            queryClient.invalidateQueries(appQueryKeys.gacha.missions(eventId));
+          }
+        },
+        onError: (err: Error) => {
+          setDrawError(err.message);
+          setRewardIndex(null);
+          setPhase("idle");
+        },
+      });
+    }
+  }, [phase, tokenCount, eventId, drawMutation, queryClient]);
+
   const handleKnobTurnComplete = useCallback(() => {
     if (phase !== "token-inserted") return;
 

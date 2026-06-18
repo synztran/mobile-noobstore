@@ -11,35 +11,37 @@ interface InsertButtonProps {
 }
 
 export const InsertButton = ({
-	onClick,
-	disabled = false,
-	hasToken = false,
-	noTokens = false,
-}: InsertButtonProps) => {
-	const bg = hasToken
+  onClick,
+  disabled = false,
+  hasToken = false,
+  noTokens = false,
+  on10xClick,
+  tokenCount,
+}: InsertButtonProps & { on10xClick?: () => void; tokenCount?: number | null }) => {
+  const bg = hasToken
 		? "linear-gradient(145deg, #4ade80 0%, #16a34a 100%)"
 		: "linear-gradient(145deg, #fbbf24 0%, #d97706 100%)";
 
-	const glow = hasToken
+  const glow = hasToken
 		? "0 5px 22px rgba(74,222,128,0.48), 0 2px 6px rgba(0,0,0,0.12)"
 		: "0 5px 22px rgba(251,191,36,0.48), 0 2px 6px rgba(0,0,0,0.12)";
 
-	const sweepGradient = hasToken
+  const sweepGradient = hasToken
 		? "conic-gradient(from 0deg, transparent 0%, #4ade80 18%, #bbf7d0 22%, #4ade80 26%, transparent 44%)"
 		: "conic-gradient(from 0deg, transparent 0%, #fbbf24 18%, #fef9c3 22%, #fbbf24 26%, transparent 44%)";
 
-	// Drive rotation with rAF — never resets to 0, speed lerps on hasToken change
-	const rotateMV = useMotionValue(0);
-	const speedRef = useRef(360 / 2200); // deg/ms
+  // Drive rotation with rAF — never resets to 0, speed lerps on hasToken change
+  const rotateMV = useMotionValue(0);
+  const speedRef = useRef(360 / 2200); // deg/ms
 
-	useAnimationFrame((_, delta) => {
+  useAnimationFrame((_, delta) => {
 		if (disabled) return;
 		const target = 360 / (hasToken ? 1400 : 2200);
 		speedRef.current += (target - speedRef.current) * 0.08;
 		rotateMV.set(rotateMV.get() + speedRef.current * delta);
 	});
 
-	return (
+  return (
 		<div className="relative w-full">
 			{/* Running border wrapper — overflow:hidden clips the spinning gradient */}
 			<div
@@ -98,6 +100,20 @@ export const InsertButton = ({
 						)}
 					</div>
 				</motion.button>
+
+				{/* 10x button below */}
+				<div className="mt-2">
+					<motion.button
+						type="button"
+						onClick={on10xClick}
+						disabled={disabled || noTokens || tokenCount === null || tokenCount < 10}
+						className="w-full flex items-center justify-center gap-1 font-semibold text-xs uppercase text-white select-none h-8 rounded-[12px] bg-gradient-to-r from-gray-600 to-gray-700 border border-gray-500/30"
+						whileTap={disabled || noTokens || tokenCount === null || tokenCount < 10 ? {} : { scale: 0.95 }}
+						transition={{ type: "spring", stiffness: 400, damping: 25 }}
+					>
+						10x
+					</motion.button>
+				</div>
 			</div>
 		</div>
 	);

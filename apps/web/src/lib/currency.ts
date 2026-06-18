@@ -15,6 +15,36 @@ export function formatVND(amount: number): string {
 }
 
 /**
+ * Format a number as Vietnamese Dong abbreviated with K suffix for thousands.
+ *
+ * Examples:
+ *   formatShortVND(285000)   → "285K"
+ *   formatShortVND(1500000)  → "1.5M"
+ *   formatShortVND(0)        → "0"
+ */
+export function formatShortVND(amount: number): string {
+	if (amount === 0) return "0";
+	if (amount < 1000) return amount.toString();
+	
+	const absAmount = Math.abs(amount);
+	let value = amount;
+	let suffix = "";
+	
+	if (absAmount >= 1000000) {
+		value = amount / 1000000;
+		suffix = "M";
+	} else {
+		value = amount / 1000;
+		suffix = "K";
+	}
+	
+	// Format with up to 1 decimal place, removing trailing .0
+	const formatted = value % 1 === 0 ? value.toString() : value.toFixed(1);
+	
+	return formatted + suffix;
+}
+
+/**
  * Render a price as a canvas image (base64) to prevent easy data crawling.
  * Usage: <img src={renderPriceAsImage(285000)} alt="285.000 ₫" />
  */

@@ -39,21 +39,22 @@ interface MachineCabinetProps {
 }
 
 export const MachineCabinet = memo(function MachineCabinet({
-	phase,
-	rewardIndex,
-	reward,
-	drawError,
-	tokenCount,
-	eventId,
-	onInsertToken,
-	onKnobTurnComplete,
-	onBallClick,
-	onReset,
-	onHistoryOpen,
-	onRewardsOpen,
-	onRulesOpen,
-	onMissionsOpen,
-}: MachineCabinetProps) {
+  phase,
+  rewardIndex,
+  reward,
+  drawError,
+  tokenCount,
+  eventId,
+  onInsertToken,
+  onInsert10xTokens,
+  onKnobTurnComplete,
+  onBallClick,
+  onReset,
+  onHistoryOpen,
+  onRewardsOpen,
+  onRulesOpen,
+  onMissionsOpen,
+}: MachineCabinetProps & { onInsert10xTokens?: () => void }) {
 	const isTrayOpen = phase === "rolling" || phase === "reveal";
 
 	return (
@@ -196,6 +197,7 @@ export const MachineCabinet = memo(function MachineCabinet({
 					<div className="px-4 py-2">
 						<InsertButton
 							onClick={onInsertToken}
+							on10xClick={onInsert10xTokens}
 							disabled={
 								phase !== "idle" ||
 								tokenCount === null ||
@@ -203,6 +205,7 @@ export const MachineCabinet = memo(function MachineCabinet({
 							}
 							noTokens={tokenCount === 0}
 							hasToken={phase === "token-inserted"}
+							tokenCount={tokenCount}
 						/>
 					</div>
 
