@@ -47,6 +47,8 @@ export interface ProductListItem {
   /** True when at least one variant is on pre-order (denormalized from DB trigger) */
   is_pre_order: boolean;
   tags: ProductTag[];
+  discount_price: number;
+  discount_percentage: number;
 }
 
 type CategoryRow = { id: string } | null;
@@ -110,6 +112,8 @@ function getTags(product: ProductListItem): ProductTag[] {
       label: "Used",
       id: 2,
       value: "used_product",
+      textColor: "text-white",
+      bgColor: "bg-gray-500",
     });
   }
 
@@ -166,6 +170,16 @@ async function shapeRow(row: RawListRow): Promise<ProductListItem> {
       ? Math.min(...variants.map((variant) => variant.effective_price))
       : Number(row.base_price);
 
+  console.log(
+    `Shaping product row: ${row.id}, base price: ${row.base_price}, lowest variant price: ${minPrice}`
+  );
+  const discountPercentage =
+    minPrice < Number(row.base_price)
+      ? Math.round(
+          ((Number(row.base_price) - minPrice) / Number(row.base_price)) * 100
+        )
+      : 0;
+
   const productType = (row.product_type ?? "standard") as ProductType;
   let effectiveStock = Number(row.stock_quantity ?? 0);
 
@@ -192,6 +206,8 @@ async function shapeRow(row: RawListRow): Promise<ProductListItem> {
     min_price: minPrice,
     is_pre_order: variants.some((v) => v.is_pre_order),
     tags: [],
+    discount_price: minPrice < Number(row.base_price) ? minPrice : 0,
+    discount_percentage: discountPercentage,
   };
 
   shaped.tags = getTags(shaped);

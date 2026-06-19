@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore } from "@/store";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type DeliverySpeed = "standard" | "express" | "shipment";
 const OPEN_WORKING = {
@@ -143,6 +143,7 @@ export function useShippingForm() {
   const { profile, user } = useAuth();
 
   const [mounted, setMounted] = useState(false);
+  const [ready, setReady] = useState(false);
   const [delivery, setDelivery] = useState<DeliverySpeed>("standard");
   const [cityTouched, setCityTouched] = useState(false);
   const [immediatePricePerKm, setImmediatePricePerKm] = useState(12000);
@@ -215,31 +216,29 @@ export function useShippingForm() {
     setMounted(true);
   }, []);
 
-  const fetchFeesConfig = useCallback(async () => {
-    try {
-      const res = await fetch("/api/fees", {
-        credentials: "include",
-      });
-
-      if (!res.ok) return;
-
-      const data = (await res.json()) as Partial<FeesConfigResponse>;
-
-      if (typeof data.delivery_immediate_price === "number") {
-        setImmediatePricePerKm(data.delivery_immediate_price);
-      }
-
-      if (typeof data.delivery_basic_price === "number") {
-        setBasicPricePerKm(data.delivery_basic_price);
-      }
-    } catch {
-      // Keep default local fallback fees when endpoint fails.
-    }
-  }, []);
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    void fetchFeesConfig();
-  }, [fetchFeesConfig]);
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    fetch("/api/fees", { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) return;
+        return res.json() as Promise<Partial<FeesConfigResponse>>;
+      })
+      .then((data) => {
+        if (!data) return;
+        if (typeof data.delivery_immediate_price === "number") {
+          setImmediatePricePerKm(data.delivery_immediate_price);
+        }
+        if (typeof data.delivery_basic_price === "number") {
+          setBasicPricePerKm(data.delivery_basic_price);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setReady(true));
+  }, []);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -525,6 +524,7 @@ export function useShippingForm() {
   const orderTotal = subtotal + shippingCost;
 
   return {
+    ready,
     distanceKm,
     distanceFee,
     isCalculatingFee,

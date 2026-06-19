@@ -13,8 +13,9 @@ import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm } from "@/hooks/useShippingForm";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
-import { Mailbox, MapPinHouse, Phone, Truck } from "lucide-react";
-import { useMemo } from "react";
+import { MapPinHouse, Phone, Truck } from "lucide-react";
+import { memo, useMemo } from "react";
+import { ShippingPageSkeleton } from "./ShippingPageSkeleton";
 
 const FIELDS = [
   {
@@ -44,15 +45,6 @@ const FIELDS = [
     required: false,
     colSpan: 1,
   },
-  // {
-  //   name: "postalCode",
-  //   label: "Mã bưu điện",
-  //   placeholder: "70000",
-  //   icon: <Mailbox size={20} />,
-  //   type: "text",
-  //   required: false,
-  //   colSpan: 1,
-  // },
   {
     name: "phoneNumber",
     label: "Số điện thoại",
@@ -66,6 +58,7 @@ const FIELDS = [
 
 const ShippingPage = () => {
   const {
+    ready,
     form,
     setForm,
     distanceKm,
@@ -125,6 +118,10 @@ const ShippingPage = () => {
       };
     });
   }, [immediateFee, basicFee, isHCM]);
+
+  if (!ready) {
+    return <ShippingPageSkeleton />;
+  }
 
   return (
     <div className="space-y-8">
@@ -470,4 +467,4 @@ const ShippingPage = () => {
   );
 };
 
-export default withAuthRedirect(ShippingPage);
+export default withAuthRedirect(memo(ShippingPage));

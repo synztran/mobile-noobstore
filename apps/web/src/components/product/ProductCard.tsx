@@ -10,6 +10,7 @@ import { useState } from "react";
 import ProductComponentTags from "./ProductComponentTags";
 import { QuickPickDrawer } from "./QuickPickDrawer";
 import { StockIndicator } from "./StockIndicator";
+import DiscountBadge from "./DiscountBadge";
 
 // ─── Skeleton ─────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  console.log("product", product);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
@@ -80,7 +82,7 @@ export function ProductCard({ product }: ProductCardProps) {
 								{product.variants.length > 1 ? "s" : ""}
 							</span>
 						)} */}
-
+            <DiscountBadge discountPercent={product.discount_percentage || 0} />
             <ProductComponentTags horizontalTags={product?.tags} />
 
             {!product.stock_quantity && (
@@ -93,19 +95,30 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
 
           {/* ── Details ─────────────────────────────────────────────── */}
-          <div className="space-y-1">
+          <div className="relative">
             <p className="truncate text-[12px] font-extrabold tracking-[0.1em] text-primary">
               {product.brand || product.category}
             </p>
-            <h3 className="truncate font-bold capitalize text-on-surface">
+            <h3 className="truncate text-sm font-bold capitalize text-on-surface">
               {product.name}
             </h3>
-            <p className="line-clamp-2 text-xs tracking-normal">
+            <p className="line-clamp-2 text-[10px] tracking-normal">
               {product.description}
             </p>
-            <div className="text-right text-base font-extrabold text-on-surface">
-              {formatVND(product.min_price)}
-            </div>
+            {product.discount_price && product.discount_price > 0 ? (
+              <div>
+                <div className="text-right text-base font-extrabold text-red-600">
+                  {formatVND(product.discount_price)}
+                </div>
+                <div className="text-right text-xs font-bold text-on-surface-variant line-through">
+                  {formatVND(product.base_price)}
+                </div>
+              </div>
+            ) : (
+              <div className="text-right text-base font-extrabold text-primary">
+                {formatVND(product.base_price)}
+              </div>
+            )}
           </div>
         </Link>
 

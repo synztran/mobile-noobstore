@@ -118,51 +118,55 @@ export default function DistanceMap({ targetLocation, isUpdating }: IProps) {
   }
 
   return (
-    <div className="relative h-[300px] w-full overflow-hidden rounded-xl border border-slate-200">
-      <Map
-        // center={[107.5, 11.3]}
-        // zoom={11}
-        className="h-full w-full bg-slate-100"
-      >
-        <FitMapToBounds coordinates={coordinatesToFrame} padding={80} />
-        <MapControls position="bottom-right" showZoom showCompass />
+    <div>
+      <div className="relative h-[300px] w-full overflow-hidden rounded-xl border border-slate-200">
+        <Map
+          // center={[107.5, 11.3]}
+          // zoom={11}
+          className="h-full w-full bg-slate-100"
+        >
+          <FitMapToBounds coordinates={coordinatesToFrame} padding={80} />
+          <MapControls position="bottom-right" showZoom showCompass />
 
-        {/* STORE MARKER (Using a Store Icon inside a rounded badge) */}
-        <MapMarker longitude={storeLocation.lon} latitude={storeLocation.lat}>
-          <MarkerContent>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-md transition-transform hover:scale-110">
-              <Store className="h-5 w-5" />
-            </div>
-          </MarkerContent>
-          <MarkerLabel
-            position="bottom"
-            className="font-semibold text-blue-900"
+          {/* STORE MARKER (Using a Store Icon inside a rounded badge) */}
+          <MapMarker longitude={storeLocation.lon} latitude={storeLocation.lat}>
+            <MarkerContent>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-md transition-transform hover:scale-110">
+                <Store className="h-5 w-5" />
+              </div>
+            </MarkerContent>
+            <MarkerLabel
+              position="bottom"
+              className="font-semibold text-blue-900"
+            >
+              {storeLocation.label}
+            </MarkerLabel>
+          </MapMarker>
+
+          {/* CUSTOMER MARKER (Using a MapPin Icon directly) */}
+          <MapMarker
+            longitude={targetLocation.lon}
+            latitude={targetLocation.lat}
           >
-            {storeLocation.label}
-          </MarkerLabel>
-        </MapMarker>
+            <MarkerContent>
+              {/* drop-shadow makes the clean icon stand out beautifully against the map roads */}
+              <MapPin className="h-8 w-8 text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-transform hover:scale-110" />
+            </MarkerContent>
+            <MarkerLabel position="top" className="font-medium text-slate-800">
+              {targetLocation.label}
+            </MarkerLabel>
+          </MapMarker>
 
-        {/* CUSTOMER MARKER (Using a MapPin Icon directly) */}
-        <MapMarker longitude={targetLocation.lon} latitude={targetLocation.lat}>
-          <MarkerContent>
-            {/* drop-shadow makes the clean icon stand out beautifully against the map roads */}
-            <MapPin className="h-8 w-8 text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-transform hover:scale-110" />
-          </MarkerContent>
-          <MarkerLabel position="top" className="font-medium text-slate-800">
-            {targetLocation.label}
-          </MarkerLabel>
-        </MapMarker>
+          {/* Only draw the route once we have the array of road coordinates */}
+          {routeCoordinates.length > 0 && (
+            <MapRoute
+              coordinates={routeCoordinates}
+              color="#3b82f6" // Switched to a solid blue for driving routes
+              width={4}
+            />
+          )}
 
-        {/* Only draw the route once we have the array of road coordinates */}
-        {routeCoordinates.length > 0 && (
-          <MapRoute
-            coordinates={routeCoordinates}
-            color="#3b82f6" // Switched to a solid blue for driving routes
-            width={4}
-          />
-        )}
-
-        {/* <MapPopup
+          {/* <MapPopup
           longitude={midPoint.lon}
           latitude={midPoint.lat}
           closeButton={false}
@@ -172,16 +176,21 @@ export default function DistanceMap({ targetLocation, isUpdating }: IProps) {
             {isLoading ? "..." : `${drivingDistanceKm} km`}
           </div>
         </MapPopup> */}
-      </Map>
+        </Map>
 
-      <div className="absolute bottom-4 left-4 z-10 rounded-lg border border-slate-200 bg-white/90 p-2 shadow-lg backdrop-blur-md">
-        <div className="border-t border-slate-200 text-sm">
-          <span className="text-slate-500">Khoảng cách tạm tính:</span>
-          <span className="ml-2 font-bold text-slate-900">
-            {isLoading ? "Calculating..." : `${drivingDistanceKm} km`}
-          </span>
+        <div className="absolute bottom-4 left-4 z-10 rounded-lg bg-white/90 px-2 py-1 shadow-lg backdrop-blur-md">
+          <div className="text-xs">
+            <span className="text-slate-500">Khoảng cách tạm tính:</span>
+            <span className="ml-2 font-bold text-slate-900">
+              {isLoading ? "Calculating..." : `${drivingDistanceKm} km`}
+            </span>
+          </div>
         </div>
       </div>
+      <small className="text-[10px] text-slate-500">
+        Lưu ý: Khoảng cách có thể thay đổi tùy thuộc vào điều kiện giao thông
+        thực tế.
+      </small>
     </div>
   );
 }

@@ -158,6 +158,11 @@
   }
 }
 
+
+.maplibregl-ctrl-bottom-right  {
+  display: none;
+}
+
 @keyframes fadeSlideUp {
   from {
     opacity: 0;

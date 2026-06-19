@@ -194,6 +194,7 @@ export default function EditProductModal({ product }: Props) {
                       onChange={(e) => {
                         setCategoryType(e.target.value);
                       }}
+                      disabled={categoryType !== "kit"}
                     />
                   </div>
                   <div className="col-span-1">

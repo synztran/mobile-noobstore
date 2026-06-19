@@ -136,19 +136,21 @@ export function ProductConfigurator({
                         : "border-transparent bg-gray-200 text-on-surface hover:border-outline-variant"
                   )}
                 >
-                  <div className="max-w-26 space-y-1 text-left">
+                  <div className="inline-flex items-center gap-1">
                     <p className="line-clamp-2 text-xs font-bold">
                       {v.variant_name}
                     </p>
                     <p
                       className={clsx(
-                        "text-right text-[10px] text-green-600",
-                        v.price_adjustment !== 0 ? "" : "sr-only"
+                        "text-right text-[10px]",
+                        v.price_adjustment !== 0 ? "" : "sr-only",
+                        v.price_adjustment > 0 ? "text-success" : "text-red-400"
                       )}
                     >
+                      (
                       {v.price_adjustment &&
                         (v.price_adjustment > 0 ? "+" : "-")}
-                      {formatVND(v.price_adjustment)}
+                      {formatVND(v.price_adjustment)})
                     </p>
                   </div>
                   {v.sale_price_percent ? (

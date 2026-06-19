@@ -45,7 +45,7 @@ export const InsertButton = ({
   });
 
   return (
-    <div className="relative grid grid-cols-2 gap-2">
+    <div className="relative grid grid-cols-1 gap-2">
       {/* Running border wrapper — overflow:hidden clips the spinning gradient */}
       <div
         className={`relative overflow-hidden rounded-2xl ${disabled ? "p-0" : "p-0.5"}`}
@@ -107,10 +107,9 @@ export const InsertButton = ({
         </motion.button>
       </div>
 
-      <div
+      {/* <div
         className={`relative overflow-hidden rounded-2xl ${disabled ? "p-0" : "p-0.5"}`}
       >
-        {/* 10x button below */}
         <motion.button
           type="button"
           onClick={on10xClick}
@@ -133,7 +132,7 @@ export const InsertButton = ({
         >
           10x
         </motion.button>
-      </div>
+      </div> */}
     </div>
   );
 };

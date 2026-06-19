@@ -47,12 +47,10 @@ export default function InputSelection({
         onChange={onChange}
         {...rest}
       >
-        {/* Optional: Add a placeholder option if a standard placeholder is passed */}
-        {rest.placeholder && (
-          <option value="" disabled hidden>
-            {rest.placeholder}
-          </option>
-        )}
+        {/* Empty/default option — selected when value is unset or doesn't match any option */}
+        <option value="">
+          {rest.placeholder || `Select ${label?.toLowerCase() || "option"}`}
+        </option>
 
         {/* Map through options */}
         {options.map((opt, index) => {

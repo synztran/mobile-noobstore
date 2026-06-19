@@ -24,3 +24,10 @@ tsconfig.tsbuildinfo
 ./github/
 docs/
 supabase/.temp/
+.agents/
+.clinerules/
+.opencode/
+.cursor/
+.windsurf/
+.github/
+supabase/

@@ -143,12 +143,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {product.base_price.toLocaleString("vi-VN")}₫
               </dd>
             </div>
-            <div className="flex items-baseline gap-1">
+            {/* <div className="flex items-baseline gap-1">
               <dt className="shrink-0 text-slate-400">Stock</dt>
               <dd className="text-slate-600">
                 {product.stock_quantity ?? "—"}
               </dd>
-            </div>
+            </div> */}
             {product.brand && (
               <div className="flex items-baseline gap-1">
                 <dt className="shrink-0 text-slate-400">Brand</dt>

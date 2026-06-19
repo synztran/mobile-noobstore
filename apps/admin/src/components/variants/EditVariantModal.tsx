@@ -7,6 +7,7 @@ import NumberInput from "@/components/ui/NumberInput";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatVND } from "@/lib/currency";
 
 export interface EditableVariant {
   id: string;
@@ -38,10 +39,10 @@ export default function EditVariantModal({ variant }: Props) {
 
   const [variantName, setVariantName] = useState(variant.variant_name);
   const [priceAdjustment, setPriceAdjustment] = useState(
-    variant.price_adjustment === null ? "" : String(variant.price_adjustment)
+    variant.price_adjustment === null ? 0 : variant.price_adjustment
   );
   const [stockQuantity, setStockQuantity] = useState(
-    variant.stock_quantity === null ? "" : String(variant.stock_quantity)
+    variant.stock_quantity === null ? 0 : variant.stock_quantity
   );
   const [isPreOrder, setIsPreOrder] = useState(variant.is_pre_order);
   const [thumbnail, setThumbnail] = useState(variant.thumbnail ?? "");
@@ -59,10 +60,10 @@ export default function EditVariantModal({ variant }: Props) {
     setError(null);
     setVariantName(variant.variant_name);
     setPriceAdjustment(
-      variant.price_adjustment === null ? "" : String(variant.price_adjustment)
+      variant.price_adjustment === null ? 0 : variant.price_adjustment
     );
     setStockQuantity(
-      variant.stock_quantity === null ? "" : String(variant.stock_quantity)
+      variant.stock_quantity === null ? 0 : variant.stock_quantity
     );
     setIsPreOrder(variant.is_pre_order);
     setThumbnail(variant.thumbnail ?? "");
@@ -110,10 +111,8 @@ export default function EditVariantModal({ variant }: Props) {
       body: JSON.stringify({
         id: variant.id,
         variant_name: variantName.trim(),
-        price_adjustment: priceAdjustment.trim()
-          ? Number(priceAdjustment)
-          : null,
-        stock_quantity: stockQuantity.trim() ? Number(stockQuantity) : null,
+        price_adjustment: priceAdjustment ?? 0,
+        stock_quantity: stockQuantity ?? 0,
         is_pre_order: isPreOrder,
         thumbnail: thumbnail.trim() || null,
         attributes,
@@ -236,21 +235,16 @@ export default function EditVariantModal({ variant }: Props) {
                 {/* Price Adjustment + Stock */}
                 <div className="grid grid-cols-2 gap-3">
                   <NumberInput
-                    value={
-                      priceAdjustment === "" ? null : Number(priceAdjustment)
-                    }
-                    onChange={(v) =>
-                      setPriceAdjustment(v != null ? String(v) : "")
-                    }
+                    value={priceAdjustment ?? 0}
+                    onChange={(v) => setPriceAdjustment(v ?? 0)}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="0"
                     label="Price Adjustment (₫)"
+                    subLabel={formatVND(priceAdjustment ?? 0)}
                   />
                   <NumberInput
-                    value={stockQuantity === "" ? null : Number(stockQuantity)}
-                    onChange={(v) =>
-                      setStockQuantity(v != null ? String(v) : "")
-                    }
+                    value={stockQuantity ?? 0}
+                    onChange={(v) => setStockQuantity(v ?? 0)}
                     min={0}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="0"

@@ -1,7 +1,7 @@
 import {
-	getProductListByFilters,
-	type ProductSortOption,
-	type ProductType,
+  getProductListByFilters,
+  type ProductSortOption,
+  type ProductType,
 } from "@/lib/product-query-service";
 import { getCache, setCache } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,57 +17,59 @@ const DEFAULT_LIMIT = 20;
 export type SortOption = "newest" | "price_asc" | "price_desc";
 
 export interface ShopVariant {
-	id: string;
-	variant_name: string;
-	price_adjustment: number;
-	effective_price: number;
-	thumbnail: string | null;
-	stock_quantity: number;
-	is_pre_order: boolean;
-	pre_order_config: PreOrderConfig | null;
+  id: string;
+  variant_name: string;
+  price_adjustment: number;
+  effective_price: number;
+  thumbnail: string | null;
+  stock_quantity: number;
+  is_pre_order: boolean;
+  pre_order_config: PreOrderConfig | null;
 }
 
 export interface ITag {
-	id: number;
-	label: string;
-	value: string;
-	icon?: string;
-	textColor?: string;
-	bgColor?: string;
+  id: number;
+  label: string;
+  value: string;
+  icon?: string;
+  textColor?: string;
+  bgColor?: string;
 }
 
 /** Config stored in the `pre_order_config` JSONB column. */
 export interface PreOrderConfig {
-	/** Human-readable shipping estimate, e.g. "2–3 tuần" */
-	estimate: string;
-	/** ISO date string for expected stock arrival, e.g. "2026-07-01" */
-	available_date?: string | null;
-	/** Optional note shown to the customer */
-	notes?: string | null;
+  /** Human-readable shipping estimate, e.g. "2–3 tuần" */
+  estimate: string;
+  /** ISO date string for expected stock arrival, e.g. "2026-07-01" */
+  available_date?: string | null;
+  /** Optional note shown to the customer */
+  notes?: string | null;
 }
 
 export interface ShopProduct {
-	id: string;
-	slug: string;
-	name: string;
-	brand: string | null;
-	category: string;
-	description: string;
-	base_price: number;
-	stock_quantity: number;
-	thumbnail: string | null;
-	images: string[] | null;
-	product_type: "standard" | "kit" | "component";
-	variants: ShopVariant[];
-	min_price: number;
-	is_used: boolean;
-	is_pre_order: boolean;
-	tags: ITag[];
+  id: string;
+  slug: string;
+  name: string;
+  brand: string | null;
+  category: string;
+  description: string;
+  base_price: number;
+  stock_quantity: number;
+  thumbnail: string | null;
+  images: string[] | null;
+  product_type: "standard" | "kit" | "component";
+  variants: ShopVariant[];
+  min_price: number;
+  is_used: boolean;
+  is_pre_order: boolean;
+  tags: ITag[];
+  discount_price?: number;
+  discount_percentage?: number;
 }
 
 export interface ProductsResponse {
-	products: ShopProduct[];
-	total: number;
+  products: ShopProduct[];
+  total: number;
 }
 
 // ─── Internal row types ───────────────────────────────────────────────────────
@@ -96,70 +98,70 @@ export interface ProductsResponse {
 //   ✓ Input validation & bounds checking
 
 export async function GET(req: NextRequest) {
-	const sp = req.nextUrl.searchParams;
+  const sp = req.nextUrl.searchParams;
 
-	// Validate and sanitize input parameters
-	const search = sp.get("search")?.trim().slice(0, 100) ?? "";
-	const categorySlug = sp.get("category")?.trim().slice(0, 100) ?? "";
-	const productTypeParam =
-		sp.get("productType")?.trim() ?? "standard,kit,component";
-	const productTypes = productTypeParam
-		.split(",")
-		.map((t) => t.trim())
-		.filter(
-			(t): t is ProductType =>
-				t === "standard" || t === "kit" || t === "component",
-		);
+  // Validate and sanitize input parameters
+  const search = sp.get("search")?.trim().slice(0, 100) ?? "";
+  const categorySlug = sp.get("category")?.trim().slice(0, 100) ?? "";
+  const productTypeParam =
+    sp.get("productType")?.trim() ?? "standard,kit,component";
+  const productTypes = productTypeParam
+    .split(",")
+    .map((t) => t.trim())
+    .filter(
+      (t): t is ProductType =>
+        t === "standard" || t === "kit" || t === "component"
+    );
 
-	// Parse and validate numeric parameters
-	const priceMin = Math.max(0, Number(sp.get("priceMin") ?? 0) || 0);
-	const priceMax = Math.max(0, Number(sp.get("priceMax") ?? 0) || 0);
-	const offset = Math.max(0, Number(sp.get("offset") ?? 0) || 0);
-	let limit = sp.get("limit") ? Number(sp.get("limit")) : DEFAULT_LIMIT;
-	limit = Math.min(Math.max(1, limit), MAX_LIMIT); // Bound: 1-100
+  // Parse and validate numeric parameters
+  const priceMin = Math.max(0, Number(sp.get("priceMin") ?? 0) || 0);
+  const priceMax = Math.max(0, Number(sp.get("priceMax") ?? 0) || 0);
+  const offset = Math.max(0, Number(sp.get("offset") ?? 0) || 0);
+  let limit = sp.get("limit") ? Number(sp.get("limit")) : DEFAULT_LIMIT;
+  limit = Math.min(Math.max(1, limit), MAX_LIMIT); // Bound: 1-100
 
-	const sort = (sp.get("sort") as ProductSortOption | null) ?? "newest";
+  const sort = (sp.get("sort") as ProductSortOption | null) ?? "newest";
 
-	try {
-		// Build a stable cache key from normalized params
-		// Search queries are cached too — useful for repeated searches within 60 s
-		const normalizedTypes = productTypes.sort().join(",");
-		const cacheKey = `products:${search}:${categorySlug}:${normalizedTypes}:${priceMin}:${priceMax}:${sort}:${limit}:${offset}`;
+  try {
+    // Build a stable cache key from normalized params
+    // Search queries are cached too — useful for repeated searches within 60 s
+    const normalizedTypes = productTypes.sort().join(",");
+    const cacheKey = `products:${search}:${categorySlug}:${normalizedTypes}:${priceMin}:${priceMax}:${sort}:${limit}:${offset}`;
 
-		const cached = await getCache<ProductsResponse>(cacheKey);
-		if (cached) {
-			return NextResponse.json<ProductsResponse>(cached);
-		}
+    const cached = await getCache<ProductsResponse>(cacheKey);
+    if (cached) {
+      return NextResponse.json<ProductsResponse>(cached);
+    }
 
-		const { products, total } = await getProductListByFilters({
-			search,
-			categorySlug,
-			priceMin,
-			priceMax,
-			sort,
-			limit,
-			offset,
-			productTypes:
-				productTypes.length > 0
-					? productTypes
-					: (["standard", "kit", "component"] as ProductType[]),
-		});
+    const { products, total } = await getProductListByFilters({
+      search,
+      categorySlug,
+      priceMin,
+      priceMax,
+      sort,
+      limit,
+      offset,
+      productTypes:
+        productTypes.length > 0
+          ? productTypes
+          : (["standard", "kit", "component"] as ProductType[]),
+    });
 
-		// Return paginated results with accurate total count
-		const response: ProductsResponse = {
-			products: products as ShopProduct[],
-			total,
-		};
+    // Return paginated results with accurate total count
+    const response: ProductsResponse = {
+      products: products as ShopProduct[],
+      total,
+    };
 
-		// Cache for 60 s — force-dynamic prevents Vercel CDN from honouring s-maxage,
-		// so Redis is the only server-level cache layer available
-		await setCache(cacheKey, response, 60);
+    // Cache for 60 s — force-dynamic prevents Vercel CDN from honouring s-maxage,
+    // so Redis is the only server-level cache layer available
+    await setCache(cacheKey, response, 60);
 
-		return NextResponse.json<ProductsResponse>(response);
-	} catch (err) {
-		return NextResponse.json(
-			{ error: err instanceof Error ? err.message : "Unknown error" },
-			{ status: 500 },
-		);
-	}
+    return NextResponse.json<ProductsResponse>(response);
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Unknown error" },
+      { status: 500 }
+    );
+  }
 }

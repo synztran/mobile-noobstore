@@ -124,7 +124,7 @@ export function OrderItemsList({
                           key={component.variant_id}
                           className="flex items-center justify-between gap-2"
                         >
-                          <div className="grid w-full grid-cols-[70px_auto_max-content] items-center gap-2">
+                          <div className="grid w-full grid-cols-[90px_auto_max-content] items-center gap-2">
                             <span className="rounded-sm bg-gray-100 px-2 py-1 text-center text-xs font-black text-on-surface-variant">
                               {component.component_group}
                             </span>
