@@ -21,6 +21,7 @@ export const homeQueryKeys = createQueryKeys("home", {
 	hero: null,
 	communityGallery: (limit: number) => [limit],
 	noteworthy: (categorySlug: string) => [categorySlug],
+	saleProducts: (categorySlug: string, limit: number, sort: string) => [categorySlug, limit, sort],
 	trustProps: null,
 	creators: null,
 });

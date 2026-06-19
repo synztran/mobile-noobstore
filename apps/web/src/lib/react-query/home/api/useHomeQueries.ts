@@ -49,6 +49,23 @@ export function useHomeNoteworthy(categorySlug: string) {
   });
 }
 
+export function useHomeSaleProducts(
+  categorySlug: string,
+  limit: number,
+  sort: string,
+) {
+  return useQuery<{ products: ShopProduct[]; total: number }>({
+    ...appQueryKeys.home.saleProducts(categorySlug, limit, sort),
+    queryFn: async () => {
+      const query = new URLSearchParams({ limit: String(limit), sort });
+      if (categorySlug) query.set("category", categorySlug);
+      const res = await fetch(`/api/products/sale?${query.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch sale products");
+      return res.json() as Promise<{ products: ShopProduct[]; total: number }>;
+    },
+  });
+}
+
 export function useHomeTrustProps() {
   return useQuery<TrustProp[]>({
     ...appQueryKeys.home.trustProps,
