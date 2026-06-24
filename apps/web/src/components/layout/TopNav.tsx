@@ -51,7 +51,7 @@ export function TopNav({
         className
       )}
     >
-      <div className="flex w-10 items-center gap-4">
+      <div className="flex items-center gap-4">
         {showBack ? (
           <button
             aria-label="Go back"

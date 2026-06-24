@@ -61,7 +61,11 @@ export default function ProductComponentFormModal({
   );
 
   const componentOptions = useMemo(
-    () => products.filter((product) => product.id !== parentProductId),
+    () =>
+      products.filter(
+        (product) =>
+          product.id !== parentProductId && product.product_type === "component"
+      ),
     [products, parentProductId]
   );
 

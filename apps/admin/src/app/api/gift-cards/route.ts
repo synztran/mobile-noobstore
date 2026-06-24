@@ -5,15 +5,15 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 30;
 
-function generateCode(length = 12): string {
+function generateCode(length = 16): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0, I/1 to avoid confusion
   let code = "";
   const bytes = crypto.getRandomValues(new Uint8Array(length));
   for (const b of bytes) {
     code += chars[b % chars.length];
   }
-  // Format as XXXX-XXXX-XXXX
-  return `${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8, 12)}`;
+  // Format as XXXX-XXXX-XXXX-XXXX
+  return `${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8, 12)}-${code.slice(12, 16)}`;
 }
 
 /**
@@ -71,7 +71,8 @@ export async function GET(req: NextRequest) {
       .in("id", redeemerIds);
 
     for (const p of profileRows ?? []) {
-      const fullName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim() || null;
+      const fullName =
+        [p.first_name, p.last_name].filter(Boolean).join(" ").trim() || null;
       profileMap[p.id] = { email: p.email, full_name: fullName };
     }
   }

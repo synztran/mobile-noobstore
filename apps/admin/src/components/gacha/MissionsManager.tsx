@@ -149,7 +149,7 @@ export function MissionsManager({ eventId }: Props) {
       if (form.req_min_price != null) requirement.amount = form.req_min_price;
       if (form.req_order_status)
         requirement.order_status = form.req_order_status;
-    } else if (form.mission_type === "order_count") {
+    } else if (form.mission_type === "order_count" || form.mission_type === "play_count") {
       if (form.req_count != null) requirement.count = form.req_count;
       if (form.req_order_status)
         requirement.order_status = form.req_order_status;
@@ -318,7 +318,7 @@ export function MissionsManager({ eventId }: Props) {
               </p>
             </div>
           )}
-          {form.mission_type === "order_count" && (
+          {(form.mission_type === "order_count" || form.mission_type === "play_count") && (
             <div>
               <NumberInput
                 value={form.req_count}
@@ -327,11 +327,12 @@ export function MissionsManager({ eventId }: Props) {
                 required
                 step={1}
                 className="w-full"
-                label="Number of Orders Required"
+                label={form.mission_type === "play_count" ? "Number of Gacha Plays Required" : "Number of Orders Required"}
               />
               <p className="text-muted mt-1 text-xs">
-                Mission completes when the customer has placed this many orders
-                total.
+                {form.mission_type === "play_count"
+                  ? "Mission completes when the customer has played gacha this many times."
+                  : "Mission completes when the customer has placed this many orders total."}
               </p>
             </div>
           )}

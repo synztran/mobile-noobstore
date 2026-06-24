@@ -12,6 +12,7 @@ import { DELIVERY_OPTIONS, mappingDisplayPrice } from "@/constants";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm } from "@/hooks/useShippingForm";
 import { formatVND } from "@/lib/currency";
+import { ShippingSubmitButton } from "@/components/checkout/ShippingSubmitButton";
 import clsx from "clsx";
 import { MapPinHouse, Phone, Truck } from "lucide-react";
 import { memo, useMemo } from "react";
@@ -57,23 +58,24 @@ const FIELDS = [
 ] as const;
 
 const ShippingPage = () => {
-  const {
-    ready,
-    form,
-    setForm,
-    distanceKm,
-    distanceFee,
-    isCalculatingFee,
-    cityTouched,
-    setCityTouched,
-    delivery,
-    setDelivery,
-    handleChange,
-    handleBlur,
-    handleCityChange,
-    isInvalid,
-    handleSubmit,
-    isHCM,
+	const {
+		ready,
+		form,
+		setForm,
+		distanceKm,
+		distanceFee,
+		isCalculatingFee,
+		isSubmitting,
+		cityTouched,
+		setCityTouched,
+		delivery,
+		setDelivery,
+		handleChange,
+		handleBlur,
+		handleCityChange,
+		isInvalid,
+		handleSubmit,
+		isHCM,
     subtotal,
     shippingCost,
     orderTotal,
@@ -441,26 +443,10 @@ const ShippingPage = () => {
               </span>
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={isCalculatingFee}
-            className={clsx(
-              "primary-gradient flex w-full items-center justify-center gap-2 !rounded-b-3xl py-5 text-sm font-black uppercase tracking-widest text-white transition-opacity active:opacity-90",
-              isCalculatingFee && "cursor-not-allowed opacity-70"
-            )}
-          >
-            {isCalculatingFee ? (
-              <>
-                <span className="loading loading-spinner loading-sm" />
-                Đang tính toán...
-              </>
-            ) : (
-              <>
-                Tiếp tục thanh toán
-                <Icon name="arrow_forward" className="text-lg" />
-              </>
-            )}
-          </button>
+			<ShippingSubmitButton
+				isCalculatingFee={isCalculatingFee}
+				isSubmitting={isSubmitting}
+			/>
         </div>
       </form>
     </div>

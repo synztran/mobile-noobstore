@@ -238,8 +238,8 @@ export function CartDrawer() {
 
       {/* Drawer */}
       <div
-        className={`duration-250 fixed left-0 right-0 z-[999] flex h-full max-h-[90dvh] flex-col rounded-t-5xl bg-surface transition-all ease-out ${
-          drawerOpen ? "top-[10vh]" : "top-[110vh]"
+        className={`duration-250 fixed left-0 right-0 z-[999] flex h-full max-h-[80dvh] flex-col rounded-t-5xl bg-surface transition-all ease-out ${
+          drawerOpen ? "top-[20vh]" : "top-[110vh]"
         }`}
       >
         {/* Handle */}
@@ -382,7 +382,7 @@ export function CartDrawer() {
           <div className="modal-action flex gap-3">
             <button
               onClick={cancelRemove}
-              className="btn min-w-32 rounded-full border-outline-variant bg-surface-container font-bold normal-case text-on-surface hover:bg-surface-container-high"
+              className="btn min-w-32 rounded-full bg-surface-container font-bold normal-case text-on-surface hover:bg-surface-container-high"
             >
               Hủy
             </button>

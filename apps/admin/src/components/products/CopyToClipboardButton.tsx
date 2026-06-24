@@ -29,7 +29,7 @@ export default function CopyToClipboardButton({
 			type="button"
 			onClick={() => void handleCopy()}
 			aria-label={label}
-			title={copied ? "Copied" : label}
+			title={copied ? "Copied!" : label}
 			className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-700">
 			{copied ? (
 				<Check className="h-3.5 w-3.5" />

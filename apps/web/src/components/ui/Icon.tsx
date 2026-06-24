@@ -51,6 +51,7 @@ const MANUAL_MAP: Record<string, string> = {
 	help: "HelpCircle",
 	bookmark: "Bookmark",
 	content_copy: "Copy",
+	redeem: "Gift",
 };
 
 function toPascalCase(name: string) {

@@ -289,6 +289,34 @@ export async function getNoteworthyProducts(
 }
 
 /**
+ * Fetch products with the same brand as a given product.
+ * Returns up to `limit` products, excluding the product itself.
+ */
+export async function getRelatedProducts(
+	brand: string | null,
+	excludeSlug: string,
+	limit = 8,
+): Promise<ShopProduct[]> {
+	if (!brand) return [];
+
+	try {
+		const result = await getProductListByFilters({
+			brand,
+			limit,
+			sort: "newest",
+			productTypes: ["standard", "kit"],
+			excludeUncategorized: true,
+		});
+		return (result.products as ShopProduct[]).filter(
+			(p) => p.slug !== excludeSlug,
+		);
+	} catch (err) {
+		console.error("[getRelatedProducts] Unexpected error:", err);
+		return [];
+	}
+}
+
+/**
  * Unified QuickPick data loader.
  * Returns product list + all configurator groups needed by QuickPickDrawer
  * in one server call so the client doesn't need to chain product + configurator fetches.
@@ -697,7 +725,7 @@ export async function getProductBySlug(
 		const { data: product, error } = await getPublicClient()
 			.from("products")
 			.select(
-				`id, slug, name, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used,
+				`id, slug, name, brand, description, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used,
 			 categories(id, name),
 			 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config),
 				 product_components!product_components_parent_product_id_fkey(
@@ -810,6 +838,8 @@ export async function getProductBySlug(
 			id: raw.id,
 			slug: raw.slug,
 			name: raw.name,
+			brand: raw.brand ?? null,
+			description: raw.description ?? null,
 			category: raw.categories?.name ?? "Unknown",
 			category_id: raw.category_id,
 			base_price: Number(raw.base_price),

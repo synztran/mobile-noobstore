@@ -31,10 +31,10 @@ export function ProductCardSkeleton() {
 
 interface ProductCardProps {
   product: ShopProduct;
+  isBundle?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
-  console.log("product", product);
+export function ProductCard({ product, isBundle = false }: ProductCardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
@@ -49,23 +49,20 @@ export function ProductCard({ product }: ProductCardProps) {
         <Link href={`/shop/${product.slug}`} className="block">
           {/* ── Image box ─────────────────────────────────────────────── */}
           <div
-            className="relative mb-3 aspect-[4/4] overflow-hidden rounded-xl bg-surface-container"
+            className="relative mb-1 aspect-[1/1] overflow-hidden rounded-md bg-surface-container"
             style={{
               boxShadow: "0 20px 40px -15px rgba(155,63,28,0.08)",
             }}
           >
             {/* Thumbnail or placeholder */}
             {product.thumbnail ? (
-              <>
-                {/* Skeleton shimmer — hidden once image loads */}
-                <Image
-                  src={product.thumbnail}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                />
-              </>
+              <Image
+                src={product.thumbnail}
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <Icon
@@ -96,27 +93,31 @@ export function ProductCard({ product }: ProductCardProps) {
 
           {/* ── Details ─────────────────────────────────────────────── */}
           <div className="relative">
-            <p className="truncate text-[12px] font-extrabold tracking-[0.1em] text-primary">
+            <p className="truncate text-[11px] font-extrabold capitalize tracking-[0.1em] text-primary">
               {product.brand || product.category}
             </p>
             <h3 className="truncate text-sm font-bold capitalize text-on-surface">
               {product.name}
             </h3>
-            <p className="line-clamp-2 text-[10px] tracking-normal">
-              {product.description}
-            </p>
+            {!isBundle ? (
+              <p className="line-clamp-3 text-[10px] tracking-wide">
+                {product.description}
+              </p>
+            ) : null}
             {product.discount_price && product.discount_price > 0 ? (
               <div>
                 <div className="text-right text-base font-extrabold text-red-600">
                   {formatVND(product.discount_price)}
                 </div>
-                <div className="text-right text-xs font-bold text-on-surface-variant line-through">
-                  {formatVND(product.base_price)}
-                </div>
+                {!isBundle ? (
+                  <div className="text-right text-xs font-bold text-on-surface-variant line-through">
+                    {formatVND(product.base_price)}
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="text-right text-base font-extrabold text-primary">
-                {formatVND(product.base_price)}
+                {formatVND(product.base_price || product.min_price)}
               </div>
             )}
           </div>
@@ -129,14 +130,14 @@ export function ProductCard({ product }: ProductCardProps) {
               productId={product.id}
               size="sm"
               showLabel
-              className="h-full w-[40px] rounded-xl"
+              className="w-[32px] rounded-xl"
             />
             <button
               type="button"
               onClick={handleQuickAdd}
               aria-label={`Quick add ${product.name}`}
               disabled={product.stock_quantity === 0}
-              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-on-surface text-[10px] font-black uppercase tracking-[0.14em] text-surface transition-all hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50"
+              className="btn-sm flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-[10px] font-black uppercase tracking-[0.14em] text-surface transition-all hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50"
             >
               <Icon name="add_shopping_cart" className="text-[16px]" />
               Mua ngay

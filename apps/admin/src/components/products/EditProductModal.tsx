@@ -77,6 +77,7 @@ export default function EditProductModal({ product }: Props) {
     setThumbnail(product.thumbnail ?? "");
     setImages(Array.isArray(product.images) ? product.images : []);
     setParentProductId(product.parent_product_id ?? "");
+    setCategoryType(product.category_id ?? ""); // Reset category selection when opening modal
     // Fetch kit options whenever the modal opens
     setKitOptionsLoading(true);
     fetch("/api/products?productType=kit")
@@ -194,7 +195,7 @@ export default function EditProductModal({ product }: Props) {
                       onChange={(e) => {
                         setCategoryType(e.target.value);
                       }}
-                      disabled={categoryType !== "kit"}
+                      // disabled={categoryType !== "kit"}
                     />
                   </div>
                   <div className="col-span-1">

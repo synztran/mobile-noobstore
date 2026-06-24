@@ -5,6 +5,11 @@ export const adminQueryKeys = {
   orders: (q = "", by = "order", page = 1) => ["orders", q, by, page] as const,
   orderDetail: (id?: string) => ["order-detail", id ?? ""] as const,
 
+  products: {
+    list: (q = "", productType = "", page = 1) =>
+      ["products", q, productType, page] as const,
+  },
+
   users: {
     list: (q = "", page = 1) => ["users", q, page] as const,
     detail: (id?: string) => ["user", id ?? ""] as const,

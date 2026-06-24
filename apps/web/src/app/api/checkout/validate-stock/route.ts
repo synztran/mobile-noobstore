@@ -56,8 +56,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log("allVariantIds", allVariantIds);
-
     // Fetch live variant stock in one query
     const variantStockMap = new Map<string, number>();
     if (allVariantIds.size > 0) {
@@ -86,7 +84,6 @@ export async function POST(req: NextRequest) {
     }
 
     for (const item of items) {
-      console.log("item", item);
       if (item.components && item.components.length > 0) {
         // Kit: if ANY component variant is OOS, the whole product is OOS
         let minAvailable = Infinity;

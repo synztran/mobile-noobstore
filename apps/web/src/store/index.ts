@@ -60,24 +60,30 @@ export const useCartStore = create<CartStore>()(
 			addItem: (product, variant, components) => {
 				set((state) => {
 					const cartId = state.cartId ?? generateId();
-					// Kit items (have components) are always standalone — never merged.
 					const isKit = (components?.length ?? 0) > 0;
-					const existing = !isKit
-						? state.items.find(
-								(i) =>
-									i.product.id === product.id &&
-									i.variant?.id === variant?.id,
-							)
-						: undefined;
+					const existing = state.items.find((i) => {
+						if (i.product.id !== product.id) return false;
+						if (isKit) {
+							const a = (i.components ?? []).map((c) => c.variant_id).sort().join(",");
+							const b = (components ?? []).map((c) => c.variant_id).sort().join(",");
+							return a === b;
+						}
+						return i.variant?.id === variant?.id;
+					});
 					if (existing) {
 						return {
 							cartId,
-							items: state.items.map((i) =>
-								i.product.id === product.id &&
-								i.variant?.id === variant?.id
-									? { ...i, quantity: i.quantity + 1 }
-									: i,
-							),
+							items: state.items.map((i) => {
+								if (i.product.id !== product.id) return i;
+								if (isKit) {
+									const a = (i.components ?? []).map((c) => c.variant_id).sort().join(",");
+									const b = (components ?? []).map((c) => c.variant_id).sort().join(",");
+									if (a !== b) return i;
+								} else if (i.variant?.id !== variant?.id) {
+									return i;
+								}
+								return { ...i, quantity: i.quantity + 1 };
+							}),
 						};
 					}
 					return {

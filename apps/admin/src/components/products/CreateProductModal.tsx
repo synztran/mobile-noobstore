@@ -2,6 +2,7 @@
 
 import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
 import KitSelector, { type KitOption } from "@/components/ui/KitSelector";
+import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -27,6 +28,7 @@ export default function CreateProductModal({
   categories,
 }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export default function CreateProductModal({
     setLoading(true);
 
     const fd = new FormData(e.currentTarget);
+    const category_id = fd.get("category") as string;
     const name = fd.get("name") as string;
     const slug = fd.get("slug") as string;
     const base_price = Number(fd.get("base_price"));
@@ -91,6 +94,7 @@ export default function CreateProductModal({
         brand,
         description,
         parent_product_id,
+        category_id,
       }),
     });
     const data = await res.json();
@@ -105,6 +109,8 @@ export default function CreateProductModal({
     setSlug("");
     setParentProductId("");
 
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+
     if (product_type === "kit" && data.id) {
       setCreatedKitId(data.id);
     } else {
@@ -115,6 +121,7 @@ export default function CreateProductModal({
 
   function handleDone() {
     setCreatedKitId(null);
+    queryClient.invalidateQueries({ queryKey: ["products"] });
     router.refresh();
     onClose();
   }
@@ -192,6 +199,17 @@ export default function CreateProductModal({
             <div className="grid grid-cols-4 gap-4">
               <div className="col-span-2">
                 <InputSelection
+                  name="product_type"
+                  options={PRODUCT_TYPES}
+                  label="Product Type"
+                  required
+                  value={productType}
+                  onChange={(e) => setProductType(e.target.value)}
+                />
+              </div>
+              <div className="col-span-2">
+                <InputSelection
+                  name="category"
                   options={
                     categories
                       ? categories.map((c) => ({ value: c.id, label: c.name }))
@@ -201,15 +219,7 @@ export default function CreateProductModal({
                   required
                   value={categoryType}
                   onChange={(e) => setCategoryType(e.target.value)}
-                />
-              </div>
-              <div className="col-span-2">
-                <InputSelection
-                  options={PRODUCT_TYPES}
-                  label="Product Type"
-                  required
-                  value={productType}
-                  onChange={(e) => setProductType(e.target.value)}
+                  disabled={productType === "component" || !categories}
                 />
               </div>
               <div className="col-span-2">
@@ -250,7 +260,9 @@ export default function CreateProductModal({
                 />
               </div>
 
-              <div className="col-span-1">
+              <div
+                className={`${productType !== "standard" ? "col-span-2" : "col-span-1"}`}
+              >
                 <NumberInput
                   name="base_price"
                   required
@@ -261,13 +273,15 @@ export default function CreateProductModal({
                 />
               </div>
 
-              <NumberInput
-                name="stock_quantity"
-                min={0}
-                disabled={isKit}
-                placeholder={isKit ? "—" : "0"}
-                label="Stock Quantity"
-              />
+              <div className={`${productType !== "standard" ? "sr-only" : ""}`}>
+                <NumberInput
+                  name="stock_quantity"
+                  min={0}
+                  disabled={isKit}
+                  placeholder={isKit ? "—" : "0"}
+                  label="Stock Quantity"
+                />
+              </div>
 
               {productType === "component" && (
                 <div className="col-span-4">
@@ -283,7 +297,7 @@ export default function CreateProductModal({
                 </div>
               )}
 
-              <div className="col-span-2">
+              <div className="col-span-4">
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Description
                 </label>

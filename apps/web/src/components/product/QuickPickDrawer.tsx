@@ -86,7 +86,7 @@ function AddToCartButton({
       onClick={onClick}
       disabled={isDisabled}
       className={clsx(
-        "flex h-14 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-black uppercase tracking-widest text-white transition-all active:scale-[0.98]",
+        "btn-md flex flex-1 items-center justify-center gap-2 rounded-xl text-sm font-black uppercase tracking-widest text-white transition-all active:scale-[0.98]",
         isActive
           ? "bg-gradient-to-r from-primary to-primary-container"
           : "cursor-not-allowed bg-outline/30"
@@ -480,11 +480,12 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
             className="h-20 w-24 rounded-xl"
           />
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 font-black uppercase leading-tight text-on-surface">
+            <p className="line-clamp-2 font-black leading-tight text-on-surface">
               {activeProduct.name}
             </p>
             <p className="mt-0.5 text-sm font-bold text-primary">
-              {formatVND(activeProduct.base_price)}
+              Giá từ{" "}
+              {formatVND(activeProduct.base_price || activeProduct.min_price)}
             </p>
           </div>
         </div>
@@ -582,7 +583,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 
         {/* Sticky footer (only in configurator view) */}
         {state.view === "configurator" && (
-          <div className="grid grid-cols-[1fr_1fr] items-center gap-4 border-t border-outline-variant/20 px-4 py-4">
+          <div className="grid grid-cols-[1fr_1fr] items-center gap-2 border-t border-outline-variant/20 px-4 py-4">
             <div className="w-full">
               <p className="text-base font-semibold text-on-surface-variant">
                 Tạm tính

@@ -1,21 +1,23 @@
 import { AnnouncementBanner } from "@/components/home/AnnouncementBanner";
 import { CommunityGallery } from "@/components/home/CommunityGallery";
 import { CustomerTestimonial } from "@/components/home/CustomerTestimonial";
-import { FlashSaleBanner } from "@/components/home/FlashSaleBanner";
+import { OurStrongPoints } from "@/components/home/OurStrongPoints";
 import { HeroSection } from "@/components/home/HeroSection";
 import { NewsletterCTA } from "@/components/home/NewsletterCTA";
 import { NoteworthySection } from "@/components/home/NoteworthySection";
+import { HomeSaleSection } from "@/components/home/SaleSection";
 
 export default function HomePage() {
-	return (
-		<>
-			<AnnouncementBanner />
-			<HeroSection />
-			<NoteworthySection />
-			<FlashSaleBanner />
-			<CommunityGallery />
-			<CustomerTestimonial />
-			<NewsletterCTA />
-		</>
-	);
+  return (
+    <div className="relative clear-both space-y-8">
+      <AnnouncementBanner />
+      <HeroSection />
+      <NoteworthySection />
+      <HomeSaleSection />
+      <OurStrongPoints />
+      <CommunityGallery />
+      <CustomerTestimonial />
+      <NewsletterCTA />
+    </div>
+  );
 }

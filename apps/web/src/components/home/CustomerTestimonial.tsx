@@ -6,93 +6,94 @@ import { Sparkles } from "lucide-react";
 import Image from "next/image";
 
 const COLOR_CLASSES: Record<string, string> = {
-	"bg-primary-container": "from-primary/20 to-primary/5",
-	"bg-secondary-container": "from-secondary/20 to-secondary/5",
-	"bg-tertiary-container": "from-tertiary/20 to-tertiary/5",
-	"bg-error-container": "from-error/20 to-error/5",
+  "bg-primary-container": "from-primary/20 to-primary/5",
+  "bg-secondary-container": "from-secondary/20 to-secondary/5",
+  "bg-tertiary-container": "from-tertiary/20 to-tertiary/5",
+  "bg-error-container": "from-error/20 to-error/5",
 };
 
 export function CustomerTestimonial() {
-	const { data: creators = [], isLoading } = useHomeCreators();
+  const { data: creators = [], isLoading } = useHomeCreators();
 
-	if (isLoading) {
-		return (
-			<section className="px-6 pb-24">
-				<div className="bg-surface-container-low p-8 rounded-3xl animate-pulse space-y-6">
-					<div className="h-8 bg-surface-container rounded-lg w-1/2" />
-					{[1, 2, 3, 4].map((i) => (
-						<div key={i} className="flex gap-4 items-center">
-							<div className="w-12 h-12 bg-surface-container rounded-full" />
-							<div className="flex-1 space-y-2">
-								<div className="h-4 bg-surface-container rounded w-3/4" />
-								<div className="h-3 bg-surface-container rounded w-1/2" />
-							</div>
-						</div>
-					))}
-				</div>
-			</section>
-		);
-	}
+  if (isLoading) {
+    return (
+      <section className="px-6 pb-24">
+        <div className="animate-pulse space-y-6 rounded-3xl bg-surface-container-low p-8">
+          <div className="h-8 w-1/2 rounded-lg bg-surface-container" />
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-surface-container" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-3/4 rounded bg-surface-container" />
+                <div className="h-3 w-1/2 rounded bg-surface-container" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
-	if (creators.length === 0) {
-		return null;
-	}
+  if (creators.length === 0) {
+    return null;
+  }
 
-	return (
-		<section className="px-6 pb-24">
-			<div className="bg-gradient-to-br from-surface-container-low to-surface-container p-6 rounded-3xl relative overflow-hidden group">
-				{/* Animated background */}
-				<div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors" />
-				<div className="absolute -bottom-20 -left-20 w-52 h-52 bg-secondary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-secondary/10 transition-colors" />
+  return (
+    <section className="px-6">
+      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-surface-container-low to-surface-container p-4">
+        {/* Animated background */}
+        <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-primary/5 blur-3xl transition-colors group-hover:bg-primary/10" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-52 w-52 rounded-full bg-secondary/5 blur-3xl transition-colors group-hover:bg-secondary/10" />
 
-				<div className="relative z-10">
-					<div className="flex items-center gap-2 mb-2">
-						<Sparkles size={18} className="text-primary" />
-						<p className="text-[10px] font-black uppercase tracking-widest text-primary">
-							Cộng đồng
-						</p>
-					</div>
+        <div className="relative z-10">
+          <div className="mb-2 flex items-center gap-2">
+            <Sparkles size={18} className="text-primary" />
+            <p className="font-black uppercase tracking-widest text-primary">
+              Về chúng tôi
+            </p>
+          </div>
 
-					<h3 className="font-black text-2xl uppercase tracking-tight mb-6">
-						Những Người Sáng Tạo
-					</h3>
+          <div className="mb-4 text-sm font-black">
+            Đã và đang xây dựng nên NoobStore
+          </div>
 
-					<div className="grid grid-cols-2 gap-3">
-						{creators.map((creator) => (
-							<a
-								key={creator.id}
-								href={`https://instagram.com/${creator.social_handle.replace("@", "")}`}
-								target="_blank"
-								rel="noopener noreferrer"
-								className={`bg-gradient-to-br ${COLOR_CLASSES[creator.color_theme] || "from-primary/20 to-primary/5"} rounded-2xl px-2 py-4 flex flex-col items-center text-center hover:shadow-lg transition-shadow group/card cursor-pointer`}>
-								<div className="w-14 h-14 rounded-full overflow-hidden mb-3 ring-2 ring-on-surface/10 group-hover/card:ring-primary/30 transition-all">
-									<Image
-										src={creator.image_url}
-										alt={creator.name}
-										width={56}
-										height={56}
-										className="w-full h-full object-cover"
-									/>
-								</div>
-								<p className="font-bold text-xs uppercase tracking-tight leading-tight">
-									{creator.name}
-								</p>
-								<p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1">
-									{creator.role}
-								</p>
-								{creator.bio && (
-									<p className="text-[9px] text-on-surface-variant mt-2 line-clamp-2">
-										{creator.bio}
-									</p>
-								)}
-								<p className="text-primary text-[10px] font-bold uppercase mt-auto">
-									{creator.social_handle}
-								</p>
-							</a>
-						))}
-					</div>
-				</div>
-			</div>
-		</section>
-	);
+          <div className="grid grid-cols-2 gap-3">
+            {creators.map((creator) => (
+              <a
+                key={creator.id}
+                href={`https://instagram.com/${creator.social_handle.replace("@", "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`bg-gradient-to-br ${COLOR_CLASSES[creator.color_theme] || "from-primary/20 to-primary/5"} group/card flex cursor-pointer flex-col items-center rounded-2xl px-2 py-4 text-center transition-shadow hover:shadow-lg`}
+              >
+                <div className="mb-3 h-14 w-14 overflow-hidden rounded-full ring-2 ring-on-surface/10 transition-all group-hover/card:ring-primary/30">
+                  <Image
+                    src={creator.image_url}
+                    alt={creator.name}
+                    width={56}
+                    height={56}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <p className="text-xs font-bold uppercase leading-tight tracking-tight">
+                  {creator.name}
+                </p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                  {creator.role}
+                </p>
+                {creator.bio && (
+                  <p className="mt-2 line-clamp-2 text-[9px] text-on-surface-variant">
+                    {creator.bio}
+                  </p>
+                )}
+                <p className="mt-auto text-[10px] font-bold uppercase text-primary">
+                  {creator.social_handle}
+                </p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }

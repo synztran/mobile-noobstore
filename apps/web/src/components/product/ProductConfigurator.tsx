@@ -23,7 +23,7 @@ const VARIANT_STATUS_BADGE = [
   {
     key: "ruleDisabled" as const,
     label: "Không khả dụng",
-    className: "tracking-wide",
+    className: "tracking-wide bg-slate-400",
   },
   {
     key: "isPreOrder" as const,
@@ -103,7 +103,7 @@ export function ProductConfigurator({
       {/* Component group selectors */}
       {groups.map((group) => (
         <div key={group.component_group} className={`space-y-3`}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <span
               className={`rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider ${group.is_required ? "bg-error/10 text-error" : "bg-surface-container"}`}
             >
@@ -115,7 +115,7 @@ export function ProductConfigurator({
               {group.component_group}
             </p>
           </div>
-          <div className="flex flex-wrap items-start gap-2">
+          <div className="flex flex-wrap items-start gap-3">
             {group.variants.map((v) => {
               const selected = selections[group.component_group] === v.id;
               const soldOut = v.stock_quantity === 0;
@@ -144,7 +144,9 @@ export function ProductConfigurator({
                       className={clsx(
                         "text-right text-[10px]",
                         v.price_adjustment !== 0 ? "" : "sr-only",
-                        v.price_adjustment > 0 ? "text-success" : "text-red-400"
+                        v.price_adjustment > 0
+                          ? "text-green-500"
+                          : "text-red-400"
                       )}
                     >
                       (
@@ -154,11 +156,11 @@ export function ProductConfigurator({
                     </p>
                   </div>
                   {v.sale_price_percent ? (
-                    <strong className="py-0.25 absolute -top-2 right-1 rounded-md bg-red-600 px-2 text-[10px] text-white">
+                    <strong className="absolute -top-2.5 right-1 rounded bg-red-600 px-2 py-1 text-[8px] leading-none text-white">
                       Giảm {v.sale_price_percent}%
                     </strong>
                   ) : null}
-                  <div className="absolute -top-2.5 left-1">
+                  <div className="absolute -top-2 left-1">
                     <VariantStatusBadge
                       soldOut={soldOut}
                       ruleDisabled={ruleDisabled}

@@ -2,6 +2,7 @@ import { ReactQueryProvider } from "@/components/ui/ReactQueryProvider";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { MobileViewportGuard } from "@/components/warning-modal/MobileViewportGuard";
+import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import "gooey-toast/styles.css";
 import type { Metadata, Viewport } from "next";
@@ -48,6 +49,7 @@ export default function RootLayout({
 			<body className="bg-background font-sans text-on-surface antialiased">
 				<AuthProvider>
 					<ReactQueryProvider>
+						<NavigationOverlay />
 						{children}
 						<MobileViewportGuard />
 						<ToastProvider />

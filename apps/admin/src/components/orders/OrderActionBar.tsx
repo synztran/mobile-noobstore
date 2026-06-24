@@ -58,7 +58,6 @@ export default function OrderActionBar({
   currentStatus,
   onUpdated,
 }: Props) {
-  console.log("order", order);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState(false);

@@ -49,6 +49,7 @@ export interface ProductListItem {
   tags: ProductTag[];
   discount_price: number;
   discount_percentage: number;
+  created_at: string;
 }
 
 type CategoryRow = { id: string } | null;
@@ -74,6 +75,7 @@ type RawListRow = {
   images: unknown;
   product_type: string;
   is_used: boolean;
+  created_at: string;
   categories: { id: string; name: string } | null;
   product_variants: VariantRow[] | null;
 };
@@ -114,6 +116,22 @@ function getTags(product: ProductListItem): ProductTag[] {
       value: "used_product",
       textColor: "text-white",
       bgColor: "bg-gray-500",
+    });
+  }
+
+  const currentDate = new Date();
+  const createdDate = new Date(product.created_at);
+  const diffInDays = Math.floor(
+    (currentDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  if (diffInDays <= 15) {
+    tags.push({
+      label: "Mới lên kệ",
+      id: 1,
+      value: "new_product",
+      textColor: "text-white",
+      bgColor: "bg-green-500",
     });
   }
 
@@ -170,9 +188,6 @@ async function shapeRow(row: RawListRow): Promise<ProductListItem> {
       ? Math.min(...variants.map((variant) => variant.effective_price))
       : Number(row.base_price);
 
-  console.log(
-    `Shaping product row: ${row.id}, base price: ${row.base_price}, lowest variant price: ${minPrice}`
-  );
   const discountPercentage =
     minPrice < Number(row.base_price)
       ? Math.round(
@@ -273,6 +288,7 @@ async function computeKitStockById(
 export interface GetProductListParams {
   search?: string;
   categorySlug?: string;
+  brand?: string;
   priceMin?: number;
   priceMax?: number;
   sort?: ProductSortOption;
@@ -288,6 +304,7 @@ export async function getProductListByFilters(
   const {
     search = "",
     categorySlug = "",
+    brand = "",
     priceMin = 0,
     priceMax = 0,
     sort = "newest",
@@ -325,7 +342,7 @@ export async function getProductListByFilters(
     let query = supabase
       .from("products")
       .select(
-        `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used,
+        `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, created_at,
 				 categories(id, name),
 				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)`
       )
@@ -334,6 +351,7 @@ export async function getProductListByFilters(
     if (excludeUncategorized) query = query.not("category_id", "is", null);
     if (safeSearch) query = query.ilike("name", `%${safeSearch}%`);
     if (categoryId !== null) query = query.eq("category_id", categoryId);
+    if (brand) query = query.eq("brand", brand);
 
     const { data, error } = await query;
     if (error) return { products: [], total: 0 };
@@ -367,14 +385,22 @@ export async function getProductListByFilters(
       );
     }
 
-    // Sorting
-    if (sort === "price_asc") {
-      filteredProducts.sort((a, b) => a.min_price - b.min_price);
-    } else if (sort === "price_desc") {
-      filteredProducts.sort((a, b) => b.min_price - a.min_price);
-    } else {
-      filteredProducts.sort((a, b) => b.id.localeCompare(a.id));
-    }
+    // Sorting — out-of-stock always at bottom
+    const inStock = filteredProducts.filter((p) => p.stock_quantity > 0);
+    const outOfStock = filteredProducts.filter((p) => p.stock_quantity === 0);
+
+    const sortFn =
+      sort === "price_asc"
+        ? (a: ProductListItem, b: ProductListItem) => a.min_price - b.min_price
+        : sort === "price_desc"
+          ? (a: ProductListItem, b: ProductListItem) => b.min_price - a.min_price
+          : (a: ProductListItem, b: ProductListItem) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime();
+
+    inStock.sort(sortFn);
+    outOfStock.sort(sortFn);
+    filteredProducts = [...inStock, ...outOfStock];
 
     // Pagination
     const total = filteredProducts.length;

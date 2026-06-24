@@ -50,7 +50,7 @@ export function BottomNav() {
             className={clsx(
               "flex flex-col items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 active:scale-90",
               isActive
-                ? "bg-primary-fixed/60 text-primary"
+                ? "bg-primary-fixed text-primary"
                 : "text-black opacity-50 hover:text-primary hover:opacity-100"
             )}
           >

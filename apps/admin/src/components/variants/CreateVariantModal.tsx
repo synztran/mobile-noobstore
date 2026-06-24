@@ -128,7 +128,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl bg-white shadow-2xl">
+      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-900">
             Create New Variant
@@ -152,13 +152,6 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
                 {error}
               </div>
             )}
-
-            {/* Hidden product_id for form submission */}
-            <input
-              type="hidden"
-              name="product_id"
-              value={selectedProductId ?? ""}
-            />
 
             {/* Product searchable select */}
             <div>
@@ -361,6 +354,13 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
                 </div>
               )}
             </div>
+
+            {/* Hidden product_id for form submission */}
+            <input
+              type="hidden"
+              name="product_id"
+              value={selectedProductId ?? ""}
+            />
           </div>
 
           {/* Actions */}

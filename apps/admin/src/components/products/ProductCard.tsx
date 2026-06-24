@@ -1,7 +1,13 @@
+"use client";
+
 import CopyToClipboardButton from "@/components/products/CopyToClipboardButton";
 import EditProductModal from "@/components/products/EditProductModal";
 import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
 import Tag from "@/components/ui/Tag";
+import { useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type VariantRow = {
   id: string;
@@ -27,7 +33,7 @@ type ComponentRow = {
 
 type CategoryRelation = { name: string } | { name: string }[] | null;
 
-type ProductCardProps = {
+export type ProductCardProps = {
   product: {
     id: string;
     name: string;
@@ -50,6 +56,24 @@ type DisplayVariant = VariantRow & {
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete product "${product.name}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      router.refresh();
+    } catch {
+      alert("Failed to delete product");
+      setDeleting(false);
+    }
+  };
+
   const directVariants = product.product_variants ?? [];
   const components = product.product_components ?? [];
 
@@ -105,7 +129,16 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="clear-both">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-slate-900">{product.name}</p>
-                <div className="shrink-0">
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    aria-label={`Delete ${product.name}`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-red-100 hover:text-red-600 disabled:opacity-40"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                   <EditProductModal product={product} />
                 </div>
               </div>

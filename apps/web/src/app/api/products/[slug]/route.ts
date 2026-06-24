@@ -39,6 +39,8 @@ export interface ProductDetail {
 	id: string;
 	slug: string;
 	name: string;
+	brand: string | null;
+	description: string | null;
 	category: string;
 	category_id: string | null;
 	base_price: number;
@@ -78,6 +80,8 @@ export async function GET(
 				id,
 				slug,
 				name,
+				brand,
+				description,
 				base_price,
 				stock_quantity,
 				category_id,
@@ -201,6 +205,8 @@ export async function GET(
 			id: p.id,
 			slug: p.slug,
 			name: p.name,
+			brand: p.brand ?? null,
+			description: p.description ?? null,
 			category: p.categories?.name ?? "",
 			category_id: p.category_id,
 			base_price: Number(p.base_price),

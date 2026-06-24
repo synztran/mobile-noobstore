@@ -150,7 +150,8 @@ export function useShippingForm() {
   const [basicPricePerKm, setBasicPricePerKm] = useState(5500);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [isCalculatingFee, setIsCalculatingFee] = useState(false);
-  const [touched, setTouched] = useState<Partial<Record<string, boolean>>>({});
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [touched, setTouched] = useState<Partial<Record<string, boolean>>>({});
   const [form, setForm] = useState<FormData>({
     fullName:
       [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ?? "",
@@ -321,6 +322,37 @@ export function useShippingForm() {
     [form, touched]
   );
 
+  const subtotal = mounted ? total() : 0;
+  const isHCM = form.city && form.city === HCM_CITY;
+  const districtSurchargeRate = getDistrictShippingSurchargeRate(
+    form.city,
+    form.districtCode
+  );
+  const operationalSurchargeRate = getOperationalSurchargeRate();
+
+  const rawImmediateCost =
+    distanceKm === null
+      ? 0
+      : Math.max(distanceKm * immediatePricePerKm, distanceKm <= 3 ? 50000 : 0);
+  const rawBasicCost =
+    distanceKm === null
+      ? 0
+      : Math.max(distanceKm * basicPricePerKm, distanceKm <= 3 ? 30000 : 0);
+  const baseImmediateFee = rawImmediateCost;
+  const baseBasicFee = rawBasicCost;
+  const immediateFee = calculateShippingFeeWithSurcharge(
+    baseImmediateFee,
+    districtSurchargeRate + operationalSurchargeRate
+  );
+  const basicFee = calculateShippingFeeWithSurcharge(
+    baseBasicFee,
+    districtSurchargeRate + operationalSurchargeRate
+  );
+  const distanceFee = delivery === "express" ? rawImmediateCost : rawBasicCost;
+  const baseShippingCost = delivery === "express" ? immediateFee : basicFee;
+  const shippingCost = baseShippingCost;
+  const orderTotal = subtotal + shippingCost;
+
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -341,26 +373,25 @@ export function useShippingForm() {
         return;
       }
 
-      setShipping(
-        {
-          ...form,
-          deliverySpeed: delivery,
-          shippingMethodId: delivery,
-        },
-        shippingCost
-      );
-      router.push(cartId ? `/checkout/summary/${cartId}` : "/checkout/summary");
-    },
-    [cartId, delivery, form, router, setShipping]
+		setIsSubmitting(true);
+		setShipping(
+			{
+				...form,
+				deliverySpeed: delivery,
+				shippingMethodId: delivery,
+			},
+			shippingCost
+		);
+		setTimeout(
+			() =>
+				router.push(
+					cartId ? `/checkout/summary/${cartId}` : "/checkout/summary"
+				),
+			150
+		);
+	},
+	[cartId, delivery, form, router, setShipping, shippingCost]
   );
-
-  const subtotal = mounted ? total() : 0;
-  const isHCM = form.city && form.city === HCM_CITY;
-  const districtSurchargeRate = getDistrictShippingSurchargeRate(
-    form.city,
-    form.districtCode
-  );
-  const operationalSurchargeRate = getOperationalSurchargeRate();
 
   // Parse combined `wardDistrict` and/or street text to extract `ward` + `district`.
   function splitWardDistrict(value?: string, street?: string) {
@@ -499,58 +530,36 @@ export function useShippingForm() {
       clearTimeout(id);
     };
   }, [form.streetAddress, form.district, form.ward, form.city]);
-  const rawImmediateCost =
-    distanceKm === null
-      ? 0
-      : Math.max(distanceKm * immediatePricePerKm, distanceKm <= 3 ? 50000 : 0);
-  const rawBasicCost =
-    distanceKm === null
-      ? 0
-      : Math.max(distanceKm * basicPricePerKm, distanceKm <= 3 ? 30000 : 0);
 
-  const baseImmediateFee = rawImmediateCost;
-  const baseBasicFee = rawBasicCost;
-  const immediateFee = calculateShippingFeeWithSurcharge(
-    baseImmediateFee,
-    districtSurchargeRate + operationalSurchargeRate
-  );
-  const basicFee = calculateShippingFeeWithSurcharge(
-    baseBasicFee,
-    districtSurchargeRate + operationalSurchargeRate
-  );
-  const distanceFee = delivery === "express" ? rawImmediateCost : rawBasicCost;
-  const baseShippingCost = delivery === "express" ? immediateFee : basicFee;
-  const shippingCost = baseShippingCost;
-  const orderTotal = subtotal + shippingCost;
-
-  return {
-    ready,
-    distanceKm,
-    distanceFee,
-    isCalculatingFee,
-    form,
-    setForm,
-    touched,
-    cityTouched,
-    setCityTouched,
-    delivery,
-    setDelivery,
-    handleChange,
-    handleBlur,
-    handleCityChange,
-    isInvalid,
-    handleSubmit,
-    isHCM,
-    subtotal,
-    shippingCost,
-    baseShippingCost,
-    districtSurchargeRate,
-    operationalSurchargeRate,
-    orderTotal,
-    baseImmediateFee,
-    baseBasicFee,
-    immediateFee,
-    basicFee,
-    customerLocation,
-  };
-}
+		return {
+			ready,
+			distanceKm,
+			distanceFee,
+			isCalculatingFee,
+			isSubmitting,
+			form,
+			setForm,
+			touched,
+			cityTouched,
+			setCityTouched,
+			delivery,
+			setDelivery,
+			handleChange,
+			handleBlur,
+			handleCityChange,
+			isInvalid,
+			handleSubmit,
+			isHCM,
+			subtotal,
+			shippingCost,
+			baseShippingCost,
+			districtSurchargeRate,
+			operationalSurchargeRate,
+			orderTotal,
+			baseImmediateFee,
+			baseBasicFee,
+			immediateFee,
+			basicFee,
+			customerLocation,
+		};
+	}

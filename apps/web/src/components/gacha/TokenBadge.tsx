@@ -5,6 +5,16 @@ interface TokenBadgeProps {
   tokenCount: number | null;
 }
 
+function formatLargeToken(tokenCount: number): string {
+  if (tokenCount >= 1_000_000) {
+    return `${(tokenCount / 1_000_000).toFixed(1)}M`;
+  } else if (tokenCount >= 1_000) {
+    return `${(tokenCount / 1_000).toFixed(1)}K`;
+  } else {
+    return tokenCount.toString();
+  }
+}
+
 export function TokenBadge({ tokenCount }: TokenBadgeProps) {
   return (
     <div className="absolute left-0 top-1/2 flex -translate-y-1/2 transform flex-col items-center gap-1">
@@ -22,7 +32,7 @@ export function TokenBadge({ tokenCount }: TokenBadgeProps) {
           <span className="loading loading-spinner loading-xs text-warning"></span>
         ) : (
           <span className="text-[8px] font-black text-amber-600">
-            x{tokenCount}
+            x{formatLargeToken(tokenCount)}
           </span>
         )}
       </div>

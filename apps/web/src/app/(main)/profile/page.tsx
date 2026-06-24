@@ -31,6 +31,11 @@ const NAV_ITEMS = [
     href: "/profile/notifications",
   },
   {
+    icon: "redeem",
+    label: "Đổi thưởng",
+    href: "/rewards",
+  },
+  {
     icon: "help",
     label: "Trợ giúp & Hỗ trợ",
     href: "https://fb.com/noobassembly",
@@ -196,9 +201,7 @@ export default function ProfilePage() {
               <Icon name="stars" className="text-lg text-white" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-white/80">
-                Điểm NoobStore
-              </p>
+              <p className="text-xs font-bold text-white/90">Điểm NoobStore</p>
               {pointsBalance === null ? (
                 <div className="mt-0.5 h-5 w-16 animate-pulse rounded-full bg-white/30" />
               ) : (

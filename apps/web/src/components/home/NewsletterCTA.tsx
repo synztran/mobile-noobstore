@@ -8,13 +8,13 @@ export function NewsletterCTA() {
 				<p className="text-[10px] font-black uppercase tracking-[0.2em] text-outline mb-3">
 					Nhận thông báo sớm nhất
 				</p>
-				<h2 className="text-3xl font-black uppercase tracking-tight leading-tight mb-3">
+				<p className="text-3xl font-black uppercase tracking-tight leading-tight mb-3">
 					HÃY LÀ
 					<br />
 					NGƯỜI ĐẦU TIÊN
 					<br />
 					BIẾT VỀ ƯU ĐÃI
-				</h2>
+				</p>
 				<p className="text-xs text-outline leading-relaxed mb-8 max-w-xs">
 					Đăng ký để nhận thông báo về sản phẩm mới, restock và ưu đãi
 					độc quyền trước mọi người.
@@ -23,11 +23,11 @@ export function NewsletterCTA() {
 					<input
 						type="email"
 						placeholder="email@example.com"
-						className="w-full bg-white/5 border border-white/10 text-surface placeholder:text-outline text-sm px-4 py-3 rounded-xl focus:outline-none focus:border-primary-fixed-dim"
+						className="w-full bg-white/5 border border-white/10 text-surface placeholder:text-outline text-sm px-4 py-3 rounded-xl outline-none transition-all duration-200 focus:border-primary-fixed-dim focus:ring-2 focus:ring-primary-fixed-dim/30 focus:bg-white/10"
 					/>
 					<button
 						type="button"
-						className="w-full bg-primary text-on-primary font-black text-xs tracking-widest uppercase py-4 rounded-xl active:scale-95 transition-transform">
+						className="w-full bg-primary text-on-primary font-black text-xs tracking-widest uppercase py-4 rounded-xl transition-all duration-200 hover:brightness-110 active:scale-95">
 						ĐĂNG KÝ NGAY
 					</button>
 				</div>

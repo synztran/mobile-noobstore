@@ -1,6 +1,7 @@
+import type { ShopProduct } from "@/app/api/products/route";
 import { TopNav } from "@/components/layout/TopNav";
 import { ProductView } from "@/components/product/ProductView";
-import { getProductDetail } from "@/lib/products-server";
+import { getProductDetail, getRelatedProducts } from "@/lib/products-server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -41,11 +42,19 @@ function ProductDetailSkeleton() {
 async function ProductLoader({ slug }: { slug: string }) {
 	const result = await getProductDetail(slug);
 	if (!result) notFound();
+
+	const relatedProducts: ShopProduct[] = await getRelatedProducts(
+		result.product.brand,
+		slug,
+		8,
+	);
+
 	return (
 		<ProductView
 			product={result.product}
 			componentGroups={result.componentGroups}
 			componentRules={result.componentRules}
+			relatedProducts={relatedProducts}
 		/>
 	);
 }

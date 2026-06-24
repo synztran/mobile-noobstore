@@ -1,14 +1,14 @@
 {
-	"name": "ile-noobstore",
+	"name": "m-noobstore",
 	"private": true,
 	"packageManager": "yarn@4.3.1",
 	"workspaces": [
-		"apps/*",
-		"packages/*"
+		"apps/*"
 	],
 	"scripts": {
 		"build": "turbo build",
-		"dev": "turbo dev",
+		"dev:web": "turbo dev --filter=\"./apps/web\"",
+		"dev:admin": "turbo dev --filter=\"./apps/admin\"",
 		"lint": "turbo lint",
 		"type-check": "turbo type-check"
 	},

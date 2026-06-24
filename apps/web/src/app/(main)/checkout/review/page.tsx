@@ -5,11 +5,13 @@ import { formatVND } from "@/lib/currency";
 import { SHIPPING_COST, TAX_RATE } from "@/lib/data";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore } from "@/store";
+import { useNavigationStore } from "@/store/navigation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function ReviewPage() {
 	const router = useRouter();
+	const { startNavigation } = useNavigationStore();
 	const { items, total, clearCart } = useCartStore();
 	const { shipping } = useCheckoutStore();
 
@@ -23,6 +25,7 @@ export default function ReviewPage() {
 	const handlePlaceOrder = async () => {
 		toast.success("Order placed successfully! 🎉");
 		clearCart();
+		startNavigation();
 		router.push("/");
 	};
 
