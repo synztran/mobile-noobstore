@@ -44,7 +44,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        className="fixed left-0 top-0 z-[51] h-full w-72 bg-base-100 p-4 text-on-surface shadow-lg sm:w-80"
+        className="fixed left-0 top-0 z-[51] h-full w-72 bg-base-100 px-4 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] text-on-surface shadow-lg sm:w-80"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold">Danh mục</h2>

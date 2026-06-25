@@ -9,124 +9,130 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 function LoginForm() {
-	const router = useRouter();
-	const searchParams = useSearchParams();
-	const { signIn, signInWithGoogle } = useAuth();
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [showPassword, setShowPassword] = useState(false);
-	const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { signIn, signInWithGoogle } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-	const handleSignIn = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!email || !password) {
-			toast.error("Vui lòng điền đầy đủ thông tin");
-			return;
-		}
-		setLoading(true);
-		const { error } = await signIn(email, password);
-		if (error) {
-			toast.error(error);
-			setLoading(false);
-			return;
-		}
-		toast.success("Chào mừng trở lại!");
-		const next = searchParams.get("next") ?? "/";
-		router.refresh(); // bust stale prefetch cache so middleware re-checks cookies
-		router.push(next);
-	};
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+    setLoading(true);
+    const { error } = await signIn(email, password);
+    if (error) {
+      toast.error(error);
+      setLoading(false);
+      return;
+    }
+    toast.success("Chào mừng trở lại!");
+    const next = searchParams.get("next") ?? "/";
+    router.push(next);
+  };
 
-	const handleGoogleSignIn = async () => {
-		setLoading(true);
-		const { error } = await signInWithGoogle();
-		if (error) {
-			toast.error(error);
-			setLoading(false);
-			return;
-		}
-	};
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      toast.error(error);
+      setLoading(false);
+      return;
+    }
+  };
 
-	return (
-		<div className="flex-1 flex flex-col px-8 pt-20 pb-12">
-			{/* Logo */}
-			<div className="flex flex-col items-center mb-12">
-				<div className="w-48 h-32 relative flex items-center gap-2 mb-2 ">
-					<Image src="/logo/noob-store.png" alt="NoobStore Logo" objectFit="contain" fill className="rounded-xl" />
-				</div>
-				<h1 className="text-2xl font-black tracking-tighter text-on-surface font-sans">
-					NoobStore
-				</h1>
-			</div>
+  return (
+    <div className="flex flex-1 flex-col px-8 pb-12 pt-20">
+      {/* Logo */}
+      <div className="mb-12 flex flex-col items-center">
+        <div className="relative mb-2 flex h-32 w-48 items-center gap-2">
+          <Image
+            src="/logo/noob-store.png"
+            alt="NoobStore Logo"
+            objectFit="contain"
+            fill
+            className="rounded-xl"
+          />
+        </div>
+        <h1 className="font-sans text-2xl font-black tracking-tighter text-on-surface">
+          NoobStore
+        </h1>
+      </div>
 
-			{/* Heading */}
-			<h2 className="text-4xl font-black text-on-surface mb-8 tracking-tight text-center">
-				Chào mừng trở lại
-			</h2>
+      {/* Heading */}
+      <h2 className="mb-8 text-center text-4xl font-black tracking-tight text-on-surface">
+        Chào mừng trở lại
+      </h2>
 
-			{/* Form */}
-			<form onSubmit={handleSignIn} className="space-y-4 w-full">
-				{/* Email */}
-				<div className="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant rounded-2xl px-5 py-4">
-					<Icon name="mail" className="text-outline text-xl" />
-					<input
-						type="email"
-						placeholder="Địa chỉ Email"
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-						className="flex-1 bg-transparent text-on-surface placeholder:text-outline font-medium outline-none"
-						autoComplete="email"
-						disabled={loading}
-					/>
-				</div>
+      {/* Form */}
+      <form onSubmit={handleSignIn} className="w-full space-y-4">
+        {/* Email */}
+        <div className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest px-5 py-4">
+          <Icon name="mail" className="text-xl text-outline" />
+          <input
+            type="email"
+            placeholder="Địa chỉ Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 bg-transparent font-medium text-on-surface outline-none placeholder:text-outline"
+            autoComplete="email"
+            disabled={loading}
+          />
+        </div>
 
-				{/* Password */}
-				<div className="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant rounded-2xl px-5 py-4">
-					<Icon name="lock" className="text-outline text-xl" />
-					<input
-						type={showPassword ? "text" : "password"}
-						placeholder="Mật khẩu"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						className="flex-1 bg-transparent text-on-surface placeholder:text-outline font-medium outline-none"
-						autoComplete="current-password"
-						disabled={loading}
-					/>
-					<button
-						type="button"
-						onClick={() => setShowPassword(!showPassword)}
-						className="text-outline hover:text-on-surface transition-colors">
-						<Icon
-							name={
-								showPassword ? "visibility" : "visibility_off"
-							}
-							className="text-xl"
-						/>
-					</button>
-				</div>
+        {/* Password */}
+        <div className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest px-5 py-4">
+          <Icon name="lock" className="text-xl text-outline" />
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Mật khẩu"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="flex-1 bg-transparent font-medium text-on-surface outline-none placeholder:text-outline"
+            autoComplete="current-password"
+            disabled={loading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="text-outline transition-colors hover:text-on-surface"
+          >
+            <Icon
+              name={showPassword ? "visibility" : "visibility_off"}
+              className="text-xl"
+            />
+          </button>
+        </div>
 
-				{/* Forgot password */}
-				<div className="text-right">
-					<Link
-						href="/forgot-password"
-						className="text-sm font-semibold text-on-surface underline underline-offset-4">
-						Quên mật khẩu?
-					</Link>
-				</div>
+        {/* Forgot password */}
+        {/* <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm font-semibold text-on-surface underline underline-offset-4"
+          >
+            Quên mật khẩu?
+          </Link>
+        </div> */}
 
-				{/* Sign In Button */}
-				<button
-					type="submit"
-					disabled={loading}
-					className="btn w-full primary-gradient text-white border-0 rounded-2xl normal-case font-bold text-base py-4 h-auto mt-2 active:scale-[0.98] transition-transform shadow-ambient-sm disabled:opacity-60">
-					{loading ? (
-						<span className="loading loading-spinner loading-sm" />
-					) : (
-						"Đăng nhập"
-					)}
-				</button>
-			</form>
+        {/* Sign In Button */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="primary-gradient btn mt-2 h-auto w-full rounded-2xl border-0 py-4 text-base font-bold normal-case text-white shadow-ambient-sm transition-transform active:scale-[0.98] disabled:opacity-60"
+        >
+          {loading ? (
+            <span className="loading loading-spinner loading-sm" />
+          ) : (
+            "Đăng nhập"
+          )}
+        </button>
+      </form>
 
-			{/* <div className="flex items-center gap-4 my-6">
+      {/* <div className="flex items-center gap-4 my-6">
 				<div className="flex-1 h-px bg-outline-variant" />
 				<span className="text-sm text-on-surface-variant font-medium">
 					Hoặc tiếp tục với
@@ -172,23 +178,24 @@ function LoginForm() {
 				</button>
 			</div> */}
 
-			{/* Sign up link */}
-			<p className="text-center mt-8 text-on-surface text-sm">
-				Don&apos;t have an account?{" "}
-				<Link
-					href="/register"
-					className="font-black text-on-surface underline underline-offset-4">
-					Đăng ký
-				</Link>
-			</p>
-		</div>
-	);
+      {/* Sign up link */}
+      <p className="mt-8 text-center text-sm text-on-surface">
+        Bạn chưa có tài khoản?{" "}
+        <Link
+          href="/register"
+          className="font-black text-on-surface underline underline-offset-4"
+        >
+          Đăng ký
+        </Link>
+      </p>
+    </div>
+  );
 }
 
 export default function LoginPage() {
-	return (
-		<Suspense>
-			<LoginForm />
-		</Suspense>
-	);
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
 }

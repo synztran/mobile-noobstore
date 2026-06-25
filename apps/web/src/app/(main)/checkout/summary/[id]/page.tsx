@@ -208,9 +208,7 @@ export default function SummaryPage() {
       </div>
 
       {/* ── Voucher / Discount ───────────────────────────────── */}
-      <div>
-        <VoucherComponent subtotal={subtotal} />
-      </div>
+      <VoucherComponent subtotal={subtotal} />
 
       {/* ── Delivery Address ────────────────────────────── */}
       {shipping && (
@@ -345,7 +343,7 @@ export default function SummaryPage() {
       <dialog
         className={`modal modal-bottom sm:modal-middle ${showConfirm ? "modal-open" : ""}`}
       >
-        <div className="modal-box rounded-2xl bg-surface px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+        <div className="modal-box rounded-2xl bg-surface px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6">
           <div className="flex flex-col items-center py-2 text-center">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
               <CheckCircle size={32} className="text-emerald-600" />

@@ -26,6 +26,7 @@ export default function RewardsTable({ rewards, totalWeight, onEdit, onDelete, o
                         <th className="text-center">Display %</th>
                         <th className="text-center">Claimed</th>
                         <th className="text-center">Golden</th>
+                        <th className="text-center">Active</th>
                         <th className="text-center">Actions</th>
                     </tr>
                 </thead>
@@ -55,6 +56,17 @@ export default function RewardsTable({ rewards, totalWeight, onEdit, onDelete, o
                                     <span className="text-yellow-500 text-lg">★</span>
                                 ) : (
                                     <span className="text-slate-300 dark:text-slate-600">—</span>
+                                )}
+                            </td>
+                            <td className="text-center">
+                                {reward.is_active !== false ? (
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                        Active
+                                    </span>
+                                ) : (
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                                        Inactive
+                                    </span>
                                 )}
                             </td>
                             <td className="text-center">

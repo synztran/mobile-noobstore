@@ -8,8 +8,7 @@ const MIN_DISPLAY_MS = 400;
 
 export function NavigationOverlay() {
   const pathname = usePathname();
-  const { isNavigating, startNavigation, endNavigation } =
-    useNavigationStore();
+  const { isNavigating, startNavigation, endNavigation } = useNavigationStore();
   const prevPathname = useRef(pathname);
   const startedAt = useRef(0);
 
@@ -31,7 +30,13 @@ export function NavigationOverlay() {
       const anchor = (e.target as HTMLElement).closest("a");
       if (!anchor) return;
       const href = anchor.getAttribute("href");
-      if (!href || href.startsWith("http") || href.startsWith("//") || href.startsWith("#")) return;
+      if (
+        !href ||
+        href.startsWith("http") ||
+        href.startsWith("//") ||
+        href.startsWith("#")
+      )
+        return;
       startedAt.current = Date.now();
       startNavigation();
     };
@@ -46,7 +51,7 @@ export function NavigationOverlay() {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-sm transition-opacity duration-200">
       <div className="flex flex-col items-center gap-4">
         <span className="loading loading-spinner loading-lg text-primary" />
-        <p className="animate-pulse text-base font-black tracking-wider text-white drop-shadow-lg">
+        <p className="animate-pulse text-base font-black tracking-wider text-slate-600 drop-shadow-lg">
           Đang chuyển trang...
         </p>
       </div>

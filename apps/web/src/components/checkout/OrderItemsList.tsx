@@ -87,11 +87,13 @@ export function OrderItemsList({
                       {item.variant.variant_name}
                     </p>
                   )}
-                  <p className="mt-1 text-sm font-black text-primary">
-                    {formatVND(
-                      item.variant?.effective_price ?? item.product.base_price
-                    )}
-                  </p>
+                  {item.variant?.effective_price || item.product.base_price ? (
+                    <p className="mt-1 text-sm font-black text-primary">
+                      {formatVND(
+                        item.variant?.effective_price ?? item.product.base_price
+                      )}
+                    </p>
+                  ) : null}
                   <div className="inline-flex items-center gap-2">
                     {item.components?.some((c) => c.is_pre_order) && (
                       <span className="rounded-sm bg-violet-500 px-1 py-0.5 text-[10px] font-black uppercase text-white">

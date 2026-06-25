@@ -43,6 +43,7 @@ export function RewardsManager({ eventId }: Props) {
     weight: number | null;
     max_quantity: string;
     is_golden: boolean;
+    is_active: boolean;
     thumbnail_url: string;
     percent_display: string;
   }>({
@@ -51,6 +52,7 @@ export function RewardsManager({ eventId }: Props) {
     weight: 100,
     max_quantity: "",
     is_golden: false,
+    is_active: true,
     thumbnail_url: "",
     percent_display: "",
   });
@@ -64,6 +66,7 @@ export function RewardsManager({ eventId }: Props) {
       weight: 100,
       max_quantity: "",
       is_golden: false,
+      is_active: true,
       thumbnail_url: "",
       percent_display: "",
     });
@@ -78,6 +81,7 @@ export function RewardsManager({ eventId }: Props) {
       weight: reward.weight ?? 0,
       max_quantity: reward.max_quantity?.toString() ?? "",
       is_golden: reward.is_golden,
+      is_active: reward.is_active,
       thumbnail_url: reward.thumbnail_url ?? "",
       percent_display: reward.percent_display?.toString() ?? "",
     });
@@ -140,6 +144,7 @@ export function RewardsManager({ eventId }: Props) {
       weight: form.weight,
       max_quantity: form.max_quantity ? Number(form.max_quantity) : null,
       is_golden: form.is_golden,
+      is_active: form.is_active,
       thumbnail_url: form.thumbnail_url || null,
       percent_display: form.percent_display
         ? Number(form.percent_display)
@@ -354,19 +359,30 @@ export function RewardsManager({ eventId }: Props) {
               />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <label className="inline-flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-6">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
               <input
                 type="checkbox"
+                className="toggle toggle-warning toggle-sm"
                 checked={form.is_golden}
                 onChange={(e) =>
                   setForm({ ...form, is_golden: e.target.checked })
                 }
-                className="rounded"
               />
               <span className="text-body font-medium">
                 Golden reward (rare)
               </span>
+            </label>
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="toggle toggle-success toggle-sm"
+                checked={form.is_active}
+                onChange={(e) =>
+                  setForm({ ...form, is_active: e.target.checked })
+                }
+              />
+              <span className="text-body font-medium">Active</span>
             </label>
           </div>
           <div className="flex justify-end gap-3">

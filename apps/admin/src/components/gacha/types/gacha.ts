@@ -7,6 +7,7 @@ export interface Reward {
     max_quantity: number | null;
     claimed_count: number;
     is_golden: boolean;
+    is_active: boolean;
     thumbnail_url: string | null;
     percent_display: number | null;
 }

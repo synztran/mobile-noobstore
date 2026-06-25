@@ -14,6 +14,7 @@ import { memo, useCallback, useMemo, useRef, useState } from "react";
 import ProductComponentTags from "../product/ProductComponentTags";
 import { ITag } from "@/app/api/products/route";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { useNavigationStore } from "@/store/navigation";
 
 function itemUnitPrice(item: CartItem) {
   const base = item.variant?.effective_price ?? item.product.base_price;
@@ -211,17 +212,19 @@ export function CartDrawer() {
     [updateQty]
   );
 
+  const startNavigation = useNavigationStore((s) => s.startNavigation);
+
   const handleCheckout = useCallback(() => {
     if (checkingOut) return;
     if (user == null) {
       toast.warning("Cần đăng nhập để thanh toán!");
       router.push("/login");
+      return;
     }
-    setCheckingOut(true);
-    router.push("/checkout/shipping");
     closeCart();
-    setCheckingOut(false);
-  }, [checkingOut, router, closeCart, user]);
+    startNavigation();
+    router.push("/checkout/shipping");
+  }, [checkingOut, router, closeCart, user, startNavigation]);
 
   usePreventScroll(drawerOpen);
 

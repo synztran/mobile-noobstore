@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
           "id, reward_type, name, description, value, thumbnail_url, weight, max_quantity, claimed_count, is_golden, percent_display"
         )
         .eq("event_id", eventId)
+        .filter("is_active", "eq", true)
         .order("percent_display", { ascending: true }),
     ]);
 
@@ -236,7 +237,8 @@ export async function POST(req: NextRequest) {
         .select(
           "id, reward_type, name, description, value, thumbnail_url, weight, max_quantity, claimed_count, is_golden"
         )
-        .eq("event_id", eventId),
+        .eq("event_id", eventId)
+        .filter("is_active", "eq", true),
     ]);
 
   if (rewardsError || !allRewards || allRewards.length === 0) {

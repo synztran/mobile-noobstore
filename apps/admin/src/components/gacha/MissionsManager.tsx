@@ -86,7 +86,7 @@ export function MissionsManager({ eventId }: Props) {
     name: "",
     description: "",
     mission_type: "login_count",
-    token_reward: 1,
+    token_reward: null,
     req_min_price: null,
     req_count: null,
     req_order_status: "",
@@ -110,7 +110,7 @@ export function MissionsManager({ eventId }: Props) {
       name: "",
       description: "",
       mission_type: "login_count",
-      token_reward: 1,
+      token_reward: null,
       req_min_price: null,
       req_count: null,
       req_order_status: "",
@@ -128,7 +128,7 @@ export function MissionsManager({ eventId }: Props) {
       description: mission.description ?? "",
       mission_type: mission.mission_type,
       token_reward: mission.token_reward,
-      req_min_price: (req.min_price as number) ?? null,
+      req_min_price: (req.amount as number) ?? null,
       req_count: (req.count as number) ?? null,
       req_order_status: (req.order_status as string) ?? "",
       show_trigger: mission.show_trigger,
@@ -260,8 +260,6 @@ export function MissionsManager({ eventId }: Props) {
             <NumberInput
               value={form.token_reward}
               onChange={(v) => setForm({ ...form, token_reward: v })}
-              min={1}
-              required
               step={1}
               className="w-full"
               label="Token Reward"
