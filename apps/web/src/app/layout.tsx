@@ -1,16 +1,25 @@
 import { ReactQueryProvider } from "@/components/ui/ReactQueryProvider";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
-import { MobileViewportGuard } from "@/components/warning-modal/MobileViewportGuard";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import "gooey-toast/styles.css";
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const MobileViewportGuard = dynamic(
+  () => import("@/components/warning-modal/MobileViewportGuard"),
+);
+
+const manrope = localFont({
+	src: "../../public/fonts/manrope/Manrope-VariableFont_wght.ttf",
+	variable: "--font-sans",
+	display: "swap",
+	weight: "200 800",
+});
 
 export const metadata: Metadata = {
 	title: "NoobStore",
@@ -45,7 +54,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en" data-theme="noobstore" className={cn("font-sans", inter.variable)}>
+		<html lang="en" data-theme="noobstore" className={cn("font-sans", manrope.variable)}>
 			<body className="bg-background font-sans text-on-surface antialiased">
 				<AuthProvider>
 					<ReactQueryProvider>

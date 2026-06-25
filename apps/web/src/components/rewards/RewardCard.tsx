@@ -19,20 +19,22 @@ export function RewardCard({ reward, onRedeem, balance }: Props) {
 
   return (
     <div className="flex flex-col gap-2 rounded-2xl bg-surface-container-lowest p-3 shadow-ambient-sm transition-all active:scale-[0.98]">
-      <div className="flex h-10 w-10 items-center justify-center self-center rounded-xl bg-primary-fixed/20 text-primary">
-        {getRewardIcon(reward.rewardType, reward.metadata)}
-      </div>
+      <div className="flex items-start gap-1">
+        <div className="flex h-8 min-w-8 items-center justify-center self-center rounded-sm bg-primary-fixed/50 text-primary">
+          {getRewardIcon(reward.rewardType, reward.metadata)}
+        </div>
 
-      <div className="text-center">
-        <p className="truncate text-xs font-black text-on-surface">
-          {reward.name}
-        </p>
-        <div className="mt-1 inline-block rounded-full bg-secondary-fixed/30 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-secondary">
-          {reward.rewardType === "point"
-            ? "ĐIỂM"
-            : reward.rewardType === "product"
-              ? "QUÀ"
-              : "VOUCHER"}
+        <div className="text-left">
+          <div className="max-w-max rounded bg-secondary-fixed/30 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-widest text-secondary">
+            {reward.rewardType === "point"
+              ? "ĐIỂM"
+              : reward.rewardType === "product"
+                ? "QUÀ"
+                : "VOUCHER"}
+          </div>
+          <p className="truncate text-[10px] font-black text-on-surface">
+            {reward.name}
+          </p>
         </div>
       </div>
 

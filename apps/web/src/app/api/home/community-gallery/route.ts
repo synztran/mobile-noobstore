@@ -33,7 +33,12 @@ export async function GET(request: Request) {
 			);
 		}
 
-		return NextResponse.json(photos as CommunityPhoto[]);
+		return NextResponse.json(photos as CommunityPhoto[], {
+			headers: {
+				"Cache-Control":
+					"public, s-maxage=60, stale-while-revalidate=300",
+			},
+		});
 	} catch (err) {
 		console.error("[community gallery] error:", err);
 		return NextResponse.json(

@@ -4,17 +4,103 @@ import type { CommunityPhoto } from "@/app/api/home/community-gallery/route";
 import { useHomeCommunityGallery } from "@/lib/react-query/home/api/useHomeQueries";
 import { Heart } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const PAGE_SIZE = 5;
 
+type ImageMeta = {
+  id: string;
+  ratio: number;
+  loaded: boolean;
+};
+
+function useIntersectionVisible(ref: React.RefObject<Element | null>) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [ref]);
+  return visible;
+}
+
+function balanceColumns<T extends { id: string }>(
+  items: T[],
+  ratios: Record<string, number>,
+): T[] {
+  const cols: { items: T[]; height: number }[] = [
+    { items: [], height: 0 },
+    { items: [], height: 0 },
+  ];
+
+  const sorted = [...items].sort(
+    (a, b) => (ratios[b.id] ?? 1) - (ratios[a.id] ?? 1),
+  );
+
+  for (const item of sorted) {
+    const ratio = ratios[item.id] ?? 1;
+    const col = cols[0].height <= cols[1].height ? cols[0] : cols[1];
+    col.items.push(item);
+    col.height += 1 / ratio;
+  }
+
+  return cols.flatMap((c) => c.items);
+}
+
 export function CommunityGallery() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const visible = useIntersectionVisible(sectionRef);
   const [limit, setLimit] = useState(PAGE_SIZE);
   const { data, isLoading } = useHomeCommunityGallery(limit);
+  const [imageMeta, setImageMeta] = useState<Record<string, ImageMeta>>({});
+  const [sorted, setSorted] = useState<CommunityPhoto[] | null>(null);
+
+  const photos = data?.photos ?? [];
+  const hasMore = data?.hasMore ?? false;
+
+  useEffect(() => {
+    setSorted(null);
+  }, [limit]);
+
+  useEffect(() => {
+    if (photos.length === 0) return;
+    const allLoaded = photos.every((p) => imageMeta[p.id]?.loaded);
+    if (!allLoaded) return;
+    const ratios: Record<string, number> = {};
+    for (const p of photos) {
+      ratios[p.id] = imageMeta[p.id]?.ratio ?? 1;
+    }
+    setSorted(balanceColumns(photos, ratios));
+  }, [imageMeta, photos]);
+
+  const displayItems = sorted ?? photos;
+
+  const handleLoadingComplete =
+    (id: string) =>
+    (img: HTMLImageElement) => {
+      const ratio =
+        img.naturalWidth && img.naturalHeight
+          ? img.naturalWidth / img.naturalHeight
+          : 1;
+      setImageMeta((prev) => ({
+        ...prev,
+        [id]: { id, ratio, loaded: true },
+      }));
+    };
 
   if (isLoading) {
     return (
-      <section className="px-6">
+      <section ref={sectionRef} className="px-6">
         <div className="mb-8 h-8 animate-pulse rounded-lg bg-surface-container" />
         <div className="grid grid-cols-2 gap-2">
           <div className="aspect-square animate-pulse rounded-lg bg-surface-container" />
@@ -25,13 +111,18 @@ export function CommunityGallery() {
     );
   }
 
-  if (data?.photos?.length === 0) {
-    return null;
-  }
+  if (photos.length === 0) return null;
 
   return (
-    <section className="px-6">
-      <div className="mb-8">
+    <section
+      ref={sectionRef}
+      className="px-6 transition-all duration-700"
+    >
+      <div
+        className={`mb-8 transition-all duration-700 ${
+          visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
+        }`}
+      >
         <div className="mb-2 flex items-center gap-2">
           <Heart size={20} className="text-primary" />
           <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
@@ -46,49 +137,75 @@ export function CommunityGallery() {
         </p>
       </div>
 
-      {/* Masonry: 2 columns, images render at their natural aspect ratio */}
       <div className="columns-2 gap-2 space-y-2">
-        {data?.photos?.map((photo, i) => (
-          <div
-            key={photo.id}
-            className="group relative cursor-pointer break-inside-avoid overflow-hidden rounded-lg bg-surface-container-high animate-[fadeIn_0.5s_ease-out_forwards]"
-            style={{ animationDelay: `${i * 80}ms`, opacity: 0 }}
-          >
-            <Image
-              src={photo.image_url}
-              alt={photo.alt_text}
-              width={0}
-              height={0}
-              sizes="(max-width: 640px) 50vw, 33vw"
-              className="h-auto w-full transition-transform duration-300 group-hover:scale-105"
-            />
-            {/* Author overlay */}
-            <div className="absolute inset-x-0 bottom-0 rounded-b-lg bg-white/20 px-2 py-1 backdrop-blur-sm transition-transform duration-300">
-              {photo.author && (
-                <p className="leading-1 flex items-center truncate text-[9px] font-black text-white drop-shadow">
-                  @{photo.author}
-                </p>
-              )}
+        {displayItems.map((photo, i) => {
+          const meta = imageMeta[photo.id];
+          const isLoaded = meta?.loaded ?? false;
+
+          return (
+            <div
+              key={photo.id}
+              className={`group relative cursor-pointer break-inside-avoid overflow-hidden rounded-xl bg-surface-container-high transition-all duration-500 ${
+                visible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-8 opacity-0"
+              }`}
+              style={{
+                animationDelay: `${i * 80}ms`,
+                transitionDelay: `${i * 60}ms`,
+              }}
+            >
+              <div className="relative overflow-hidden">
+                <Image
+                  src={photo.image_url}
+                  alt={photo.alt_text}
+                  width={0}
+                  height={0}
+                  sizes="(max-width: 640px) 50vw, 33vw"
+                  className={`h-auto w-full transition-all duration-700 ${
+                    isLoaded
+                      ? "scale-100 blur-0"
+                      : "scale-105 blur-xl"
+                  } group-hover:scale-105`}
+                  onLoadingComplete={handleLoadingComplete(photo.id)}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              </div>
+
+              <div
+                className={`absolute inset-x-0 bottom-0 rounded-b-xl bg-gradient-to-t from-black/50 to-transparent px-3 py-2 backdrop-blur-sm transition-all duration-300 ${
+                  isLoaded
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-2 opacity-0"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  {photo.author && (
+                    <p className="truncate text-[9px] font-black text-white drop-shadow">
+                      @{photo.author}
+                    </p>
+                  )}
+                  <Heart
+                    size={12}
+                    className="shrink-0 text-white/70 transition-colors hover:text-red-400"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {data?.hasMore && (
+      {hasMore && (
         <button
           onClick={() => setLimit((l) => l + PAGE_SIZE)}
-          disabled={isLoading}
-          className="mt-4 w-full rounded-xl border border-primary/30 py-2.5 text-xs font-black uppercase tracking-widest text-primary transition-all hover:bg-primary/5 active:scale-95 disabled:opacity-50"
+          className="mt-6 w-full rounded-xl border border-primary/30 py-3 text-xs font-black uppercase tracking-widest text-primary transition-all hover:bg-primary/5 hover:shadow-lg active:scale-95"
         >
-          {isLoading ? (
-            <span className="loading loading-spinner text-accent"></span>
-          ) : (
-            "Xem thêm"
-          )}
+          Xem thêm
         </button>
       )}
 
-      <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 px-2 py-4 text-center">
+      <div className="mt-6 rounded-xl border border-primary/20 bg-primary/5 px-2 py-4 text-center">
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
           ✨ Tag @noobstore, để sớm được chia sẻ ✨
         </p>

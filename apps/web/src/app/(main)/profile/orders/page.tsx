@@ -73,8 +73,8 @@ const STATUS_CONFIG: Record<
   delivered: {
     label: "Đã giao hàng",
     Icon: PackageCheck,
-    color: "text-primary",
-    bg: "bg-primary/5",
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
   },
   cancelled: {
     label: "Đã hủy",
@@ -354,8 +354,8 @@ function OrdersPage() {
             >
               {/* Row 1: order number + status */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="flex w-full flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-black tracking-widest text-primary">
                       {order.order_number ?? `#${order.id}`}
                     </span>

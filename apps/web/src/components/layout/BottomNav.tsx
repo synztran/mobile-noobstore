@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { Dices, House, ShoppingBasket, UserRound } from "lucide-react";
+import { Dices, Gift, House, ShoppingBasket, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -25,6 +25,12 @@ const navItems = [
     iconFilled: false,
   },
   {
+    href: "/rewards",
+    icon: <Gift size={16} />,
+    label: "Đổi thưởng",
+    iconFilled: false,
+  },
+  {
     href: "/profile",
     icon: <UserRound size={16} />,
     label: "Hồ sơ",
@@ -40,9 +46,10 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[70vw] items-center justify-between rounded-xl border-gray-200/30 !bg-[rgba(255,255,255,0.8)] p-2 shadow-lg">
+    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[90vw] items-center justify-between rounded-xl border-gray-200/30 !bg-[rgba(255,255,255,0.8)] p-2 shadow-lg">
       {navItems.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive =
+          pathname === item.href || pathname.startsWith(item.href + "/");
         return (
           <Link
             key={item.href}
@@ -64,7 +71,7 @@ export function BottomNav() {
                 {item.icon}
               </div>
             }
-            <span className="font-sans text-[9px] font-semibold uppercase tracking-widest">
+            <span className="font-sans text-[8px] font-semibold uppercase tracking-widest">
               {item.label}
             </span>
           </Link>

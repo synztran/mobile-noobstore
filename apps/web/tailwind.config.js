@@ -86,10 +86,10 @@ module.exports = {
 				full: "9999px",
 			},
 			fontFamily: {
-				sans: ["Manrope", "sans-serif"],
-				headline: ["Manrope", "sans-serif"],
-				body: ["Manrope", "sans-serif"],
-				label: ["Manrope", "sans-serif"],
+				sans: ["var(--font-sans)", "sans-serif"],
+				headline: ["var(--font-sans)", "sans-serif"],
+				body: ["var(--font-sans)", "sans-serif"],
+				label: ["var(--font-sans)", "sans-serif"],
 			},
 			boxShadow: {
 				ambient: "0 40px 40px rgba(155, 63, 28, 0.06)",

@@ -1,14 +1,12 @@
 "use client";
 
-import type { ShopProduct } from "@/app/api/products/route";
-import { formatVND } from "@/lib/currency";
 import { useHomeSaleProducts } from "@/lib/react-query/home/api/useHomeQueries";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import DiscountBadge from "../product/DiscountBadge";
 import { ICON_SALE } from "@/lib/images";
+import { BundleProductCard, BundleProductCardSkeleton } from "./BundleProductCard";
 
 const CATEGORIES = [
   { label: "TẤT CẢ", slug: "" },
@@ -24,60 +22,6 @@ const SORTS = [
   { label: "Giá cao", value: "price_desc" },
   { label: "Mới nhất", value: "newest" },
 ] as const;
-
-function ProductCard({ product }: { product: ShopProduct }) {
-  return (
-    <Link
-      href={`/shop/${product.slug}`}
-      className="group w-[180px] flex-shrink-0 transition-transform active:scale-95"
-    >
-      <div className="relative mb-2 aspect-[4/3] overflow-hidden rounded-2xl bg-surface-container-high">
-        {product.thumbnail ? (
-          <Image
-            src={product.thumbnail}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <span className="text-[5rem] font-black uppercase leading-none text-on-surface/5">
-              {product.name.charAt(0)}
-            </span>
-          </div>
-        )}
-        <DiscountBadge discountPercent={product.discount_percentage || 0} />
-      </div>
-      <p className="truncate text-xs font-extrabold capitalize tracking-[0.1em] text-primary">
-        {product.brand || product.category}
-      </p>
-      <p className="truncate text-sm font-bold capitalize text-on-surface">
-        {product.name}
-      </p>
-      <div className="flex flex-col items-end">
-        <span className="text-base font-extrabold text-red-600">
-          {formatVND(product.discount_price || product.min_price)}
-        </span>
-        {product.discount_price && product.discount_price > 0 && (
-          <span className="text-xs font-bold text-on-surface-variant line-through">
-            {formatVND(product.base_price)}
-          </span>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-function ProductSkeleton() {
-  return (
-    <div className="w-[180px] flex-shrink-0 animate-pulse space-y-3">
-      <div className="aspect-[4/3] rounded-2xl bg-surface-container" />
-      <div className="h-4 w-3/4 rounded bg-surface-container" />
-      <div className="h-3 w-1/2 rounded bg-surface-container" />
-      <div className="h-4 w-1/3 rounded bg-surface-container" />
-    </div>
-  );
-}
 
 export function HomeSaleSection() {
   const [activeCategory, setActiveCategory] = useState("");
@@ -167,9 +111,15 @@ export function HomeSaleSection() {
       {/* Product Carousel */}
       <div className="hide-scrollbar flex gap-4 overflow-x-auto px-6 pb-2">
         {isLoading
-          ? Array.from({ length: 3 }, (_, i) => <ProductSkeleton key={i} />)
-          : products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+          ? Array.from({ length: 3 }, (_, i) => <BundleProductCardSkeleton key={i} />)
+          : products.map((product, i) => (
+              <div
+                key={product.id}
+                className="min-w-[180px] animate-[fadeSlideUp_0.5s_ease-out_forwards]"
+                style={{ animationDelay: `${i * 60}ms`, opacity: 0 }}
+              >
+                <BundleProductCard product={product} />
+              </div>
             ))}
         {!isLoading && products.length === 0 && (
           <div className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-5 py-6 text-center">

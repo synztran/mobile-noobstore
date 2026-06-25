@@ -63,6 +63,7 @@ export function useHomeSaleProducts(
       if (!res.ok) throw new Error("Failed to fetch sale products");
       return res.json() as Promise<{ products: ShopProduct[]; total: number }>;
     },
+    placeholderData: (prev) => prev,
   });
 }
 

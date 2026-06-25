@@ -8,7 +8,7 @@ const nextConfig = {
     // Enables per-import tree-shaking for icon and UI libraries.
     // Next.js rewrites e.g. `import { X } from "lucide-react"` to a direct
     // path import, so only the used icons are included in each bundle.
-    optimizePackageImports: ["@supabase/ssr"],
+    optimizePackageImports: ["@supabase/ssr", "lucide-react", "framer-motion"],
   },
 
   images: {

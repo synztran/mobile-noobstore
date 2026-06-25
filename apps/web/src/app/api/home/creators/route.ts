@@ -1,3 +1,4 @@
+import { getCache, setCache } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -15,6 +16,10 @@ export interface Creator {
 
 export async function GET() {
 	try {
+		const cacheKey = "home:creators";
+		const cached = await getCache<Creator[]>(cacheKey);
+		if (cached) return NextResponse.json(cached);
+
 		const supabase = await createClient();
 
 		const { data: creators, error } = await supabase
@@ -32,6 +37,7 @@ export async function GET() {
 			);
 		}
 
+		await setCache(cacheKey, creators, 300);
 		return NextResponse.json(creators as Creator[]);
 	} catch (err) {
 		console.error("[creators] error:", err);

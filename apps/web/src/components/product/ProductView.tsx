@@ -251,7 +251,7 @@ export function ProductView({
     <>
       <TopNav showBack backHref="/shop" showCart showFavorite />
 
-      <main className="my-auto space-y-4 pb-4">
+      <main className="my-auto space-y-2 pb-4">
         {/* ── Hero Image Gallery ── */}
         <section
           className="relative"
@@ -306,7 +306,7 @@ export function ProductView({
         </section>
 
         {/* ── Product Info ── */}
-        <section className="mt-6 px-6">
+        <section className="px-6">
           <div className="mb-3 flex flex-wrap gap-2">
             {badges.map((badge) => (
               <span

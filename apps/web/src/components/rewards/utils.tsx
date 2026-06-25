@@ -15,13 +15,16 @@ export function formatDate(iso: string) {
   });
 }
 
-export function getRewardIcon(rewardType: string, metadata: Record<string, unknown>) {
-  if (rewardType === "point") return <Coins size={24} />;
-  if (rewardType === "product") return <Gift size={24} />;
+export function getRewardIcon(
+  rewardType: string,
+  metadata: Record<string, unknown>
+) {
+  if (rewardType === "point") return <Coins size={18} />;
+  if (rewardType === "product") return <Gift size={18} />;
   const rt = metadata.reward_type as string;
-  if (rt === "free_shipping") return <Truck size={24} />;
-  if (rt === "percent_off") return <Percent size={24} />;
-  return <ShoppingBag size={24} />;
+  if (rt === "free_shipping") return <Truck size={18} />;
+  if (rt === "percent_off") return <Percent size={18} />;
+  return <ShoppingBag size={18} />;
 }
 
 type BenefitConfig = {
