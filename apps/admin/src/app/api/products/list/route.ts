@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     .from("products")
     .select(
       `
-      id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail,
+      id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail, attributes, is_active, parent_product_id,
       categories(id, name),
       product_variants(id, variant_name, price_adjustment, stock_quantity, is_pre_order, attributes),
       product_components!product_components_parent_product_id_fkey(

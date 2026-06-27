@@ -18,6 +18,7 @@ import {
 } from "@/lib/react-query/gacha/queries";
 import { adminQueryKeys } from "@/lib/react-query/root";
 import NumberInput from "@/components/ui/NumberInput";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 
 interface Mission {
   id: string;
@@ -367,15 +368,10 @@ export function MissionsManager({ eventId }: Props) {
             </p>
           )}
           <div className="col-span-full">
-            <label className="text-body mb-1 block text-sm font-medium">
-              Description
-            </label>
-            <textarea
+            <RichTextEditor
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              className="input-base w-full rounded-lg border px-3 py-2 text-sm"
+              onChange={(html) => setForm({ ...form, description: html })}
+              label="Description"
               rows={2}
               placeholder="Describe what the user needs to do..."
             />

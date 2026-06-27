@@ -35,6 +35,17 @@ export interface OrderDetail {
   cancelled_note: string | null;
   created_at: string | null;
   updated_at: string | null;
+  delivery_address: {
+    full_name?: string | null;
+    phone_number?: string | null;
+    street_address?: string | null;
+    apartment?: string | null;
+    ward?: string | null;
+    district?: string | null;
+    city?: string | null;
+    postal_code?: string | null;
+  } | null;
+  invoice_url: string | null;
   items: OrderItemDetail[];
 }
 
@@ -52,6 +63,8 @@ interface RawOrderRow {
   cancelled_note: string | null;
   created_at: string | null;
   updated_at: string | null;
+  delivery_address: unknown | null;
+  invoice_url: string | null;
 }
 
 export async function GET(
@@ -79,7 +92,7 @@ export async function GET(
     const { data: order, error: orderError } = (await supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, shipping_fee, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at"
+        "id, order_number, status, total_price, shipping_fee, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, delivery_address, invoice_url"
       )
       .eq("id", id)
       .eq("user_id", user.id)
@@ -131,8 +144,9 @@ export async function GET(
     if (productIds.length > 0) {
       const { data } = await supabase
         .from("products")
-        .select("id, thumbnail")
-        .in("id", productIds);
+      .select("id, thumbnail")
+      .eq("is_active", true)
+      .in("id", productIds);
       productRows = data ?? [];
     }
 
@@ -197,6 +211,8 @@ export async function GET(
       cancelled_note: order.cancelled_note ?? null,
       created_at: order.created_at ?? null,
       updated_at: order.updated_at ?? null,
+      delivery_address: order.delivery_address as OrderDetail["delivery_address"],
+      invoice_url: order.invoice_url ?? null,
       items,
     } satisfies OrderDetail);
   } catch (err) {

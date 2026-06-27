@@ -1,3 +1,4 @@
+import { generateAndStoreInvoice } from "@/lib/invoice";
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@db-types";
@@ -149,6 +150,63 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Generate invoice when order is confirmed (fire-and-forget)
+  if (body.status === "confirmed") {
+    void (async () => {
+      try {
+        const { data: order } = await supabase
+          .from("orders")
+          .select(
+            "order_number, total_price, shipping_fee, shipping_discount_amount, voucher_discount_amount, delivery_address"
+          )
+          .eq("id", id)
+          .single();
+
+        const { data: items } = await supabase
+          .from("order_items")
+          .select("product_name, quantity, unit_price")
+          .eq("order_id", id);
+
+        if (order && items && order.delivery_address) {
+          const addr = order.delivery_address as Record<string, string | null>;
+          const customerName = [addr.full_name, addr.phone_number]
+            .filter(Boolean)
+            .join(" - ");
+          const customerAddress = [
+            addr.street_address,
+            addr.apartment,
+            addr.ward,
+            addr.district,
+            addr.city,
+          ]
+            .filter(Boolean)
+            .join(", ");
+
+          await generateAndStoreInvoice(id, {
+            orderNumber: order.order_number,
+            customerName: customerName || "Khách hàng",
+            customerAddress: customerAddress || "",
+            items: (items ?? []).map((i) => ({
+              name: i.product_name,
+              quantity: i.quantity,
+              unit_cost: Number(i.unit_price),
+            })),
+            shippingFee: Number(order.shipping_fee ?? 0),
+            discount:
+              Number(order.shipping_discount_amount ?? 0) +
+              Number(order.voucher_discount_amount ?? 0),
+            total: Number(order.total_price),
+          });
+        }
+      } catch (invoiceErr) {
+        console.error(
+          `[orders] failed to generate invoice for order ${id}:`,
+          invoiceErr
+        );
+      }
+    })();
+  }
+
   // Restore stock when order is cancelled or refunded
   if (body.status === "cancelled" || body.status === "refunded") {
     try {
@@ -233,12 +291,11 @@ export async function PATCH(
         // Fetch the order's user and total price
         const { data: orderRow } = await supabase
           .from("orders")
-          .select("user_id, total_price")
+          .select("user_id, total_price, order_number")
           .eq("id", id)
           .single();
 
         if (orderRow?.user_id && orderRow.total_price) {
-          // Compute points via DB helper then credit them
           const { data: ptRows } = await (
             supabase.rpc as unknown as (
               fn: string,
@@ -264,7 +321,7 @@ export async function PATCH(
               p_source_type: "order_delivered",
               p_source_ref: id,
               p_amount: points,
-              p_note: `Order #${id} delivered`,
+              p_note: `Order #${orderRow.order_number} delivered`,
             });
           }
         }

@@ -8,8 +8,11 @@ import KitSelector, { type KitOption } from "@/components/ui/KitSelector";
 import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
 import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import NumberInput from "@/components/ui/NumberInput";
+import RichTextEditor from "@/components/ui/RichTextEditor";
+import AttributesEditor from "@/components/ui/AttributesEditor";
 import InputSelection from "../ui/InputSelection";
 import { formatVND } from "@/lib/currency";
 
@@ -24,6 +27,8 @@ type EditableProduct = {
   product_type: string;
   brand: string | null;
   description?: string | null;
+  attributes?: Record<string, string> | null;
+  is_active?: boolean | null;
   thumbnail?: string | null;
   images?: string[] | null;
   parent_product_id?: string | null;
@@ -36,6 +41,7 @@ type Props = {
 
 export default function EditProductModal({ product }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +67,10 @@ export default function EditProductModal({ product }: Props) {
     []
   );
   const [categoryType, setCategoryType] = useState<string>("");
+  const [attributes, setAttributes] = useState<Record<string, string>>(
+    product.attributes ?? {}
+  );
+  const [isActive, setIsActive] = useState(product.is_active ?? true);
 
   useEffect(() => {
     if (!open) return;
@@ -78,6 +88,8 @@ export default function EditProductModal({ product }: Props) {
     setImages(Array.isArray(product.images) ? product.images : []);
     setParentProductId(product.parent_product_id ?? "");
     setCategoryType(product.category_id ?? ""); // Reset category selection when opening modal
+    setAttributes(product.attributes ?? {});
+    setIsActive(product.is_active ?? true);
     // Fetch kit options whenever the modal opens
     setKitOptionsLoading(true);
     fetch("/api/products?productType=kit")
@@ -122,6 +134,8 @@ export default function EditProductModal({ product }: Props) {
       parent_product_id:
         productType === "component" && parentProductId ? parentProductId : null,
       category_id: categoryType || null,
+      attributes: Object.keys(attributes).length > 0 ? attributes : null,
+      is_active: isActive,
     };
 
     const res = await fetch(`/api/products/${product.id}`, {
@@ -139,6 +153,7 @@ export default function EditProductModal({ product }: Props) {
     }
 
     setOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["products"] });
     router.refresh();
   }
 
@@ -157,7 +172,6 @@ export default function EditProductModal({ product }: Props) {
         <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setOpen(false)}
           />
           <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
             <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -274,16 +288,37 @@ export default function EditProductModal({ product }: Props) {
                   </div>
 
                   <div className="col-span-2">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
-                      Description
-                    </label>
-                    <textarea
-                      rows={5}
+                    <RichTextEditor
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={setDescription}
+                      label="Description"
                       placeholder="Optional description"
+                      rows={5}
                     />
+                  </div>
+
+                  <div className="col-span-2">
+                    <AttributesEditor
+                      value={attributes}
+                      onChange={setAttributes}
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsActive((v) => !v)}
+                        className={`relative h-6 w-10 rounded-full transition-colors ${isActive ? "bg-green-500" : "bg-slate-300"}`}
+                      >
+                        <span
+                          className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? "translate-x-4" : ""}`}
+                        />
+                      </button>
+                      <span className="text-sm font-medium text-slate-700">
+                        {isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
                   </div>
 
                   {productType === "component" && (

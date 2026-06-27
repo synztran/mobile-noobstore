@@ -20,6 +20,7 @@ export interface ConfiguratorVariant {
 	sale_price_percent?: number;
 	/** The component product this variant belongs to (used for rule resolution). */
 	component_product_id?: string;
+	attributes: Record<string, string> | null;
 }
 
 export interface ConfiguratorGroup {
@@ -133,6 +134,7 @@ export async function GET(
 						(v.pre_order_config as ConfiguratorVariant["pre_order_config"]) ??
 						null,
 					component_product_id: componentProductId,
+					attributes: (v as any).attributes ?? null,
 				});
 			}
 		}

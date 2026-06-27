@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       { data: productRows, error: productErr },
       { data: variantRows, error: variantErr },
     ] = await Promise.all([
-      supabase.from("products").select("id, base_price").in("id", productIds),
+      supabase.from("products").select("id, base_price").eq("is_active", true).in("id", productIds),
       allVariantIds.length > 0
         ? supabase
             .from("product_variants")

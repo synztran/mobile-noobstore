@@ -27,6 +27,7 @@ export interface ProductVariant {
   stock_quantity: number;
   is_pre_order: boolean;
   pre_order_config: PreOrderConfig | null;
+  attributes: Record<string, string> | null;
 }
 
 export interface ProductListItem {
@@ -61,6 +62,7 @@ type VariantRow = {
   stock_quantity: number;
   is_pre_order: boolean;
   pre_order_config: unknown;
+  attributes: unknown;
 };
 
 type RawListRow = {
@@ -149,6 +151,7 @@ async function shapeRow(row: RawListRow): Promise<ProductListItem> {
     stock_quantity: Number(variant.stock_quantity ?? 0),
     pre_order_config:
       (variant.pre_order_config as PreOrderConfig | null) ?? null,
+    attributes: (variant.attributes as Record<string, string> | null) ?? null,
   }));
 
   // If kit, merge in all variants from child components
@@ -157,10 +160,12 @@ async function shapeRow(row: RawListRow): Promise<ProductListItem> {
     const { data: childComponents, error } = await supabase
       .from("products")
       .select(
-        "id, product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)"
+        "id, is_active, product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)"
       )
+      .eq("is_active", true)
       .eq("parent_product_id", row.id)
       .eq("product_type", "component");
+    console.log("childComponents", row, childComponents);
     if (!error && childComponents && childComponents.length > 0) {
       for (const comp of childComponents) {
         if (Array.isArray(comp.product_variants)) {
@@ -176,6 +181,8 @@ async function shapeRow(row: RawListRow): Promise<ProductListItem> {
               is_pre_order: v.is_pre_order ?? false,
               pre_order_config:
                 (v.pre_order_config as PreOrderConfig | null) ?? null,
+              attributes:
+                (v.attributes as Record<string, string> | null) ?? null,
             });
           }
         }
@@ -254,7 +261,8 @@ async function computeKitStockById(
 
   const { data: componentRows, error: componentRowsError } = await supabase
     .from("products")
-    .select("id, product_variants(stock_quantity)")
+    .select("id, is_active, product_variants(stock_quantity)")
+    .eq("is_active", true)
     .in("id", componentProductIds);
 
   if (componentRowsError) return result;
@@ -342,10 +350,11 @@ export async function getProductListByFilters(
     let query = supabase
       .from("products")
       .select(
-        `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, created_at,
-				 categories(id, name),
-				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)`
+        `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, created_at,
+         categories(id, name),
+         product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
       )
+      .eq("is_active", true)
       .in("product_type", productTypes);
 
     if (excludeUncategorized) query = query.not("category_id", "is", null);
@@ -362,10 +371,12 @@ export async function getProductListByFilters(
       .map((row) => row.id);
 
     const kitStockById = await computeKitStockById(kitIds);
+    console.log("data", data, kitStockById, kitIds);
 
     let filteredProducts = await Promise.all(
       rows.map(async (row) => {
         const shaped = await shapeRow(row);
+        console.log("shaped", shaped);
         if (row.product_type === "kit") {
           const stock = kitStockById.get(row.id);
           if (typeof stock === "number") {
@@ -393,7 +404,8 @@ export async function getProductListByFilters(
       sort === "price_asc"
         ? (a: ProductListItem, b: ProductListItem) => a.min_price - b.min_price
         : sort === "price_desc"
-          ? (a: ProductListItem, b: ProductListItem) => b.min_price - a.min_price
+          ? (a: ProductListItem, b: ProductListItem) =>
+              b.min_price - a.min_price
           : (a: ProductListItem, b: ProductListItem) =>
               new Date(b.created_at).getTime() -
               new Date(a.created_at).getTime();

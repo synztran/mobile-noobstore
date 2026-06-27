@@ -882,6 +882,7 @@ export type Database = {
           expected_delivery_at: string | null
           gift_items_snapshot: Json | null
           id: string
+          invoice_url: string | null
           order_number: string
           paid_at: string | null
           payment_reminder_sent_at: string | null
@@ -908,6 +909,7 @@ export type Database = {
           expected_delivery_at?: string | null
           gift_items_snapshot?: Json | null
           id: string
+          invoice_url?: string | null
           order_number: string
           paid_at?: string | null
           payment_reminder_sent_at?: string | null
@@ -934,6 +936,7 @@ export type Database = {
           expected_delivery_at?: string | null
           gift_items_snapshot?: Json | null
           id?: string
+          invoice_url?: string | null
           order_number?: string
           paid_at?: string | null
           payment_reminder_sent_at?: string | null
@@ -1181,7 +1184,9 @@ export type Database = {
           description: string | null
           id: string
           images: Json | null
+          is_active: boolean | null
           is_used: boolean | null
+          attributes: Json | null
           name: string
           parent_product_id: string | null
           product_type: string
@@ -1198,7 +1203,9 @@ export type Database = {
           description?: string | null
           id?: string
           images?: Json | null
+          is_active?: boolean | null
           is_used?: boolean | null
+          attributes?: Json | null
           name: string
           parent_product_id?: string | null
           product_type?: string
@@ -1215,7 +1222,9 @@ export type Database = {
           description?: string | null
           id?: string
           images?: Json | null
+          is_active?: boolean | null
           is_used?: boolean | null
+          attributes?: Json | null
           name?: string
           parent_product_id?: string | null
           product_type?: string

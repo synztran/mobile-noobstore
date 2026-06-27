@@ -485,7 +485,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
             </p>
             <p className="mt-0.5 text-sm font-bold text-primary">
               Giá từ{" "}
-              {formatVND(activeProduct.base_price || activeProduct.min_price)}
+              {formatVND(activeProduct.min_price || activeProduct.base_price)}
             </p>
           </div>
         </div>

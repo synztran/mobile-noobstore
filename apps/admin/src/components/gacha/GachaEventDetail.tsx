@@ -8,6 +8,7 @@ import { MissionsManager } from "./MissionsManager";
 import { BlockedUsersManager } from "./BlockedUsersManager";
 import { RewardHistoryManager } from "./RewardHistoryManager";
 import NumberInput from "@/components/ui/NumberInput";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 
 type Tab = "rewards" | "missions" | "history" | "blacklist";
 
@@ -183,16 +184,11 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
             />
           </div>
           <div>
-            <label className="text-body mb-1 block text-sm font-medium">
-              Description
-            </label>
-            <textarea
+            <RichTextEditor
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
+              onChange={(html) => setForm({ ...form, description: html })}
+              label="Description"
               rows={3}
-              className="input-base w-full rounded-lg border px-3 py-2 text-sm"
             />
           </div>
         </div>

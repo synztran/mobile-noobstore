@@ -9,6 +9,21 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatVND } from "@/lib/currency";
 
+const PRE_ORDER_KEYS = ["estimate", "notes", "available_date"];
+
+function mergePreOrderAttrs(
+  attrs: { key: string; value: string }[],
+  isPreOrder: boolean
+) {
+  if (isPreOrder) {
+    const existingKeys = new Set(attrs.map((a) => a.key));
+    const toAdd = PRE_ORDER_KEYS.filter((k) => !existingKeys.has(k));
+    if (toAdd.length === 0) return attrs;
+    return [...attrs, ...toAdd.map((k) => ({ key: k, value: "" }))];
+  }
+  return attrs.filter((a) => !PRE_ORDER_KEYS.includes(a.key));
+}
+
 export interface EditableVariant {
   id: string;
   variant_name: string;
@@ -68,12 +83,15 @@ export default function EditVariantModal({ variant }: Props) {
     setIsPreOrder(variant.is_pre_order);
     setThumbnail(variant.thumbnail ?? "");
     setAttrs(
-      variant.attributes
-        ? Object.entries(variant.attributes).map(([key, value]) => ({
-            key,
-            value,
-          }))
-        : []
+      mergePreOrderAttrs(
+        variant.attributes
+          ? Object.entries(variant.attributes).map(([key, value]) => ({
+              key,
+              value,
+            }))
+          : [],
+        variant.is_pre_order
+      )
     );
   }, [open, variant]);
 
@@ -89,6 +107,12 @@ export default function EditVariantModal({ variant }: Props) {
     setAttrs((prev) =>
       prev.map((a, idx) => (idx === i ? { ...a, [field]: val } : a))
     );
+  }
+
+  function handleTogglePreOrder() {
+    const next = !isPreOrder;
+    setAttrs((prev) => mergePreOrderAttrs(prev, next));
+    setIsPreOrder(next);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -146,7 +170,6 @@ export default function EditVariantModal({ variant }: Props) {
         <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setOpen(false)}
           />
           <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
             <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -256,7 +279,7 @@ export default function EditVariantModal({ variant }: Props) {
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => setIsPreOrder((v) => !v)}
+                    onClick={handleTogglePreOrder}
                     className={`relative h-6 w-10 rounded-full transition-colors ${isPreOrder ? "bg-purple-600" : "bg-slate-300"}`}
                   >
                     <span

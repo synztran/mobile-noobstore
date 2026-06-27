@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
       const { data: products } = await supabase
         .from("products")
         .select("id, stock_quantity")
+        .eq("is_active", true)
         .in("id", productIds);
 
       for (const p of products ?? []) {

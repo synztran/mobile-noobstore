@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from("products")
     .select(
-      `id, name, slug, product_type, base_price, stock_quantity,
+      `id, name, slug, product_type, base_price, stock_quantity, is_active,
 			 product_variants(id, variant_name, stock_quantity, price_adjustment),
 			 product_components!product_components_parent_product_id_fkey(
 			   id, component_group, is_required,

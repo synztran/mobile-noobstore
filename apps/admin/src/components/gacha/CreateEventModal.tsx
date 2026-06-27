@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import NumberInput from "@/components/ui/NumberInput";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 
 interface Props {
   onClose: () => void;
@@ -48,7 +49,7 @@ export function CreateEventModal({ onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" />
       <div className="card-bg relative w-full max-w-lg space-y-4 rounded-xl p-6 shadow-xl">
         <div className="flex items-center justify-between">
           <h2 className="text-heading text-lg font-bold">Create Gacha Event</h2>
@@ -75,16 +76,11 @@ export function CreateEventModal({ onClose, onCreated }: Props) {
             />
           </div>
           <div>
-            <label className="text-body mb-1 block text-sm font-medium">
-              Description
-            </label>
-            <textarea
+            <RichTextEditor
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
+              onChange={(html) => setForm({ ...form, description: html })}
+              label="Description"
               rows={2}
-              className="input-base w-full rounded-lg border px-3 py-2 text-sm"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

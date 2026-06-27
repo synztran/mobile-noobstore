@@ -13,6 +13,7 @@ import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm } from "@/hooks/useShippingForm";
 import { formatVND } from "@/lib/currency";
 import { ShippingSubmitButton } from "@/components/checkout/ShippingSubmitButton";
+import AddressSuggest from "@/components/checkout/AddressSuggest";
 import clsx from "clsx";
 import { MapPinHouse, Phone, Truck } from "lucide-react";
 import { memo, useMemo } from "react";
@@ -24,15 +25,6 @@ const FIELDS = [
     label: "Họ và tên",
     placeholder: "Nguyễn Văn A",
     icon: "person",
-    type: "text",
-    required: true,
-    colSpan: 2,
-  },
-  {
-    name: "streetAddress",
-    label: "Địa chỉ",
-    placeholder: "123 Đường Nguyễn Huệ, Quận 1",
-    icon: "home",
     type: "text",
     required: true,
     colSpan: 2,
@@ -58,30 +50,33 @@ const FIELDS = [
 ] as const;
 
 const ShippingPage = () => {
-	const {
-		ready,
-		form,
-		setForm,
-		distanceKm,
-		distanceFee,
-		isCalculatingFee,
-		isSubmitting,
-		cityTouched,
-		setCityTouched,
-		delivery,
-		setDelivery,
-		handleChange,
-		handleBlur,
-		handleCityChange,
-		isInvalid,
-		handleSubmit,
-		isHCM,
+  const {
+    ready,
+    form,
+    setForm,
+    distanceKm,
+    distanceFee,
+    isCalculatingFee,
+    isSubmitting,
+    cityTouched,
+    setCityTouched,
+    delivery,
+    setDelivery,
+    handleChange,
+    handleBlur,
+    handleCityChange,
+    isInvalid,
+    handleSubmit,
+    isHCM,
     subtotal,
     shippingCost,
     orderTotal,
     immediateFee,
     basicFee,
     customerLocation,
+    routeCoordinates,
+    storeCoords,
+    handleAddressSelect,
   } = useShippingForm();
 
   const cityCode = useMemo(
@@ -95,6 +90,7 @@ const ShippingPage = () => {
       : "";
     setForm((prev) => ({
       ...prev,
+      streetAddress: "",
       district,
       districtCode,
       ward: "",
@@ -155,6 +151,7 @@ const ShippingPage = () => {
 
       {/* ── Address form ─────────────────────────────────────────── */}
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* ── Other fields ──────────────────────────────────────── */}
         <div className="grid grid-cols-2 gap-4">
           {FIELDS.map((field) => (
             <div
@@ -222,12 +219,10 @@ const ShippingPage = () => {
             </div>
           ))}
         </div>
-
         {/* ── City select ─────────────────────────────────────── */}
         <div>
           <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Tỉnh / Thành phố
-            <span className="ml-0.5 text-primary">*</span>
+            Tỉnh / Thành phố <span className="ml-0.5 text-primary">*</span>
           </label>
           <CitySearchInput
             value={form.city}
@@ -250,10 +245,8 @@ const ShippingPage = () => {
 
         {/* ── District / Ward ─────────────────────────────────── */}
         <div>
-          {/* District selector (quận / huyện) */}
           <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Quận / Huyện
-            <span className="ml-0.5 text-primary">*</span>
+            Quận / Huyện <span className="ml-0.5 text-primary">*</span>
           </label>
           <DistrictSearchInput
             value={form.district}
@@ -269,14 +262,12 @@ const ShippingPage = () => {
             </p>
           )}
 
-          {/* Ward input (phường / xã) */}
           <label className="mb-2 ml-1 mt-3 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Phường / Xã
-            <span className="ml-0.5 text-primary">*</span>
+            Phường / Xã <span className="ml-0.5 text-primary">*</span>
           </label>
           <WardSearchInput
             value={form.ward}
-            onChange={(ward: string) => setForm((prev) => ({ ...prev, ward }))}
+            onChange={(ward: string) => setForm((prev) => ({ ...prev, streetAddress: "", ward }))}
             onCodeChange={(code: string) =>
               setForm((prev) => ({ ...prev, wardCode: code }))
             }
@@ -293,7 +284,62 @@ const ShippingPage = () => {
           )}
         </div>
 
-        <DistanceMap targetLocation={customerLocation} />
+        {/* ── Street Address ─────────────────────────────────────── */}
+        <div>
+          <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Địa chỉ cụ thể <span className="ml-0.5 text-primary">*</span>
+          </label>
+          <div
+            className={clsx(
+              "relative flex items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
+              isInvalid("streetAddress", true)
+                ? "border-error"
+                : "border-transparent focus-within:border-primary"
+            )}
+          >
+            <Icon
+              name="home"
+              className={clsx(
+                "flex-shrink-0 text-xl transition-colors",
+                isInvalid("streetAddress", true)
+                  ? "text-error"
+                  : "text-outline-variant"
+              )}
+            />
+            <AddressSuggest
+              value={form.streetAddress}
+              onChange={handleAddressSelect}
+              onBlur={() =>
+                handleBlur({ target: { name: "streetAddress" } } as any)
+              }
+              city={form.city}
+              district={form.district}
+              ward={form.ward}
+              disabled={false}
+            />
+            {form.streetAddress && !isInvalid("streetAddress", true) && (
+              <Icon
+                name="check_circle"
+                className="flex-shrink-0 text-base text-primary"
+              />
+            )}
+          </div>
+          {isInvalid("streetAddress", true) && (
+            <p className="ml-1 mt-1 text-[10px] font-bold text-error">
+              Trường này là bắt buộc
+            </p>
+          )}
+        </div>
+
+        <DistanceMap
+          targetLocation={customerLocation}
+          storeLocation={
+            storeCoords ? { ...storeCoords, label: "Noobstore HCM" } : null
+          }
+          routeCoordinates={routeCoordinates}
+          drivingDistanceKm={distanceKm !== null ? distanceKm.toFixed(1) : null}
+          isLoading={isCalculatingFee}
+        />
 
         {/* ── Delivery speed ───────────────────────────────────── */}
         <div className="space-y-3">
@@ -429,10 +475,23 @@ const ShippingPage = () => {
               <span
                 className={clsx(
                   "font-bold",
-                  shippingCost === 0 ? "text-secondary" : "text-on-surface"
+                  isCalculatingFee
+                    ? "text-on-surface-variant"
+                    : shippingCost === 0
+                      ? "text-secondary"
+                      : "text-on-surface"
                 )}
               >
-                {shippingCost === 0 ? "Miễn phí" : formatVND(shippingCost)}
+                {isCalculatingFee ? (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="loading loading-spinner loading-xs" />
+                    Đang tính toán
+                  </span>
+                ) : shippingCost === 0 ? (
+                  "Miễn phí"
+                ) : (
+                  formatVND(shippingCost)
+                )}
               </span>
             </div>
             <div className="h-px bg-outline-variant/30" />
@@ -443,10 +502,10 @@ const ShippingPage = () => {
               </span>
             </div>
           </div>
-			<ShippingSubmitButton
-				isCalculatingFee={isCalculatingFee}
-				isSubmitting={isSubmitting}
-			/>
+          <ShippingSubmitButton
+            isCalculatingFee={isCalculatingFee}
+            isSubmitting={isSubmitting}
+          />
         </div>
       </form>
     </div>

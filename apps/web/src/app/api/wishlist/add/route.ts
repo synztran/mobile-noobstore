@@ -37,8 +37,9 @@ export async function POST(req: NextRequest) {
 
 		const { data: product, error: productError } = await supabase
 			.from("products")
-			.select("id")
-			.eq("id", body.productId)
+      .select("id")
+      .eq("is_active", true)
+      .eq("id", body.productId)
 			.maybeSingle();
 
 		if (productError) {

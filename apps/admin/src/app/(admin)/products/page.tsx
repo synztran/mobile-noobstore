@@ -1,5 +1,6 @@
 import ProductsClient from "@/components/products/ProductsClient";
 import ProductsHeader from "@/components/products/ProductsHeader";
+import type { ProductCardProps } from "@/components/products/ProductCard";
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = {
@@ -28,7 +29,7 @@ export default async function ProductsPage({
     .from("products")
     .select(
       `
-			id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail,
+			id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail, attributes, is_active, parent_product_id,
 			categories(id, name),
 			product_variants(
 				id, variant_name, price_adjustment, stock_quantity, is_pre_order, attributes
@@ -78,7 +79,7 @@ export default async function ProductsPage({
       )}
 
       <ProductsClient
-        initialProducts={rows ?? []}
+        initialProducts={rows as ProductCardProps["product"][]}
         initialCount={count ?? 0}
         initialTotalPages={totalPages}
       />

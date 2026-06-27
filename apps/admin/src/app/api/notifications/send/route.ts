@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
 
     let sent = 0;
     let failed = 0;
+    let skipped = 0;
 
     for (const userId of targetUserIds) {
       const userSubs = subsByUser.get(userId) ?? [];
@@ -114,17 +115,20 @@ export async function POST(req: NextRequest) {
 
       if (insErr || !inserted) {
         console.error("[admin/notifications/send] insert error:", insErr);
-        // count these subscriptions as failed
-        failed += userSubs.length;
+        failed += userSubs.length || 1;
         continue;
       }
 
-      if (userSubs.length === 0) continue;
+      if (userSubs.length === 0) {
+        skipped++;
+        continue;
+      }
 
       if (!supabaseUrl || !secret) {
         console.warn(
           "[admin/notifications/send] missing SUPABASE url or internal secret, created notifications but did not send pushes"
         );
+        skipped++;
         continue;
       }
 
@@ -167,7 +171,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, sent, failed });
+    return NextResponse.json({ success: true, sent, failed, skipped });
   } catch (err) {
     console.error("[admin/notifications/send] unexpected error:", err);
     return NextResponse.json(

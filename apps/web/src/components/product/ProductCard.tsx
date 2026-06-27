@@ -72,15 +72,14 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
               </div>
             )}
 
-            {/* Variants badge */}
-            {/* {product.variants.length > 0 && (
-							<span className="absolute top-3 left-3 z-10 text-[10px] font-black px-2.5 py-1 rounded tracking-tighter bg-surface-container-lowest text-on-surface">
-								{product.variants.length} option
-								{product.variants.length > 1 ? "s" : ""}
-							</span>
-						)} */}
-            <DiscountBadge discountPercent={product.discount_percentage || 0} />
-            <ProductComponentTags horizontalTags={product?.tags} />
+            {product.stock_quantity > 0 ? (
+              <>
+                <DiscountBadge
+                  discountPercent={product.discount_percentage || 0}
+                />
+                <ProductComponentTags horizontalTags={product?.tags} />
+              </>
+            ) : null}
 
             {!product.stock_quantity && (
               <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-surface/70">
@@ -100,9 +99,10 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
               {product.name}
             </h3>
             {!isBundle ? (
-              <p className="line-clamp-3 text-[10px] tracking-wide">
-                {product.description}
-              </p>
+              <div
+                className="line-clamp-3 text-[10px] tracking-wide"
+                dangerouslySetInnerHTML={{ __html: product.description || "" }}
+              />
             ) : null}
             {product.discount_price && product.discount_price > 0 ? (
               <div>

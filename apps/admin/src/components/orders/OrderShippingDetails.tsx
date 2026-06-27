@@ -55,42 +55,46 @@ export default function OrderShippingDetails({
   if (!hasDetails) return null;
 
   return (
-    <div className="rounded-lg border border-slate-200 px-4 py-3">
-      <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+    <div className="relative">
+      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
         <Truck className="h-4 w-4" />
         Shipping Details
-      </h3>
+      </div>
 
-      {displayAddress && (
-        <>
-          <p className="text-sm font-medium text-slate-700">
-            {displayAddress.full_name ?? "—"} -{" "}
-            {displayAddress.phone_number ?? "—"}
-          </p>
-          {addressLine && (
-            <p className="mt-0.5 text-sm text-slate-500">{addressLine}</p>
-          )}
-          {displayAddress.phone_number && (
-            <p className="mt-0.5 text-sm text-slate-500">
-              {displayAddress.phone_number}
+      <div className="rounded-lg border border-slate-200 px-4 py-3">
+        {displayAddress && (
+          <>
+            <p className="text-sm font-medium text-slate-700">
+              {displayAddress.full_name ?? "—"} -{" "}
+              {displayAddress.phone_number ?? "—"}
             </p>
-          )}
-        </>
-      )}
+            {addressLine && (
+              <p className="mt-0.5 text-sm text-slate-500">{addressLine}</p>
+            )}
+            {displayAddress.phone_number && (
+              <p className="mt-0.5 text-sm text-slate-500">
+                {displayAddress.phone_number}
+              </p>
+            )}
+          </>
+        )}
 
-      {shippingMethodName && (
-        <p className="mt-2 text-sm text-slate-600">
-          <span className="font-medium text-slate-700">Shipping Method:</span>{" "}
-          {shippingMethodName}
-        </p>
-      )}
+        {shippingMethodName && (
+          <p className="mt-2 text-sm text-slate-600">
+            <span className="font-medium text-slate-700">Shipping Method:</span>{" "}
+            {shippingMethodName}
+          </p>
+        )}
 
-      {expectedDeliveryAt && (
-        <p className="mt-1 text-sm text-slate-600">
-          <span className="font-medium text-slate-700">Expected Delivery:</span>{" "}
-          {formatDateTime(expectedDeliveryAt)}
-        </p>
-      )}
+        {expectedDeliveryAt && (
+          <p className="mt-1 text-sm text-slate-600">
+            <span className="font-medium text-slate-700">
+              Expected Delivery:
+            </span>{" "}
+            {formatDateTime(expectedDeliveryAt)}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

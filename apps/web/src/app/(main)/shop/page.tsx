@@ -42,7 +42,6 @@ async function ProductGrid({
     priceMax: priceMax ?? 0,
     sort: sort ?? "newest",
   });
-  console.log("products", products);
 
   if (products.length === 0) {
     return (

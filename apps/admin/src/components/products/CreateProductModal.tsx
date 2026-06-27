@@ -1,6 +1,8 @@
 "use client";
 
 import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
+import RichTextEditor from "@/components/ui/RichTextEditor";
+import AttributesEditor from "@/components/ui/AttributesEditor";
 import KitSelector, { type KitOption } from "@/components/ui/KitSelector";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
@@ -39,6 +41,9 @@ export default function CreateProductModal({
   const [kitOptionsLoading, setKitOptionsLoading] = useState(false);
   const [createdKitId, setCreatedKitId] = useState<string | null>(null);
   const [categoryType, setCategoryType] = useState("");
+  const [description, setDescription] = useState("");
+  const [attributes, setAttributes] = useState<Record<string, string>>({});
+  const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     if (!open) return;
@@ -78,7 +83,6 @@ export default function CreateProductModal({
         ? null
         : Number(fd.get("stock_quantity"));
     const brand = (fd.get("brand") as string) || null;
-    const description = (fd.get("description") as string) || null;
     const parent_product_id =
       product_type === "component" ? parentProductId || null : null;
 
@@ -95,6 +99,8 @@ export default function CreateProductModal({
         description,
         parent_product_id,
         category_id,
+        attributes: Object.keys(attributes).length > 0 ? attributes : null,
+        is_active: isActive,
       }),
     });
     const data = await res.json();
@@ -129,7 +135,7 @@ export default function CreateProductModal({
   if (createdKitId) {
     return (
       <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/50" onClick={handleDone} />
+        <div className="absolute inset-0 bg-black/50" />
         <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
             <div>
@@ -168,7 +174,7 @@ export default function CreateProductModal({
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" />
 
       {/* Modal */}
       <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
@@ -298,15 +304,37 @@ export default function CreateProductModal({
               )}
 
               <div className="col-span-4">
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  rows={3}
-                  className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                <RichTextEditor
+                  value={description}
+                  onChange={setDescription}
+                  label="Description"
                   placeholder="Optional description"
+                  rows={3}
                 />
+              </div>
+
+              <div className="col-span-4">
+                <AttributesEditor
+                  value={attributes}
+                  onChange={setAttributes}
+                />
+              </div>
+
+              <div className="col-span-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsActive((v) => !v)}
+                    className={`relative h-6 w-10 rounded-full transition-colors ${isActive ? "bg-green-500" : "bg-slate-300"}`}
+                  >
+                    <span
+                      className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? "translate-x-4" : ""}`}
+                    />
+                  </button>
+                  <span className="text-sm font-medium text-slate-700">
+                    {isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

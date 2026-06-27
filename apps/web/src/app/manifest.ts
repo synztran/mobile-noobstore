@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Mobile Noobstore",
-    short_name: "M NoobStore",
-    description: "Mobile Noobstore - Sell and service mechanical keyboard",
+    name: "Mobile NoobStore",
+    short_name: "NoobStore",
+    description: "Mobile NoobStore - Sell and service mechanical keyboard",
     start_url: "/",
     scope: "/",
     display: "standalone",

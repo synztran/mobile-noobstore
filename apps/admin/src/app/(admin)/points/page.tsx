@@ -371,7 +371,6 @@ function RulesTab() {
         <>
           <div
             className="fixed inset-0 z-40 bg-black/50"
-            onClick={() => setEditing(null)}
           />
           <div className="card-bg card-shadow fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 space-y-4 rounded-xl p-6">
             <div className="flex items-center justify-between">
@@ -655,7 +654,6 @@ function GiftCardsTab() {
         <>
           <div
             className="fixed inset-0 z-40 bg-black/50"
-            onClick={() => setShowCreate(false)}
           />
           <div className="card-bg card-shadow fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl p-6">
             {created.length > 0 ? (

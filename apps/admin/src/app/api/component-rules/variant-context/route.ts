@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
   const { data: kitsData, error: kitsError } = await supabase
     .from("products")
     .select(
-      `id, name,
+      `id, name, is_active,
 			product_components!product_components_parent_product_id_fkey(
 				component_product_id,
 				products!product_components_component_product_id_fkey(

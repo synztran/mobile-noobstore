@@ -171,6 +171,15 @@ export function useShippingForm() {
     lon: number;
     label: string;
   } | null>(null);
+  const [routeCoordinates, setRouteCoordinates] = useState<
+    [number, number][]
+  >([]);
+  const [storeCoords, setStoreCoords] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+  const presetLatRef = useRef<number | undefined>();
+  const presetLonRef = useRef<number | undefined>();
 
   const getCityCode = useCallback((cityName: string) => {
     return VIETNAM_CITIES.find((c) => c.name === cityName)?.code ?? "";
@@ -301,8 +310,10 @@ export function useShippingForm() {
         ...prev,
         city,
         cityCode,
+        streetAddress: city !== prev.city ? "" : prev.streetAddress,
         district: city !== prev.city ? "" : prev.district,
         districtCode: city !== prev.city ? "" : prev.districtCode,
+        ward: city !== prev.city ? "" : prev.ward,
         wardCode: city !== prev.city ? "" : prev.wardCode,
       }));
       if (city !== HCM_CITY) {
@@ -393,6 +404,17 @@ export function useShippingForm() {
 	[cartId, delivery, form, router, setShipping, shippingCost]
   );
 
+  const handleAddressSelect = useCallback(
+    (address: string, lat?: number, lon?: number) => {
+      setForm((prev) => ({ ...prev, streetAddress: address }));
+      if (lat !== undefined && lon !== undefined) {
+        presetLatRef.current = lat;
+        presetLonRef.current = lon;
+      }
+    },
+    []
+  );
+
   // Parse combined `wardDistrict` and/or street text to extract `ward` + `district`.
   function splitWardDistrict(value?: string, street?: string) {
     const result: { ward?: string; district?: string } = {};
@@ -471,7 +493,10 @@ export function useShippingForm() {
       (String(form.district).trim() || String(form.ward).trim());
     if (!shouldCall) {
       setDistanceKm(null);
-      setIsCalculatingFee(false);
+      setIsCalculatingFee(
+        !!String(form.city).trim() &&
+          !!(String(form.district).trim() || String(form.ward).trim())
+      );
       return;
     }
 
@@ -482,19 +507,26 @@ export function useShippingForm() {
           form.district || form.ward || undefined,
           form.streetAddress
         );
+        const body: Record<string, unknown> = {
+          streetAddress: form.streetAddress,
+          city: form.city,
+          district: form.district || sd.district,
+          ward: form.ward || sd.ward,
+          wardDistrict:
+            form.ward || form.district
+              ? `${form.ward ? form.ward + ", " : ""}${form.district}`.trim()
+              : undefined,
+        };
+        if (presetLatRef.current !== undefined && presetLonRef.current !== undefined) {
+          body.lat = presetLatRef.current;
+          body.lon = presetLonRef.current;
+          presetLatRef.current = undefined;
+          presetLonRef.current = undefined;
+        }
         const res = await fetch("/api/shipping/distance", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            streetAddress: form.streetAddress,
-            city: form.city,
-            district: form.district || sd.district,
-            ward: form.ward || sd.ward,
-            wardDistrict:
-              form.ward || form.district
-                ? `${form.ward ? form.ward + ", " : ""}${form.district}`.trim()
-                : undefined,
-          }),
+          body: JSON.stringify(body),
         });
 
         if (!res.ok) {
@@ -515,6 +547,18 @@ export function useShippingForm() {
             label:
               `${form.streetAddress}, ${form.ward ? form.ward + ", " : ""}${form.district ? form.district + ", " : ""}${form.city}`.trim(),
           });
+          if (
+            Array.isArray(data.route_geometry) &&
+            data.route_geometry.length > 0
+          ) {
+            setRouteCoordinates(data.route_geometry);
+          }
+          if (
+            typeof data.store_lat === "number" &&
+            typeof data.store_lon === "number"
+          ) {
+            setStoreCoords({ lat: data.store_lat, lon: data.store_lon });
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -561,5 +605,8 @@ export function useShippingForm() {
 			immediateFee,
 			basicFee,
 			customerLocation,
+			routeCoordinates,
+			storeCoords,
+			handleAddressSelect,
 		};
 	}

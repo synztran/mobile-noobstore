@@ -28,3 +28,19 @@ export async function PATCH(req: NextRequest) {
   }
   return NextResponse.json({ success: true });
 }
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json();
+  if (!id) {
+    return NextResponse.json({ error: "Missing variant id" }, { status: 400 });
+  }
+  const supabase = getAdminClient();
+  const { error } = await supabase
+    .from("product_variants")
+    .delete()
+    .eq("id", id);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+  return NextResponse.json({ success: true });
+}

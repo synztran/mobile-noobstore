@@ -132,13 +132,13 @@ async function fetchGoogleDistanceKm(
   }
 }
 
-async function fetchOsrmDistanceKm(
+async function fetchOsrmRoute(
   originLat: number,
   originLon: number,
   destLat: number,
   destLon: number
 ) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destLon},${destLat}?overview=false`;
+  const url = `https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destLon},${destLat}?overview=full&geometries=geojson`;
 
   try {
     const res = await fetch(url);
@@ -153,10 +153,14 @@ async function fetchOsrmDistanceKm(
       return null;
     }
 
-    const distanceMeters = Number(data.routes[0].distance);
+    const route = data.routes[0];
+    const distanceMeters = Number(route.distance);
     if (!Number.isFinite(distanceMeters)) return null;
 
-    return distanceMeters / 1000;
+    return {
+      distanceKm: distanceMeters / 1000,
+      geometry: route.geometry.coordinates as [number, number][],
+    };
   } catch (err) {
     console.error("OSRM request failed", err);
     return null;
@@ -305,10 +309,11 @@ export async function POST(req: Request) {
 
     // Start with straight-line distance as a fallback.
     let distanceKm = haversineKm(storeLat, storeLon, Number(lat), Number(lon));
+    let routeGeometry: [number, number][] = [];
     let routingMethod = "haversine_fallback";
     let routingStatus = "OK";
 
-    // 1. Try Google Distance Matrix if API key is configured.
+    // 1. Try Google Distance Matrix if API key is configured (distance only).
     const googleKey = process.env.GOOGLE_DISTANCE_MATRIX_API_KEY;
     if (googleKey) {
       const origin = `${storeLat},${storeLon}`;
@@ -326,21 +331,22 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Use OSRM driving distance if Google is unavailable or failed.
-    if (routingMethod === "haversine_fallback") {
-      const osrmDistance = await fetchOsrmDistanceKm(
-        storeLat,
-        storeLon,
-        Number(lat),
-        Number(lon)
-      );
-      if (osrmDistance !== null) {
-        distanceKm = osrmDistance;
+    // 2. Fetch OSRM route for geometry (and distance if Google failed).
+    const osrmRoute = await fetchOsrmRoute(
+      storeLat,
+      storeLon,
+      Number(lat),
+      Number(lon)
+    );
+    if (osrmRoute !== null) {
+      routeGeometry = osrmRoute.geometry;
+      if (routingMethod === "haversine_fallback") {
+        distanceKm = osrmRoute.distanceKm;
         routingMethod = "osrm_driving";
         routingStatus = "OK";
-      } else {
-        routingStatus = "ALL_ROUTING_FAILED_USING_FALLBACK";
       }
+    } else if (routingMethod === "haversine_fallback") {
+      routingStatus = "ALL_ROUTING_FAILED_USING_FALLBACK";
     }
 
     // Pricing config (server-side envs)
@@ -357,6 +363,7 @@ export async function POST(req: Request) {
       lon: Number(lon),
       store_lat: storeLat,
       store_lon: storeLon,
+      route_geometry: routeGeometry,
       routing_method: routingMethod,
       routing_status: routingStatus,
     });

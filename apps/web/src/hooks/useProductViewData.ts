@@ -79,6 +79,7 @@ export function useProductViewData(
           stock_quantity: v.stock_quantity,
           is_pre_order: v.is_pre_order,
           pre_order_config: v.pre_order_config,
+          attributes: v.attributes ?? null,
         }))
       ),
     [initialGroups, product.base_price]

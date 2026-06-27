@@ -43,8 +43,11 @@ export type ProductCardProps = {
     product_type: string;
     brand: string | null;
     description?: string | null;
+    attributes?: Record<string, string> | null;
+    is_active: boolean | null;
     is_used: boolean | null;
     thumbnail: string | null;
+    parent_product_id?: string | null;
     categories?: CategoryRelation;
     product_variants?: VariantRow[] | null;
     product_components?: ComponentRow[] | null;
@@ -147,6 +150,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <Tag tone={product.is_used ? "yellow" : "green"}>
                   {product.is_used ? "Used" : "New"}
                 </Tag>
+                {product.is_active === false && (
+                  <Tag tone="red">Inactive</Tag>
+                )}
                 {hasPreOrderVariant && <Tag tone="purple">Pre-order</Tag>}
               </div>
             </div>

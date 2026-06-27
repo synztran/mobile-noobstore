@@ -78,9 +78,11 @@ Deno.serve(async (req) => {
 	);
 
 	const failedIndexes: number[] = [];
-	results.forEach((result, index) => {
+	const errors: string[] = [];
+	results.forEach((result, _index) => {
 		if (result.status === "rejected") {
-			failedIndexes.push(index);
+			failedIndexes.push(_index);
+			errors.push(result.reason?.message ?? String(result.reason));
 		}
 	});
 
@@ -89,6 +91,7 @@ Deno.serve(async (req) => {
 			sent: subscriptions.length - failedIndexes.length,
 			failed: failedIndexes.length,
 			failedIndexes,
+			errors,
 		}),
 		{ headers: { "Content-Type": "application/json" } },
 	);

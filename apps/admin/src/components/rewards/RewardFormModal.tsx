@@ -2,6 +2,7 @@
 
 import NumberInput from "@/components/ui/NumberInput";
 import InputSelection from "@/components/ui/InputSelection";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -130,7 +131,7 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
 
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" />
       <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl dark:bg-slate-800">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
@@ -168,14 +169,11 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
 
               {/* Description */}
               <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Mô tả
-                </label>
-                <textarea
+                <RichTextEditor
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={setDescription}
+                  label="Mô tả"
                   rows={3}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700"
                   placeholder="Mô tả ngắn về phần thưởng"
                 />
               </div>

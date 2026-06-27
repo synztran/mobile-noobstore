@@ -25,6 +25,7 @@ export interface ShopVariant {
   stock_quantity: number;
   is_pre_order: boolean;
   pre_order_config: PreOrderConfig | null;
+  attributes: Record<string, string> | null;
 }
 
 export interface ITag {

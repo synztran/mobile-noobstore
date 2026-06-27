@@ -115,13 +115,6 @@ export function ProductView({
 
   const heroImage = mediaImages[activeImageIndex] ?? product.thumbnail ?? null;
 
-  const productTypeLabel =
-    product.product_type === "kit"
-      ? "Bộ sưu tập chọn lọc"
-      : product.product_type === "component"
-        ? "Phần tử module"
-        : "Sản phẩm độc lập";
-
   const badges = useMemo(() => {
     const list: { label: string; className: string }[] = [];
     if (isOutOfStock) {
@@ -172,52 +165,12 @@ export function ProductView({
   ]);
 
   const specItems = useMemo(() => {
-    const items: { label: string; value: string }[] = [
-      {
-        label: "Loại sản phẩm",
-        value: productTypeLabel,
-      },
-      {
-        label: "Tình trạng kho",
-        value: isOutOfStock
-          ? "Hết hàng"
-          : `${effectiveStockQuantity} sản phẩm có sẵn`,
-      },
-    ];
-    if (product.brand) {
-      items.push({ label: "Thương hiệu", value: product.brand });
-    }
-    if (variants.length > 0) {
-      items.push({
-        label: "Số lượng biến thể",
-        value: `${variants.length} tùy chọn`,
-      });
-    }
-    if (product.components.length > 0) {
-      items.push({
-        label: "Số lượng thành phần",
-        value: `${product.components.length} thành phần curated`,
-      });
-    }
-    if (hasDiscount) {
-      items.push({
-        label: "Giảm giá",
-        value: `Giảm ${discountPercent}% (tiết kiệm ${formatVND(product.base_price - product.min_price)})`,
-      });
-    }
-    return items;
-  }, [
-    productTypeLabel,
-    isOutOfStock,
-    effectiveStockQuantity,
-    product.brand,
-    variants.length,
-    product.components.length,
-    hasDiscount,
-    discountPercent,
-    product.base_price,
-    product.min_price,
-  ]);
+    if (!product.attributes) return [];
+    return Object.entries(product.attributes).map(([key, value]) => ({
+      label: key,
+      value,
+    }));
+  }, [product.attributes]);
 
   const editorialContent = useMemo(() => {
     if (product.description) {
@@ -229,19 +182,11 @@ export function ProductView({
     return "This edition keeps the product presentation minimal and focused. Variant choices remain clear, stock states are visible up front, and the interaction model stays close to the tactile feel established in the quick-pick experience.";
   }, [product.description, product.components.length]);
 
-  const editorialHeading = useMemo(() => {
-    if (product.description) return product.name;
-    if (product.product_type === "kit")
-      return "Precision engineered for modern setups.";
-    return "Designed with intention.";
-  }, [product.description, product.name, product.product_type]);
-
   const hasConfigurator =
     loadingVariants ||
     loadingConfigurator ||
     variants.length > 0 ||
     groups.length > 0;
-  const hasComponents = product.components.length > 0;
 
   useEffect(() => {
     setActiveImageIndex(0);
@@ -259,7 +204,7 @@ export function ProductView({
           onTouchEnd={handleTouchEnd}
         >
           <div className="p-6 pb-4">
-            <div className="relative h-64 w-full overflow-hidden rounded-xl bg-surface-container-low shadow-[0_20px_48px_-20px_rgba(26,28,31,0.12)]">
+            <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm">
               {heroImage ? (
                 <Image
                   src={heroImage}
@@ -294,7 +239,7 @@ export function ProductView({
                   onClick={() => setActiveImageIndex(i)}
                   aria-label={`View image ${i + 1}`}
                   className={clsx(
-                    "rounded-full transition-all",
+                    "rounded-full transition-all active:scale-90",
                     i === activeImageIndex
                       ? "h-1 w-8 bg-primary"
                       : "h-1 w-2 bg-outline-variant"
@@ -322,27 +267,23 @@ export function ProductView({
           </div>
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="mb-1 text-sm font-black uppercase tracking-[0.18em] text-primary">
+              <p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-primary">
                 {product.category}
               </p>
-              <h1 className="text-2xl font-black uppercase leading-none text-on-surface">
+              <p className="text-balance text-2xl font-black uppercase leading-none text-on-surface">
                 {product.name}
-              </h1>
+              </p>
               {product.brand && (
                 <p className="mt-1 text-xs font-semibold text-on-surface-variant">
                   bởi {product.brand}
                 </p>
               )}
             </div>
-            <CopyToClipboardButton
-              value={product.slug}
-              label="Copy product slug"
-            />
           </div>
-          <div className="mt-4 flex items-baseline gap-3">
+          <div className="mt-4 flex items-baseline justify-end gap-3">
             <span
               className={clsx(
-                "text-3xl font-black leading-none",
+                "text-3xl font-black leading-none text-primary",
                 hasDiscount ? "text-red-500" : "text-on-surface"
               )}
             >
@@ -421,34 +362,34 @@ export function ProductView({
         )}
 
         {/* ── Specs ── */}
-        <section className="px-6">
-          <div className="rounded-none bg-surface-container-low p-8">
-            <h3 className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-on-surface">
-              Thông số kỹ thuật
-            </h3>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-              {specItems.map((item) => (
-                <div key={item.label}>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
-                    {item.label}
-                  </p>
-                  <p className="text-sm font-semibold leading-snug text-on-surface">
-                    {item.value}
-                  </p>
-                </div>
-              ))}
+        {specItems.length > 0 && (
+          <section className="px-6">
+            <div className="rounded-none bg-surface-container-low p-2">
+              <p className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-on-surface">
+                Thông số kỹ thuật
+              </p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                {specItems.map((item) => (
+                  <div key={item.label}>
+                    <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
+                      {item.label}
+                    </p>
+                    <p className="text-sm font-semibold leading-snug text-on-surface">
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ── Editorial / Description ── */}
         <section className="mb-12 mt-12 px-6">
-          <h3 className="mb-4 max-w-[14ch] text-[1.75rem] font-black leading-tight tracking-tight text-on-surface">
-            {editorialHeading}
-          </h3>
-          <p className="mb-6 text-base font-light leading-relaxed text-on-surface-variant">
-            {editorialContent}
-          </p>
+          <div
+            className="prose-sm prose max-w-none text-on-surface [&_a]:text-primary [&_img]:rounded-xl"
+            dangerouslySetInnerHTML={{ __html: editorialContent }}
+          />
           {product.thumbnail && (
             <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-xl bg-surface-container-low">
               <Image
@@ -481,9 +422,9 @@ export function ProductView({
               </Link>
             )}
           </div>
-          <div className="hide-scrollbar flex gap-4 overflow-x-auto pb-2">
+          <div className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2">
             {relatedProducts.map((rp) => (
-              <div key={rp.id} className="w-[160px] flex-shrink-0">
+              <div key={rp.id} className="w-[160px] shrink-0 snap-start">
                 <ProductCard product={rp} isBundle />
               </div>
             ))}
@@ -492,7 +433,7 @@ export function ProductView({
       )}
 
       {/* ── Bottom Action Bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-[100] flex gap-2 rounded-tl-3xl rounded-tr-3xl border-t border-outline-variant/20 bg-surface/95 px-6 py-4 backdrop-blur-md">
+      <div className="fixed bottom-0 left-0 right-0 z-[100] flex gap-2 rounded-tl-3xl rounded-tr-3xl border-t border-outline-variant/20 bg-surface/95 px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-md">
         <WishlistButton
           productId={product.id}
           showLabel
