@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Mobile NoobStore",
+    name: "NoobStore",
     short_name: "NoobStore",
     description: "Mobile NoobStore - Sell and service mechanical keyboard",
     start_url: "/",

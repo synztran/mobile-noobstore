@@ -1,5 +1,5 @@
 {
-  "name": "Mobile NoobStore",
+  "name": "NoobStore",
   "short_name": "NoobStore",
   "description": "Mobile NoobStore - Sell and service mechanical keyboard",
   "start_url": "/",
@@ -23,7 +23,7 @@
       "purpose": "maskable"
     },
     {
-      "src": "/apple-icon",
+      "src": "/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
