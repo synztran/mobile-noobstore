@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { useEffect, useState } from "react";
 
 const STATUS_CONFIG: Record<
@@ -67,6 +68,12 @@ const STATUS_CONFIG: Record<
     color: "text-error",
     bg: "bg-error/5",
   },
+  refunded: {
+    label: "Đã hoàn tiền",
+    Icon: CircleX,
+    color: "text-error",
+    bg: "bg-error/5",
+  },
 };
 
 interface Props {
@@ -78,6 +85,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const isOpen = orderId !== null;
+  usePreventScroll(isOpen);
 
   useEffect(() => {
     if (!isOpen) {
@@ -91,13 +99,6 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [orderId, isOpen]);
-
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
 
   const cfg = detail
     ? (STATUS_CONFIG[detail.status] ?? STATUS_CONFIG.pending)
