@@ -25,7 +25,7 @@ export async function restoreOrderStock(orderId: string): Promise<void> {
 	// If already cancelled without payment (going to refunded), stock was already restored — skip
 	// if (!order.paid_at && order.status === "cancelled") return;
 	const bypassStatus = ["cancelled", "refunded"];
-	if (!bypassStatus.includes(order.status)) return;
+	if (bypassStatus.includes(order.status)) return;
 
 	const updates: Promise<void>[] = [];
 

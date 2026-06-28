@@ -334,5 +334,126 @@ export async function PATCH(
     })();
   }
 
+  // Send push notification to customer on status changes (fire-and-forget)
+  if (
+    body.status &&
+    ["confirmed", "delivering", "delivered", "cancelled", "refunded"].includes(
+      body.status
+    )
+  ) {
+    void (async () => {
+      try {
+        const { data: orderRow } = await supabase
+          .from("orders")
+          .select("user_id, order_number, total_price, cancelled_note")
+          .eq("id", id)
+          .single();
+
+        if (!orderRow?.user_id || !orderRow?.order_number) return;
+
+        let title = "";
+        let nbody = "";
+        const orderNum = orderRow.order_number;
+
+        switch (body.status) {
+          case "confirmed":
+            title = "Xác nhận thanh toán";
+            nbody = `Đơn hàng ${orderNum} đã được xác nhận thanh toán thành công với số tiền ${orderRow.total_price?.toLocaleString("vi-VN")}₫`;
+            break;
+          case "delivering":
+            title = `Đơn hàng ${orderNum} đang được vận chuyển`;
+            nbody = `Đơn hàng ${orderNum} đã và đang được vận chuyển đến bạn.`;
+            break;
+          case "delivered": {
+            title = `Đơn hàng ${orderNum} đã được giao hàng thành công`;
+            let pointsStr = "";
+            if (orderRow.total_price) {
+              const { data: ptRows } = await (
+                supabase.rpc as unknown as (
+                  fn: string,
+                  args: Record<string, unknown>
+                ) => Promise<{ data: unknown; error: unknown }>
+              )("compute_points_for_amount", {
+                p_rule_type: "order_delivered",
+                p_amount: Number(orderRow.total_price),
+              });
+              const points = Number(
+                Array.isArray(ptRows)
+                  ? (ptRows as Record<string, unknown>[])[0]
+                      ?.compute_points_for_amount
+                  : ptRows
+              );
+              if (points > 0) {
+                pointsStr = ` ${points.toLocaleString("vi-VN")} điểm đã được cộng vào tài khoản.`;
+              }
+            }
+            nbody = `Đơn hàng ${orderNum} đã được giao đến bạn.${pointsStr} Cảm ơn bạn đã tin tưởng và mua hàng ở NoobStore`;
+            break;
+          }
+          case "cancelled":
+            title = `Đơn hàng ${orderNum} đã được hủy`;
+            nbody = `Đơn hàng ${orderNum} đã được hủy. Với lí do: ${orderRow.cancelled_note ?? "Không có ghi chú"}`;
+            break;
+          case "refunded":
+            title = `Đơn hàng ${orderNum} đã được hoàn trả tiền về bạn`;
+            nbody = `Đơn hàng ${orderNum} đã được hoàn tiền về bạn.`;
+            break;
+        }
+
+        if (!title || !nbody) return;
+
+        const { data: inserted } = await supabase
+          .from("user_notifications")
+          .insert({
+            user_id: orderRow.user_id,
+            title,
+            body: nbody,
+            type: "order_status",
+            deep_link: `/profile/orders/${id}`,
+          })
+          .select("id")
+          .single();
+
+        if (!inserted) return;
+
+        const { data: subs } = await supabase
+          .from("push_subscriptions")
+          .select("endpoint, p256dh, auth")
+          .eq("user_id", orderRow.user_id)
+          .eq("is_active", true);
+
+        if (!subs || subs.length === 0) return;
+
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const secret = process.env.NOTIFICATION_INTERNAL_SECRET;
+        if (!supabaseUrl || !secret) return;
+
+        await fetch(`${supabaseUrl}/functions/v1/send-web-push`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-notification-secret": secret,
+          },
+          body: JSON.stringify({
+            subscriptions: subs,
+            payload: {
+              title,
+              body: nbody,
+              deepLink: `/profile/orders/${id}`,
+              notificationId: inserted.id,
+              icon: "/icon-192.png",
+              badge: "/icon-192.png",
+            },
+          }),
+        });
+      } catch (pushErr) {
+        console.error(
+          `[orders] failed to send push notification for order ${id}:`,
+          pushErr
+        );
+      }
+    })();
+  }
+
   return NextResponse.json({ success: true });
 }

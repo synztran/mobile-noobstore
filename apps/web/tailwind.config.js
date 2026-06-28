@@ -101,6 +101,15 @@ module.exports = {
 				"primary-gradient":
 					"linear-gradient(135deg, #9B3F1C 0%, #BB5732 100%)",
 			},
+			animation: {
+				"slide-up": "slideUp 0.3s ease-out",
+			},
+			keyframes: {
+				slideUp: {
+					"0%": { transform: "translateY(100%)", opacity: "0" },
+					"100%": { transform: "translateY(0)", opacity: "1" },
+				},
+			},
 		},
 	},
 	plugins: [require("daisyui")],
