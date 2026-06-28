@@ -582,6 +582,93 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
 }
 
 /**
+ * Find products frequently bought together with the given product.
+ * Queries order_items grouped by co-occurrence in the same order.
+ */
+export async function getFrequentlyBoughtTogether(
+  productId: string,
+  limit = 6
+): Promise<ShopProduct[]> {
+  try {
+    const { data: sameOrders } = await getPublicClient()
+      .from("order_items")
+      .select("order_id")
+      .eq("product_id", productId);
+
+    if (!sameOrders || sameOrders.length === 0) return [];
+
+    const orderIds = [
+      ...new Set(sameOrders.map((o) => o.order_id)),
+    ].filter(Boolean);
+
+    if (orderIds.length === 0) return [];
+
+    const { data: coItems } = await getPublicClient()
+      .from("order_items")
+      .select("product_id")
+      .in("order_id", orderIds)
+      .not("product_id", "eq", productId)
+      .not("product_id", "is", null);
+
+    if (!coItems || coItems.length === 0) return [];
+
+    const freq = new Map<string, number>();
+    for (const item of coItems) {
+      const pid = item.product_id as string;
+      freq.set(pid, (freq.get(pid) ?? 0) + 1);
+    }
+
+    const topIds = [...freq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([id]) => id);
+
+    if (topIds.length === 0) return [];
+
+    const { data: products } = await getPublicClient()
+      .from("products")
+      .select(
+        `id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
+         categories(id, name),
+         product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, attributes)`
+      )
+      .eq("is_active", true)
+      .in("id", topIds);
+
+    if (!products) return [];
+    return await Promise.all(
+      (products as unknown as RawListRow[]).map(shapeRow)
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get the number of times a product has been purchased (delivered orders).
+ */
+export async function getProductPurchaseCount(
+  productId: string
+): Promise<number> {
+  try {
+    const { data, error } = await getPublicClient()
+      .from("order_items")
+      .select("quantity, orders!inner(status)")
+      .eq("product_id", productId)
+      .eq("orders.status", "delivered");
+
+    if (error) return 0;
+    if (!data || data.length === 0) return 0;
+    return (data as { quantity: number }[]).reduce(
+      (sum, item) => sum + Number(item.quantity),
+      0
+    );
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Fetch a product by slug with its selectable component groups for the
  * interactive product detail page.
  *
@@ -720,7 +807,7 @@ export async function getProductBySlug(
     const { data: product, error } = await getPublicClient()
       .from("products")
       .select(
-        `id, slug, name, brand, description, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used, is_active, attributes,
+        `id, slug, name, brand, description, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used, is_active, attributes, sale_ends_at,
 			 categories(id, name),
 			 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes),
 				 product_components!product_components_parent_product_id_fkey(
@@ -848,6 +935,7 @@ export async function getProductBySlug(
       min_price: minPrice,
       is_used: raw.is_used ?? false,
       is_pre_order: variants.some((v) => v.is_pre_order),
+      sale_ends_at: (raw as Record<string, unknown>).sale_ends_at as string | null ?? null,
     };
   } catch (err) {
     console.error("[getProductBySlug] Unexpected error:", err);

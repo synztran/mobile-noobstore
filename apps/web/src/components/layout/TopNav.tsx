@@ -47,7 +47,7 @@ export function TopNav({
   return (
     <nav
       className={clsx(
-        "top-nav-pad fixed top-0 z-[51] flex w-full items-center justify-between bg-gray-50 px-6",
+        "top-nav-pad fixed top-0 z-[51] flex w-full items-center justify-between bg-gray-50 px-4",
         className
       )}
     >

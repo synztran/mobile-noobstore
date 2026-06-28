@@ -60,6 +60,7 @@ export interface ProductDetail {
   /** True when at least one variant is pre-order */
   is_pre_order: boolean;
   attributes?: Record<string, string> | null;
+  sale_ends_at?: string | null;
 }
 
 // ─── GET /api/products/[slug] ─────────────────────────────────────────────────
@@ -94,6 +95,7 @@ export async function GET(
 				is_used,
 				is_active,
         attributes,
+        sale_ends_at,
 				categories(id, name),
 				product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes),
 				product_components!product_components_parent_product_id_fkey(
@@ -225,6 +227,7 @@ export async function GET(
       is_used: p.is_used ?? false,
       is_pre_order: variants.some((v) => v.is_pre_order),
       attributes: (p as any).attributes ?? null,
+      sale_ends_at: (p as any).sale_ends_at ?? null,
     };
 
     return NextResponse.json(result);

@@ -18,7 +18,7 @@ const VARIANT_STATUS_BADGE = [
   {
     key: "soldOut" as const,
     label: "Hết hàng",
-    className: "tracking-wide",
+    className: "tracking-wide bg-slate-400",
   },
   {
     key: "ruleDisabled" as const,

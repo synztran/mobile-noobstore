@@ -53,8 +53,6 @@ export async function generateAndStoreInvoice(
     terms: "Payment is due within 3 days.",
   };
 
-  console.log(payload);
-
   try {
     const postData = JSON.stringify(payload);
 

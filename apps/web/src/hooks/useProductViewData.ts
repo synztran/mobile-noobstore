@@ -29,8 +29,10 @@ export type UseProductViewDataReturn = {
   isOutOfStock: boolean;
   isLowStock: boolean;
   isLoadingAddToCart: boolean;
-  handleAddToCart: () => Promise<void>;
+  handleAddToCart: (quantity?: number) => Promise<void>;
   disabledVariantIds: Set<string>;
+  quantity: number;
+  setQuantity: (q: number) => void;
 };
 
 /**
@@ -44,6 +46,7 @@ export function useProductViewData(
 ): UseProductViewDataReturn {
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [isLoadingAddToCart, setIsLoadingAddToCart] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const { addItem, openCart } = useCartStore();
 
   // Auto-select when there is only one variant
@@ -174,7 +177,7 @@ export function useProductViewData(
     return disabled;
   }, [initialRules, initialGroups, selections]);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (qty?: number) => {
     if (product.variants.length > 0 && !selectedVariant) {
       toast.error("Please select a variant");
       return;
@@ -262,5 +265,7 @@ export function useProductViewData(
     isLoadingAddToCart,
     handleAddToCart,
     disabledVariantIds,
+    quantity,
+    setQuantity,
   };
 }

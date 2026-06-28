@@ -1,7 +1,12 @@
 import type { ShopProduct } from "@/app/api/products/route";
 import { TopNav } from "@/components/layout/TopNav";
 import { ProductView } from "@/components/product/ProductView";
-import { getProductDetail, getRelatedProducts } from "@/lib/products-server";
+import {
+  getFrequentlyBoughtTogether,
+  getProductDetail,
+  getProductPurchaseCount,
+  getRelatedProducts,
+} from "@/lib/products-server";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -65,11 +70,11 @@ async function ProductLoader({ slug }: { slug: string }) {
   const result = await getProductDetail(slug);
   if (!result) notFound();
 
-  const relatedProducts: ShopProduct[] = await getRelatedProducts(
-    result.product.brand,
-    slug,
-    8
-  );
+  const [relatedProducts, purchaseCount, boughtTogether] = await Promise.all([
+    getRelatedProducts(result.product.brand, slug, 8),
+    getProductPurchaseCount(result.product.id),
+    getFrequentlyBoughtTogether(result.product.id),
+  ]);
 
   return (
     <ProductView
@@ -77,6 +82,8 @@ async function ProductLoader({ slug }: { slug: string }) {
       componentGroups={result.componentGroups}
       componentRules={result.componentRules}
       relatedProducts={relatedProducts}
+      purchaseCount={purchaseCount}
+      boughtTogether={boughtTogether}
     />
   );
 }

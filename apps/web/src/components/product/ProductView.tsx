@@ -19,6 +19,13 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ImageViewer } from "@/components/product/ImageViewer";
+import { PreOrderBanner } from "@/components/product/PreOrderBanner";
+import { ProductInfoTabs } from "@/components/product/ProductInfoTabs";
+import { SaleCountdown } from "@/components/product/SaleCountdown";
+import { ShareButton } from "@/components/product/ShareButton";
+import { Minus, Plus } from "lucide-react";
 import CopyToClipboardButton from "./CopyToClipboardButton";
 
 export function ProductView({
@@ -26,13 +33,18 @@ export function ProductView({
   componentGroups = [],
   componentRules = [],
   relatedProducts = [],
+  purchaseCount = 0,
+  boughtTogether = [],
 }: {
   product: ProductDetail;
   componentGroups?: ConfiguratorGroup[];
   componentRules?: ComponentVariantRule[];
   relatedProducts?: ShopProduct[];
+  purchaseCount?: number;
+  boughtTogether?: ShopProduct[];
 }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
   const mediaImages = useMemo(() => {
@@ -80,6 +92,8 @@ export function ProductView({
     isLoadingAddToCart,
     handleAddToCart,
     disabledVariantIds,
+    quantity,
+    setQuantity,
   } = useProductViewData(product, componentGroups, componentRules);
 
   const hasDiscount = product.min_price < product.base_price;
@@ -122,12 +136,8 @@ export function ProductView({
         label: "Hết hàng",
         className: "bg-surface-container-high text-on-surface-variant",
       });
-    } else if (isLowStock) {
-      list.push({
-        label: `Chỉ còn ${effectiveStockQuantity}`,
-        className: "bg-yellow-500 text-white",
-      });
     }
+
     if (product.is_used) {
       list.push({
         label: "Đã qua sử dụng",
@@ -193,18 +203,22 @@ export function ProductView({
   }, [product.slug]);
 
   return (
-    <>
+    <div className="pb-4">
       <TopNav showBack backHref="/shop" showCart showFavorite />
 
-      <main className="my-auto space-y-2 pb-4">
+      <main className="my-auto space-y-4 pb-6">
         {/* ── Hero Image Gallery ── */}
         <section
           className="relative"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="p-6 pb-4">
-            <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm">
+          <div className="p-4">
+            <button
+              type="button"
+              onClick={() => mediaImages.length > 0 && setImageViewerOpen(true)}
+              className="relative h-64 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm"
+            >
               {heroImage ? (
                 <Image
                   src={heroImage}
@@ -223,15 +237,25 @@ export function ProductView({
                 </div>
               )}
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent" />
+              {mediaImages.length > 0 && (
+                <div className="absolute bottom-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                  {activeImageIndex + 1}/{mediaImages.length}
+                </div>
+              )}
               {hasDiscount && (
                 <div className="absolute right-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
                   -{discountPercent}%
                 </div>
               )}
-            </div>
+              {product.sale_ends_at && (
+                <div className="absolute left-3 top-3">
+                  <SaleCountdown endsAt={product.sale_ends_at} />
+                </div>
+              )}
+            </button>
           </div>
           {mediaImages.length > 1 && (
-            <div className="flex justify-center gap-2 px-6">
+            <div className="flex justify-center gap-2 px-4">
               {mediaImages.map((img, i) => (
                 <button
                   key={`${img}-${i}`}
@@ -251,8 +275,8 @@ export function ProductView({
         </section>
 
         {/* ── Product Info ── */}
-        <section className="px-6">
-          <div className="mb-3 flex flex-wrap gap-2">
+        <section className="px-4">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             {badges.map((badge) => (
               <span
                 key={badge.label}
@@ -264,9 +288,21 @@ export function ProductView({
                 {badge.label}
               </span>
             ))}
+            {purchaseCount > 0 && (
+              <span className="flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-3 w-3"
+                  fill="currentColor"
+                >
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                </svg>
+                Đã bán {purchaseCount}
+              </span>
+            )}
           </div>
           <div className="flex items-start justify-between gap-2">
-            <div>
+            <div className="flex-1">
               <p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-primary">
                 {product.category}
               </p>
@@ -279,8 +315,12 @@ export function ProductView({
                 </p>
               )}
             </div>
+            <ShareButton
+              productName={product.name}
+              productSlug={product.slug}
+            />
           </div>
-          <div className="mt-4 flex items-baseline justify-end gap-3">
+          <div className="mt-4 flex items-baseline justify-end gap-2">
             <span
               className={clsx(
                 "text-3xl font-black leading-none text-primary",
@@ -289,23 +329,28 @@ export function ProductView({
             >
               {formatVND(displayPrice)}
             </span>
-            {hasDiscount && (
-              <span className="text-sm text-on-surface-variant line-through opacity-60">
-                {formatVND(product.base_price)}
-              </span>
-            )}
-            {selectedVariant && selectedVariant.price_adjustment !== 0 && (
-              <span className="text-sm text-on-surface-variant line-through opacity-60">
-                {formatVND(product.min_price)}
-              </span>
-            )}
+            <div className="flex items-baseline gap-2">
+              {hasDiscount && (
+                <span className="text-sm text-on-surface-variant line-through opacity-60">
+                  {formatVND(product.base_price)}
+                </span>
+              )}
+              {selectedVariant && selectedVariant.price_adjustment !== 0 && (
+                <span className="text-sm text-on-surface-variant line-through opacity-60">
+                  {formatVND(product.min_price)}
+                </span>
+              )}
+            </div>
           </div>
         </section>
 
         {/* ── Configurator (variants + component groups) ── */}
         {hasConfigurator && (
-          <section className="mt-10 px-6">
-            <div className="space-y-4 rounded-2xl bg-surface-container-low p-3">
+          <section className="px-4">
+            <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
+              Lựa chọn cấu hình
+            </div>
+            <div className="space-y-4 rounded-xl bg-surface-container-low p-4">
               {loadingVariants ? (
                 <div className="grid grid-cols-2 gap-3">
                   {[1, 2].map((i) => (
@@ -331,83 +376,152 @@ export function ProductView({
           </section>
         )}
 
+        {/* ── Low stock urgency banner ── */}
+        {isLowStock && effectiveStockQuantity > 0 && (
+          <motion.section
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+            className="px-4"
+          >
+            <div className="flex items-center gap-3 rounded-2xl border border-red-400/40 bg-red-50 px-4 py-3">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{
+                  repeat: Infinity,
+                  duration: 2,
+                  ease: "easeInOut",
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="currentColor"
+                >
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                </svg>
+              </motion.div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-red-700">
+                  Chỉ còn {effectiveStockQuantity} sản phẩm
+                </p>
+                <p className="text-xs text-red-600">Đặt ngay kẻo lỡ!</p>
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* ── Quantity stepper ── */}
+        {/* {!isOutOfStock && (
+          <section className="px-4">
+            <div className="flex items-center justify-between rounded-2xl bg-surface-container-lowest px-4 py-3">
+              <p className="text-xs font-black uppercase tracking-wider text-on-surface-variant">
+                Số lượng
+              </p>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-30"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="w-8 text-center text-base font-black text-on-surface">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuantity(Math.min(effectiveStockQuantity, quantity + 1))
+                  }
+                  disabled={quantity >= effectiveStockQuantity}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-30"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            </div>
+          </section>
+        )} */}
+
         {/* ── Pre-order Info Banner ── */}
         {selectedPreOrderConfig && (
-          <section className="px-6">
-            <div className="flex items-start gap-3 rounded-2xl border border-violet-500/30 bg-violet-500/10 p-4">
-              <Icon
-                name="schedule"
-                className="mt-0.5 shrink-0 text-2xl text-violet-400"
-              />
-              <div className="space-y-1">
-                <p className="text-xs font-black uppercase tracking-widest text-violet-400">
-                  Sản phẩm đặt trước
-                </p>
-                <p className="text-sm font-bold text-on-surface">
-                  Thời gian giao hàng dự kiến: {selectedPreOrderConfig.estimate}
-                </p>
-                {selectedPreOrderConfig.available_date && (
-                  <p className="text-xs text-on-surface-variant">
-                    Dự kiến có hàng: {selectedPreOrderConfig.available_date}
-                  </p>
-                )}
-                {selectedPreOrderConfig.notes && (
-                  <p className="text-xs text-on-surface-variant">
-                    {selectedPreOrderConfig.notes}
-                  </p>
-                )}
-              </div>
-            </div>
+          <section className="px-4">
+            <PreOrderBanner config={selectedPreOrderConfig} />
           </section>
         )}
 
-        {/* ── Specs ── */}
-        {specItems.length > 0 && (
-          <section className="px-6">
-            <div className="rounded-none bg-surface-container-low p-2">
-              <p className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-on-surface">
-                Thông số kỹ thuật
-              </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-                {specItems.map((item) => (
-                  <div key={item.label}>
-                    <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
-                      {item.label}
-                    </p>
-                    <p className="text-sm font-semibold leading-snug text-on-surface">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ── Editorial / Description ── */}
-        <section className="mb-12 mt-12 px-6">
-          <div
-            className="prose-sm prose max-w-none text-on-surface [&_a]:text-primary [&_img]:rounded-xl"
-            dangerouslySetInnerHTML={{ __html: editorialContent }}
+        {/* ── Tabbed Info (Description / Specs / Shipping) ── */}
+        <div className="mb-12 mt-12">
+          <ProductInfoTabs
+            product={product}
+            editorialContent={editorialContent}
+            specItems={specItems}
+            productSlug={product.slug}
           />
-          {product.thumbnail && (
-            <div className="relative mb-6 aspect-video w-full overflow-hidden rounded-xl bg-surface-container-low">
-              <Image
-                src={product.thumbnail}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-              <div className="absolute inset-0 bg-black/20" />
-            </div>
-          )}
-        </section>
+        </div>
       </main>
+
+      {/* ── Image Viewer ── */}
+      <ImageViewer
+        images={mediaImages}
+        initialIndex={activeImageIndex}
+        isOpen={imageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+      />
+
+      {/* ── Frequently Bought Together ── */}
+      {boughtTogether.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="px-4"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-lg font-black uppercase tracking-tight">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 text-primary"
+                fill="currentColor"
+              >
+                <path d="M16 6l2.29 2.29-9.88 9.88-4-4L10 12l4.71-4.71L16 6zm0-2.83l-3.29 3.29-4.71 4.71-4.71-4.71L0 6l10 10 10-10-4-4.83z" />
+              </svg>
+              Thường được mua cùng
+            </div>
+          </div>
+          <div className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2">
+            {boughtTogether.map((bp, i) => (
+              <motion.div
+                key={bp.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  delay: i * 0.06,
+                  duration: 0.35,
+                  ease: "easeOut",
+                }}
+                className="w-[140px] shrink-0 snap-start"
+              >
+                <ProductCard product={bp} isBundle />
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
+      )}
 
       {/* ── Related Products ── */}
       {relatedProducts.length > 0 && (
-        <section className="px-6">
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="px-4"
+        >
           <div className="mb-4 flex items-center justify-between">
             <div className="text-lg font-black uppercase tracking-tight">
               Sản phẩm liên quan
@@ -423,21 +537,38 @@ export function ProductView({
             )}
           </div>
           <div className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2">
-            {relatedProducts.map((rp) => (
-              <div key={rp.id} className="w-[160px] shrink-0 snap-start">
+            {relatedProducts.map((rp, i) => (
+              <motion.div
+                key={rp.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  delay: i * 0.06,
+                  duration: 0.35,
+                  ease: "easeOut",
+                }}
+                className="w-[160px] shrink-0 snap-start"
+              >
                 <ProductCard product={rp} isBundle />
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
       )}
 
       {/* ── Bottom Action Bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-[100] flex gap-2 rounded-tl-3xl rounded-tr-3xl border-t border-outline-variant/20 bg-surface/95 px-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur-md">
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
+        className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-tl-4xl rounded-tr-4xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 shadow-float backdrop-blur-md"
+      >
         <WishlistButton
           productId={product.id}
           showLabel
-          className="h-14 w-14 flex-shrink-0 rounded-2xl"
+          size="md"
+          className="flex h-14 shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
+          iconOnly={false}
         />
         <AddToCartButton
           isOutOfStock={isOutOfStock}
@@ -445,9 +576,9 @@ export function ProductView({
           missingConfiguration={missingConfiguration}
           isLoading={isLoadingAddToCart}
           isPreOrder={selectedPreOrderConfig !== null}
-          onClick={handleAddToCart}
+          onClick={() => handleAddToCart(quantity)}
         />
-      </div>
-    </>
+      </motion.div>
+    </div>
   );
 }

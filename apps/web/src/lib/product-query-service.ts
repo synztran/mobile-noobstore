@@ -165,7 +165,6 @@ async function shapeRow(row: RawListRow): Promise<ProductListItem> {
       .eq("is_active", true)
       .eq("parent_product_id", row.id)
       .eq("product_type", "component");
-    console.log("childComponents", row, childComponents);
     if (!error && childComponents && childComponents.length > 0) {
       for (const comp of childComponents) {
         if (Array.isArray(comp.product_variants)) {
@@ -371,12 +370,10 @@ export async function getProductListByFilters(
       .map((row) => row.id);
 
     const kitStockById = await computeKitStockById(kitIds);
-    console.log("data", data, kitStockById, kitIds);
 
     let filteredProducts = await Promise.all(
       rows.map(async (row) => {
         const shaped = await shapeRow(row);
-        console.log("shaped", shaped);
         if (row.product_type === "kit") {
           const stock = kitStockById.get(row.id);
           if (typeof stock === "number") {

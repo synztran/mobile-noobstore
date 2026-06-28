@@ -10,6 +10,7 @@ interface AddToCartButtonProps {
 	isLoading: boolean;
 	isPreOrder?: boolean;
 	onClick: () => void | Promise<void>;
+	className?: string;
 }
 
 export function AddToCartButton({
@@ -19,6 +20,7 @@ export function AddToCartButton({
 	isLoading,
 	isPreOrder = false,
 	onClick,
+	className,
 }: AddToCartButtonProps) {
 	const isDisabled =
 		isOutOfStock ||
@@ -51,6 +53,7 @@ export function AddToCartButton({
 				isDisabled
 					? "opacity-50 cursor-not-allowed text-white"
 					: "text-white",
+				className,
 			)}>
 			{isLoading ? (
 				<div className="animate-spin">

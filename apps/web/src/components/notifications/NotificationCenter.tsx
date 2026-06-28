@@ -1,24 +1,23 @@
 "use client";
 
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useNotifications } from "@/lib/react-query/notification/api/useNotificationQueries";
+import {
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useSendTestPush,
+} from "@/lib/react-query/notification/api/useNotificationMutations";
 import { toast } from "@/lib/toast";
-import { useEffect, useMemo, useState } from "react";
-
-interface NotificationItem {
-  id: string;
-  title: string;
-  body: string;
-  type: string;
-  deep_link: string | null;
-  metadata: unknown;
-  read_at: string | null;
-  created_at: string;
-}
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 
 export function NotificationCenter() {
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const router = useRouter();
+  const { data: items, isLoading } = useNotifications();
+  const markOneRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
+  const sendTestPush = useSendTestPush();
   const {
     isSupported,
     permission,
@@ -28,106 +27,51 @@ export function NotificationCenter() {
   } = usePushNotifications();
 
   const unreadCount = useMemo(
-    () => items.filter((item) => !item.read_at).length,
-    [items]
+    () => items?.filter((item) => !item.read_at).length ?? 0,
+    [items],
   );
 
-  useEffect(() => {
-    const run = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch("/api/notifications?limit=50");
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          notifications?: NotificationItem[];
-        };
-        setItems(data.notifications ?? []);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void run();
-  }, []);
-
-  const markOneRead = async (id: string) => {
-    setBusy(true);
-    try {
-      await fetch("/api/notifications/read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationId: id }),
-      });
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, read_at: new Date().toISOString() } : item
-        )
-      );
-    } finally {
-      setBusy(false);
-    }
+  const handleMarkAllRead = () => {
+    markAllRead.mutate(undefined, {
+      onError: () => toast.error("Đánh dấu đã đọc thất bại"),
+    });
   };
 
-  const markAllRead = async () => {
-    setBusy(true);
-    try {
-      await fetch("/api/notifications/read", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markAll: true }),
-      });
-      setItems((prev) =>
-        prev.map((item) => ({
-          ...item,
-          read_at: item.read_at ?? new Date().toISOString(),
-        }))
-      );
-    } finally {
-      setBusy(false);
-    }
+  const handleMarkOneRead = (id: string) => {
+    markOneRead.mutate(id, {
+      onError: () => toast.error("Đánh dấu đã đọc thất bại"),
+    });
   };
 
-  const sendTestPush = async () => {
-    setBusy(true);
-    try {
-      const res = await fetch("/api/notifications/push-self", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: "NoobStore",
-          body: "Đây là thông báo thử nghiệm cho PWA",
-          deepLink: "/profile/notifications",
-          type: "test",
-        }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(payload?.error ?? "Gửi test push thất bại");
-      }
-      toast.success("Đã gửi test notification");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Đã có lỗi xảy ra");
-    } finally {
-      setBusy(false);
-    }
+  const handleSendTestPush = () => {
+    sendTestPush.mutate(undefined, {
+      onSuccess: () => toast.success("Đã gửi test notification"),
+      onError: (err) =>
+        toast.error(err instanceof Error ? err.message : "Đã có lỗi xảy ra"),
+    });
   };
 
   return (
     <div className="space-y-4 px-4 pb-24 pt-3">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => router.push("/profile")}
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container text-on-surface transition-transform active:scale-90"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div className="flex-1">
           <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Notification Center
+            Trung tâm thông báo
           </p>
-          <h1 className="text-2xl font-black text-on-surface">Thông báo</h1>
+          <p className="text-2xl font-black text-on-surface">Thông báo</p>
         </div>
         {unreadCount > 0 ? (
           <button
             type="button"
-            onClick={() => void markAllRead()}
-            disabled={busy}
+            onClick={handleMarkAllRead}
+            disabled={markAllRead.isPending}
             className="text-xs font-black uppercase tracking-wide text-primary disabled:opacity-50"
           >
             Đánh dấu đã đọc
@@ -165,17 +109,10 @@ export function NotificationCenter() {
           >
             Tắt thông báo
           </button>
-          {/* <button
-						type="button"
-						onClick={() => void sendTestPush()}
-						disabled={busy}
-						className="h-9 px-3 rounded-lg bg-surface-container text-on-surface text-[10px] font-black uppercase tracking-wider disabled:opacity-50">
-						Gửi test push
-					</button> */}
         </div>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((n) => (
             <div
@@ -187,7 +124,7 @@ export function NotificationCenter() {
             </div>
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : !items || items.length === 0 ? (
         <div className="rounded-2xl bg-surface-container-lowest p-8 text-center text-sm text-on-surface-variant">
           Chưa có thông báo nào.
         </div>
@@ -197,8 +134,8 @@ export function NotificationCenter() {
             <button
               type="button"
               key={item.id}
-              onClick={() => void markOneRead(item.id)}
-              disabled={busy}
+              onClick={() => handleMarkOneRead(item.id)}
+              disabled={markOneRead.isPending}
               className={`w-full rounded-2xl p-4 text-left transition-colors ${
                 item.read_at
                   ? "bg-surface-container"

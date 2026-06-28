@@ -182,8 +182,6 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
     setTokenCount((prev) => (prev ?? 0) + tokenReward);
   }, []);
 
-  console.log("phase", phase);
-
   return (
     <div className="flex flex-col items-center gap-2">
       <MachineCabinet
