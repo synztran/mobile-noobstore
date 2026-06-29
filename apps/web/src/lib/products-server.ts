@@ -363,6 +363,7 @@ export async function getQuickPickData(
 						 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
           )
           .eq("is_active", true)
+          .neq("product_type", "gift")
           .eq("id", productId)
           .single();
 
@@ -502,6 +503,37 @@ export async function getQuickPickData(
       if (refreshed) activeProduct = refreshed;
     }
 
+    // Batch-fetch gift data
+    const allIds = products.map(p => p.id);
+    const giftsByProductId: Record<string, Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>> = {};
+    if (allIds.length > 0) {
+      const { data: giftData } = await getPublicClient()
+        .from("gift_products")
+        .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+        .in("product_id", allIds);
+
+      if (giftData) {
+        for (const g of giftData as any[]) {
+          const pid = g.product_id;
+          if (!giftsByProductId[pid]) giftsByProductId[pid] = [];
+          giftsByProductId[pid].push({
+            gift_name: g.gift?.name ?? "",
+            gift_slug: g.gift?.slug ?? "",
+            gift_thumbnail: g.gift?.thumbnail ?? null,
+            quantity: g.quantity,
+          });
+        }
+      }
+    }
+    for (const p of products) {
+      p.gifts = giftsByProductId[p.id] ?? null;
+    }
+    // Re-sync activeProduct after gift attachment
+    if (activeProduct) {
+      const refreshed = products.find((p) => p.id === activeProduct!.id);
+      if (refreshed) activeProduct = refreshed;
+    }
+
     // Fetch rules for all kit products
     const kitIds = Object.keys(configuratorByProductId);
     const rulesByProductId: Record<string, ComponentVariantRule[]> = {};
@@ -562,10 +594,11 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
     const { data, error } = await getPublicClient()
       .from("products")
       .select(
-        `id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
+        `id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, is_gift,
 		 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, attributes)`
       )
       .eq("is_active", true)
+      .neq("product_type", "gift")
       .in("product_type", ["standard", "kit"])
       .limit(limit);
 
@@ -574,7 +607,35 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
       return [];
     }
     if (!data) return [];
-    return await Promise.all((data as unknown as RawListRow[]).map(shapeRow));
+    const products = await Promise.all((data as unknown as RawListRow[]).map(shapeRow));
+
+    // Batch-fetch gift data
+    const productIds = products.map(p => p.id);
+    const giftsByProductId: Record<string, Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>> = {};
+    if (productIds.length > 0) {
+      const { data: giftData } = await getPublicClient()
+        .from("gift_products")
+        .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+        .in("product_id", productIds);
+
+      if (giftData) {
+        for (const g of giftData as any[]) {
+          const pid = g.product_id;
+          if (!giftsByProductId[pid]) giftsByProductId[pid] = [];
+          giftsByProductId[pid].push({
+            gift_name: g.gift?.name ?? "",
+            gift_slug: g.gift?.slug ?? "",
+            gift_thumbnail: g.gift?.thumbnail ?? null,
+            quantity: g.quantity,
+          });
+        }
+      }
+    }
+
+    return products.map(p => ({
+      ...p,
+      gifts: giftsByProductId[p.id] ?? null,
+    })) as unknown as ShopProduct[];
   } catch (err) {
     console.error("[getNewestProducts] Unexpected error:", err);
     return [];
@@ -628,11 +689,12 @@ export async function getFrequentlyBoughtTogether(
     const { data: products } = await getPublicClient()
       .from("products")
       .select(
-        `id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
+        `id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, is_gift,
          categories(id, name),
          product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, attributes)`
       )
       .eq("is_active", true)
+      .neq("product_type", "gift")
       .in("id", topIds);
 
     if (!products) return [];
@@ -815,6 +877,7 @@ export async function getProductBySlug(
 				 )`
       )
       .eq("is_active", true)
+      .neq("product_type", "gift")
       .eq("slug", slug)
       .maybeSingle();
 
@@ -915,6 +978,21 @@ export async function getProductBySlug(
       };
     });
 
+    // Fetch gift products
+    const { data: giftRows } = await getPublicClient()
+      .from("gift_products")
+      .select("quantity, gift:gift_product_id!inner(name, slug, thumbnail)")
+      .eq("product_id", raw.id);
+
+    const gifts: ProductDetail["gifts"] =
+      (giftRows as unknown as Array<{ quantity: number; gift: { name: string; slug: string; thumbnail: string | null } }> | null)
+        ?.map((g) => ({
+          gift_name: g.gift.name,
+          gift_slug: g.gift.slug,
+          gift_thumbnail: g.gift.thumbnail,
+          quantity: g.quantity,
+        })) ?? undefined;
+
     return {
       ...raw,
       id: raw.id,
@@ -936,6 +1014,7 @@ export async function getProductBySlug(
       is_used: raw.is_used ?? false,
       is_pre_order: variants.some((v) => v.is_pre_order),
       sale_ends_at: (raw as Record<string, unknown>).sale_ends_at as string | null ?? null,
+      gifts,
     };
   } catch (err) {
     console.error("[getProductBySlug] Unexpected error:", err);

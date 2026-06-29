@@ -643,6 +643,45 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_products: {
+        Row: {
+          id: string
+          product_id: string
+          gift_product_id: string
+          quantity: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          gift_product_id: string
+          quantity?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          gift_product_id?: string
+          quantity?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_products_gift_product_id_fkey"
+            columns: ["gift_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hero_campaigns: {
         Row: {
           created_at: string | null
@@ -1185,6 +1224,7 @@ export type Database = {
           id: string
           images: Json | null
           is_active: boolean | null
+          is_gift: boolean | null
           is_used: boolean | null
           attributes: Json | null
           name: string
@@ -1204,6 +1244,7 @@ export type Database = {
           id?: string
           images?: Json | null
           is_active?: boolean | null
+          is_gift?: boolean | null
           is_used?: boolean | null
           attributes?: Json | null
           name: string
@@ -1223,6 +1264,7 @@ export type Database = {
           id?: string
           images?: Json | null
           is_active?: boolean | null
+          is_gift?: boolean | null
           is_used?: boolean | null
           attributes?: Json | null
           name?: string

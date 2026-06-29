@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type ProductType = "standard" | "kit" | "component";
+export type ProductType = "standard" | "kit" | "component" | "gift";
 
 export interface CreateVariantInput {
 	variant_name: string;
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
 	}
 
 	const productType: ProductType = body.product_type ?? "standard";
-	const validTypes: ProductType[] = ["standard", "kit", "component"];
+	const validTypes: ProductType[] = ["standard", "kit", "component", "gift"];
 	if (!validTypes.includes(productType)) {
 		return NextResponse.json(
 			{ error: `product_type must be one of: ${validTypes.join(", ")}` },

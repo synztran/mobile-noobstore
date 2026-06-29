@@ -380,7 +380,8 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
         ...activeProduct,
       },
       selectedSimpleVariant,
-      hasComponents ? components : undefined
+      hasComponents ? components : undefined,
+      activeProduct.gifts
     );
 
     dispatch({ type: "SUBMIT_DONE" });
@@ -488,6 +489,28 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
               {formatVND(activeProduct.min_price || activeProduct.base_price)}
             </p>
           </div>
+        </div>
+      )}
+      {/* Gift product info */}
+      {activeProduct?.gifts && activeProduct.gifts.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {activeProduct.gifts.map((g) => (
+            <div
+              key={g.gift_name}
+              className="flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2"
+            >
+              <span className="text-base leading-none">🎁</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black uppercase tracking-wider text-rose-500">
+                  Quà tặng kèm
+                </p>
+                <p className="truncate text-xs font-bold text-rose-700">
+                  {g.gift_name}
+                  {g.quantity > 1 && ` x${g.quantity}`}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
       <div className="flex min-h-0 flex-col gap-4 pb-2">

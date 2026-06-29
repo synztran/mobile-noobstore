@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createClient();
+    const admin = getAdminClient();
 
     const {
       data: { user },
@@ -122,7 +123,7 @@ export async function POST(req: NextRequest) {
     ] = await Promise.all([
       supabase.from("products").select("id, base_price").eq("is_active", true).in("id", productIds),
       allVariantIds.length > 0
-        ? supabase
+        ? admin
             .from("product_variants")
             .select("id, price_adjustment")
             .in("id", allVariantIds)
@@ -251,7 +252,7 @@ export async function POST(req: NextRequest) {
     // submit_order uses SELECT … FOR UPDATE to prevent the race condition where
     // two concurrent checkouts both pass stock validation for the last unit.
     const { data, error } = await (
-      supabase.rpc as unknown as (
+      admin.rpc as unknown as (
         fn: string,
         args: Record<string, unknown>
       ) => Promise<{ data: unknown; error: { message: string } | null }>
@@ -302,7 +303,6 @@ export async function POST(req: NextRequest) {
 
       let voucherPersisted = !updateOrderError;
       if (updateOrderError) {
-        const admin = getAdminClient();
         const { error: adminUpdateOrderError } = await admin
           .from("orders")
           .update(orderVoucherUpdate)
@@ -320,7 +320,6 @@ export async function POST(req: NextRequest) {
       }
 
       if (voucherPersisted && primaryVoucher?.voucher_id) {
-        const admin = getAdminClient();
         const { error: incrementUsageError } = await (
           admin.rpc as unknown as (
             fn: string,
@@ -366,6 +365,38 @@ export async function POST(req: NextRequest) {
           expected_delivery_at: expectedDeliveryAt,
         })
         .eq("id", result.order_id);
+    }
+
+    // ── Persist gift items as order_items ─────────────────────────────────
+    const giftItems = primaryVoucher?.gift_items_snapshot ?? [];
+    if (giftItems.length > 0) {
+      const giftProductIds = [...new Set(giftItems.map((g) => g.product_id))];
+      const { data: giftProducts } = await admin
+        .from("products")
+        .select("id, name, thumbnail")
+        .in("id", giftProductIds);
+
+      const giftProductMap = new Map(
+        (giftProducts ?? []).map((p) => [p.id, p])
+      );
+
+      const giftOrderItems = giftItems.map((gift, idx) => ({
+        id: `${result.order_id}-gift-${idx}`,
+        order_id: result.order_id,
+        product_id: gift.product_id,
+        product_name: giftProductMap.get(gift.product_id)?.name ?? "Quà tặng",
+        thumbnail: giftProductMap.get(gift.product_id)?.thumbnail ?? null,
+        quantity: gift.quantity,
+        unit_price: 0,
+      }));
+
+      const { error: giftInsertError } = await supabase
+        .from("order_items")
+        .insert(giftOrderItems);
+
+      if (giftInsertError) {
+        console.error("[submit] failed to insert gift items:", giftInsertError);
+      }
     }
 
     // ── Optional: attach services ─────────────────────────────────────────

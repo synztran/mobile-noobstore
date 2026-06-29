@@ -227,6 +227,7 @@ export function useShippingForm() {
   }, []);
 
   const fetchedRef = useRef(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (fetchedRef.current) return;
@@ -251,6 +252,15 @@ export function useShippingForm() {
   }, []);
 
   useEffect(() => {
+    if (initializedRef.current) return;
+
+    const hasProfile = !!profile;
+    const hasAddress = !!addressFromUser;
+    const hasShipping = !!shipping && Object.keys(shipping).length > 0;
+    if (!hasProfile && !hasAddress && !hasShipping) return;
+
+    initializedRef.current = true;
+
     setForm((prev) => ({
       ...prev,
       fullName:

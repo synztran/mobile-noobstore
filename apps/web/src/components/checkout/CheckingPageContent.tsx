@@ -234,6 +234,15 @@ export default function CheckingPageContent() {
       </div>
 
       <OrderItemsList items={orderedItems} />
+
+      {/* ── View Orders ─────────────────────────────────────── */}
+      <button
+        onClick={() => router.push("/profile/orders")}
+        className="primary-gradient flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black uppercase tracking-widest text-white transition-transform active:scale-[0.98]"
+      >
+        <Icon name="shopping_bag" className="text-lg" />
+        Theo dõi đơn hàng
+      </button>
     </div>
   );
 }

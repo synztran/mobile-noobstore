@@ -88,11 +88,27 @@ export function OrderItemsList({
                     </p>
                   )}
                   {item.variant?.effective_price || item.product.base_price ? (
-                    <p className="mt-1 text-sm font-black text-primary">
-                      {formatVND(
-                        item.variant?.effective_price ?? item.product.base_price
-                      )}
-                    </p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <p className="text-sm font-black text-primary">
+                        {formatVND(
+                          item.variant?.effective_price ??
+                            item.product.base_price
+                        )}
+                      </p>
+                      {item.variant?.price_adjustment != null &&
+                        item.variant.price_adjustment !== 0 && (
+                          <span
+                            className={`text-[10px] font-bold ${
+                              item.variant.price_adjustment > 0
+                                ? "text-red-500"
+                                : "text-emerald-600"
+                            }`}
+                          >
+                            {item.variant.price_adjustment > 0 ? "+" : ""}
+                            {formatVND(item.variant.price_adjustment)}
+                          </span>
+                        )}
+                    </div>
                   ) : null}
                   <div className="inline-flex items-center gap-2">
                     {item.components?.some((c) => c.is_pre_order) && (
@@ -106,6 +122,44 @@ export function OrderItemsList({
                   x{item.quantity}
                 </span>
               </div>
+
+              {/* Gift breakdown */}
+              {item.gifts && item.gifts.length > 0 && (
+                <div className="mt-2 space-y-2 border-t border-outline-variant/20 pt-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                    Quà tặng kèm
+                  </p>
+                  {item.gifts.map((gift) => (
+                    <div
+                      key={gift.gift_slug}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-surface-container">
+                        {gift.gift_thumbnail ? (
+                          <Image
+                            src={gift.gift_thumbnail}
+                            alt={gift.gift_name}
+                            fill
+                            className="rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-on-surface-variant">
+                            <span className="text-[10px]">Gift</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col justify-between">
+                        <span className="text-xs font-semibold text-emerald-700">
+                          {gift.gift_name}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-600">
+                          x{gift.quantity}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Components breakdown */}
               {item.components &&
@@ -134,9 +188,13 @@ export function OrderItemsList({
                               {component.variant_name}
                             </span>
                             <span
-                              className={`ml-auto flex-shrink-0 text-[10px] font-bold text-primary ${component.price_adjustment > 0 ? "" : "opacity-0"}`}
+                              className={`ml-auto flex-shrink-0 text-[10px] font-bold text-primary`}
                             >
-                              +{formatVND(component.price_adjustment)}
+                              {component.price_adjustment !== 0
+                                ? `${component.price_adjustment > 0 ? "+" : ""}${formatVND(
+                                    component.price_adjustment
+                                  )}`
+                                : ""}
                             </span>
                           </div>
                         </div>

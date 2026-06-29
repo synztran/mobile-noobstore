@@ -302,7 +302,7 @@ export default function OrderDetailModal({
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" />
-      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl bg-white shadow-2xl">
+      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-max flex-col rounded-xl bg-white shadow-2xl">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
@@ -324,9 +324,9 @@ export default function OrderDetailModal({
         </div>
 
         {/* Body */}
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0">
           {/* Left column — flex-col: scrollable content on top, actions pinned at bottom */}
-          <div className="flex min-h-0 flex-col">
+          <div className="flex flex-1 flex-col">
             {/* Scrollable content */}
             <div className="flex-1 space-y-4 overflow-y-auto py-4 pl-4">
               {isLoading && (
@@ -398,7 +398,7 @@ export default function OrderDetailModal({
           <div className="divider divider-horizontal" />
 
           {/* Right column — Price summary */}
-          <div className="flex min-h-0 min-w-80 flex-col gap-4 py-4 pr-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 py-4 pr-4">
             {order && !isLoading && (
               <OrderTimeline
                 createdAt={order.created_at}

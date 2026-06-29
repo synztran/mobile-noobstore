@@ -11,6 +11,33 @@ export function NavigationOverlay() {
   const { isNavigating, startNavigation, endNavigation } = useNavigationStore();
   const prevPathname = useRef(pathname);
   const startedAt = useRef(0);
+  const scrollY = useRef(0);
+
+  // Lock scroll when overlay is visible
+  useEffect(() => {
+    if (isNavigating) {
+      scrollY.current = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY.current}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, scrollY.current);
+    }
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
+    };
+  }, [isNavigating]);
 
   // Auto-hide after pathname change (with min display time)
   useEffect(() => {
@@ -48,10 +75,10 @@ export function NavigationOverlay() {
   if (!isNavigating) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-sm transition-opacity duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200">
       <div className="flex flex-col items-center gap-4">
-        <span className="loading loading-spinner loading-lg text-primary" />
-        <p className="animate-pulse text-base font-black tracking-wider text-slate-600 drop-shadow-lg">
+        <span className="loading loading-spinner w-[3rem] text-accent" />
+        <p className="animate-pulse text-lg font-black tracking-wider text-white drop-shadow-lg">
           Đang chuyển trang...
         </p>
       </div>

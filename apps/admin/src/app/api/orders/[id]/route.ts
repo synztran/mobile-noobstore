@@ -23,7 +23,7 @@ export async function GET(
 			delivery_address, shipping_method_id, expected_delivery_at,
 			user_id,
 			users(id, first_name, last_name, email, phone_number),
-			order_items(id, product_name, quantity, unit_price, thumbnail, order_item_components(id, component_group, variant_name, price_adjustment, product_variant_id, thumbnail, is_pre_order, pre_order_config)),
+			order_items(id, product_id, product_name, quantity, unit_price, thumbnail, order_item_components(id, component_group, variant_name, price_adjustment, product_variant_id, thumbnail, is_pre_order, pre_order_config)),
 			order_services(
 				id, service_id, service_name, price, quantity, selected_options, customer_note,
 				services(base_price)
@@ -93,6 +93,35 @@ export async function GET(
     (shippingMethods ?? []).map((method) => [method.id, method.name])
   );
 
+  // Attach gift info to order items
+  if (data.order_items?.length > 0) {
+    const productIds = Array.from(
+      new Set(data.order_items.map((i: Record<string, unknown>) => i.product_id as string).filter(Boolean))
+    ) as string[];
+    const { data: giftRows } = await supabase
+      .from("gift_products")
+      .select("product_id, quantity, gift:gift_product_id!inner(name, thumbnail)")
+      .in("product_id", productIds);
+
+    if (giftRows) {
+      const giftsByProductId: Record<string, Array<{ gift_name: string; gift_thumbnail: string | null; quantity: number }>> = {};
+      for (const g of giftRows as unknown as Array<Record<string, unknown>>) {
+        const pid = g.product_id as string;
+        const gift = g.gift as Record<string, unknown>;
+        if (!giftsByProductId[pid]) giftsByProductId[pid] = [];
+        giftsByProductId[pid].push({
+          gift_name: (gift.name as string) ?? "",
+          gift_thumbnail: (gift.thumbnail as string) ?? null,
+          quantity: Number(g.quantity ?? 1),
+        });
+      }
+      for (const item of data.order_items as Array<Record<string, unknown>>) {
+        const pid = item.product_id as string | undefined;
+        item.gifts = pid ? (giftsByProductId[pid] ?? null) : null;
+      }
+    }
+  }
+
   return NextResponse.json({
     ...data,
     optionValueMap,
@@ -145,6 +174,22 @@ export async function PATCH(
   }
 
   const supabase = getAdminClient();
+
+  // Restore stock BEFORE updating status — the restoreOrderStock guard
+  // checks current status to prevent double-restore; it must see the OLD
+  // status (not yet "cancelled"/"refunded") to proceed.
+  if (body.status === "cancelled" || body.status === "refunded") {
+    try {
+      await restoreOrderStock(id);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      console.error(
+        `[orderService] Failed to restore stock for order ${id}: ${msg}`
+      );
+      return NextResponse.json({ success: true, stockWarning: msg });
+    }
+  }
+
   const { error } = await supabase.from("orders").update(update).eq("id", id);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -205,20 +250,6 @@ export async function PATCH(
         );
       }
     })();
-  }
-
-  // Restore stock when order is cancelled or refunded
-  if (body.status === "cancelled" || body.status === "refunded") {
-    try {
-      await restoreOrderStock(id);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      console.error(
-        `[orderService] Failed to restore stock for order ${id}: ${msg}`
-      );
-      // Return a warning but don't roll back — status is already updated
-      return NextResponse.json({ success: true, stockWarning: msg });
-    }
   }
 
   // Trigger gacha missions whenever order status changes (fire-and-forget)

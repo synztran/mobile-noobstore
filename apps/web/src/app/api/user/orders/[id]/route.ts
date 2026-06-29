@@ -19,6 +19,7 @@ export interface OrderItemDetail {
   quantity: number;
   thumbnail: string | null;
   components: OrderItemComponentDetail[];
+  gifts?: Array<{ gift_name: string; gift_thumbnail: string | null; quantity: number }> | null;
 }
 
 export interface OrderDetail {
@@ -154,6 +155,27 @@ export async function GET(
       productRows.map((row) => [row.id, row.thumbnail])
     );
 
+    const giftsByProductId: Record<string, Array<{ gift_name: string; gift_thumbnail: string | null; quantity: number }>> = {};
+    if (productIds.length > 0) {
+      const { data: giftRows } = await supabase
+        .from("gift_products")
+        .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+        .in("product_id", productIds);
+
+      if (giftRows) {
+        for (const g of giftRows as unknown as Array<Record<string, unknown>>) {
+          const pid = g.product_id as string;
+          const gift = g.gift as Record<string, unknown>;
+          if (!giftsByProductId[pid]) giftsByProductId[pid] = [];
+          giftsByProductId[pid].push({
+            gift_name: (gift.name as string) ?? "",
+            gift_thumbnail: (gift.thumbnail as string) ?? null,
+            quantity: Number(g.quantity ?? 1),
+          });
+        }
+      }
+    }
+
     const componentsByOrderItemId = rawComponents.reduce<
       Record<string, OrderItemComponentDetail[]>
     >((acc, comp) => {
@@ -194,6 +216,7 @@ export async function GET(
             ? (productThumbnailById.get(row.product_id) ?? null)
             : null),
         components,
+        gifts: row.product_id ? (giftsByProductId[row.product_id] ?? null) : null,
       };
     });
 

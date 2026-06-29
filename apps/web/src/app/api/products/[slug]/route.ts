@@ -38,7 +38,7 @@ export interface ProductComponentDetail {
   component_product: ComponentProductDetail;
 }
 
-export type ProductType = "standard" | "kit" | "component";
+export type ProductType = "standard" | "kit" | "component" | "gift";
 
 export interface ProductDetail {
   id: string;
@@ -61,6 +61,7 @@ export interface ProductDetail {
   is_pre_order: boolean;
   attributes?: Record<string, string> | null;
   sale_ends_at?: string | null;
+  gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
 }
 
 // ─── GET /api/products/[slug] ─────────────────────────────────────────────────
@@ -92,10 +93,10 @@ export async function GET(
 				thumbnail,
 				images,
 				product_type,
-				is_used,
-				is_active,
-        attributes,
-        sale_ends_at,
+ 				is_used,
+ 				is_active,
+          attributes,
+         sale_ends_at,
 				categories(id, name),
 				product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes),
 				product_components!product_components_parent_product_id_fkey(
@@ -208,6 +209,24 @@ export async function GET(
         component_product: componentProductMap.get(c.component_product_id!)!,
       }));
 
+    // Fetch gift data
+    let gifts: ProductDetail["gifts"];
+    const { data: giftRows } = await supabase
+      .from("gift_products")
+      .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+      .eq("product_id", p.id);
+    if (giftRows && giftRows.length > 0) {
+      gifts = (giftRows as unknown as Array<Record<string, unknown>>).map((g) => {
+        const gift = g.gift as Record<string, unknown>;
+        return {
+          gift_name: (gift.name as string) ?? "",
+          gift_slug: (gift.slug as string) ?? "",
+          gift_thumbnail: (gift.thumbnail as string) ?? null,
+          quantity: Number(g.quantity ?? 1),
+        };
+      });
+    }
+
     const result: ProductDetail = {
       id: p.id,
       slug: p.slug,
@@ -228,6 +247,7 @@ export async function GET(
       is_pre_order: variants.some((v) => v.is_pre_order),
       attributes: (p as any).attributes ?? null,
       sale_ends_at: (p as any).sale_ends_at ?? null,
+      gifts,
     };
 
     return NextResponse.json(result);

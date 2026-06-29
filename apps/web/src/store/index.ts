@@ -35,6 +35,7 @@ interface CartStore {
 		product: Product,
 		variant: ProductVariant | null,
 		components?: SelectedComponent[],
+		gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>,
 	) => void;
 	removeItem: (productId: string, variantId: string | null) => void;
 	updateQty: (
@@ -57,7 +58,7 @@ export const useCartStore = create<CartStore>()(
 			cartId: null,
 			isOpen: false,
 
-			addItem: (product, variant, components) => {
+			addItem: (product, variant, components, gifts) => {
 				set((state) => {
 					const cartId = state.cartId ?? generateId();
 					const isKit = (components?.length ?? 0) > 0;
@@ -95,6 +96,7 @@ export const useCartStore = create<CartStore>()(
 								variant: variant ?? null,
 								components: components ?? [],
 								quantity: 1,
+								gifts: gifts ?? undefined,
 							},
 						],
 					};

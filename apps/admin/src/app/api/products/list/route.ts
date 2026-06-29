@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const allowedProductTypes = new Set(["standard", "kit", "component"]);
+  const allowedProductTypes = new Set(["standard", "kit", "component", "gift"]);
   const selectedProductType = allowedProductTypes.has(productType)
     ? productType
     : undefined;
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     .from("products")
     .select(
       `
-      id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail, attributes, is_active, parent_product_id,
+      id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail, attributes, is_active, parent_product_id, category_id,
       categories(id, name),
       product_variants(id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config),
       product_components!product_components_parent_product_id_fkey(

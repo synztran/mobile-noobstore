@@ -44,6 +44,7 @@ export interface CartItem {
   /** For composite kits: the resolved component selections */
   components?: SelectedComponent[];
   quantity: number;
+  gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
 }
 
 export interface ShippingDetails {

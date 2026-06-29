@@ -1,7 +1,7 @@
 import { getPublicClient } from "@/lib/supabase/public";
 
 export type ProductSortOption = "newest" | "price_asc" | "price_desc";
-export type ProductType = "standard" | "kit" | "component";
+export type ProductType = "standard" | "kit" | "component" | "gift";
 
 export interface ProductTag {
   id: number;
@@ -51,6 +51,7 @@ export interface ProductListItem {
   discount_price: number;
   discount_percentage: number;
   created_at: string;
+  gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
 }
 
 type CategoryRow = { id: string } | null;
@@ -354,6 +355,7 @@ export async function getProductListByFilters(
          product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
       )
       .eq("is_active", true)
+      .neq("product_type", "gift")
       .in("product_type", productTypes);
 
     if (excludeUncategorized) query = query.not("category_id", "is", null);
@@ -418,7 +420,36 @@ export async function getProductListByFilters(
       safeOffset + safeLimit
     );
 
-    return { products: pagedProducts, total };
+    // Batch-fetch gift data
+    const productIds = pagedProducts.map(p => p.id);
+    const giftsByProductId: Record<string, Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>> = {};
+    if (productIds.length > 0) {
+      const { data: giftData } = await getPublicClient()
+        .from("gift_products")
+        .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+        .in("product_id", productIds);
+
+      if (giftData) {
+        for (const g of giftData as any[]) {
+          const pid = g.product_id;
+          if (!giftsByProductId[pid]) giftsByProductId[pid] = [];
+          giftsByProductId[pid].push({
+            gift_name: g.gift?.name ?? "",
+            gift_slug: g.gift?.slug ?? "",
+            gift_thumbnail: g.gift?.thumbnail ?? null,
+            quantity: g.quantity,
+          });
+        }
+      }
+    }
+
+    return {
+      products: pagedProducts.map(p => ({
+        ...p,
+        gifts: giftsByProductId[p.id] ?? null,
+      })),
+      total,
+    };
   } catch {
     return { products: [], total: 0 };
   }

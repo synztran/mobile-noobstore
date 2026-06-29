@@ -16,7 +16,7 @@ import AttributesEditor from "@/components/ui/AttributesEditor";
 import InputSelection from "../ui/InputSelection";
 import { formatVND } from "@/lib/currency";
 
-const PRODUCT_TYPES = ["standard", "kit", "component"];
+const PRODUCT_TYPES = ["standard", "kit", "component", "gift"];
 
 type EditableProduct = {
   id: string;
@@ -104,11 +104,85 @@ export default function EditProductModal({ product }: Props) {
   }, [open, product]);
 
   function toSlug(value: string) {
+    const vietnameseMap: Record<string, string> = {
+      à: "a",
+      á: "a",
+      ả: "a",
+      ã: "a",
+      ạ: "a",
+      ă: "a",
+      ắ: "a",
+      ằ: "a",
+      ẳ: "a",
+      ẵ: "a",
+      ặ: "a",
+      â: "a",
+      ấ: "a",
+      ầ: "a",
+      ẩ: "a",
+      ẫ: "a",
+      ậ: "a",
+      đ: "d",
+      è: "e",
+      é: "e",
+      ẻ: "e",
+      ẽ: "e",
+      ẹ: "e",
+      ê: "e",
+      ế: "e",
+      ề: "e",
+      ể: "e",
+      ễ: "e",
+      ệ: "e",
+      ì: "i",
+      í: "i",
+      ỉ: "i",
+      ĩ: "i",
+      ị: "i",
+      ò: "o",
+      ó: "o",
+      ỏ: "o",
+      õ: "o",
+      ọ: "o",
+      ô: "o",
+      ố: "o",
+      ồ: "o",
+      ổ: "o",
+      ỗ: "o",
+      ộ: "o",
+      ơ: "o",
+      ớ: "o",
+      ờ: "o",
+      ở: "o",
+      ỡ: "o",
+      ợ: "o",
+      ù: "u",
+      ú: "u",
+      ủ: "u",
+      ũ: "u",
+      ụ: "u",
+      ư: "u",
+      ứ: "u",
+      ừ: "u",
+      ử: "u",
+      ữ: "u",
+      ự: "u",
+      ỳ: "y",
+      ý: "y",
+      ỷ: "y",
+      ỹ: "y",
+      ỵ: "y",
+    };
     return value
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, "-");
+      .split("")
+      .map((ch) => vietnameseMap[ch] ?? ch)
+      .join("")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
   const isKit = productType === "kit";
@@ -170,9 +244,7 @@ export default function EditProductModal({ product }: Props) {
 
       {open && (
         <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/50"
-          />
+          <div className="absolute inset-0 bg-black/50" />
           <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl">
             <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
               <h2 className="text-lg font-semibold text-slate-900">
@@ -205,7 +277,7 @@ export default function EditProductModal({ product }: Props) {
                         value: c.id,
                         label: c.name,
                       }))}
-                      value={product.category_id as string}
+                      value={categoryType}
                       onChange={(e) => {
                         setCategoryType(e.target.value);
                       }}

@@ -31,7 +31,7 @@ type ComponentRow = {
   } | null;
 };
 
-type CategoryRelation = { name: string } | { name: string }[] | null;
+type CategoryRelation = { id: string; name: string } | { id: string; name: string }[] | null;
 
 export type ProductCardProps = {
   product: {
@@ -48,6 +48,7 @@ export type ProductCardProps = {
     is_used: boolean | null;
     thumbnail: string | null;
     parent_product_id?: string | null;
+    category_id?: string | null;
     categories?: CategoryRelation;
     product_variants?: VariantRow[] | null;
     product_components?: ComponentRow[] | null;

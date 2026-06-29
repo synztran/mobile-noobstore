@@ -15,7 +15,7 @@ export default async function ProductsPage({
   searchParams: Promise<{ q?: string; page?: string; product_type?: string }>;
 }) {
   const { q, page, product_type } = await searchParams;
-  const allowedProductTypes = new Set(["standard", "kit", "component"]);
+  const allowedProductTypes = new Set(["standard", "kit", "component", "gift"]);
   const selectedProductType = allowedProductTypes.has(product_type ?? "")
     ? product_type
     : undefined;

@@ -55,6 +55,7 @@ const navigation: NavItem[] = [
         icon: PackageSearch,
       },
       { label: "Components", href: "/products/components", icon: Puzzle },
+      { label: "Gift Products", href: "/products/gifts", icon: Gift },
     ],
   },
   { label: "Orders", href: "/orders", icon: ShoppingCart },

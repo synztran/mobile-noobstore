@@ -238,7 +238,8 @@ export function useProductViewData(
       addItem(
         cartProduct,
         initialGroups.length > 0 ? null : selectedVariant,
-        components
+        components,
+        product.gifts
       );
       toast.success("Added to cart!");
       openCart();

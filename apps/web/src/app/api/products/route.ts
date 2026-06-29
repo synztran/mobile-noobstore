@@ -58,7 +58,7 @@ export interface ShopProduct {
   stock_quantity: number;
   thumbnail: string | null;
   images: string[] | null;
-  product_type: "standard" | "kit" | "component";
+  product_type: "standard" | "kit" | "component" | "gift";
   variants: ShopVariant[];
   min_price: number;
   is_used: boolean;
@@ -66,6 +66,7 @@ export interface ShopProduct {
   tags: ITag[];
   discount_price?: number;
   discount_percentage?: number;
+  gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
 }
 
 export interface ProductsResponse {

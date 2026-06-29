@@ -464,6 +464,60 @@ export function ProductView({
         </div>
       </main>
 
+      {/* ── Gift Products ── */}
+      {product.gifts && product.gifts.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="px-4"
+        >
+          <div className="mb-4 mt-6 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
+              <span className="text-sm">🎁</span>
+            </div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">
+              Quà tặng kèm
+            </p>
+          </div>
+          <div className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2">
+            {product.gifts.map((gift) => (
+              <Link
+                key={gift.gift_slug}
+                href={`/shop/${gift.gift_slug}`}
+                className="w-[140px] shrink-0 snap-start"
+              >
+                <div className="overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm">
+                  <div className="relative aspect-square w-full bg-surface-container">
+                    {gift.gift_thumbnail ? (
+                      <Image
+                        src={gift.gift_thumbnail}
+                        alt={gift.gift_name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-3xl">
+                        🎁
+                      </div>
+                    )}
+                    <div className="absolute right-1.5 top-1.5 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                      x{gift.quantity}
+                    </div>
+                  </div>
+                  <div className="p-2.5">
+                    <p className="line-clamp-2 text-xs font-semibold text-on-surface">
+                      {gift.gift_name}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </motion.section>
+      )}
+
       {/* ── Image Viewer ── */}
       <ImageViewer
         images={mediaImages}

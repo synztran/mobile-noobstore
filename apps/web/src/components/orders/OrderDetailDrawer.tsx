@@ -265,6 +265,15 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
                             ))}
                           </div>
                         )}
+                        {item.gifts?.map((g) => (
+                          <div key={g.gift_name} className="flex items-center gap-1.5 rounded-md bg-rose-50 px-2 py-1">
+                            <span className="text-xs leading-none">🎁</span>
+                            <span className="text-[11px] font-semibold text-rose-600">
+                              {g.gift_name}
+                              {g.quantity > 1 && ` x${g.quantity}`}
+                            </span>
+                          </div>
+                        ))}
                         <div className="mt-1.5 flex items-center justify-between">
                           <span className="text-xs text-on-surface-variant">
                             x{item.quantity}

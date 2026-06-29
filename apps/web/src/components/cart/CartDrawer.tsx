@@ -108,6 +108,23 @@ const CartItemRow = memo(function CartItemRow({
             ))}
           </div>
         )}
+        {item.gifts?.map((g) => (
+          <div
+            key={g.gift_name}
+            className="flex items-start gap-2 rounded-xl bg-rose-100 p-2"
+          >
+            <span className="text-sm leading-none">🎁</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[8px] font-black uppercase tracking-wider text-rose-500">
+                Quà tặng kèm
+              </p>
+              <p className="truncate text-[10px] font-bold text-rose-700">
+                {g.gift_name}
+                {g.quantity > 1 && ` x${g.quantity}`}
+              </p>
+            </div>
+          </div>
+        ))}
         <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center gap-3 rounded-full bg-gray-200 px-2 py-1">
             <button

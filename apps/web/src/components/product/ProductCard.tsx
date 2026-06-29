@@ -77,6 +77,12 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
                 <DiscountBadge
                   discountPercent={product.discount_percentage || 0}
                 />
+                {product.gifts && product.gifts.length > 0 && (
+                  <div className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded bg-rose-500 px-1.5 py-0.5 text-[10px] font-black uppercase text-white shadow-sm">
+                    <span className="text-[10px] leading-none">🎁</span>
+                    Quà tặng
+                  </div>
+                )}
                 <ProductComponentTags horizontalTags={product?.tags} />
               </>
             ) : null}

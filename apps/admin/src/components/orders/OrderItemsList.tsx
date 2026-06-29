@@ -1,4 +1,4 @@
-import { Package } from "lucide-react";
+import { Package, Gift } from "lucide-react";
 import Image from "next/image";
 
 interface KitComponent {
@@ -12,6 +12,12 @@ interface KitComponent {
 	pre_order_config: unknown;
 }
 
+interface GiftInfo {
+	gift_name: string;
+	gift_thumbnail: string | null;
+	quantity: number;
+}
+
 interface OrderItem {
 	id: string;
 	product_name: string;
@@ -19,6 +25,7 @@ interface OrderItem {
 	unit_price: number;
 	thumbnail: string | null;
 	order_item_components: KitComponent[];
+	gifts?: GiftInfo[];
 }
 
 interface Props {
@@ -30,11 +37,6 @@ function KitComponentBadge({ c }: { c: KitComponent }) {
 		<span className="inline-flex items-center gap-1.5 text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full">
 			<span className="text-indigo-400">{c.component_group}:</span>
 			{c.variant_name}
-			{/* {c.is_pre_order && (
-				<span className="bg-amber-100 text-amber-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
-					Pre-order
-				</span>
-			)} */}
 			{c.price_adjustment !== null && c.price_adjustment !== 0 && (
 				<span
 					className={
@@ -103,6 +105,15 @@ export default function OrderItemsList({ items }: Props) {
 											)}
 											₫
 										</div>
+										{item.gifts?.map((g) => (
+											<div key={g.gift_name} className="flex items-center gap-1 mt-1">
+												<Gift className="w-3 h-3 text-rose-500" />
+												<span className="text-[11px] font-semibold text-rose-600">
+													{g.gift_name}
+													{g.quantity > 1 && ` x${g.quantity}`}
+												</span>
+											</div>
+										))}
 									</div>
 									<div className="text-sm font-semibold text-slate-800 shrink-0">
 										{(

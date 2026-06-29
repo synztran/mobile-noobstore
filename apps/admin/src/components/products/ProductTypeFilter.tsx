@@ -8,6 +8,7 @@ const PRODUCT_TYPE_OPTIONS = [
 	{ label: "Standard", value: "standard" },
 	{ label: "Kit", value: "kit" },
 	{ label: "Component", value: "component" },
+	{ label: "Gift", value: "gift" },
 ];
 
 export default function ProductTypeFilter() {
