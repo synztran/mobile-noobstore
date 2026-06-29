@@ -3,12 +3,50 @@ import { TopNav } from "@/components/layout/TopNav";
 import { ProductView } from "@/components/product/ProductView";
 import {
   getFrequentlyBoughtTogether,
+  getProductBySlug,
   getProductDetail,
   getProductPurchaseCount,
   getRelatedProducts,
 } from "@/lib/products-server";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+
+  if (!product) {
+    return { title: "Sản phẩm" };
+  }
+
+  const ogImage =
+    product.thumbnail || product.images?.find(Boolean) || undefined;
+  const description =
+    product.description?.slice(0, 160) ||
+    `${product.name} - ${product.brand ?? "NoobStore"}`;
+
+  return {
+    title: product.name,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      url: `https://www.noobstore.xyz/shop/${slug}`,
+      images: ogImage ? [{ url: ogImage, width: 800, height: 800 }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: ogImage ? [ogImage] : [],
+    },
+  };
+}
 
 function ProductDetailSkeleton() {
   return (

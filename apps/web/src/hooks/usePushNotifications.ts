@@ -55,12 +55,16 @@ export function usePushNotifications() {
 				return false;
 			}
 
-			const registration = await navigator.serviceWorker.register(
-				"/sw.js",
-				{
+			let registration: ServiceWorkerRegistration;
+			try {
+				registration = await navigator.serviceWorker.register("/sw.js", {
 					scope: "/",
-				},
-			);
+				});
+			} catch (swErr) {
+				throw new Error(
+					"Không thể đăng ký Service Worker. Vui lòng kiểm tra kết nối SSL và thử lại.",
+				);
+			}
 
 			const subscription = await registration.pushManager.subscribe({
 				userVisibleOnly: true,

@@ -1,6 +1,45 @@
 import { GachaMachine } from "@/components/gacha/GachaMachine";
 import { createClient } from "@/lib/supabase/server";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = await createClient();
+  const { data: event } = await supabase
+    .from("gacha_events")
+    .select("name, description")
+    .eq("is_active", true)
+    .lte("start_at", new Date().toISOString())
+    .gte("end_at", new Date().toISOString())
+    .order("id", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!event) {
+    return {
+      title: "Gacha",
+      description: "Tham gia sự kiện quay thưởng để nhận phần thưởng hấp dẫn từ NoobStore.",
+    };
+  }
+
+  const description =
+    event.description?.slice(0, 160) ||
+    `Tham gia sự kiện ${event.name} để nhận phần thưởng hấp dẫn từ NoobStore.`;
+
+  return {
+    title: event.name,
+    description,
+    openGraph: {
+      title: event.name,
+      description,
+      url: "https://www.noobstore.xyz/gacha",
+    },
+    twitter: {
+      title: event.name,
+      description,
+    },
+  };
+}
 
 export default async function GachaPage() {
   const supabase = await createClient();

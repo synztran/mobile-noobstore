@@ -69,7 +69,7 @@ export function BundleProductCard({
         {product.name}
       </p>
       {hasDiscount ? (
-        <div className="text-right">
+        <div className="flex flex-col text-right">
           <span className="text-base font-extrabold text-red-600">
             {formatVND(product.discount_price!)}
           </span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Bell, X } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -7,11 +8,14 @@ import { useEffect, useState } from "react";
 const STORAGE_KEY = "noobstore-push-prompt-dismissed";
 
 export function PushNotificationPrompt() {
+  const { user, loading: authLoading } = useAuth();
   const { isSupported, loading, subscribe, permission } =
     usePushNotifications();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) return;
     if (!isSupported) return;
     if (permission === "granted") return;
     if (permission === "denied") return;
@@ -19,7 +23,7 @@ export function PushNotificationPrompt() {
     if (dismissed === "true") return;
     const timer = setTimeout(() => setVisible(true), 3000);
     return () => clearTimeout(timer);
-  }, [isSupported, permission]);
+  }, [isSupported, permission, user, authLoading]);
 
   const handleDismiss = () => {
     localStorage.setItem(STORAGE_KEY, "true");

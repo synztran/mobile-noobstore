@@ -22,8 +22,25 @@ const manrope = localFont({
 });
 
 export const metadata: Metadata = {
-	title: "NoobStore",
-	description: "Premium curated sneaker drops",
+	title: {
+		template: "%s - NoobStore",
+		default: "NoobStore",
+	},
+	description: "Service and Retail for Premium Mechanical Keyboards",
+	metadataBase: new URL("https://www.noobstore.xyz"),
+	openGraph: {
+		type: "website",
+		siteName: "NoobStore",
+		title: "NoobStore",
+		description: "Service and Retail for Premium Mechanical Keyboards",
+		images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "NoobStore",
+		description: "Service and Retail for Premium Mechanical Keyboards",
+		images: ["/icon-512.png"],
+	},
 	manifest: "/manifest.webmanifest",
 	appleWebApp: {
 		capable: true,
