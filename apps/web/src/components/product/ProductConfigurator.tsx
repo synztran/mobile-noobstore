@@ -151,7 +151,7 @@ export function ProductConfigurator({
                     >
                       (
                       {v.price_adjustment &&
-                        (v.price_adjustment > 0 ? "+" : "-")}
+                        (v.price_adjustment > 0 ? "+" : "")}
                       {formatVND(v.price_adjustment)})
                     </p>
                   </div>

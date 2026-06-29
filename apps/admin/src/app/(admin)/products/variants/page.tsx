@@ -36,7 +36,7 @@ export default async function ProductVariantsPage({
     .from("product_variants")
     .select(
       `
-			id, variant_name, price_adjustment, stock_quantity, is_pre_order, attributes, thumbnail, product_id,
+			id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config, thumbnail, product_id,
 			products(id, name, product_type, slug, base_price, stock_quantity, thumbnail, brand, is_active)
 		`,
       { count: "exact" }
@@ -101,11 +101,11 @@ export default async function ProductVariantsPage({
               brand: string | null;
               is_active: boolean | null;
             } | null;
-            const attrs =
-              v.attributes &&
-              typeof v.attributes === "object" &&
-              !Array.isArray(v.attributes)
-                ? (v.attributes as Record<string, string>)
+            const preOrderCfg =
+              v.pre_order_config &&
+              typeof v.pre_order_config === "object" &&
+              !Array.isArray(v.pre_order_config)
+                ? (v.pre_order_config as Record<string, string>)
                 : null;
 
             const priceAdj = v.price_adjustment ?? 0;
@@ -214,23 +214,30 @@ export default async function ProductVariantsPage({
                     </div>
                   </div>
 
-                  {attrs && Object.keys(attrs).length > 0 && (
-                    <div>
-                      <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                        Attributes
+                  {v.is_pre_order && preOrderCfg && (
+                    <div className="rounded-lg border border-purple-200 bg-purple-50/50 p-2.5">
+                      <span className="text-[11px] font-medium uppercase tracking-wide text-purple-600">
+                        Pre-order Config
                       </span>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {Object.entries(attrs).map(([k, val]) => (
-                          <span
-                            key={k}
-                            className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
-                          >
-                            <span className="font-medium text-slate-500">
-                              {k}:
-                            </span>
-                            {val}
-                          </span>
-                        ))}
+                      <div className="mt-1.5 space-y-1">
+                        {preOrderCfg.estimate && (
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="font-medium text-slate-500">Estimate:</span>
+                            <span className="text-slate-700">{preOrderCfg.estimate}</span>
+                          </div>
+                        )}
+                        {preOrderCfg.available_date && (
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="font-medium text-slate-500">Available:</span>
+                            <span className="text-slate-700">{preOrderCfg.available_date}</span>
+                          </div>
+                        )}
+                        {preOrderCfg.notes && (
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            <span className="font-medium text-slate-500">Notes:</span>
+                            <span className="text-slate-700">{preOrderCfg.notes}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -259,7 +266,7 @@ export default async function ProductVariantsPage({
                       stock_quantity: v.stock_quantity,
                       is_pre_order: v.is_pre_order,
                       thumbnail: v.thumbnail ?? null,
-                      attributes: attrs,
+                      pre_order_config: preOrderCfg as { estimate: string; notes?: string; available_date?: string } | null,
                       product_id: v.product_id ?? "",
                       product_name: product?.name ?? "",
                       product_type: product?.product_type,

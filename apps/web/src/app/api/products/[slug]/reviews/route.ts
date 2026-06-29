@@ -3,6 +3,50 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+type ReviewsDb = {
+  select: (
+    columns: string
+  ) => {
+    eq: (
+      column: string,
+      value: string
+    ) => {
+      eq: (
+        column2: string,
+        value2: string
+      ) => {
+        maybeSingle: () => Promise<{
+          data: Record<string, unknown> | null;
+          error: { message: string } | null;
+        }>;
+      };
+      order: (
+        column: string,
+        options: { ascending: boolean }
+      ) => Promise<{
+        data: Record<string, unknown>[] | null;
+        error: { message: string } | null;
+      }>;
+    };
+  };
+  insert: (values: Record<string, unknown>) => Promise<{
+    error: { message: string } | null;
+  }>;
+};
+
+function maskName(name: string): string {
+  if (!name) return "Ẩn danh";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return name;
+  return parts[0] + " " + parts.slice(1).map((p) => "*".repeat(p.length)).join(" ");
+}
+
+function reviewsDb(supabase: Awaited<ReturnType<typeof createClient>>) {
+  return (supabase.from as unknown as (table: string) => ReviewsDb)(
+    "product_reviews"
+  );
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -21,39 +65,10 @@ export async function GET(
       return NextResponse.json({ reviews: [], average: 0, total: 0 });
     }
 
-    const db = supabase.from as unknown as {
-      select: (
-        columns: string
-      ) => {
-        eq: (
-          column: string,
-          value: string
-        ) => {
-          eq: (
-            column2: string,
-            value2: string
-          ) => {
-            maybeSingle: () => Promise<{
-              data: Record<string, unknown> | null;
-              error: { message: string } | null;
-            }>;
-          };
-          order: (
-            column: string,
-            options: { ascending: boolean }
-          ) => Promise<{
-            data: Record<string, unknown>[] | null;
-            error: { message: string } | null;
-          }>;
-        };
-      };
-      insert: (values: Record<string, unknown>) => Promise<{
-        error: { message: string } | null;
-      }>;
-    };
+    const db = reviewsDb(supabase);
 
     const { data, error } = await db
-      .select("id, rating, title, body, created_at, user_id, users(first_name, last_name)")
+      .select("id, rating, title, body, reviewer_name, created_at")
       .eq("product_id", product.id)
       .order("created_at", { ascending: false });
 
@@ -78,13 +93,8 @@ export async function GET(
         rating: Number(r.rating),
         title: r.title ?? null,
         body: r.body ?? null,
+        reviewer_name: maskName((r.reviewer_name as string) ?? ""),
         created_at: r.created_at,
-        reviewer_name:
-          r.users && typeof r.users === "object" && !Array.isArray(r.users)
-            ? [((r.users as Record<string, unknown>).first_name as string) ?? "", ((r.users as Record<string, unknown>).last_name as string) ?? ""]
-                .filter(Boolean)
-                .join(" ")
-            : "Ẩn danh",
       })),
       average,
       total,
@@ -130,33 +140,7 @@ export async function POST(
       return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 });
     }
 
-    const db = supabase.from as unknown as {
-      select: (
-        columns: string
-      ) => {
-        eq: (
-          column: string,
-          value: string
-        ) => {
-          eq: (
-            column2: string,
-            value2: string
-          ) => {
-            maybeSingle: () => Promise<{
-              data: Record<string, unknown> | null;
-              error: { message: string } | null;
-            }>;
-          };
-          maybeSingle: () => Promise<{
-            data: Record<string, unknown> | null;
-            error: { message: string } | null;
-          }>;
-        };
-      };
-      insert: (values: Record<string, unknown>) => Promise<{
-        error: { message: string } | null;
-      }>;
-    };
+    const db = reviewsDb(supabase);
 
     const { data: existing } = await db
       .select("id")
@@ -171,12 +155,18 @@ export async function POST(
       );
     }
 
+    const reviewerName =
+      (user.user_metadata?.full_name as string) ||
+      (user.user_metadata?.name as string) ||
+      "";
+
     const { error } = await db.insert({
       product_id: product.id,
       user_id: user.id,
       rating: body.rating,
       title: body.title ?? null,
       body: body.body ?? null,
+      reviewer_name: reviewerName || "Ẩn danh",
     });
 
     if (error) {

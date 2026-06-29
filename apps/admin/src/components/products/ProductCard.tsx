@@ -15,7 +15,7 @@ type VariantRow = {
   price_adjustment: number | null;
   stock_quantity: number | null;
   is_pre_order: boolean | null;
-  attributes: unknown;
+  pre_order_config: unknown;
 };
 
 type ComponentRow = {

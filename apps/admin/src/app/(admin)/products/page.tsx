@@ -32,14 +32,14 @@ export default async function ProductsPage({
 			id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail, attributes, is_active, parent_product_id,
 			categories(id, name),
 			product_variants(
-				id, variant_name, price_adjustment, stock_quantity, is_pre_order, attributes
+				id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config
 			),
 			product_components!product_components_parent_product_id_fkey(
 				id, component_group, is_required, max_quantity,
 				component_product:products!product_components_component_product_id_fkey(
 					id, name, thumbnail,
 					product_variants(
-						id, variant_name, price_adjustment, stock_quantity, is_pre_order, attributes
+						id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config
 					)
 				)
 			)

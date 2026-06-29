@@ -1,24 +1,15 @@
 "use client";
 
 import { SingleImageUploader } from "@/components/ui/ImageUploader";
-import { Plus, Trash2, X } from "lucide-react";
+import { X } from "lucide-react";
 import NumberInput from "@/components/ui/NumberInput";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
-const PRE_ORDER_KEYS = ["estimate", "notes", "available_date"];
-
-function mergePreOrderAttrs(
-  attrs: { key: string; value: string }[],
-  isPreOrder: boolean
-) {
-  if (isPreOrder) {
-    const existingKeys = new Set(attrs.map((a) => a.key));
-    const toAdd = PRE_ORDER_KEYS.filter((k) => !existingKeys.has(k));
-    if (toAdd.length === 0) return attrs;
-    return [...attrs, ...toAdd.map((k) => ({ key: k, value: "" }))];
-  }
-  return attrs.filter((a) => !PRE_ORDER_KEYS.includes(a.key));
+interface PreOrderConfig {
+  estimate: string;
+  notes?: string;
+  available_date?: string;
 }
 
 interface Product {
@@ -44,7 +35,9 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isPreOrder, setIsPreOrder] = useState(false);
   const [thumbnail, setThumbnail] = useState("");
-  const [attrs, setAttrs] = useState<{ key: string; value: string }[]>([]);
+  const [preOrderConfig, setPreOrderConfig] = useState<PreOrderConfig>({
+    estimate: "",
+  });
   const [productSearch, setProductSearch] = useState("");
   const [selectedProductId, setSelectedProductId] = useState<string | null>(
     null
@@ -61,25 +54,17 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
 
   function handleTogglePreOrder() {
     const next = !isPreOrder;
-    setAttrs((prev) => mergePreOrderAttrs(prev, next));
     setIsPreOrder(next);
+    if (next && !preOrderConfig.estimate) {
+      setPreOrderConfig({ estimate: "" });
+    }
+  }
+
+  function updateConfig(field: keyof PreOrderConfig, value: string) {
+    setPreOrderConfig((prev) => ({ ...prev, [field]: value }));
   }
 
   if (!open) return null;
-
-  function addAttr() {
-    setAttrs((prev) => [...prev, { key: "", value: "" }]);
-  }
-
-  function removeAttr(i: number) {
-    setAttrs((prev) => prev.filter((_, idx) => idx !== i));
-  }
-
-  function updateAttr(i: number, field: "key" | "value", val: string) {
-    setAttrs((prev) =>
-      prev.map((a, idx) => (idx === i ? { ...a, [field]: val } : a))
-    );
-  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -100,18 +85,6 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
     const stock_quantity = fd.get("stock_quantity")
       ? Number(fd.get("stock_quantity"))
       : null;
-    const product_name =
-      products.find((p) => p.id === product_id)?.name ?? null;
-
-    // Build attributes object from pairs (skip empty keys)
-    const attributes =
-      attrs.length > 0
-        ? Object.fromEntries(
-            attrs
-              .filter((a) => a.key.trim())
-              .map((a) => [a.key.trim(), a.value.trim()])
-          )
-        : null;
 
     const res = await fetch("/api/variants", {
       method: "POST",
@@ -123,8 +96,15 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
         stock_quantity,
         is_pre_order: isPreOrder,
         thumbnail: thumbnail.trim() || null,
-        product_name,
-        attributes,
+        pre_order_config: isPreOrder
+          ? {
+              estimate: preOrderConfig.estimate,
+              ...(preOrderConfig.notes ? { notes: preOrderConfig.notes } : {}),
+              ...(preOrderConfig.available_date
+                ? { available_date: preOrderConfig.available_date }
+                : {}),
+            }
+          : null,
       }),
     });
 
@@ -137,8 +117,8 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
     }
 
     formRef.current?.reset();
-    setAttrs([]);
     setIsPreOrder(false);
+    setPreOrderConfig({ estimate: "" });
     setThumbnail("");
     setSelectedProductId(null);
     setProductSearch("");
@@ -320,67 +300,60 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
               <span className="text-sm text-slate-700">Pre-order</span>
             </div>
 
+            {/* Pre-order Config (only when is_pre_order is true) */}
+            {isPreOrder && (
+              <div className="rounded-lg border border-purple-200 bg-purple-50/50 p-4">
+                <p className="mb-3 text-sm font-semibold text-purple-800">
+                  Pre-order Configuration
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-purple-700">
+                      Estimate <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      value={preOrderConfig.estimate}
+                      onChange={(e) =>
+                        updateConfig("estimate", e.target.value)
+                      }
+                      placeholder="e.g. 2–3 tuần, 15–20 ngày"
+                      className="w-full rounded-lg border border-purple-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-purple-700">
+                      Available Date
+                    </label>
+                    <input
+                      type="date"
+                      value={preOrderConfig.available_date ?? ""}
+                      onChange={(e) =>
+                        updateConfig("available_date", e.target.value)
+                      }
+                      className="w-full rounded-lg border border-purple-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-purple-700">
+                      Notes
+                    </label>
+                    <textarea
+                      value={preOrderConfig.notes ?? ""}
+                      onChange={(e) => updateConfig("notes", e.target.value)}
+                      placeholder="e.g. Hàng đặt trước — thanh toán trước 100%"
+                      rows={2}
+                      className="w-full resize-none rounded-lg border border-purple-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Thumbnail */}
             <SingleImageUploader
               label="Thumbnail"
               value={thumbnail}
               onChange={setThumbnail}
-            />
-
-            {/* Attributes */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label className="block text-sm font-medium text-slate-700">
-                  Attributes
-                </label>
-                <button
-                  type="button"
-                  onClick={addAttr}
-                  className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add attribute
-                </button>
-              </div>
-              {attrs.length === 0 ? (
-                <p className="text-xs text-slate-400">
-                  No attributes — click "Add attribute" to define key/value
-                  pairs (e.g. color: red).
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {attrs.map((a, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <input
-                        value={a.key}
-                        onChange={(e) => updateAttr(i, "key", e.target.value)}
-                        placeholder="Key"
-                        className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <input
-                        value={a.value}
-                        onChange={(e) => updateAttr(i, "value", e.target.value)}
-                        placeholder="Value"
-                        className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeAttr(i)}
-                        className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Hidden product_id for form submission */}
-            <input
-              type="hidden"
-              name="product_id"
-              value={selectedProductId ?? ""}
             />
           </div>
 

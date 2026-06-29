@@ -2,26 +2,17 @@
 
 import { SingleImageUploader } from "@/components/ui/ImageUploader";
 import VariantRulesEditor from "@/components/variants/VariantRulesEditor";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import NumberInput from "@/components/ui/NumberInput";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatVND } from "@/lib/currency";
 
-const PRE_ORDER_KEYS = ["estimate", "notes", "available_date"];
-
-function mergePreOrderAttrs(
-  attrs: { key: string; value: string }[],
-  isPreOrder: boolean
-) {
-  if (isPreOrder) {
-    const existingKeys = new Set(attrs.map((a) => a.key));
-    const toAdd = PRE_ORDER_KEYS.filter((k) => !existingKeys.has(k));
-    if (toAdd.length === 0) return attrs;
-    return [...attrs, ...toAdd.map((k) => ({ key: k, value: "" }))];
-  }
-  return attrs.filter((a) => !PRE_ORDER_KEYS.includes(a.key));
+interface PreOrderConfig {
+  estimate: string;
+  notes?: string;
+  available_date?: string;
 }
 
 export interface EditableVariant {
@@ -31,7 +22,7 @@ export interface EditableVariant {
   stock_quantity: number | null;
   is_pre_order: boolean;
   thumbnail: string | null;
-  attributes: Record<string, string> | null;
+  pre_order_config: PreOrderConfig | null;
   product_id: string;
   product_name: string;
   product_type?: string;
@@ -45,6 +36,8 @@ export interface EditableVariant {
 interface Props {
   variant: EditableVariant;
 }
+
+const emptyConfig: PreOrderConfig = { estimate: "" };
 
 export default function EditVariantModal({ variant }: Props) {
   const router = useRouter();
@@ -61,13 +54,8 @@ export default function EditVariantModal({ variant }: Props) {
   );
   const [isPreOrder, setIsPreOrder] = useState(variant.is_pre_order);
   const [thumbnail, setThumbnail] = useState(variant.thumbnail ?? "");
-  const [attrs, setAttrs] = useState<{ key: string; value: string }[]>(
-    variant.attributes
-      ? Object.entries(variant.attributes).map(([key, value]) => ({
-          key,
-          value,
-        }))
-      : []
+  const [preOrderConfig, setPreOrderConfig] = useState<PreOrderConfig>(
+    variant.pre_order_config ?? emptyConfig
   );
 
   useEffect(() => {
@@ -82,52 +70,25 @@ export default function EditVariantModal({ variant }: Props) {
     );
     setIsPreOrder(variant.is_pre_order);
     setThumbnail(variant.thumbnail ?? "");
-    setAttrs(
-      mergePreOrderAttrs(
-        variant.attributes
-          ? Object.entries(variant.attributes).map(([key, value]) => ({
-              key,
-              value,
-            }))
-          : [],
-        variant.is_pre_order
-      )
-    );
+    setPreOrderConfig(variant.pre_order_config ?? emptyConfig);
   }, [open, variant]);
-
-  function addAttr() {
-    setAttrs((prev) => [...prev, { key: "", value: "" }]);
-  }
-
-  function removeAttr(i: number) {
-    setAttrs((prev) => prev.filter((_, idx) => idx !== i));
-  }
-
-  function updateAttr(i: number, field: "key" | "value", val: string) {
-    setAttrs((prev) =>
-      prev.map((a, idx) => (idx === i ? { ...a, [field]: val } : a))
-    );
-  }
 
   function handleTogglePreOrder() {
     const next = !isPreOrder;
-    setAttrs((prev) => mergePreOrderAttrs(prev, next));
     setIsPreOrder(next);
+    if (next && !preOrderConfig.estimate) {
+      setPreOrderConfig(emptyConfig);
+    }
+  }
+
+  function updateConfig(field: keyof PreOrderConfig, value: string) {
+    setPreOrderConfig((prev) => ({ ...prev, [field]: value }));
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
-    const attributes =
-      attrs.length > 0
-        ? Object.fromEntries(
-            attrs
-              .filter((a) => a.key.trim())
-              .map((a) => [a.key.trim(), a.value.trim()])
-          )
-        : null;
 
     const res = await fetch("/api/variants", {
       method: "PATCH",
@@ -139,7 +100,15 @@ export default function EditVariantModal({ variant }: Props) {
         stock_quantity: stockQuantity ?? 0,
         is_pre_order: isPreOrder,
         thumbnail: thumbnail.trim() || null,
-        attributes,
+        pre_order_config: isPreOrder
+          ? {
+              estimate: preOrderConfig.estimate,
+              ...(preOrderConfig.notes ? { notes: preOrderConfig.notes } : {}),
+              ...(preOrderConfig.available_date
+                ? { available_date: preOrderConfig.available_date }
+                : {}),
+            }
+          : null,
       }),
     });
 
@@ -289,6 +258,57 @@ export default function EditVariantModal({ variant }: Props) {
                   <span className="text-sm text-slate-700">Pre-order</span>
                 </div>
 
+                {/* Pre-order Config (only when is_pre_order is true) */}
+                {isPreOrder && (
+                  <div className="rounded-lg border border-purple-200 bg-purple-50/50 p-4">
+                    <p className="mb-3 text-sm font-semibold text-purple-800">
+                      Pre-order Configuration
+                    </p>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-purple-700">
+                          Estimate <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          value={preOrderConfig.estimate}
+                          onChange={(e) =>
+                            updateConfig("estimate", e.target.value)
+                          }
+                          placeholder="e.g. 2–3 tuần, 15–20 ngày"
+                          className="w-full rounded-lg border border-purple-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-purple-700">
+                          Available Date
+                        </label>
+                        <input
+                          type="date"
+                          value={preOrderConfig.available_date ?? ""}
+                          onChange={(e) =>
+                            updateConfig("available_date", e.target.value)
+                          }
+                          className="w-full rounded-lg border border-purple-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-purple-700">
+                          Notes
+                        </label>
+                        <textarea
+                          value={preOrderConfig.notes ?? ""}
+                          onChange={(e) =>
+                            updateConfig("notes", e.target.value)
+                          }
+                          placeholder="e.g. Hàng đặt trước — thanh toán trước 100%"
+                          rows={2}
+                          className="w-full resize-none rounded-lg border border-purple-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Thumbnail */}
                 <SingleImageUploader
                   label="Thumbnail"
@@ -297,58 +317,6 @@ export default function EditVariantModal({ variant }: Props) {
                   slug={variant?.product_slug}
                 />
 
-                {/* Attributes */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="block text-sm font-medium text-slate-700">
-                      Attributes
-                    </label>
-                    <button
-                      type="button"
-                      onClick={addAttr}
-                      className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Add attribute
-                    </button>
-                  </div>
-                  {attrs.length === 0 ? (
-                    <p className="text-xs text-slate-400">
-                      No attributes — click "Add attribute" to define key/value
-                      pairs (e.g. color: red).
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {attrs.map((a, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <input
-                            value={a.key}
-                            onChange={(e) =>
-                              updateAttr(i, "key", e.target.value)
-                            }
-                            placeholder="Key"
-                            className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                          <input
-                            value={a.value}
-                            onChange={(e) =>
-                              updateAttr(i, "value", e.target.value)
-                            }
-                            placeholder="Value"
-                            className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeAttr(i)}
-                            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
                 {/* Compatibility Rules */}
                 <>
                   <div className="mb-3 text-sm font-semibold text-slate-700">
