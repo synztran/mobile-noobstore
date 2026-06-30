@@ -2,6 +2,7 @@ import { ReactQueryProvider } from "@/components/ui/ReactQueryProvider";
 import { ServiceWorkerRegister } from "@/components/ui/ServiceWorkerRegister";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { FlyToCart } from "@/components/ui/FlyToCart";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import "gooey-toast/styles.css";
@@ -81,6 +82,7 @@ export default function RootLayout({
 				<AuthProvider>
 					<ReactQueryProvider>
 						<NavigationOverlay />
+						<FlyToCart />
 						{children}
 						<MobileViewportGuard />
 						<ToastProvider />

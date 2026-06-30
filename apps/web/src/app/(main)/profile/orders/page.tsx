@@ -9,6 +9,7 @@ import { ServiceOrderDetailDrawer } from "@/components/orders/ServiceOrderDetail
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
 import { formatVND } from "@/lib/currency";
+import { useOrderByNumber, useOrders } from "@/lib/react-query/order/api/useOrderQueries";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -22,8 +23,8 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 const STATUS_CONFIG: Record<
   string,
@@ -151,14 +152,8 @@ function LoadMoreSkeleton() {
 function OrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [orders, setOrders] = useState<OrderSummary[]>([]);
-  const [total, setTotal] = useState(0);
-  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
-  const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
@@ -167,7 +162,31 @@ function OrdersPage() {
     string | null
   >(null);
   const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
-  const inFlightRef = useRef(false);
+
+  const orderNumberParam = searchParams.get("orderNumber");
+  const orderByNumber = useOrderByNumber(orderNumberParam);
+
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useOrders({ q: debouncedQ, status: activeStatus });
+
+  // Open order detail from URL param
+  useEffect(() => {
+    const found = orderByNumber.data;
+    if (found) setSelectedOrderId(found.id);
+  }, [orderByNumber.data]);
+
+  // Clean the URL param after handling
+  useEffect(() => {
+    if (!orderNumberParam) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("orderNumber");
+    window.history.replaceState({}, "", url.toString());
+  }, [orderNumberParam]);
 
   // Debounce search
   useEffect(() => {
@@ -175,93 +194,17 @@ function OrdersPage() {
     return () => clearTimeout(t);
   }, [q]);
 
-  const fetchOrders = useCallback(
-    async ({
-      search,
-      status,
-      nextPage,
-      append,
-    }: {
-      search: string;
-      status: string;
-      nextPage: number;
-      append: boolean;
-    }) => {
-      if (inFlightRef.current) return;
-      inFlightRef.current = true;
-
-      if (append) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-      try {
-        const params = new URLSearchParams();
-        if (search) params.set("q", search);
-        if (status !== "all") params.set("status", status);
-        params.set("page", String(nextPage));
-        params.set("limit", "10");
-        const res = await fetch(`/api/user/orders?${params}`);
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
-        if (!res.ok) return;
-        const data = await res.json();
-        setOrders((prev) =>
-          append
-            ? [...prev, ...(data.orders as OrderSummary[])]
-            : (data.orders as OrderSummary[])
-        );
-        setTotal(data.total);
-        setPage(data.pagination?.page ?? nextPage);
-        setHasNextPage(Boolean(data.pagination?.has_next_page));
-        if (!append && data.status_counts) {
-          setStatusCounts(data.status_counts as Record<string, number>);
-        }
-      } finally {
-        if (append) {
-          setLoadingMore(false);
-        } else {
-          setLoading(false);
-        }
-        inFlightRef.current = false;
-      }
-    },
-    [router]
-  );
-
-  // auth redirect handled by withAuthRedirect HOC
-
-  useEffect(() => {
-    if (!authLoading && user) {
-      setPage(1);
-      setHasNextPage(false);
-      fetchOrders({
-        search: debouncedQ,
-        status: activeStatus,
-        nextPage: 1,
-        append: false,
-      });
-    }
-  }, [authLoading, user, debouncedQ, activeStatus, fetchOrders]);
-
+  // Infinite scroll
   useEffect(() => {
     const target = loadMoreTriggerRef.current;
-    if (!target || loading || loadingMore || !hasNextPage) {
+    if (!target || isLoading || isFetchingNextPage || !hasNextPage) {
       return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
-        if (!first.isIntersecting || inFlightRef.current) return;
-        fetchOrders({
-          search: debouncedQ,
-          status: activeStatus,
-          nextPage: page + 1,
-          append: true,
-        });
+        if (first.isIntersecting) fetchNextPage();
       },
       { rootMargin: "180px 0px" }
     );
@@ -271,12 +214,18 @@ function OrdersPage() {
   }, [
     activeStatus,
     debouncedQ,
-    fetchOrders,
+    fetchNextPage,
     hasNextPage,
-    loading,
-    loadingMore,
-    page,
+    isLoading,
+    isFetchingNextPage,
   ]);
+
+  const allOrders = data?.pages.flatMap((p) => p.orders) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
+  const statusCounts = data?.pages[0]?.status_counts ?? {};
+
+  const rendered = authLoading || isLoading;
+  const empty = !rendered && allOrders.length === 0;
 
   return (
     <div className="space-y-5 px-4 pb-24 pt-2">
@@ -289,13 +238,13 @@ function OrdersPage() {
           <ArrowLeft size={18} className="text-on-surface" />
         </Link>
         <div>
-          <h1 className="text-xl font-black tracking-tight text-on-surface">
+          <p className="text-xl font-black tracking-tight text-on-surface">
             Đơn hàng của tôi
-          </h1>
-          {!loading ? (
-            <p className="text-xs text-on-surface-variant">{total} đơn hàng</p>
-          ) : (
+          </p>
+          {rendered ? (
             <div className="mt-1 h-3 w-16 rounded-full bg-surface-container-high" />
+          ) : (
+            <p className="text-xs text-on-surface-variant">{total} đơn hàng</p>
           )}
         </div>
       </div>
@@ -327,9 +276,9 @@ function OrdersPage() {
       />
 
       {/* List */}
-      {loading || authLoading ? (
+      {rendered ? (
         <OrderSkeleton />
-      ) : orders.length === 0 ? (
+      ) : empty ? (
         <div className="flex flex-col items-center justify-center gap-4 py-20">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
             <ReceiptText size={28} className="text-outline-variant" />
@@ -342,7 +291,7 @@ function OrdersPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {orders.map((order) => (
+          {allOrders.map((order) => (
             <button
               key={order.id}
               onClick={() =>
@@ -419,11 +368,11 @@ function OrdersPage() {
             </button>
           ))}
 
-          {loadingMore ? <LoadMoreSkeleton /> : null}
+          {isFetchingNextPage ? <LoadMoreSkeleton /> : null}
 
           <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-2" />
 
-          {hasNextPage && !loadingMore ? (
+          {hasNextPage && !isFetchingNextPage ? (
             <div className="flex items-center justify-center py-2 text-xs text-on-surface-variant">
               <Loader2 size={14} className="mr-2 animate-spin" />
               Đang tải thêm đơn hàng...

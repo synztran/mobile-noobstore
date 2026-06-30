@@ -37,6 +37,11 @@ interface CartStore {
 		components?: SelectedComponent[],
 		gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>,
 	) => void;
+	addStandardProduct: (
+		product: Product,
+		variant: ProductVariant | null,
+		gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>,
+	) => { success: boolean; reason?: string };
 	removeItem: (productId: string, variantId: string | null) => void;
 	updateQty: (
 		productId: string,
@@ -101,6 +106,24 @@ export const useCartStore = create<CartStore>()(
 						],
 					};
 				});
+			},
+
+			addStandardProduct: (product, variant, gifts) => {
+				const state = get();
+				const existingItem = state.items.find(
+					(i) =>
+						i.product.id === product.id &&
+						(i.variant?.id ?? null) === (variant?.id ?? null),
+				);
+				const currentQty = existingItem?.quantity ?? 0;
+				if (currentQty + 1 > product.stock_quantity) {
+					return {
+						success: false,
+						reason: `Sản phẩm này chỉ còn ${product.stock_quantity} trong kho`,
+					};
+				}
+				state.addItem(product, variant, undefined, gifts);
+				return { success: true };
 			},
 
 			removeItem: (productId, variantId) => {

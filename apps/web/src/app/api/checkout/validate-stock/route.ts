@@ -107,14 +107,14 @@ export async function POST(req: NextRequest) {
           });
         }
       } else {
-        // const available =
-        // 	item.variant_id !== null
-        // 		? (variantStockMap.get(item.variant_id) ?? 0)
-        // 		: (productStockMap.get(item.product_id) ?? 0);
         const available =
-          item.variant_id !== null
-            ? (variantStockMap.get(item.variant_id) ?? 0)
-            : 0;
+        	item.variant_id !== null
+        		? (variantStockMap.get(item.variant_id) ?? 0)
+        		: (productStockMap.get(item.product_id) ?? 0);
+        // const available =
+        //   item.variant_id !== null
+        //     ? (variantStockMap.get(item.variant_id) ?? 0)
+        //     : 0;
 
         if (available < item.quantity) {
           oos_items.push({

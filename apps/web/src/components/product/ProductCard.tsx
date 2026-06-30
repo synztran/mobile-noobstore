@@ -4,9 +4,13 @@ import type { ShopProduct } from "@/app/api/products/route";
 import Icon from "@/components/ui/Icon";
 import WishlistButton from "@/components/wishlist/WishlistButton";
 import { formatVND } from "@/lib/currency";
+import { toast } from "@/lib/toast";
+import { useCartStore } from "@/store";
+import { useFlyToCartStore } from "@/store/useFlyToCart";
+import { useAddToCart } from "@/lib/react-query/cart/api/useCartMutations";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import ProductComponentTags from "./ProductComponentTags";
 import { QuickPickDrawer } from "./QuickPickDrawer";
 import { StockIndicator } from "./StockIndicator";
@@ -36,11 +40,55 @@ interface ProductCardProps {
 
 export function ProductCard({ product, isBundle = false }: ProductCardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const addToCartMutation = useAddToCart();
+  const { addStandardProduct, openCart } = useCartStore();
+  const flyToCart = useFlyToCartStore((s) => s.flyToCart);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setDrawerOpen(true);
+
+    if (product.product_type === "kit") {
+      setDrawerOpen(true);
+      return;
+    }
+
+    addStandardToCart();
+  };
+
+  const addStandardToCart = async () => {
+    const selectedVariant = product.variants[0] ?? null;
+
+    const { success, reason } = addStandardProduct(
+      product,
+      selectedVariant,
+      product.gifts
+    );
+    if (!success) {
+      toast.warning(reason ?? "Không thể thêm vào giỏ hàng");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      await addToCartMutation.mutateAsync({
+        parent_product_id: product.id,
+        selected_variant_ids: selectedVariant ? [selectedVariant.id] : [],
+      });
+    } catch {
+      // non-fatal
+    }
+
+    if (product.thumbnail && imageRef.current) {
+      flyToCart(product.thumbnail, imageRef.current);
+    }
+
+    toast.success("Đã thêm vào giỏ hàng!");
+    setSubmitting(false);
+    openCart();
   };
 
   return (
@@ -49,6 +97,7 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
         <Link href={`/shop/${product.slug}`} className="block">
           {/* ── Image box ─────────────────────────────────────────────── */}
           <div
+            ref={imageRef}
             className="relative mb-1 aspect-[1/1] overflow-hidden rounded-xl bg-surface-container"
             style={{
               boxShadow: "0 20px 40px -15px rgba(155,63,28,0.08)",
@@ -141,21 +190,27 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
               type="button"
               onClick={handleQuickAdd}
               aria-label={`Quick add ${product.name}`}
-              disabled={product.stock_quantity === 0}
+              disabled={product.stock_quantity === 0 || submitting}
               className="btn-sm flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-[10px] font-black uppercase tracking-[0.14em] text-surface transition-all hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50"
             >
-              <Icon name="add_shopping_cart" className="text-[16px]" />
-              Mua ngay
+              {submitting ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                <Icon name="add_shopping_cart" className="text-[16px]" />
+              )}
+              {submitting ? "Đang thêm" : "Mua ngay"}
             </button>
           </div>
         </div>
       </div>
 
-      <QuickPickDrawer
-        product={product}
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      />
+      {product.product_type === "kit" && (
+        <QuickPickDrawer
+          product={product}
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        />
+      )}
     </>
   );
 }

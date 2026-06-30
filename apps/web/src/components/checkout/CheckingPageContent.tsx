@@ -235,14 +235,21 @@ export default function CheckingPageContent() {
 
       <OrderItemsList items={orderedItems} />
 
-      {/* ── View Orders ─────────────────────────────────────── */}
-      <button
-        onClick={() => router.push("/profile/orders")}
-        className="primary-gradient flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black uppercase tracking-widest text-white transition-transform active:scale-[0.98]"
-      >
-        <Icon name="shopping_bag" className="text-lg" />
-        Theo dõi đơn hàng
-      </button>
+      {/* ── Actions ─────────────────────────────────────────── */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => router.push(`/profile/orders?orderNumber=${orderNumber}`)}
+          className="primary-gradient flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-xs font-black uppercase tracking-widest text-white transition-transform active:scale-[0.98]"
+        >
+          Theo dõi đơn hàng
+        </button>
+        <button
+          onClick={() => router.push("/shop")}
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-primary bg-transparent py-4 text-xs font-black uppercase tracking-widest text-primary transition-transform active:scale-[0.98]"
+        >
+          Mua sắm tiếp
+        </button>
+      </div>
     </div>
   );
 }

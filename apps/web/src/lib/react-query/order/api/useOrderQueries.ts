@@ -1,7 +1,8 @@
+import type { OrderSummary } from "@/app/api/user/orders/route";
 import type { PaymentInformation } from "@/lib/payment-information";
 import { appQueryKeys } from "@/lib/react-query/root";
-import type { OrderStatusResult } from "@/lib/react-query/router/order";
-import { useQuery } from "@tanstack/react-query";
+import type { OrderListFilters, OrderStatusResult } from "@/lib/react-query/router/order";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 export function usePaymentInformation(enabled = true) {
 	return useQuery<PaymentInformation[]>({
@@ -46,6 +47,53 @@ export function useOrderStatus(
 				shipping_discount_amount:
 					Number(data.shipping_discount_amount ?? 0) || 0,
 			};
+		},
+	});
+}
+
+type OrderListPage = {
+	orders: OrderSummary[];
+	total: number;
+	status_counts: Record<string, number>;
+	pagination: { page: number; has_next_page: boolean };
+};
+
+export function useOrders({ q, status }: { q: string; status: string }) {
+	return useInfiniteQuery<OrderListPage>({
+		queryKey: ["orders", "list", { q, status }],
+		queryFn: async ({ pageParam }) => {
+			const params = new URLSearchParams();
+			if (q) params.set("q", q);
+			if (status !== "all") params.set("status", status);
+			params.set("page", String(pageParam));
+			params.set("limit", "10");
+			const res = await fetch(`/api/user/orders?${params}`);
+			if (res.status === 401) throw new Error("Unauthorized");
+			return res.json();
+		},
+		initialPageParam: 1,
+		getNextPageParam: (lastPage) =>
+			lastPage.pagination?.has_next_page
+				? lastPage.pagination.page + 1
+				: undefined,
+	});
+}
+
+export function useOrderByNumber(orderNumber: string | null) {
+	return useQuery<OrderSummary | null>({
+		...appQueryKeys.order.byNumber(orderNumber ?? ""),
+		enabled: !!orderNumber,
+		queryFn: async () => {
+			const res = await fetch(
+				`/api/user/orders?q=${encodeURIComponent(orderNumber!)}&limit=10`,
+			);
+			if (!res.ok) return null;
+			const data = await res.json();
+			return (
+				((data.orders as OrderSummary[]) ?? []).find(
+					(o) => o.order_number === orderNumber,
+				) ?? null
+			);
 		},
 	});
 }

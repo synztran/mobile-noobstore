@@ -226,63 +226,86 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
                     Sản phẩm ({detail.items.length})
                   </p>
                   {detail.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start gap-3 rounded-2xl bg-surface-container-lowest p-3"
-                    >
-                      <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-container">
-                        {item.thumbnail ? (
-                          <Image
-                            src={item.thumbnail}
-                            alt={item.product_name}
-                            fill
-                            className="object-cover"
-                            sizes="64px"
-                          />
-                        ) : (
-                          <PackageCheck
-                            size={24}
-                            className="text-outline-variant"
-                          />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <p className="truncate text-sm font-bold text-on-surface">
-                          {item.product_name}
-                        </p>
-                        {item.components.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-2">
-                            {item.components.map((component) => (
-                              <p
-                                key={`${item.id}-${component.variant_id}`}
-                                className="truncate rounded-md bg-gray-200 px-2 py-1 text-[11px] leading-snug text-on-surface-variant"
-                              >
-                                {component.component_group}:{" "}
-                                <span className="font-semibold text-on-surface">
-                                  {component.variant_name}
-                                </span>
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                        {item.gifts?.map((g) => (
-                          <div key={g.gift_name} className="flex items-center gap-1.5 rounded-md bg-rose-50 px-2 py-1">
-                            <span className="text-xs leading-none">🎁</span>
-                            <span className="text-[11px] font-semibold text-rose-600">
-                              {g.gift_name}
-                              {g.quantity > 1 && ` x${g.quantity}`}
+                    <div key={item.id} className="space-y-1">
+                      <div className="flex items-start gap-2 rounded-2xl bg-surface-container-lowest p-2">
+                        <div className="relative flex h-20 w-24 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-container">
+                          {item.thumbnail ? (
+                            <Image
+                              src={item.thumbnail}
+                              alt={item.product_name}
+                              fill
+                              className="object-cover"
+                              sizes="96px"
+                            />
+                          ) : (
+                            <PackageCheck
+                              size={24}
+                              className="text-outline-variant"
+                            />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <p className="line-clamp-3 text-sm font-bold text-on-surface">
+                            {item.product_name}
+                          </p>
+                          {item.components.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              {item.components.map((component) => (
+                                <p
+                                  key={`${item.id}-${component.variant_id}`}
+                                  className="truncate rounded-md bg-gray-200 px-2 py-1 text-[11px] leading-snug text-on-surface-variant"
+                                >
+                                  {component.component_group}:{" "}
+                                  <span className="font-semibold text-on-surface">
+                                    {component.variant_name}
+                                  </span>
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          <div className="mt-1.5 flex items-center justify-between">
+                            <span className="text-xs text-on-surface-variant">
+                              Số lượng: {item.quantity}
+                            </span>
+                            <span className="text-sm font-black text-primary">
+                              {formatVND(item.unit_price * item.quantity)}
                             </span>
                           </div>
-                        ))}
-                        <div className="mt-1.5 flex items-center justify-between">
-                          <span className="text-xs text-on-surface-variant">
-                            x{item.quantity}
-                          </span>
-                          <span className="text-sm font-black text-primary">
-                            {formatVND(item.unit_price * item.quantity)}
-                          </span>
                         </div>
                       </div>
+                      {item.gifts && item.gifts.length > 0 && (
+                        <div className="ml-1 border-l-2 border-rose-200 pl-3">
+                          {item.gifts.map((g) => (
+                            <div
+                              key={g.gift_name}
+                              className="flex items-center gap-2 rounded-lg bg-rose-50 px-3 py-2"
+                            >
+                              {g.gift_thumbnail ? (
+                                <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-lg bg-rose-100">
+                                  <Image
+                                    src={g.gift_thumbnail}
+                                    alt={g.gift_name}
+                                    fill
+                                    className="object-cover"
+                                    sizes="32px"
+                                  />
+                                </div>
+                              ) : (
+                                <span className="text-base">🎁</span>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-wider text-rose-500">
+                                  Quà tặng kèm
+                                </p>
+                                <p className="truncate text-xs font-semibold text-rose-700">
+                                  {g.gift_name}
+                                  {g.quantity > 1 && ` x${g.quantity}`}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

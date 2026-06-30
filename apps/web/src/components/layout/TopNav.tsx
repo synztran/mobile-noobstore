@@ -94,6 +94,7 @@ export function TopNav({
         <button
           disabled={hideCart}
           onClick={openCart}
+          data-cart-icon
           className={`relative text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 ${hideCart ? "cursor-not-allowed opacity-0" : ""}`}
         >
           <Icon name="shopping_cart" className="text-[26px]" />
