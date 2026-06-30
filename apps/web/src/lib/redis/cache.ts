@@ -1,4 +1,6 @@
-import { redis } from "./client";
+import { getRedis } from "./client";
+
+const redis = getRedis();
 
 /**
  * Read a value from Redis cache.

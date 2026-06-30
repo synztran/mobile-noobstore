@@ -3,7 +3,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import type { AppliedVoucherSummary } from "@/types/voucher";
-import { checkoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import { getCheckoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -91,7 +91,7 @@ function toJson(value: unknown): Json | null {
 }
 
 export async function POST(req: NextRequest) {
-  const { success, reset } = await checkoutLimiter.limit(
+  const { success, reset } = await getCheckoutLimiter().limit(
     getRateLimitKey(req)
   );
   if (!success) {

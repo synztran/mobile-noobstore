@@ -1,13 +1,17 @@
 import { Redis } from "@upstash/redis";
 
-// Upstash Redis — HTTP-based, safe for Next.js serverless and Edge runtimes.
-// Requires two env vars (set in .env.local and Vercel dashboard):
-//   UPSTASH_REDIS_REST_URL   — e.g. https://xxx.upstash.io
-//   UPSTASH_REDIS_REST_TOKEN — Upstash REST token
-//
-// Throws at startup if env vars are missing (intentional — misconfiguration
-// should fail loudly rather than silently skip caching in production).
-export const redis = new Redis({
-	url: process.env.UPSTASH_REDIS_REST_URL!,
-	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+let _redis: Redis | null = null;
+
+export function getRedis(): Redis {
+  if (!_redis) {
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (!url || !token) {
+      throw new Error(
+        "Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN env vars"
+      );
+    }
+    _redis = new Redis({ url, token });
+  }
+  return _redis;
+}

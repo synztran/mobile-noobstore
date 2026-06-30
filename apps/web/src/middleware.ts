@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { authLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import { getRateLimitKey } from "@/lib/redis/ratelimit";
 
 const RATE_LIMITED_PATHS = ["/login", "/register"];
 
@@ -67,10 +67,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Rate limit auth pages
+  // Rate limit auth pages (lazy import — avoid loading @upstash/redis on Edge
+  // for non-rate-limited routes like /checkout)
   if (RATE_LIMITED_PATHS.includes(pathname) && !isLoggedIn) {
     const identifier = getClientIp(request);
-    const { success } = await authLimiter.limit(identifier);
+    const { getAuthLimiter } = await import("@/lib/redis/ratelimit");
+    const { success } = await getAuthLimiter().limit(identifier);
 
     if (!success) {
       return new NextResponse("Too Many Requests", { status: 429 });

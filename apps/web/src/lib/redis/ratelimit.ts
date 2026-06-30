@@ -1,5 +1,5 @@
 import { Ratelimit } from "@upstash/ratelimit";
-import { redis } from "./client";
+import { getRedis } from "./client";
 
 function getIp(request: Request): string {
   return (
@@ -13,23 +13,35 @@ export function getRateLimitKey(request: Request, userId?: string): string {
   return userId || getIp(request);
 }
 
-export const authLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.fixedWindow(10, "1 m"),
-  prefix: "ratelimit:auth",
-});
+const rateLimiters = {
+  auth: new Ratelimit({
+    redis: getRedis(),
+    limiter: Ratelimit.fixedWindow(10, "1 m"),
+    prefix: "ratelimit:auth",
+  }),
+  apiAuth: new Ratelimit({
+    redis: getRedis(),
+    limiter: Ratelimit.fixedWindow(20, "1 m"),
+    prefix: "ratelimit:api:auth",
+  }),
+  checkout: new Ratelimit({
+    redis: getRedis(),
+    limiter: Ratelimit.fixedWindow(5, "1 m"),
+    prefix: "ratelimit:checkout",
+  }),
+};
 
-export const apiAuthLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.fixedWindow(20, "1 m"),
-  prefix: "ratelimit:api:auth",
-});
+export function getAuthLimiter() {
+  return rateLimiters.auth;
+}
 
-export const checkoutLimiter = new Ratelimit({
-  redis,
-  limiter: Ratelimit.fixedWindow(5, "1 m"),
-  prefix: "ratelimit:checkout",
-});
+export function getApiAuthLimiter() {
+  return rateLimiters.apiAuth;
+}
+
+export function getCheckoutLimiter() {
+  return rateLimiters.checkout;
+}
 
 export async function tryRateLimit(
   limiter: Ratelimit,
