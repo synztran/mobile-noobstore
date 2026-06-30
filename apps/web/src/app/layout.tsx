@@ -36,9 +36,7 @@ export const metadata: Metadata = {
 		description: "Service and Retail for Premium Mechanical Keyboards",
 		images: [{ url: "/icon-512.png", width: 512, height: 512 }],
 	},
-	other: {
-		"fb:app_id": "YOUR_FB_APP_ID", // replace with real Facebook App ID
-	},
+	other: {},
 	twitter: {
 		card: "summary_large_image",
 		title: "NoobStore",
@@ -76,6 +74,9 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en" data-theme="noobstore" className={cn("font-sans", manrope.variable)}>
+			<head>
+				<meta property="fb:app_id" content="YOUR_FB_APP_ID" />
+			</head>
 			<body className="bg-background font-sans text-on-surface antialiased">
 				<AuthProvider>
 					<ReactQueryProvider>

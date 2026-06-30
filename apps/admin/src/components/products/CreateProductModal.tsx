@@ -44,7 +44,7 @@ export default function CreateProductModal({
   const [description, setDescription] = useState("");
   const [attributes, setAttributes] = useState<Record<string, string>>({});
   const [isActive, setIsActive] = useState(true);
-  const [isPreOrder, setIsPreOrder] = useState(false);
+  // const [isPreOrder, setIsPreOrder] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -122,7 +122,7 @@ export default function CreateProductModal({
         category_id,
         attributes: Object.keys(attributes).length > 0 ? attributes : null,
         is_active: isActive,
-        is_pre_order: isPreOrder,
+        // is_pre_order: isPreOrder,
       }),
     });
     const data = await res.json();
@@ -359,7 +359,7 @@ export default function CreateProductModal({
                 </div>
               </div>
 
-              <div className="col-span-4">
+              {/* <div className="col-span-4">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
@@ -374,7 +374,7 @@ export default function CreateProductModal({
                     {isPreOrder ? "Pre-order" : "Not pre-order"}
                   </span>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 

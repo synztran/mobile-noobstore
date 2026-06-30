@@ -49,7 +49,7 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
         <Link href={`/shop/${product.slug}`} className="block">
           {/* ── Image box ─────────────────────────────────────────────── */}
           <div
-            className="relative mb-1 aspect-[1/1] overflow-hidden rounded-md bg-surface-container"
+            className="relative mb-1 aspect-[1/1] overflow-hidden rounded-xl bg-surface-container"
             style={{
               boxShadow: "0 20px 40px -15px rgba(155,63,28,0.08)",
             }}
