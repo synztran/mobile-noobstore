@@ -62,7 +62,7 @@ export function OrderItemsList({
                 className={`flex items-start gap-2 ${isOos ? "opacity-50" : ""}`}
               >
                 {/* Product thumbnail */}
-                <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-surface-container">
+                <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-surface-container">
                   {item.product.thumbnail ? (
                     <Image
                       src={item.product.thumbnail}
@@ -78,17 +78,17 @@ export function OrderItemsList({
                 </div>
 
                 {/* Product details */}
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-bold text-on-surface">
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="line-clamp-3 text-xs font-bold text-on-surface">
                     {item.product.name}
-                  </h3>
+                  </div>
                   {item.variant && (
-                    <p className="mt-0.5 text-xs font-semibold text-outline">
+                    <p className="mt-0.5 text-sm font-semibold text-outline">
                       {item.variant.variant_name}
                     </p>
                   )}
                   {item.variant?.effective_price || item.product.base_price ? (
-                    <div className="mt-1 flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5">
                       <p className="text-sm font-black text-primary">
                         {formatVND(
                           item.variant?.effective_price ??
@@ -110,17 +110,20 @@ export function OrderItemsList({
                         )}
                     </div>
                   ) : null}
-                  <div className="inline-flex items-center gap-2">
-                    {item.components?.some((c) => c.is_pre_order) && (
+                  {item.components?.some((c) => c.is_pre_order) && (
+                    <div className="inline-flex items-center gap-2">
                       <span className="rounded-sm bg-violet-500 px-1 py-0.5 text-[10px] font-black uppercase text-white">
                         Pre-order
                       </span>
-                    )}
+                    </div>
+                  )}
+                  <div className="flex-shrink-0 text-xs font-bold text-on-surface-variant">
+                    Số lượng: {item.quantity}
                   </div>
                 </div>
-                <span className="flex-shrink-0 rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">
+                {/* <span className="flex-shrink-0 rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">
                   x{item.quantity}
-                </span>
+                </span> */}
               </div>
 
               {/* Gift breakdown */}
