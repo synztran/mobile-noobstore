@@ -3,6 +3,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import type { AppliedVoucherSummary } from "@/types/voucher";
+import { checkoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +41,6 @@ export interface SubmitOrderRequest {
     ward?: string;
     district_code?: string;
     ward_code?: string;
-    ward_district?: string;
     postal_code?: string | null;
   } | null;
   vouchers?: {
@@ -85,6 +85,19 @@ function toJson(value: unknown): Json | null {
 }
 
 export async function POST(req: NextRequest) {
+  const { success, reset } = await checkoutLimiter.limit(
+    getRateLimitKey(req)
+  );
+  if (!success) {
+    return NextResponse.json(
+      { error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)) },
+      }
+    );
+  }
+
   try {
     const body: SubmitOrderRequest = await req.json();
 

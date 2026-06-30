@@ -44,6 +44,7 @@ export default function CreateProductModal({
   const [description, setDescription] = useState("");
   const [attributes, setAttributes] = useState<Record<string, string>>({});
   const [isActive, setIsActive] = useState(true);
+  const [isPreOrder, setIsPreOrder] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -121,6 +122,7 @@ export default function CreateProductModal({
         category_id,
         attributes: Object.keys(attributes).length > 0 ? attributes : null,
         is_active: isActive,
+        is_pre_order: isPreOrder,
       }),
     });
     const data = await res.json();
@@ -353,6 +355,23 @@ export default function CreateProductModal({
                   </button>
                   <span className="text-sm font-medium text-slate-700">
                     {isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="col-span-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsPreOrder((v) => !v)}
+                    className={`relative h-6 w-10 rounded-full transition-colors ${isPreOrder ? "bg-violet-500" : "bg-slate-300"}`}
+                  >
+                    <span
+                      className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isPreOrder ? "translate-x-4" : ""}`}
+                    />
+                  </button>
+                  <span className="text-sm font-medium text-slate-700">
+                    {isPreOrder ? "Pre-order" : "Not pre-order"}
                   </span>
                 </div>
               </div>

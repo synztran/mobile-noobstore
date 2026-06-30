@@ -58,7 +58,6 @@ export interface OrderDetail {
     address_line?: string | null;
     street_address?: string | null;
     apartment?: string | null;
-    ward_district?: string | null;
     district?: string | null;
     ward?: string | null;
     district_code?: string | null;
@@ -76,7 +75,6 @@ export interface OrderDetail {
     address_line: string;
     street_address?: string | null;
     apartment?: string | null;
-    ward_district: string | null;
     district?: string | null;
     ward?: string | null;
     district_code?: string | null;

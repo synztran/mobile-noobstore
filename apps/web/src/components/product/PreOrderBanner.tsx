@@ -64,7 +64,7 @@ export function PreOrderBanner({ config }: PreOrderBannerProps) {
               Dự kiến giao hàng
             </p>
             <p className="mt-0.5 text-xs font-bold text-on-surface">
-              {config.estimate}
+              {config.estimate || "Chưa cập nhật"}
             </p>
           </div>
         </div>

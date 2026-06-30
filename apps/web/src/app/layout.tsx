@@ -1,4 +1,5 @@
 import { ReactQueryProvider } from "@/components/ui/ReactQueryProvider";
+import { ServiceWorkerRegister } from "@/components/ui/ServiceWorkerRegister";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
@@ -34,6 +35,9 @@ export const metadata: Metadata = {
 		title: "NoobStore",
 		description: "Service and Retail for Premium Mechanical Keyboards",
 		images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+	},
+	other: {
+		"fb:app_id": "YOUR_FB_APP_ID", // replace with real Facebook App ID
 	},
 	twitter: {
 		card: "summary_large_image",
@@ -80,6 +84,7 @@ export default function RootLayout({
 						<MobileViewportGuard />
 						<ToastProvider />
 						<StoreHydrator />
+						<ServiceWorkerRegister />
 					</ReactQueryProvider>
 				</AuthProvider>
 			</body>

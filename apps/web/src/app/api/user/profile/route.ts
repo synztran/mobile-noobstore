@@ -199,10 +199,6 @@ export async function POST(req: NextRequest) {
       ward?: string;
       district_code?: string;
       ward_code?: string;
-      ward_district?: string;
-      wardDistrict?: string;
-      ward_district_code?: string;
-      wardDistrictCode?: string;
       is_default?: boolean;
       isDefault?: boolean;
     };

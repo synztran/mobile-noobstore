@@ -105,10 +105,9 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
               {product.name}
             </h3>
             {!isBundle ? (
-              <div
-                className="editor-content line-clamp-3 text-[10px]"
-                dangerouslySetInnerHTML={{ __html: product.description || "" }}
-              />
+              <p className="line-clamp-3 text-[10px]">
+                {product.description?.replace(/<[^>]*>/g, "") || ""}
+              </p>
             ) : null}
             {product.discount_price && product.discount_price > 0 ? (
               <div>

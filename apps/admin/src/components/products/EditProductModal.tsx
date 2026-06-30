@@ -18,6 +18,11 @@ import { formatVND } from "@/lib/currency";
 
 const PRODUCT_TYPES = ["standard", "kit", "component", "gift"];
 
+type VariantRow = {
+  id: string;
+  is_pre_order: boolean | null;
+};
+
 type EditableProduct = {
   id: string;
   name: string;
@@ -33,6 +38,7 @@ type EditableProduct = {
   images?: string[] | null;
   parent_product_id?: string | null;
   category_id?: string | null;
+  product_variants?: VariantRow[] | null;
 };
 
 type Props = {
@@ -71,6 +77,9 @@ export default function EditProductModal({ product }: Props) {
     product.attributes ?? {}
   );
   const [isActive, setIsActive] = useState(product.is_active ?? true);
+  const [isPreOrder, setIsPreOrder] = useState(
+    product.product_variants?.some((v) => v.is_pre_order) ?? false
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -90,6 +99,9 @@ export default function EditProductModal({ product }: Props) {
     setCategoryType(product.category_id ?? ""); // Reset category selection when opening modal
     setAttributes(product.attributes ?? {});
     setIsActive(product.is_active ?? true);
+    setIsPreOrder(
+      product.product_variants?.some((v) => v.is_pre_order) ?? false
+    );
     // Fetch kit options whenever the modal opens
     setKitOptionsLoading(true);
     fetch("/api/products?productType=kit")
@@ -210,6 +222,7 @@ export default function EditProductModal({ product }: Props) {
       category_id: categoryType || null,
       attributes: Object.keys(attributes).length > 0 ? attributes : null,
       is_active: isActive,
+      is_pre_order: isPreOrder,
     };
 
     const res = await fetch(`/api/products/${product.id}`, {
@@ -390,6 +403,28 @@ export default function EditProductModal({ product }: Props) {
                       <span className="text-sm font-medium text-slate-700">
                         {isActive ? "Active" : "Inactive"}
                       </span>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsPreOrder((v) => !v)}
+                        className={`relative h-6 w-10 rounded-full transition-colors ${isPreOrder ? "bg-violet-500" : "bg-slate-300"}`}
+                      >
+                        <span
+                          className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isPreOrder ? "translate-x-4" : ""}`}
+                        />
+                      </button>
+                      <span className="text-sm font-medium text-slate-700">
+                        {isPreOrder ? "Pre-order" : "Not pre-order"}
+                      </span>
+                      {product.product_variants?.length ? (
+                        <span className="text-xs text-slate-400">
+                          Applies to all {product.product_variants.length} variants
+                        </span>
+                      ) : null}
                     </div>
                   </div>
 

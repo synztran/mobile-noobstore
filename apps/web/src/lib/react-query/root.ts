@@ -6,6 +6,7 @@ import { notificationQueryKeys } from "./router/notification";
 import { orderQueryKeys } from "./router/order";
 import { pointsQueryKeys } from "./router/points";
 import { reviewQueryKeys } from "./router/review";
+import { shopQueryKeys } from "./router/shop";
 import { userQueryKeys } from "./router/user";
 import { productQueryKeys } from "./router/product";
 import { serviceQueryKeys } from "./router/service";
@@ -16,6 +17,7 @@ export const appQueryKeys = mergeQueryKeys(
   gachaQueryKeys,
   notificationQueryKeys,
   reviewQueryKeys,
+  shopQueryKeys,
   userQueryKeys,
   productQueryKeys,
   orderQueryKeys,

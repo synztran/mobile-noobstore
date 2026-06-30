@@ -10,6 +10,7 @@ export function NavigationOverlay() {
   const pathname = usePathname();
   const { isNavigating, startNavigation, endNavigation } = useNavigationStore();
   const prevPathname = useRef(pathname);
+  const pathnameRef = useRef(pathname);
   const startedAt = useRef(0);
   const scrollY = useRef(0);
 
@@ -17,27 +18,20 @@ export function NavigationOverlay() {
   useEffect(() => {
     if (isNavigating) {
       scrollY.current = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY.current}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     } else {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
       window.scrollTo(0, scrollY.current);
     }
     return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
   }, [isNavigating]);
+
+  // Keep pathnameRef in sync
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   // Auto-hide after pathname change (with min display time)
   useEffect(() => {
@@ -64,6 +58,8 @@ export function NavigationOverlay() {
         href.startsWith("#")
       )
         return;
+      // Don't show overlay for same-page navigation (pathname won't change)
+      if (href === pathnameRef.current) return;
       startedAt.current = Date.now();
       startNavigation();
     };
@@ -75,7 +71,7 @@ export function NavigationOverlay() {
   if (!isNavigating) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200 min-h-[100dvh]">
       <div className="flex flex-col items-center gap-4">
         <span className="loading loading-spinner w-[3rem] text-accent" />
         <p className="animate-pulse text-lg font-black tracking-wider text-white drop-shadow-lg">

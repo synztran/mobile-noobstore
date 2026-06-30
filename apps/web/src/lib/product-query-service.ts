@@ -45,16 +45,21 @@ export interface ProductListItem {
   variants: ProductVariant[];
   min_price: number;
   is_used: boolean;
-  /** True when at least one variant is on pre-order (denormalized from DB trigger) */
   is_pre_order: boolean;
   tags: ProductTag[];
   discount_price: number;
   discount_percentage: number;
   created_at: string;
-  gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
+  gifts?: Array<{
+    gift_name: string;
+    gift_slug: string;
+    gift_thumbnail: string | null;
+    quantity: number;
+  }>;
 }
 
-type CategoryRow = { id: string } | null;
+// ─── Raw DB row types ──────────────────────────────────────────────────────────
+
 type VariantRow = {
   id: string;
   variant_name: string;
@@ -83,23 +88,57 @@ type RawListRow = {
   product_variants: VariantRow[] | null;
 };
 
-type ComponentLink = {
-  parent_product_id: string;
-  component_product_id: string;
-  is_required: boolean;
+type ComponentChildRow = {
+  id: string;
+  parent_product_id: string | null;
+  product_variants: VariantRow[] | null;
 };
 
-type ComponentRow = {
-  id: string;
-  product_variants?: Array<{
-    stock_quantity?: number;
-  }> | null;
+// ─── Supplement types (batch-fetched) ─────────────────────────────────────────
+
+type KitSupplement = {
+  childVariantsByProductId: Map<string, VariantRow[]>;
+  kitStockById: Map<string, number>;
 };
+
+type GiftSupplement = Map<
+  string,
+  Array<{
+    gift_name: string;
+    gift_slug: string;
+    gift_thumbnail: string | null;
+    quantity: number;
+  }>
+>;
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
-function getTags(product: ProductListItem): ProductTag[] {
+const VARIANT_COLUMNS = `id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes`;
+
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
+
+function parseVariant(v: VariantRow, basePrice: number): ProductVariant {
+  return {
+    id: v.id,
+    variant_name: v.variant_name,
+    price_adjustment: Number(v.price_adjustment),
+    effective_price: basePrice + Number(v.price_adjustment),
+    thumbnail: v.thumbnail,
+    stock_quantity: Number(v.stock_quantity ?? 0),
+    is_pre_order: v.is_pre_order ?? false,
+    pre_order_config: (v.pre_order_config as PreOrderConfig | null) ?? null,
+    attributes: (v.attributes as Record<string, string> | null) ?? null,
+  };
+}
+
+function getTags(product: {
+  is_pre_order: boolean;
+  is_used: boolean;
+  created_at: string;
+}): ProductTag[] {
   const tags: ProductTag[] = [];
 
   if (product.is_pre_order) {
@@ -122,10 +161,9 @@ function getTags(product: ProductListItem): ProductTag[] {
     });
   }
 
-  const currentDate = new Date();
-  const createdDate = new Date(product.created_at);
   const diffInDays = Math.floor(
-    (currentDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
+    (Date.now() - new Date(product.created_at).getTime()) /
+      (1000 * 60 * 60 * 24)
   );
 
   if (diffInDays <= 15) {
@@ -141,157 +179,212 @@ function getTags(product: ProductListItem): ProductTag[] {
   return tags;
 }
 
-async function shapeRow(row: RawListRow): Promise<ProductListItem> {
-  if (!row) throw new Error("Row is null or undefined");
-  if (!row.product_variants) throw new Error("Row is missing product_variants");
+// ─── Batch supplement fetchers ────────────────────────────────────────────────
 
-  let variants = row.product_variants.map((variant) => ({
-    ...variant,
-    price_adjustment: Number(variant.price_adjustment),
-    effective_price: Number(row.base_price) + Number(variant.price_adjustment),
-    stock_quantity: Number(variant.stock_quantity ?? 0),
-    pre_order_config:
-      (variant.pre_order_config as PreOrderConfig | null) ?? null,
-    attributes: (variant.attributes as Record<string, string> | null) ?? null,
-  }));
+async function fetchKitSupplements(kitIds: string[]): Promise<KitSupplement> {
+  const childVariantsByProductId = new Map<string, VariantRow[]>();
+  const kitStockById = new Map<string, number>();
 
-  // If kit, merge in all variants from child components
-  if (row.product_type === "kit") {
-    const supabase = getPublicClient();
-    const { data: childComponents, error } = await supabase
-      .from("products")
-      .select(
-        "id, is_active, product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)"
-      )
-      .eq("is_active", true)
-      .eq("parent_product_id", row.id)
-      .eq("product_type", "component");
-    if (!error && childComponents && childComponents.length > 0) {
-      for (const comp of childComponents) {
-        if (Array.isArray(comp.product_variants)) {
-          for (const v of comp.product_variants) {
-            variants.push({
-              id: v.id,
-              variant_name: v.variant_name,
-              price_adjustment: Number(v.price_adjustment),
-              effective_price:
-                Number(row.base_price) + Number(v.price_adjustment),
-              thumbnail: v.thumbnail,
-              stock_quantity: Number(v.stock_quantity ?? 0),
-              is_pre_order: v.is_pre_order ?? false,
-              pre_order_config:
-                (v.pre_order_config as PreOrderConfig | null) ?? null,
-              attributes:
-                (v.attributes as Record<string, string> | null) ?? null,
-            });
-          }
-        }
+  if (kitIds.length === 0) return { childVariantsByProductId, kitStockById };
+
+  const supabase = getPublicClient();
+
+  // 1. Fetch child component products (linked via parent_product_id) + their variants
+  const { data: children } = await supabase
+    .from("products")
+    .select(`id, parent_product_id, product_variants(${VARIANT_COLUMNS})`)
+    .eq("is_active", true)
+    .eq("product_type", "component")
+    .in("parent_product_id", kitIds);
+
+  if (children) {
+    for (const row of children as unknown as ComponentChildRow[]) {
+      if (row.product_variants && row.parent_product_id) {
+        const existing =
+          childVariantsByProductId.get(row.parent_product_id) ?? [];
+        existing.push(...row.product_variants);
+        childVariantsByProductId.set(row.parent_product_id, existing);
       }
     }
   }
 
-  const minPrice =
+  // 2. Fetch required component links for stock computation
+  const { data: links } = await supabase
+    .from("product_components")
+    .select("parent_product_id, component_product_id, is_required")
+    .in("parent_product_id", kitIds)
+    .eq("is_required", true);
+
+  if (links && links.length > 0) {
+    const componentIds = Array.from(
+      new Set(
+        links
+          .map((l) => l.component_product_id)
+          .filter((id): id is string => !!id)
+      )
+    );
+
+    const { data: componentRows } = await supabase
+      .from("products")
+      .select(`id, product_variants(stock_quantity)`)
+      .eq("is_active", true)
+      .in("id", componentIds);
+
+    const componentStock = new Map<string, number>();
+    if (componentRows) {
+      for (const row of componentRows as unknown as ComponentChildRow[]) {
+        const stock = (row.product_variants ?? []).reduce(
+          (sum, v) => sum + Number(v.stock_quantity ?? 0),
+          0
+        );
+        componentStock.set(row.id, stock);
+      }
+    }
+
+    const childrenByParent = new Map<string, string[]>();
+    for (const link of links) {
+      if (!link.component_product_id || !link.parent_product_id) continue;
+      const list = childrenByParent.get(link.parent_product_id) ?? [];
+      list.push(link.component_product_id);
+      childrenByParent.set(link.parent_product_id, list);
+    }
+
+    for (const [parentId, childIds] of childrenByParent) {
+      const stocks = childIds.map((id) => componentStock.get(id) ?? 0);
+      kitStockById.set(parentId, stocks.length > 0 ? Math.min(...stocks) : 0);
+    }
+  }
+
+  return { childVariantsByProductId, kitStockById };
+}
+
+async function fetchGiftSupplement(
+  productIds: string[]
+): Promise<GiftSupplement> {
+  const giftsByProductId: GiftSupplement = new Map();
+
+  if (productIds.length === 0) return giftsByProductId;
+
+  const { data: giftData } = await getPublicClient()
+    .from("gift_products")
+    .select(
+      `product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`
+    )
+    .in("product_id", productIds);
+
+  if (giftData) {
+    for (const g of giftData as unknown as Array<{
+      product_id: string;
+      quantity: number;
+      gift: { name: string; slug: string; thumbnail: string | null } | null;
+    }>) {
+      if (!g.gift) continue;
+      const list = giftsByProductId.get(g.product_id) ?? [];
+      list.push({
+        gift_name: g.gift.name,
+        gift_slug: g.gift.slug,
+        gift_thumbnail: g.gift.thumbnail,
+        quantity: g.quantity,
+      });
+      giftsByProductId.set(g.product_id, list);
+    }
+  }
+
+  return giftsByProductId;
+}
+
+// ─── Pure shapeRow (no side effects) ──────────────────────────────────────────
+
+function shapeRow(
+  row: RawListRow,
+  kitSupplements: KitSupplement
+): ProductListItem {
+  const basePrice = Number(row.base_price);
+
+  // 1. Parse direct variants
+  const variants = (row.product_variants ?? []).map((v) =>
+    parseVariant(v, basePrice)
+  );
+
+  // 2. For kit products, merge in child component variants
+  const childVariants =
+    row.product_type === "kit"
+      ? (kitSupplements.childVariantsByProductId.get(row.id) ?? [])
+      : [];
+
+  for (const cv of childVariants) {
+    variants.push(parseVariant(cv, basePrice));
+  }
+
+  // 3. Pricing
+  const computedMinPrice =
     variants.length > 0
-      ? Math.min(...variants.map((variant) => variant.effective_price))
-      : Number(row.base_price);
+      ? Math.min(...variants.map((v) => v.effective_price))
+      : basePrice;
+
+  const minPrice =
+    computedMinPrice === 0 && basePrice > 0 ? basePrice : computedMinPrice;
+
+  if (computedMinPrice === 0 && basePrice > 0) {
+    console.warn(
+      `[shapeRow] min_price clamped for ${row.id} (${row.name}): basePrice=${basePrice}, variants=${variants.length}`,
+      variants.map((v) => ({
+        name: v.variant_name,
+        adj: v.price_adjustment,
+        eff: v.effective_price,
+      }))
+    );
+  }
 
   const discountPercentage =
-    minPrice < Number(row.base_price)
-      ? Math.round(
-          ((Number(row.base_price) - minPrice) / Number(row.base_price)) * 100
-        )
+    minPrice < basePrice
+      ? Math.round(((basePrice - minPrice) / basePrice) * 100)
       : 0;
 
+  // 4. Stock
   const productType = (row.product_type ?? "standard") as ProductType;
   let effectiveStock = Number(row.stock_quantity ?? 0);
 
   if (productType === "kit") {
+    const kitStock = kitSupplements.kitStockById.get(row.id);
     effectiveStock =
-      variants.length > 0
-        ? Math.min(...variants.map((variant) => variant.stock_quantity))
-        : Number(row.stock_quantity ?? 0);
+      typeof kitStock === "number"
+        ? kitStock
+        : variants.length > 0
+          ? Math.min(...variants.map((v) => v.stock_quantity))
+          : Number(row.stock_quantity ?? 0);
   } else if (productType === "component") {
-    effectiveStock = variants.reduce(
-      (sum, variant) => sum + variant.stock_quantity,
-      0
-    );
+    effectiveStock = variants.reduce((s, v) => s + v.stock_quantity, 0);
   }
 
+  // 5. Build result
   const shaped: ProductListItem = {
-    ...row,
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    brand: row.brand ?? null,
     category: row.categories?.name ?? "Unknown",
-    base_price: Number(row.base_price),
+    description: row.description ?? "",
+    base_price: basePrice,
     stock_quantity: effectiveStock,
+    thumbnail: row.thumbnail,
     images: Array.isArray(row.images) ? (row.images as string[]) : null,
     product_type: productType,
     variants,
     min_price: minPrice,
+    is_used: row.is_used ?? false,
     is_pre_order: variants.some((v) => v.is_pre_order),
     tags: [],
-    discount_price: minPrice < Number(row.base_price) ? minPrice : 0,
+    discount_price: minPrice < basePrice ? minPrice : 0,
     discount_percentage: discountPercentage,
+    created_at: row.created_at,
   };
 
   shaped.tags = getTags(shaped);
   return shaped;
 }
 
-async function computeKitStockById(
-  kitIds: string[]
-): Promise<Map<string, number>> {
-  const supabase = getPublicClient();
-  const result = new Map<string, number>();
-
-  if (kitIds.length === 0) return result;
-
-  const { data: componentLinks, error: linkError } = await supabase
-    .from("product_components")
-    .select("parent_product_id, component_product_id, is_required")
-    .in("parent_product_id", kitIds)
-    .eq("is_required", true);
-
-  if (linkError) return result;
-
-  const links = (componentLinks ?? []) as ComponentLink[];
-  const componentProductIds = Array.from(
-    new Set(links.map((link) => link.component_product_id))
-  );
-
-  if (componentProductIds.length === 0) return result;
-
-  const { data: componentRows, error: componentRowsError } = await supabase
-    .from("products")
-    .select("id, is_active, product_variants(stock_quantity)")
-    .eq("is_active", true)
-    .in("id", componentProductIds);
-
-  if (componentRowsError) return result;
-
-  const componentStockById = new Map<string, number>();
-  for (const row of (componentRows ?? []) as ComponentRow[]) {
-    const stock = (row.product_variants ?? []).reduce(
-      (sum, variant) => sum + Number(variant.stock_quantity ?? 0),
-      0
-    );
-    componentStockById.set(row.id, stock);
-  }
-
-  const childrenByParent = new Map<string, string[]>();
-  for (const link of links) {
-    const childIds = childrenByParent.get(link.parent_product_id) ?? [];
-    childIds.push(link.component_product_id);
-    childrenByParent.set(link.parent_product_id, childIds);
-  }
-
-  for (const [parentId, childIds] of childrenByParent) {
-    const childStocks = childIds.map(
-      (childId) => componentStockById.get(childId) ?? 0
-    );
-    result.set(parentId, childStocks.length > 0 ? Math.min(...childStocks) : 0);
-  }
-
-  return result;
-}
+// ─── Public API ───────────────────────────────────────────────────────────────
 
 export interface GetProductListParams {
   search?: string;
@@ -335,6 +428,7 @@ export async function getProductListByFilters(
   try {
     const supabase = getPublicClient();
 
+    // ── Resolve category ──
     let categoryId: string | null = null;
     if (safeCategorySlug) {
       const { data: catRow } = await supabase
@@ -344,60 +438,92 @@ export async function getProductListByFilters(
         .maybeSingle();
 
       if (!catRow) return { products: [], total: 0 };
-      categoryId = (catRow as CategoryRow)?.id ?? null;
+      categoryId = catRow?.id ?? null;
     }
 
-    let query = supabase
+    // ── Build base filter helpers ──
+    const applyFilters = (q: any) => {
+      let r = q
+        .eq("is_active", true)
+        .neq("product_type", "gift")
+        .in("product_type", ["standard", "kit"]);
+      if (excludeUncategorized) r = r.not("category_id", "is", null);
+      if (safeSearch) r = r.ilike("name", `%${safeSearch}%`);
+      if (categoryId !== null) r = r.eq("category_id", categoryId);
+      if (brand) r = r.eq("brand", brand);
+      if (safePriceMin > 0) r = r.gte("base_price", safePriceMin);
+      if (safePriceMax > 0) r = r.lte("base_price", safePriceMax);
+      return r;
+    };
+
+    // ── Count total (standard + kit only; components are stripped from result) ──
+    let countQuery = supabase
       .from("products")
-      .select(
-        `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, created_at,
-         categories(id, name),
-         product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
-      )
+      .select("id", { count: "exact", head: true })
       .eq("is_active", true)
       .neq("product_type", "gift")
-      .in("product_type", productTypes);
+      .in("product_type", ["standard", "kit"]);
+    if (excludeUncategorized)
+      countQuery = countQuery.not("category_id", "is", null);
+    if (safeSearch) countQuery = countQuery.ilike("name", `%${safeSearch}%`);
+    if (categoryId !== null)
+      countQuery = countQuery.eq("category_id", categoryId);
+    if (brand) countQuery = countQuery.eq("brand", brand);
+    if (safePriceMin > 0)
+      countQuery = countQuery.gte("base_price", safePriceMin);
+    if (safePriceMax > 0)
+      countQuery = countQuery.lte("base_price", safePriceMax);
 
-    if (excludeUncategorized) query = query.not("category_id", "is", null);
-    if (safeSearch) query = query.ilike("name", `%${safeSearch}%`);
-    if (categoryId !== null) query = query.eq("category_id", categoryId);
-    if (brand) query = query.eq("brand", brand);
+    const { count, error: countErr } = await countQuery;
+    if (countErr || count === null) return { products: [], total: 0 };
 
-    const { data, error } = await query;
-    if (error) return { products: [], total: 0 };
-
-    const rows = (data ?? []) as unknown as RawListRow[];
-    const kitIds = rows
-      .filter((row) => row.product_type === "kit")
-      .map((row) => row.id);
-
-    const kitStockById = await computeKitStockById(kitIds);
-
-    let filteredProducts = await Promise.all(
-      rows.map(async (row) => {
-        const shaped = await shapeRow(row);
-        if (row.product_type === "kit") {
-          const stock = kitStockById.get(row.id);
-          if (typeof stock === "number") {
-            shaped.stock_quantity = stock;
-            shaped.tags = getTags(shaped);
-          }
-        }
-        return shaped;
-      })
+    // ── Fetch paginated products ──
+    let dataQuery = applyFilters(
+      supabase.from("products").select(
+        `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, created_at,
+         categories(id, name),
+         product_variants(${VARIANT_COLUMNS})`
+      )
     );
 
-    if (safePriceMin > 0 || safePriceMax > 0) {
-      filteredProducts = filteredProducts.filter(
-        (product) =>
-          product.min_price >= safePriceMin &&
-          (safePriceMax === 0 || product.min_price <= safePriceMax)
-      );
+    // Push sort to DB
+    if (sort === "newest") {
+      dataQuery = dataQuery.order("created_at", { ascending: false });
+    } else if (sort === "price_asc") {
+      dataQuery = dataQuery.order("base_price", { ascending: true });
+    } else if (sort === "price_desc") {
+      dataQuery = dataQuery.order("base_price", { ascending: false });
     }
 
-    // Sorting — out-of-stock always at bottom
-    const inStock = filteredProducts.filter((p) => p.stock_quantity > 0);
-    const outOfStock = filteredProducts.filter((p) => p.stock_quantity === 0);
+    // Paginate at DB level instead of fetch-all + slice
+    const { data, error } = await dataQuery.range(
+      safeOffset,
+      safeOffset + safeLimit - 1
+    );
+
+    if (error || !data) return { products: [], total: 0 };
+
+    const rows = data as unknown as RawListRow[];
+
+    // ── Batch-fetch supplements ──
+    const kitIds = rows
+      .filter((r) => r.product_type === "kit")
+      .map((r) => r.id);
+
+    const [kitSupplements, giftsByProductId] = await Promise.all([
+      fetchKitSupplements(kitIds),
+      fetchGiftSupplement(rows.map((r) => r.id)),
+    ]);
+
+    // ── Shape rows (pure) ──
+    let products = rows.map((row) => shapeRow(row, kitSupplements));
+
+    // Strip components from shop display — they're only fetched for kit processing
+    products = products.filter((p) => p.product_type !== "component");
+
+    // ── Push out-of-stock to bottom within page ──
+    const inStock = products.filter((p) => p.stock_quantity > 0);
+    const outOfStock = products.filter((p) => p.stock_quantity === 0);
 
     const sortFn =
       sort === "price_asc"
@@ -411,45 +537,16 @@ export async function getProductListByFilters(
 
     inStock.sort(sortFn);
     outOfStock.sort(sortFn);
-    filteredProducts = [...inStock, ...outOfStock];
 
-    // Pagination
-    const total = filteredProducts.length;
-    const pagedProducts = filteredProducts.slice(
-      safeOffset,
-      safeOffset + safeLimit
-    );
+    const sorted = [...inStock, ...outOfStock];
 
-    // Batch-fetch gift data
-    const productIds = pagedProducts.map(p => p.id);
-    const giftsByProductId: Record<string, Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>> = {};
-    if (productIds.length > 0) {
-      const { data: giftData } = await getPublicClient()
-        .from("gift_products")
-        .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
-        .in("product_id", productIds);
+    // ── Attach gifts ──
+    const result = sorted.map((p) => ({
+      ...p,
+      gifts: giftsByProductId.get(p.id) ?? undefined,
+    }));
 
-      if (giftData) {
-        for (const g of giftData as any[]) {
-          const pid = g.product_id;
-          if (!giftsByProductId[pid]) giftsByProductId[pid] = [];
-          giftsByProductId[pid].push({
-            gift_name: g.gift?.name ?? "",
-            gift_slug: g.gift?.slug ?? "",
-            gift_thumbnail: g.gift?.thumbnail ?? null,
-            quantity: g.quantity,
-          });
-        }
-      }
-    }
-
-    return {
-      products: pagedProducts.map(p => ({
-        ...p,
-        gifts: giftsByProductId[p.id] ?? null,
-      })),
-      total,
-    };
+    return { products: result, total: count };
   } catch {
     return { products: [], total: 0 };
   }

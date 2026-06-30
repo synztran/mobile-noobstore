@@ -40,10 +40,23 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 	const body = await req.json();
 	const supabase = getAdminClient();
 
-	const { error } = await supabase.from("products").update(body).eq("id", id);
+	const { is_pre_order, ...productBody } = body;
+
+	const { error } = await supabase
+		.from("products")
+		.update(productBody)
+		.eq("id", id);
 
 	if (error) {
 		return NextResponse.json({ error: error.message }, { status: 400 });
+	}
+
+	// Propagate is_pre_order to all product variants
+	if (typeof is_pre_order === "boolean") {
+		await supabase
+			.from("product_variants")
+			.update({ is_pre_order })
+			.eq("product_id", id);
 	}
 
 	return NextResponse.json({ success: true }, { status: 200 });

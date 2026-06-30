@@ -78,7 +78,7 @@ export async function GET(
   if (data.user_id) {
     const { data: addr } = await supabase
       .from("user_addresses")
-      .select("full_name, phone_number, address_line, ward_district, city")
+      .select("full_name, phone_number, address_line, ward, ward_code, district, district_code, city")
       .eq("user_id", data.user_id)
       .eq("is_default", true)
       .maybeSingle();

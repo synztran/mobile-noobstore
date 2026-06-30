@@ -15,6 +15,7 @@
     color: #1b1c1a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: contain;
     /* @apply bg-background text-foreground; */
   }
 

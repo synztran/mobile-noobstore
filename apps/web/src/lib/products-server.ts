@@ -3,6 +3,7 @@
  * Mirrors the shaping logic in /api/products/route.ts.
  */
 
+import { cache } from "react";
 import type {
   ComponentVariantRule,
   ConfiguratorGroup,
@@ -13,6 +14,7 @@ import type {
 } from "@/app/api/products/[slug]/route";
 import type { ShopProduct } from "@/app/api/products/route";
 import { getProductListByFilters } from "@/lib/product-query-service";
+import { getCache, setCache } from "@/lib/redis/cache";
 import { getPublicClient } from "@/lib/supabase/public";
 
 export type { ProductDetail };
@@ -202,6 +204,7 @@ export interface GetProductsParams {
   sort?: "newest" | "price_asc" | "price_desc";
   limit?: number;
   offset?: number;
+  productTypes?: Array<"standard" | "kit" | "component">;
 }
 
 export interface GetNoteworthyProductsParams {
@@ -227,8 +230,10 @@ export interface QuickPickData {
 
 /**
  * Flexible product query for server components (shop page, search, etc.)
+ * Wrapped with React.cache() to deduplicate concurrent calls (shop page
+ * fetches this once for total + once in Suspense-bound ProductGrid).
  */
-export async function getProducts(
+export const getProducts = cache(async function getProducts(
   params: GetProductsParams = {}
 ): Promise<{ products: ShopProduct[]; total: number }> {
   const {
@@ -249,10 +254,12 @@ export async function getProducts(
       priceMax,
       sort,
       limit,
-      productTypes: ["standard", "kit"],
+      productTypes: params.productTypes ?? ["standard", "kit", "component"],
       excludeUncategorized: true,
       offset,
     });
+
+    console.log("result", result);
 
     return {
       products: result.products as ShopProduct[],
@@ -262,7 +269,7 @@ export async function getProducts(
     console.error("[getProducts] Unexpected error:", err);
     return { products: [], total: 0 };
   }
-}
+});
 
 /**
  * Product feed for the home Noteworthy section.
@@ -504,12 +511,22 @@ export async function getQuickPickData(
     }
 
     // Batch-fetch gift data
-    const allIds = products.map(p => p.id);
-    const giftsByProductId: Record<string, Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>> = {};
+    const allIds = products.map((p) => p.id);
+    const giftsByProductId: Record<
+      string,
+      Array<{
+        gift_name: string;
+        gift_slug: string;
+        gift_thumbnail: string | null;
+        quantity: number;
+      }>
+    > = {};
     if (allIds.length > 0) {
       const { data: giftData } = await getPublicClient()
         .from("gift_products")
-        .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+        .select(
+          `product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`
+        )
         .in("product_id", allIds);
 
       if (giftData) {
@@ -607,15 +624,27 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
       return [];
     }
     if (!data) return [];
-    const products = await Promise.all((data as unknown as RawListRow[]).map(shapeRow));
+    const products = await Promise.all(
+      (data as unknown as RawListRow[]).map(shapeRow)
+    );
 
     // Batch-fetch gift data
-    const productIds = products.map(p => p.id);
-    const giftsByProductId: Record<string, Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>> = {};
+    const productIds = products.map((p) => p.id);
+    const giftsByProductId: Record<
+      string,
+      Array<{
+        gift_name: string;
+        gift_slug: string;
+        gift_thumbnail: string | null;
+        quantity: number;
+      }>
+    > = {};
     if (productIds.length > 0) {
       const { data: giftData } = await getPublicClient()
         .from("gift_products")
-        .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+        .select(
+          `product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`
+        )
         .in("product_id", productIds);
 
       if (giftData) {
@@ -632,7 +661,7 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
       }
     }
 
-    return products.map(p => ({
+    return products.map((p) => ({
       ...p,
       gifts: giftsByProductId[p.id] ?? null,
     })) as unknown as ShopProduct[];
@@ -658,9 +687,9 @@ export async function getFrequentlyBoughtTogether(
 
     if (!sameOrders || sameOrders.length === 0) return [];
 
-    const orderIds = [
-      ...new Set(sameOrders.map((o) => o.order_id)),
-    ].filter(Boolean);
+    const orderIds = [...new Set(sameOrders.map((o) => o.order_id))].filter(
+      Boolean
+    );
 
     if (orderIds.length === 0) return [];
 
@@ -861,11 +890,16 @@ export async function getProductDetail(slug: string): Promise<{
 
 /**
  * Fetch a single product by slug for the product detail page.
+ * Wrapped with React.cache() to deduplicate in-flight requests within
+ * the same render pass (e.g. generateMetadata + page body).
  */
-export async function getProductBySlug(
+export const getProductBySlug = cache(async function getProductBySlug(
   slug: string
 ): Promise<ProductDetail | null> {
   try {
+    const cached = await getCache<ProductDetail>(`product:slug:${slug}`);
+    if (cached) return cached;
+
     const { data: product, error } = await getPublicClient()
       .from("products")
       .select(
@@ -908,10 +942,21 @@ export async function getProductBySlug(
       attributes: (v.attributes as Record<string, string> | null) ?? null,
     }));
 
-    const minPrice =
+    const computedMinPrice =
       variants.length > 0
         ? Math.min(...variants.map((v) => v.effective_price))
         : Number(raw.base_price);
+
+    const minPrice =
+      computedMinPrice === 0 && Number(raw.base_price) > 0
+        ? Number(raw.base_price)
+        : computedMinPrice;
+
+    if (computedMinPrice === 0 && Number(raw.base_price) > 0) {
+      console.warn(
+        `[getProductBySlug] min_price clamped for ${raw.id} (${raw.name}): basePrice=${raw.base_price}, variants=${variants.length}`
+      );
+    }
 
     const compIds = (raw.product_components ?? []).map(
       (c) => c.component_product_id
@@ -985,15 +1030,19 @@ export async function getProductBySlug(
       .eq("product_id", raw.id);
 
     const gifts: ProductDetail["gifts"] =
-      (giftRows as unknown as Array<{ quantity: number; gift: { name: string; slug: string; thumbnail: string | null } }> | null)
-        ?.map((g) => ({
-          gift_name: g.gift.name,
-          gift_slug: g.gift.slug,
-          gift_thumbnail: g.gift.thumbnail,
-          quantity: g.quantity,
-        })) ?? undefined;
+      (
+        giftRows as unknown as Array<{
+          quantity: number;
+          gift: { name: string; slug: string; thumbnail: string | null };
+        }> | null
+      )?.map((g) => ({
+        gift_name: g.gift.name,
+        gift_slug: g.gift.slug,
+        gift_thumbnail: g.gift.thumbnail,
+        quantity: g.quantity,
+      })) ?? undefined;
 
-    return {
+    const productDetail: ProductDetail & { gifts?: unknown } = {
       ...raw,
       id: raw.id,
       slug: raw.slug,
@@ -1013,11 +1062,16 @@ export async function getProductBySlug(
       min_price: minPrice,
       is_used: raw.is_used ?? false,
       is_pre_order: variants.some((v) => v.is_pre_order),
-      sale_ends_at: (raw as Record<string, unknown>).sale_ends_at as string | null ?? null,
+      sale_ends_at:
+        ((raw as Record<string, unknown>).sale_ends_at as string | null) ??
+        null,
       gifts,
     };
+
+    await setCache(`product:slug:${slug}`, productDetail, 60);
+    return productDetail;
   } catch (err) {
     console.error("[getProductBySlug] Unexpected error:", err);
     return null;
   }
-}
+});

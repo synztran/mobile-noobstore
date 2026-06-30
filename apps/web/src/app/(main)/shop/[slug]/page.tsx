@@ -8,6 +8,7 @@ import {
   getProductPurchaseCount,
   getRelatedProducts,
 } from "@/lib/products-server";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -24,25 +25,33 @@ export async function generateMetadata({
     return { title: "Sản phẩm" };
   }
 
-  const ogImage =
+  const rawImage =
     product.thumbnail || product.images?.find(Boolean) || undefined;
-  const description =
-    product.description?.slice(0, 160) ||
-    `${product.name} - ${product.brand ?? "NoobStore"}`;
+  const ogImage = rawImage?.startsWith("http")
+    ? rawImage
+    : `https://www.noobstore.xyz${rawImage ?? ""}`;
+  const cleanDescription =
+    product.description
+      ? product.description.replace(/<[^>]*>/g, "").slice(0, 160)
+      : `${product.name} - ${product.brand ?? "NoobStore"}`;
 
   return {
     title: product.name,
-    description,
+    description: cleanDescription,
     openGraph: {
+      type: "website",
+      siteName: "NoobStore",
       title: product.name,
-      description,
+      description: cleanDescription,
       url: `https://www.noobstore.xyz/shop/${slug}`,
-      images: ogImage ? [{ url: ogImage, width: 800, height: 800 }] : [],
+      images: ogImage
+        ? [{ url: ogImage, width: 1200, height: 630 }]
+        : [],
     },
     twitter: {
       card: "summary_large_image",
       title: product.name,
-      description,
+      description: cleanDescription,
       images: ogImage ? [ogImage] : [],
     },
   };
@@ -133,8 +142,10 @@ export default async function ProductPage({
 }) {
   const { slug } = await params;
   return (
-    <Suspense fallback={<ProductDetailSkeleton />}>
-      <ProductLoader slug={slug} />
-    </Suspense>
+    <PullToRefresh>
+      <Suspense fallback={<ProductDetailSkeleton />}>
+        <ProductLoader slug={slug} />
+      </Suspense>
+    </PullToRefresh>
   );
 }

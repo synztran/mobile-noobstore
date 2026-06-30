@@ -43,10 +43,6 @@ type AddressLike = {
   ward_code?: string;
   districtCode?: string;
   wardCode?: string;
-  ward_district?: string;
-  wardDistrict?: string;
-  ward_district_code?: string;
-  wardDistrictCode?: string;
   is_default?: boolean;
   isDefault?: boolean;
 };
@@ -150,8 +146,8 @@ export function useShippingForm() {
   const [basicPricePerKm, setBasicPricePerKm] = useState(5500);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [isCalculatingFee, setIsCalculatingFee] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [touched, setTouched] = useState<Partial<Record<string, boolean>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touched, setTouched] = useState<Partial<Record<string, boolean>>>({});
   const [form, setForm] = useState<FormData>({
     fullName:
       [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ?? "",
@@ -171,9 +167,9 @@ export function useShippingForm() {
     lon: number;
     label: string;
   } | null>(null);
-  const [routeCoordinates, setRouteCoordinates] = useState<
-    [number, number][]
-  >([]);
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
+    []
+  );
   const [storeCoords, setStoreCoords] = useState<{
     lat: number;
     lon: number;
@@ -394,24 +390,24 @@ export function useShippingForm() {
         return;
       }
 
-		setIsSubmitting(true);
-		setShipping(
-			{
-				...form,
-				deliverySpeed: delivery,
-				shippingMethodId: delivery,
-			},
-			shippingCost
-		);
-		setTimeout(
-			() =>
-				router.push(
-					cartId ? `/checkout/summary/${cartId}` : "/checkout/summary"
-				),
-			150
-		);
-	},
-	[cartId, delivery, form, router, setShipping, shippingCost]
+      setIsSubmitting(true);
+      setShipping(
+        {
+          ...form,
+          deliverySpeed: delivery,
+          shippingMethodId: delivery,
+        },
+        shippingCost
+      );
+      setTimeout(
+        () =>
+          router.push(
+            cartId ? `/checkout/summary/${cartId}` : "/checkout/summary"
+          ),
+        150
+      );
+    },
+    [cartId, delivery, form, router, setShipping, shippingCost]
   );
 
   const handleAddressSelect = useCallback(
@@ -527,7 +523,10 @@ export function useShippingForm() {
               ? `${form.ward ? form.ward + ", " : ""}${form.district}`.trim()
               : undefined,
         };
-        if (presetLatRef.current !== undefined && presetLonRef.current !== undefined) {
+        if (
+          presetLatRef.current !== undefined &&
+          presetLonRef.current !== undefined
+        ) {
           body.lat = presetLatRef.current;
           body.lon = presetLonRef.current;
           presetLatRef.current = undefined;
@@ -585,38 +584,38 @@ export function useShippingForm() {
     };
   }, [form.streetAddress, form.district, form.ward, form.city]);
 
-		return {
-			ready,
-			distanceKm,
-			distanceFee,
-			isCalculatingFee,
-			isSubmitting,
-			form,
-			setForm,
-			touched,
-			cityTouched,
-			setCityTouched,
-			delivery,
-			setDelivery,
-			handleChange,
-			handleBlur,
-			handleCityChange,
-			isInvalid,
-			handleSubmit,
-			isHCM,
-			subtotal,
-			shippingCost,
-			baseShippingCost,
-			districtSurchargeRate,
-			operationalSurchargeRate,
-			orderTotal,
-			baseImmediateFee,
-			baseBasicFee,
-			immediateFee,
-			basicFee,
-			customerLocation,
-			routeCoordinates,
-			storeCoords,
-			handleAddressSelect,
-		};
-	}
+  return {
+    ready,
+    distanceKm,
+    distanceFee,
+    isCalculatingFee,
+    isSubmitting,
+    form,
+    setForm,
+    touched,
+    cityTouched,
+    setCityTouched,
+    delivery,
+    setDelivery,
+    handleChange,
+    handleBlur,
+    handleCityChange,
+    isInvalid,
+    handleSubmit,
+    isHCM,
+    subtotal,
+    shippingCost,
+    baseShippingCost,
+    districtSurchargeRate,
+    operationalSurchargeRate,
+    orderTotal,
+    baseImmediateFee,
+    baseBasicFee,
+    immediateFee,
+    basicFee,
+    customerLocation,
+    routeCoordinates,
+    storeCoords,
+    handleAddressSelect,
+  };
+}

@@ -6,7 +6,6 @@ interface AddressShape {
   address_line?: string | null;
   street_address?: string | null;
   apartment?: string | null;
-  ward_district?: string | null;
   district?: string | null;
   ward?: string | null;
   district_code?: string | null;

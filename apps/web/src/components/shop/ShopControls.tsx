@@ -8,9 +8,9 @@ import {
 import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
 import type { CategoryItem } from "@/lib/products-server";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SORT_OPTIONS, SortSheet } from "./SortSheet";
+import type { Filters } from "@/lib/react-query/shop/api/useShopInfiniteQuery";
 
 function formatFilterPills(filters: FilterState): string[] {
 	const pills: string[] = [];
@@ -29,72 +29,75 @@ function formatFilterPills(filters: FilterState): string[] {
 	return pills;
 }
 
-// ─── Skeleton for controls while loading ─────────────────────────────────────
-function ResultSkeleton() {
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="h-[16px] w-24 bg-surface-container rounded-md" />
-      <div className="h-[32px] w-32 bg-surface-container rounded-md" />
-    </div>
-  );
+function buildUrlString(
+	search: string,
+	sort: SortOption,
+	filters: FilterState,
+): string {
+	const params = new URLSearchParams();
+	if (search) params.set("search", search);
+	if (sort !== "newest") params.set("sort", sort);
+	if (filters.category) params.set("category", filters.category);
+	if (filters.priceMin > 0)
+		params.set("priceMin", String(filters.priceMin));
+	if (filters.priceMax > 0)
+		params.set("priceMax", String(filters.priceMax));
+	const qs = params.toString();
+	return qs ? `/shop?${qs}` : "/shop";
 }
 
-// ─── Controls ─────────────────────────────────────────────────────────────────
+type ExternalFilters = Pick<Filters, "search" | "category" | "sort" | "priceMin" | "priceMax">;
 
 export function ShopControls({
 	total,
 	categories = [],
-	startTransition: externalStartTransition,
-  isLoading = false,
+	filters: externalFilters,
+	onFiltersChange,
 }: {
 	total: number;
 	categories?: CategoryItem[];
-	startTransition?: (fn: () => void) => void;
-  isLoading?: boolean;
+	filters: ExternalFilters;
+	onFiltersChange: (f: ExternalFilters) => void;
 }) {
-	const router = useRouter();
-	const sp = useSearchParams();
-
-	const [search, setSearch] = useState(sp.get("search") ?? "");
+	const [search, setSearch] = useState(externalFilters.search ?? "");
 	const [sort, setSort] = useState<SortOption>(
-		(sp.get("sort") as SortOption) ?? "newest",
+		(externalFilters.sort as SortOption) ?? "newest",
 	);
-	const [filters, setFilters] = useState<FilterState>({
-		category: sp.get("category") ?? null,
-		priceMin: Number(sp.get("priceMin") ?? 0),
-		priceMax: Number(sp.get("priceMax") ?? 0),
+	const [filterState, setFilterState] = useState<FilterState>({
+		category: externalFilters.category ?? null,
+		priceMin: Number(externalFilters.priceMin ?? 0),
+		priceMax: Number(externalFilters.priceMax ?? 0),
 	});
 	const [showFilter, setShowFilter] = useState(false);
 	const [showSort, setShowSort] = useState(false);
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const isFirstRender = useRef(true);
 
-	const navigate = (fn: () => void) => {
-		if (externalStartTransition) {
-			externalStartTransition(fn);
-		} else {
-			fn();
-		}
-	};
-
-	// Push all state to URL — server re-renders with new data
-	const pushParams = (
-		newSearch: string,
-		newSort: SortOption,
-		newFilters: FilterState,
-	) => {
-		navigate(() => {
-			const params = new URLSearchParams();
-			if (newSearch) params.set("search", newSearch);
-			if (newSort !== "newest") params.set("sort", newSort);
-			if (newFilters.category) params.set("category", newFilters.category);
-			if (newFilters.priceMin > 0)
-				params.set("priceMin", String(newFilters.priceMin));
-			if (newFilters.priceMax > 0)
-				params.set("priceMax", String(newFilters.priceMax));
-			router.push(`/shop?${params.toString()}`);
+	// Sync external → internal when URL changes (browser back/forward)
+	useEffect(() => {
+		setSearch(externalFilters.search ?? "");
+		setSort((externalFilters.sort as SortOption) ?? "newest");
+		setFilterState({
+			category: externalFilters.category ?? null,
+			priceMin: Number(externalFilters.priceMin ?? 0),
+			priceMax: Number(externalFilters.priceMax ?? 0),
 		});
-	};
+	}, [externalFilters]);
+
+	const commitFilters = useCallback(
+		(newSearch: string, newSort: SortOption, newFilter: FilterState) => {
+			const url = buildUrlString(newSearch, newSort, newFilter);
+			window.history.replaceState(null, "", url);
+			onFiltersChange({
+				search: newSearch || undefined,
+				category: newFilter.category ?? undefined,
+				sort: newSort === "newest" ? undefined : newSort,
+				priceMin: newFilter.priceMin > 0 ? String(newFilter.priceMin) : undefined,
+				priceMax: newFilter.priceMax > 0 ? String(newFilter.priceMax) : undefined,
+			});
+		},
+		[onFiltersChange],
+	);
 
 	// Debounced search
 	useEffect(() => {
@@ -104,7 +107,7 @@ export function ShopControls({
 		}
 		if (debounceRef.current) clearTimeout(debounceRef.current);
 		debounceRef.current = setTimeout(
-			() => pushParams(search, sort, filters),
+			() => commitFilters(search, sort, filterState),
 			search ? 400 : 0,
 		);
 		return () => {
@@ -115,12 +118,12 @@ export function ShopControls({
 
 	const handleSort = (v: SortOption) => {
 		setSort(v);
-		pushParams(search, v, filters);
+		commitFilters(search, v, filterState);
 	};
 
 	const handleApplyFilter = (state: FilterState) => {
-		setFilters(state);
-		pushParams(search, sort, state);
+		setFilterState(state);
+		commitFilters(search, sort, state);
 	};
 
 	const handleClearFilters = () => {
@@ -129,8 +132,8 @@ export function ShopControls({
 			priceMin: 0,
 			priceMax: 0,
 		};
-		setFilters(cleared);
-		pushParams(search, sort, cleared);
+		setFilterState(cleared);
+		commitFilters(search, sort, cleared);
 	};
 
 	// Lock body scroll when overlays open
@@ -142,9 +145,9 @@ export function ShopControls({
 	}, [showFilter, showSort]);
 
 	const filterApplied =
-		filters.category !== null ||
-		filters.priceMin > 0 ||
-		filters.priceMax > 0;
+		filterState.category !== null ||
+		filterState.priceMin > 0 ||
+		filterState.priceMax > 0;
 
 	return (
 		<>
@@ -158,29 +161,18 @@ export function ShopControls({
 					onChange={(e) => setSearch(e.target.value)}
 					className="flex-1 bg-transparent text-on-surface placeholder:text-outline font-medium outline-none"
 				/>
-				{/* {search && (
-					<button
-						onClick={() => setSearch("")}
-						className="text-outline">
-						<Icon name="close" className="text-sm" />
-					</button>
-				)} */}
 			</div>
 
 			{/* Header row */}
 			<div className="flex justify-between items-center mb-4">
-        {
-          isLoading ? <ResultSkeleton /> : (
-            <div>
-              <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">
-                Bộ sưu tập
-              </p>
-              <h2 className="text-2xl font-black tracking-tighter">
-                {total} kết quả
-              </h2>
-            </div>
-          )
-        }
+				<div>
+					<p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">
+						Bộ sưu tập
+					</p>
+					<p className="text-2xl font-black tracking-tighter">
+						{total} kết quả
+					</p>
+				</div>
 				<div className="flex gap-2">
 					<button
 						onClick={() => setShowFilter(true)}
@@ -204,7 +196,7 @@ export function ShopControls({
 			{/* Active filter pills */}
 			{filterApplied && (
 				<div className="flex items-center gap-2 flex-wrap mb-4">
-					{formatFilterPills(filters).map((p) => (
+					{formatFilterPills(filterState).map((p) => (
 						<span
 							key={p}
 							className="text-[10px] font-bold bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-wide">
@@ -223,7 +215,7 @@ export function ShopControls({
 				isOpen={showFilter}
 				onClose={() => setShowFilter(false)}
 				onApply={handleApplyFilter}
-				initialState={filters}
+				initialState={filterState}
 				categories={categories}
 			/>
 

@@ -65,16 +65,16 @@ export default function ProductsClient({
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-4 sm:grid-cols-2">
-        {products.length > 0
-          ? products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
-          : (
-              <div className="rounded-lg bg-white px-6 py-12 text-center text-slate-500 shadow col-span-full">
-                No products found
-              </div>
-            )}
+      <div className="grid grid-cols-3 gap-4 sm:grid-cols-3">
+        {products.length > 0 ? (
+          products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))
+        ) : (
+          <div className="col-span-full rounded-lg bg-white px-6 py-12 text-center text-slate-500 shadow">
+            No products found
+          </div>
+        )}
       </div>
 
       {totalPages > 1 && (
@@ -97,8 +97,7 @@ export default function ProductsClient({
             </Link>
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(
-                (p) =>
-                  p === 1 || p === totalPages || Math.abs(p - page) <= 1
+                (p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1
               )
               .reduce<(number | "…")[]>((acc, p, idx, arr) => {
                 if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("…");
