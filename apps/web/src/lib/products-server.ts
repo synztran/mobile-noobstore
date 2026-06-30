@@ -259,8 +259,6 @@ export const getProducts = cache(async function getProducts(
       offset,
     });
 
-    console.log("result", result);
-
     return {
       products: result.products as ShopProduct[],
       total: result.total,

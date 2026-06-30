@@ -76,6 +76,12 @@ function toNumber(value: unknown, fallback = 0): number {
   return fallback;
 }
 
+function isValidUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
 function toJson(value: unknown): Json | null {
   if (value === null || typeof value === "undefined") {
     return null;
@@ -114,6 +120,25 @@ export async function POST(req: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
+    // ── Validate variant IDs are proper UUIDs ───────────────────────────
+    // Invalid UUIDs crash the DB queries below (uuid column → PG error).
+    // for (const item of body.items) {
+    //   if (item.variant_id && !isValidUuid(item.variant_id)) {
+    //     return NextResponse.json(
+    //       { error: `Invalid variant_id format: ${item.variant_id}` },
+    //       { status: 400 }
+    //     );
+    //   }
+    //   for (const comp of item.components ?? []) {
+    //     if (!isValidUuid(comp.variant_id)) {
+    //       return NextResponse.json(
+    //         { error: `Invalid component variant_id format: ${comp.variant_id}` },
+    //         { status: 400 }
+    //       );
+    //     }
+    //   }
+    // }
 
     // ── Server-side price recalculation ──────────────────────────────────
     // NEVER trust unit_price or total_price from the client.

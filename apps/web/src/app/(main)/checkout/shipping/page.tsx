@@ -485,7 +485,7 @@ const ShippingPage = () => {
                 {isCalculatingFee ? (
                   <span className="inline-flex items-center gap-1">
                     <span className="loading loading-spinner loading-xs" />
-                    Đang tính toán
+                    Đang tính phí
                   </span>
                 ) : shippingCost === 0 ? (
                   "Miễn phí"

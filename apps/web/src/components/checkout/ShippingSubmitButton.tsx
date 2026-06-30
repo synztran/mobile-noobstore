@@ -31,7 +31,7 @@ export function ShippingSubmitButton({
       ) : isCalculatingFee ? (
         <>
           <span className="loading loading-spinner loading-sm" />
-          Đang tính toán...
+          Đang tính phí...
         </>
       ) : (
         <>

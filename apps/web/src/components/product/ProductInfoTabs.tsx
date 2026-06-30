@@ -1,10 +1,11 @@
 "use client";
 
 import { ProductReviews } from "@/components/product/ProductReviews";
+import Icon from "@/components/ui/Icon";
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
 import clsx from "clsx";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ShippingEstimate {
   id: string;
@@ -35,6 +36,14 @@ export function ProductInfoTabs({
   const [activeTab, setActiveTab] = useState<Tab>("Mô tả");
   const [estimates, setEstimates] = useState<ShippingEstimate[]>([]);
   const [estimatesLoading, setEstimatesLoading] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [descOverflows, setDescOverflows] = useState(false);
+  const descContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = descContentRef.current;
+    if (el) setDescOverflows(el.scrollHeight > 100);
+  }, [editorialContent]);
 
   useEffect(() => {
     if (activeTab !== "Vận chuyển" || estimates.length > 0) return;
@@ -89,10 +98,40 @@ export function ProductInfoTabs({
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
             {activeTab === "Mô tả" && (
-              <div
-                className="editor-content text-on-surface"
-                dangerouslySetInnerHTML={{ __html: editorialContent }}
-              />
+              <div className="relative">
+                <motion.div
+                  animate={{ height: descExpanded ? "auto" : 100 }}
+                  transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div
+                    ref={descContentRef}
+                    className="editor-content text-on-surface"
+                    dangerouslySetInnerHTML={{ __html: editorialContent }}
+                  />
+                </motion.div>
+                {!descExpanded && (
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-surface to-transparent" />
+                )}
+                {descOverflows && (
+                  <motion.button
+                    type="button"
+                    onClick={() => setDescExpanded(!descExpanded)}
+                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-surface-container px-4 py-2.5 text-xs font-black text-on-surface"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  >
+                    {descExpanded ? "Thu gọn" : "Xem thêm"}
+                    <motion.span
+                      animate={{ rotate: descExpanded ? 180 : 0 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                      <Icon name="chevron_down" className="text-sm" />
+                    </motion.span>
+                  </motion.button>
+                )}
+              </div>
             )}
 
             {activeTab === "Thông số" && (
