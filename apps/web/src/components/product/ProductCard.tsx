@@ -106,7 +106,7 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
             </h3>
             {!isBundle ? (
               <div
-                className="line-clamp-3 text-[10px] tracking-wide"
+                className="editor-content line-clamp-3 text-[10px]"
                 dangerouslySetInnerHTML={{ __html: product.description || "" }}
               />
             ) : null}

@@ -473,7 +473,7 @@ export function ProductView({
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="px-4"
         >
-          <div className="mb-4 mt-6 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
               <span className="text-sm">🎁</span>
             </div>
@@ -547,7 +547,7 @@ export function ProductView({
               Thường được mua cùng
             </div>
           </div>
-          <div className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2">
+          <div className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain">
             {boughtTogether.map((bp, i) => (
               <motion.div
                 key={bp.id}

@@ -47,11 +47,11 @@ export function ProductInfoTabs({
   }, [activeTab, estimates.length]);
 
   return (
-    <section className="px-6">
+    <section className="px-4">
       {/* Sticky tab bar */}
       <LayoutGroup>
-        <div className="sticky top-[72px] z-10 -mx-6 border-b border-outline-variant/20 bg-surface px-6">
-          <div className="flex gap-0">
+        <div className="sticky top-[72px] z-10 border-b border-outline-variant/20 bg-surface">
+          <div className="flex justify-between gap-0">
             {TABS.map((tab) => (
               <button
                 key={tab}
@@ -79,7 +79,7 @@ export function ProductInfoTabs({
       </LayoutGroup>
 
       {/* Tab content */}
-      <div className="py-5">
+      <div className="pt-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -90,7 +90,7 @@ export function ProductInfoTabs({
           >
             {activeTab === "Mô tả" && (
               <div
-                className="prose-sm prose max-w-none text-on-surface [&_a]:text-primary [&_img]:rounded-xl"
+                className="editor-content text-on-surface"
                 dangerouslySetInnerHTML={{ __html: editorialContent }}
               />
             )}
@@ -143,7 +143,11 @@ export function ProductInfoTabs({
                       key={method.id}
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.08, duration: 0.3, ease: "easeOut" }}
+                      transition={{
+                        delay: i * 0.08,
+                        duration: 0.3,
+                        ease: "easeOut",
+                      }}
                       className="flex gap-3"
                     >
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -156,17 +160,19 @@ export function ProductInfoTabs({
                         </svg>
                       </div>
                       <div>
-                        <p className="font-bold text-on-surface">{method.name}</p>
+                        <p className="font-bold text-on-surface">
+                          {method.name}
+                        </p>
                         <p className="mt-0.5">{method.description}</p>
                         <p className="mt-0.5 text-xs text-primary">
                           Nhận hàng{" "}
-                          {new Date(method.estimated_date_min).toLocaleDateString(
-                            "vi-VN"
-                          )}
+                          {new Date(
+                            method.estimated_date_min
+                          ).toLocaleDateString("vi-VN")}
                           {" — "}
-                          {new Date(method.estimated_date_max).toLocaleDateString(
-                            "vi-VN"
-                          )}
+                          {new Date(
+                            method.estimated_date_max
+                          ).toLocaleDateString("vi-VN")}
                         </p>
                       </div>
                     </motion.div>
@@ -187,8 +193,8 @@ export function ProductInfoTabs({
                       Đổi trả trong 7 ngày
                     </p>
                     <p className="mt-0.5">
-                      Sản phẩm lỗi hoặc chưa sử dụng được đổi trả trong vòng 7 ngày
-                      kể từ khi nhận.
+                      Sản phẩm lỗi hoặc chưa sử dụng được đổi trả trong vòng 7
+                      ngày kể từ khi nhận.
                     </p>
                   </div>
                 </div>
@@ -203,7 +209,9 @@ export function ProductInfoTabs({
                     </svg>
                   </div>
                   <div>
-                    <p className="font-bold text-on-surface">Cam kết chính hãng</p>
+                    <p className="font-bold text-on-surface">
+                      Cam kết chính hãng
+                    </p>
                     <p className="mt-0.5">
                       Sản phẩm được kiểm định và cam kết hàng chính hãng 100%.
                     </p>
