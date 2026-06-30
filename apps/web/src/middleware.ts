@@ -1,15 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getRateLimitKey } from "@/lib/redis/ratelimit";
-
-const RATE_LIMITED_PATHS = ["/login", "/register"];
-
-function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "127.0.0.1"
-  );
-}
 
 /**
  * Lightweight session check — reads the Supabase auth cookie directly without
@@ -21,26 +10,29 @@ function getClientIp(request: NextRequest): string {
  * via supabase.auth.getUser() from the server client.
  */
 function hasValidSession(request: NextRequest): boolean {
-  const cookies = request.cookies.getAll();
-
-  // @supabase/ssr stores session in sb-*-auth-token (or chunked as .0, .1 …)
-  const sessionCookie = cookies.find(
-    ({ name }) =>
-      name.startsWith("sb-") &&
-      (name.endsWith("-auth-token") || name.endsWith("-auth-token.0")),
-  );
-
-  if (!sessionCookie?.value) return false;
-
   try {
-    // Newer @supabase/ssr versions base64url-encode the JSON session object.
-    // Older versions store raw JSON. Try base64 decode first, fall back to raw.
+    const cookies = request.cookies.getAll();
+
+    // @supabase/ssr stores session in sb-*-auth-token (or chunked as .0, .1 …)
+    const sessionCookie = cookies.find(
+      ({ name }) =>
+        name.startsWith("sb-") &&
+        (name.endsWith("-auth-token") || name.endsWith("-auth-token.0")),
+    );
+
+    if (!sessionCookie?.value) return false;
+
     let raw = sessionCookie.value;
-    try {
-      const decoded = Buffer.from(raw, "base64url").toString("utf-8");
-      if (decoded.startsWith("{")) raw = decoded;
-    } catch {
-      // ignore — raw is already JSON
+
+    // Base64url-decode if the value looks base64url-encoded (no manual Buffer
+    // calls — Edge runtime may not support Buffer.from with base64url encoding)
+    if (/^[A-Za-z0-9_-]+$/.test(raw) && raw.includes(".")) {
+      try {
+        const decoded = atob(raw.replace(/-/g, "+").replace(/_/g, "/"));
+        if (decoded.startsWith("{")) raw = decoded;
+      } catch {
+        // not base64 — use raw value
+      }
     }
 
     const session = JSON.parse(raw) as { expires_at?: number };
@@ -52,31 +44,23 @@ function hasValidSession(request: NextRequest): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const isLoggedIn = hasValidSession(request);
+  try {
+    const { pathname } = request.nextUrl;
+    const isLoggedIn = hasValidSession(request);
 
-  // Redirect unauthenticated users away from protected routes
-  if (pathname.startsWith("/checkout") && !isLoggedIn) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Redirect authenticated users away from auth pages
-  if ((pathname === "/login" || pathname === "/register") && isLoggedIn) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  // Rate limit auth pages (lazy import — avoid loading @upstash/redis on Edge
-  // for non-rate-limited routes like /checkout)
-  if (RATE_LIMITED_PATHS.includes(pathname) && !isLoggedIn) {
-    const identifier = getClientIp(request);
-    const { getAuthLimiter } = await import("@/lib/redis/ratelimit");
-    const { success } = await getAuthLimiter().limit(identifier);
-
-    if (!success) {
-      return new NextResponse("Too Many Requests", { status: 429 });
+    // Redirect unauthenticated users away from protected routes
+    if (pathname.startsWith("/checkout") && !isLoggedIn) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
     }
+
+    // Redirect authenticated users away from auth pages
+    if ((pathname === "/login" || pathname === "/register") && isLoggedIn) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  } catch (err) {
+    console.error("[middleware] unexpected error:", err);
   }
 
   return NextResponse.next();
