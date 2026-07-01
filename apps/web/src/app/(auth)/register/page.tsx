@@ -2,6 +2,7 @@
 
 import Icon from "@/components/ui/Icon";
 import { useRegisterForm } from "@/hooks/useRegisterForm";
+import { motion } from "motion/react";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -132,11 +133,11 @@ export default function RegisterPage() {
 						/>
 						<span className="text-sm text-on-surface leading-relaxed">
 							Tôi đồng ý với{" "}
-							<Link href="#" className="underline underline-offset-2">
+							<Link href="/terms#terms" className="underline underline-offset-2">
 								Điều khoản &amp; Điều kiện
 							</Link>{" "}
 							và{" "}
-							<Link href="#" className="underline underline-offset-2">
+							<Link href="/terms#policy" className="underline underline-offset-2">
 								Chính sách bảo mật
 							</Link>
 						</span>
@@ -147,16 +148,32 @@ export default function RegisterPage() {
 				</div>
 
 				{/* Register Button */}
-				<button
-					type="submit"
-					disabled={isSubmitting}
-					className="btn w-full primary-gradient text-white border-0 rounded-2xl normal-case font-bold text-base py-4 h-auto mt-2 active:scale-[0.98] transition-transform shadow-ambient-sm disabled:opacity-60">
+        <button
+          type="submit"
+          data-testid="register-submit"
+          disabled={isSubmitting}
+          className="btn w-full primary-gradient text-white border-0 rounded-2xl normal-case font-bold text-base py-4 h-auto mt-2 active:scale-[0.98] transition-transform shadow-ambient-sm disabled:opacity-60">
 					{isSubmitting ? (
 						<span className="loading loading-spinner loading-sm" />
 					) : (
 						"Đăng ký"
 					)}
 				</button>
+				<motion.p
+					initial={{ opacity: 0, y: 8 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ delay: 0.3, duration: 0.5 }}
+					className="flex items-center justify-center gap-1.5 text-xs font-semibold text-amber-600 text-center mt-3"
+				>
+					<motion.span
+						animate={{ scale: [1, 1.15, 1] }}
+						transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+						className="inline-block"
+					>
+						<Icon name="warning" className="text-sm" />
+					</motion.span>
+					Kiểm tra cả mục Spam nếu không thấy email xác nhận
+				</motion.p>
 			</form>
 
 			{/* Log in link */}

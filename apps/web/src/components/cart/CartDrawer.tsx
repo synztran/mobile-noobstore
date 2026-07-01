@@ -371,6 +371,7 @@ export function CartDrawer() {
 
             <button
               onClick={handleCheckout}
+              data-testid="cart-checkout"
               disabled={checkingOut}
               className="primary-gradient btn btn-md !h-[40px] !min-h-[40px] w-full rounded-full border-0 text-xs font-bold uppercase tracking-widest text-white shadow-ambient-sm transition-transform active:scale-[0.98] disabled:scale-100 disabled:opacity-70"
             >

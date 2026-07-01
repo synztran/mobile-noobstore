@@ -45,6 +45,7 @@ export function AddToCartButton({
   return (
     <button
       type="button"
+      data-testid="add-to-cart"
       onClick={onClick}
       disabled={isDisabled}
       className={clsx(

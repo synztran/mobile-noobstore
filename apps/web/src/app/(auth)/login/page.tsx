@@ -121,6 +121,7 @@ function LoginForm() {
         {/* Sign In Button */}
         <button
           type="submit"
+          data-testid="login-submit"
           disabled={loading}
           className="primary-gradient btn mt-2 h-auto w-full rounded-2xl border-0 py-4 text-base font-bold normal-case text-white shadow-ambient-sm transition-transform active:scale-[0.98] disabled:opacity-60"
         >
