@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "@/lib/toast";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 	const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -18,18 +18,17 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 
 export function usePushNotifications() {
 	const [loading, setLoading] = useState(false);
-	const [permission, setPermission] = useState<NotificationPermission>(
-		typeof window !== "undefined" && "Notification" in window
-			? Notification.permission
-			: "default",
-	);
+	const [permission, setPermission] = useState<NotificationPermission>("default");
+	const [isSupported, setIsSupported] = useState(false);
 
-	const isSupported = useMemo(() => {
-		if (typeof window === "undefined") return false;
-		return (
+	useEffect(() => {
+		if ("Notification" in window) {
+			setPermission(Notification.permission);
+		}
+		setIsSupported(
 			"serviceWorker" in navigator &&
-			"PushManager" in window &&
-			"Notification" in window
+				"PushManager" in window &&
+				"Notification" in window,
 		);
 	}, []);
 

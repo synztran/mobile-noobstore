@@ -6,12 +6,10 @@ const nextConfig = {
 	},
 	images: {
 		minimumCacheTTL: 86400,
-		remotePatterns: [
-			{ protocol: "https", hostname: "*.supabase.co" },
-			{ protocol: "http", hostname: "*.supabase.co" },
-			{ protocol: "https", hostname: "res.cloudinary.com" },
-			{ protocol: "http", hostname: "res.cloudinary.com" },
-		],
+    remotePatterns: [
+      { protocol: "https", hostname: "*.supabase.co" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+    ],
 	},
 };
 

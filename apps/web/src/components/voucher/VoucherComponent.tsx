@@ -1,5 +1,6 @@
 "use client";
 
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
 import { useDiscountStore } from "@/store";
 import type { VoucherRow } from "@/types/voucher";
@@ -99,8 +100,14 @@ export function VoucherComponent({
     );
   }, [searchQuery, displayVouchers]);
 
-  const validVouchers = filteredVouchers.filter(isVoucherValid);
-  const invalidVouchers = filteredVouchers.filter((v) => !isVoucherValid(v));
+  const isMounted = useIsMounted();
+
+  const validVouchers = isMounted
+    ? filteredVouchers.filter(isVoucherValid)
+    : filteredVouchers;
+  const invalidVouchers = isMounted
+    ? filteredVouchers.filter((v) => !isVoucherValid(v))
+    : [];
 
   return (
     <section className={`space-y-2 ${className}`}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
 import type { VoucherRow } from "@/types/voucher";
 import {
@@ -96,6 +97,8 @@ export function VoucherCard({
     });
   }, [voucher.end_at]);
 
+  const isMounted = useIsMounted();
+
   const RewardIcon = rewardIcon;
 
   const getInvalidReason = (): string => {
@@ -141,7 +144,7 @@ export function VoucherCard({
               <p className="line-clamp-2 text-sm font-black leading-tight text-on-surface">
                 {rewardLabel}
               </p>
-              {!isValid ? (
+              {!isValid && isMounted ? (
                 <p className="mt-1 text-xs font-bold leading-5 text-warning">
                   ❌ {getInvalidReason()}
                 </p>

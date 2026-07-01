@@ -20,7 +20,7 @@ function formatTime(ms: number): string {
 }
 
 export function SaleCountdown({ endsAt }: Props) {
-  const [remaining, setRemaining] = useState(() => getRemaining(endsAt));
+  const [remaining, setRemaining] = useState(0);
 
   useEffect(() => {
     setRemaining(getRemaining(endsAt));
