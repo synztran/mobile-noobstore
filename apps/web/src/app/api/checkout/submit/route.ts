@@ -91,17 +91,21 @@ function toJson(value: unknown): Json | null {
 }
 
 export async function POST(req: NextRequest) {
-  const { success, reset } = await getCheckoutLimiter().limit(
-    getRateLimitKey(req)
-  );
-  if (!success) {
-    return NextResponse.json(
-      { error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
-      {
-        status: 429,
-        headers: { "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)) },
-      }
+  try {
+    const { success, reset } = await getCheckoutLimiter().limit(
+      getRateLimitKey(req)
     );
+    if (!success) {
+      return NextResponse.json(
+        { error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)) },
+        }
+      );
+    }
+  } catch (rateLimitError) {
+    console.warn("[submit] rate limiter unavailable, allowing request:", rateLimitError);
   }
 
   try {
@@ -525,10 +529,9 @@ export async function POST(req: NextRequest) {
       status: result.status,
     } satisfies SubmitOrderResponse);
   } catch (err: unknown) {
-    console.error("[submit] unexpected error:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const msg =
+      err instanceof Error ? err.message : "Internal server error";
+    console.error("[submit] unexpected error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

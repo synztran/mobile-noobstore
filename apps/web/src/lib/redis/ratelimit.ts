@@ -16,17 +16,17 @@ export function getRateLimitKey(request: Request, userId?: string): string {
 const rateLimiters = {
   auth: new Ratelimit({
     redis: getRedis(),
-    limiter: Ratelimit.fixedWindow(10, "1 m"),
+    limiter: Ratelimit.fixedWindow(100, "1 m"),
     prefix: "ratelimit:auth",
   }),
   apiAuth: new Ratelimit({
     redis: getRedis(),
-    limiter: Ratelimit.fixedWindow(20, "1 m"),
+    limiter: Ratelimit.fixedWindow(200, "1 m"),
     prefix: "ratelimit:api:auth",
   }),
   checkout: new Ratelimit({
     redis: getRedis(),
-    limiter: Ratelimit.fixedWindow(5, "1 m"),
+    limiter: Ratelimit.fixedWindow(50, "1 m"),
     prefix: "ratelimit:checkout",
   }),
 };
