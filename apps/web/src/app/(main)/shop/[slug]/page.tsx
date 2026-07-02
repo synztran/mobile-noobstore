@@ -9,9 +9,11 @@ import {
   getRelatedProducts,
 } from "@/lib/products-server";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { ScrollToTopOnNav } from "./ScrollToTopOnNav";
 
 export async function generateMetadata({
   params,
@@ -143,9 +145,11 @@ export default async function ProductPage({
   const { slug } = await params;
   return (
     <PullToRefresh>
+      <ScrollToTopOnNav />
       <Suspense fallback={<ProductDetailSkeleton />}>
         <ProductLoader slug={slug} />
       </Suspense>
+      <ScrollToTop />
     </PullToRefresh>
   );
 }

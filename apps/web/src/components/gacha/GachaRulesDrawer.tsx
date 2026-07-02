@@ -1,5 +1,6 @@
 "use client";
 
+import { RULES } from "@/constants/gacha";
 import { X } from "lucide-react";
 import { useEffect } from "react";
 
@@ -7,33 +8,6 @@ interface GachaRulesDrawerProps {
 	open: boolean;
 	onClose: () => void;
 }
-
-const RULES = [
-	{
-		title: "Cách chơi",
-		body: "Bỏ token vào máy, sau đó xoay núm điều khiển đủ 360° để quay. Núm sẽ bật trở lại nếu bạn thả tay trước khi hoàn thành vòng xoay.",
-	},
-	{
-		title: "Token",
-		body: "Token được nhận khi hoàn thành nhiệm vụ hoặc mua thêm. Mỗi lượt chơi tốn 1 token. Số token được cập nhật ngay sau mỗi lượt quay.",
-	},
-	{
-		title: "Phần thưởng",
-		body: "Mỗi viên nang chứa một phần thưởng được chọn ngẫu nhiên. Phần thưởng có nhiều độ hiếm khác nhau — viên nang vàng chứa những giải thưởng hiếm nhất. Tỉ lệ trúng của từng phần thưởng được hiển thị trong danh sách Phần Thưởng.",
-	},
-	{
-		title: "Phần thưởng giới hạn",
-		body: 'Một số phần thưởng có số lượng tối đa (hiển thị là "Còn X" trong danh sách). Khi hết số lượng, phần thưởng đó sẽ không thể trúng nữa và được thay thế bởi vật phẩm khác theo tỉ lệ.',
-	},
-	{
-		title: "Nhiệm vụ",
-		body: "Hoàn thành các nhiệm vụ trong ứng dụng để nhận thêm token. Nhiệm vụ làm mới theo lịch sự kiện. Kiểm tra tab Nhiệm Vụ để xem các nhiệm vụ hiện tại.",
-	},
-	{
-		title: "Công bằng",
-		body: "Mỗi lượt quay là hoàn toàn độc lập. Kết quả trước không ảnh hưởng đến lượt sau. Tỉ lệ phần trăm hiển thị phản ánh đúng trọng số quay được hệ thống sử dụng.",
-	},
-];
 
 export function GachaRulesDrawer({ open, onClose }: GachaRulesDrawerProps) {
 	useEffect(() => {
@@ -61,9 +35,9 @@ export function GachaRulesDrawer({ open, onClose }: GachaRulesDrawerProps) {
 				style={{ maxHeight: "80vh" }}>
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-base-200">
-					<h2 className="text-base font-black">
+					<p className="text-base font-black">
 						Cách Thức Hoạt Động
-					</h2>
+					</p>
 					<button
 						aria-label="Đóng"
 						onClick={onClose}

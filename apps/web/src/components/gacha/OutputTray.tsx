@@ -1,7 +1,8 @@
 "use client";
 
+import { BALL_PALETTE } from "@/constants/gacha";
 import { AnimatePresence, motion } from "motion/react";
-import LuckyBall, { BALL_PALETTE } from "./LuckyBall";
+import LuckyBall from "./LuckyBall";
 
 interface OutputTrayProps {
 	isOpen: boolean;

@@ -15,12 +15,16 @@ import {
 } from "@/lib/react-query/service/api/useServiceQueries";
 import { resolveSectionEntry } from "@/lib/services/bookingSelectionHandlers";
 import { validateSelections } from "@/lib/validators/serviceBooking";
+import type { ServicePricingRule } from "@/types/service-pricing";
 import { useMemo, useState } from "react";
 import type { BookingSummaryItem } from "./ServiceBookingSummaryBar";
 import {
+	buildPricingMaps,
 	computeCleaningPrice,
 	computeKeycapStemPrice,
 	computeSwitchLubePrice,
+	setPricingMaps,
+	type PricingMaps,
 	type ServiceEntryDraft,
 } from "./ServiceSectionCard";
 
@@ -79,6 +83,7 @@ export type BookingSummary = {
 function computeBookingSummary(
 	servicesById: Record<string, BookingService>,
 	selections: Record<string, ServiceEntryDraft[]>,
+	pricingMaps?: PricingMaps,
 ): BookingSummary {
 	let totalPrice = 0;
 	let totalHandlingDays = 0;
@@ -96,15 +101,15 @@ function computeBookingSummary(
 
 			let entryPrice = 0;
 			if (service.service_section === "cleaning") {
-				entryPrice = computeCleaningPrice(entry);
+				entryPrice = computeCleaningPrice(entry, pricingMaps);
 			} else if (service.service_section === "keycap_stem") {
-				entryPrice = computeKeycapStemPrice(entry);
+				entryPrice = computeKeycapStemPrice(entry, pricingMaps);
 			} else if (
 				service.service_section === "switch" &&
 				service.id === "svc-switch-lube"
 			) {
 				entryPrice =
-					computeSwitchLubePrice(entry) +
+					computeSwitchLubePrice(entry, pricingMaps) +
 					getServiceOptionAdjustment(
 						service,
 						entry.selectedByOptionId,
@@ -193,6 +198,14 @@ export function useServiceBookingFlow() {
 
 	const bookingConfigQuery = useBookingConfig();
 
+	const pricingMaps = useMemo(() => {
+		const rules = bookingConfigQuery.data?.pricing;
+		if (!rules || rules.length === 0) return undefined;
+		const maps = buildPricingMaps(rules);
+		setPricingMaps(maps);
+		return maps;
+	}, [bookingConfigQuery.data]);
+
 	const servicesById = useMemo(() => {
 		const map: Record<string, BookingService> = {};
 		for (const section of bookingConfigQuery.data?.sections ?? []) {
@@ -204,8 +217,8 @@ export function useServiceBookingFlow() {
 	}, [bookingConfigQuery.data]);
 
 	const summary = useMemo(
-		() => computeBookingSummary(servicesById, selections),
-		[selections, servicesById],
+		() => computeBookingSummary(servicesById, selections, pricingMaps),
+		[selections, servicesById, pricingMaps],
 	);
 
 	const bookingMutation = useServiceBookingMutation();

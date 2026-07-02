@@ -209,51 +209,49 @@ export function ProductView({
       <main className="my-auto space-y-4 pb-6">
         {/* ── Hero Image Gallery ── */}
         <section
-          className="relative"
+          className="relative p-4"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="p-4">
-            <button
-              type="button"
-              onClick={() => mediaImages.length > 0 && setImageViewerOpen(true)}
-              className="relative h-64 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm"
-            >
-              {heroImage ? (
-                <Image
-                  src={heroImage}
-                  alt={product.name}
-                  fill
-                  className="object-cover mix-blend-multiply"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
+          <button
+            type="button"
+            onClick={() => mediaImages.length > 0 && setImageViewerOpen(true)}
+            className="relative h-80 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm"
+          >
+            {heroImage ? (
+              <Image
+                src={heroImage}
+                alt={product.name}
+                fill
+                className="object-cover mix-blend-multiply"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Icon
+                  name="inventory_2"
+                  className="text-9xl text-outline-variant opacity-40"
                 />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Icon
-                    name="inventory_2"
-                    className="text-9xl text-outline-variant opacity-40"
-                  />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent" />
-              {mediaImages.length > 0 && (
-                <div className="absolute bottom-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-                  {activeImageIndex + 1}/{mediaImages.length}
-                </div>
-              )}
-              {hasDiscount && (
-                <div className="absolute right-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
-                  -{discountPercent}%
-                </div>
-              )}
-              {product.sale_ends_at && (
-                <div className="absolute left-3 top-3">
-                  <SaleCountdown endsAt={product.sale_ends_at} />
-                </div>
-              )}
-            </button>
-          </div>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent" />
+            {mediaImages.length > 0 && (
+              <div className="absolute bottom-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                {activeImageIndex + 1}/{mediaImages.length}
+              </div>
+            )}
+            {hasDiscount && (
+              <div className="absolute right-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
+                -{discountPercent}%
+              </div>
+            )}
+            {product.sale_ends_at && (
+              <div className="absolute left-3 top-3">
+                <SaleCountdown endsAt={product.sale_ends_at} />
+              </div>
+            )}
+          </button>
           {mediaImages.length > 1 && (
             <div className="flex justify-center gap-2 px-4">
               {mediaImages.map((img, i) => (
@@ -275,8 +273,8 @@ export function ProductView({
         </section>
 
         {/* ── Product Info ── */}
-        <section className="px-4">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
+        <section className="!mt-0 px-4">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
             {badges.map((badge) => (
               <span
                 key={badge.label}
@@ -303,10 +301,10 @@ export function ProductView({
           </div>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <p className="mb-1 text-xs font-black uppercase tracking-[0.18em] text-primary">
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-primary">
                 {product.category}
               </p>
-              <p className="text-balance text-2xl font-black uppercase leading-none text-on-surface">
+              <p className="text-balance text-xl font-black uppercase leading-none text-on-surface">
                 {product.name}
               </p>
               {product.brand && (
@@ -323,7 +321,7 @@ export function ProductView({
           <div className="mt-4 flex items-baseline justify-end gap-2">
             <span
               className={clsx(
-                "text-3xl font-black leading-none text-primary",
+                "text-2xl font-black leading-none text-primary",
                 hasDiscount ? "text-red-500" : "text-on-surface"
               )}
             >
@@ -533,7 +531,7 @@ export function ProductView({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="px-4"
+          className="mt-8 px-4"
         >
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2 text-lg font-black uppercase tracking-tight">
@@ -574,7 +572,7 @@ export function ProductView({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="px-4"
+          className="mt-8 px-4"
         >
           <div className="mb-4 flex items-center justify-between">
             <div className="text-lg font-black uppercase tracking-tight">

@@ -1,12 +1,7 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
-
-interface Winner {
-  displayName: string;
-  rewardName: string;
-  isGolden: boolean;
-}
+import { useRecentWinners } from "@/lib/react-query/gacha/api/useGachaQueries";
+import { memo } from "react";
 
 interface WinnerTickerProps {
   eventId: number;
@@ -15,16 +10,8 @@ interface WinnerTickerProps {
 export const WinnerTicker = memo(function WinnerTicker({
   eventId,
 }: WinnerTickerProps) {
-  const [winners, setWinners] = useState<Winner[]>([]);
-
-  useEffect(() => {
-    fetch(`/api/gacha/recent-winners?event_id=${eventId}&limit=15`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.winners) setWinners(data.winners);
-      })
-      .catch(() => null);
-  }, [eventId]);
+  const { data } = useRecentWinners(eventId);
+  const winners = data?.winners ?? [];
 
   if (winners.length === 0) return null;
 

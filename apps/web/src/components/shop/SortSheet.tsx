@@ -2,26 +2,7 @@
 
 import type { SortOption } from "@/app/api/products/route";
 import Icon from "@/components/ui/Icon";
-import { ArrowDown01, ArrowDown10, CalendarArrowUp } from "lucide-react";
-import { ReactElement } from "react";
-
-export const SORT_OPTIONS: {
-	value: SortOption;
-	label: string;
-	icon: ReactElement;
-}[] = [
-	{ value: "newest", label: "Mới nhất", icon: <CalendarArrowUp size={16} /> },
-	{
-		value: "price_asc",
-		label: "Giá: Thấp đến Cao",
-		icon: <ArrowDown01 size={16} />,
-	},
-	{
-		value: "price_desc",
-		label: "Giá: Cao đến Thấp",
-		icon: <ArrowDown10 size={16} />,
-	},
-];
+import { SORT_OPTIONS } from "@/constants/shop";
 
 interface SortSheetProps {
 	isOpen: boolean;
@@ -54,9 +35,9 @@ export function SortSheet({
 					isOpen ? "bottom-0" : "bottom-[-110%]"
 				}`}>
 				<div className="flex justify-between items-center px-6 py-5 border-b border-outline-variant/20">
-					<h2 className="text-lg font-black text-on-surface">
+					<p className="text-lg font-black text-on-surface">
 						Sắp xếp theo
-					</h2>
+					</p>
 					<button
 						onClick={onClose}
 						className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center">

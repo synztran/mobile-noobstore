@@ -15,8 +15,8 @@ export default async function ProductsPage({
   searchParams: Promise<{ q?: string; page?: string; product_type?: string }>;
 }) {
   const { q, page, product_type } = await searchParams;
-  const allowedProductTypes = new Set(["standard", "kit", "component", "gift"]);
-  const selectedProductType = allowedProductTypes.has(product_type ?? "")
+  const allowedProductTypes = new Set(["standard", "kit", "component", "gift", "all"]);
+  const selectedProductType = allowedProductTypes.has(product_type ?? "all") && product_type !== "all"
     ? product_type
     : undefined;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10));

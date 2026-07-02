@@ -52,8 +52,8 @@ export function StabilizerEntryConfig({
 							className={clsx(
 								"rounded-xl px-3 py-2 text-left border flex-1",
 								entry.stabilizerType === type
-									? "border-primary bg-primary text-primary-content"
-									: "border-base-200 bg-base-100 text-on-surface",
+									? "border-primary bg-primary text-on-primary"
+									: "border-outline-variant/30 bg-surface-container text-on-surface",
 							)}>
 							<p className="text-[11px] font-black">{label}</p>
 							<p className="text-[10px] opacity-75 mt-0.5">
@@ -82,8 +82,8 @@ export function StabilizerEntryConfig({
 							className={clsx(
 								"rounded-xl px-3 py-1.5 text-[11px] font-semibold border",
 								mode === m
-									? "border-primary bg-primary text-primary-content"
-									: "border-base-200 bg-base-100 text-on-surface",
+									? "border-primary bg-primary text-on-primary"
+									: "border-outline-variant/30 bg-surface-container text-on-surface",
 							)}>
 							{m === "bundle" ? "Bundle sẵn" : "Tùy chỉnh"}
 						</button>
@@ -104,8 +104,8 @@ export function StabilizerEntryConfig({
 								className={clsx(
 									"rounded-xl px-3 py-2 text-left border transition-colors",
 									selectedBundle === bKey
-										? "border-primary bg-primary text-primary-content"
-										: "border-base-200 bg-base-100 text-on-surface",
+										? "border-primary bg-primary text-on-primary"
+										: "border-outline-variant/30 bg-surface-container text-on-surface",
 								)}>
 								<p className="text-[11px] font-black">
 									{STABILIZER_BUNDLES[bKey].label}
@@ -121,7 +121,7 @@ export function StabilizerEntryConfig({
 						{STABILIZER_SIZES.map((size) => (
 							<div
 								key={size}
-								className="flex items-center gap-2 rounded-xl border border-base-200 bg-base-100 px-2.5 py-1.5">
+								className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container px-2.5 py-1.5">
 								<span className="text-[11px] font-bold text-on-surface w-10">
 									{size}
 								</span>
@@ -144,7 +144,7 @@ export function StabilizerEntryConfig({
 												},
 											)
 										}
-										className="btn btn-ghost btn-xs rounded-full w-6 h-6 min-h-0 p-0">
+										className="flex h-6 w-6 items-center justify-center rounded-full text-on-surface transition-colors hover:bg-surface-container-high">
 										<Minus size={10} />
 									</button>
 									<span className="text-[11px] font-black w-5 text-center">
@@ -166,7 +166,7 @@ export function StabilizerEntryConfig({
 												},
 											)
 										}
-										className="btn btn-ghost btn-xs rounded-full w-6 h-6 min-h-0 p-0">
+										className="flex h-6 w-6 items-center justify-center rounded-full text-on-surface transition-colors hover:bg-surface-container-high">
 										<Plus size={10} />
 									</button>
 								</div>

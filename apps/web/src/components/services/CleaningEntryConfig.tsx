@@ -62,8 +62,8 @@ export function CleaningEntryConfig({
 							className={clsx(
 								"rounded-xl px-3 py-1.5 text-[11px] font-semibold border",
 								productType === type
-									? "border-primary bg-primary text-primary-content"
-									: "border-base-200 bg-base-100 text-on-surface",
+									? "border-primary bg-primary text-on-primary"
+									: "border-outline-variant/30 bg-surface-container text-on-surface",
 							)}>
 							{label}
 						</button>
@@ -89,8 +89,8 @@ export function CleaningEntryConfig({
 								className={clsx(
 									"rounded-xl px-2.5 py-1.5 text-[11px] font-semibold border text-left",
 									entry.cleaningLayout === layout
-										? "border-primary bg-primary text-primary-content"
-										: "border-base-200 bg-base-100 text-on-surface",
+										? "border-primary bg-primary text-on-primary"
+										: "border-outline-variant/30 bg-surface-container text-on-surface",
 								)}>
 								{layout}
 								<span className="ml-1 opacity-75 text-[10px]">
@@ -153,8 +153,8 @@ export function CleaningEntryConfig({
 									className={clsx(
 										"rounded-xl px-2.5 py-1.5 text-[11px] font-semibold border",
 										entry.cleaningSwitchBundle === b.count
-											? "border-primary bg-primary text-primary-content"
-											: "border-base-200 bg-base-100 text-on-surface",
+											? "border-primary bg-primary text-on-primary"
+											: "border-outline-variant/30 bg-surface-container text-on-surface",
 									)}>
 									{b.count} switch
 									<span className="ml-1 opacity-75 text-[10px]">
@@ -187,8 +187,8 @@ export function CleaningEntryConfig({
 									className={clsx(
 										"rounded-xl px-2.5 py-1.5 text-[11px] font-semibold border",
 										entry.cleaningSwitchStatus === status
-											? "border-primary bg-primary text-primary-content"
-											: "border-base-200 bg-base-100 text-on-surface",
+											? "border-primary bg-primary text-on-primary"
+											: "border-outline-variant/30 bg-surface-container text-on-surface",
 									)}>
 									{status}
 								</button>

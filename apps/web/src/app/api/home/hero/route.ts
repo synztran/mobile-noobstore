@@ -13,6 +13,7 @@ export interface HeroCampaign {
 	cta_text: string;
 	cta_link: string;
 	is_active: boolean;
+	priority: number;
 }
 
 export async function GET() {
@@ -28,10 +29,10 @@ export async function GET() {
 		const { data: campaigns, error } = await supabase
 			.from("hero_campaigns")
 			.select(
-				"id, title, subtitle, description, image_url, cta_text, cta_link, is_active",
+				"id, title, subtitle, description, image_url, cta_text, cta_link, is_active, priority",
 			)
 			.eq("is_active", true)
-			.order("created_at", { ascending: true })
+			.order("priority", { ascending: false })
 			.limit(6);
 
 		if (error) {
@@ -49,9 +50,9 @@ export async function GET() {
 			);
 		}
 
-		// Cache for 5 min — hero campaigns rarely change
-		await setCache(cacheKey, campaigns, 300);
-		return NextResponse.json(campaigns as HeroCampaign[]);
+		// Cache indefinitely — only invalidated via admin mutations
+		await setCache(cacheKey, campaigns);
+		return NextResponse.json(campaigns as unknown as HeroCampaign[]);
 	} catch (err) {
 		console.error("[hero] error:", err);
 		return NextResponse.json(

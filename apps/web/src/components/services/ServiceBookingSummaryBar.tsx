@@ -34,10 +34,10 @@ export function ServiceBookingSummaryBar({
 	const [expanded, setExpanded] = useState(false);
 
 	return (
-		<div className="fixed left-0 right-0 z-[60] border-t border-base-200 bg-base-100/95 backdrop-blur px-4 py-3 bottom-0">
+		<div className="fixed left-0 right-0 bottom-0 z-[60] border-t border-outline-variant/20 bg-surface/80 backdrop-blur-xl px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
 			<div className="flex items-center justify-between mb-2">
 				<div>
-					<p className="text-[11px] uppercase tracking-wider text-on-surface-variant">
+					<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
 						Đã chọn
 					</p>
 					<p className="text-sm font-black text-on-surface">
@@ -45,7 +45,7 @@ export function ServiceBookingSummaryBar({
 					</p>
 				</div>
 				<div className="text-right">
-					<p className="text-[11px] uppercase tracking-wider text-on-surface-variant">
+					<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
 						Tổng tạm tính
 					</p>
 					<p className="text-base font-black text-primary">
@@ -55,8 +55,8 @@ export function ServiceBookingSummaryBar({
 			</div>
 
 			<div className="flex items-center justify-between mb-2">
-				<p className="text-xs text-on-surface-variant">
-					Tổng thời gian xử lý dự kiến:{" "}
+				<p className="text-[10px] text-on-surface-variant">
+					Tổng thời gian xử lý:{" "}
 					<span className="font-bold text-on-surface">
 						{totalHandlingDays}
 					</span>{" "}
@@ -65,21 +65,22 @@ export function ServiceBookingSummaryBar({
 				<button
 					type="button"
 					onClick={() => setExpanded((v) => !v)}
-					className="btn btn-ghost btn-xs rounded-full">
+					className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant transition-colors hover:bg-surface-container-high"
+				>
 					{expanded ? (
 						<>
-							Thu gọn <ChevronUp size={14} />
+							Thu gọn <ChevronUp size={12} />
 						</>
 					) : (
 						<>
-							Chi tiết <ChevronDown size={14} />
+							Chi tiết <ChevronDown size={12} />
 						</>
 					)}
 				</button>
 			</div>
 
 			{expanded ? (
-				<div className="mb-3 max-h-36 overflow-y-auto rounded-xl border border-base-200 bg-base-100 p-2 space-y-1.5">
+				<div className="mb-3 max-h-36 overflow-y-auto rounded-2xl border border-outline-variant/20 bg-surface-container-low p-3 space-y-2">
 					{summaryItems.length === 0 ? (
 						<p className="text-xs text-on-surface-variant">
 							Chưa có mục được chọn.
@@ -88,9 +89,10 @@ export function ServiceBookingSummaryBar({
 						summaryItems.map((item) => (
 							<div
 								key={item.serviceId}
-								className="flex items-center justify-between text-xs gap-2">
-								<div className="text-left shrink-0">
-									<p className="font-semibold text-on-surface truncate">
+								className="flex items-center justify-between gap-2"
+							>
+								<div className="min-w-0">
+									<p className="text-xs font-bold text-on-surface truncate">
 										{item.serviceName}
 										<span className="ml-1 text-on-surface-variant font-normal">
 											x{item.count}
@@ -100,8 +102,7 @@ export function ServiceBookingSummaryBar({
 										{item.handlingDays} ngày
 									</p>
 								</div>
-
-								<p className="font-black text-sm text-primary">
+								<p className="text-sm font-black text-primary shrink-0">
 									{formatVND(item.price)}
 								</p>
 							</div>
@@ -114,7 +115,8 @@ export function ServiceBookingSummaryBar({
 				type="button"
 				onClick={onSubmit}
 				disabled={disabled || isSubmitting}
-				className="btn btn-primary w-full rounded-full font-black uppercase tracking-wide disabled:opacity-50">
+				className="w-full rounded-full bg-primary-gradient py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-opacity active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+			>
 				{isSubmitting ? (
 					<span className="loading loading-spinner loading-sm" />
 				) : (

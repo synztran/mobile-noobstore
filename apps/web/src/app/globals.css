@@ -183,6 +183,18 @@
   50% { box-shadow: 0 0 0 6px rgba(155, 63, 28, 0); }
 }
 
+/* ── gooey-toast color overrides ──
+   gooey-toast uses oklch() which can be dropped by Next.js production
+   CSS minification. Hex fallbacks ensure colors survive the build.       */
+:root {
+	--gooey-state-success: #16a34a;
+	--gooey-state-loading: #6b7280;
+	--gooey-state-error: #dc2626;
+	--gooey-state-warning: #d97706;
+	--gooey-state-info: #2563eb;
+	--gooey-state-action: #4f46e5;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

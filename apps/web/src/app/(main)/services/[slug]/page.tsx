@@ -1,56 +1,13 @@
-import type { Service } from "@/app/api/services/route";
+"use client";
+
+import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
 import { TopNav } from "@/components/layout/TopNav";
 import { ServiceConfigurator } from "@/components/services/ServiceConfigurator";
 import { formatVND } from "@/lib/currency";
-import { createClient } from "@/lib/supabase/server";
+import { useServiceDetail } from "@/lib/react-query/service/api/useServiceQueries";
+import { AlertTriangle, RefreshCcw } from "lucide-react";
 import Image from "next/image";
-import { notFound } from "next/navigation";
-
-async function getService(slug: string): Promise<Service | null> {
-	const supabase = await createClient();
-
-	const { data } = await supabase
-		.from("services")
-		.select(
-			`
-			id, name, slug, description, service_type,
-			base_price, thumbnail_url, estimated_days,
-			service_options (
-				id, label, is_required, display_order,
-				service_option_values (
-					id, label, price_adjustment, display_order
-				)
-			)
-		`,
-		)
-		.eq("slug", slug)
-		.eq("is_active", true)
-		.maybeSingle();
-
-	if (!data) return null;
-
-	return {
-		id: data.id,
-		name: data.name,
-		slug: data.slug,
-		description: data.description,
-		service_type: data.service_type,
-		base_price: data.base_price,
-		thumbnail_url: data.thumbnail_url,
-		estimated_days: data.estimated_days,
-		options: (data.service_options ?? [])
-			.sort((a, b) => a.display_order - b.display_order)
-			.map((opt) => ({
-				id: opt.id,
-				label: opt.label,
-				is_required: opt.is_required,
-				display_order: opt.display_order,
-				values: (opt.service_option_values ?? []).sort(
-					(a, b) => a.display_order - b.display_order,
-				),
-			})),
-	};
-}
+import { useParams } from "next/navigation";
 
 const SERVICE_TYPE_LABELS: Record<string, string> = {
 	mod: "Mod",
@@ -60,15 +17,63 @@ const SERVICE_TYPE_LABELS: Record<string, string> = {
 	middleman: "Middleman",
 };
 
-export default async function ServiceDetailPage({
-	params,
-}: {
-	params: Promise<{ slug: string }>;
-}) {
-	const { slug } = await params;
-	const service = await getService(slug);
+function ServiceDetailSkeleton() {
+	return (
+		<>
+			<TopNav showBack backHref="/services" showCart />
+			<main className="pb-40 animate-pulse">
+				<div className="relative aspect-[4/3] w-full bg-surface-container-high" />
+				<div className="px-4 pt-6 pb-4 space-y-3">
+					<div className="h-3 w-16 bg-surface-container-high rounded-full" />
+					<div className="h-6 w-3/4 bg-surface-container-high rounded" />
+					<div className="h-5 w-24 bg-surface-container-high rounded" />
+					<div className="h-4 w-full bg-surface-container-high rounded mt-3" />
+				</div>
+			</main>
+		</>
+	);
+}
 
-	if (!service) notFound();
+function ServiceDetailContent() {
+	const params = useParams();
+	const slug = params.slug as string;
+
+	const { data: service, isLoading, isError, error, refetch } = useServiceDetail(slug);
+
+	if (isLoading) {
+		return <ServiceDetailSkeleton />;
+	}
+
+	if (isError) {
+		const is404 = error?.message === "NOT_FOUND";
+		return (
+			<>
+				<TopNav showBack backHref="/services" showCart />
+				<main className="pb-40">
+					<div className="flex flex-col items-center justify-center gap-4 px-4 pt-20 text-center">
+						<AlertTriangle className="h-12 w-12 text-outline" />
+						<p className="text-sm font-bold text-on-surface">
+							{is404
+								? "Dịch vụ không tồn tại"
+								: "Không thể tải dịch vụ"}
+						</p>
+						{!is404 ? (
+							<button
+								type="button"
+								onClick={() => refetch()}
+								className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/30 bg-surface-container px-4 py-2 text-xs font-black uppercase tracking-widest text-on-surface transition-colors hover:bg-surface-container-high"
+							>
+								<RefreshCcw size={14} />
+								Thử lại
+							</button>
+						) : null}
+					</div>
+				</main>
+			</>
+		);
+	}
+
+	if (!service) return null;
 
 	const typeLabel =
 		SERVICE_TYPE_LABELS[service.service_type] ?? service.service_type;
@@ -83,8 +88,7 @@ export default async function ServiceDetailPage({
 			/>
 
 			<main className="pb-40">
-				{/* Hero */}
-				<div className="relative aspect-[4/3] bg-surface-container w-full">
+				<div className="relative aspect-[4/3] w-full bg-surface-container-high">
 					{service.thumbnail_url ? (
 						<Image
 							src={service.thumbnail_url}
@@ -95,27 +99,26 @@ export default async function ServiceDetailPage({
 							priority
 						/>
 					) : (
-						<div className="absolute inset-0 flex items-center justify-center opacity-20">
-							<span className="text-7xl">🔧</span>
+						<div className="absolute inset-0 flex items-center justify-center">
+							<span className="text-6xl opacity-20 select-none">🔧</span>
 						</div>
 					)}
 				</div>
 
-				{/* Header */}
-				<div className="px-4 pt-6 pb-4 space-y-1">
-					<span className="text-[10px] font-black uppercase tracking-widest text-primary">
+				<div className="px-4 pt-6 pb-4 space-y-1.5">
+					<span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
 						{typeLabel}
 					</span>
-					<h1 className="text-2xl font-black uppercase text-on-surface leading-tight">
+					<p className="text-2xl font-black uppercase text-on-surface leading-tight">
 						{service.name}
-					</h1>
+					</p>
 					<div className="flex items-center gap-3 pt-1">
 						<span className="text-lg font-black text-on-surface">
 							{formatVND(service.base_price)}
 						</span>
 						{service.estimated_days && (
 							<span className="text-xs text-on-surface-variant">
-								Thời gian ~{service.estimated_days} ngày
+								~{service.estimated_days} ngày
 							</span>
 						)}
 					</div>
@@ -126,9 +129,8 @@ export default async function ServiceDetailPage({
 					)}
 				</div>
 
-				<div className="border-t border-base-200 mx-4" />
+				<div className="border-t border-outline-variant/20 mx-4" />
 
-				{/* Configurator */}
 				<div className="px-4 pt-6">
 					<ServiceConfigurator service={service} />
 				</div>
@@ -136,3 +138,5 @@ export default async function ServiceDetailPage({
 		</>
 	);
 }
+
+export default withAuthRedirect(ServiceDetailContent);

@@ -15,7 +15,7 @@ import { formatVND } from "@/lib/currency";
 import { ShippingSubmitButton } from "@/components/checkout/ShippingSubmitButton";
 import AddressSuggest from "@/components/checkout/AddressSuggest";
 import clsx from "clsx";
-import { MapPinHouse, Phone, Truck } from "lucide-react";
+import { MapPinHouse, PercentCircle, Phone, Truck } from "lucide-react";
 import { memo, useMemo } from "react";
 import { ShippingPageSkeleton } from "./ShippingPageSkeleton";
 
@@ -267,7 +267,9 @@ const ShippingPage = () => {
           </label>
           <WardSearchInput
             value={form.ward}
-            onChange={(ward: string) => setForm((prev) => ({ ...prev, streetAddress: "", ward }))}
+            onChange={(ward: string) =>
+              setForm((prev) => ({ ...prev, streetAddress: "", ward }))
+            }
             onCodeChange={(code: string) =>
               setForm((prev) => ({ ...prev, wardCode: code }))
             }
@@ -458,6 +460,27 @@ const ShippingPage = () => {
             )}
           </div>
         </div>
+        {/* ── Discount teaser ──────────────────────────────────── */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-surface-container-low p-5">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-amber-400/20 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-orange-400/15 blur-xl" />
+          <div className="relative flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-ambient-sm">
+              <PercentCircle className="text-lg text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black tracking-tight text-amber-700">
+                Giảm giá ở bước tiếp theo
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                Bạn có mã giảm giá? Ở bước thanh toán, bạn có thể áp dụng mã
+                giảm giá, tích điểm thưởng hoặc chọn ưu đãi đặc biệt để giảm
+                tổng hóa đơn.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* ── Order summary + CTA ──────────────────────────────── */}
         <div className="overflow-hidden rounded-3xl bg-surface-container-low">
           <div className="space-y-3 px-5 pb-4 pt-5">

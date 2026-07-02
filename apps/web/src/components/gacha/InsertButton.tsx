@@ -8,6 +8,8 @@ interface InsertButtonProps {
   disabled?: boolean;
   hasToken?: boolean;
   noTokens?: boolean;
+  on10xClick?: () => void;
+  tokenCount?: number | null;
 }
 
 export const InsertButton = ({
@@ -15,12 +17,13 @@ export const InsertButton = ({
   disabled = false,
   hasToken = false,
   noTokens = false,
-  on10xClick,
-  tokenCount,
-}: InsertButtonProps & {
-  on10xClick?: () => void;
-  tokenCount?: number | null;
-}) => {
+}: InsertButtonProps) => {
+  function renderButtonLabel() {
+    if (hasToken) return "Quay thôi";
+    if (noTokens) return "Không đủ token";
+    return "Tham gia";
+  }
+
   const bg = hasToken
     ? "linear-gradient(145deg, #4ade80 0%, #16a34a 100%)"
     : "linear-gradient(145deg, #fbbf24 0%, #d97706 100%)";
@@ -84,55 +87,10 @@ export const InsertButton = ({
             damping: 30,
           }}
         >
-          {/* Top gloss bar */}
-          {/* {!disabled && (
-						<div className="absolute inset-x-5 top-1.5 rounded-full h-2 bg-white/30 blur-[2px]" />
-					)} */}
-          {/* Bottom depth shadow */}
-          {/* {!disabled && (
-						<div className="absolute inset-x-0 bottom-0 h-1.5 bg-black/[12%] rounded-b-xl" />
-					)} */}
-
-          <div className="text-xs">
-            {hasToken ? (
-              "Quay thôi"
-            ) : noTokens ? (
-              "Không đủ token"
-            ) : (
-              <div className="relative flex items-center justify-center">
-                Tham gia
-              </div>
-            )}
-          </div>
+          <div className="text-xs">{renderButtonLabel()}</div>
         </motion.button>
       </div>
 
-      {/* <div
-        className={`relative overflow-hidden rounded-2xl ${disabled ? "p-0" : "p-0.5"}`}
-      >
-        <motion.button
-          type="button"
-          onClick={on10xClick}
-          disabled={
-            disabled ||
-            noTokens ||
-            tokenCount === null ||
-            (tokenCount || 0) < 10
-          }
-          className="flex h-10 w-full select-none items-center justify-center gap-1 rounded-[12px] border border-gray-500/30 bg-gradient-to-r from-gray-600 to-gray-700 text-xs font-semibold uppercase text-white"
-          whileTap={
-            disabled ||
-            noTokens ||
-            tokenCount === null ||
-            (tokenCount || 0) < 10
-              ? {}
-              : { scale: 0.96, y: 2 }
-          }
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        >
-          10x
-        </motion.button>
-      </div> */}
     </div>
   );
 };

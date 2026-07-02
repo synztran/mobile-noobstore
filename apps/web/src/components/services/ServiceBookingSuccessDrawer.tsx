@@ -33,7 +33,7 @@ export function ServiceBookingSuccessDrawer({
 
 			<div
 				className={clsx(
-					"fixed left-0 right-0 z-[79] bg-base-100 rounded-t-3xl transition-all duration-300 ease-out p-5",
+					"fixed left-0 right-0 z-[79] bg-surface-container-lowest rounded-t-3xl transition-all duration-300 ease-out p-5",
 					open ? "bottom-0" : "-bottom-full",
 				)}>
 				<div className="flex justify-between items-center mb-5">
@@ -64,13 +64,13 @@ export function ServiceBookingSuccessDrawer({
 					<button
 						type="button"
 						onClick={onBookMore}
-						className="btn btn-primary w-full rounded-full font-black uppercase tracking-wide">
+						className="w-full rounded-full bg-primary-gradient py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20">
 						Đặt thêm dịch vụ
 					</button>
 					<button
 						type="button"
 						onClick={onClose}
-						className="btn w-full rounded-full uppercase tracking-wide">
+						className="w-full rounded-full border border-outline-variant/30 bg-surface-container py-3 text-xs font-black uppercase tracking-widest text-on-surface">
 						Đóng
 					</button>
 				</div>

@@ -45,11 +45,11 @@ function OptionGroup({
 	return (
 		<div className="space-y-2">
 			<div className="flex items-center gap-1">
-				<p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
+				<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
 					{option.label}
 				</p>
 				{option.is_required && (
-					<span className="text-[10px] text-error font-bold">*</span>
+					<span className="text-[10px] font-bold text-error">*</span>
 				)}
 			</div>
 			<div className="flex flex-wrap gap-2">
@@ -60,11 +60,12 @@ function OptionGroup({
 							key={val.id}
 							type="button"
 							onClick={() => onToggle(val.id)}
-							className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+							className={`rounded-xl px-3 py-1.5 text-xs font-bold border transition-colors ${
 								active
-									? "bg-primary text-primary-content border-primary"
+									? "bg-primary text-on-primary border-primary"
 									: "bg-surface-container text-on-surface border-transparent"
-							}`}>
+							}`}
+						>
 							{val.label}
 							{val.price_adjustment !== 0 && (
 								<span className="ml-1 opacity-70">
@@ -91,7 +92,7 @@ function ConfirmationScreen({
 }) {
 	return (
 		<div className="flex flex-col items-center justify-center py-20 gap-6 text-center px-6">
-			<CheckCircle className="w-16 h-16 text-success" />
+			<CheckCircle className="h-16 w-16 text-green-600" />
 			<div className="space-y-1">
 				<p className="text-lg font-black text-on-surface uppercase tracking-tight">
 					Đặt dịch vụ thành công!
@@ -109,7 +110,8 @@ function ConfirmationScreen({
 			<button
 				type="button"
 				onClick={onBack}
-				className="btn btn-primary btn-sm rounded-full px-6">
+				className="rounded-full bg-primary-gradient px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20"
+			>
 				Xem thêm dịch vụ
 			</button>
 		</div>
@@ -154,7 +156,6 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 			return;
 		}
 
-		// Validate required options
 		for (const opt of service.options) {
 			if (!opt.is_required) continue;
 			const hasSelection = opt.values.some((v) => selectedIds.has(v.id));
@@ -189,7 +190,6 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 
 	return (
 		<div className="space-y-6">
-			{/* Options */}
 			{service.options.length > 0 && (
 				<div className="space-y-5">
 					{service.options.map((opt) => (
@@ -203,9 +203,8 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 				</div>
 			)}
 
-			{/* Quantity */}
 			<div className="space-y-2">
-				<p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
+				<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
 					Số lượng
 				</p>
 				<div className="flex items-center gap-3">
@@ -213,19 +212,21 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 						type="button"
 						disabled={quantity <= 1}
 						onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-						className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center disabled:opacity-40">
+						className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container transition-colors hover:bg-surface-container-high disabled:opacity-40 disabled:cursor-not-allowed"
+					>
 						<Icon
 							name="minus"
 							className="text-base text-on-surface"
 						/>
 					</button>
-					<span className="text-base font-black text-on-surface w-6 text-center">
+					<span className="w-6 text-center text-base font-black text-on-surface">
 						{quantity}
 					</span>
 					<button
 						type="button"
 						onClick={() => setQuantity((q) => q + 1)}
-						className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center">
+						className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container transition-colors hover:bg-surface-container-high"
+					>
 						<Icon
 							name="add"
 							className="text-base text-on-surface"
@@ -234,44 +235,40 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 				</div>
 			</div>
 
-			{/* Customer note */}
 			<div className="space-y-2">
-				<p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
+				<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
 					Ghi chú (tuỳ chọn)
 				</p>
 				<textarea
 					value={note}
 					onChange={(e) => setNote(e.target.value)}
-					placeholder="Ví dụ: Gateron Yellow, chỉ lube linear..."
+					placeholder="VD: Gateron Yellow, chỉ lube linear..."
 					rows={3}
-					className="w-full text-sm rounded-2xl bg-surface-container p-3 text-on-surface placeholder:text-on-surface-variant resize-none outline-none focus:ring-2 focus:ring-primary/30"
+					className="w-full resize-none rounded-2xl bg-surface-container p-4 text-sm text-on-surface placeholder:text-on-surface-variant outline-none focus:ring-2 focus:ring-primary/30"
 				/>
 			</div>
 
-			{/* Pickup time */}
 			<div className="space-y-2">
-				<p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
+				<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
 					Thời gian nhận dịch vụ
 				</p>
 				<input
 					type="datetime-local"
 					value={pickupAt}
 					onChange={(e) => setPickupAt(e.target.value)}
-					className="w-full text-sm rounded-2xl bg-surface-container px-4 py-3 text-on-surface placeholder:text-on-surface-variant outline-none focus:ring-2 focus:ring-primary/30"
+					className="w-full rounded-2xl bg-surface-container px-4 py-3.5 text-sm text-on-surface placeholder:text-on-surface-variant outline-none focus:ring-2 focus:ring-primary/30"
 				/>
 			</div>
 
-			{/* Validation / API errors */}
 			{(validationError ?? mutation.error) && (
-				<p className="text-sm text-error font-medium">
+				<p className="text-xs font-bold text-error">
 					{validationError ?? mutation.error?.message}
 				</p>
 			)}
 
-			{/* Fixed bottom bar */}
-			<div className="fixed bottom-0 left-0 right-0 bg-base-100/90 backdrop-blur-sm border-t border-base-200 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+			<div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-outline-variant/20 bg-surface/80 backdrop-blur-xl px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
 				<div className="flex items-center justify-between mb-3">
-					<span className="text-xs text-on-surface-variant">
+					<span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
 						Tổng dự kiến
 					</span>
 					<span className="text-base font-black text-primary">
@@ -282,7 +279,8 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 					type="button"
 					onClick={handleSubmit}
 					disabled={mutation.isPending}
-					className="btn btn-primary w-full rounded-full font-black uppercase tracking-wide">
+					className="w-full rounded-full bg-primary-gradient py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-opacity active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+				>
 					{mutation.isPending ? (
 						<span className="loading loading-spinner loading-sm" />
 					) : (

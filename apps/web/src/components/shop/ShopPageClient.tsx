@@ -38,6 +38,8 @@ export function ShopPageClient({
   const products =
     data?.pages.flatMap((p) => p.products as ShopProduct[]) ?? [];
 
+  const total = data?.pages[0]?.total ?? initialData.total;
+
   // ── Infinite scroll sentinel ──
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useCallback(
@@ -58,7 +60,7 @@ export function ShopPageClient({
   return (
     <>
       <ShopControls
-        total={initialData.total}
+        total={total}
         categories={categories}
         filters={filters}
         onFiltersChange={setFilters}

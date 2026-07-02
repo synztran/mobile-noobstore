@@ -1,24 +1,9 @@
 "use client";
 
+import { REWARD_TYPE_LABEL } from "@/constants/gacha";
+import type { GachaRewardData } from "@/types/gacha";
 import { AnimatePresence, motion } from "motion/react";
 import LuckyBall from "./LuckyBall";
-
-export interface GachaRewardData {
-	id: number;
-	reward_type: "product" | "point" | "puzzle" | "lucky_text";
-	name: string;
-	description: string | null;
-	value: string | null;
-	thumbnail_url: string | null;
-	is_golden: boolean;
-}
-
-const REWARD_TYPE_LABEL: Record<string, string> = {
-	product: "Sản phẩm",
-	point: "Điểm",
-	puzzle: "Mảnh ghép",
-	lucky_text: "Tin nhắn may mắn",
-};
 
 interface RewardRevealProps {
 	rewardIndex: number | null;

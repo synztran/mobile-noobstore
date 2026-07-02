@@ -3,160 +3,164 @@
 import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
 import Icon from "@/components/ui/Icon";
 import clsx from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface FilterState {
-	category: string | null;
-	priceMin: number;
-	priceMax: number;
+  category: string | null;
+  priceMin: number;
+  priceMax: number;
 }
 
 const DEFAULT_FILTER_STATE: FilterState = {
-	category: null,
-	priceMin: 0,
-	priceMax: 0,
+  category: null,
+  priceMin: 0,
+  priceMax: 0,
 };
 
 interface FilterOverlayProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onApply?: (state: FilterState) => void;
-	initialState?: Partial<FilterState>;
-	categories?: { id: string; slug: string; name: string }[];
+  isOpen: boolean;
+  onClose: () => void;
+  onApply?: (state: FilterState) => void;
+  initialState?: Partial<FilterState>;
+  categories?: { id: string; slug: string; name: string }[];
 }
 
 export function FilterOverlay({
-	isOpen,
-	onClose,
-	onApply,
-	initialState,
-	categories = [],
+  isOpen,
+  onClose,
+  onApply,
+  initialState,
+  categories = [],
 }: FilterOverlayProps) {
-	const init = { ...DEFAULT_FILTER_STATE, ...initialState };
-	const [selectedCategory, setSelectedCategory] = useState<string | null>(
-		init.category,
-	);
-	const [selectedPriceMin, setSelectedPriceMin] = useState<number>(
-		init.priceMin,
-	);
-	const [selectedPriceMax, setSelectedPriceMax] = useState<number>(
-		init.priceMax,
-	);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    initialState?.category ?? null
+  );
+  const [selectedPriceMin, setSelectedPriceMin] = useState<number>(
+    initialState?.priceMin ?? 0
+  );
+  const [selectedPriceMax, setSelectedPriceMax] = useState<number>(
+    initialState?.priceMax ?? 0
+  );
 
-	return (
-		<>
-			{/* Backdrop */}
-			<div
-				className={`fixed inset-0 bg-on-surface/30 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
-					isOpen
-						? "opacity-100 pointer-events-auto"
-						: "opacity-0 pointer-events-none"
-				}`}
-				onClick={onClose}
-			/>
+  useEffect(() => {
+    setSelectedCategory(initialState?.category ?? null);
+    setSelectedPriceMin(initialState?.priceMin ?? 0);
+    setSelectedPriceMax(initialState?.priceMax ?? 0);
+  }, [initialState?.category, initialState?.priceMin, initialState?.priceMax]);
 
-			{/* Panel — slides from top */}
-			<div
-				className={`fixed left-0 right-0 z-[70] bg-white rounded-b-3xl shadow-2xl overflow-hidden flex flex-col transition-all duration-300 ease-out ${
-					isOpen ? "top-0 bottom-[10vh]" : "top-[-110%] bottom-[110%]"
-				}`}>
-				{/* Header */}
-				<div className="flex-none flex justify-between items-center px-6 py-5 border-b border-outline-variant/20">
-					<h2 className="text-xl font-black text-on-surface">
-						Lọc sản phẩm
-					</h2>
-					<button
-						onClick={onClose}
-						className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors">
-						<Icon
-							name="close"
-							className="text-on-surface text-xl"
-						/>
-					</button>
-				</div>
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-[60] bg-on-surface/30 backdrop-blur-sm transition-opacity duration-300 ${
+          isOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+        onClick={onClose}
+      />
 
-				<div className="flex-1 overflow-y-auto hide-scrollbar px-6 py-4 space-y-6 pb-4">
-					{/* Category */}
-					{categories.length > 0 && (
-						<section>
-							<h3 className="font-black text-on-surface text-base mb-3">
-								Danh mục
-							</h3>
-							<div className="flex flex-wrap gap-2">
-								<button
-									onClick={() => setSelectedCategory(null)}
-									className={clsx(
-										"px-4 py-2 rounded-xl text-sm font-bold transition-all",
-										selectedCategory === null
-											? "bg-primary text-on-primary"
-											: "bg-surface-container text-on-surface",
-									)}>
-									Tất cả
-								</button>
-								{categories.map((cat) => (
-									<button
-										key={cat.id}
-										onClick={() =>
-											setSelectedCategory(
-												cat.slug === selectedCategory
-													? null
-													: cat.slug,
-											)
-										}
-										className={clsx(
-											"px-4 py-2 rounded-xl text-sm font-bold transition-all",
-											selectedCategory === cat.slug
-												? "bg-primary text-on-primary"
-												: "bg-surface-container text-on-surface",
-										)}>
-										{cat.name}
-									</button>
-								))}
-							</div>
-						</section>
-					)}
+      {/* Panel — slides from top */}
+      <div
+        className={`fixed left-0 right-0 z-[70] flex flex-col overflow-hidden rounded-b-3xl bg-white shadow-2xl transition-all duration-300 ease-out ${
+          isOpen ? "bottom-[10vh] top-0" : "bottom-[110%] top-[-110%]"
+        }`}
+      >
+        {/* Header */}
+        <div className="flex flex-none items-center justify-between border-b border-outline-variant/20 px-6 py-5">
+          <h2 className="text-xl font-black text-on-surface">Lọc sản phẩm</h2>
+          <button
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container transition-colors hover:bg-surface-container-high"
+          >
+            <Icon name="close" className="text-xl text-on-surface" />
+          </button>
+        </div>
 
-					{/* Price range */}
-					<section>
-						<h3 className="font-black text-on-surface text-base mb-3">
-							Khoảng giá
-						</h3>
-						<DualRangeSlider
-							min={selectedPriceMin}
-							max={selectedPriceMax}
-							onChange={(min, max) => {
-								setSelectedPriceMin(min);
-								setSelectedPriceMax(max);
-							}}
-						/>
-					</section>
-				</div>
+        <div className="hide-scrollbar flex-1 space-y-6 overflow-y-auto px-6 py-4 pb-4">
+          {/* Category */}
+          {categories.length > 0 && (
+            <section>
+              <h3 className="mb-3 text-base font-black text-on-surface">
+                Danh mục
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className={clsx(
+                    "rounded-xl px-4 py-2 text-sm font-bold transition-all",
+                    selectedCategory === null
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-container text-on-surface"
+                  )}
+                >
+                  Tất cả
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() =>
+                      setSelectedCategory(
+                        cat.slug === selectedCategory ? null : cat.slug
+                      )
+                    }
+                    className={clsx(
+                      "rounded-xl px-4 py-2 text-sm font-bold transition-all",
+                      selectedCategory === cat.slug
+                        ? "bg-primary text-on-primary"
+                        : "bg-surface-container text-on-surface"
+                    )}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
-				{/* Footer */}
-				<div className="flex-none bg-white border-t border-outline-variant/20 flex items-center justify-between px-6 py-4">
-					<button
-						onClick={() => {
-							setSelectedCategory(null);
-							setSelectedPriceMin(0);
-							setSelectedPriceMax(0);
-						}}
-						className="font-bold text-on-surface text-sm">
-						Đặt lại
-					</button>
-					<button
-						onClick={() => {
-							onApply?.({
-								category: selectedCategory,
-								priceMin: selectedPriceMin,
-								priceMax: selectedPriceMax,
-							});
-							onClose();
-						}}
-						className="btn primary-gradient text-white border-0 rounded-2xl normal-case font-bold px-8 py-3 h-auto">
-						Áp dụng
-					</button>
-				</div>
-			</div>
-		</>
-	);
+          {/* Price range */}
+          <section>
+            <h3 className="mb-3 text-base font-black text-on-surface">
+              Khoảng giá
+            </h3>
+            <DualRangeSlider
+              min={selectedPriceMin}
+              max={selectedPriceMax}
+              onChange={(min, max) => {
+                setSelectedPriceMin(min);
+                setSelectedPriceMax(max);
+              }}
+            />
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="flex flex-none items-center justify-between border-t border-outline-variant/20 bg-white px-6 py-4">
+          <button
+            onClick={() => {
+              setSelectedCategory(null);
+              setSelectedPriceMin(0);
+              setSelectedPriceMax(0);
+            }}
+            className="text-sm font-bold text-on-surface"
+          >
+            Đặt lại
+          </button>
+          <button
+            onClick={() => {
+              onApply?.({
+                category: selectedCategory,
+                priceMin: selectedPriceMin,
+                priceMax: selectedPriceMax,
+              });
+              onClose();
+            }}
+            className="primary-gradient btn h-auto rounded-2xl border-0 px-8 py-3 font-bold normal-case text-white"
+          >
+            Áp dụng
+          </button>
+        </div>
+      </div>
+    </>
+  );
 }

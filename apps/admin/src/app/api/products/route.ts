@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     )
     .order("name");
 
-  if (productType) {
+  if (productType && productType !== "all") {
     query = query.eq("product_type", productType);
   }
 

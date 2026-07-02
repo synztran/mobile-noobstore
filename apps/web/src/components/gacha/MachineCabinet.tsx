@@ -1,5 +1,6 @@
 "use client";
 
+import type { GachaRewardData, Phase } from "@/types/gacha";
 import { motion } from "motion/react";
 import { memo } from "react";
 import { BallTank } from "./BallTank";
@@ -8,18 +9,11 @@ import { MachineActions } from "./MachineActions";
 import { MachineHeader } from "./MachineHeader";
 import { MachineStand } from "./MachineStand";
 import { OutputTray } from "./OutputTray";
-import { type GachaRewardData, RewardReveal } from "./RewardReveal";
+import { RewardReveal } from "./RewardReveal";
 import { RotaryKnob } from "./RotaryKnob";
 import { TokenBadge } from "./TokenBadge";
 import { TokenSlot } from "./TokenSlot";
 import { WinnerTicker } from "./WinnerTicker";
-
-export type Phase =
-  | "idle"
-  | "token-inserted"
-  | "dispensing"
-  | "rolling"
-  | "reveal";
 
 interface MachineCabinetProps {
   phase: Phase;
@@ -29,6 +23,7 @@ interface MachineCabinetProps {
   tokenCount: number | null;
   eventId: number;
   onInsertToken: () => void;
+  onInsert10xTokens?: () => void;
   onKnobTurnComplete: () => void;
   onBallClick: () => void;
   onReset: () => void;
@@ -54,7 +49,7 @@ export const MachineCabinet = memo(function MachineCabinet({
   onRewardsOpen,
   onRulesOpen,
   onMissionsOpen,
-}: MachineCabinetProps & { onInsert10xTokens?: () => void }) {
+}: MachineCabinetProps) {
   const isTrayOpen = phase === "rolling" || phase === "reveal";
 
   return (
@@ -197,7 +192,7 @@ export const MachineCabinet = memo(function MachineCabinet({
           </div>
 
           {/* ── Insert button ── */}
-          <div className="px-4 py-2">
+          <div className="h-[60px] px-4 py-2">
             <InsertButton
               onClick={onInsertToken}
               on10xClick={onInsert10xTokens}

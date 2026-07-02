@@ -15,6 +15,8 @@ export function useHomeHero() {
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
 }
 

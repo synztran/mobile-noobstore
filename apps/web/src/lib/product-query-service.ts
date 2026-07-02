@@ -474,6 +474,8 @@ export async function getProductListByFilters(
     if (safePriceMax > 0)
       countQuery = countQuery.lte("base_price", safePriceMax);
 
+    console.log("countQuery", countQuery);
+
     const { count, error: countErr } = await countQuery;
     if (countErr || count === null) return { products: [], total: 0 };
 

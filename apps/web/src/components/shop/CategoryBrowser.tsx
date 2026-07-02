@@ -34,9 +34,9 @@ export function CategoryBrowser({ categories }: CategoryBrowserProps) {
 							<div className="absolute inset-0 bg-surface-container-high" />
 						)}
 						<div className="absolute inset-0 bg-gradient-to-t from-on-surface/70 via-transparent to-transparent flex items-end p-4">
-							<h3 className="text-white font-black uppercase text-sm tracking-wide leading-tight text-left">
+							<p className="text-white font-black uppercase text-sm tracking-wide leading-tight text-left">
 								{cat.name}
-							</h3>
+							</p>
 						</div>
 					</button>
 				))}

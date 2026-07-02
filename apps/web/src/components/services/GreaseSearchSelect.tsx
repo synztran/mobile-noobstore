@@ -31,8 +31,8 @@ export function GreaseSearchSelect({
 		<div className="relative">
 			<div
 				className={clsx(
-					"flex items-center gap-2 rounded-xl border bg-base-100 px-3 py-2",
-					open ? "border-primary" : "border-base-200",
+					"flex items-center gap-2 rounded-xl border bg-surface-container px-3 py-2",
+					open ? "border-primary" : "border-outline-variant/30",
 				)}>
 				<input
 					value={open ? query : (selected?.label ?? "")}
@@ -49,7 +49,7 @@ export function GreaseSearchSelect({
 				) : null}
 			</div>
 			{open && filtered.length > 0 ? (
-				<div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-xl border border-base-200 bg-base-100 shadow-lg overflow-auto max-h-48">
+				<div className="absolute top-full left-0 right-0 z-20 mt-1 rounded-xl border border-outline-variant/20 bg-surface-container shadow-lg overflow-auto max-h-48">
 					{filtered.map((v) => (
 						<button
 							key={v.id}

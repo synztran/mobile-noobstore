@@ -101,19 +101,47 @@ export default function RegisterPage() {
 
 				{/* Confirm Password */}
 				<div>
-					<div className={`flex items-center gap-3 bg-surface-container-lowest border rounded-2xl px-5 py-4 ${touched.confirmPassword && errors.confirmPassword ? "border-error" : "border-outline-variant"}`}>
-						<Icon name="lock" className="text-outline text-xl" />
-						<input
-							type="password"
-							name="confirmPassword"
-							placeholder="Xác nhận mật khẩu"
-							value={values.confirmPassword}
-							onChange={handleChange}
-							onBlur={handleBlur}
-							className="flex-1 bg-transparent text-on-surface placeholder:text-outline font-medium outline-none"
-							autoComplete="new-password"
-							disabled={isSubmitting}
-						/>
+					<div className="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant rounded-2xl px-5 py-4">
+						<Icon name="lock" className="text-outline text-xl shrink-0" />
+						<div className="relative flex-1">
+							{/* Per-character background behind password dots */}
+							{values.confirmPassword ? (
+								<div className="absolute inset-0 flex items-center pointer-events-none overflow-hidden rounded-lg">
+									{values.confirmPassword.split("").map((char, i) => {
+										const match =
+											i < values.password.length &&
+											char === values.password[i];
+										return (
+											<div
+												key={i}
+												className={`h-full transition-colors ${
+													match ? "bg-success/15" : "bg-error/15"
+												}`}
+												style={{ width: `${100 / values.confirmPassword.length}%` }}
+											/>
+										);
+									})}
+								</div>
+							) : null}
+							<input
+								type="password"
+								name="confirmPassword"
+								placeholder="Xác nhận mật khẩu"
+								value={values.confirmPassword}
+								onChange={handleChange}
+								onBlur={handleBlur}
+								className="relative w-full bg-transparent text-on-surface placeholder:text-outline font-medium outline-none"
+								autoComplete="new-password"
+								disabled={isSubmitting}
+							/>
+						</div>
+						{values.confirmPassword.length > 0 &&
+							values.password === values.confirmPassword ? (
+							<Icon
+								name="check_circle"
+								className="text-xl text-success shrink-0"
+							/>
+						) : null}
 					</div>
 					{touched.confirmPassword && errors.confirmPassword && (
 						<p className="text-error text-xs font-semibold mt-1 ml-1">{errors.confirmPassword}</p>

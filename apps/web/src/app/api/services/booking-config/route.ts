@@ -6,6 +6,7 @@ import {
 	SERVICE_PAGE_SWITCH_SECTION_IMAGE,
 } from "@/lib/images";
 import { getPublicClient } from "@/lib/supabase/public";
+import type { ServicePricingRule } from "@/types/service-pricing";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +58,7 @@ export interface BookingSection {
 
 export interface BookingConfigResponse {
 	sections: BookingSection[];
+	pricing: ServicePricingRule[];
 	defaults: {
 		min_pickup_lead_hours: number;
 	};
@@ -150,15 +152,30 @@ export async function GET() {
 			})),
 	}));
 
+	// ── Fetch pricing rules ──────────────────────────────────────────────────
+	const { data: pricingData, error: pricingError } = await supabase
+		.from("service_pricing_rules")
+		.select("*")
+		.order("service_type")
+		.order("sort_order");
+
+	if (pricingError) {
+		return NextResponse.json(
+			{ error: pricingError.message },
+			{ status: 500 },
+		);
+	}
+
 	const sections: BookingSection[] = SECTION_ORDER.map((key) => ({
 		key,
 		title: SECTION_TITLES[key],
 		services: services.filter((svc) => svc.service_section === key),
-		heroImageUrl: SECTION_HERO_IMAGE[key], // Add your hero image URL logic here
+		heroImageUrl: SECTION_HERO_IMAGE[key],
 	})).filter((section) => section.services.length > 0);
 
 	const response: BookingConfigResponse = {
 		sections,
+		pricing: pricingData ?? [],
 		defaults: {
 			min_pickup_lead_hours: 2,
 		},

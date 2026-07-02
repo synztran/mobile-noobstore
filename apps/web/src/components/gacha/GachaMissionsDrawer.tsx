@@ -1,25 +1,15 @@
 "use client";
 
 import { TOKEN_ICON } from "@/lib/images";
-import { useGachaMissions } from "@/lib/react-query/gacha/api/useGachaQueries";
+import {
+  useClaimMission,
+  useGachaMissions,
+} from "@/lib/react-query/gacha/api/useGachaQueries";
+import { MISSION_TYPE_LABEL } from "@/constants/gacha";
+import type { GachaMission } from "@/lib/react-query/router/gacha";
 import { CheckCircle2, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-
-interface GachaMission {
-  id: number;
-  name: string;
-  description: string | null;
-  mission_type: string;
-  requirement: {
-    amount?: number;
-    count?: number;
-  };
-  token_reward: number;
-  progress: number | null;
-  completed_at: string | null;
-  claimed_at: string | null;
-}
+import { useCallback, useEffect, useState } from "react";
 
 interface GachaMissionsDrawerProps {
   open: boolean;
@@ -27,19 +17,6 @@ interface GachaMissionsDrawerProps {
   eventId: number;
   onClaimed?: (tokenReward: number) => void;
 }
-
-const MISSION_TYPE_LABEL: Record<string, string> = {
-  first_login: "Đăng nhập lần đầu",
-  login_count: "Đăng nhập lần đầu",
-  order_min_price: "Đơn hàng tối thiểu",
-  spend_amount: "Đơn hàng tối thiểu",
-  order_count: "Hoàn thành đơn hàng",
-  purchase: "Mua hàng",
-  spin: "Quay thưởng",
-  login: "Đăng nhập",
-  referral: "Giới thiệu bạn",
-  review: "Đánh giá",
-};
 
 export function GachaMissionsDrawer({
   open,
@@ -81,7 +58,7 @@ export function GachaMissionsDrawer({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-base-200 px-4 pb-3 pt-4">
           <div>
-            <h2 className="text-base font-black">Nhiệm vụ</h2>
+            <p className="text-base font-black">Nhiệm vụ</p>
             <p className="text-xs text-base-content/50">
               Hoàn thành nhiệm vụ để nhận token quay thưởng
             </p>
@@ -129,26 +106,20 @@ function MissionCard({
   eventId: number;
   onClaimed: (tokenReward: number) => void;
 }) {
-  const [claiming, setClaiming] = useState(false);
+  const claimMutation = useClaimMission();
   const [claimed, setClaimed] = useState(m.claimed_at != null);
 
-  async function handleClaim() {
-    setClaiming(true);
-    try {
-      const res = await fetch("/api/gacha/mission/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event_id: eventId, mission_id: m.id }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        setClaimed(true);
-        onClaimed(json.token_reward ?? 0);
-      }
-    } finally {
-      setClaiming(false);
-    }
-  }
+  const handleClaim = useCallback(() => {
+    claimMutation.mutate(
+      { eventId, missionId: m.id },
+      {
+        onSuccess: (data) => {
+          setClaimed(true);
+          onClaimed(data.token_reward ?? 0);
+        },
+      },
+    );
+  }, [claimMutation, eventId, m.id, onClaimed]);
   const progress = m.progress ?? 0;
   const requirement = m.requirement.amount ?? m.requirement.count ?? 1;
   const percent = Math.min(100, Math.round((progress / requirement) * 100));
@@ -166,14 +137,6 @@ function MissionCard({
       {/* Top row: name + reward */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          {/* <div className="mb-0.5 flex items-center gap-1.5">
-            <span className="rounded-full bg-base-200 px-1.5 py-0.5 text-[10px] font-semibold text-base-content/60">
-              {typeLabel}
-            </span>
-            {isDone && (
-              <CheckCircle2 size={14} className="shrink-0 text-success" />
-            )}
-          </div> */}
           <div className="flex items-center gap-1 text-xs text-base-content/50">
             <p className="text-sm font-bold leading-tight">{m.name}</p>
             {isDone && (
@@ -230,9 +193,9 @@ function MissionCard({
           <button
             className="btn btn-warning btn-sm w-full"
             onClick={handleClaim}
-            disabled={claiming}
+            disabled={claimMutation.isPending}
           >
-            {claiming ? (
+            {claimMutation.isPending ? (
               <span className="loading loading-spinner loading-xs" />
             ) : (
               "Nhận thưởng 🎁"

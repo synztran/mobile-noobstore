@@ -5,15 +5,15 @@ import {
   useGachaEvent,
 } from "@/lib/react-query/gacha/api/useGachaQueries";
 import { appQueryKeys } from "@/lib/react-query/root";
+import { BALL_PALETTE } from "@/constants/gacha";
+import type { GachaEvent, GachaRewardData, GachaRewardMeta, Phase } from "@/types/gacha";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { GachaHistoryDrawer } from "./GachaHistoryDrawer";
 import { GachaMissionsDrawer } from "./GachaMissionsDrawer";
 import { GachaRewardsDrawer } from "./GachaRewardsDrawer";
 import { GachaRulesDrawer } from "./GachaRulesDrawer";
-import { BALL_PALETTE } from "./LuckyBall";
-import { MachineCabinet, type Phase } from "./MachineCabinet";
-import { type GachaRewardData } from "./RewardReveal";
+import { MachineCabinet } from "./MachineCabinet";
 
 // Maps reward type/golden flag to a BALL_PALETTE index so the ball color
 // matches the reward revealed. See docs/features/gacha-ball-color-mapping.md
@@ -34,19 +34,6 @@ function rewardToColorIndex(r: {
     default:
       return 0; // Flame (red) — fallback
   }
-}
-
-interface GachaRewardMeta extends GachaRewardData {
-  weight: number;
-  max_quantity: number | null;
-  claimed_count: number;
-  percent: number;
-  percent_display: number;
-}
-
-interface GachaEvent {
-  id: number;
-  name: string;
 }
 
 interface GachaMachineProps {

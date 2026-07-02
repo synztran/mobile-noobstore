@@ -131,11 +131,6 @@ export const TokenSlot = memo(function TokenSlot({ hasToken }: TokenSlotProps) {
         </div>
       </div>
 
-      {/* <p
-				className="text-[8px] font-black uppercase tracking-widest text-center absolute -bottom-5 left-1/2 -translate-x-1/2 w-full min-w-[120px]"
-				style={{ color: hasToken ? "#22c55e" : "#888" }}>
-				{hasToken ? "Token sẵn sàng!" : "Chưa có token"}
-			</p> */}
     </div>
   );
 });

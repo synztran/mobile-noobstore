@@ -1,38 +1,18 @@
 "use client";
 
+import { TYPE_BADGE } from "@/constants/gacha";
+import type { GachaRewardMeta } from "@/types/gacha";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { memo, useEffect } from "react";
 
-interface GachaReward {
-	id: number;
-	reward_type: "product" | "point" | "puzzle" | "lucky_text";
-	name: string;
-	description: string | null;
-	value: string | null;
-	thumbnail_url: string | null;
-	weight: number;
-	max_quantity: number | null;
-	claimed_count: number;
-	is_golden: boolean;
-	percent: number;
-	percent_display: number;
-}
-
 interface GachaRewardsDrawerProps {
 	open: boolean;
 	onClose: () => void;
-	rewards: GachaReward[];
+	rewards: GachaRewardMeta[];
 }
 
-const TYPE_BADGE: Record<string, { label: string; color: string }> = {
-	product: { label: "Sản phẩm", color: "badge-primary" },
-	point: { label: "Điểm", color: "badge-success" },
-	puzzle: { label: "Câu đố", color: "badge-info" },
-	lucky_text: { label: "Lời chúc", color: "badge-secondary" },
-};
-
-const RewardCard = memo(function RewardCard({ r }: { r: GachaReward }) {
+const RewardCard = memo(function RewardCard({ r }: { r: GachaRewardMeta }) {
 	const typeBadge = TYPE_BADGE[r.reward_type] ?? {
 		label: r.reward_type,
 		color: "badge-ghost",
@@ -134,9 +114,9 @@ export function GachaRewardsDrawer({
 				{/* Header */}
 				<div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-base-200">
 					<div>
-						<h2 className="text-base font-black">
+						<p className="text-base font-black">
 							Danh sách phần thưởng
-						</h2>
+						</p>
 						<p className="text-xs text-base-content/50">
 							{rewards.length} phần thưởng có thể nhận được khi
 							tham gia quay thưởng

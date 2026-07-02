@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const allowedProductTypes = new Set(["standard", "kit", "component", "gift"]);
-  const selectedProductType = allowedProductTypes.has(productType)
+  const allowedProductTypes = new Set(["standard", "kit", "component", "gift", "all"]);
+  const selectedProductType = allowedProductTypes.has(productType) && productType !== "all"
     ? productType
     : undefined;
 

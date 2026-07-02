@@ -14,6 +14,27 @@ interface RotaryKnobProps {
 	disabled?: boolean;
 }
 
+function getLabelText(disabled: boolean, isReversing: boolean, isHolding: boolean): string {
+	if (disabled) return "";
+	if (isReversing) return "Giữ lâu hơn...";
+	if (isHolding) return "Đang quay...";
+	return "Giữ để quay";
+}
+
+function getLabelColor(disabled: boolean, isReversing: boolean, isHolding: boolean): string {
+	if (disabled) return "#bbb";
+	if (isReversing) return "#ef4444";
+	if (isHolding) return "#f59e0b";
+	return "#888";
+}
+
+function getStrokeColor(disabled: boolean, isReversing: boolean, isHolding: boolean): string {
+	if (disabled) return "rgba(255,255,255,0.12)";
+	if (isReversing) return "rgba(239,68,68,0.7)";
+	if (isHolding) return "#f59e0b";
+	return "rgba(245,158,11,0.5)";
+}
+
 const FULL_TURN = 360;
 const SPEED_DEG_PER_FRAME = 9;
 const FRAME_MS = 16;
@@ -98,21 +119,8 @@ export const RotaryKnob = ({
 		});
 	}, [isHolding, stopRaf, rotationMV]);
 
-	const labelText = disabled
-		? ""
-		: isReversing
-			? "Giữ lâu hơn..."
-			: isHolding
-				? "Đang quay..."
-				: "Giữ để quay";
-
-	const labelColor = disabled
-		? "#bbb"
-		: isReversing
-			? "#ef4444"
-			: isHolding
-				? "#f59e0b"
-				: "#888";
+	const labelText = getLabelText(disabled, isReversing, isHolding);
+	const labelColor = getLabelColor(disabled, isReversing, isHolding);
 
 	return (
 		<div className="flex flex-col items-center gap-2 select-none relative">
@@ -171,15 +179,7 @@ export const RotaryKnob = ({
 							cy={41}
 							r={34}
 							fill="none"
-							stroke={
-								disabled
-									? "rgba(255,255,255,0.12)"
-									: isReversing
-										? "rgba(239,68,68,0.7)"
-										: isHolding
-											? "#f59e0b"
-											: "rgba(245,158,11,0.5)"
-							}
+							stroke={getStrokeColor(disabled, isReversing, isHolding)}
 							strokeWidth={5}
 							strokeDasharray={`${2 * Math.PI * 34}`}
 							strokeDashoffset={`${2 * Math.PI * 34 * (1 - progress)}`}
@@ -266,11 +266,6 @@ export const RotaryKnob = ({
 				</div>
 			</div>
 
-			{/* <p
-				className="text-[8px] font-black uppercase tracking-widest text-center absolute -bottom-5 left-1/2 -translate-x-1/2 w-full"
-				style={{ color: labelColor }}>
-				{labelText}
-			</p> */}
 		</div>
 	);
 };

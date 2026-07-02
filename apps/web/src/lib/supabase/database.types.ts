@@ -1406,6 +1406,45 @@ export type Database = {
           },
         ]
       }
+      service_pricing_rules: {
+        Row: {
+          created_at: string | null
+          handling_days: number
+          id: string
+          key: string
+          label: string
+          metadata: Json
+          price: number
+          service_type: string
+          sort_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          handling_days?: number
+          id?: string
+          key: string
+          label: string
+          metadata?: Json
+          price: number
+          service_type: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          handling_days?: number
+          id?: string
+          key?: string
+          label?: string
+          metadata?: Json
+          price?: number
+          service_type?: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           base_price: number

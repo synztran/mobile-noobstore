@@ -42,7 +42,7 @@ export function ProductInfoTabs({
 
   useEffect(() => {
     const el = descContentRef.current;
-    if (el) setDescOverflows(el.scrollHeight > 100);
+    if (el) setDescOverflows(el.scrollHeight > 90);
   }, [editorialContent]);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export function ProductInfoTabs({
                 >
                   <div
                     ref={descContentRef}
-                    className="editor-content text-on-surface"
+                    className="editor-content text-sm text-on-surface"
                     dangerouslySetInnerHTML={{ __html: editorialContent }}
                   />
                 </motion.div>

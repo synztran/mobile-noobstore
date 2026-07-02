@@ -21,10 +21,14 @@ export async function getCache<T>(key: string): Promise<T | null> {
 export async function setCache<T>(
 	key: string,
 	value: T,
-	ttlSeconds: number,
+	ttlSeconds?: number,
 ): Promise<void> {
 	try {
-		await redis.set(key, value, { ex: ttlSeconds });
+		if (ttlSeconds !== undefined) {
+			await redis.set(key, value, { ex: ttlSeconds });
+		} else {
+			await redis.set(key, value);
+		}
 	} catch {
 		// non-fatal
 	}

@@ -1,27 +1,8 @@
 "use client";
 
+import { BALL_PALETTE } from "@/constants/gacha";
 import { motion } from "motion/react";
 import { memo } from "react";
-
-export const BALL_PALETTE = [
-	{ top: "#FF6B6B", bottom: "#FF3A1A", name: "Flame", glow: "#FF6B6B" },
-	{ top: "#4ECDC4", bottom: "#1A8FD1", name: "Ocean", glow: "#4ECDC4" },
-	{ top: "#C084FC", bottom: "#EC4899", name: "Cosmic", glow: "#C084FC" },
-	{ top: "#34D399", bottom: "#047857", name: "Forest", glow: "#34D399" },
-	{
-		top: "#FFE566",
-		bottom: "#F59E0B",
-		name: "Gold",
-		glow: "#FFE566",
-		isGolden: true,
-	},
-	{ top: "#F9A8D4", bottom: "#A855F7", name: "Rose", glow: "#F9A8D4" },
-	{ top: "#93C5FD", bottom: "#2563EB", name: "Sky", glow: "#93C5FD" },
-	{ top: "#FB923C", bottom: "#DC2626", name: "Lava", glow: "#FB923C" },
-	{ top: "#F0ABFC", bottom: "#7C3AED", name: "Mystic", glow: "#F0ABFC" },
-	{ top: "#6EE7B7", bottom: "#0891B2", name: "Aqua", glow: "#6EE7B7" },
-	{ top: "#FCD34D", bottom: "#EF4444", name: "Solar", glow: "#FCD34D" },
-];
 
 interface LuckyBallProps {
 	colorIndex: number;
