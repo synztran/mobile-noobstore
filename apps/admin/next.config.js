@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-	serverExternalPackages: ["resend", "@upstash/redis"],
+	serverExternalPackages: ["resend", "@upstash/redis", "pdfkit"],
 	experimental: {
 		optimizePackageImports: ["lucide-react", "@supabase/ssr"],
 	},

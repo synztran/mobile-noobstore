@@ -1,6 +1,12 @@
 "use client";
 
-import { Check, ChevronRight, RotateCcw, XCircle } from "lucide-react";
+import {
+  Check,
+  ChevronRight,
+  FileText,
+  RotateCcw,
+  XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { OrderDetail } from "./OrderDetailModal";
 
@@ -60,6 +66,7 @@ export default function OrderActionBar({
 }: Props) {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showCancel, setShowCancel] = useState(false);
   const [cancelNote, setCancelNote] = useState("");
   const [showRefund, setShowRefund] = useState(false);
@@ -103,6 +110,27 @@ export default function OrderActionBar({
     }
   };
 
+  const generateInvoice = async () => {
+    setActionLoading(true);
+    setActionError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetch(`/api/invoices/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id, customer: order.users, gifts: order.order_items?.map(item => item.gifts) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to generate invoice");
+      setSuccessMessage("Hoá đơn đã được tạo!");
+      onUpdated();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (isTerminal && !canRefund) return null;
 
   return (
@@ -117,6 +145,11 @@ export default function OrderActionBar({
       {actionError && (
         <p className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-600">
           {actionError}
+        </p>
+      )}
+      {successMessage && (
+        <p className="rounded border border-green-200 bg-green-50 px-2 py-1.5 text-xs text-green-700">
+          {successMessage}
         </p>
       )}
 
@@ -206,6 +239,16 @@ export default function OrderActionBar({
             >
               <XCircle className="h-4 w-4" />
               Cancel Order
+            </button>
+          )}
+          {!order.invoice_url && (
+            <button
+              onClick={generateInvoice}
+              disabled={actionLoading}
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-green-300 px-3 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
+            >
+              <FileText className="h-4 w-4" />
+              Generate Invoice
             </button>
           )}
         </div>

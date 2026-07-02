@@ -22,6 +22,7 @@ export async function GET(
 			created_at, updated_at, cancelled_at, cancelled_note, paid_at, refunded_at, delivering_at, delivered_at,
 			delivery_address, shipping_method_id, expected_delivery_at,
 			user_id,
+			invoice_url,
 			users(id, first_name, last_name, email, phone_number),
 			order_items(id, product_id, product_name, quantity, unit_price, thumbnail, order_item_components(id, component_group, variant_name, price_adjustment, product_variant_id, thumbnail, is_pre_order, pre_order_config)),
 			order_services(

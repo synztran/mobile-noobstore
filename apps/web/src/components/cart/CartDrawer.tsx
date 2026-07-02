@@ -154,7 +154,7 @@ const CartItemRow = memo(function CartItemRow({
 
 export function CartDrawer() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const mounted = useIsMounted();
   const { items, isOpen, closeCart, updateQty, removeItem, total } =
     useCartStore();
@@ -233,6 +233,7 @@ export function CartDrawer() {
 
   const handleCheckout = useCallback(() => {
     if (checkingOut) return;
+    if (authLoading) return; // wait for auth to hydrate
     if (user == null) {
       toast.warning("Cần đăng nhập để thanh toán!");
       router.push("/login");
@@ -241,7 +242,7 @@ export function CartDrawer() {
     closeCart();
     startNavigation();
     router.push("/checkout/shipping");
-  }, [checkingOut, router, closeCart, user, startNavigation]);
+  }, [checkingOut, router, closeCart, user, authLoading, startNavigation]);
 
   usePreventScroll(drawerOpen);
 

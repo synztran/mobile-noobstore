@@ -28,6 +28,11 @@ interface OrderItem {
   unit_price: number;
   thumbnail: string | null;
   order_item_components: KitComponent[];
+  gifts?: {
+    gift_name: string;
+    gift_thumbnail: string;
+    quantity: number;
+  }[];
 }
 
 interface OrderService {
@@ -42,6 +47,14 @@ interface OrderService {
   >;
   customer_note: string | null;
   services: { base_price: number } | null;
+}
+
+export interface IOrderDetailUser {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  phone_number: string | null;
 }
 
 export interface OrderDetail {
@@ -90,13 +103,7 @@ export interface OrderDetail {
   refunded_at: string | null;
   delivering_at: string | null;
   delivered_at: string | null;
-  users: {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    email: string;
-    phone_number: string | null;
-  } | null;
+  users: IOrderDetailUser | null;
   order_items: OrderItem[];
   order_item_components: {
     id: string;
@@ -108,6 +115,7 @@ export interface OrderDetail {
   }[];
   order_services: OrderService[];
   optionValueMap: Record<string, { optionLabel: string; valueLabel: string }>;
+  invoice_url: string | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
