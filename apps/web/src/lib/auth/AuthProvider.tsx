@@ -199,22 +199,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Auth methods
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const res = await fetch("/api/auth/signin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
-    return { error: error?.message ?? null };
+    const data = await res.json();
+    return { error: data.error ?? null };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, fullName }),
     });
-    return { error: error?.message ?? null };
+    const data = await res.json();
+    return { error: data.error ?? null };
   };
 
   const signOut = async () => {

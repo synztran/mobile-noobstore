@@ -32,7 +32,7 @@ export async function GET() {
 			);
 		}
 
-		await setCache(cacheKey, props, 300);
+		await setCache(cacheKey, props);
 		return NextResponse.json(props as TrustProp[]);
 	} catch (err) {
 		console.error("[trust props] error:", err);

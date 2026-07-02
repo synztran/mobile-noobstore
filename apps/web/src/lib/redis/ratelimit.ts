@@ -16,12 +16,12 @@ export function getRateLimitKey(request: Request, userId?: string): string {
 const rateLimiters = {
   auth: new Ratelimit({
     redis: getRedis(),
-    limiter: Ratelimit.fixedWindow(100, "1 m"),
+    limiter: Ratelimit.fixedWindow(30, "1 m"),
     prefix: "ratelimit:auth",
   }),
   apiAuth: new Ratelimit({
     redis: getRedis(),
-    limiter: Ratelimit.fixedWindow(200, "1 m"),
+    limiter: Ratelimit.fixedWindow(50, "1 m"),
     prefix: "ratelimit:api:auth",
   }),
   checkout: new Ratelimit({
@@ -45,7 +45,7 @@ export function getCheckoutLimiter() {
 
 export async function tryRateLimit(
   limiter: Ratelimit,
-  identifier: string,
+  identifier: string
 ): Promise<{ allowed: boolean; reset: number }> {
   const { success, reset } = await limiter.limit(identifier);
   return { allowed: success, reset };

@@ -37,7 +37,7 @@ export async function GET() {
 			);
 		}
 
-		await setCache(cacheKey, creators, 300);
+		await setCache(cacheKey, creators);
 		return NextResponse.json(creators as Creator[]);
 	} catch (err) {
 		console.error("[creators] error:", err);

@@ -470,12 +470,11 @@ const ShippingPage = () => {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-black tracking-tight text-amber-700">
-                Giảm giá ở bước tiếp theo
+                Thêm mã giảm giá ở bước tiếp theo
               </p>
               <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                Bạn có mã giảm giá? Ở bước thanh toán, bạn có thể áp dụng mã
-                giảm giá, tích điểm thưởng hoặc chọn ưu đãi đặc biệt để giảm
-                tổng hóa đơn.
+                Mã giảm giá và các ưu đãi khác sẽ được áp dụng ở bước tiếp theo.
+                Bạn có thể nhập mã giảm giá hoặc chọn ưu đãi có sẵn.
               </p>
             </div>
           </div>

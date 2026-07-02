@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 
 /**
  * Lightweight session check — reads the Supabase auth cookie directly without
@@ -17,7 +18,7 @@ function hasValidSession(request: NextRequest): boolean {
     const sessionCookie = cookies.find(
       ({ name }) =>
         name.startsWith("sb-") &&
-        (name.endsWith("-auth-token") || name.endsWith("-auth-token.0")),
+        (name.endsWith("-auth-token") || name.endsWith("-auth-token.0"))
     );
 
     if (!sessionCookie?.value) return false;
@@ -46,6 +47,33 @@ function hasValidSession(request: NextRequest): boolean {
 export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
+    const pathNames = ['/signin', '/signup']
+
+    // Rate limit auth endpoints (login, register) — 10 req/min per IP
+    if (pathNames.includes(pathname)) {
+      try {
+        const { success, reset } = await getAuthLimiter().limit(
+          getRateLimitKey(request)
+        );
+        if (!success) {
+          return NextResponse.json(
+            { error: "Quá nhiều lần thử. Vui lòng chờ vài giây." },
+            {
+              status: 429,
+              headers: {
+                "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
+              },
+            }
+          );
+        }
+      } catch (rateLimitError) {
+        console.warn(
+          "[middleware] auth rate limiter unavailable:",
+          rateLimitError
+        );
+      }
+    }
+
     const isLoggedIn = hasValidSession(request);
 
     // Redirect unauthenticated users away from protected routes
