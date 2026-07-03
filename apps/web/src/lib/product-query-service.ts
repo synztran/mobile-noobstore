@@ -474,21 +474,18 @@ export async function getProductListByFilters(
     if (safePriceMax > 0)
       countQuery = countQuery.lte("base_price", safePriceMax);
 
-    console.log("countQuery", countQuery);
-
     const { count, error: countErr } = await countQuery;
     if (countErr || count === null) return { products: [], total: 0 };
 
-    // ── Fetch paginated products ──
+    // ── Fetch paginated products (sorted by user's choice) ──
+    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, created_at,
+       categories(id, name),
+       product_variants(${VARIANT_COLUMNS})`;
+
     let dataQuery = applyFilters(
-      supabase.from("products").select(
-        `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, created_at,
-         categories(id, name),
-         product_variants(${VARIANT_COLUMNS})`
-      )
+      supabase.from("products").select(SELECT_COLUMNS)
     );
 
-    // Push sort to DB
     if (sort === "newest") {
       dataQuery = dataQuery.order("created_at", { ascending: false });
     } else if (sort === "price_asc") {
@@ -497,7 +494,6 @@ export async function getProductListByFilters(
       dataQuery = dataQuery.order("base_price", { ascending: false });
     }
 
-    // Paginate at DB level instead of fetch-all + slice
     const { data, error } = await dataQuery.range(
       safeOffset,
       safeOffset + safeLimit - 1
@@ -523,27 +519,8 @@ export async function getProductListByFilters(
     // Strip components from shop display — they're only fetched for kit processing
     products = products.filter((p) => p.product_type !== "component");
 
-    // ── Push out-of-stock to bottom within page ──
-    const inStock = products.filter((p) => p.stock_quantity > 0);
-    const outOfStock = products.filter((p) => p.stock_quantity === 0);
-
-    const sortFn =
-      sort === "price_asc"
-        ? (a: ProductListItem, b: ProductListItem) => a.min_price - b.min_price
-        : sort === "price_desc"
-          ? (a: ProductListItem, b: ProductListItem) =>
-              b.min_price - a.min_price
-          : (a: ProductListItem, b: ProductListItem) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime();
-
-    inStock.sort(sortFn);
-    outOfStock.sort(sortFn);
-
-    const sorted = [...inStock, ...outOfStock];
-
     // ── Attach gifts ──
-    const result = sorted.map((p) => ({
+    const result = products.map((p) => ({
       ...p,
       gifts: giftsByProductId.get(p.id) ?? undefined,
     }));

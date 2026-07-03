@@ -1,13 +1,12 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tag, X } from "lucide-react";
 import OrderActionBar from "./OrderActionBar";
-import OrderCustomerInfo from "./OrderCustomerInfo";
+import OrderCustomerInfoCard from "./OrderCustomerInfoCard";
 import OrderItemsList from "./OrderItemsList";
 import OrderShippingDetails from "./OrderShippingDetails";
 import OrderServicesList from "./OrderServicesList";
-import OrderStatusBanner from "./OrderStatusBanner";
+import OrderStatusIndicator from "./OrderStatusIndicator";
 import OrderTimeline from "./OrderTimeline";
 
 interface KitComponent {
@@ -60,7 +59,7 @@ export interface IOrderDetailUser {
 export interface OrderDetail {
   id: string;
   order_number: string;
-  status: string;
+  status: "pending" | "confirmed" | "delivering" | "delivered" | "refunded";
   total_price: number;
   shipping_fee: number | null;
   shipping_method_id: string | null;
@@ -118,27 +117,8 @@ export interface OrderDetail {
   invoice_url: string | null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizeOrder(data: any): OrderDetail {
-  return {
-    ...data,
-    order_items: data.order_items ?? [],
-    order_item_components: data.order_item_components ?? [],
-    order_services: data.order_services ?? [],
-    optionValueMap: data.optionValueMap ?? {},
-    shippingMethodMap: data.shippingMethodMap ?? {},
-  };
-}
-
-async function fetchOrderDetail(id: string): Promise<OrderDetail> {
-  const res = await fetch(`/api/orders/${id}`);
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  return normalizeOrder(data);
-}
-
 interface Props {
-  orderId: string | null;
+  order: OrderDetail | null;
   onClose: () => void;
   onStatusUpdated?: () => void;
 }
@@ -165,7 +145,7 @@ function OrderPriceSummary({ order }: { order: OrderDetail }) {
     order.shipping_discount_amount + order.voucher_discount_amount;
 
   return (
-    <div className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+    <div className="flex w-full shrink-0 flex-col gap-4 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/80 p-4">
       <div>
         <div className="text-sm font-semibold text-slate-800">
           Price Summary&nbsp;
@@ -271,36 +251,18 @@ function OrderPriceSummary({ order }: { order: OrderDetail }) {
 }
 
 export default function OrderDetailModal({
-  orderId,
+  order,
   onClose,
   onStatusUpdated,
 }: Props) {
-  const queryClient = useQueryClient();
+  if (!order) return null;
 
-  const {
-    data: order,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["order-detail", orderId],
-    queryFn: () => fetchOrderDetail(orderId!),
-    enabled: !!orderId,
-    staleTime: 30_000,
-  });
-
-  const handleUpdated = () => {
-    queryClient.invalidateQueries({ queryKey: ["order-detail", orderId] });
-    onStatusUpdated?.();
-  };
-
-  if (!orderId) return null;
-
-  const customerName = order?.users
+  const customerName = order.users
     ? `${order.users.first_name ?? ""} ${order.users.last_name ?? ""}`.trim() ||
       order.users.email
     : "—";
 
-  const shippingMethodName = order?.shipping_method_id
+  const shippingMethodName = order.shipping_method_id
     ? (order.shippingMethodMap?.[order.shipping_method_id] ??
       order.shipping_method_id)
     : null;
@@ -308,18 +270,16 @@ export default function OrderDetailModal({
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" />
-      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-max flex-col rounded-xl bg-white shadow-2xl">
+      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-[85vw] flex-col rounded-xl bg-white shadow-2xl">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
               Order Detail
             </h2>
-            {order && (
-              <p className="mt-0.5 font-mono text-sm text-slate-500">
-                #{order.order_number}
-              </p>
-            )}
+            <p className="mt-0.5 font-mono text-sm text-slate-500">
+              #{order.order_number}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -330,95 +290,60 @@ export default function OrderDetailModal({
         </div>
 
         {/* Body */}
-        <div className="flex min-h-0">
-          {/* Left column — flex-col: scrollable content on top, actions pinned at bottom */}
-          <div className="flex flex-1 flex-col">
-            {/* Scrollable content */}
-            <div className="flex-1 space-y-4 overflow-y-auto py-4 pl-4">
-              {isLoading && (
-                <div className="flex items-center justify-center py-12 text-slate-400">
-                  Loading…
-                </div>
-              )}
-              {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error instanceof Error
-                    ? error.message
-                    : "Failed to load order"}
-                </div>
-              )}
-              {order && !isLoading && (
-                <>
-                  <OrderCustomerInfo
-                    customerName={customerName}
-                    email={order.users?.email}
-                    phoneNumber={order.users?.phone_number}
-                    status={order.status}
-                  />
+        <div className="grid grid-cols-12 gap-4">
+          {/* Left column */}
+          <div className="col-span-7 my-4 ml-4 flex min-h-0 flex-col gap-4 rounded-md border border-slate-200 bg-slate-50/80 p-4">
+            <div className="max-h-[65dvh] min-h-0 flex-1 space-y-4 overflow-y-auto">
+              <OrderCustomerInfoCard
+                customerId={order.users?.id ?? "—"}
+                customerName={customerName}
+                email={order.users?.email}
+                phoneNumber={order.users?.phone_number}
+              />
 
-                  <OrderStatusBanner
-                    status={order.status}
-                    updatedAt={order.updated_at}
-                    cancelledNote={order.cancelled_note}
-                  />
+              <OrderStatusIndicator
+                status={order.status}
+                paidAt={order.paid_at}
+                refundedAt={order.refunded_at}
+              />
 
-                  <OrderShippingDetails
-                    deliveryAddress={order.delivery_address}
-                    fallbackAddress={order.shippingAddress}
-                    shippingMethodName={shippingMethodName}
-                    expectedDeliveryAt={order.expected_delivery_at}
-                  />
+              <OrderShippingDetails
+                deliveryAddress={order.delivery_address}
+                fallbackAddress={order.shippingAddress}
+                shippingMethodName={shippingMethodName}
+                expectedDeliveryAt={order.expected_delivery_at}
+              />
 
-                  {/* Order history timeline */}
-                  {/* <OrderTimeline
-										createdAt={order.created_at}
-										paidAt={order.paid_at}
-										cancelledAt={order.cancelled_at}
-										cancelledNote={order.cancelled_note}
-										refundedAt={order.refunded_at}
-										status={order.status}
-										updatedAt={order.updated_at}
-									/> */}
+              <OrderItemsList items={order.order_items} />
 
-                  <OrderItemsList items={order.order_items} />
-
-                  <OrderServicesList
-                    services={order.order_services}
-                    optionValueMap={order.optionValueMap}
-                  />
-                </>
-              )}
+              <OrderServicesList
+                services={order.order_services}
+                optionValueMap={order.optionValueMap}
+              />
             </div>
 
             {/* Actions — pinned at bottom of left column */}
-            {order && !isLoading && (
-              <OrderActionBar
-                // orderId={order.id}
-                order={order}
-                currentStatus={order.status}
-                onUpdated={handleUpdated}
-              />
-            )}
+            <OrderActionBar
+              order={order}
+              currentStatus={order.status}
+              onUpdated={onStatusUpdated ?? (() => {})}
+            />
           </div>
 
-          <div className="divider divider-horizontal" />
-
           {/* Right column — Price summary */}
-          <div className="flex min-h-0 flex-1 flex-col gap-4 py-4 pr-4">
-            {order && !isLoading && (
-              <OrderTimeline
-                createdAt={order.created_at}
-                paidAt={order.paid_at}
-                deliveringAt={order.delivering_at ?? null}
-                deliveredAt={order.delivered_at ?? null}
-                cancelledAt={order.cancelled_at}
-                cancelledNote={order.cancelled_note}
-                refundedAt={order.refunded_at}
-                status={order.status}
-                updatedAt={order.updated_at}
-              />
-            )}
-            {order && !isLoading && <OrderPriceSummary order={order} />}
+          <div className="col-span-5 flex min-h-0 flex-col gap-4 py-4 pr-4">
+            <OrderTimeline
+              createdAt={order.created_at}
+              paidAt={order.paid_at}
+              deliveringAt={order.delivering_at ?? null}
+              deliveredAt={order.delivered_at ?? null}
+              cancelledAt={order.cancelled_at}
+              cancelledNote={order.cancelled_note}
+              refundedAt={order.refunded_at}
+              status={order.status}
+              updatedAt={order.updated_at}
+            />
+            <OrderPriceSummary order={order} />
           </div>
         </div>
       </div>

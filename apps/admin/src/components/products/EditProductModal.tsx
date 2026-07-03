@@ -37,7 +37,10 @@ type EditableProduct = {
   thumbnail?: string | null;
   images?: string[] | null;
   parent_product_id?: string | null;
-  category_id?: string | null;
+  categories?: {
+    id: string;
+    name: string;
+  } | null;
   product_variants?: VariantRow[] | null;
 };
 
@@ -96,7 +99,7 @@ export default function EditProductModal({ product }: Props) {
     setThumbnail(product.thumbnail ?? "");
     setImages(Array.isArray(product.images) ? product.images : []);
     setParentProductId(product.parent_product_id ?? "");
-    setCategoryType(product.category_id ?? ""); // Reset category selection when opening modal
+    setCategoryType(product.categories?.id ?? ""); // Reset category selection when opening modal
     setAttributes(product.attributes ?? {});
     setIsActive(product.is_active ?? true);
     setIsPreOrder(
@@ -422,7 +425,8 @@ export default function EditProductModal({ product }: Props) {
                       </span>
                       {product.product_variants?.length ? (
                         <span className="text-xs text-slate-400">
-                          Applies to all {product.product_variants.length} variants
+                          Applies to all {product.product_variants.length}{" "}
+                          variants
                         </span>
                       ) : null}
                     </div>

@@ -150,7 +150,7 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
             <p className="truncate text-[11px] font-extrabold capitalize tracking-[0.1em] text-primary">
               {product.brand || product.category}
             </p>
-            <h3 className="truncate text-sm font-bold capitalize text-on-surface">
+            <h3 className="line-clamp-2 text-sm font-bold capitalize text-on-surface">
               {product.name}
             </h3>
             {!isBundle ? (
@@ -171,6 +171,10 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
               </div>
             ) : (
               <div className="text-right text-base font-extrabold text-primary">
+                {product.base_price === 0 ? (
+                  <span className="text-xs text-slate-500">giá chỉ từ</span>
+                ) : null}
+                &nbsp;
                 {formatVND(product.base_price || product.min_price)}
               </div>
             )}

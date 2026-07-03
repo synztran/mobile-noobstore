@@ -1,6 +1,9 @@
 "use client";
 
-import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
+import {
+  ProductCard,
+  ProductCardSkeleton,
+} from "@/components/product/ProductCard";
 import { ShopControls } from "@/components/shop/ShopControls";
 import type { CategoryItem } from "@/lib/products-server";
 import {
@@ -9,7 +12,7 @@ import {
   type Filters,
 } from "@/lib/react-query/shop/api/useShopInfiniteQuery";
 import type { ProductsResponse, ShopProduct } from "@/app/api/products/route";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -23,9 +26,7 @@ export function ShopPageClient({
   categories: CategoryItem[];
 }) {
   const sp = useSearchParams();
-  const [filters, setFilters] = useState<Filters>(() =>
-    buildShopFilters(sp)
-  );
+  const [filters, setFilters] = useState<Filters>(() => buildShopFilters(sp));
 
   // Sync URL → filters on mount & manual URL changes
   useEffect(() => {
@@ -35,8 +36,13 @@ export function ShopPageClient({
   const { data, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useShopInfiniteQuery(filters, initialData);
 
-  const products =
-    data?.pages.flatMap((p) => p.products as ShopProduct[]) ?? [];
+  // Sort: in-stock products first, sold-out last, preserving server sort within each group
+  const products = useMemo(() => {
+    const all = data?.pages.flatMap((p) => p.products as ShopProduct[]) ?? [];
+    const inStock = all.filter((p) => p.stock_quantity > 0);
+    const soldOut = all.filter((p) => p.stock_quantity === 0);
+    return [...inStock, ...soldOut];
+  }, [data]);
 
   const total = data?.pages[0]?.total ?? initialData.total;
 

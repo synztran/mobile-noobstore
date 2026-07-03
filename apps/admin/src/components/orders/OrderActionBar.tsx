@@ -118,7 +118,11 @@ export default function OrderActionBar({
       const res = await fetch(`/api/invoices/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.id, customer: order.users, gifts: order.order_items?.map(item => item.gifts) }),
+        body: JSON.stringify({
+          orderId: order.id,
+          customer: order.users,
+          gifts: order.order_items?.map((item) => item.gifts),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to generate invoice");
@@ -134,7 +138,7 @@ export default function OrderActionBar({
   if (isTerminal && !canRefund) return null;
 
   return (
-    <div className="shrink-0 space-y-3 border-t border-slate-200 px-6 py-4">
+    <div className="shrink-0 space-y-2 border-t border-slate-200 pt-4">
       {/* Step flow indicator */}
       {flowIdx >= 0 && (
         <div className="pb-1">
@@ -241,16 +245,17 @@ export default function OrderActionBar({
               Cancel Order
             </button>
           )}
-          {!order.invoice_url && (
-            <button
-              onClick={generateInvoice}
-              disabled={actionLoading}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-green-300 px-3 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
-            >
-              <FileText className="h-4 w-4" />
-              Generate Invoice
-            </button>
-          )}
+          {["confirm", "delivered", "delivering"].includes(order.status) &&
+            !order.invoice_url && (
+              <button
+                onClick={generateInvoice}
+                disabled={actionLoading}
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-green-300 px-3 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
+              >
+                <FileText className="h-4 w-4" />
+                Generate Invoice
+              </button>
+            )}
         </div>
       )}
     </div>

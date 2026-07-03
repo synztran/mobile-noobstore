@@ -31,7 +31,7 @@ type ComponentRow = {
   } | null;
 };
 
-type CategoryRelation = { id: string; name: string } | { id: string; name: string }[] | null;
+type CategoryRelation = { id: string; name: string } | null;
 
 export type ProductCardProps = {
   product: {
@@ -65,10 +65,17 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete product "${product.name}"? This cannot be undone.`)) return;
+    if (
+      !window.confirm(
+        `Delete product "${product.name}"? This cannot be undone.`
+      )
+    )
+      return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/products/${product.id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Failed to delete");
       queryClient.invalidateQueries({ queryKey: ["products"] });
       router.refresh();
@@ -113,10 +120,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     },
     {}
   );
-
-  const categoryName = Array.isArray(product.categories)
-    ? product.categories[0]?.name
-    : product.categories?.name;
+  const categoryName = product.categories?.name || "";
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow">
@@ -151,9 +155,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <Tag tone={product.is_used ? "yellow" : "green"}>
                   {product.is_used ? "Used" : "New"}
                 </Tag>
-                {product.is_active === false && (
-                  <Tag tone="red">Inactive</Tag>
-                )}
+                {product.is_active === false && <Tag tone="red">Inactive</Tag>}
                 {hasPreOrderVariant && <Tag tone="purple">Pre-order</Tag>}
               </div>
             </div>

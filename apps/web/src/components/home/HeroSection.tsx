@@ -50,7 +50,7 @@ export function HeroSection() {
       <section className="relative !mt-0 h-[680px] animate-pulse overflow-hidden bg-surface-container">
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-surface-container-high" />
 
-        <div className="absolute inset-0 z-10 flex flex-col justify-end p-8">
+        <div className="absolute inset-0 z-10 flex flex-col justify-end p-4">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <div className="h-5 w-1 rounded-full bg-primary/40" />
@@ -115,7 +115,7 @@ export function HeroSection() {
       ))}
 
       {/* Content */}
-      <div className="absolute inset-0 z-10 flex flex-col justify-end p-8">
+      <div className="absolute inset-0 z-10 flex flex-col justify-end p-4">
         <div
           key={current}
           className="flex animate-[fadeSlideUp_0.5s_ease_forwards] flex-col gap-4"

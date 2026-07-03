@@ -50,8 +50,6 @@ export function ServiceBookingFlow() {
     handleBookMore,
   } = useServiceBookingFlow();
 
-  console.log(user);
-
   if (bookingConfigQuery.isPending) {
     return <ServiceBookingFlowSkeleton />;
   }

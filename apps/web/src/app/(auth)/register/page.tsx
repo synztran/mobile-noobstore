@@ -161,13 +161,13 @@ export default function RegisterPage() {
 						/>
 						<span className="text-sm text-on-surface leading-relaxed">
 							Tôi đồng ý với{" "}
-							<Link href="/terms#terms" className="underline underline-offset-2">
-								Điều khoản &amp; Điều kiện
-							</Link>{" "}
-							và{" "}
-							<Link href="/terms#policy" className="underline underline-offset-2">
-								Chính sách bảo mật
-							</Link>
+                <Link href="/terms" className="underline underline-offset-2">
+                  Điều khoản &amp; Điều kiện
+                </Link>{" "}
+                và{" "}
+                <Link href="/policy" className="underline underline-offset-2">
+                  Chính sách bảo mật
+                </Link>
 						</span>
 					</label>
 					{touched.agreed && errors.agreed && (

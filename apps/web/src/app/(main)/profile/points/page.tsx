@@ -112,8 +112,8 @@ function PointsPage() {
   }
 
   return (
-    <div className="space-y-5 px-4 pb-24 pt-2">
-      <div className="mb-2 flex items-center gap-3">
+    <div className="space-y-5 px-4 pt-2">
+      <div className="sticky mb-2 flex items-center gap-3">
         <Link
           href="/profile"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"

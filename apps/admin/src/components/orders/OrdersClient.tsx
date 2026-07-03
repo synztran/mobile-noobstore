@@ -1,6 +1,8 @@
 "use client";
 
-import OrderDetailModal from "@/components/orders/OrderDetailModal";
+import OrderDetailModal, {
+  type OrderDetail,
+} from "@/components/orders/OrderDetailModal";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Search } from "lucide-react";
@@ -73,6 +75,20 @@ async function fetchOrders(q: string, by: string, page: number) {
 	return res.json() as Promise<{ orders: Order[]; count: number }>;
 }
 
+async function fetchOrderDetail(id: string): Promise<OrderDetail> {
+	const res = await fetch(`/api/orders/${id}`);
+	const data = await res.json();
+	if (data.error) throw new Error(data.error);
+	return {
+		...data,
+		order_items: data.order_items ?? [],
+		order_item_components: data.order_item_components ?? [],
+		order_services: data.order_services ?? [],
+		optionValueMap: data.optionValueMap ?? {},
+		shippingMethodMap: data.shippingMethodMap ?? {},
+	} as OrderDetail;
+}
+
 export default function OrdersClient({
 	orders: initialOrders,
 	count: initialCount,
@@ -85,7 +101,10 @@ export default function OrdersClient({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [, startTransition] = useTransition();
-	const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+	const [prefetchedOrder, setPrefetchedOrder] = useState<OrderDetail | null>(
+		null,
+	);
+	const [isDetailLoading, setIsDetailLoading] = useState<string | null>(null);
 	const [newOrderBadge, setNewOrderBadge] = useState(false);
 
 	const queryClient = useQueryClient();
@@ -253,12 +272,38 @@ export default function OrdersClient({
 										</td>
 										<td className="px-6 py-4 text-sm">
 											<button
-												onClick={() =>
-													setActiveOrderId(order.id)
+												onClick={async () => {
+													setIsDetailLoading(order.id);
+													try {
+														const detail =
+															await fetchOrderDetail(
+																order.id,
+															);
+														setPrefetchedOrder(
+															detail,
+														);
+													} catch {
+														console.error(
+															"Failed to load order detail",
+														);
+													} finally {
+														setIsDetailLoading(
+															null,
+														);
+													}
+												}}
+												disabled={
+													isDetailLoading ===
+													order.id
 												}
-												className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors"
+												className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors disabled:opacity-50"
 												title="View">
-												<Search className="w-4 h-4" />
+												{isDetailLoading ===
+												order.id ? (
+													<span className="loading loading-spinner loading-xs" />
+												) : (
+													<Search className="w-4 h-4" />
+												)}
 											</button>
 										</td>
 									</tr>
@@ -331,11 +376,16 @@ export default function OrdersClient({
 			)}
 
 			<OrderDetailModal
-				orderId={activeOrderId}
-				onClose={() => setActiveOrderId(null)}
-				onStatusUpdated={() =>
-					queryClient.invalidateQueries({ queryKey: ["orders"] })
-				}
+				order={prefetchedOrder}
+				onClose={() => setPrefetchedOrder(null)}
+				onStatusUpdated={() => {
+					if (prefetchedOrder) {
+						fetchOrderDetail(prefetchedOrder.id).then(
+							setPrefetchedOrder,
+						);
+					}
+					queryClient.invalidateQueries({ queryKey: ["orders"] });
+				}}
 			/>
 		</>
 	);

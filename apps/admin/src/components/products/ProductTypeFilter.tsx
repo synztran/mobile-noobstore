@@ -18,8 +18,6 @@ export default function ProductTypeFilter() {
   const currentValue = searchParams?.get("product_type") ?? "all";
   const [, startTransition] = useTransition();
 
-  console.log("currentValue", currentValue);
-
   const handleChange = useCallback(
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString());
