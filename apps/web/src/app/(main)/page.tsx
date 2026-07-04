@@ -6,6 +6,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { NewsletterCTA } from "@/components/home/NewsletterCTA";
 import { NoteworthySection } from "@/components/home/NoteworthySection";
 import { HomeSaleSection } from "@/components/home/SaleSection";
+import { HomeFooter } from "@/components/home/HomeFooter";
 
 export default function HomePage() {
   return (
@@ -18,6 +19,7 @@ export default function HomePage() {
       <CommunityGallery />
       <CustomerTestimonial />
       <NewsletterCTA />
+      <HomeFooter />
     </div>
   );
 }

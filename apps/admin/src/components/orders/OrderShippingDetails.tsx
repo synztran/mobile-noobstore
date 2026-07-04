@@ -78,23 +78,6 @@ export default function OrderShippingDetails({
           </>
         )}
 
-        {displayAddress && (
-          <>
-            <p className="text-sm font-medium text-slate-700">
-              {displayAddress.full_name ?? "—"} -{" "}
-              {displayAddress.phone_number ?? "—"}
-            </p>
-            {addressLine && (
-              <p className="mt-0.5 text-sm text-slate-500">{addressLine}</p>
-            )}
-            {displayAddress.phone_number && (
-              <p className="mt-0.5 text-sm text-slate-500">
-                {displayAddress.phone_number}
-              </p>
-            )}
-          </>
-        )}
-
         {shippingMethodName && (
           <p className="mt-2 text-sm text-slate-600">
             <span className="font-medium text-slate-700">Shipping Method:</span>{" "}

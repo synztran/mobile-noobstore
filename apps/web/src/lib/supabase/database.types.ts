@@ -1228,6 +1228,7 @@ export type Database = {
           is_used: boolean | null
           attributes: Json | null
           name: string
+          sold_count: number
           parent_product_id: string | null
           product_type: string
           slug: string
@@ -1251,6 +1252,7 @@ export type Database = {
           parent_product_id?: string | null
           product_type?: string
           slug: string
+          sold_count?: number
           stock_quantity?: number | null
           thumbnail?: string | null
           updated_at?: string
@@ -1271,6 +1273,7 @@ export type Database = {
           parent_product_id?: string | null
           product_type?: string
           slug?: string
+          sold_count?: number
           stock_quantity?: number | null
           thumbnail?: string | null
           updated_at?: string

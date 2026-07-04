@@ -56,7 +56,7 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={clsx(
-              "flex flex-col items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 active:scale-90",
+              "flex flex-col items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 active:scale-90 select-none touch-manipulation",
               isActive
                 ? "bg-primary-fixed text-primary"
                 : "text-black opacity-50 hover:text-primary hover:opacity-100"

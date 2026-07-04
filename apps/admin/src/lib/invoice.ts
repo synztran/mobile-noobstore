@@ -147,8 +147,8 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       .fontSize(10)
       .font(fontBold)
       .fillColor("#111")
-      .text("Tổng hóa đơn:", 350, rightY, { width: 110, align: "right" });
-    doc.text(formatVND(input.balanceDue || input.total), 410, rightY, {
+      .text("Cần thanh toán:", 350, rightY, { width: 110, align: "right" });
+    doc.text(formatVND(input.shippingFee), 410, rightY, {
       width: 135,
       align: "right",
     });
@@ -275,6 +275,11 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     totals.push({
       label: "Tổng tiền:",
       value: formatVND(input.total),
+      bold: true,
+    });
+    totals.push({
+      label: "Đã thanh toán:",
+      value: formatVND(Math.max(0, subtotal - input.discount)),
       bold: true,
     });
 

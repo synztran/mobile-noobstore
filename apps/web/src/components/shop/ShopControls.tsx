@@ -61,7 +61,7 @@ export function ShopControls({
   return (
     <>
       {/* Search bar */}
-      <div className="mb-6 flex items-center gap-3 rounded-full bg-surface-container px-3 py-3.5">
+      <div className="mb-4 flex items-center gap-2 rounded-full bg-surface-container px-3 py-2">
         <Icon name="search" className="text-outline" />
         <input
           type="search"

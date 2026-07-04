@@ -32,7 +32,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   ]);
 
   return (
-    <div className="px-4 py-4">
+    <div className="clear-both p-4">
       <Suspense fallback={null}>
         <ShopPageClient initialData={initialData} categories={categories} />
       </Suspense>

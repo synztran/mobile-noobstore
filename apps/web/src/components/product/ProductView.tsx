@@ -469,12 +469,10 @@ export function ProductView({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="px-4"
+          className="space-y-2 px-4"
         >
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
-              <span className="text-sm">🎁</span>
-            </div>
+            <span className="text-sm">🎁</span>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">
               Quà tặng kèm
             </p>

@@ -71,6 +71,7 @@ type RawListRow = {
   images: unknown;
   product_type: string;
   is_used: boolean;
+  sold_count: number;
   categories: { id: string; name: string } | null;
   product_variants: RawVariantRow[] | null;
 };
@@ -191,6 +192,7 @@ async function shapeRow(p: RawListRow): Promise<ShopProduct> {
     is_used: p.is_used ?? false,
     tags,
     is_pre_order: variants.some((v) => v.is_pre_order),
+    sold_count: 0,
   };
 }
 
@@ -254,7 +256,7 @@ export const getProducts = cache(async function getProducts(
       priceMax,
       sort,
       limit,
-      productTypes: params.productTypes ?? ["standard", "kit", "component"],
+      // productTypes: params.productTypes ?? ["standard", "kit", "component"],
       excludeUncategorized: true,
       offset,
     });
@@ -901,7 +903,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
     const { data: product, error } = await getPublicClient()
       .from("products")
       .select(
-        `id, slug, name, brand, description, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used, is_active, attributes, sale_ends_at,
+        `id, slug, name, brand, description, base_price, stock_quantity, category_id, thumbnail, images, product_type, is_used, is_active, attributes, sale_ends_at, sold_count,
 			 categories(id, name),
 			 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes),
 				 product_components!product_components_parent_product_id_fkey(
@@ -1063,6 +1065,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
       sale_ends_at:
         ((raw as Record<string, unknown>).sale_ends_at as string | null) ??
         null,
+      sold_count: Number(raw.sold_count ?? 0),
       gifts,
     };
 

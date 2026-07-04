@@ -66,6 +66,7 @@ export interface ShopProduct {
   tags: ITag[];
   discount_price?: number;
   discount_percentage?: number;
+  sold_count: number;
   gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
 }
 

@@ -88,7 +88,7 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
 
     toast.success("Đã thêm vào giỏ hàng!");
     setSubmitting(false);
-    openCart();
+    // openCart();
   };
 
   return (
@@ -158,6 +158,11 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
                 {product.description?.replace(/<[^>]*>/g, "") || ""}
               </p>
             ) : null}
+            {product.sold_count > 0 && (
+              <p className="text-[9px] font-bold text-amber-600">
+                Đã bán {product.sold_count}
+              </p>
+            )}
             {product.discount_price && product.discount_price > 0 ? (
               <div>
                 <div className="text-right text-base font-extrabold text-red-600">

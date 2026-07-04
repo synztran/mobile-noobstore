@@ -61,6 +61,7 @@ export interface ProductDetail {
   is_pre_order: boolean;
   attributes?: Record<string, string> | null;
   sale_ends_at?: string | null;
+  sold_count: number;
   gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
 }
 
@@ -247,6 +248,7 @@ export async function GET(
       is_pre_order: variants.some((v) => v.is_pre_order),
       attributes: (p as any).attributes ?? null,
       sale_ends_at: (p as any).sale_ends_at ?? null,
+      sold_count: Number((p as any).sold_count ?? 0),
       gifts,
     };
 

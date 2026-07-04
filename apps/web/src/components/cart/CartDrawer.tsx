@@ -45,7 +45,7 @@ const CartItemRow = memo(function CartItemRow({
   );
 
   return (
-    <div className="relative flex items-start gap-2 rounded-3xl bg-surface-container-low p-2">
+    <div className="relative flex items-start gap-2 rounded-xl bg-surface-container-low p-2">
       {/* Remove button */}
       <button
         onClick={() => onRemove(item.product.id, item.variant?.id ?? null)}
@@ -54,7 +54,7 @@ const CartItemRow = memo(function CartItemRow({
         <Trash className="text-white" size={14} />
       </button>
       {/* Thumbnail */}
-      <div className="relative mt-2 h-20 w-24 flex-shrink-0 bg-surface-container">
+      <div className="relative h-20 w-24 flex-shrink-0 bg-surface-container">
         {item.product.thumbnail ? (
           <Image
             src={item.product.thumbnail}
@@ -78,7 +78,7 @@ const CartItemRow = memo(function CartItemRow({
         )}
       </div>
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="mr-6 line-clamp-1 truncate text-base font-bold leading-tight text-on-surface">
+        <p className="mr-6 line-clamp-3 text-sm font-bold leading-tight text-on-surface">
           {item.product.name}
         </p>
         {item.variant && (
@@ -86,11 +86,11 @@ const CartItemRow = memo(function CartItemRow({
             {item.variant.variant_name}
           </p>
         )}
-        <div>
+        <div className="flex gap-2">
           {item.product.tags?.map((tag) => (
             <span
               key={tag.id}
-              className={`flex max-w-max items-center justify-center rounded-lg border border-outline-variant/30 px-2 py-1 text-xs font-bold leading-tight tracking-wide text-on-surface shadow-sm backdrop-blur ${tag.textColor ?? "text-on-surface"} ${tag.bgColor ?? "bg-surface-container-lowest"}`}
+              className={`flex max-w-max items-center justify-center rounded-lg border border-outline-variant/30 px-2 py-1 text-[10px] font-bold leading-tight tracking-wide text-on-surface shadow-sm backdrop-blur ${tag.textColor ?? "text-on-surface"} ${tag.bgColor ?? "bg-surface-container-lowest"}`}
             >
               {tag.label}
             </span>
@@ -101,7 +101,7 @@ const CartItemRow = memo(function CartItemRow({
             {item.components.map((c) => (
               <span
                 key={c.variant_id}
-                className="inline-flex items-center gap-1 rounded-lg bg-gray-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant"
+                className="inline-flex items-center gap-1 rounded-lg bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-on-surface-variant"
               >
                 {c.component_group}: <strong>{c.variant_name}</strong>
               </span>
@@ -126,14 +126,14 @@ const CartItemRow = memo(function CartItemRow({
           </div>
         ))}
         <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 rounded-full bg-gray-200 px-2 py-1">
+          <div className="flex items-center gap-3 rounded-lg bg-gray-200 px-2 py-1">
             <button
               onClick={() => onMinus(item)}
               className="text-base font-bold leading-none text-on-surface transition-transform active:scale-90"
             >
               −
             </button>
-            <span className="w-4 text-center text-sm font-bold text-on-surface">
+            <span className="w-8 text-center text-sm font-bold text-on-surface">
               {item.quantity}
             </span>
             <button
@@ -166,6 +166,25 @@ export function CartDrawer() {
     () => (mounted ? total() : 0),
     [mounted, total, items]
   );
+  // const totalSavings = useMemo(
+  //   () =>
+  //     visibleItems.reduce((sum, item) => {
+  //       const effective = itemUnitPrice(item);
+  //       const original = item.product.base_price;
+  //       const perUnit = Math.max(0, original - effective);
+  //       return sum + perUnit * item.quantity;
+  //     }, 0),
+  //   [visibleItems]
+  // );
+  // const savingsPercentage = useMemo(() => {
+  //   const totalOriginal = visibleItems.reduce(
+  //     (s, i) => s + i.product.base_price * i.quantity,
+  //     0
+  //   );
+  //   return totalOriginal > 0
+  //     ? Math.round((totalSavings / totalOriginal) * 100)
+  //     : 0;
+  // }, [totalSavings, visibleItems]);
   const drawerOpen = mounted && isOpen;
 
   const [pendingRemoval, setPendingRemoval] = useState<{
@@ -259,8 +278,8 @@ export function CartDrawer() {
 
       {/* Drawer */}
       <div
-        className={`duration-250 fixed left-0 right-0 z-[999] flex h-full max-h-[80dvh] flex-col rounded-t-5xl bg-surface transition-all ease-out ${
-          drawerOpen ? "top-[20vh]" : "top-[110vh]"
+        className={`duration-250 fixed left-0 right-0 z-[999] flex h-full max-h-[85dvh] flex-col rounded-t-2xl bg-surface transition-all ease-out ${
+          drawerOpen ? "top-[15vh]" : "top-[110vh]"
         }`}
       >
         {/* Handle */}
@@ -277,7 +296,7 @@ export function CartDrawer() {
             onClick={closeCart}
             className="text-on-surface transition-opacity hover:opacity-70 active:scale-95"
           >
-            <Icon name="close" className="text-on-surface" />
+            <Icon name="close" className="text-xl text-on-surface" />
           </button>
         </div>
 
@@ -297,7 +316,7 @@ export function CartDrawer() {
         {/* Items */}
         <div
           data-allow-scroll
-          className="max-h-full min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-4"
+          className="max-h-full min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
         >
           {visibleItems.length === 0 ? (
             <div className="py-12 text-center">
@@ -328,10 +347,10 @@ export function CartDrawer() {
 
           {/* Sustainable packaging badge */}
           {visibleItems.length > 0 && (
-            <div className="flex items-center gap-3 rounded-2xl bg-secondary/10 px-4 py-3">
+            <div className="flex items-center gap-2 rounded-2xl bg-secondary/10 p-2">
               <Icon name="eco" className="text-sm text-secondary" />
-              <p className="text-xs font-bold uppercase tracking-wider text-secondary">
-                Đơn hàng này được đóng gói thân thiện với môi trường.
+              <p className="text-[10px] font-bold uppercase tracking-wider text-secondary">
+                Đơn hàng được đóng gói thân thiện với môi trường.
               </p>
             </div>
           )}
@@ -340,30 +359,32 @@ export function CartDrawer() {
         {/* Footer */}
         {visibleItems.length > 0 && (
           <div
-            className="space-y-2 border-t border-outline-variant/20 bg-surface px-4 pt-4"
+            className="space-y-2 border-t border-outline-variant/20 bg-surface px-4 pt-2"
             style={{
               paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
             }}
           >
             <div className="space-y-1">
+              {/* {totalSavings > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-green-600">
+                    Tiết kiệm {savingsPercentage}%
+                  </span>
+                  <span className="font-semibold text-green-600">
+                    -{formatVND(totalSavings)}
+                  </span>
+                </div>
+              )} */}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-on-surface-variant">
-                  Tạm tính
+                <span className="text-sm text-on-surface">
+                  Phí vận chuyển và giảm giá
                 </span>
-                <span className="font-semibold text-on-surface">
-                  {formatVND(subtotal)}
+                <span className="text-xs font-semibold text-on-surface">
+                  Ở bước thanh toán
                 </span>
               </div>
-              {/* <div className="flex justify-between items-center">
-								<span className="text-on-surface-variant text-sm">
-									Phí vận chuyển dự kiến
-								</span>
-								<span className="font-semibold text-secondary text-xs">
-									Chi tiết ở bước thanh toán
-								</span>
-							</div> */}
-              <div className="flex justify-between">
-                <span className="font-bold text-on-surface">Tổng cộng</span>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-on-surface">Tạm tính</span>
                 <span className="text-xl font-black text-primary">
                   {formatVND(subtotal)}
                 </span>

@@ -50,6 +50,7 @@ export interface ProductListItem {
   discount_price: number;
   discount_percentage: number;
   created_at: string;
+  sold_count: number;
   gifts?: Array<{
     gift_name: string;
     gift_slug: string;
@@ -84,6 +85,7 @@ type RawListRow = {
   product_type: string;
   is_used: boolean;
   created_at: string;
+  sold_count: number;
   categories: { id: string; name: string } | null;
   product_variants: VariantRow[] | null;
 };
@@ -378,6 +380,7 @@ function shapeRow(
     discount_price: minPrice < basePrice ? minPrice : 0,
     discount_percentage: discountPercentage,
     created_at: row.created_at,
+    sold_count: Number(row.sold_count ?? 0),
   };
 
   shaped.tags = getTags(shaped);
@@ -411,7 +414,7 @@ export async function getProductListByFilters(
     sort = "newest",
     limit,
     offset = 0,
-    productTypes = ["standard", "kit", "component"],
+    // productTypes = ["standard", "kit", "component"],
     excludeUncategorized = false,
   } = params;
 
@@ -478,7 +481,7 @@ export async function getProductListByFilters(
     if (countErr || count === null) return { products: [], total: 0 };
 
     // ── Fetch paginated products (sorted by user's choice) ──
-    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, created_at,
+    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, created_at, sold_count,
        categories(id, name),
        product_variants(${VARIANT_COLUMNS})`;
 
