@@ -259,8 +259,8 @@ export function CartDrawer() {
 
       {/* Drawer */}
       <div
-        className={`duration-250 fixed left-0 right-0 z-[999] flex h-full max-h-screen flex-col rounded-t-2xl bg-surface transition-all ease-out ${
-          drawerOpen ? "top-[15vh]" : "top-[110vh]"
+        className={`duration-250 fixed left-0 right-0 z-[999] flex h-[85dvh] flex-col rounded-t-2xl bg-surface transition-all ease-out ${
+          drawerOpen ? "top-[15dvh]" : "top-[110dvh]"
         }`}
       >
         {/* Handle */}
@@ -289,7 +289,7 @@ export function CartDrawer() {
         {/* Items */}
         <div
           data-allow-scroll
-          className="max-h-[60%] min-h-0 space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
+          className="max-h-[60dvh] min-h-0 space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
         >
           {visibleItems.length === 0 ? (
             <div className="py-12 text-center">
@@ -332,9 +332,9 @@ export function CartDrawer() {
         {/* Footer */}
         {visibleItems.length > 0 && (
           <div
-            className="space-y-2 border-t border-outline-variant/20 bg-surface px-4 pt-2"
+            className="flex-2 space-y-2 border-t border-outline-variant/20 bg-surface px-4 pt-2"
             style={{
-              paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
+              paddingBottom: "max(0.5rem, env(safe-area-inset-bottom) - 2rem)",
             }}
           >
             <div className="space-y-1">

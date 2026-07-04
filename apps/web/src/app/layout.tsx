@@ -4,7 +4,6 @@ import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { FlyToCart } from "@/components/ui/FlyToCart";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
-import { ViewportHeightProvider } from "@/components/layout/ViewportHeightProvider";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import "gooey-toast/styles.css";
 import type { Metadata, Viewport } from "next";
@@ -92,19 +91,17 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background font-sans text-on-surface antialiased">
-        <ViewportHeightProvider>
-          <AuthProvider>
-            <ReactQueryProvider>
-              <NavigationOverlay />
-              <FlyToCart />
-              {children}
-              <MobileViewportGuard />
-              <ToastProvider />
-              <StoreHydrator />
-              <ServiceWorkerRegister />
-            </ReactQueryProvider>
-          </AuthProvider>
-        </ViewportHeightProvider>
+        <AuthProvider>
+          <ReactQueryProvider>
+            <NavigationOverlay />
+            <FlyToCart />
+            {children}
+            <MobileViewportGuard />
+            <ToastProvider />
+            <StoreHydrator />
+            <ServiceWorkerRegister />
+          </ReactQueryProvider>
+        </AuthProvider>
       </body>
     </html>
   );
