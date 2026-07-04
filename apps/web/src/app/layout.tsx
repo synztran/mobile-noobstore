@@ -13,84 +13,96 @@ import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
 
 const MobileViewportGuard = dynamic(
-  () => import("@/components/warning-modal/MobileViewportGuard"),
+  () => import("@/components/warning-modal/MobileViewportGuard")
 );
 
 const manrope = localFont({
-	src: "../../public/fonts/manrope/Manrope-VariableFont_wght.ttf",
-	variable: "--font-sans",
-	display: "swap",
-	weight: "200 800",
+  src: "../../public/fonts/manrope/Manrope-VariableFont_wght.ttf",
+  variable: "--font-sans",
+  display: "swap",
+  weight: "200 800",
 });
 
 export const metadata: Metadata = {
-	title: {
-		template: "%s - NoobStore",
-		default: "NoobStore",
-	},
-	description: "Service and Retail for Premium Mechanical Keyboards",
-	metadataBase: new URL("https://www.noobstore.xyz"),
-	openGraph: {
-		type: "website",
-		siteName: "NoobStore",
-		title: "NoobStore",
-		description: "Service and Retail for Premium Mechanical Keyboards",
-		images: [{ url: "/icon-512.png", width: 512, height: 512 }],
-	},
-	other: {},
-	twitter: {
-		card: "summary_large_image",
-		title: "NoobStore",
-		description: "Service and Retail for Premium Mechanical Keyboards",
-		images: ["/icon-512.png"],
-	},
-	manifest: "/manifest.webmanifest",
-	appleWebApp: {
-		capable: true,
-		title: "NoobStore",
-		statusBarStyle: "black-translucent",
-	},
-	icons: {
-		apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
-		icon: [
-			{ url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-			{ url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-		],
-	},
+  title: {
+    template: "%s - NoobStore",
+    default: "NoobStore",
+  },
+  description: "Service and Retail for Premium Mechanical Keyboards",
+  metadataBase: new URL("https://www.noobstore.xyz"),
+  openGraph: {
+    type: "website",
+    siteName: "NoobStore",
+    title: "NoobStore",
+    description: "Service and Retail for Premium Mechanical Keyboards",
+    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+  },
+  other: {},
+  twitter: {
+    card: "summary_large_image",
+    title: "NoobStore",
+    description: "Service and Retail for Premium Mechanical Keyboards",
+    images: ["/icon-512.png"],
+  },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "NoobStore",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
-	width: "device-width",
-	initialScale: 1,
-	maximumScale: 1,
-	userScalable: false,
-	viewportFit: "cover",
-	themeColor: "#9b3f1c",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#9b3f1c",
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: {
-	children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-	return (
-		<html lang="en" data-theme="noobstore" className={cn("font-sans", manrope.variable)}>
-			<head>
-				<meta property="fb:app_id" content="YOUR_FB_APP_ID" />
-			</head>
-			<body className="bg-background font-sans text-on-surface antialiased">
-				<AuthProvider>
-					<ReactQueryProvider>
-						<NavigationOverlay />
-						<FlyToCart />
-						{children}
-						<MobileViewportGuard />
-						<ToastProvider />
-						<StoreHydrator />
-						<ServiceWorkerRegister />
-					</ReactQueryProvider>
-				</AuthProvider>
-			</body>
-		</html>
-	);
+  return (
+    <html
+      lang="en"
+      data-theme="noobstore"
+      className={cn("font-sans", manrope.variable)}
+    >
+      <head>
+        <meta property="fb:app_id" content="YOUR_FB_APP_ID" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+      </head>
+      <body className="bg-background font-sans text-on-surface antialiased">
+        <AuthProvider>
+          <ReactQueryProvider>
+            <NavigationOverlay />
+            <FlyToCart />
+            {children}
+            <MobileViewportGuard />
+            <ToastProvider />
+            <StoreHydrator />
+            <ServiceWorkerRegister />
+          </ReactQueryProvider>
+        </AuthProvider>
+      </body>
+    </html>
+  );
 }
