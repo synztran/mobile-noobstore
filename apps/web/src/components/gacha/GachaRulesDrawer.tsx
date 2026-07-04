@@ -1,7 +1,7 @@
 "use client";
 
 import { RULES } from "@/constants/gacha";
-import { X } from "lucide-react";
+
 import { useEffect } from "react";
 
 interface GachaRulesDrawerProps {
@@ -41,8 +41,8 @@ export function GachaRulesDrawer({ open, onClose }: GachaRulesDrawerProps) {
 					<button
 						aria-label="Đóng"
 						onClick={onClose}
-						className="p-1 rounded-full hover:bg-base-200">
-						<X size={18} />
+						className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90">
+						Đóng
 					</button>
 				</div>
 

@@ -209,7 +209,7 @@ export function ProductView({
       <main className="my-auto space-y-4 pb-6">
         {/* ── Hero Image Gallery ── */}
         <section
-          className="relative p-4"
+          className="relative space-y-2 p-4"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >

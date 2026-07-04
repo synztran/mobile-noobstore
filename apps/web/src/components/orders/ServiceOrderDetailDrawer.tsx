@@ -139,8 +139,8 @@ export function ServiceOrderDetailDrawer({ orderId, onClose }: Props) {
 					</div>
 					<button
 						onClick={onClose}
-						className="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center active:scale-90 transition-transform">
-						<X size={18} className="text-on-surface" />
+						className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90">
+						Đóng
 					</button>
 				</div>
 

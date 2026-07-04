@@ -40,11 +40,8 @@ export function SortSheet({
 					</p>
 					<button
 						onClick={onClose}
-						className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center">
-						<Icon
-							name="close"
-							className="text-on-surface text-xl"
-						/>
+						className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90">
+						Đóng
 					</button>
 				</div>
 				<div className="p-4 space-y-2 pb-8">

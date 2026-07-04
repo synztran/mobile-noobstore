@@ -59,8 +59,10 @@ export function VoucherDrawer({
           </h2>
           <button
             onClick={onClose}
-            className="text-on-surface transition-opacity hover:opacity-70 active:scale-95"
-          ></button>
+            className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90"
+          >
+            Đóng
+          </button>
         </div>
         <div className="flex-1 space-y-4 overflow-y-auto px-4 pb-4">
           <div className="menu flex h-full w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-base-200 p-0">

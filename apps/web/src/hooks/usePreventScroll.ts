@@ -12,13 +12,14 @@ export function usePreventScroll(isOpen: boolean) {
 		const originalTop = body.style.top;
 		const originalLeft = body.style.left;
 		const originalWidth = body.style.width;
-    const originHeihgt = body.style.height
+		const originalHeight = body.style.height;
 
 		body.style.overflow = "hidden";
 		body.style.position = "fixed";
 		body.style.top = `-${scrollY}px`;
+		body.style.left = "0";
 		body.style.width = "100%";
-    body.style.height = '100dvh'
+		body.style.height = `${window.innerHeight}px`;
 
 		return () => {
 			body.style.overflow = originalOverflow;
@@ -26,7 +27,7 @@ export function usePreventScroll(isOpen: boolean) {
 			body.style.top = originalTop;
 			body.style.left = originalLeft;
 			body.style.width = originalWidth;
-      body.style.height = originHeihgt
+			body.style.height = originalHeight;
 			window.scrollTo(0, scrollY);
 		};
 	}, [isOpen]);

@@ -1,6 +1,5 @@
 "use client";
 
-import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -81,9 +80,9 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ delay: 0.15, duration: 0.2, ease: "easeOut" }}
-            className="absolute right-4 top-14 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md"
+            className="absolute right-4 top-14 z-10 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md transition-all active:scale-90"
           >
-            <X size={20} />
+            Đóng
           </motion.button>
 
           <motion.div

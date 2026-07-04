@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useRouter } from "next/navigation";
-import { type ComponentType, useEffect } from "react";
+import { type ComponentType, useEffect, useRef } from "react";
 
 type WithAuthRedirectOptions = {
   redirectTo?: string;
@@ -17,10 +17,18 @@ export function withAuthRedirect<P extends object>(
   function WithAuthRedirectComponent(props: P) {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const hydrated = useRef(false);
 
     useEffect(() => {
-      if (!loading && !user) {
-        router.push(redirectTo);
+      if (!loading) {
+        hydrated.current = true;
+      }
+    }, [loading]);
+
+    useEffect(() => {
+      if (!loading && !user && hydrated.current) {
+        const currentPath = window.location.pathname + window.location.search;
+        router.push(`${redirectTo}?next=${encodeURIComponent(currentPath)}`);
       }
     }, [loading, user, router, redirectTo]);
 

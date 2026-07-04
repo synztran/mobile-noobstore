@@ -9,7 +9,7 @@ import { VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import clsx from "clsx";
 import { useFormik } from "formik";
-import { X } from "lucide-react";
+
 import { memo, useEffect, useMemo } from "react";
 import * as yup from "yup";
 
@@ -131,9 +131,9 @@ const AddressEditorDrawer = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
+            className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90"
           >
-            <X size={18} className="text-on-surface" />
+            Đóng
           </button>
         </div>
 

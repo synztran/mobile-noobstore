@@ -71,9 +71,9 @@ export function FilterOverlay({
           <h2 className="text-xl font-black text-on-surface">Lọc sản phẩm</h2>
           <button
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container transition-colors hover:bg-surface-container-high"
+            className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90"
           >
-            <Icon name="close" className="text-xl text-on-surface" />
+            Đóng
           </button>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import clsx from "clsx";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 interface ServiceBookingSuccessDrawerProps {
 	open: boolean;
@@ -42,8 +42,8 @@ export function ServiceBookingSuccessDrawer({
 					<button
 						type="button"
 						onClick={onClose}
-						className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
-						<X size={16} />
+						className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90">
+						Đóng
 					</button>
 				</div>
 

@@ -7,7 +7,7 @@ import {
 } from "@/lib/react-query/gacha/api/useGachaQueries";
 import { MISSION_TYPE_LABEL } from "@/constants/gacha";
 import type { GachaMission } from "@/lib/react-query/router/gacha";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
@@ -66,9 +66,9 @@ export function GachaMissionsDrawer({
           <button
             aria-label="Đóng"
             onClick={onClose}
-            className="rounded-full p-1 hover:bg-base-200"
+            className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90"
           >
-            <X size={18} />
+            Đóng
           </button>
         </div>
 

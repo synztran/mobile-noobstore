@@ -166,25 +166,6 @@ export function CartDrawer() {
     () => (mounted ? total() : 0),
     [mounted, total, items]
   );
-  // const totalSavings = useMemo(
-  //   () =>
-  //     visibleItems.reduce((sum, item) => {
-  //       const effective = itemUnitPrice(item);
-  //       const original = item.product.base_price;
-  //       const perUnit = Math.max(0, original - effective);
-  //       return sum + perUnit * item.quantity;
-  //     }, 0),
-  //   [visibleItems]
-  // );
-  // const savingsPercentage = useMemo(() => {
-  //   const totalOriginal = visibleItems.reduce(
-  //     (s, i) => s + i.product.base_price * i.quantity,
-  //     0
-  //   );
-  //   return totalOriginal > 0
-  //     ? Math.round((totalSavings / totalOriginal) * 100)
-  //     : 0;
-  // }, [totalSavings, visibleItems]);
   const drawerOpen = mounted && isOpen;
 
   const [pendingRemoval, setPendingRemoval] = useState<{
@@ -268,7 +249,7 @@ export function CartDrawer() {
   return (
     <>
       <div
-        className={`fixed inset-0 z-[60] bg-on-surface/30 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[60] h-screen bg-on-surface/30 backdrop-blur-sm transition-opacity duration-300 ${
           drawerOpen
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
@@ -278,7 +259,7 @@ export function CartDrawer() {
 
       {/* Drawer */}
       <div
-        className={`duration-250 fixed left-0 right-0 z-[999] flex h-full max-h-[85dvh] flex-col rounded-t-2xl bg-surface transition-all ease-out ${
+        className={`duration-250 fixed left-0 right-0 z-[999] flex h-full max-h-screen flex-col rounded-t-2xl bg-surface transition-all ease-out ${
           drawerOpen ? "top-[15vh]" : "top-[110vh]"
         }`}
       >
@@ -290,33 +271,25 @@ export function CartDrawer() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2">
           <h2 className="text-xl font-black tracking-tight text-on-surface">
-            Giỏ hàng của bạn
+            Giỏ hàng
           </h2>
-          <button
+          <div
+            className="flex w-full flex-1 items-center justify-end"
             onClick={closeCart}
-            className="text-on-surface transition-opacity hover:opacity-70 active:scale-95"
           >
-            <Icon name="close" className="text-xl text-on-surface" />
-          </button>
+            <button
+              onClick={closeCart}
+              className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90"
+            >
+              Đóng
+            </button>
+          </div>
         </div>
-
-        {/* Pre-order notice */}
-        {/* {hasPreOrderItem && (
-					<div className="mx-4 mb-2 flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-2xl px-4 py-2.5">
-						<Icon
-							name="schedule"
-							className="text-violet-400 text-base shrink-0"
-						/>
-						<p className="text-xs font-black uppercase tracking-widest text-violet-400">
-							Giỏ hàng có sản phẩm đặt trước
-						</p>
-					</div>
-				)} */}
 
         {/* Items */}
         <div
           data-allow-scroll
-          className="max-h-full min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
+          className="max-h-[60%] min-h-0 space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
         >
           {visibleItems.length === 0 ? (
             <div className="py-12 text-center">
@@ -365,16 +338,6 @@ export function CartDrawer() {
             }}
           >
             <div className="space-y-1">
-              {/* {totalSavings > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-green-600">
-                    Tiết kiệm {savingsPercentage}%
-                  </span>
-                  <span className="font-semibold text-green-600">
-                    -{formatVND(totalSavings)}
-                  </span>
-                </div>
-              )} */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-on-surface">
                   Phí vận chuyển và giảm giá

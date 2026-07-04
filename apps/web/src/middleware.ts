@@ -85,7 +85,9 @@ export async function middleware(request: NextRequest) {
 
     // Redirect authenticated users away from auth pages
     if ((pathname === "/login" || pathname === "/register") && isLoggedIn) {
-      return NextResponse.redirect(new URL("/", request.url));
+      const nextParam = request.nextUrl.searchParams.get("next");
+      const redirectTo = nextParam || "/";
+      return NextResponse.redirect(new URL(redirectTo, request.url));
     }
   } catch (err) {
     console.error("[middleware] unexpected error:", err);

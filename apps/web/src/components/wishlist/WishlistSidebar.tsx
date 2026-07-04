@@ -59,12 +59,9 @@ export function WishlistSidebar({ drawerOpen, onClose }: WishlistSidebarProps) {
 						<button
 							type="button"
 							onClick={onClose}
-							className="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center active:scale-90 transition-transform"
+							className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90"
 							aria-label="Close wishlist">
-							<Icon
-								name="close"
-								className="text-[18px] text-on-surface"
-							/>
+							Đóng
 						</button>
 					</div>
 

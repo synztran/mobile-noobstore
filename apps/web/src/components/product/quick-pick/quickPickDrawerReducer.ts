@@ -109,12 +109,8 @@ export function reduce(state: DrawerState, action: DrawerAction): DrawerState {
 		case "SELECT": {
 			const isAlreadySelected =
 				state.selections[action.group] === action.variantId;
-			const group = state.groups.find(
-				(g) => g.component_group === action.group,
-			);
-			const isRequired = group?.is_required ?? true;
 
-			if (isAlreadySelected && !isRequired) {
+			if (isAlreadySelected) {
 				const next = { ...state.selections };
 				delete next[action.group];
 				return { ...state, selections: next };
