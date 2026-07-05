@@ -18,4 +18,5 @@ export const orderQueryKeys = createQueryKeys("order", {
 	status: (orderNumber: string | undefined) => [orderNumber ?? ""],
 	list: (filters: OrderListFilters) => [filters],
 	byNumber: (orderNumber: string) => [orderNumber],
+	detail: (id: string) => [id],
 });

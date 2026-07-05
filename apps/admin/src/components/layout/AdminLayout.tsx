@@ -19,6 +19,7 @@ import {
   Puzzle,
   MessageSquareText,
   Settings2,
+  ShieldAlert,
   ShoppingBag,
   ShoppingCart,
   Tag,
@@ -65,6 +66,7 @@ const navigation: NavItem[] = [
   { label: "Users", href: "/users", icon: Users },
   { label: "Notifications", href: "/notifications", icon: FileText },
   { label: "Reviews", href: "/reviews", icon: MessageSquareText },
+  { label: "Support", href: "/support", icon: ShieldAlert },
   {
     label: "Services",
     icon: Wrench,

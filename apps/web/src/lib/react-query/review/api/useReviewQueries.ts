@@ -16,6 +16,18 @@ export interface ReviewsResponse {
   total: number;
 }
 
+export interface RecentReviewItem {
+  id: string;
+  rating: number;
+  body: string | null;
+  reviewer_name: string;
+  created_at: string;
+  product_name: string;
+  product_slug: string;
+  product_thumbnail: string | null;
+  source: "native" | "google";
+}
+
 export function useReviews(productSlug: string) {
   return useQuery<ReviewsResponse>({
     ...appQueryKeys.review.list(productSlug),
@@ -23,6 +35,17 @@ export function useReviews(productSlug: string) {
       const res = await fetch(`/api/products/${productSlug}/reviews`);
       if (!res.ok) return { reviews: [], average: 0, total: 0 };
       return res.json() as Promise<ReviewsResponse>;
+    },
+  });
+}
+
+export function useRecentReviews() {
+  return useQuery<RecentReviewItem[]>({
+    ...appQueryKeys.review.recent,
+    queryFn: async () => {
+      const res = await fetch("/api/reviews/recent");
+      if (!res.ok) return [];
+      return res.json() as Promise<RecentReviewItem[]>;
     },
   });
 }

@@ -24,6 +24,9 @@ export function BundleProductCard({
   const isNew = showNewBadge && product.tags?.some((t) => t.value === "new");
   const isSoldOut = showSoldOutOverlay && product.stock_quantity === 0;
   const hasDiscount = product.discount_price && product.discount_price > 0;
+  const isPreOrder = product.is_pre_order;
+  const isUsed = product.is_used;
+  const isBestseller = product.sold_count >= 50;
 
   return (
     <Link
@@ -45,13 +48,30 @@ export function BundleProductCard({
             </span>
           </div>
         )}
-        {isNew && (
-          <div className="absolute left-3 top-3 rounded-md bg-primary px-2 py-1 text-[8px] font-black uppercase tracking-widest text-on-primary">
-            MỚI
-          </div>
-        )}
+        <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1">
+          {isBestseller && (
+            <div className="rounded-md bg-amber-500 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow-sm">
+              Bán chạy
+            </div>
+          )}
+          {isPreOrder && (
+            <div className="rounded-md bg-violet-500 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow-sm">
+              Pre-order
+            </div>
+          )}
+          {isUsed && (
+            <div className="rounded-md bg-surface-container-highest px-2 py-1 text-[8px] font-black uppercase tracking-widest text-on-surface-variant shadow-sm">
+              Cũ
+            </div>
+          )}
+          {isNew && (
+            <div className="rounded-md bg-primary px-2 py-1 text-[8px] font-black uppercase tracking-widest text-on-primary shadow-sm">
+              MỚI
+            </div>
+          )}
+        </div>
         {isSoldOut && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-surface/70">
+          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-surface/70">
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-on-surface-variant">
               Hết hàng
             </p>

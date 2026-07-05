@@ -6,10 +6,14 @@ import OrderStatusTabs, {
   type OrderStatusTabOption,
 } from "@/components/orders/OrderStatusTabs";
 import { ServiceOrderDetailDrawer } from "@/components/orders/ServiceOrderDetailDrawer";
+import { SupportFAB } from "@/components/support/SupportFAB";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
 import { formatVND } from "@/lib/currency";
-import { useOrderByNumber, useOrders } from "@/lib/react-query/order/api/useOrderQueries";
+import {
+  useOrderByNumber,
+  useOrders,
+} from "@/lib/react-query/order/api/useOrderQueries";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -18,6 +22,7 @@ import {
   Loader2,
   PackageCheck,
   ReceiptText,
+  RotateCcw,
   Search,
   Truck,
   X,
@@ -83,6 +88,12 @@ const STATUS_CONFIG: Record<
     color: "text-error",
     bg: "bg-error/5",
   },
+  refunded: {
+    label: "Đã hoàn tiền",
+    Icon: RotateCcw,
+    color: "text-slate-600",
+    bg: "bg-slate-600/10",
+  },
 };
 
 const STATUS_TABS: OrderStatusTabOption[] = [
@@ -92,6 +103,7 @@ const STATUS_TABS: OrderStatusTabOption[] = [
   { value: "delivering", label: "Đang giao" },
   { value: "delivered", label: "Đã giao" },
   { value: "cancelled", label: "Đã hủy" },
+  { value: "refunded", label: "Đã hoàn tiền" },
 ];
 
 function StatusBadge({ status }: { status: string }) {
@@ -166,13 +178,8 @@ function OrdersPage() {
   const orderNumberParam = searchParams.get("orderNumber");
   const orderByNumber = useOrderByNumber(orderNumberParam);
 
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-  } = useOrders({ q: debouncedQ, status: activeStatus });
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
+    useOrders({ q: debouncedQ, status: activeStatus });
 
   // Open order detail from URL param
   useEffect(() => {
@@ -389,6 +396,7 @@ function OrdersPage() {
         orderId={selectedServiceOrderId}
         onClose={() => setSelectedServiceOrderId(null)}
       />
+      <SupportFAB />
     </div>
   );
 }

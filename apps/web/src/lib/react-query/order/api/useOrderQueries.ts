@@ -1,3 +1,4 @@
+import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
 import type { OrderSummary } from "@/app/api/user/orders/route";
 import type { PaymentInformation } from "@/lib/payment-information";
 import { appQueryKeys } from "@/lib/react-query/root";
@@ -76,6 +77,19 @@ export function useOrders({ q, status }: { q: string; status: string }) {
 			lastPage.pagination?.has_next_page
 				? lastPage.pagination.page + 1
 				: undefined,
+	});
+}
+
+export function useOrderDetail(id: string | null) {
+	return useQuery<OrderDetail | null>({
+		...appQueryKeys.order.detail(id ?? ""),
+		enabled: !!id,
+		queryFn: async () => {
+			const res = await fetch(`/api/user/orders/${id}`);
+			if (!res.ok) return null;
+			const data = await res.json();
+			return data?.error ? null : data;
+		},
 	});
 }
 

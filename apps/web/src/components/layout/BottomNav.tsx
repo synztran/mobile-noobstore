@@ -40,7 +40,7 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const excludedPaths = ["/checkout", "/services", "/gacha"];
+  const excludedPaths = ["/checkout", "/services", "/gacha", "/profile/support"];
 
   if (excludedPaths.some((path) => pathname.startsWith(path))) {
     return null;

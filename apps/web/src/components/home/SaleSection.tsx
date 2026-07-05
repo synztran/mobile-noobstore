@@ -118,7 +118,7 @@ export function HomeSaleSection() {
                 className="min-w-[180px] animate-[fadeSlideUp_0.5s_ease-out_forwards]"
                 style={{ animationDelay: `${i * 60}ms`, opacity: 0 }}
               >
-                <BundleProductCard product={product} />
+                <BundleProductCard product={product} showSoldOutOverlay />
               </div>
             ))}
         {!isLoading && products.length === 0 && (

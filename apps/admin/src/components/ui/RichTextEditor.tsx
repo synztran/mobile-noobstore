@@ -38,10 +38,8 @@ export default function RichTextEditor({
       (window as any).jQuery = jQuery;
       (window as any).$ = jQuery;
 
-      await Promise.all([
-        import("trumbowyg"),
-        import("trumbowyg/dist/langs/vi.min.js"),
-      ]);
+      await import("trumbowyg");
+      await import("trumbowyg/dist/langs/vi.min.js");
 
       if (disposed || !textareaRef.current) return;
 
