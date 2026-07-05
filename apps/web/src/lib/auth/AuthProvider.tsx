@@ -205,6 +205,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
+    if (!data.error) {
+      const {
+        data: { session: newSession },
+      } = await supabase.auth.getSession();
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      if (newSession?.user) {
+        await fetchProfile();
+      }
+    }
     return { error: data.error ?? null };
   };
 
