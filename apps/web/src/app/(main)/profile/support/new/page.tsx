@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, RefreshCw } from "lucide-react";
@@ -91,7 +91,7 @@ function OrderSummaryBanner({
   );
 }
 
-export default function NewTicketPage() {
+function NewTicketPageContent() {
   const sp = useSearchParams();
   const orderIdParam = sp.get("order_id");
   const orderNumberParam = sp.get("order_number");
@@ -261,5 +261,13 @@ export default function NewTicketPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function NewTicketPage() {
+  return (
+    <Suspense>
+      <NewTicketPageContent />
+    </Suspense>
   );
 }
