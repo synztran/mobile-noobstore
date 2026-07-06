@@ -15,6 +15,8 @@ interface Order {
 	status: string;
 	total_price: number;
 	created_at: string | null;
+	cancelled_at?: string | null;
+	cancelled_note?: string | null;
 	order_items?: Array<{ count: number | null }> | null;
 	order_services?: Array<{ count: number | null }> | null;
 	users: { first_name: string | null; last_name: string | null } | null;
@@ -212,8 +214,7 @@ export default function OrdersClient({
 			</div>
 
 			{/* Table */}
-			<div
-				className={`bg-white rounded-lg shadow overflow-hidden transition-opacity ${isFetching ? "opacity-60" : "opacity-100"}`}>
+			<div className="bg-white rounded-lg shadow overflow-hidden">
 				<table className="w-full">
 					<thead className="bg-slate-50 border-b border-slate-200">
 						<tr>
@@ -228,7 +229,19 @@ export default function OrdersClient({
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-slate-200">
-						{orders.length > 0 ? (
+						{isFetching ? (
+							<>
+								{[1, 2, 3, 4, 5].map((i) => (
+									<tr key={i}>
+										{[1, 2, 3, 4, 5, 6].map((j) => (
+											<td key={j} className="px-6 py-4">
+												<div className="h-4 w-full animate-pulse rounded bg-slate-200" />
+											</td>
+										))}
+									</tr>
+								))}
+							</>
+						) : orders.length > 0 ? (
 							orders.map((order) => {
 								const customer = order.users
 									? `${order.users.first_name ?? ""} ${order.users.last_name ?? ""}`.trim() ||
@@ -259,7 +272,12 @@ export default function OrdersClient({
 										</td>
 										<td className="px-6 py-4 text-sm">
 											<span
-												className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[order.status] ?? "bg-slate-100 text-slate-700"}`}>
+												className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[order.status] ?? "bg-slate-100 text-slate-700"}`}
+												title={
+													order.status === "cancelled" && order.cancelled_note
+														? order.cancelled_note
+														: undefined
+												}>
 												{order.status}
 											</span>
 										</td>

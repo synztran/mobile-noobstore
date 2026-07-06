@@ -61,7 +61,7 @@ export interface ProductListItem {
 
 // ─── Raw DB row types ──────────────────────────────────────────────────────────
 
-type VariantRow = {
+export type VariantRow = {
   id: string;
   variant_name: string;
   price_adjustment: number;
@@ -98,12 +98,12 @@ type ComponentChildRow = {
 
 // ─── Supplement types (batch-fetched) ─────────────────────────────────────────
 
-type KitSupplement = {
+export type KitSupplement = {
   childVariantsByProductId: Map<string, VariantRow[]>;
   kitStockById: Map<string, number>;
 };
 
-type GiftSupplement = Map<
+export type GiftSupplement = Map<
   string,
   Array<{
     gift_name: string;
@@ -183,7 +183,7 @@ function getTags(product: {
 
 // ─── Batch supplement fetchers ────────────────────────────────────────────────
 
-async function fetchKitSupplements(kitIds: string[]): Promise<KitSupplement> {
+export async function fetchKitSupplements(kitIds: string[]): Promise<KitSupplement> {
   const childVariantsByProductId = new Map<string, VariantRow[]>();
   const kitStockById = new Map<string, number>();
 
@@ -260,7 +260,7 @@ async function fetchKitSupplements(kitIds: string[]): Promise<KitSupplement> {
   return { childVariantsByProductId, kitStockById };
 }
 
-async function fetchGiftSupplement(
+export async function fetchGiftSupplement(
   productIds: string[]
 ): Promise<GiftSupplement> {
   const giftsByProductId: GiftSupplement = new Map();

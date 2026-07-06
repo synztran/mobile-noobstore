@@ -2,6 +2,7 @@
 
 import Icon from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { safeRedirect } from "@/lib/auth/redirect";
 import { toast } from "@/lib/toast";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,7 +32,7 @@ function LoginForm() {
       return;
     }
     toast.success("Chào mừng trở lại!");
-    const next = searchParams.get("next") ?? "/";
+    const next = safeRedirect(searchParams.get("next"));
     router.push(next);
   };
 

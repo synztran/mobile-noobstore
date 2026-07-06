@@ -15,6 +15,13 @@ import type {
 import type { ShopProduct } from "@/app/api/products/route";
 import { getProductListByFilters } from "@/lib/product-query-service";
 import { getCache, setCache } from "@/lib/redis/cache";
+import {
+  fetchKitSupplements,
+  fetchGiftSupplement,
+  type KitSupplement,
+  type GiftSupplement,
+  type VariantRow,
+} from "@/lib/product-query-service";
 import { getPublicClient } from "@/lib/supabase/public";
 
 export type { ProductDetail };
@@ -28,9 +35,15 @@ export type CategoryItem = {
 
 /**
  * Fetch all categories for use in server components.
+ * Cached with React.cache() + Redis (600s TTL).
  */
-export async function getCategories(): Promise<CategoryItem[]> {
+export const getCategories = cache(async function getCategories(): Promise<
+  CategoryItem[]
+> {
   try {
+    const cached = await getCache<CategoryItem[]>("categories");
+    if (cached) return cached;
+
     const { data, error } = await getPublicClient()
       .from("categories")
       .select("id, name, slug, thumbnail")
@@ -39,12 +52,15 @@ export async function getCategories(): Promise<CategoryItem[]> {
       console.error("[getCategories] Supabase error:", error.message);
       return [];
     }
-    return (data ?? []) as CategoryItem[];
+
+    const result = (data ?? []) as CategoryItem[];
+    await setCache("categories", result, 600);
+    return result;
   } catch (err) {
     console.error("[getCategories] Unexpected error:", err);
     return [];
   }
-}
+});
 
 // ─── Internal row types ───────────────────────────────────────────────────────
 
@@ -76,9 +92,34 @@ type RawListRow = {
   product_variants: RawVariantRow[] | null;
 };
 
-// ─── Shared shaping logic ─────────────────────────────────────────────────────
+// ─── Batch supplement helpers ─────────────────────────────────────────────────
 
-async function shapeRow(p: RawListRow): Promise<ShopProduct> {
+async function prepareSupplements(
+  productIds: string[],
+  kitIds: string[]
+): Promise<{
+  kitSupplements: KitSupplement;
+  giftsByProductId: GiftSupplement;
+}> {
+  const [kitSupplements, giftsByProductId] = await Promise.all([
+    kitIds.length > 0
+      ? fetchKitSupplements(kitIds)
+      : Promise.resolve({
+          childVariantsByProductId: new Map<string, VariantRow[]>(),
+          kitStockById: new Map<string, number>(),
+        } as KitSupplement),
+    fetchGiftSupplement(productIds),
+  ]);
+  return { kitSupplements, giftsByProductId };
+}
+
+// ─── Pure shapeRow (no side effects, uses batch supplements) ───────────────────
+
+function shapeRow(
+  p: RawListRow,
+  kitSupplements: KitSupplement,
+  giftsByProductId: GiftSupplement = new Map()
+): ShopProduct {
   let variants = (p.product_variants ?? []).map((v) => ({
     id: v.id,
     variant_name: v.variant_name,
@@ -93,39 +134,25 @@ async function shapeRow(p: RawListRow): Promise<ShopProduct> {
     attributes: (v.attributes as Record<string, string> | null) ?? null,
   }));
 
-  // If kit, merge in all variants from child components
+  // If kit, merge in all variants from child components (batch-fetched)
   if (p.product_type === "kit") {
-    const supabase = getPublicClient();
-    const { data: childComponents, error } = await supabase
-      .from("products")
-      .select(
-        "id, is_active, product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)"
-      )
-      .eq("is_active", true)
-      .eq("parent_product_id", p.id)
-      .eq("product_type", "component");
-    if (!error && childComponents && childComponents.length > 0) {
-      for (const comp of childComponents) {
-        if (Array.isArray(comp.product_variants)) {
-          for (const v of comp.product_variants) {
-            variants.push({
-              id: v.id,
-              variant_name: v.variant_name,
-              price_adjustment: Number(v.price_adjustment),
-              effective_price:
-                Number(p.base_price) + Number(v.price_adjustment),
-              thumbnail: v.thumbnail,
-              stock_quantity: Number(v.stock_quantity ?? 0),
-              is_pre_order: v.is_pre_order ?? false,
-              pre_order_config:
-                (v.pre_order_config as import("@/app/api/products/route").ShopVariant["pre_order_config"]) ??
-                null,
-              attributes:
-                (v.attributes as Record<string, string> | null) ?? null,
-            });
-          }
-        }
-      }
+    const childVariants =
+      kitSupplements.childVariantsByProductId.get(p.id) ?? [];
+    for (const cv of childVariants) {
+      variants.push({
+        id: cv.id,
+        variant_name: cv.variant_name,
+        price_adjustment: Number(cv.price_adjustment),
+        effective_price: Number(p.base_price) + Number(cv.price_adjustment),
+        thumbnail: cv.thumbnail,
+        stock_quantity: Number(cv.stock_quantity ?? 0),
+        is_pre_order: cv.is_pre_order ?? false,
+        pre_order_config:
+          (cv.pre_order_config as import("@/app/api/products/route").ShopVariant["pre_order_config"]) ??
+          null,
+        attributes:
+          (cv.attributes as Record<string, string> | null) ?? null,
+      });
     }
   }
 
@@ -138,10 +165,13 @@ async function shapeRow(p: RawListRow): Promise<ShopProduct> {
     "standard") as ShopProduct["product_type"];
   let effectiveStock: number;
   if (productType === "kit") {
+    const kitStock = kitSupplements.kitStockById.get(p.id);
     effectiveStock =
-      variants.length > 0
-        ? Math.min(...variants.map((v) => v.stock_quantity))
-        : Number(p.stock_quantity ?? 0);
+      typeof kitStock === "number"
+        ? kitStock
+        : variants.length > 0
+          ? Math.min(...variants.map((v) => v.stock_quantity))
+          : Number(p.stock_quantity ?? 0);
   } else if (productType === "component") {
     effectiveStock = variants.reduce(
       (sum, variant) => sum + variant.stock_quantity,
@@ -192,7 +222,8 @@ async function shapeRow(p: RawListRow): Promise<ShopProduct> {
     is_used: p.is_used ?? false,
     tags,
     is_pre_order: variants.some((v) => v.is_pre_order),
-    sold_count: 0,
+    sold_count: Number(p.sold_count ?? 0),
+    gifts: giftsByProductId.get(p.id) ?? undefined,
   };
 }
 
@@ -275,75 +306,98 @@ export const getProducts = cache(async function getProducts(
  * Product feed for the home Noteworthy section.
  * Uses shared product query logic to keep API and server rendering consistent.
  */
-export async function getNoteworthyProducts(
-  params: GetNoteworthyProductsParams = {}
-): Promise<{ products: ShopProduct[]; total: number }> {
-  const { categorySlug = "", limit = 8 } = params;
+export const getNoteworthyProducts = cache(
+  async function getNoteworthyProducts(
+    params: GetNoteworthyProductsParams = {}
+  ): Promise<{ products: ShopProduct[]; total: number }> {
+    const { categorySlug = "", limit = 8 } = params;
 
-  try {
-    const result = await getProductListByFilters({
-      categorySlug,
-      limit,
-      sort: "newest",
-      productTypes: ["standard", "kit"],
-      excludeUncategorized: true,
-    });
+    try {
+      const result = await getProductListByFilters({
+        categorySlug,
+        limit,
+        sort: "newest",
+        productTypes: ["standard", "kit"],
+        excludeUncategorized: true,
+      });
 
-    return {
-      products: result.products as ShopProduct[],
-      total: result.total,
-    };
-  } catch (err) {
-    console.error("[getNoteworthyProducts] Unexpected error:", err);
-    return { products: [], total: 0 };
+      return {
+        products: result.products as ShopProduct[],
+        total: result.total,
+      };
+    } catch (err) {
+      console.error("[getNoteworthyProducts] Unexpected error:", err);
+      return { products: [], total: 0 };
+    }
   }
-}
+);
 
 /**
  * Fetch products with the same brand as a given product.
  * Returns up to `limit` products, excluding the product itself.
+ * Cached with React.cache() + Redis (300s TTL).
  */
-export async function getRelatedProducts(
-  brand: string | null,
-  excludeSlug: string,
-  limit = 8
-): Promise<ShopProduct[]> {
-  if (!brand) return [];
+export const getRelatedProducts = cache(
+  async function getRelatedProducts(
+    brand: string | null,
+    excludeSlug: string,
+    limit = 8
+  ): Promise<ShopProduct[]> {
+    if (!brand) return [];
 
-  try {
-    const result = await getProductListByFilters({
-      brand,
-      limit,
-      sort: "newest",
-      productTypes: ["standard", "kit"],
-      excludeUncategorized: true,
-    });
-    return (result.products as ShopProduct[]).filter(
-      (p) => p.slug !== excludeSlug
-    );
-  } catch (err) {
-    console.error("[getRelatedProducts] Unexpected error:", err);
-    return [];
+    try {
+      const cached = await getCache<ShopProduct[]>(
+        `related-products:${brand}:${excludeSlug}:${limit}`
+      );
+      if (cached) return cached;
+
+      const result = await getProductListByFilters({
+        brand,
+        limit,
+        sort: "newest",
+        productTypes: ["standard", "kit"],
+        excludeUncategorized: true,
+      });
+      const products = (result.products as ShopProduct[]).filter(
+        (p) => p.slug !== excludeSlug
+      );
+
+      await setCache(
+        `related-products:${brand}:${excludeSlug}:${limit}`,
+        products,
+        300
+      );
+      return products;
+    } catch (err) {
+      console.error("[getRelatedProducts] Unexpected error:", err);
+      return [];
+    }
   }
-}
+);
 
 /**
  * Unified QuickPick data loader.
  * Returns product list + all configurator groups needed by QuickPickDrawer
  * in one server call so the client doesn't need to chain product + configurator fetches.
+ * Cached with React.cache() + Redis (60s TTL).
  */
-export async function getQuickPickData(
-  params: GetQuickPickDataParams = {}
-): Promise<QuickPickData> {
-  const {
-    categorySlug = "",
-    productId,
-    search = "",
-    limit,
-    sort = "newest",
-  } = params;
+export const getQuickPickData = cache(
+  async function getQuickPickData(
+    params: GetQuickPickDataParams = {}
+  ): Promise<QuickPickData> {
+    const {
+      categorySlug = "",
+      productId,
+      search = "",
+      limit,
+      sort = "newest",
+    } = params;
 
   try {
+    const cacheKey = `quick-pick:${categorySlug}:${productId ?? ""}:${search}:${limit ?? ""}:${sort}`;
+    const cached = await getCache<QuickPickData>(cacheKey);
+    if (cached) return cached;
+
     const shouldFetchProductList = Boolean(categorySlug || search || limit);
     const result = shouldFetchProductList
       ? await getProducts({
@@ -365,7 +419,7 @@ export async function getQuickPickData(
         const { data, error } = await getPublicClient()
           .from("products")
           .select(
-            `id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
+            `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, sold_count,
 						 categories(id, name),
 						 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
           )
@@ -375,7 +429,13 @@ export async function getQuickPickData(
           .single();
 
         if (!error && data) {
-          activeProduct = await shapeRow(data as unknown as RawListRow);
+          const row = data as unknown as RawListRow;
+          const { kitSupplements, giftsByProductId } =
+            await prepareSupplements(
+              [row.id],
+              row.product_type === "kit" ? [row.id] : []
+            );
+          activeProduct = shapeRow(row, kitSupplements, giftsByProductId);
           if (activeProduct) {
             products.push(activeProduct);
             productIds.add(activeProduct.id);
@@ -510,47 +570,6 @@ export async function getQuickPickData(
       if (refreshed) activeProduct = refreshed;
     }
 
-    // Batch-fetch gift data
-    const allIds = products.map((p) => p.id);
-    const giftsByProductId: Record<
-      string,
-      Array<{
-        gift_name: string;
-        gift_slug: string;
-        gift_thumbnail: string | null;
-        quantity: number;
-      }>
-    > = {};
-    if (allIds.length > 0) {
-      const { data: giftData } = await getPublicClient()
-        .from("gift_products")
-        .select(
-          `product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`
-        )
-        .in("product_id", allIds);
-
-      if (giftData) {
-        for (const g of giftData as any[]) {
-          const pid = g.product_id;
-          if (!giftsByProductId[pid]) giftsByProductId[pid] = [];
-          giftsByProductId[pid].push({
-            gift_name: g.gift?.name ?? "",
-            gift_slug: g.gift?.slug ?? "",
-            gift_thumbnail: g.gift?.thumbnail ?? null,
-            quantity: g.quantity,
-          });
-        }
-      }
-    }
-    for (const p of products) {
-      p.gifts = giftsByProductId[p.id] ?? null;
-    }
-    // Re-sync activeProduct after gift attachment
-    if (activeProduct) {
-      const refreshed = products.find((p) => p.id === activeProduct!.id);
-      if (refreshed) activeProduct = refreshed;
-    }
-
     // Fetch rules for all kit products
     const kitIds = Object.keys(configuratorByProductId);
     const rulesByProductId: Record<string, ComponentVariantRule[]> = {};
@@ -584,13 +603,15 @@ export async function getQuickPickData(
       }
     }
 
-    return {
+    const quickPickResult: QuickPickData = {
       products,
       configuratorByProductId,
       rulesByProductId,
       activeProduct,
       total: products.length,
     };
+    await setCache(cacheKey, quickPickResult, 60);
+    return quickPickResult;
   } catch (err) {
     console.error("[getQuickPickData] Unexpected error:", err);
     return {
@@ -602,17 +623,25 @@ export async function getQuickPickData(
     };
   }
 }
+);
 
 /**
  * Fetch the N newest products for use in server components.
+ * Cached with React.cache() (per‑render deduplication) + Redis (cross‑request, 120s TTL).
  */
-export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
+export const getNewestProducts = cache(async function getNewestProducts(
+  limit: number
+): Promise<ShopProduct[]> {
   try {
+    const cached = await getCache<ShopProduct[]>(`newest-products:${limit}`);
+    if (cached) return cached;
+
     const { data, error } = await getPublicClient()
       .from("products")
       .select(
-        `id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, is_gift,
-		 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, attributes)`
+        `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, sold_count,
+         categories(id, name),
+		 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
       )
       .eq("is_active", true)
       .neq("product_type", "gift")
@@ -624,140 +653,149 @@ export async function getNewestProducts(limit: number): Promise<ShopProduct[]> {
       return [];
     }
     if (!data) return [];
-    const products = await Promise.all(
-      (data as unknown as RawListRow[]).map(shapeRow)
+
+    const rows = data as unknown as RawListRow[];
+    const kitIds = rows
+      .filter((r) => r.product_type === "kit")
+      .map((r) => r.id);
+    const allIds = rows.map((r) => r.id);
+    const { kitSupplements, giftsByProductId } = await prepareSupplements(
+      allIds,
+      kitIds
     );
 
-    // Batch-fetch gift data
-    const productIds = products.map((p) => p.id);
-    const giftsByProductId: Record<
-      string,
-      Array<{
-        gift_name: string;
-        gift_slug: string;
-        gift_thumbnail: string | null;
-        quantity: number;
-      }>
-    > = {};
-    if (productIds.length > 0) {
-      const { data: giftData } = await getPublicClient()
-        .from("gift_products")
-        .select(
-          `product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`
-        )
-        .in("product_id", productIds);
+    const products = rows.map((row) =>
+      shapeRow(row, kitSupplements, giftsByProductId)
+    );
 
-      if (giftData) {
-        for (const g of giftData as any[]) {
-          const pid = g.product_id;
-          if (!giftsByProductId[pid]) giftsByProductId[pid] = [];
-          giftsByProductId[pid].push({
-            gift_name: g.gift?.name ?? "",
-            gift_slug: g.gift?.slug ?? "",
-            gift_thumbnail: g.gift?.thumbnail ?? null,
-            quantity: g.quantity,
-          });
-        }
-      }
-    }
-
-    return products.map((p) => ({
-      ...p,
-      gifts: giftsByProductId[p.id] ?? null,
-    })) as unknown as ShopProduct[];
+    await setCache(`newest-products:${limit}`, products, 120);
+    return products;
   } catch (err) {
     console.error("[getNewestProducts] Unexpected error:", err);
     return [];
   }
-}
+});
 
 /**
  * Find products frequently bought together with the given product.
  * Queries order_items grouped by co-occurrence in the same order.
+ * Cached with React.cache() + Redis (300s TTL).
  */
-export async function getFrequentlyBoughtTogether(
-  productId: string,
-  limit = 6
-): Promise<ShopProduct[]> {
-  try {
-    const { data: sameOrders } = await getPublicClient()
-      .from("order_items")
-      .select("order_id")
-      .eq("product_id", productId);
+export const getFrequentlyBoughtTogether = cache(
+  async function getFrequentlyBoughtTogether(
+    productId: string,
+    limit = 6
+  ): Promise<ShopProduct[]> {
+    try {
+      const cached = await getCache<ShopProduct[]>(
+        `fbt:${productId}:${limit}`
+      );
+      if (cached) return cached;
 
-    if (!sameOrders || sameOrders.length === 0) return [];
+      const { data: sameOrders } = await getPublicClient()
+        .from("order_items")
+        .select("order_id")
+        .eq("product_id", productId);
 
-    const orderIds = [...new Set(sameOrders.map((o) => o.order_id))].filter(
-      Boolean
-    );
+      if (!sameOrders || sameOrders.length === 0) return [];
 
-    if (orderIds.length === 0) return [];
+      const orderIds = [...new Set(sameOrders.map((o) => o.order_id))].filter(
+        Boolean
+      );
 
-    const { data: coItems } = await getPublicClient()
-      .from("order_items")
-      .select("product_id")
-      .in("order_id", orderIds)
-      .not("product_id", "eq", productId)
-      .not("product_id", "is", null);
+      if (orderIds.length === 0) return [];
 
-    if (!coItems || coItems.length === 0) return [];
+      const { data: coItems } = await getPublicClient()
+        .from("order_items")
+        .select("product_id")
+        .in("order_id", orderIds)
+        .not("product_id", "eq", productId)
+        .not("product_id", "is", null);
 
-    const freq = new Map<string, number>();
-    for (const item of coItems) {
-      const pid = item.product_id as string;
-      freq.set(pid, (freq.get(pid) ?? 0) + 1);
-    }
+      if (!coItems || coItems.length === 0) return [];
 
-    const topIds = [...freq.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, limit)
-      .map(([id]) => id);
+      const freq = new Map<string, number>();
+      for (const item of coItems) {
+        const pid = item.product_id as string;
+        freq.set(pid, (freq.get(pid) ?? 0) + 1);
+      }
 
-    if (topIds.length === 0) return [];
+      const topIds = [...freq.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([id]) => id);
 
-    const { data: products } = await getPublicClient()
-      .from("products")
-      .select(
-        `id, slug, name, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, is_gift,
+      if (topIds.length === 0) return [];
+
+      const { data: products } = await getPublicClient()
+        .from("products")
+        .select(
+          `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, sold_count,
          categories(id, name),
-         product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, attributes)`
-      )
-      .eq("is_active", true)
-      .neq("product_type", "gift")
-      .in("id", topIds);
+         product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
+        )
+        .eq("is_active", true)
+        .neq("product_type", "gift")
+        .in("id", topIds);
 
-    if (!products) return [];
-    return await Promise.all(
-      (products as unknown as RawListRow[]).map(shapeRow)
-    );
-  } catch {
-    return [];
+      if (!products) return [];
+
+      const rows = products as unknown as RawListRow[];
+      const kitIds = rows
+        .filter((r) => r.product_type === "kit")
+        .map((r) => r.id);
+      const allIds = rows.map((r) => r.id);
+      const { kitSupplements, giftsByProductId } = await prepareSupplements(
+        allIds,
+        kitIds
+      );
+
+      const result = rows.map((row) =>
+        shapeRow(row, kitSupplements, giftsByProductId)
+      );
+
+      await setCache(`fbt:${productId}:${limit}`, result, 300);
+      return result;
+    } catch {
+      return [];
+    }
   }
-}
+);
 
 /**
  * Get the number of times a product has been purchased (delivered orders).
+ * Cached with React.cache() + Redis (300s TTL).
  */
-export async function getProductPurchaseCount(
-  productId: string
-): Promise<number> {
-  try {
-    const { data, error } = await getPublicClient()
-      .from("order_items")
-      .select("quantity, orders!inner(status)")
-      .eq("product_id", productId)
-      .eq("orders.status", "delivered");
+export const getProductPurchaseCount = cache(
+  async function getProductPurchaseCount(
+    productId: string
+  ): Promise<number> {
+    try {
+      const cached = await getCache<number>(
+        `purchase-count:${productId}`
+      );
+      if (cached !== null) return cached;
 
-    if (error) return 0;
-    if (!data || data.length === 0) return 0;
-    return (data as { quantity: number }[]).reduce(
-      (sum, item) => sum + Number(item.quantity),
-      0
-    );
-  } catch {
-    return 0;
+      const { data, error } = await getPublicClient()
+        .from("order_items")
+        .select("quantity, orders!inner(status)")
+        .eq("product_id", productId)
+        .eq("orders.status", "delivered");
+
+      if (error) return 0;
+      if (!data || data.length === 0) return 0;
+      const count = (data as { quantity: number }[]).reduce(
+        (sum, item) => sum + Number(item.quantity),
+        0
+      );
+
+      await setCache(`purchase-count:${productId}`, count, 300);
+      return count;
+    } catch {
+      return 0;
+    }
   }
-}
+);
 
 /**
  * Fetch a product by slug with its selectable component groups for the
@@ -974,8 +1012,12 @@ export const getProductBySlug = cache(async function getProductBySlug(
         .eq("is_active", true)
         .in("id", compIds);
       if (compData) {
-        componentProducts = await Promise.all(
-          (compData as unknown as RawListRow[]).map(shapeRow)
+        const emptySupplements: KitSupplement = {
+          childVariantsByProductId: new Map(),
+          kitStockById: new Map(),
+        };
+        componentProducts = (compData as unknown as RawListRow[]).map(
+          (row) => shapeRow(row, emptySupplements)
         );
       }
     }

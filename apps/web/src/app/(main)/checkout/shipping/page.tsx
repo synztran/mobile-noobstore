@@ -15,7 +15,13 @@ import { formatVND } from "@/lib/currency";
 import { ShippingSubmitButton } from "@/components/checkout/ShippingSubmitButton";
 import AddressSuggest from "@/components/checkout/AddressSuggest";
 import clsx from "clsx";
-import { MapPinHouse, PercentCircle, Phone, Truck } from "lucide-react";
+import {
+  MapPinHouse,
+  NotebookPen,
+  PercentCircle,
+  Phone,
+  Truck,
+} from "lucide-react";
 import { memo, useMemo } from "react";
 import { ShippingPageSkeleton } from "./ShippingPageSkeleton";
 
@@ -122,7 +128,7 @@ const ShippingPage = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* ── Hero header ─────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-4">
         <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
@@ -331,6 +337,24 @@ const ShippingPage = () => {
               Trường này là bắt buộc
             </p>
           )}
+        </div>
+
+        {/* ── Notes ─────────────────────────────────────── */}
+        <div>
+          <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Ghi chú
+          </label>
+          <div className="flex items-start gap-3 rounded-2xl border-2 border-transparent bg-surface-container px-4 py-3.5 transition-all focus-within:border-primary">
+            <NotebookPen className="flex-shrink-0 text-xl text-outline-variant" />
+            <textarea
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              placeholder="Lưu ý về giờ giấc, địa điểm giao hàng,..."
+              rows={3}
+              className="min-w-0 flex-1 resize-none bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+            />
+          </div>
         </div>
 
         <DistanceMap

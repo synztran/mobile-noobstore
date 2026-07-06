@@ -1,3 +1,4 @@
+import { safeRedirect } from "@/lib/auth/redirect";
 import { type NextRequest, NextResponse } from "next/server";
 import { getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 
@@ -40,6 +41,8 @@ function hasValidSession(request: NextRequest): boolean {
     if (typeof session.expires_at !== "number") return true;
     return session.expires_at > Math.floor(Date.now() / 1000);
   } catch {
+    // Cookie exists but can't be parsed (e.g. chunked, unusual encoding).
+    // Let it through — server-side auth.getUser() does the real JWT validation.
     return true;
   }
 }
@@ -85,9 +88,11 @@ export async function middleware(request: NextRequest) {
 
     // Redirect authenticated users away from auth pages
     if ((pathname === "/login" || pathname === "/register") && isLoggedIn) {
-      const nextParam = request.nextUrl.searchParams.get("next");
-      const redirectTo = nextParam || "/";
-      return NextResponse.redirect(new URL(redirectTo, request.url));
+      const nextParam = safeRedirect(
+        request.nextUrl.searchParams.get("next"),
+        request.url
+      );
+      return NextResponse.redirect(new URL(nextParam, request.url));
     }
   } catch (err) {
     console.error("[middleware] unexpected error:", err);

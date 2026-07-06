@@ -38,8 +38,7 @@ const NAV_ITEMS = [
   {
     icon: "help",
     label: "Trợ giúp & Hỗ trợ",
-    href: "https://fb.com/noobassembly",
-    isNewPage: true,
+    href: "/profile/support",
   },
 ];
 
@@ -217,11 +216,10 @@ export default function ProfilePage() {
 
       {/* Menu items */}
       <div className={`space-y-3 ${!user ? "sr-only" : ""}`}>
-        {NAV_ITEMS.map(({ icon, label, href, isNewPage }) => (
+        {NAV_ITEMS.map(({ icon, label, href }) => (
           <Link
             key={label}
             href={href}
-            target={isNewPage ? "_blank" : "_self"}
             className="flex w-full items-center gap-4 rounded-2xl bg-surface-container-lowest px-5 py-4 shadow-ambient-sm transition-colors hover:bg-surface-container-low"
           >
             <Icon name={icon} className="text-primary" />

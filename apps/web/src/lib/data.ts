@@ -59,6 +59,7 @@ export interface ShippingDetails {
   wardCode: string;
   postalCode: string;
   phoneNumber: string;
+  notes?: string;
   deliverySpeed: "standard" | "express" | "shipment";
   /** Matches shipping_methods.id — same value as deliverySpeed for now */
   shippingMethodId: string;

@@ -26,6 +26,7 @@ type FormData = {
   wardCode: string;
   postalCode: string;
   phoneNumber: string;
+  notes: string;
 };
 
 type AddressLike = {
@@ -161,6 +162,7 @@ export function useShippingForm() {
     wardCode: "",
     postalCode: "",
     phoneNumber: profile?.phone_number ?? "",
+    notes: shipping?.notes ?? "",
   });
   const [customerLocation, setCustomerLocation] = useState<{
     lat: number;
@@ -298,12 +300,16 @@ export function useShippingForm() {
       apartment: shipping?.apartment ?? "",
       postalCode: shipping?.postalCode ?? "",
       streetAddress: shipping?.streetAddress ?? addressFromUser?.address ?? "",
+      notes: shipping?.notes ?? "",
     }));
   }, [addressFromUser, getCityCode, getDistrictCode, profile, shipping]);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  }, []);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    },
+    []
+  );
 
   const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
     setTouched((prev) => ({ ...prev, [e.target.name]: true }));

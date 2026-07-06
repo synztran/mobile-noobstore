@@ -19,7 +19,11 @@ export interface OrderItemDetail {
   quantity: number;
   thumbnail: string | null;
   components: OrderItemComponentDetail[];
-  gifts?: Array<{ gift_name: string; gift_thumbnail: string | null; quantity: number }> | null;
+  gifts?: Array<{
+    gift_name: string;
+    gift_thumbnail: string | null;
+    quantity: number;
+  }> | null;
 }
 
 export interface OrderDetail {
@@ -45,6 +49,7 @@ export interface OrderDetail {
     district?: string | null;
     city?: string | null;
     postal_code?: string | null;
+    notes?: string | null;
   } | null;
   invoice_url: string | null;
   items: OrderItemDetail[];
@@ -145,9 +150,9 @@ export async function GET(
     if (productIds.length > 0) {
       const { data } = await supabase
         .from("products")
-      .select("id, thumbnail")
-      .eq("is_active", true)
-      .in("id", productIds);
+        .select("id, thumbnail")
+        .eq("is_active", true)
+        .in("id", productIds);
       productRows = data ?? [];
     }
 
@@ -155,11 +160,20 @@ export async function GET(
       productRows.map((row) => [row.id, row.thumbnail])
     );
 
-    const giftsByProductId: Record<string, Array<{ gift_name: string; gift_thumbnail: string | null; quantity: number }>> = {};
+    const giftsByProductId: Record<
+      string,
+      Array<{
+        gift_name: string;
+        gift_thumbnail: string | null;
+        quantity: number;
+      }>
+    > = {};
     if (productIds.length > 0) {
       const { data: giftRows } = await supabase
         .from("gift_products")
-        .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+        .select(
+          `product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`
+        )
         .in("product_id", productIds);
 
       if (giftRows) {
@@ -216,7 +230,9 @@ export async function GET(
             ? (productThumbnailById.get(row.product_id) ?? null)
             : null),
         components,
-        gifts: row.product_id ? (giftsByProductId[row.product_id] ?? null) : null,
+        gifts: row.product_id
+          ? (giftsByProductId[row.product_id] ?? null)
+          : null,
       };
     });
 
@@ -234,7 +250,8 @@ export async function GET(
       cancelled_note: order.cancelled_note ?? null,
       created_at: order.created_at ?? null,
       updated_at: order.updated_at ?? null,
-      delivery_address: order.delivery_address as OrderDetail["delivery_address"],
+      delivery_address:
+        order.delivery_address as OrderDetail["delivery_address"],
       invoice_url: order.invoice_url ?? null,
       items,
     } satisfies OrderDetail);

@@ -4,7 +4,9 @@ import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
 import { OrderPaymentPanel } from "@/components/orders/OrderPaymentPanel";
 import { VoucherInfo } from "@/components/voucher/VoucherInfo";
 import { formatVND } from "@/lib/currency";
+import { toast } from "@/lib/toast";
 import { useOrderDetail } from "@/lib/react-query/order/api/useOrderQueries";
+import { useCancelOrder } from "@/lib/react-query/order/api/useOrderMutations";
 import {
   AlertCircle,
   CheckCircle2,
@@ -15,6 +17,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { usePreventScroll } from "@/hooks/usePreventScroll";
 
 const STATUS_CONFIG: Record<
   string,
@@ -81,6 +85,21 @@ interface Props {
   onClose: () => void;
 }
 
+const CANCELLABLE_STATUSES = ["pending"];
+const NON_TERMINAL_STATUSES = [
+  "pending",
+  "confirmed",
+  "preparing",
+  "delivering",
+  "delivered",
+];
+const TIMELINE_STEPS = [
+  { key: "pending", label: "Đang kiểm tra" },
+  { key: "confirmed", label: "Đã xác nhận" },
+  { key: "delivering", label: "Đang giao" },
+  { key: "delivered", label: "Đã giao" },
+];
+
 function OrderDetailContent({
   detail,
   onClose,
@@ -89,7 +108,12 @@ function OrderDetailContent({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const isSupportAvailable = ["delivered"].includes(detail.status);
+  const cancelMutation = useCancelOrder();
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+
+  const isSupportAvailable = NON_TERMINAL_STATUSES.includes(detail.status);
+  const isCancellable = CANCELLABLE_STATUSES.includes(detail.status);
   const cfg = STATUS_CONFIG[detail.status] ?? STATUS_CONFIG.pending;
   const voucherDiscount = detail.voucher_discount_amount ?? 0;
   const shippingDiscount = detail.shipping_discount_amount ?? 0;
@@ -103,6 +127,21 @@ function OrderDetailContent({
         minute: "2-digit",
       })
     : null;
+
+  const handleCancelOrder = async () => {
+    try {
+      await cancelMutation.mutateAsync({
+        orderId: detail.id,
+        reason: cancelReason,
+      });
+      toast.success("Đã hủy đơn hàng thành công");
+      setShowCancelModal(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Không thể hủy đơn hàng"
+      );
+    }
+  };
 
   return (
     <>
@@ -119,26 +158,66 @@ function OrderDetailContent({
         );
       })()}
 
+      {/* Status timeline */}
+      {NON_TERMINAL_STATUSES.includes(detail.status) && (
+        <ul className="steps steps-horizontal w-full">
+          {TIMELINE_STEPS.map((step, i) => {
+            const currentIdx = TIMELINE_STEPS.findIndex(
+              (s) => s.key === detail.status
+            );
+            const isCompleted = i < currentIdx;
+            const isCurrent = i === currentIdx;
+            return (
+              <li
+                key={step.key}
+                className={`step text-[10px] font-bold ${
+                  isCompleted
+                    ? "step-neutral text-on-surface"
+                    : isCurrent
+                      ? "step-primary text-primary"
+                      : "text-on-surface-variant/50"
+                }`}
+              >
+                {step.label}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
       {/* Cancelled details */}
       {detail.status === "cancelled" && (
-        <div className="space-y-2 rounded-2xl border border-error/20 bg-error/5 px-4 py-3">
+        <div className="space-y-2">
           <p className="text-[10px] font-black uppercase tracking-widest text-error">
             Chi tiết hủy đơn
           </p>
-          <div className="flex items-start justify-between gap-3 text-sm">
-            <span className="text-on-surface-variant">Thời gian hủy</span>
-            <span className="text-right font-bold text-on-surface">
-              {cancelledAtLabel ?? "Không có thông tin"}
-            </span>
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm text-on-surface-variant">Ghi chú hủy</p>
-            <p className="rounded-xl bg-surface px-3 py-2 text-sm leading-relaxed text-on-surface">
-              {detail.cancelled_note?.trim() ||
-                "Không có ghi chú hủy từ hệ thống."}
-            </p>
+          <div className="space-y-2 rounded-2xl border border-error/20 bg-error/5 px-4 py-3 text-sm">
+            <div className="flex items-start justify-between gap-3">
+              <span className="text-on-surface-variant">Thời gian hủy</span>
+              <span className="text-right font-bold text-on-surface">
+                {cancelledAtLabel ?? "Không có thông tin"}
+              </span>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-on-surface-variant">Ghi chú hủy</p>
+              <p className="rounded-xl bg-surface px-3 py-2 text-sm leading-relaxed text-on-surface">
+                {detail.cancelled_note?.trim() ||
+                  "Không có ghi chú hủy từ hệ thống."}
+              </p>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Cancel button */}
+      {isCancellable && (
+        <button
+          onClick={() => setShowCancelModal(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-error/20 bg-error/5 py-3 text-sm font-black uppercase tracking-wider text-error transition-all active:scale-[0.98]"
+        >
+          <CircleX size={16} />
+          Huỷ đơn hàng
+        </button>
       )}
 
       {/* Order items */}
@@ -148,20 +227,22 @@ function OrderDetailContent({
             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
               Sản phẩm ({detail.items.length})
             </p>
-            {isSupportAvailable && (
-              <button
-                onClick={() => {
-                  router.push(
-                    `/profile/support/new?order_id=${detail.id}&order_number=${detail.order_number}`
-                  );
-                  onClose();
-                }}
-                className="flex items-center gap-1 rounded-lg border border-error/20 bg-error/5 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-error transition-all active:scale-90"
-              >
-                <AlertCircle size={12} className="text-error" />
-                Báo cáo vấn đề
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {isSupportAvailable && (
+                <button
+                  onClick={() => {
+                    router.push(
+                      `/profile/support/new?order_id=${detail.id}&order_number=${detail.order_number}`
+                    );
+                    onClose();
+                  }}
+                  className="flex items-center gap-1 rounded-lg border border-error/20 bg-error/5 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-error transition-all active:scale-90"
+                >
+                  <AlertCircle size={12} className="text-error" />
+                  Báo cáo vấn đề
+                </button>
+              )}
+            </div>
           </div>
           {detail.items.map((item) => (
             <div key={item.id} className="space-y-1">
@@ -247,12 +328,12 @@ function OrderDetailContent({
 
       {/* Delivery information */}
       {detail.delivery_address && (
-        <div className="space-y-2 rounded-2xl bg-surface-container px-4 py-3">
+        <div className="space-y-2">
           <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
             <Truck size={14} />
             Thông tin giao hàng
           </p>
-          <div className="space-y-1">
+          <div className="space-y-1 rounded-2xl bg-surface-container p-4">
             {detail.delivery_address.full_name && (
               <p className="text-sm font-bold text-on-surface">
                 {detail.delivery_address.full_name}
@@ -271,6 +352,10 @@ function OrderDetailContent({
               ]
                 .filter(Boolean)
                 .join(", ")}
+            </p>
+            <p className="space-x-1">
+              <strong className="text-sm">Ghi chú:</strong>
+              <small>{detail.delivery_address.notes}</small>
             </p>
           </div>
         </div>
@@ -364,6 +449,64 @@ function OrderDetailContent({
             Tải hóa đơn
           </a>
         )}
+
+      {/* Cancel confirmation modal */}
+      <dialog
+        className={`modal ${showCancelModal ? "modal-open" : ""}`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setShowCancelModal(false);
+        }}
+      >
+        <div className="modal-box rounded-3xl">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-error/10">
+              <CircleX size={24} className="text-error" />
+            </div>
+            <p className="text-lg font-black text-on-surface">Huỷ đơn hàng</p>
+            <p className="text-sm text-on-surface-variant">
+              Hành động này không thể hoàn tác. Bạn có chắc chắn muốn hủy đơn{" "}
+              <span className="font-bold text-on-surface">
+                {detail.order_number}
+              </span>
+              ?
+            </p>
+          </div>
+          <div className="mt-4 space-y-1.5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+              Lý do hủy (không bắt buộc)
+            </p>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Nhập lý do hủy (nếu có)..."
+              rows={3}
+              className="w-full rounded-2xl bg-surface-container px-4 py-3 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          <div className="modal-action">
+            <button
+              onClick={() => setShowCancelModal(false)}
+              className="btn rounded-full border-0 bg-surface-container px-6 text-sm font-bold normal-case text-on-surface"
+            >
+              Huỷ
+            </button>
+            <button
+              onClick={handleCancelOrder}
+              disabled={cancelMutation.isPending}
+              className="btn rounded-full border-0 bg-error px-6 text-sm font-bold normal-case text-white transition-all active:scale-[0.98] disabled:opacity-60"
+            >
+              {cancelMutation.isPending ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Xác nhận huỷ đơn"
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setShowCancelModal(false)}>close</button>
+        </form>
+      </dialog>
     </>
   );
 }
@@ -391,6 +534,7 @@ function DrawerSkeleton() {
 export function OrderDetailDrawer({ orderId, onClose }: Props) {
   const isOpen = orderId !== null;
   const { data: detail, isLoading } = useOrderDetail(isOpen ? orderId : null);
+  usePreventScroll(isOpen)
 
   return (
     <>

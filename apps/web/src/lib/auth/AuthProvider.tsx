@@ -205,17 +205,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!data.error) {
-      const {
-        data: { session: newSession },
-      } = await supabase.auth.getSession();
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      if (newSession?.user) {
-        await fetchProfile();
-      }
+    console.log("Data", data);
+    if (data.error) return { error: data.error ?? null };
+
+    // Use session from API response directly (avoids cookie timing gap)
+    let newSession: Session | null = data.session ?? null;
+
+    // Fallback: read from cookies if API didn't return session
+    if (!newSession) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      newSession = sessionData.session;
     }
-    return { error: data.error ?? null };
+
+    // Retry once after a tick if still not found
+    if (!newSession) {
+      await new Promise((r) => setTimeout(r, 100));
+      const { data: sessionData } = await supabase.auth.getSession();
+      newSession = sessionData.session;
+    }
+
+    setSession(newSession);
+    setUser(newSession?.user ?? null);
+    if (newSession?.user) {
+      await fetchProfile();
+    }
+    return { error: null };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {

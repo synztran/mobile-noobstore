@@ -106,6 +106,7 @@ export default function SummaryPage() {
               district_code: shipping.districtCode || null,
               ward_code: shipping.wardCode || null,
               postal_code: shipping.postalCode || null,
+              notes: shipping.notes || null,
             }
           : null,
         vouchers: [
@@ -232,6 +233,10 @@ export default function SummaryPage() {
             ]
               .filter(Boolean)
               .join(", ")}
+          </p>
+          <p className="space-x-1">
+            <strong className="text-sm">Ghi chú:</strong>
+            <small>{shipping.notes}</small>
           </p>
         </div>
       )}

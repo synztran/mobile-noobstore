@@ -42,6 +42,7 @@ export interface SubmitOrderRequest {
     district_code?: string;
     ward_code?: string;
     postal_code?: string | null;
+    notes?: string | null;
   } | null;
   vouchers?: {
     voucher_id?: string | null;

@@ -18,7 +18,7 @@ export default async function OrdersPage({ searchParams }: Props) {
 	let query = supabase
 		.from("orders")
 		.select(
-			"id, order_number, status, total_price, created_at, users(first_name, last_name), order_items(count), order_services(count)",
+			"id, order_number, status, total_price, created_at, cancelled_at, cancelled_note, users(first_name, last_name), order_items(count), order_services(count)",
 			{
 				count: "exact",
 			},

@@ -136,8 +136,30 @@ export function TicketsList() {
       </div>
 
       {isLoading ? (
-        <div className="py-12 text-center text-sm text-base-content/50">
-          Đang tải...
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-base-300 text-xs font-bold uppercase tracking-wider text-base-content/60">
+                <th className="pb-3 pr-4">Tiêu đề</th>
+                <th className="pb-3 pr-4">Danh mục</th>
+                <th className="pb-3 pr-4">Trạng thái</th>
+                <th className="pb-3 pr-4">Ngày tạo</th>
+                <th className="pb-3 pr-4">File</th>
+                <th className="pb-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4].map((i) => (
+                <tr key={i}>
+                  {[1, 2, 3, 4, 5, 6].map((j) => (
+                    <td key={j} className="py-3 pr-4">
+                      <div className="h-4 w-full animate-pulse rounded bg-base-200" />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : tickets.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-base-content/50">
@@ -337,8 +359,17 @@ function TicketDetailModal({
         </div>
 
         {isLoading ? (
-          <div className="py-8 text-center text-sm text-base-content/50">
-            Đang tải...
+          <div className="grid grid-cols-[1fr_300px] gap-6">
+            <div className="space-y-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-5 w-3/4 animate-pulse rounded bg-base-200" />
+              ))}
+            </div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-5 w-full animate-pulse rounded bg-base-200" />
+              ))}
+            </div>
           </div>
         ) : ticket ? (
           <div className="grid grid-cols-[1fr_300px] gap-6">

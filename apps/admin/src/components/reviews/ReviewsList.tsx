@@ -230,11 +230,17 @@ export function ReviewsList() {
 					</thead>
 					<tbody className="divide-y divide-slate-100">
 						{isLoading ? (
-							<tr>
-								<td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
-									Đang tải...
-								</td>
-							</tr>
+							<>
+								{[1, 2, 3, 4, 5].map((i) => (
+									<tr key={i}>
+										{[1, 2, 3, 4, 5, 6, 7].map((j) => (
+											<td key={j} className="px-4 py-3">
+												<div className="h-4 w-full animate-pulse rounded bg-slate-200" />
+											</td>
+										))}
+									</tr>
+								))}
+							</>
 						) : data && data.reviews.length > 0 ? (
 							data.reviews.map((review) => (
 								<tr key={review.id} className="hover:bg-slate-50">

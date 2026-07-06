@@ -163,7 +163,6 @@ function LoadMoreSkeleton() {
 
 function OrdersPage() {
   const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [q, setQ] = useState("");

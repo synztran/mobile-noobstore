@@ -122,7 +122,9 @@ export default function CheckoutLayout({
         </div>
       </nav>
 
-      <main className="pb-18 mx-auto mt-[calc(env(safe-area-inset-top,0px)+10rem)] w-full px-4">{children}</main>
+      <main className="pb-18 mx-auto mt-[calc(env(safe-area-inset-top,0px)+9rem)] w-full px-4">
+        {children}
+      </main>
     </div>
   );
 }

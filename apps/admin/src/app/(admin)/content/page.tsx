@@ -104,11 +104,17 @@ export default function ContentPage() {
 						</thead>
 						<tbody className="divide-y divide-slate-200">
 							{isLoading ? (
-								<tr>
-									<td colSpan={8} className="px-6 py-8 text-center text-slate-500">
-										Loading...
-									</td>
-								</tr>
+								<>
+									{[1, 2, 3].map((i) => (
+										<tr key={i}>
+											{[1, 2, 3, 4, 5, 6, 7, 8].map((j) => (
+												<td key={j} className="px-6 py-4">
+													<div className="h-4 w-full animate-pulse rounded bg-slate-200" />
+												</td>
+											))}
+										</tr>
+									))}
+								</>
 							) : campaigns && campaigns.length > 0 ? (
 								campaigns.map((campaign) => (
 									<tr key={campaign.id} className="hover:bg-slate-50">
