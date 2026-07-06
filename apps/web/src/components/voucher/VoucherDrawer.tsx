@@ -3,7 +3,6 @@
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { useDiscountStore } from "@/store";
 import type { VoucherRow } from "@/types/voucher";
-import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { VoucherCard } from "./VoucherCard";
 
@@ -16,6 +15,7 @@ interface VoucherDrawerProps {
   invalidVouchers: VoucherRow[];
   filteredVouchers: VoucherRow[];
   subtotal: number;
+  shippingCost?: number;
 }
 
 export function VoucherDrawer({
@@ -27,10 +27,24 @@ export function VoucherDrawer({
   invalidVouchers,
   filteredVouchers,
   subtotal,
+  shippingCost = 0,
 }: VoucherDrawerProps) {
-  const { appliedVoucher, applyingVoucher, applyVoucher } = useDiscountStore();
+  const { appliedVouchers, applyingVoucher, applyVouchers } =
+    useDiscountStore();
 
   usePreventScroll(drawerOpen);
+
+  const appliedIds = new Set(
+    appliedVouchers.map((v) => v.voucherInfo.voucher_id)
+  );
+
+  const handleApply = (voucherId: string) => {
+    const currentIds = appliedVouchers.map((v) => v.voucherInfo.voucher_id);
+    if (!currentIds.includes(voucherId)) {
+      currentIds.push(voucherId);
+    }
+    void applyVouchers(currentIds, subtotal, shippingCost);
+  };
 
   return (
     <>
@@ -90,32 +104,18 @@ export function VoucherDrawer({
                     Voucher khả dụng ({validVouchers.length})
                   </p>
                   {validVouchers.map((voucher) => (
-                    <motion.div
-                      key={voucher.id}
-                      layout
-                      initial={{
-                        opacity: 0,
-                        y: -8,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      transition={{
-                        duration: 0.22,
-                      }}
-                    >
+                    <div key={voucher.id}>
                       <VoucherCard
                         voucher={voucher}
-                        isApplied={appliedVoucher?.voucher_id === voucher.id}
+                        isApplied={appliedIds.has(voucher.id)}
                         isApplying={applyingVoucher}
                         isValid={true}
                         subtotal={subtotal}
                         onApply={() => {
-                          void applyVoucher(voucher.id, subtotal);
+                          handleApply(voucher.id);
                         }}
                       />
-                    </motion.div>
+                    </div>
                   ))}
                 </>
               )}
@@ -127,21 +127,7 @@ export function VoucherDrawer({
                     Voucher không khả dụng ({invalidVouchers.length})
                   </p>
                   {invalidVouchers.map((voucher) => (
-                    <motion.div
-                      key={voucher.id}
-                      layout
-                      initial={{
-                        opacity: 0,
-                        y: -8,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      transition={{
-                        duration: 0.22,
-                      }}
-                    >
+                    <div key={voucher.id}>
                       <VoucherCard
                         voucher={voucher}
                         isApplied={false}
@@ -149,7 +135,7 @@ export function VoucherDrawer({
                         isValid={false}
                         subtotal={subtotal}
                       />
-                    </motion.div>
+                    </div>
                   ))}
                 </>
               )}

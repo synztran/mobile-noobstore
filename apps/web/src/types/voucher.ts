@@ -83,31 +83,38 @@ export interface AppliedVoucherSummary {
 	rule: VoucherRule;
 }
 
+export interface VoucherGiftItem {
+	product_id: string;
+	variant_id: string | null;
+	quantity: number;
+}
+
+export interface AppliedVoucherEntry {
+	voucherInfo: AppliedVoucherSummary;
+	discountAmount: number;
+	shippingDiscountAmount: number;
+	gifts: VoucherGiftItem[];
+}
+
 export interface OrderVoucherFields {
 	voucher_id: string | null;
 	voucher_code: string | null;
 	voucher_discount_amount: number;
 	shipping_discount_amount: number;
-	voucher_snapshot: AppliedVoucherSummary | null;
-	gift_items_snapshot: Array<{
-		product_id: string;
-		variant_id: string | null;
-		quantity: number;
-	}> | null;
+	voucher_snapshot: AppliedVoucherSummary[] | null;
+	gift_items_snapshot: VoucherGiftItem[] | null;
 }
 
 export interface ApplyVoucherRequest {
-	voucherId: string;
+	voucherIds: string[];
+	subtotal?: number;
+	shippingCost?: number;
 }
 
 export interface ApplyVoucherResponse {
 	success: boolean;
-	voucherInfo: AppliedVoucherSummary;
-	discountAmount: number;
-	shippingDiscountAmount: number;
-	gifts: Array<{
-		product_id: string;
-		variant_id: string | null;
-		quantity: number;
-	}>;
+	vouchers: AppliedVoucherEntry[];
+	totalDiscountAmount: number;
+	totalShippingDiscountAmount: number;
+	totalGifts: VoucherGiftItem[];
 }

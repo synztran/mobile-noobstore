@@ -22,6 +22,8 @@ export default function NumberInput({
   className = "",
   step,
   placeholder,
+  label,
+  subLabel,
   ...rest
 }: NumberInputProps) {
   const [local, setLocal] = useState<string>(
@@ -71,10 +73,10 @@ export default function NumberInput({
     <div className="relative w-full rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
       <div className="flex items-center justify-between">
         <label className="mb-1 block text-sm font-medium text-slate-700">
-          {rest.label}
+          {label}
         </label>
-        {rest.subLabel && (
-          <p className="text-xs text-slate-500">{rest.subLabel}</p>
+        {subLabel && (
+          <p className="text-xs text-slate-500">{subLabel}</p>
         )}
       </div>
       <div className={`relative`}>

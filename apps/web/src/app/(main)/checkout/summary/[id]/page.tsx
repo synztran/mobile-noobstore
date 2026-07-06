@@ -29,13 +29,17 @@ export default function SummaryPage() {
     removeItem,
   } = useCartStore();
   const { shippingCost, shipping, setOrder } = useCheckoutStore();
-  const { discountAmount, shippingDiscountAmount, appliedVoucher, giftItems } =
-    useDiscountStore();
+  const {
+    appliedVouchers,
+    totalDiscountAmount,
+    totalShippingDiscountAmount,
+    totalGiftItems,
+  } = useDiscountStore();
 
   const items = mounted ? rawItems : [];
   const subtotal = mounted ? getSubtotal() : 0;
   const orderTotal =
-    subtotal + shippingCost - discountAmount - shippingDiscountAmount;
+    subtotal + shippingCost - totalDiscountAmount - totalShippingDiscountAmount;
 
   if (!mounted) {
     return (
@@ -86,7 +90,6 @@ export default function SummaryPage() {
         setSubmitting(false);
         return;
       }
-      // Clear any previous OOS markers on successful validation
       setOosProductIds(new Set());
 
       const payloadCheckoutSubmit = {
@@ -109,16 +112,14 @@ export default function SummaryPage() {
               notes: shipping.notes || null,
             }
           : null,
-        vouchers: [
-          {
-            voucher_id: appliedVoucher?.voucher_id ?? null,
-            voucher_code: appliedVoucher?.voucher_code ?? null,
-            voucher_discount_amount: discountAmount,
-            shipping_discount_amount: shippingDiscountAmount,
-            voucher_snapshot: appliedVoucher,
-            gift_items_snapshot: giftItems,
-          },
-        ],
+        vouchers: appliedVouchers.map((entry) => ({
+          voucher_id: entry.voucherInfo.voucher_id,
+          voucher_code: entry.voucherInfo.voucher_code,
+          voucher_discount_amount: entry.discountAmount,
+          shipping_discount_amount: entry.shippingDiscountAmount,
+          voucher_snapshot: entry.voucherInfo,
+          gift_items_snapshot: entry.gifts.length > 0 ? entry.gifts : null,
+        })),
         items: items.map((i) => ({
           product_id: i.product.id,
           product_name: i.product.name,
@@ -186,10 +187,6 @@ export default function SummaryPage() {
             </p>
           </div>
         </div>
-        {/* Progress bar */}
-        {/* <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
-          <div className="primary-gradient h-full w-2/3 rounded-full" />
-        </div> */}
       </div>
 
       {/* ── Order Items ──────────────────────────────────────── */}
@@ -209,7 +206,7 @@ export default function SummaryPage() {
       </div>
 
       {/* ── Voucher / Discount ───────────────────────────────── */}
-      <VoucherComponent subtotal={subtotal} />
+      <VoucherComponent subtotal={subtotal} shippingCost={shippingCost} />
 
       {/* ── Delivery Address ────────────────────────────── */}
       {shipping && (
@@ -295,24 +292,24 @@ export default function SummaryPage() {
               </span>
             </div>
 
-            {discountAmount > 0 && (
+            {totalDiscountAmount > 0 && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-on-surface-variant">
                   Giảm giá voucher
                 </span>
                 <span className="font-bold text-emerald-600">
-                  -{formatVND(discountAmount)}
+                  -{formatVND(totalDiscountAmount)}
                 </span>
               </div>
             )}
 
-            {shippingDiscountAmount > 0 && (
+            {totalShippingDiscountAmount > 0 && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-on-surface-variant">
                   Giảm phí vận chuyển
                 </span>
                 <span className="font-bold text-emerald-600">
-                  -{formatVND(shippingDiscountAmount)}
+                  -{formatVND(totalShippingDiscountAmount)}
                 </span>
               </div>
             )}
@@ -378,11 +375,21 @@ export default function SummaryPage() {
                 {shippingCost === 0 ? "Miễn phí" : formatVND(shippingCost)}
               </span>
             </div>
-            {discountAmount > 0 && (
+            {totalDiscountAmount > 0 && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-on-surface-variant">Giảm giá</span>
                 <span className="font-bold text-emerald-600">
-                  -{formatVND(discountAmount)}
+                  -{formatVND(totalDiscountAmount)}
+                </span>
+              </div>
+            )}
+            {totalShippingDiscountAmount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-on-surface-variant">
+                  Giảm phí vận chuyển
+                </span>
+                <span className="font-bold text-emerald-600">
+                  -{formatVND(totalShippingDiscountAmount)}
                 </span>
               </div>
             )}

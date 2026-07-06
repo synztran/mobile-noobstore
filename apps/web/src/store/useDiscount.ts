@@ -1,7 +1,9 @@
 import { toast } from "@/lib/toast";
 import type {
+  AppliedVoucherEntry,
   AppliedVoucherSummary,
   ApplyVoucherResponse,
+  VoucherGiftItem,
   VoucherRow,
 } from "@/types/voucher";
 import { create } from "zustand";
@@ -14,30 +16,31 @@ type FetchVouchersResult = {
 
 type DiscountStore = {
   vouchers: VoucherRow[];
-  appliedVoucher: AppliedVoucherSummary | null;
-  discountAmount: number;
-  shippingDiscountAmount: number;
-  giftItems: Array<{
-    product_id: string;
-    variant_id: string | null;
-    quantity: number;
-  }>;
+  appliedVouchers: AppliedVoucherEntry[];
+  totalDiscountAmount: number;
+  totalShippingDiscountAmount: number;
+  totalGiftItems: VoucherGiftItem[];
   loadingVouchers: boolean;
   applyingVoucher: boolean;
   error: string | null;
   setVouchers: (vouchers: VoucherRow[]) => void;
   fetchVouchers: () => Promise<void>;
-  applyVoucher: (voucherId: string, subtotal?: number) => Promise<void>;
-  removeVoucher: () => void;
+  applyVouchers: (
+    voucherIds: string[],
+    subtotal?: number,
+    shippingCost?: number
+  ) => Promise<void>;
+  removeAppliedVoucher: (voucherId: string) => void;
+  removeAllVouchers: () => void;
   resetDiscount: () => void;
 };
 
 const INITIAL_STATE = {
   vouchers: [],
-  appliedVoucher: null,
-  discountAmount: 0,
-  shippingDiscountAmount: 0,
-  giftItems: [],
+  appliedVouchers: [],
+  totalDiscountAmount: 0,
+  totalShippingDiscountAmount: 0,
+  totalGiftItems: [],
   loadingVouchers: false,
   applyingVoucher: false,
   error: null,
@@ -45,7 +48,7 @@ const INITIAL_STATE = {
 
 export const useDiscountStore = create<DiscountStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...INITIAL_STATE,
 
       setVouchers: (vouchers) =>
@@ -84,13 +87,22 @@ export const useDiscountStore = create<DiscountStore>()(
         }
       },
 
-      applyVoucher: async (voucherId, subtotal = 0) => {
+      applyVouchers: async (voucherIds, subtotal = 0, shippingCost = 0) => {
+        if (voucherIds.length === 0) {
+          get().removeAllVouchers();
+          return;
+        }
+
         set({ applyingVoucher: true, error: null });
         try {
           const res = await fetch("/api/vouchers/apply", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ voucherId, subtotal }),
+            body: JSON.stringify({
+              voucherIds: [...new Set(voucherIds)],
+              subtotal,
+              shippingCost,
+            }),
           });
 
           if (!res.ok) {
@@ -100,13 +112,12 @@ export const useDiscountStore = create<DiscountStore>()(
 
           const data = (await res.json()) as ApplyVoucherResponse;
           set({
-            appliedVoucher: data.voucherInfo,
-            discountAmount: data.discountAmount ?? 0,
-            shippingDiscountAmount: data.shippingDiscountAmount ?? 0,
-            giftItems: data.gifts ?? [],
+            appliedVouchers: data.vouchers,
+            totalDiscountAmount: data.totalDiscountAmount,
+            totalShippingDiscountAmount: data.totalShippingDiscountAmount,
+            totalGiftItems: data.totalGifts,
             applyingVoucher: false,
           });
-          // return true;
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Failed to apply voucher";
@@ -118,12 +129,38 @@ export const useDiscountStore = create<DiscountStore>()(
         }
       },
 
-      removeVoucher: () =>
+      removeAppliedVoucher: (voucherId) => {
+        const state = get();
+        const remaining = state.appliedVouchers.filter(
+          (v) => v.voucherInfo.voucher_id !== voucherId
+        );
+
+        if (remaining.length === 0) {
+          get().removeAllVouchers();
+          return;
+        }
+
         set({
-          appliedVoucher: null,
-          discountAmount: 0,
-          shippingDiscountAmount: 0,
-          giftItems: [],
+          appliedVouchers: remaining,
+          totalDiscountAmount: remaining.reduce(
+            (sum, v) => sum + v.discountAmount,
+            0
+          ),
+          totalShippingDiscountAmount: remaining.reduce(
+            (sum, v) => sum + v.shippingDiscountAmount,
+            0
+          ),
+          totalGiftItems: remaining.flatMap((v) => v.gifts),
+          error: null,
+        });
+      },
+
+      removeAllVouchers: () =>
+        set({
+          appliedVouchers: [],
+          totalDiscountAmount: 0,
+          totalShippingDiscountAmount: 0,
+          totalGiftItems: [],
           error: null,
         }),
 
@@ -132,11 +169,31 @@ export const useDiscountStore = create<DiscountStore>()(
     {
       name: "noobstore-discount",
       partialize: (state) => ({
-        appliedVoucher: state.appliedVoucher,
-        discountAmount: state.discountAmount,
-        shippingDiscountAmount: state.shippingDiscountAmount,
-        giftItems: state.giftItems,
+        appliedVouchers: state.appliedVouchers,
       }),
+      merge: (persisted, current) => {
+        const merged = { ...current, ...(persisted as Partial<DiscountStore>) };
+
+        // Migrate old single-voucher persisted state to new format
+        const p = (persisted as Record<string, unknown>) ?? {};
+        const oldAppliedVoucher = p.appliedVoucher;
+        if (
+          oldAppliedVoucher &&
+          !(merged.appliedVouchers as AppliedVoucherEntry[] | undefined)
+            ?.length
+        ) {
+          merged.appliedVouchers = [
+            {
+              voucherInfo: oldAppliedVoucher as AppliedVoucherSummary,
+              discountAmount: (p.discountAmount as number) ?? 0,
+              shippingDiscountAmount: (p.shippingDiscountAmount as number) ?? 0,
+              gifts: (p.giftItems as VoucherGiftItem[]) ?? [],
+            },
+          ];
+        }
+
+        return merged;
+      },
     }
   )
 );
