@@ -9,28 +9,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 export { useDiscountStore } from "./useDiscount";
 
-function generateId(): string {
-	const globalCrypto = globalThis.crypto;
-
-	if (typeof globalCrypto?.randomUUID === "function") {
-		return globalCrypto.randomUUID();
-	}
-
-	if (typeof globalCrypto?.getRandomValues === "function") {
-		const bytes = globalCrypto.getRandomValues(new Uint8Array(16));
-		bytes[6] = (bytes[6] & 0x0f) | 0x40;
-		bytes[8] = (bytes[8] & 0x3f) | 0x80;
-		const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
-		return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10, 16).join("")}`;
-	}
-
-	return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
 interface CartStore {
 	items: CartItem[];
 	cartId: string | null;
 	isOpen: boolean;
+	isHydrated: boolean;
+
+	setCart: (items: CartItem[], cartId: string | null) => void;
+	setHydrated: (v: boolean) => void;
 	addItem: (
 		product: Product,
 		variant: ProductVariant | null,
@@ -62,10 +48,13 @@ export const useCartStore = create<CartStore>()(
 			items: [],
 			cartId: null,
 			isOpen: false,
+			isHydrated: false,
+
+			setCart: (items, cartId) => set({ items, cartId, isHydrated: true }),
+			setHydrated: (v) => set({ isHydrated: v }),
 
 			addItem: (product, variant, components, gifts) => {
 				set((state) => {
-					const cartId = state.cartId ?? generateId();
 					const isKit = (components?.length ?? 0) > 0;
 					const existing = state.items.find((i) => {
 						if (i.product.id !== product.id) return false;
@@ -78,7 +67,6 @@ export const useCartStore = create<CartStore>()(
 					});
 					if (existing) {
 						return {
-							cartId,
 							items: state.items.map((i) => {
 								if (i.product.id !== product.id) return i;
 								if (isKit) {
@@ -93,7 +81,6 @@ export const useCartStore = create<CartStore>()(
 						};
 					}
 					return {
-						cartId,
 						items: [
 							...state.items,
 							{
@@ -130,10 +117,7 @@ export const useCartStore = create<CartStore>()(
 				set((state) => ({
 					items: state.items.filter(
 						(i) =>
-							!(
-								i.product.id === productId &&
-								(i.variant?.id ?? null) === variantId
-							),
+							!(i.product.id === productId && (i.variant?.id ?? null) === variantId),
 					),
 				}));
 			},
@@ -148,10 +132,7 @@ export const useCartStore = create<CartStore>()(
 							) {
 								const newQty =
 									delta > 0
-										? Math.min(
-												i.quantity + delta,
-												i.product.stock_quantity,
-											)
+										? Math.min(i.quantity + delta, i.product.stock_quantity)
 										: Math.max(0, i.quantity + delta);
 								return { ...i, quantity: newQty };
 							}
@@ -167,8 +148,7 @@ export const useCartStore = create<CartStore>()(
 
 			total: () =>
 				get().items.reduce((sum, i) => {
-					const basePrice =
-						i.variant?.effective_price ?? i.product.base_price;
+					const basePrice = i.variant?.effective_price ?? i.product.base_price;
 					const componentsTotal = (i.components ?? []).reduce(
 						(s, c) => s + c.price_adjustment,
 						0,
@@ -182,18 +162,24 @@ export const useCartStore = create<CartStore>()(
 						(s, c) => s + c.price_adjustment,
 						0,
 					);
-					return (
-						sum +
-						(i.product.base_price + componentsTotal) * i.quantity
-					);
+					return sum + (i.product.base_price + componentsTotal) * i.quantity;
 				}, 0),
 
 			itemCount: () =>
 				get().items.reduce((sum, i) => sum + i.quantity, 0),
 		}),
-		{ name: "noobstore-cart", skipHydration: true },
+		{
+			name: "noobstore-cart",
+			skipHydration: true,
+			partialize: (state) => ({
+				items: state.items,
+				cartId: state.cartId,
+			}),
+		},
 	),
 );
+
+// ─── CheckoutStore ───────────────────────────────────────────────────────────
 
 interface CheckoutStore {
 	shipping: ShippingDetails | null;

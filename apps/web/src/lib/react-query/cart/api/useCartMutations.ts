@@ -1,15 +1,74 @@
-import type { AddToCartRequest } from "@/app/api/cart/add/route";
-import { useMutation } from "@tanstack/react-query";
+import type { AddCartItemRequest } from "@/app/api/cart/items/route";
+import { appQueryKeys } from "@/lib/react-query/root";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export function useAddToCart() {
+function invalidateCart(client: ReturnType<typeof useQueryClient>) {
+	client.invalidateQueries({ queryKey: appQueryKeys.cart.all.queryKey });
+}
+
+export function useAddCartItem() {
+	const queryClient = useQueryClient();
+
 	return useMutation({
-		mutationFn: async (body: AddToCartRequest) => {
-			const res = await fetch("/api/cart/add", {
+		mutationFn: async (body: AddCartItemRequest) => {
+			const res = await fetch("/api/cart/items", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(body),
 			});
-			if (!res.ok) throw new Error("Failed to add cart item");
+			if (!res.ok) {
+				const err = await res.json().catch(() => ({ error: "Failed to add cart item" }));
+				throw new Error(err.error ?? "Failed to add cart item");
+			}
+			return res.json() as Promise<{ cart_id: string; item_id: string }>;
 		},
+		onSuccess: () => invalidateCart(queryClient),
+	});
+}
+
+export function useUpdateCartItem() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({
+			itemId,
+			quantity,
+		}: { itemId: string; quantity: number }) => {
+			const res = await fetch(`/api/cart/items/${itemId}`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ quantity }),
+			});
+			if (!res.ok) throw new Error("Failed to update cart item");
+		},
+		onSuccess: () => invalidateCart(queryClient),
+	});
+}
+
+export function useRemoveCartItem() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (itemId: string) => {
+			const res = await fetch(`/api/cart/items/${itemId}`, {
+				method: "DELETE",
+			});
+			if (!res.ok) throw new Error("Failed to remove cart item");
+		},
+		onSuccess: () => invalidateCart(queryClient),
+	});
+}
+
+export function useClearCart() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (cartId: string) => {
+			const res = await fetch(`/api/cart?cart_id=${encodeURIComponent(cartId)}`, {
+				method: "DELETE",
+			});
+			if (!res.ok) throw new Error("Failed to clear cart");
+		},
+		onSuccess: () => invalidateCart(queryClient),
 	});
 }

@@ -1,4 +1,5 @@
 import { AnnouncementBanner } from "@/components/home/AnnouncementBanner";
+import { CategoryStrip } from "@/components/home/CategoryStrip";
 import { CommunityGallery } from "@/components/home/CommunityGallery";
 import { CustomerTestimonial } from "@/components/home/CustomerTestimonial";
 import { OurStrongPoints } from "@/components/home/OurStrongPoints";
@@ -15,13 +16,13 @@ export default function HomePage() {
     <div className="relative clear-both space-y-8">
       <AnnouncementBanner />
       <HeroSection />
+      {/* <CategoryStrip /> */}
       <NoteworthySection />
       <HomeSaleSection />
       <OurStrongPoints />
       <CommunityGallery />
       <CustomerTestimonial />
       <HomeTestimonials />
-      {/* <HomePressStrip /> */}
       <NewsletterCTA />
       <HomeFooter />
     </div>

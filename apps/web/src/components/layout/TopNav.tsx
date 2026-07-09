@@ -6,6 +6,7 @@ import WishlistSidebar from "@/components/wishlist/WishlistSidebar";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore } from "@/store";
 import clsx from "clsx";
+import { Loader } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -29,7 +30,7 @@ export function TopNav({
   const mounted = useIsMounted();
   const pathname = usePathname();
   const router = useRouter();
-  const { openCart, itemCount } = useCartStore();
+  const { openCart, itemCount, isHydrated } = useCartStore();
   const count = mounted ? itemCount() : 0;
   const [menuOpen, setMenuOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
@@ -97,11 +98,17 @@ export function TopNav({
           data-cart-icon
           className={`relative text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 ${hideCart ? "cursor-not-allowed opacity-0" : ""}`}
         >
-          <Icon name="shopping_cart" className="text-[26px]" />
-          {count > 0 && (
-            <span className="w-4.5 h-4.5 absolute -right-1.5 -top-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-white">
-              {count}
-            </span>
+          {!isHydrated && showCart && !hideCart ? (
+            <div className="skeleton h-[26px] w-[26px] rounded-full" />
+          ) : (
+            <>
+              <Icon name="shopping_cart" className="text-[26px]" />
+              {count > 0 && (
+                <span className="w-4.5 h-4.5 absolute -right-1.5 -top-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-white">
+                  {count}
+                </span>
+              )}
+            </>
           )}
         </button>
       </div>

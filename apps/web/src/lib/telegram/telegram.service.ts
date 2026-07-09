@@ -64,6 +64,29 @@ export async function notifyNewUserRegistered(
 }
 
 /**
+ * Format a single voucher entry for the order notification message.
+ */
+function formatVoucherLine(v: {
+	voucher_code?: string | null;
+	voucher_discount_amount?: number;
+	shipping_discount_amount?: number;
+}): string {
+	const parts: string[] = [];
+	if (v.voucher_code) parts.push(v.voucher_code);
+	if (v.voucher_discount_amount) {
+		parts.push(
+			`-${v.voucher_discount_amount.toLocaleString("vi-VN", { style: "currency", currency: "VND" })} sp`,
+		);
+	}
+	if (v.shipping_discount_amount) {
+		parts.push(
+			`-${v.shipping_discount_amount.toLocaleString("vi-VN", { style: "currency", currency: "VND" })} ship`,
+		);
+	}
+	return parts.join(" ");
+}
+
+/**
  *
  * Notify when a new order is placed.
  */
@@ -94,7 +117,7 @@ export async function notifyNewOrder(
 			? `📦 <b>Số lượng sản phẩm:</b> ${itemCount}`
 			: undefined,
 		vouchers && vouchers.length > 0
-			? `🏷️ <b>Voucher:</b> ${vouchers.map((v) => `${v.voucher_code ?? ""} (-${v.voucher_discount_amount?.toLocaleString("vi-VN", { style: "currency", currency: "VND" })})`).join(", ")}`
+			? `🏷️ <b>Voucher:</b> ${vouchers.map(formatVoucherLine).join(", ")}`
 			: undefined,
 	]
 		.filter(Boolean)

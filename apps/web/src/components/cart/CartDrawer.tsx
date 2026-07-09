@@ -6,6 +6,11 @@ import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { formatVND } from "@/lib/currency";
 import type { CartItem } from "@/lib/data";
 import { toast } from "@/lib/toast";
+import {
+  useClearCart,
+  useRemoveCartItem,
+  useUpdateCartItem,
+} from "@/lib/react-query/cart/api/useCartMutations";
 import { useCartStore } from "@/store";
 import { Trash } from "lucide-react";
 import Image from "next/image";
@@ -27,7 +32,7 @@ function itemUnitPrice(item: CartItem) {
 
 type CartItemRowProps = {
   item: CartItem;
-  onRemove: (productId: string, variantId: string | null) => void;
+  onRemove: (item: CartItem) => void;
   onMinus: (item: CartItem) => void;
   onPlus: (item: CartItem) => void;
 };
@@ -48,7 +53,7 @@ const CartItemRow = memo(function CartItemRow({
     <div className="relative flex items-start gap-2 rounded-xl bg-surface-container-low p-2">
       {/* Remove button */}
       <button
-        onClick={() => onRemove(item.product.id, item.variant?.id ?? null)}
+        onClick={() => onRemove(item)}
         className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-400 transition-transform active:scale-90"
       >
         <Trash className="text-white" size={14} />
@@ -156,23 +161,23 @@ export function CartDrawer() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const mounted = useIsMounted();
-  const { items, isOpen, closeCart, updateQty, removeItem, total } =
+  const { items, isOpen, isHydrated, cartId, closeCart, updateQty, removeItem, total } =
     useCartStore();
 
+  const removeMutation = useRemoveCartItem();
+  const updateMutation = useUpdateCartItem();
+  const clearCartMutation = useClearCart();
+
   const visibleItems = useMemo(() => (mounted ? items : []), [mounted, items]);
-  // `total` is a stable fn ref in Zustand — `items` must be in deps so this
-  // recomputes whenever the cart contents change.
   const subtotal = useMemo(
     () => (mounted ? total() : 0),
     [mounted, total, items]
   );
   const drawerOpen = mounted && isOpen;
 
-  const [pendingRemoval, setPendingRemoval] = useState<{
-    productId: string;
-    variantId: string | null;
-  } | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<CartItem | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [clearAllMode, setClearAllMode] = useState(false);
   const confirmDialogRef = useRef<HTMLDialogElement>(null);
 
   const hasPreOrderItem = useMemo(
@@ -184,36 +189,50 @@ export function CartDrawer() {
     [visibleItems]
   );
 
-  const handleRemoveClick = useCallback(
-    (productId: string, variantId: string | null) => {
-      setPendingRemoval({ productId, variantId });
-      confirmDialogRef.current?.showModal();
-    },
-    []
-  );
+  const handleRemoveClick = useCallback((item: CartItem) => {
+    setClearAllMode(false);
+    setPendingRemoval(item);
+    confirmDialogRef.current?.showModal();
+  }, []);
+
+  const handleClearAllClick = useCallback(() => {
+    setClearAllMode(true);
+    setPendingRemoval(null);
+    confirmDialogRef.current?.showModal();
+  }, []);
 
   const confirmRemove = useCallback(() => {
-    if (pendingRemoval) {
-      removeItem(pendingRemoval.productId, pendingRemoval.variantId);
+    if (clearAllMode) {
+      if (cartId) clearCartMutation.mutate(cartId);
+      setClearAllMode(false);
+    } else if (pendingRemoval) {
+      if (pendingRemoval.id) {
+        removeMutation.mutate(pendingRemoval.id);
+      } else {
+        removeItem(pendingRemoval.product.id, pendingRemoval.variant?.id ?? null);
+      }
       setPendingRemoval(null);
     }
     confirmDialogRef.current?.close();
-  }, [pendingRemoval, removeItem]);
+  }, [clearAllMode, pendingRemoval, cartId, clearCartMutation, removeMutation, removeItem]);
 
   const cancelRemove = useCallback(() => {
     setPendingRemoval(null);
+    setClearAllMode(false);
     confirmDialogRef.current?.close();
   }, []);
 
   const handleMinus = useCallback(
     (item: CartItem) => {
       if (item.quantity === 1) {
-        handleRemoveClick(item.product.id, item.variant?.id ?? null);
+        handleRemoveClick(item);
+      } else if (item.id) {
+        updateMutation.mutate({ itemId: item.id, quantity: item.quantity - 1 });
       } else {
         updateQty(item.product.id, item.variant?.id ?? null, -1);
       }
     },
-    [handleRemoveClick, updateQty]
+    [handleRemoveClick, updateMutation, updateQty]
   );
 
   const handlePlus = useCallback(
@@ -224,9 +243,13 @@ export function CartDrawer() {
         );
         return;
       }
-      updateQty(item.product.id, item.variant?.id ?? null, 1);
+      if (item.id) {
+        updateMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 });
+      } else {
+        updateQty(item.product.id, item.variant?.id ?? null, 1);
+      }
     },
-    [updateQty]
+    [updateMutation, updateQty]
   );
 
   const startNavigation = useNavigationStore((s) => s.startNavigation);
@@ -273,10 +296,15 @@ export function CartDrawer() {
           <h2 className="text-xl font-black tracking-tight text-on-surface">
             Giỏ hàng
           </h2>
-          <div
-            className="flex w-full flex-1 items-center justify-end"
-            onClick={closeCart}
-          >
+          <div className="flex items-center gap-2">
+            {visibleItems.length > 0 && (
+              <button
+                onClick={handleClearAllClick}
+                className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-error transition-all active:scale-90"
+              >
+                Xóa tất cả
+              </button>
+            )}
             <button
               onClick={closeCart}
               className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90"
@@ -291,7 +319,14 @@ export function CartDrawer() {
           data-allow-scroll
           className="h-[60dvh] min-h-0 space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
         >
-          {visibleItems.length === 0 ? (
+          {!isHydrated ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="skeleton h-24 w-full rounded-xl"
+              />
+            ))
+          ) : visibleItems.length === 0 ? (
             <div className="py-12 text-center">
               <Icon
                 name="shopping_bag"
@@ -310,14 +345,13 @@ export function CartDrawer() {
                 <CartItemRow
                   key={itemKey}
                   item={item}
-                  onRemove={handleRemoveClick}
+                  onRemove={(it) => handleRemoveClick(it)}
                   onMinus={handleMinus}
                   onPlus={handlePlus}
                 />
               );
             })
           )}
-
           {/* Sustainable packaging badge */}
           {visibleItems.length > 0 && (
             <div className="flex items-center gap-2 rounded-2xl bg-secondary/10 p-2">
@@ -380,10 +414,12 @@ export function CartDrawer() {
       >
         <div className="modal-box bg-surface">
           <h3 className="mb-2 text-lg font-black text-on-surface">
-            Xóa sản phẩm?
+            {clearAllMode ? "Xóa tất cả sản phẩm?" : "Xóa sản phẩm?"}
           </h3>
           <p className="mb-6 text-sm font-semibold text-on-surface-variant">
-            Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?
+            {clearAllMode
+              ? "Bạn có chắc chắn muốn xóa tất cả sản phẩm khỏi giỏ hàng?"
+              : "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?"}
           </p>
           <div className="modal-action flex gap-3">
             <button
@@ -394,12 +430,20 @@ export function CartDrawer() {
             </button>
             <button
               onClick={confirmRemove}
-              className="btn min-w-32 rounded-full border-0 bg-error font-bold normal-case text-white hover:bg-error/90"
+              disabled={clearCartMutation.isPending || removeMutation.isPending}
+              className="btn min-w-32 rounded-full border-0 bg-error font-bold normal-case text-white hover:bg-error/90 disabled:opacity-60"
             >
-              Xóa
+              {(clearCartMutation.isPending || removeMutation.isPending) ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Xóa"
+              )}
             </button>
           </div>
         </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={cancelRemove}>close</button>
+        </form>
       </dialog>
     </>
   );

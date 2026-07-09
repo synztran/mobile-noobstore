@@ -1,11 +1,11 @@
 "use client";
 
-import { useCartStore } from "@/store";
+import { useCheckoutStore } from "@/store";
 import { useEffect } from "react";
 
 export function StoreHydrator() {
 	useEffect(() => {
-		useCartStore.persist.rehydrate();
+		useCheckoutStore.persist.rehydrate();
 	}, []);
 
 	return null;

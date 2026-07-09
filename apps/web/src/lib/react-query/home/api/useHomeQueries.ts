@@ -1,10 +1,11 @@
 import type { CommunityPhoto } from "@/app/api/home/community-gallery/route";
 import type { Creator } from "@/app/api/home/creators/route";
 import type { HeroCampaign } from "@/app/api/home/hero/route";
+import type { Testimonial } from "@/app/api/home/testimonials/route";
 import type { TrustProp } from "@/app/api/home/trust-props/route";
 import type { ShopProduct } from "@/app/api/products/route";
 import { appQueryKeys } from "@/lib/react-query/root";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function useHomeHero() {
   return useQuery<HeroCampaign[]>({
@@ -89,6 +90,33 @@ export function useHomeCreators() {
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
+    },
+  });
+}
+
+export function useHomeTestimonials() {
+  return useQuery<Testimonial[]>({
+    ...appQueryKeys.home.testimonials,
+    queryFn: async () => {
+      const res = await fetch("/api/home/testimonials");
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+}
+
+export function useNewsletterSubscribe() {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Đăng ký thất bại");
+      return data;
     },
   });
 }

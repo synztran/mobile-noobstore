@@ -24,4 +24,5 @@ export const homeQueryKeys = createQueryKeys("home", {
 	saleProducts: (categorySlug: string, limit: number, sort: string) => [categorySlug, limit, sort],
 	trustProps: null,
 	creators: null,
+	testimonials: null,
 });

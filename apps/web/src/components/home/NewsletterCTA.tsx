@@ -1,4 +1,29 @@
+"use client";
+
+import { useNewsletterSubscribe } from "@/lib/react-query/home/api/useHomeQueries";
+import { toast } from "@/lib/toast";
+import { useState } from "react";
+
 export function NewsletterCTA() {
+  const [email, setEmail] = useState("");
+  const { mutate, isPending } = useNewsletterSubscribe();
+
+  const handleSubmit = () => {
+    if (!email.trim()) {
+      toast.error("Vui lòng nhập email");
+      return;
+    }
+    mutate(email.trim(), {
+      onSuccess: () => {
+        toast.success("Đăng ký thành công!");
+        setEmail("");
+      },
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    });
+  };
+
   return (
     <section className="relative overflow-hidden bg-on-surface px-6 py-8 text-surface">
       <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-primary/10 blur-3xl" />
@@ -23,13 +48,22 @@ export function NewsletterCTA() {
           <input
             type="email"
             placeholder="email@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
             className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-surface outline-none transition-all duration-200 placeholder:text-outline focus:border-primary-fixed-dim focus:bg-white/10 focus:ring-2 focus:ring-primary-fixed-dim/30"
           />
           <button
             type="button"
-            className="w-full rounded-xl bg-primary py-4 text-xs font-black uppercase tracking-widest text-on-primary transition-all duration-200 hover:brightness-110 active:scale-95"
+            onClick={handleSubmit}
+            disabled={isPending}
+            className="w-full rounded-xl bg-primary py-4 text-xs font-black uppercase tracking-widest text-on-primary transition-all duration-200 hover:brightness-110 active:scale-95 disabled:opacity-60"
           >
-            ĐĂNG KÝ NGAY
+            {isPending ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              "ĐĂNG KÝ NGAY"
+            )}
           </button>
         </div>
       </div>

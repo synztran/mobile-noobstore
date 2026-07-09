@@ -1,12 +1,44 @@
 "use client";
 
-const BRANDS = [
-  "Gearvn",
-  "Mechanic",
-  "ThinkPro",
-  "CellphoneS",
-  "Vietgear",
+const BRANDS: {
+  name: string;
+  initials: string;
+  bg: string;
+  fg: string;
+}[] = [
+  { name: "Gearvn", initials: "GV", bg: "#2563eb", fg: "#ffffff" },
+  { name: "Mechanic", initials: "MC", bg: "#7c3aed", fg: "#ffffff" },
+  { name: "ThinkPro", initials: "TP", bg: "#0891b2", fg: "#ffffff" },
+  { name: "CellphoneS", initials: "CS", bg: "#d97706", fg: "#ffffff" },
+  { name: "Vietgear", initials: "VG", bg: "#dc2626", fg: "#ffffff" },
 ];
+
+function BrandLogo({
+  brand,
+  className,
+}: {
+  brand: (typeof BRANDS)[number];
+  className?: string;
+}) {
+  return (
+    <svg viewBox="0 0 120 40" className={className}>
+      <rect width="120" height="40" rx="8" fill={brand.bg} />
+      <text
+        x="50%"
+        y="50%"
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontFamily="system-ui, sans-serif"
+        fontWeight="900"
+        fontSize="16"
+        fill={brand.fg}
+        letterSpacing="2"
+      >
+        {brand.initials}
+      </text>
+    </svg>
+  );
+}
 
 export function HomePressStrip() {
   return (
@@ -22,18 +54,17 @@ export function HomePressStrip() {
           }
         `}</style>
         <div
-          className="flex w-max gap-16 opacity-60"
+          className="flex w-max items-center gap-12 opacity-60"
           style={{
             animation: "press-scroll 20s linear infinite",
           }}
         >
           {[...BRANDS, ...BRANDS].map((brand, i) => (
-            <span
+            <BrandLogo
               key={i}
-              className="flex-shrink-0 text-sm font-black uppercase tracking-tight text-on-surface"
-            >
-              {brand}
-            </span>
+              brand={brand}
+              className="h-10 w-[100px] flex-shrink-0"
+            />
           ))}
         </div>
       </div>

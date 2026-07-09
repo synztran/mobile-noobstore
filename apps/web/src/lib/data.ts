@@ -39,6 +39,8 @@ export interface SelectedComponent {
 }
 
 export interface CartItem {
+  /** cart_items.id — may be absent for items not yet synced from server */
+  id?: string;
   product: Product;
   variant: ProductVariant | null;
   /** For composite kits: the resolved component selections */

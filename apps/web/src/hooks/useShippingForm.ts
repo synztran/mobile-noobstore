@@ -405,13 +405,7 @@ export function useShippingForm() {
         },
         shippingCost
       );
-      setTimeout(
-        () =>
-          router.push(
-            cartId ? `/checkout/summary/${cartId}` : "/checkout/summary"
-          ),
-        150
-      );
+      router.push("/checkout/summary")
     },
     [cartId, delivery, form, router, setShipping, shippingCost]
   );

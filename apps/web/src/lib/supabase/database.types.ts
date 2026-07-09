@@ -17,26 +17,32 @@ export type Database = {
       cart_items: {
         Row: {
           cart_id: string | null
+          created_at: string | null
           id: string
           parent_cart_item_id: string | null
           product_id: string | null
           quantity: number
+          updated_at: string | null
           variant_id: string | null
         }
         Insert: {
           cart_id?: string | null
+          created_at?: string | null
           id: string
           parent_cart_item_id?: string | null
           product_id?: string | null
           quantity?: number
+          updated_at?: string | null
           variant_id?: string | null
         }
         Update: {
           cart_id?: string | null
+          created_at?: string | null
           id?: string
           parent_cart_item_id?: string | null
           product_id?: string | null
           quantity?: number
+          updated_at?: string | null
           variant_id?: string | null
         }
         Relationships: [
@@ -79,15 +85,24 @@ export type Database = {
       }
       carts: {
         Row: {
+          created_at: string | null
           id: string
+          status: string
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          created_at?: string | null
           id: string
+          status?: string
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          created_at?: string | null
           id?: string
+          status?: string
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [

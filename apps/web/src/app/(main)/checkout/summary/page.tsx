@@ -28,6 +28,7 @@ export default function SummaryPage() {
     clearCart,
     removeItem,
   } = useCartStore();
+  console.log("SummaryPage:useCartStore:items", rawItems);
   const { shippingCost, shipping, setOrder } = useCheckoutStore();
   const {
     appliedVouchers,

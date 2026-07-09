@@ -1,4 +1,5 @@
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { CartHydrator } from "@/components/ui/CartHydrator";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { MainContent } from "@/components/layout/MainContent";
 import { TopNav } from "@/components/layout/TopNav";
@@ -11,6 +12,7 @@ export default function MainLayout({
 }) {
 	return (
 		<>
+			<CartHydrator />
 			<TopNav />
 			<MainContent>{children}</MainContent>
 			<BottomNav />

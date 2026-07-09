@@ -432,6 +432,17 @@ export async function POST(req: NextRequest) {
       );
     });
 
+    // ── Mark old cart as converted (keeps data for admin analytics) ──────
+    if (body.cart_id) {
+      await admin.from("carts").update({ status: "converted" }).eq("id", body.cart_id);
+    }
+
+    // ── Create a fresh active cart for the customer ──────────────────────
+    if (user) {
+      const newCartId = crypto.randomUUID();
+      await admin.from("carts").insert({ id: newCartId, user_id: user.id, status: "active" });
+    }
+
     // ── Gacha mission progress (fire-and-forget) ─────────────────────────
     if (user) {
       void (async () => {

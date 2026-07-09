@@ -1,6 +1,5 @@
 "use client";
 
-import type { AddToCartRequest } from "@/app/api/cart/add/route";
 import type {
   ComponentVariantRule,
   ConfiguratorGroup,
@@ -21,7 +20,7 @@ import type { SelectedComponent } from "@/lib/data";
 import type { CategoryItem } from "@/lib/products-server";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
-import { useAddToCart } from "@/lib/react-query/cart/api/useCartMutations";
+import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
 import { useQuickPick } from "@/lib/react-query/product/api/useProductQueries";
 import clsx from "clsx";
 import Image from "next/image";
@@ -185,7 +184,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     }
   }, [isOpen]);
 
-  const addToCartMutation = useAddToCart();
+  const addCartItem = useAddCartItem();
 
   // ── Escape key ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -251,8 +250,8 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     .map((g) => g.component_group);
   const canAdd = missingRequired.length === 0;
   const isSubmitting = useMemo(
-    () => state.submitting || addToCartMutation.isPending,
-    [state.submitting, addToCartMutation.isPending]
+    () => state.submitting || addCartItem.isPending,
+    [state.submitting, addCartItem.isPending]
   );
   const isFetchingVariants =
     quickPickQuery.isFetching || state.loadingConfigurator;
@@ -366,11 +365,12 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     });
 
     try {
-      const body: AddToCartRequest = {
-        parent_product_id: activeProduct.id,
-        selected_variant_ids: components.map((c) => c.variant_id),
+      const body = {
+        product_id: activeProduct.id,
+        variant_id: hasComponents ? null : selectedSimpleVariant?.id ?? null,
+        components: hasComponents ? components.map((c) => ({ variant_id: c.variant_id })) : undefined,
       };
-      await addToCartMutation.mutateAsync(body);
+      await addCartItem.mutateAsync(body);
     } catch {
       console.warn("[QuickPickDrawer] cart/add API failed");
     }

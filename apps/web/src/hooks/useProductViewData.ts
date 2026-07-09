@@ -1,4 +1,3 @@
-import type { AddToCartRequest } from "@/app/api/cart/add/route";
 import type {
   ComponentVariantRule,
   ConfiguratorGroup,
@@ -9,6 +8,7 @@ import type {
 } from "@/app/api/products/[slug]/route";
 import type { ShopVariant } from "@/app/api/products/route";
 import type { Product, SelectedComponent } from "@/lib/data";
+import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
 import { useEffect, useMemo, useState } from "react";
@@ -48,6 +48,7 @@ export function useProductViewData(
   const [isLoadingAddToCart, setIsLoadingAddToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { addItem, openCart } = useCartStore();
+  const addCartItem = useAddCartItem();
 
   // Auto-select when there is only one variant
   useEffect(() => {
@@ -211,14 +212,18 @@ export function useProductViewData(
 
     if (initialGroups.length > 0) {
       try {
-        const body: AddToCartRequest = {
-          parent_product_id: product.id,
-          selected_variant_ids: components.map((c) => c.variant_id),
-        };
-        await fetch("/api/cart/add", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+        await addCartItem.mutateAsync({
+          product_id: product.id,
+          components: components.map((c) => ({ variant_id: c.variant_id })),
+        });
+      } catch {
+        console.warn("[useProductViewData] cart/add API failed");
+      }
+    } else if (selectedVariant) {
+      try {
+        await addCartItem.mutateAsync({
+          product_id: product.id,
+          variant_id: selectedVariant.id,
         });
       } catch {
         console.warn("[useProductViewData] cart/add API failed");

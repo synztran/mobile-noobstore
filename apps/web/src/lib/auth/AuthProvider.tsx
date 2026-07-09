@@ -4,6 +4,7 @@ import type { Tables } from "@/lib/supabase/database.types";
 import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { createBrowserClient } from "@supabase/ssr";
 import type { Session, User } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   useCallback,
@@ -84,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Fetch profile from your API route
   const fetchProfile = useCallback(async (): Promise<void> => {
@@ -157,6 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchProfile();
         // Fire first_login mission on SIGNED_IN (fire-and-forget)
         if (event === "SIGNED_IN") {
+          useCartStore.persist.clearStorage();
+          queryClient.invalidateQueries({ queryKey: ["cart"] });
+
           void (async () => {
             try {
               // Find the active gacha event first
@@ -248,8 +253,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     setUser(null);
     setProfile(null);
-    useDiscountStore.persist.clearStorage();
+    useCartStore.getState().clearCart();
     useCartStore.persist.clearStorage();
+    useDiscountStore.persist.clearStorage();
     useCheckoutStore.persist.clearStorage();
   };
 

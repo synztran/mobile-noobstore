@@ -7,7 +7,7 @@ import { formatVND } from "@/lib/currency";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
 import { useFlyToCartStore } from "@/store/useFlyToCart";
-import { useAddToCart } from "@/lib/react-query/cart/api/useCartMutations";
+import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -42,7 +42,7 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
-  const addToCartMutation = useAddToCart();
+  const addCartItem = useAddCartItem();
   const { addStandardProduct, openCart } = useCartStore();
   const flyToCart = useFlyToCartStore((s) => s.flyToCart);
 
@@ -74,9 +74,9 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
     setSubmitting(true);
 
     try {
-      await addToCartMutation.mutateAsync({
-        parent_product_id: product.id,
-        selected_variant_ids: selectedVariant ? [selectedVariant.id] : [],
+      await addCartItem.mutateAsync({
+        product_id: product.id,
+        variant_id: selectedVariant?.id ?? null,
       });
     } catch {
       // non-fatal

@@ -91,8 +91,8 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-background font-sans text-on-surface antialiased">
-        <AuthProvider>
-          <ReactQueryProvider>
+        <ReactQueryProvider>
+          <AuthProvider>
             <NavigationOverlay />
             <FlyToCart />
             {children}
@@ -100,8 +100,8 @@ export default function RootLayout({
             <ToastProvider />
             <StoreHydrator />
             <ServiceWorkerRegister />
-          </ReactQueryProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );

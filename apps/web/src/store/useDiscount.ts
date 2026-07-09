@@ -118,6 +118,7 @@ export const useDiscountStore = create<DiscountStore>()(
             totalGiftItems: data.totalGifts,
             applyingVoucher: false,
           });
+          toast.success("Áp dụng voucher thành công");
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Failed to apply voucher";
@@ -137,6 +138,7 @@ export const useDiscountStore = create<DiscountStore>()(
 
         if (remaining.length === 0) {
           get().removeAllVouchers();
+          toast.success("Đã loại bỏ voucher");
           return;
         }
 
@@ -153,6 +155,7 @@ export const useDiscountStore = create<DiscountStore>()(
           totalGiftItems: remaining.flatMap((v) => v.gifts),
           error: null,
         });
+        toast.success("Đã loại bỏ voucher");
       },
 
       removeAllVouchers: () =>
