@@ -31,32 +31,23 @@ export async function POST(req: NextRequest) {
 			data: { user },
 		} = await supabase.auth.getUser();
 
-		const cartCookie = !user
-			? (req.cookies.get("noobstore-cart-id")?.value ?? null)
-			: undefined;
+		if (!user) {
+			return NextResponse.json(
+				{ error: "Vui lòng đăng nhập để thêm vào giỏ hàng" },
+				{ status: 401 },
+			);
+		}
 
 		const { cartId } = await getOrCreateCart(supabase, {
-			userId: user?.id ?? null,
-			cartCookie,
+			userId: user.id,
 		});
 
 		const { parentItemId } = await upsertCartItem(supabase, cartId, body);
 
-		const response = NextResponse.json<AddCartItemResponse>({
+		return NextResponse.json<AddCartItemResponse>({
 			cart_id: cartId,
 			item_id: parentItemId,
 		});
-
-		if (!user) {
-			response.cookies.set("noobstore-cart-id", cartId, {
-				httpOnly: true,
-				sameSite: "lax",
-				maxAge: 60 * 60 * 24 * 30,
-				path: "/",
-			});
-		}
-
-		return response;
 	} catch (err) {
 		console.error("[cart/items/POST] error:", err);
 		return NextResponse.json(

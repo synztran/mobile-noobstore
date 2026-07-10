@@ -36,46 +36,23 @@ export interface UpsertCartInput {
 
 export async function getOrCreateCart(
 	supabase: Supabase,
-	options?: { userId?: string | null; cartCookie?: string | null },
+	options: { userId: string },
 ): Promise<{ cartId: string; isNew: boolean }> {
-	if (options?.userId) {
-		const { data: existingCart } = await supabase
-			.from("carts")
-			.select("id")
-			.eq("user_id", options.userId)
-			.eq("status", "active")
-			.maybeSingle();
+	const { data: existingCart } = await supabase
+		.from("carts")
+		.select("id")
+		.eq("user_id", options.userId)
+		.eq("status", "active")
+		.maybeSingle();
 
-		if (existingCart) {
-			return { cartId: existingCart.id, isNew: false };
-		}
-
-		const cartId = crypto.randomUUID();
-		const { error } = await supabase
-			.from("carts")
-			.insert({ id: cartId, user_id: options.userId, status: "active" });
-
-		if (error) throw new Error(error.message);
-		return { cartId, isNew: true };
-	}
-
-	if (options?.cartCookie) {
-		const { data: existingCart } = await supabase
-			.from("carts")
-			.select("id")
-			.eq("id", options.cartCookie)
-			.eq("status", "active")
-			.maybeSingle();
-
-		if (existingCart) {
-			return { cartId: existingCart.id, isNew: false };
-		}
+	if (existingCart) {
+		return { cartId: existingCart.id, isNew: false };
 	}
 
 	const cartId = crypto.randomUUID();
 	const { error } = await supabase
 		.from("carts")
-		.insert({ id: cartId, user_id: null, status: "active" });
+		.insert({ id: cartId, user_id: options.userId, status: "active" });
 
 	if (error) throw new Error(error.message);
 	return { cartId, isNew: true };
@@ -380,5 +357,4 @@ export async function clearCart(
 	cartId: string,
 ): Promise<void> {
 	await supabase.from("cart_items").delete().eq("cart_id", cartId);
-	await supabase.from("carts").delete().eq("id", cartId);
 }

@@ -8,8 +8,10 @@ import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
 import { useFlyToCartStore } from "@/store/useFlyToCart";
 import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import ProductComponentTags from "./ProductComponentTags";
 import { QuickPickDrawer } from "./QuickPickDrawer";
@@ -45,6 +47,8 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
   const addCartItem = useAddCartItem();
   const { addStandardProduct, openCart } = useCartStore();
   const flyToCart = useFlyToCartStore((s) => s.flyToCart);
+  const router = useRouter();
+  const { user } = useAuth();
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -59,6 +63,12 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
   };
 
   const addStandardToCart = async () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      router.push("/login");
+      return;
+    }
+
     const selectedVariant = product.variants[0] ?? null;
 
     const { success, reason } = addStandardProduct(

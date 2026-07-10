@@ -11,7 +11,7 @@ const STATUS_COLORS: Record<string, string> = {
   open: "bg-info/10 text-info",
   in_progress: "bg-warning/10 text-warning",
   resolved: "bg-success/10 text-success",
-  closed: "bg-base-300 text-base-content/60",
+  closed: "bg-[rgb(var(--admin-border))] text-muted",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -81,7 +81,7 @@ export function TicketsList() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-base-content">
+        <h1 className="text-2xl font-bold text-heading">
           Hỗ trợ khách hàng
         </h1>
       </div>
@@ -90,7 +90,7 @@ export function TicketsList() {
         <div className="relative flex-1">
           <Search
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
           />
           <input
             type="text"
@@ -100,7 +100,7 @@ export function TicketsList() {
               setPage(1);
             }}
             placeholder="Tìm kiếm..."
-            className="w-full rounded-lg border border-base-300 bg-base-100 py-2 pl-9 pr-8 text-sm text-base-content outline-none focus:border-base-content/50"
+            className="w-full rounded-lg border table-border card-bg py-2 pl-9 pr-8 text-sm text-heading outline-none focus:border-[rgb(var(--admin-text))] focus:border-opacity-50"
           />
           {q && (
             <button
@@ -110,7 +110,7 @@ export function TicketsList() {
               }}
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              <X size={14} className="text-base-content/50" />
+              <X size={14} className="text-muted" />
             </button>
           )}
         </div>
@@ -126,8 +126,8 @@ export function TicketsList() {
             }}
             className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
               status === tab.value
-                ? "bg-base-content text-base-100"
-                : "bg-base-200 text-base-content/70 hover:bg-base-300"
+? "bg-[rgb(var(--admin-text))] text-white"
+              : "bg-[rgb(var(--admin-hover))] text-body hover:bg-[rgb(var(--admin-border))]"
             }`}
           >
             {tab.label}
@@ -139,7 +139,7 @@ export function TicketsList() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-base-300 text-xs font-bold uppercase tracking-wider text-base-content/60">
+              <tr className="border-b table-border text-xs font-bold uppercase tracking-wider text-muted">
                 <th className="pb-3 pr-4">Tiêu đề</th>
                 <th className="pb-3 pr-4">Danh mục</th>
                 <th className="pb-3 pr-4">Trạng thái</th>
@@ -153,7 +153,7 @@ export function TicketsList() {
                 <tr key={i}>
                   {[1, 2, 3, 4, 5, 6].map((j) => (
                     <td key={j} className="py-3 pr-4">
-                      <div className="h-4 w-full animate-pulse rounded bg-base-200" />
+                      <div className="h-4 w-full animate-pulse rounded bg-[rgb(var(--admin-hover))]" />
                     </td>
                   ))}
                 </tr>
@@ -162,7 +162,7 @@ export function TicketsList() {
           </table>
         </div>
       ) : tickets.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-base-content/50">
+        <div className="flex flex-col items-center gap-3 py-12 text-muted">
           <MessageSquareText size={32} />
           <p className="text-sm">Chưa có yêu cầu hỗ trợ nào</p>
         </div>
@@ -170,7 +170,7 @@ export function TicketsList() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-base-300 text-xs font-bold uppercase tracking-wider text-base-content/60">
+              <tr className="border-b table-border text-xs font-bold uppercase tracking-wider text-muted">
                 <th className="pb-3 pr-4">Tiêu đề</th>
                 <th className="pb-3 pr-4">Danh mục</th>
                 <th className="pb-3 pr-4">Trạng thái</th>
@@ -181,14 +181,14 @@ export function TicketsList() {
             </thead>
             <tbody>
               {tickets.map((t) => (
-                <tr key={t.id} className="border-b border-base-200">
+                <tr key={t.id} className="border-b table-border">
                   <td className="py-3 pr-4">
-                    <p className="truncate font-medium text-base-content">
+                    <p className="truncate font-medium text-heading">
                       {t.subject}
                     </p>
                   </td>
                   <td className="py-3 pr-4">
-                    <span className="rounded-md bg-base-200 px-2 py-0.5 text-xs text-base-content/70">
+                    <span className="rounded-md bg-[rgb(var(--admin-hover))] px-2 py-0.5 text-xs text-body">
                       {CATEGORY_LABELS[t.category] ?? t.category}
                     </span>
                   </td>
@@ -199,16 +199,16 @@ export function TicketsList() {
                       {STATUS_LABELS[t.status] ?? t.status}
                     </span>
                   </td>
-                  <td className="py-3 pr-4 text-xs text-base-content/60">
+                  <td className="py-3 pr-4 text-xs text-muted">
                     {new Date(t.created_at).toLocaleDateString("vi-VN")}
                   </td>
-                  <td className="py-3 pr-4 text-xs text-base-content/60">
+                  <td className="py-3 pr-4 text-xs text-muted">
                     {t.attachment_count > 0 ? `${t.attachment_count} file` : ""}
                   </td>
                   <td className="py-3">
                     <button
                       onClick={() => setSelectedId(t.id)}
-                      className="rounded-lg bg-base-content px-3 py-1.5 text-xs font-bold text-base-100 transition-all hover:bg-base-content/80"
+                      className="rounded-lg bg-[rgb(var(--admin-text))] px-3 py-1.5 text-xs font-bold text-white transition-all hover:opacity-80"
                     >
                       Chi tiết
                     </button>
@@ -228,8 +228,8 @@ export function TicketsList() {
               onClick={() => setPage(p)}
               className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold ${
                 p === page
-                  ? "bg-base-content text-base-100"
-                  : "bg-base-200 text-base-content/70 hover:bg-base-300"
+                  ? "bg-[rgb(var(--admin-text))] text-white"
+              : "bg-[rgb(var(--admin-hover))] text-body hover:bg-[rgb(var(--admin-border))]"
               }`}
             >
               {p}
@@ -344,15 +344,15 @@ function TicketDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-base-300/50 backdrop-blur-sm">
-      <div className="mx-4 max-h-[85vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-base-100 p-6 shadow-xl" data-theme="light">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 dark:bg-black/40 backdrop-blur-sm">
+      <div className="mx-4 max-h-[85vh] w-full max-w-5xl overflow-y-auto rounded-2xl card-bg p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-base-content">
+          <h2 className="text-lg font-bold text-heading">
             Chi tiết yêu cầu
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 hover:bg-base-200"
+            className="rounded-lg p-1 hover:bg-[rgb(var(--admin-hover))]"
           >
             <X size={18} />
           </button>
@@ -362,12 +362,12 @@ function TicketDetailModal({
           <div className="grid grid-cols-[1fr_300px] gap-6">
             <div className="space-y-4">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-5 w-3/4 animate-pulse rounded bg-base-200" />
+                <div key={i} className="h-5 w-3/4 animate-pulse rounded bg-[rgb(var(--admin-hover))]" />
               ))}
             </div>
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-5 w-full animate-pulse rounded bg-base-200" />
+                <div key={i} className="h-5 w-full animate-pulse rounded bg-[rgb(var(--admin-hover))]" />
               ))}
             </div>
           </div>
@@ -375,19 +375,19 @@ function TicketDetailModal({
           <div className="grid grid-cols-[1fr_300px] gap-6">
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-base-content/60">Tiêu đề</p>
-                <p className="font-bold text-base-content">{ticket.subject}</p>
+                <p className="text-sm text-muted">Tiêu đề</p>
+                <p className="font-bold text-heading">{ticket.subject}</p>
               </div>
 
               <div className="flex flex-wrap gap-x-5 gap-y-2">
                 <div>
-                  <p className="text-sm text-base-content/60">Danh mục</p>
-                  <span className="rounded-md bg-base-200 px-2 py-0.5 text-xs font-medium text-base-content/70">
+                  <p className="text-sm text-muted">Danh mục</p>
+                  <span className="rounded-md bg-[rgb(var(--admin-hover))] px-2 py-0.5 text-xs font-medium text-body">
                     {CATEGORY_LABELS[ticket.category] ?? ticket.category}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-base-content/60">Trạng thái</p>
+                  <p className="text-sm text-muted">Trạng thái</p>
                   <span
                     className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold uppercase ${STATUS_COLORS[ticket.status] ?? ""}`}
                   >
@@ -396,15 +396,15 @@ function TicketDetailModal({
                 </div>
                 {ticket.order_order_number && (
                   <div>
-                    <p className="text-sm text-base-content/60">Đơn hàng</p>
+                    <p className="text-sm text-muted">Đơn hàng</p>
                     <p className="font-medium text-primary">
                       {ticket.order_order_number}
                     </p>
                   </div>
                 )}
                 <div>
-                  <p className="text-sm text-base-content/60">Ngày tạo</p>
-                  <p className="text-sm text-base-content">
+                  <p className="text-sm text-muted">Ngày tạo</p>
+                  <p className="text-sm text-heading">
                     {new Date(ticket.created_at).toLocaleDateString("vi-VN", {
                       day: "2-digit",
                       month: "2-digit",
@@ -418,8 +418,8 @@ function TicketDetailModal({
 
               {ticket.description && (
                 <div>
-                  <p className="text-sm text-base-content/60">Mô tả</p>
-                  <p className="whitespace-pre-wrap rounded-lg bg-base-200 p-3 text-sm text-base-content">
+                  <p className="text-sm text-muted">Mô tả</p>
+                  <p className="whitespace-pre-wrap rounded-lg bg-[rgb(var(--admin-hover))] p-3 text-sm text-heading">
                     {ticket.description}
                   </p>
                 </div>
@@ -427,18 +427,18 @@ function TicketDetailModal({
 
               {ticket.admin_notes && (
                 <div>
-                  <p className="mb-1 text-sm text-base-content/60">
+                  <p className="mb-1 text-sm text-muted">
                     Phản hồi trước đó
                   </p>
                   <div
-                    className="prose prose-sm max-w-none rounded-lg bg-base-200 p-3 text-base-content"
+                    className="prose prose-sm max-w-none rounded-lg bg-[rgb(var(--admin-hover))] p-3 text-heading"
                     dangerouslySetInnerHTML={{ __html: ticket.admin_notes }}
                   />
                 </div>
               )}
 
-              <div className="border-t border-base-300 pt-4">
-                <p className="mb-2 text-sm font-bold text-base-content">
+              <div className="border-t table-border pt-4">
+                <p className="mb-2 text-sm font-bold text-heading">
                   Phản hồi khách hàng
                 </p>
                 <RichTextEditor
@@ -461,8 +461,8 @@ function TicketDetailModal({
                 </div>
               </div>
 
-              <div className="border-t border-base-300 pt-4">
-                <p className="mb-2 text-sm font-bold text-base-content">
+              <div className="border-t table-border pt-4">
+                <p className="mb-2 text-sm font-bold text-heading">
                   Cập nhật trạng thái
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -473,8 +473,8 @@ function TicketDetailModal({
                       onClick={() => handleUpdate(val, sanitizeHtml(notes))}
                       className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
                         val === ticket.status
-                          ? "cursor-not-allowed bg-base-300 text-base-content/50"
-                          : "bg-base-content text-base-100 hover:bg-base-content/80"
+                          ? "cursor-not-allowed bg-[rgb(var(--admin-border))] text-muted"
+                          : "bg-[rgb(var(--admin-text))] text-white hover:opacity-80"
                       }`}
                     >
                       {label}
@@ -486,15 +486,15 @@ function TicketDetailModal({
 
             <div className="space-y-4">
               {ticket.user_full_name && (
-                <div className="rounded-lg bg-base-200 p-3">
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-base-content/60">
+                <div className="rounded-lg bg-[rgb(var(--admin-hover))] p-3">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-muted">
                     Khách hàng
                   </p>
-                  <p className="font-medium text-base-content">
+                  <p className="font-medium text-heading">
                     {ticket.user_full_name}
                   </p>
                   {ticket.user_email && (
-                    <p className="text-xs text-base-content/60">
+                    <p className="text-xs text-muted">
                       {ticket.user_email}
                     </p>
                   )}
@@ -502,25 +502,25 @@ function TicketDetailModal({
               )}
 
               {orderCustomer && (
-                <div className="rounded-lg bg-base-200 p-3">
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-base-content/60">
+                <div className="rounded-lg bg-[rgb(var(--admin-hover))] p-3">
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-muted">
                     Chủ đơn hàng
                   </p>
-                  <p className="font-medium text-base-content">
+                  <p className="font-medium text-heading">
                     {orderCustomer.name}
                   </p>
                   {orderCustomer.userId && (
-                    <p className="text-[10px] font-mono text-base-content/40">
+                    <p className="text-[10px] font-mono text-muted">
                       ID: {orderCustomer.userId}
                     </p>
                   )}
                   {orderCustomer.email && (
-                    <p className="text-xs text-base-content/60">
+                    <p className="text-xs text-muted">
                       {orderCustomer.email}
                     </p>
                   )}
                   {orderCustomer.phone && (
-                    <p className="text-xs text-base-content/60">
+                    <p className="text-xs text-muted">
                       {orderCustomer.phone}
                     </p>
                   )}
@@ -529,22 +529,22 @@ function TicketDetailModal({
 
               {ticket.order_item && (
                 <div>
-                  <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-base-content/60">
+                  <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-muted">
                     Sản phẩm gặp vấn đề
                   </p>
-                  <div className="flex items-start gap-3 rounded-lg bg-base-200 p-3">
+                  <div className="flex items-start gap-3 rounded-lg bg-[rgb(var(--admin-hover))] p-3">
                     {ticket.order_item.thumbnail && (
                       <img
                         src={ticket.order_item.thumbnail}
                         alt=""
-                        className="h-16 w-16 flex-shrink-0 rounded-lg bg-base-300 object-cover"
+                        className="h-16 w-16 flex-shrink-0 rounded-lg bg-[rgb(var(--admin-border))] object-cover"
                       />
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-base-content">
+                      <p className="text-sm font-bold text-heading">
                         {ticket.order_item.product_name}
                       </p>
-                      <p className="mt-0.5 text-xs text-base-content/70">
+                      <p className="mt-0.5 text-xs text-body">
                         {new Intl.NumberFormat("vi-VN", {
                           style: "currency",
                           currency: "VND",
@@ -558,7 +558,7 @@ function TicketDetailModal({
                             (c: { variant_name: string }, ci: number) => (
                               <span
                                 key={ci}
-                                className="rounded-md bg-base-300 px-1.5 py-0.5 text-[10px] font-bold text-base-content/70"
+                                className="rounded-md bg-[rgb(var(--admin-border))] px-1.5 py-0.5 text-[10px] font-bold text-body"
                               >
                                 {c.variant_name}
                               </span>
@@ -573,7 +573,7 @@ function TicketDetailModal({
 
               {ticket.attachments?.length > 0 && (
                 <div>
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-base-content/60">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-muted">
                     Hình ảnh đính kèm
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -584,7 +584,7 @@ function TicketDetailModal({
                           href={att.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block h-20 w-20 overflow-hidden rounded-lg bg-base-200"
+                          className="block h-20 w-20 overflow-hidden rounded-lg bg-[rgb(var(--admin-hover))]"
                         >
                           <img
                             src={att.file_url}
@@ -600,7 +600,7 @@ function TicketDetailModal({
             </div>
           </div>
         ) : (
-          <div className="py-8 text-center text-sm text-base-content/50">
+          <div className="py-8 text-center text-sm text-muted">
             Không tìm thấy
           </div>
         )}

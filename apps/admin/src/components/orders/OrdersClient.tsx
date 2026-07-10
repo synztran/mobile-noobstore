@@ -1,5 +1,6 @@
 "use client";
 
+import BulkUpdateBar from "@/components/orders/BulkUpdateBar";
 import OrderDetailModal, {
   type OrderDetail,
 } from "@/components/orders/OrderDetailModal";
@@ -23,11 +24,13 @@ interface Order {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-	pending: "bg-yellow-100 text-yellow-800",
-	confirmed: "bg-blue-100 text-blue-800",
-	shipped: "bg-purple-100 text-purple-800",
-	delivered: "bg-green-100 text-green-800",
-	cancelled: "bg-red-100 text-red-800",
+	pending: "badge-pending",
+	confirmed: "badge-confirmed",
+	shipped: "badge-delivering",
+	delivering: "badge-delivering",
+	delivered: "badge-delivered",
+	cancelled: "badge-cancelled",
+	refunded: "badge-cancelled",
 };
 
 const ORDER_TYPE_COLORS: Record<string, string> = {
@@ -108,6 +111,7 @@ export default function OrdersClient({
 	);
 	const [isDetailLoading, setIsDetailLoading] = useState<string | null>(null);
 	const [newOrderBadge, setNewOrderBadge] = useState(false);
+	const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
 	const queryClient = useQueryClient();
 	const queryKey = ["orders", q, searchBy, currentPage];
@@ -171,7 +175,7 @@ export default function OrdersClient({
 			{/* Header */}
 			<div className="flex items-center gap-4">
 				<div className="flex items-center gap-3 mr-auto">
-					<h1 className="text-3xl font-bold text-slate-900">
+					<h1 className="text-3xl font-bold text-heading">
 						Orders
 					</h1>
 					{isFetching && (
@@ -188,11 +192,11 @@ export default function OrdersClient({
 						</button>
 					)}
 				</div>
-				<div className="flex items-center border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+				<div className="input-base flex items-center rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
 					<select
 						defaultValue={searchBy}
 						onChange={(e) => handleSearch(q, e.target.value)}
-						className="border-r border-slate-300 bg-slate-50 text-sm text-slate-600 px-2 py-2 focus:outline-none">
+						className="border-r border-slate-300 bg-transparent text-sm px-2 py-2 focus:outline-none">
 						<option value="order">Order #</option>
 						<option value="customer">Customer</option>
 					</select>
@@ -207,35 +211,54 @@ export default function OrdersClient({
 									? "Search by name…"
 									: "Search by order #…"
 							}
-							className="pl-9 pr-4 py-2 text-sm w-56 focus:outline-none"
+							className="pl-9 pr-4 py-2 text-sm w-56 focus:outline-none bg-transparent"
 						/>
 					</div>
 				</div>
 			</div>
 
 			{/* Table */}
-			<div className="bg-white rounded-lg shadow overflow-hidden">
+			<div className="card-bg card-border rounded-lg shadow overflow-hidden">
 				<table className="w-full">
-					<thead className="bg-slate-50 border-b border-slate-200">
+					<thead className="thead-bg table-border">
 						<tr>
+							<th className="w-10 px-4 py-3">
+								<input
+									type="checkbox"
+									className="checkbox checkbox-sm"
+									checked={
+										selectedIds.length > 0 &&
+										selectedIds.length === orders.length
+									}
+									onChange={() => {
+										if (selectedIds.length === orders.length) {
+											setSelectedIds([]);
+										} else {
+											setSelectedIds(
+												orders.map((o) => o.id),
+											);
+										}
+									}}
+								/>
+							</th>
 							{ORDER_TABLE_COLUMNS.map((column) => (
 								<th
 									key={column}
-									className="px-6 py-3 text-left text-sm font-semibold text-slate-900">
+									className="px-6 py-3 text-left text-sm font-semibold text-heading">
 									{column}
 								</th>
 							))}
 							<th className="px-6 py-3" />
 						</tr>
 					</thead>
-					<tbody className="divide-y divide-slate-200">
+					<tbody className="table-divide">
 						{isFetching ? (
 							<>
 								{[1, 2, 3, 4, 5].map((i) => (
 									<tr key={i}>
 										{[1, 2, 3, 4, 5, 6].map((j) => (
 											<td key={j} className="px-6 py-4">
-												<div className="h-4 w-full animate-pulse rounded bg-slate-200" />
+												<div className="h-4 w-full animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
 											</td>
 										))}
 									</tr>
@@ -251,8 +274,28 @@ export default function OrdersClient({
 								return (
 									<tr
 										key={order.id}
-										className="hover:bg-slate-50">
-										<td className="px-6 py-4 text-sm font-mono text-slate-900">
+										className="table-row-hover">
+										<td className="px-4 py-4">
+											<input
+												type="checkbox"
+												className="checkbox checkbox-sm"
+												checked={selectedIds.includes(
+													order.id,
+												)}
+												onChange={() => {
+													setSelectedIds((prev) =>
+														prev.includes(order.id)
+															? prev.filter(
+																	(id) =>
+																		id !==
+																		order.id,
+																)
+															: [...prev, order.id],
+													);
+												}}
+											/>
+										</td>
+										<td className="px-6 py-4 text-sm font-mono text-heading">
 											<div className="flex items-center gap-2">
 												<span
 													className={`px-2 py-0.5 rounded text-xs font-medium ${ORDER_TYPE_COLORS[orderType.tone]}`}>
@@ -261,10 +304,10 @@ export default function OrdersClient({
 												{order.order_number}
 											</div>
 										</td>
-										<td className="px-6 py-4 text-sm text-slate-600">
+										<td className="px-6 py-4 text-sm text-body">
 											{customer}
 										</td>
-										<td className="px-6 py-4 text-sm font-medium text-slate-900">
+										<td className="px-6 py-4 text-sm font-medium text-heading">
 											{order.total_price.toLocaleString(
 												"vi-VN",
 											)}
@@ -272,7 +315,7 @@ export default function OrdersClient({
 										</td>
 										<td className="px-6 py-4 text-sm">
 											<span
-												className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[order.status] ?? "bg-slate-100 text-slate-700"}`}
+												className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${STATUS_COLORS[order.status] ?? "badge-inactive"}`}
 												title={
 													order.status === "cancelled" && order.cancelled_note
 														? order.cancelled_note
@@ -281,7 +324,7 @@ export default function OrdersClient({
 												{order.status}
 											</span>
 										</td>
-										<td className="px-6 py-4 text-sm text-slate-600">
+										<td className="px-6 py-4 text-sm text-body">
 											{order.created_at
 												? new Date(
 														order.created_at,
@@ -314,7 +357,7 @@ export default function OrdersClient({
 													isDetailLoading ===
 													order.id
 												}
-												className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors disabled:opacity-50"
+												className="btn-icon-edit w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-50"
 												title="View">
 												{isDetailLoading ===
 												order.id ? (
@@ -330,8 +373,8 @@ export default function OrdersClient({
 						) : (
 							<tr>
 								<td
-									colSpan={6}
-									className="px-6 py-8 text-center text-slate-500">
+									colSpan={7}
+									className="px-6 py-8 text-center text-muted">
 									No orders found
 								</td>
 							</tr>
@@ -343,7 +386,7 @@ export default function OrdersClient({
 			{/* Pagination */}
 			{totalPages > 1 && (
 				<div className="flex items-center justify-between pt-2">
-					<span className="text-sm text-slate-500">
+					<span className="text-sm text-muted">
 						{count} order{count !== 1 ? "s" : ""} · Page{" "}
 						{currentPage} of {totalPages}
 					</span>
@@ -351,7 +394,7 @@ export default function OrdersClient({
 						<a
 							href={buildUrl(currentPage - 1)}
 							aria-disabled={currentPage === 1}
-							className={`p-1.5 rounded-lg border border-slate-200 text-slate-600 ${currentPage === 1 ? "pointer-events-none opacity-40" : "hover:bg-slate-100"}`}>
+							className={`p-1.5 rounded-lg table-border text-body ${currentPage === 1 ? "pointer-events-none opacity-40" : "table-row-hover"}`}>
 							‹
 						</a>
 						{Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -371,14 +414,14 @@ export default function OrdersClient({
 								p === "…" ? (
 									<span
 										key={`e-${i}`}
-										className="px-2 text-slate-400 text-sm">
+										className="px-2 text-muted text-sm">
 										…
 									</span>
 								) : (
 									<a
 										key={p}
 										href={buildUrl(p)}
-										className={`min-w-[2rem] h-8 flex items-center justify-center rounded-lg text-sm border ${p === currentPage ? "bg-blue-600 text-white border-blue-600 font-medium" : "border-slate-200 hover:bg-slate-100"}`}>
+										className={`min-w-[2rem] h-8 flex items-center justify-center rounded-lg text-sm border ${p === currentPage ? "bg-blue-600 text-white border-blue-600 font-medium" : "table-border table-row-hover text-body"}`}>
 										{p}
 									</a>
 								),
@@ -386,12 +429,17 @@ export default function OrdersClient({
 						<a
 							href={buildUrl(currentPage + 1)}
 							aria-disabled={currentPage === totalPages}
-							className={`p-1.5 rounded-lg border border-slate-200 text-slate-600 ${currentPage === totalPages ? "pointer-events-none opacity-40" : "hover:bg-slate-100"}`}>
+							className={`p-1.5 rounded-lg table-border text-body ${currentPage === totalPages ? "pointer-events-none opacity-40" : "table-row-hover"}`}>
 							›
 						</a>
 					</div>
 				</div>
 			)}
+
+			<BulkUpdateBar
+				selectedIds={selectedIds}
+				onClear={() => setSelectedIds([])}
+			/>
 
 			<OrderDetailModal
 				order={prefetchedOrder}

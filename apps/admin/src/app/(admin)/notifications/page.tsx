@@ -142,7 +142,7 @@ export default function NotificationsPage() {
       </form>
 
       {result && (
-        <div className="mt-6 rounded bg-base-200 p-4">
+        <div className="mt-6 rounded card-bg p-4">
           <pre className="whitespace-pre-wrap text-sm">
             {JSON.stringify(result, null, 2)}
           </pre>

@@ -24,6 +24,12 @@ type DiscountStore = {
   applyingVoucher: boolean;
   error: string | null;
   setVouchers: (vouchers: VoucherRow[]) => void;
+  setAppliedVouchers: (
+    appliedVouchers: AppliedVoucherEntry[],
+    totalDiscountAmount: number,
+    totalShippingDiscountAmount: number,
+    totalGiftItems: VoucherGiftItem[]
+  ) => void;
   fetchVouchers: () => Promise<void>;
   applyVouchers: (
     voucherIds: string[],
@@ -54,6 +60,16 @@ export const useDiscountStore = create<DiscountStore>()(
       setVouchers: (vouchers) =>
         set({
           vouchers,
+          error: null,
+        }),
+
+      setAppliedVouchers: (appliedVouchers, totalDiscountAmount, totalShippingDiscountAmount, totalGiftItems) =>
+        set({
+          appliedVouchers,
+          totalDiscountAmount,
+          totalShippingDiscountAmount,
+          totalGiftItems,
+          applyingVoucher: false,
           error: null,
         }),
 

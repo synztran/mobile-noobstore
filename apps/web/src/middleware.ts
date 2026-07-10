@@ -49,7 +49,20 @@ function hasValidSession(request: NextRequest): boolean {
 
 export async function middleware(request: NextRequest) {
   try {
-    const { pathname } = request.nextUrl;
+    const { pathname, hostname } = request.nextUrl;
+
+    // Subdomain rewrite — keep visitor on subdomain but serve target page
+    const subdomain = hostname.split(".")[0];
+    const SUBDOMAIN_ROUTES: Record<string, string> = {
+      gacha: "/gacha",
+      support: "/profile/support",
+      blog: "/blogs",
+    };
+    if (subdomain in SUBDOMAIN_ROUTES && pathname === "/") {
+      request.nextUrl.pathname = SUBDOMAIN_ROUTES[subdomain];
+      return NextResponse.rewrite(request.nextUrl);
+    }
+
     const pathNames = ['/signin', '/signup']
 
     // Rate limit auth endpoints (login, register) — 10 req/min per IP

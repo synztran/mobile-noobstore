@@ -3,9 +3,25 @@
 @tailwind utilities;
 
 :root {
-	--on-surface: 33, 37, 41;
-	--surface-container: 247, 250, 252;
-	--surface-dim: 218, 222, 226;
+	--admin-bg: 248, 250, 252;
+	--admin-surface: 255, 255, 255;
+	--admin-border: 226, 232, 240;
+	--admin-text: 15, 23, 42;
+	--admin-text-secondary: 100, 116, 139;
+	--admin-text-muted: 148, 163, 184;
+	--admin-hover: 241, 245, 249;
+	--admin-header-bg: 248, 250, 252;
+}
+
+.dark {
+	--admin-bg: 15, 23, 42;
+	--admin-surface: 30, 41, 59;
+	--admin-border: 51, 65, 85;
+	--admin-text: 248, 250, 252;
+	--admin-text-secondary: 203, 213, 225;
+	--admin-text-muted: 148, 163, 184;
+	--admin-hover: 30, 41, 59;
+	--admin-header-bg: 30, 41, 59;
 }
 
 * {
@@ -17,7 +33,7 @@ html {
 }
 
 body {
-	@apply bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100;
+	@apply bg-[rgb(var(--admin-bg))];
 }
 
 /* ─── Base form element theming ────────────────────────────────────────────── */
@@ -25,41 +41,66 @@ body {
 	input:not([type="checkbox"]):not([type="radio"]),
 	select,
 	textarea {
-		@apply bg-white text-slate-900 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600;
+		@apply bg-[rgb(var(--admin-surface))] text-[rgb(var(--admin-text))] border-[rgb(var(--admin-border))];
 	}
 }
 
-/* ─── Dark mode: theme-aware custom utilities ──────────────────────────────── */
+/* ─── Status badge colors (dark-mode aware) ────────────────────────────────── */
+@layer components {
+	.badge-pending {
+		@apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300;
+	}
+	.badge-confirmed {
+		@apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300;
+	}
+	.badge-delivering {
+		@apply bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300;
+	}
+	.badge-delivered {
+		@apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300;
+	}
+	.badge-cancelled {
+		@apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300;
+	}
+	.badge-active {
+		@apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300;
+	}
+	.badge-inactive {
+		@apply bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300;
+	}
+}
+
+/* ─── Theme-aware custom utilities ──────────────────────────────────────────── */
 @layer utilities {
 	.card-bg {
-		@apply bg-white dark:bg-slate-800;
+		@apply bg-[rgb(var(--admin-surface))];
 	}
 	.card-shadow {
-		@apply shadow dark:shadow-black/20;
+		@apply shadow shadow-black/5 dark:shadow-black/30;
 	}
 	.thead-bg {
-		@apply bg-slate-50 dark:bg-slate-700/50;
+		@apply bg-[rgb(var(--admin-header-bg))];
 	}
 	.table-border {
-		@apply border-slate-200 dark:border-slate-700;
+		@apply border-[rgb(var(--admin-border))];
 	}
 	.table-divide {
-		@apply divide-slate-200 dark:divide-slate-700;
+		@apply divide-[rgb(var(--admin-border))];
 	}
 	.table-row-hover {
-		@apply hover:bg-slate-50 dark:hover:bg-slate-700/50;
+		@apply hover:bg-[rgb(var(--admin-hover))];
 	}
 	.text-heading {
-		@apply text-slate-900 dark:text-slate-100;
+		@apply text-[rgb(var(--admin-text))];
 	}
 	.text-body {
-		@apply text-slate-600 dark:text-slate-300;
+		@apply text-[rgb(var(--admin-text-secondary))];
 	}
 	.text-muted {
-		@apply text-slate-500 dark:text-slate-400;
+		@apply text-[rgb(var(--admin-text-muted))];
 	}
 	.input-base {
-		@apply bg-white border-slate-300 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100;
+		@apply bg-[rgb(var(--admin-surface))] border-[rgb(var(--admin-border))] text-[rgb(var(--admin-text))];
 	}
 	.btn-icon-edit {
 		@apply bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40;

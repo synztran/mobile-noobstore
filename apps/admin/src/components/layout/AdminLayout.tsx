@@ -18,6 +18,7 @@ import {
   PackageSearch,
   Puzzle,
   MessageSquareText,
+  Newspaper,
   Settings2,
   ShieldAlert,
   ShoppingBag,
@@ -65,6 +66,7 @@ const navigation: NavItem[] = [
   { label: "Cart Monitoring", href: "/carts", icon: ShoppingBag },
   { label: "Users", href: "/users", icon: Users },
   { label: "Notifications", href: "/notifications", icon: FileText },
+  { label: "Blog", href: "/blog", icon: Newspaper },
   { label: "Reviews", href: "/reviews", icon: MessageSquareText },
   { label: "Support", href: "/support", icon: ShieldAlert },
   {
@@ -85,6 +87,7 @@ const navigation: NavItem[] = [
   { label: "Points", href: "/points", icon: Coins },
   { label: "Content", href: "/content", icon: FileText },
   { label: "Gacha", href: "/gacha", icon: FerrisWheel },
+  { label: "Audit Log", href: "/audit-log", icon: ShieldAlert },
 ];
 
 export default function AdminLayout({
@@ -113,7 +116,7 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 dark:bg-slate-900">
+    <div className="flex h-screen bg-[rgb(var(--admin-bg))]">
       {/* Sidebar */}
       <div
         className={`${
@@ -230,8 +233,8 @@ export default function AdminLayout({
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top Bar */}
-        <div className="flex min-h-[70px] items-center justify-between border-b border-slate-200 bg-white px-8 py-4 dark:border-slate-700 dark:bg-slate-800">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+        <div className="card-bg flex min-h-[70px] items-center justify-between border-b table-border px-8 py-4">
+          <h2 className="text-xl font-semibold text-heading">
             Admin Dashboard
           </h2>
           <ThemeToggle />

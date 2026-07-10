@@ -10,8 +10,10 @@ import type { ShopVariant } from "@/app/api/products/route";
 import type { Product, SelectedComponent } from "@/lib/data";
 import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
 import { toast } from "@/lib/toast";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { useCartStore } from "@/store";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export type UseProductViewDataReturn = {
   variants: ShopVariant[];
@@ -49,6 +51,8 @@ export function useProductViewData(
   const [quantity, setQuantity] = useState(1);
   const { addItem, openCart } = useCartStore();
   const addCartItem = useAddCartItem();
+  const router = useRouter();
+  const { user } = useAuth();
 
   // Auto-select when there is only one variant
   useEffect(() => {
@@ -179,6 +183,11 @@ export function useProductViewData(
   }, [initialRules, initialGroups, selections]);
 
   const handleAddToCart = async (qty?: number) => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      router.push("/login");
+      return;
+    }
     if (product.variants.length > 0 && !selectedVariant) {
       toast.error("Please select a variant");
       return;

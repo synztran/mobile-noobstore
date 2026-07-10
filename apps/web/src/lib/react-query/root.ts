@@ -12,6 +12,7 @@ import { productQueryKeys } from "./router/product";
 import { serviceQueryKeys } from "./router/service";
 import { cartQueryKeys } from "./router/cart";
 import { supportQueryKeys } from "./router/support";
+import { voucherQueryKeys } from "./router/voucher";
 
 export const appQueryKeys = mergeQueryKeys(
   cartQueryKeys,
@@ -26,7 +27,8 @@ export const appQueryKeys = mergeQueryKeys(
   orderQueryKeys,
   pointsQueryKeys,
   serviceQueryKeys,
-  supportQueryKeys
+  supportQueryKeys,
+  voucherQueryKeys
 );
 
 export type AppQueryKeys = typeof appQueryKeys;

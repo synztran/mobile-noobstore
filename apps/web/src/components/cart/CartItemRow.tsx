@@ -1,0 +1,135 @@
+"use client";
+
+import Icon from "@/components/ui/Icon";
+import { formatVND } from "@/lib/currency";
+import type { CartItem } from "@/lib/data";
+import { Trash } from "lucide-react";
+import Image from "next/image";
+import { memo, useMemo } from "react";
+
+function itemUnitPrice(item: CartItem) {
+	const base = item.variant?.effective_price ?? item.product.base_price;
+	const components =
+		item.components?.reduce((s, c) => s + c.price_adjustment, 0) ?? 0;
+	return base + components;
+}
+
+interface CartItemRowProps {
+	item: CartItem;
+	onRemove: () => void;
+	onMinus: () => void;
+	onPlus: () => void;
+}
+
+function CartItemRow({ item, onRemove, onMinus, onPlus }: CartItemRowProps) {
+	const unitTotal = useMemo(() => itemUnitPrice(item) * item.quantity, [item]);
+	const isPreOrderComponent = useMemo(
+		() => item.components?.some((c) => c.is_pre_order) ?? false,
+		[item.components],
+	);
+
+	return (
+		<div className="relative flex items-start gap-2 rounded-xl bg-surface-container-low p-2">
+			<button
+				onClick={onRemove}
+				className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-400 transition-transform active:scale-90"
+			>
+				<Trash className="text-white" size={14} />
+			</button>
+			<div className="relative h-20 w-24 flex-shrink-0 bg-surface-container">
+				{item.product.thumbnail ? (
+					<Image
+						src={item.product.thumbnail}
+						alt={item.product.name}
+						fill
+						className="rounded-lg object-cover"
+						sizes="80px"
+					/>
+				) : (
+					<div className="absolute inset-0 flex items-center justify-center">
+						<Icon
+							name="inventory_2"
+							className="text-3xl text-outline-variant"
+						/>
+					</div>
+				)}
+				{isPreOrderComponent && (
+					<span className="absolute -top-2 left-1/2 min-w-16 -translate-x-1/2 transform truncate text-nowrap rounded-sm bg-violet-500 px-1 py-0.5 text-center text-[8px] font-black uppercase text-white">
+						Pre-order
+					</span>
+				)}
+			</div>
+			<div className="min-w-0 flex-1 space-y-1">
+				<p className="mr-6 line-clamp-3 text-sm font-bold leading-tight text-on-surface">
+					{item.product.name}
+				</p>
+				{item.variant && (
+					<p className="mt-0.5 text-xs font-semibold tracking-wide text-on-surface-variant">
+						{item.variant.variant_name}
+					</p>
+				)}
+				<div className="flex gap-2">
+					{item.product.tags?.map((tag) => (
+						<span
+							key={tag.id}
+							className={`flex max-w-max items-center justify-center rounded-lg border border-outline-variant/30 px-2 py-1 text-[10px] font-bold leading-tight tracking-wide text-on-surface shadow-sm backdrop-blur ${tag.textColor ?? "text-on-surface"} ${tag.bgColor ?? "bg-surface-container-lowest"}`}
+						>
+							{tag.label}
+						</span>
+					))}
+				</div>
+				{item.components && item.components.length > 0 && (
+					<div className="flex flex-wrap gap-1">
+						{item.components.map((c) => (
+							<span
+								key={c.variant_id}
+								className="inline-flex items-center gap-1 rounded-lg bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-on-surface-variant"
+							>
+								{c.component_group}: <strong>{c.variant_name}</strong>
+							</span>
+						))}
+					</div>
+				)}
+				{item.gifts?.map((g) => (
+					<div
+						key={g.gift_name}
+						className="flex items-start gap-2 rounded-xl bg-rose-100 p-2"
+					>
+						<span className="text-sm leading-none">🎁</span>
+						<div className="min-w-0 flex-1">
+							<p className="text-[8px] font-black uppercase tracking-wider text-rose-500">
+								Quà tặng kèm
+							</p>
+							<p className="truncate text-[10px] font-bold text-rose-700">
+								{g.gift_name}
+								{g.quantity > 1 && ` x${g.quantity}`}
+							</p>
+						</div>
+					</div>
+				))}
+				<div className="mt-4 flex items-center justify-between">
+					<div className="flex items-center gap-3 rounded-lg bg-gray-200 px-2 py-1">
+						<button
+							onClick={onMinus}
+							className="text-base font-bold leading-none text-on-surface transition-transform active:scale-90"
+						>
+							−
+						</button>
+						<span className="w-8 text-center text-sm font-bold text-on-surface">
+							{item.quantity}
+						</span>
+						<button
+							onClick={onPlus}
+							className="text-base font-bold leading-none text-on-surface transition-transform active:scale-90"
+						>
+							+
+						</button>
+					</div>
+					<p className="font-black text-primary">{formatVND(unitTotal)}</p>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export default memo(CartItemRow);

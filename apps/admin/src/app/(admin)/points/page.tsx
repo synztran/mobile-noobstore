@@ -665,7 +665,7 @@ function GiftCardsTab() {
                     Created
                   </h3>
                 </div>
-                <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-base-200 p-3">
+                <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border table-border p-3">
                   {created.map((c) => (
                     <div
                       key={c.code}

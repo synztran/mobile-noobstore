@@ -155,16 +155,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newSession?.user ?? null);
 
       if (newSession?.user) {
-        // Don't await heavy work inside listener if possible
         fetchProfile();
-        // Fire first_login mission on SIGNED_IN (fire-and-forget)
         if (event === "SIGNED_IN") {
-          useCartStore.persist.clearStorage();
-          queryClient.invalidateQueries({ queryKey: ["cart"] });
-
           void (async () => {
             try {
-              // Find the active gacha event first
               const { data: activeEvent } = await supabase
                 .from("gacha_events")
                 .select("id")
@@ -195,12 +189,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Cleanup
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile]); // ← fetchProfile is stable thanks to useCallback
+  }, [fetchProfile]);
 
   // Auth methods
   const signIn = async (email: string, password: string) => {
@@ -210,7 +203,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    console.log("Data", data);
     if (data.error) return { error: data.error ?? null };
 
     // Use session from API response directly (avoids cookie timing gap)

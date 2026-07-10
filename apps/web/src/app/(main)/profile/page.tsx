@@ -99,7 +99,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="min-main-content flex items-center justify-center">
         <span className="loading loading-spinner loading-lg text-primary" />
       </div>
     );

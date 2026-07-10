@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          id: string
+          admin_user_id: string
+          admin_email: string
+          action: string
+          entity_type: string
+          entity_id: string | null
+          old_data: Json | null
+          new_data: Json | null
+          diff_data: Json | null
+          ip_address: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          admin_user_id: string
+          admin_email: string
+          action: string
+          entity_type: string
+          entity_id?: string | null
+          old_data?: Json | null
+          new_data?: Json | null
+          diff_data?: Json | null
+          ip_address?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          admin_user_id?: string
+          admin_email?: string
+          action?: string
+          entity_type?: string
+          entity_id?: string | null
+          old_data?: Json | null
+          new_data?: Json | null
+          diff_data?: Json | null
+          ip_address?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_log_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           cart_id: string | null
@@ -2048,6 +2098,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      blog_posts: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          content: string
+          excerpt: string | null
+          category: string
+          author: string
+          thumbnail: string | null
+          meta_title: string | null
+          meta_description: string | null
+          og_image: string | null
+          tags: string[] | null
+          published: boolean | null
+          featured: boolean | null
+          published_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          slug: string
+          title: string
+          content: string
+          excerpt?: string | null
+          category?: string
+          author?: string
+          thumbnail?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          og_image?: string | null
+          tags?: string[] | null
+          published?: boolean | null
+          featured?: boolean | null
+          published_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          slug?: string
+          title?: string
+          content?: string
+          excerpt?: string | null
+          category?: string
+          author?: string
+          thumbnail?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          og_image?: string | null
+          tags?: string[] | null
+          published?: boolean | null
+          featured?: boolean | null
+          published_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

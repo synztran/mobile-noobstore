@@ -1,3 +1,4 @@
+import { logAuditEvent } from "@/lib/audit-log";
 import { generateAndStoreInvoice } from "@/lib/invoice";
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -176,6 +177,15 @@ export async function PATCH(
 
   const supabase = getAdminClient();
 
+  // Fetch old data for audit log
+  const { data: oldOrder } = body.status
+    ? await supabase
+        .from("orders")
+        .select("status, paid_at, cancelled_at, cancelled_note, delivering_at, delivered_at, refunded_at")
+        .eq("id", id)
+        .single()
+    : { data: null };
+
   // Restore stock BEFORE updating status — the restoreOrderStock guard
   // checks current status to prevent double-restore; it must see the OLD
   // status (not yet "cancelled"/"refunded") to proceed.
@@ -194,6 +204,24 @@ export async function PATCH(
   const { error } = await supabase.from("orders").update(update).eq("id", id);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Log audit event
+  if (body.status && oldOrder) {
+    const newData: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(update as Record<string, unknown>)) {
+      if (val !== undefined) newData[key] = val;
+    }
+    void logAuditEvent(
+      {
+        action: "order.update_status",
+        entity_type: "orders",
+        entity_id: id,
+        old_data: oldOrder as unknown as Record<string, unknown>,
+        new_data: newData,
+      },
+      supabase,
+    );
   }
 
   // Generate invoice when order is confirmed (fire-and-forget)

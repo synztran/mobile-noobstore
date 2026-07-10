@@ -11,9 +11,25 @@ export async function GET(request: Request) {
 		await supabase.auth.exchangeCodeForSession(code);
 	}
 
-	const next = safeRedirect(
-		requestUrl.searchParams.get("next"),
-		requestUrl.origin
+	// Password reset passes next inside redirect_to:
+	// /auth/callback?code=xxx&redirect_to=...%3Fnext%3D%2Fupdate-password
+	let next = requestUrl.searchParams.get("next");
+	if (!next) {
+		const redirectTo = requestUrl.searchParams.get("redirect_to");
+		if (redirectTo) {
+			try {
+				const redirectUrl = new URL(redirectTo);
+				next = redirectUrl.searchParams.get("next");
+			} catch {
+				// invalid redirect_to — ignore
+			}
+		}
+	}
+
+	return NextResponse.redirect(
+		new URL(
+			safeRedirect(next, requestUrl.origin, "/verified-success"),
+			requestUrl.origin,
+		),
 	);
-	return NextResponse.redirect(new URL(next, requestUrl.origin));
 }

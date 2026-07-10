@@ -24,7 +24,10 @@ import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
 import { useQuickPick } from "@/lib/react-query/product/api/useProductQueries";
 import clsx from "clsx";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useReducer } from "react";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 // ─── Add to Cart Button ─────────────────────────────────────────────────────
 
@@ -122,6 +125,8 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 
   const [state, dispatch] = useReducer(reduce, INITIAL_STATE);
   const { addItem, openCart, items: cartItems } = useCartStore();
+  const router = useRouter();
+  const { user } = useAuth();
 
   type QuickPickResponse = {
     products: ShopProduct[];
@@ -281,6 +286,11 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
 
   // ── Add to cart ───────────────────────────────────────────────────────
   const handleAdd = async () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      router.push("/login");
+      return;
+    }
     if (isInvalidPrice) {
       toast.error("Sản phẩm chưa được cập nhật giá, vui lòng liên hệ shop");
       return;

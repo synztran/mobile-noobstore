@@ -110,14 +110,14 @@ function LoginForm() {
         </div>
 
         {/* Forgot password */}
-        {/* <div className="text-right">
+        <div className="text-right">
           <Link
             href="/forgot-password"
             className="text-sm font-semibold text-on-surface underline underline-offset-4"
           >
             Quên mật khẩu?
           </Link>
-        </div> */}
+        </div>
 
         {/* Sign In Button */}
         <button

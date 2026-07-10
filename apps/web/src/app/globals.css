@@ -205,7 +205,7 @@
   50% { box-shadow: 0 0 0 6px rgba(155, 63, 28, 0); }
 }
 
-/* ── gooey-toast color overrides ──
+/* ── gooey-toast overrides ──
    gooey-toast uses oklch() which can be dropped by Next.js production
    CSS minification. Hex fallbacks ensure colors survive the build.       */
 :root {
@@ -215,6 +215,79 @@
 	--gooey-state-warning: #d97706;
 	--gooey-state-info: #2563eb;
 	--gooey-state-action: #4f46e5;
+}
+
+[data-gooey-title] {
+	font-size: 0.8125rem;
+}
+
+[data-gooey-description] {
+	font-size: 0.8125rem;
+}
+
+.content-html h2 {
+  margin-bottom: 0.75rem;
+  margin-top: 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 900;
+  color: #1b1c1a;
+}
+.content-html h2:first-child {
+  margin-top: 0;
+}
+.content-html h3 {
+  margin-bottom: 0.5rem;
+  margin-top: 1.25rem;
+  font-size: 1rem;
+  font-weight: 900;
+  color: #1b1c1a;
+}
+.content-html p {
+  margin-bottom: 0.75rem;
+}
+.content-html ul {
+  margin-left: 1rem;
+  list-style: disc;
+}
+.content-html ul, .content-html ol {
+  padding-left: 0;
+}
+.content-html ul li, .content-html ol li {
+  margin-bottom: 0.25rem;
+}
+.content-html ol {
+  margin-left: 1rem;
+  list-style: decimal;
+}
+.content-html a {
+  color: #9b3f1c;
+  text-decoration: underline;
+}
+.content-html a:hover {
+  color: #9b3f1c;
+  opacity: 0.8;
+}
+.content-html img {
+  border-radius: 0.75rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  max-width: 100%;
+  height: auto;
+}
+.content-html blockquote {
+  border-left: 4px solid rgba(155, 63, 28, 0.3);
+  padding-left: 1rem;
+  font-style: italic;
+  color: rgba(27, 28, 26, 0.7);
+}
+.content-html hr {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.content-html strong {
+  font-weight: 900;
+  color: #1b1c1a;
 }
 
 @media (prefers-reduced-motion: reduce) {
