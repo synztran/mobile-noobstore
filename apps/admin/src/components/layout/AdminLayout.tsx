@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import {
   ArrowLeft,
+  Building2,
   ChevronDown,
   ChevronRight,
   Coins,
@@ -18,6 +19,7 @@ import {
   PackageSearch,
   Puzzle,
   MessageSquareText,
+  Search,
   Newspaper,
   Settings2,
   ShieldAlert,
@@ -88,6 +90,14 @@ const navigation: NavItem[] = [
   { label: "Content", href: "/content", icon: FileText },
   { label: "Gacha", href: "/gacha", icon: FerrisWheel },
   { label: "Audit Log", href: "/audit-log", icon: ShieldAlert },
+  {
+    label: "Tools",
+    icon: Wrench,
+    children: [
+      { label: "Crawling", href: "/crawling", icon: Search },
+      { label: "Vendors", href: "/vendors", icon: Building2 },
+    ],
+  },
 ];
 
 export default function AdminLayout({

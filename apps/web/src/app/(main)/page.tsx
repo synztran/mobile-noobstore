@@ -10,6 +10,7 @@ import { NewsletterCTA } from "@/components/home/NewsletterCTA";
 import { NoteworthySection } from "@/components/home/NoteworthySection";
 import { HomeSaleSection } from "@/components/home/SaleSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import ReleaseSubscribeForm from "@/components/home/ReleaseSubscribeForm";
 
 export default function HomePage() {
   return (
@@ -24,6 +25,9 @@ export default function HomePage() {
       <CustomerTestimonial />
       <HomeTestimonials />
       <NewsletterCTA />
+      <section className="mx-auto max-w-md px-4">
+        <ReleaseSubscribeForm />
+      </section>
       <HomeFooter />
     </div>
   );
