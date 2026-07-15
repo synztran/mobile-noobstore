@@ -19,11 +19,13 @@ interface Props {
 async function fetchProducts(
   q: string,
   productType: string,
+  excludeSoldOut: boolean,
   page: number
 ): Promise<{ products: ProductRow[]; count: number; totalPages: number }> {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (productType) params.set("productType", productType);
+  if (excludeSoldOut) params.set("excludeSoldOut", "true");
   if (page > 1) params.set("page", String(page));
   const res = await fetch(`/api/products/list?${params.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch products");
@@ -38,11 +40,17 @@ export default function ProductsClient({
   const searchParams = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const productType = searchParams.get("product_type") ?? "";
+  const excludeSoldOut = searchParams.get("exclude_sold_out") === "true";
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
 
   const { data } = useQuery({
-    queryKey: adminQueryKeys.products.list(q, productType, page),
-    queryFn: () => fetchProducts(q, productType, page),
+    queryKey: adminQueryKeys.products.list(
+      q,
+      productType,
+      excludeSoldOut,
+      page
+    ),
+    queryFn: () => fetchProducts(q, productType, excludeSoldOut, page),
     initialData: {
       products: initialProducts,
       count: initialCount,
@@ -59,13 +67,14 @@ export default function ProductsClient({
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (productType) params.set("product_type", productType);
+    if (excludeSoldOut) params.set("exclude_sold_out", "true");
     params.set("page", String(p));
     return `/products?${params.toString()}`;
   };
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-2 xl:grid-cols-2">
         {products.length > 0 ? (
           products.map((product) => (
             <ProductCard key={product.id} product={product} />

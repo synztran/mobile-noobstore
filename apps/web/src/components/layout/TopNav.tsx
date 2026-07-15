@@ -6,7 +6,6 @@ import WishlistSidebar from "@/components/wishlist/WishlistSidebar";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore } from "@/store";
 import clsx from "clsx";
-import { Loader } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -40,6 +39,7 @@ export function TopNav({
     setNavigating(true);
     router.push(backHref);
   };
+
   const pathHideCart = ["/gacha", "/checkout"];
   const hideCart =
     pathHideCart.includes(pathname) ||
@@ -48,11 +48,11 @@ export function TopNav({
   return (
     <nav
       className={clsx(
-        "top-nav-pad fixed top-0 z-[51] flex w-full items-center justify-between bg-gray-50 px-4",
+        "top-nav-pad fixed top-0 z-[51] grid w-full grid-cols-3 items-center bg-gray-50 px-4",
         className
       )}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 justify-self-start">
         {showBack ? (
           <button
             aria-label="Go back"
@@ -79,11 +79,11 @@ export function TopNav({
         )}
       </div>
 
-      <h1 className="font-sans text-xl font-black tracking-tighter text-on-surface">
+      <p className="text-center font-sans text-xl font-black tracking-tighter text-on-surface">
         {title}
-      </h1>
+      </p>
 
-      <div className="flex items-center justify-end gap-4">
+      <div className="flex items-center justify-end gap-4 justify-self-end">
         {showFavorite && (
           <button
             onClick={() => setWishlistOpen(true)}

@@ -315,14 +315,18 @@ export const getNoteworthyProducts = cache(
     try {
       const result = await getProductListByFilters({
         categorySlug,
-        limit,
+        limit: limit * 2,
         sort: "newest",
         productTypes: ["standard", "kit"],
         excludeUncategorized: true,
       });
 
+      const notable = (result.products as ShopProduct[]).filter(
+        (p) => p.stock_quantity > 0
+      );
+
       return {
-        products: result.products as ShopProduct[],
+        products: notable.slice(0, limit),
         total: result.total,
       };
     } catch (err) {

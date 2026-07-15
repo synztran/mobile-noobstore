@@ -1,6 +1,7 @@
 import ProductsClient from "@/components/products/ProductsClient";
 import ProductsHeader from "@/components/products/ProductsHeader";
 import type { ProductCardProps } from "@/components/products/ProductCard";
+import { isInStock } from "@/lib/product-utils";
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = {
@@ -12,9 +13,9 @@ const PAGE_SIZE = 20;
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; product_type?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; product_type?: string; exclude_sold_out?: string }>;
 }) {
-  const { q, page, product_type } = await searchParams;
+  const { q, page, product_type, exclude_sold_out } = await searchParams;
   const allowedProductTypes = new Set(["standard", "kit", "component", "gift", "all"]);
   const selectedProductType = allowedProductTypes.has(product_type ?? "all") && product_type !== "all"
     ? product_type
@@ -61,7 +62,13 @@ export default async function ProductsPage({
 
   const { data: rows, error, count } = await query;
 
-  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
+  const excludeSoldOut = exclude_sold_out === "true";
+  let products = (rows ?? []) as ProductCardProps["product"][];
+  if (excludeSoldOut) {
+    products = products.filter((p) => isInStock(p));
+  }
+
+  const totalPages = Math.max(1, Math.ceil((excludeSoldOut ? products.length : count ?? 0) / PAGE_SIZE));
   const { data: categories } = await categoryQuery;
 
   if (error) {
@@ -79,8 +86,8 @@ export default async function ProductsPage({
       )}
 
       <ProductsClient
-        initialProducts={rows as ProductCardProps["product"][]}
-        initialCount={count ?? 0}
+        initialProducts={products}
+        initialCount={excludeSoldOut ? products.length : (count ?? 0)}
         initialTotalPages={totalPages}
       />
     </div>

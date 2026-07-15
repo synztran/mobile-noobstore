@@ -6,6 +6,7 @@ export interface GetSaleProductsParams {
   categorySlug?: string;
   limit?: number;
   sort?: "discount_desc" | "price_asc" | "price_desc" | "newest";
+  excludeSoldOut?: boolean;
 }
 
 /**
@@ -14,11 +15,7 @@ export interface GetSaleProductsParams {
 export async function getSaleProducts(
   params: GetSaleProductsParams = {}
 ): Promise<{ products: ShopProduct[]; total: number }> {
-  const {
-    categorySlug = "",
-    limit = 8,
-    sort = "discount_desc",
-  } = params;
+  const { categorySlug = "", limit = 8, sort = "discount_desc", excludeSoldOut = false } = params;
 
   try {
     // First, get all products to filter for sale items
@@ -27,11 +24,11 @@ export async function getSaleProducts(
       limit: 100,
       sort: "newest",
       productTypes: ["standard", "kit"],
-      excludeUncategorized: true,
+      excludeUncategorized: true
     });
 
     // Filter products that have discount variants (min_price < base_price)
-    const saleProducts = allProducts.filter((product) => {
+    let saleProducts = allProducts.filter((product) => {
       // Check if any variant has a negative price adjustment (discount)
       const hasDiscountVariant = product.variants.some(
         (variant) => variant.price_adjustment < 0
@@ -40,6 +37,10 @@ export async function getSaleProducts(
       const hasPriceDiscount = product.min_price < product.base_price;
       return hasDiscountVariant || hasPriceDiscount;
     });
+
+    if (excludeSoldOut) {
+      saleProducts = saleProducts.filter((p) => p.stock_quantity > 0);
+    }
 
     // Apply sorting
     let sortedProducts = [...saleProducts];

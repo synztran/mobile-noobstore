@@ -6,8 +6,8 @@ export const adminQueryKeys = {
   orderDetail: (id?: string) => ["order-detail", id ?? ""] as const,
 
   products: {
-    list: (q = "", productType = "", page = 1) =>
-      ["products", q, productType, page] as const,
+    list: (q = "", productType = "", excludeSoldOut = false, page = 1) =>
+      ["products", q, productType, excludeSoldOut, page] as const,
   },
 
   users: {

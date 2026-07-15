@@ -1,6 +1,7 @@
 "use client";
 
 import CreateProductModal from "@/components/products/CreateProductModal";
+import ExcludeSoldOutToggle from "@/components/products/ExcludeSoldOutToggle";
 import ProductSearchInput from "@/components/products/ProductSearchInput";
 import ProductTypeFilter from "@/components/products/ProductTypeFilter";
 import { Plus } from "lucide-react";
@@ -20,6 +21,9 @@ export default function ProductsHeader({ categories }: IProps) {
         <ProductSearchInput />
 		<Suspense fallback={<div className="h-[38px] w-[150px] rounded-lg bg-slate-100 animate-pulse" />}>
 			<ProductTypeFilter />
+		</Suspense>
+		<Suspense fallback={<div className="h-[38px] w-[100px] rounded-lg bg-slate-100 animate-pulse" />}>
+			<ExcludeSoldOutToggle />
 		</Suspense>
         <button
           onClick={() => setModalOpen(true)}

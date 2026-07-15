@@ -50,7 +50,7 @@
   /* Target the gooey-toast wrapper, specifically when it's positioned at the top */
   section[data-gooey-viewport][data-position*="top"] {
     /* Push below TopNav (~3.75rem) + safe area */
-    padding-top: calc(env(safe-area-inset-top, 20px) + 3.75rem) !important;
+    /* padding-top: calc(env(safe-area-inset-top, 20px) + 3.75rem) !important; */
   }
 
   /* Prevent gooey-toast viewport from blocking clicks on elements behind it */

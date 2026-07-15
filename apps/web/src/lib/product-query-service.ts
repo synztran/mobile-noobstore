@@ -183,7 +183,9 @@ function getTags(product: {
 
 // ─── Batch supplement fetchers ────────────────────────────────────────────────
 
-export async function fetchKitSupplements(kitIds: string[]): Promise<KitSupplement> {
+export async function fetchKitSupplements(
+  kitIds: string[]
+): Promise<KitSupplement> {
   const childVariantsByProductId = new Map<string, VariantRow[]>();
   const kitStockById = new Map<string, number>();
 
@@ -405,6 +407,7 @@ export interface GetProductListParams {
 export async function getProductListByFilters(
   params: GetProductListParams = {}
 ): Promise<{ products: ProductListItem[]; total: number }> {
+  let skipOOS = false;
   const {
     search = "",
     categorySlug = "",
@@ -427,6 +430,11 @@ export async function getProductListByFilters(
     typeof limit === "number"
       ? Math.min(Math.max(1, Math.floor(limit)), MAX_LIMIT)
       : DEFAULT_LIMIT;
+  const bundleSkipOOS = ["newest"];
+
+  if (bundleSkipOOS.includes(sort)) {
+    skipOOS = true;
+  }
 
   try {
     const supabase = getPublicClient();

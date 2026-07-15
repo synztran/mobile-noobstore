@@ -2159,6 +2159,260 @@ export type Database = {
         }
         Relationships: []
       }
+      vendors: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          logo_url: string | null
+          description: string | null
+          website: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          logo_url?: string | null
+          description?: string | null
+          website?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          logo_url?: string | null
+          description?: string | null
+          website?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      crawling_sources: {
+        Row: {
+          id: string
+          name: string
+          url: string
+          selector: string | null
+          schedule_days: number[]
+          schedule_time: string
+          category: string
+          author: string
+          status: string
+          watch_id: string | null
+          type: string
+          vendor_id: string | null
+          last_content_hash: string | null
+          last_crawled_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          url: string
+          selector?: string | null
+          schedule_days?: number[]
+          schedule_time?: string
+          category?: string
+          author?: string
+          status?: string
+          watch_id?: string | null
+          type?: string
+          vendor_id?: string | null
+          last_content_hash?: string | null
+          last_crawled_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          url?: string
+          selector?: string | null
+          schedule_days?: number[]
+          schedule_time?: string
+          category?: string
+          author?: string
+          status?: string
+          watch_id?: string | null
+          type?: string
+          vendor_id?: string | null
+          last_content_hash?: string | null
+          last_crawled_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crawling_sources_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crawling_detections: {
+        Row: {
+          id: string
+          source_id: string
+          content_hash: string
+          detected_title: string | null
+          detected_content: string
+          detected_url: string | null
+          status: string
+          release_id: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          source_id: string
+          content_hash: string
+          detected_title?: string | null
+          detected_content: string
+          detected_url?: string | null
+          status?: string
+          release_id?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          source_id?: string
+          content_hash?: string
+          detected_title?: string | null
+          detected_content?: string
+          detected_url?: string | null
+          status?: string
+          release_id?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_detection_source"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "crawling_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crawling_history: {
+        Row: {
+          id: string
+          source_id: string
+          status: string
+          message: string | null
+          items_found: number
+          items_created: number
+          ran_at: string | null
+        }
+        Insert: {
+          id?: string
+          source_id: string
+          status: string
+          message?: string | null
+          items_found?: number
+          items_created?: number
+          ran_at?: string | null
+        }
+        Update: {
+          id?: string
+          source_id?: string
+          status?: string
+          message?: string | null
+          items_found?: number
+          items_created?: number
+          ran_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_history_source"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "crawling_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maker_releases: {
+        Row: {
+          id: string
+          title: string
+          content: string
+          excerpt: string | null
+          source_url: string | null
+          maker_name: string | null
+          thumbnail: string | null
+          vendor_id: string | null
+          type: string
+          published_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          title: string
+          content: string
+          excerpt?: string | null
+          source_url?: string | null
+          maker_name?: string | null
+          thumbnail?: string | null
+          vendor_id?: string | null
+          type?: string
+          published_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          title?: string
+          content?: string
+          excerpt?: string | null
+          source_url?: string | null
+          maker_name?: string | null
+          thumbnail?: string | null
+          vendor_id?: string | null
+          type?: string
+          published_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maker_releases_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      release_subscribers: {
+        Row: {
+          id: string
+          email: string
+          active: boolean | null
+          subscribed_at: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          active?: boolean | null
+          subscribed_at?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          active?: boolean | null
+          subscribed_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       kit_component_variants: {

@@ -4,9 +4,11 @@ import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import {
   ArrowLeft,
+  Bell,
   Building2,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
   Coins,
   FerrisWheel,
   FileText,
@@ -64,8 +66,16 @@ const navigation: NavItem[] = [
       { label: "Gift Products", href: "/products/gifts", icon: Gift },
     ],
   },
+  { label: "Inventory", href: "/inventory", icon: ClipboardList },
   { label: "Orders", href: "/orders", icon: ShoppingCart },
-  { label: "Cart Monitoring", href: "/carts", icon: ShoppingBag },
+  {
+    label: "Cart Monitoring",
+    icon: ShoppingBag,
+    children: [
+      { label: "All Carts", href: "/carts", icon: ShoppingBag },
+      { label: "Abandoned Recovery", href: "/carts/abandoned", icon: Bell },
+    ],
+  },
   { label: "Users", href: "/users", icon: Users },
   { label: "Notifications", href: "/notifications", icon: FileText },
   { label: "Blog", href: "/blog", icon: Newspaper },

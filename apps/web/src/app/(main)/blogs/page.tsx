@@ -2,6 +2,19 @@ import { CalendarDays } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Blog - NoobStore",
+  description:
+    "Tin tức, bài viết và hướng dẫn về bàn phím cơ, switch, keycap từ NoobStore.",
+  openGraph: {
+    title: "Blog - NoobStore",
+    description:
+      "Tin tức, bài viết và hướng dẫn về bàn phím cơ, switch, keycap từ NoobStore.",
+    siteName: "NoobStore",
+  },
+};
 
 type BlogPost = {
 	id: string;

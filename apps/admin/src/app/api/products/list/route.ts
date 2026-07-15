@@ -1,3 +1,4 @@
+import { isInStock } from "@/lib/product-utils";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -9,6 +10,7 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const q = sp.get("q") ?? "";
   const productType = sp.get("productType") ?? "";
+  const excludeSoldOut = sp.get("excludeSoldOut") === "true";
   const page = Math.max(1, parseInt(sp.get("page") ?? "1", 10));
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
@@ -49,10 +51,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  let products = data ?? [];
+  if (excludeSoldOut) {
+    products = products.filter((p) => isInStock(p));
+  }
+
   return NextResponse.json({
-    products: data ?? [],
-    count: count ?? 0,
+    products,
+    count: excludeSoldOut ? products.length : (count ?? 0),
     page,
-    totalPages: Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE)),
+    totalPages: Math.max(1, Math.ceil((excludeSoldOut ? products.length : count ?? 0) / PAGE_SIZE)),
   });
 }

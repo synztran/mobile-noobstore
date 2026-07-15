@@ -49,7 +49,7 @@ export function BundleProductCard({
           </div>
         )}
         <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1">
-          {isBestseller && (
+          {/* {isBestseller && (
             <div className="rounded-md bg-amber-500 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow-sm">
               Bán chạy
             </div>
@@ -68,7 +68,7 @@ export function BundleProductCard({
             <div className="rounded-md bg-primary px-2 py-1 text-[8px] font-black uppercase tracking-widest text-on-primary shadow-sm">
               MỚI
             </div>
-          )}
+          )} */}
         </div>
         {isSoldOut && (
           <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-surface/70">

@@ -1,27 +1,47 @@
 "use client";
 
-import { useNewsletterSubscribe } from "@/lib/react-query/home/api/useHomeQueries";
 import { toast } from "@/lib/toast";
 import { useState } from "react";
 
 export function NewsletterCTA() {
   const [email, setEmail] = useState("");
-  const { mutate, isPending } = useNewsletterSubscribe();
+  const [isPending, setIsPending] = useState(false);
 
-  const handleSubmit = () => {
-    if (!email.trim()) {
+  const handleSubmit = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) {
       toast.error("Vui lòng nhập email");
       return;
     }
-    mutate(email.trim(), {
-      onSuccess: () => {
-        toast.success("Đăng ký thành công!");
-        setEmail("");
-      },
-      onError: (err) => {
-        toast.error(err.message);
-      },
-    });
+
+    setIsPending(true);
+
+    try {
+      const [newsletterRes, releaseRes] = await Promise.all([
+        fetch("/api/newsletter/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: trimmed }),
+        }),
+        fetch("/api/release-subscribers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: trimmed }),
+        }),
+      ]);
+
+      if (!newsletterRes.ok && !releaseRes.ok) {
+        const data = await newsletterRes.json().catch(() => null);
+        throw new Error(data?.error ?? "Đăng ký thất bại");
+      }
+
+      toast.success("Đăng ký thành công! Bạn sẽ nhận được thông báo sớm nhất.");
+      setEmail("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Đăng ký thất bại");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -41,8 +61,8 @@ export function NewsletterCTA() {
           BIẾT VỀ ƯU ĐÃI
         </p>
         <p className="mb-8 max-w-xs text-xs leading-relaxed text-outline">
-          Đăng ký để nhận thông báo về sản phẩm mới, restock và ưu đãi độc quyền
-          trước mọi người.
+          Đăng ký để nhận thông báo về sản phẩm mới, restock, groupbuy và ưu đãi
+          độc quyền trước mọi người.
         </p>
         <div className="flex flex-col gap-3">
           <input

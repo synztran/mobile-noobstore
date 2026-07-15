@@ -10,7 +10,20 @@ import { NewsletterCTA } from "@/components/home/NewsletterCTA";
 import { NoteworthySection } from "@/components/home/NoteworthySection";
 import { HomeSaleSection } from "@/components/home/SaleSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
-import ReleaseSubscribeForm from "@/components/home/ReleaseSubscribeForm";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "NoobStore - Bàn phím cơ, Switch & Phụ kiện chính hãng",
+  description:
+    "NoobStore - Cửa hàng bàn phím cơ, switch, keycap và phụ kiện bàn phím chính hãng. Giao hàng toàn quốc, bảo hành uy tín.",
+  openGraph: {
+    title: "NoobStore - Bàn phím cơ, Switch & Phụ kiện chính hãng",
+    description:
+      "NoobStore - Cửa hàng bàn phím cơ, switch, keycap và phụ kiện bàn phím chính hãng.",
+    siteName: "NoobStore",
+    type: "website",
+  },
+};
 
 export default function HomePage() {
   return (
@@ -25,9 +38,6 @@ export default function HomePage() {
       <CustomerTestimonial />
       <HomeTestimonials />
       <NewsletterCTA />
-      <section className="mx-auto max-w-md px-4">
-        <ReleaseSubscribeForm />
-      </section>
       <HomeFooter />
     </div>
   );

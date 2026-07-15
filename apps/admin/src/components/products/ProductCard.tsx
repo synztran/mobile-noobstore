@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 
 type VariantRow = {
   id: string;
@@ -127,14 +128,17 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="flex flex-col items-start gap-4 border-b border-slate-200 bg-slate-50 p-4">
         <div className="flex w-full items-start gap-4">
           {product.thumbnail && (
-            <img
-              src={product.thumbnail}
-              alt={product.name}
-              className="mt-0.5 h-12 w-12 shrink-0 rounded object-cover"
-            />
+            <div className="relative h-32 min-w-32">
+              <Image
+                src={product.thumbnail}
+                alt={product.name}
+                className="rounded-xl object-cover"
+                fill
+              />
+            </div>
           )}
           <div className="w-full space-y-1.5">
-            <div className="clear-both">
+            <div className="clear-both space-y-2">
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-slate-900">{product.name}</p>
                 <div className="flex shrink-0 items-center gap-1">
@@ -143,9 +147,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                     onClick={handleDelete}
                     disabled={deleting}
                     aria-label={`Delete ${product.name}`}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 transition-colors hover:bg-red-100 hover:text-red-600 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-100"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
+                    Xóa
                   </button>
                   <EditProductModal product={product} />
                 </div>
@@ -158,52 +163,50 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {product.is_active === false && <Tag tone="red">Inactive</Tag>}
                 {hasPreOrderVariant && <Tag tone="purple">Pre-order</Tag>}
               </div>
+              <div>
+                <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-xs">
+                  <div className="flex items-baseline gap-1">
+                    <dt className="shrink-0 text-slate-400">ID</dt>
+                    <dd className="flex select-all items-center gap-1 truncate font-mono text-slate-400">
+                      <span className="truncate">{product.id}</span>
+                      <CopyToClipboardButton
+                        value={product.id}
+                        label={`Copy product ID ${product.id}`}
+                      />
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <dt className="shrink-0 text-slate-400">Slug</dt>
+                    <dd className="truncate font-mono text-slate-500">
+                      /{product.slug}
+                    </dd>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <dt className="shrink-0 text-slate-400">Price</dt>
+                    <dd className="font-semibold text-slate-800">
+                      {product.base_price.toLocaleString("vi-VN")}₫
+                    </dd>
+                  </div>
+                  {product.brand && (
+                    <div className="flex items-baseline gap-1">
+                      <dt className="shrink-0 text-slate-400">Brand</dt>
+                      <dd className="truncate text-slate-600">
+                        {product.brand}
+                      </dd>
+                    </div>
+                  )}
+                  {categoryName && (
+                    <div className="flex items-baseline gap-1">
+                      <dt className="shrink-0 text-slate-400">Category</dt>
+                      <dd className="truncate text-slate-600">
+                        {categoryName}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
             </div>
           </div>
-        </div>
-        <div>
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-xs">
-            <div className="flex items-baseline gap-1">
-              <dt className="shrink-0 text-slate-400">ID</dt>
-              <dd className="flex select-all items-center gap-1 truncate font-mono text-slate-400">
-                <span className="truncate">{product.id}</span>
-                <CopyToClipboardButton
-                  value={product.id}
-                  label={`Copy product ID ${product.id}`}
-                />
-              </dd>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <dt className="shrink-0 text-slate-400">Slug</dt>
-              <dd className="truncate font-mono text-slate-500">
-                /{product.slug}
-              </dd>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <dt className="shrink-0 text-slate-400">Price</dt>
-              <dd className="font-semibold text-slate-800">
-                {product.base_price.toLocaleString("vi-VN")}₫
-              </dd>
-            </div>
-            {/* <div className="flex items-baseline gap-1">
-              <dt className="shrink-0 text-slate-400">Stock</dt>
-              <dd className="text-slate-600">
-                {product.stock_quantity ?? "—"}
-              </dd>
-            </div> */}
-            {product.brand && (
-              <div className="flex items-baseline gap-1">
-                <dt className="shrink-0 text-slate-400">Brand</dt>
-                <dd className="truncate text-slate-600">{product.brand}</dd>
-              </div>
-            )}
-            {categoryName && (
-              <div className="flex items-baseline gap-1">
-                <dt className="shrink-0 text-slate-400">Category</dt>
-                <dd className="truncate text-slate-600">{categoryName}</dd>
-              </div>
-            )}
-          </dl>
         </div>
       </div>
 
@@ -246,7 +249,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Components
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-1">
             {Object.entries(componentGroups).map(([group, items]) => (
               <div key={group}>
                 <div className="mb-1 flex items-center gap-2">

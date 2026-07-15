@@ -2,6 +2,7 @@ import type { SortOption } from "@/app/api/products/route";
 import { ShopPageClient } from "@/components/shop/ShopPageClient";
 import { getCategories, getProducts } from "@/lib/products-server";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 interface ShopPageProps {
   searchParams: Promise<{
@@ -12,6 +13,18 @@ interface ShopPageProps {
     priceMax?: string;
   }>;
 }
+
+export const metadata: Metadata = {
+  title: "Cửa hàng - NoobStore",
+  description:
+    "Khám phá bộ sưu tập bàn phím cơ, switch, keycap và phụ kiện tại NoobStore. Chính hãng, chất lượng, giá tốt.",
+  openGraph: {
+    title: "Cửa hàng - NoobStore",
+    description:
+      "Khám phá bộ sưu tập bàn phím cơ, switch, keycap và phụ kiện tại NoobStore.",
+    siteName: "NoobStore",
+  },
+};
 
 const PAGE_SIZE = 12;
 
