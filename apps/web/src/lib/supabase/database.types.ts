@@ -1809,6 +1809,8 @@ export type Database = {
           last_name: string | null
           phone_number: string | null
           points_balance: number
+          rank_id: string | null
+          rank_updated_at: string | null
           role: string | null
         }
         Insert: {
@@ -1819,6 +1821,8 @@ export type Database = {
           last_name?: string | null
           phone_number?: string | null
           points_balance?: number
+          rank_id?: string | null
+          rank_updated_at?: string | null
           role?: string | null
         }
         Update: {
@@ -1829,9 +1833,19 @@ export type Database = {
           last_name?: string | null
           phone_number?: string | null
           points_balance?: number
+          rank_id?: string | null
+          rank_updated_at?: string | null
           role?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_rank_id_fkey"
+            columns: ["rank_id"]
+            isOneToOne: false
+            referencedRelation: "customer_ranks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vouchers: {
         Row: {
@@ -2391,6 +2405,106 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rank_history: {
+        Row: {
+          changed_by: string
+          created_at: string | null
+          from_rank_id: string | null
+          id: string
+          reason: string | null
+          to_rank_id: string | null
+          user_id: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string | null
+          from_rank_id?: string | null
+          id?: string
+          reason?: string | null
+          to_rank_id?: string | null
+          user_id: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string | null
+          from_rank_id?: string | null
+          id?: string
+          reason?: string | null
+          to_rank_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rank_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rank_history_from_rank_id_fkey"
+            columns: ["from_rank_id"]
+            isOneToOne: false
+            referencedRelation: "customer_ranks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rank_history_to_rank_id_fkey"
+            columns: ["to_rank_id"]
+            isOneToOne: false
+            referencedRelation: "customer_ranks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_ranks: {
+        Row: {
+          benefits: Json
+          color: string
+          created_at: string | null
+          icon_label: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          level: number
+          min_order_count: number
+          min_total_spent: number
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          benefits?: Json
+          color?: string
+          created_at?: string | null
+          icon_label?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          level: number
+          min_order_count?: number
+          min_total_spent?: number
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          benefits?: Json
+          color?: string
+          created_at?: string | null
+          icon_label?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          level?: number
+          min_order_count?: number
+          min_total_spent?: number
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       release_subscribers: {
         Row: {

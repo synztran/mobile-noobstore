@@ -53,6 +53,11 @@ export interface SubmitOrderRequest {
       quantity: number;
     }> | null;
   }[];
+  rank_discount?: {
+    discount_amount: number;
+    free_shipping: boolean;
+    rank_name: string;
+  };
 }
 
 export interface SubmitOrderResponse {
@@ -235,9 +240,15 @@ export async function POST(req: NextRequest) {
       Math.max(0, totalRequestedShippingDiscount),
       safeShippingCost
     );
+
+    // ── Rank-based discount ────────────────────────────────────────────
+    const requestedRankDiscount = toNumber(body.rank_discount?.discount_amount, 0);
+    const safeRankDiscount = Math.min(Math.max(0, requestedRankDiscount), subtotal - safeVoucherDiscount);
+    const safeRankShipping = body.rank_discount?.free_shipping ? Math.min(safeShippingCost - safeShippingDiscount, safeShippingCost) : 0;
+
     const recalculatedTotal = Math.max(
       0,
-      subtotal + safeShippingCost - safeVoucherDiscount - safeShippingDiscount
+      subtotal + safeShippingCost - safeVoucherDiscount - safeShippingDiscount - safeRankDiscount - safeRankShipping
     );
 
     const orderId = crypto.randomUUID();

@@ -9,9 +9,8 @@ interface Props {
 }
 
 export function ShareButton({ productName, productSlug }: Props) {
-  const url = `${window.location.origin}/shop/${productSlug}`;
-
   const handleShare = async () => {
+    const url = `${window.location.origin}/shop/${productSlug}`;
     if (navigator.share) {
       try {
         await navigator.share({

@@ -7,6 +7,8 @@ import { Search, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+const SEARCH_HIDDEN_PATHS = ["/checkout", "/services", "/gacha", "/profile"];
+
 export function SearchFloating() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -19,9 +21,6 @@ export function SearchFloating() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const router = useRouter();
   const pathname = usePathname();
-
-  const hiddenPaths = ["/checkout", "/services", "/gacha", "/profile/support"];
-  if (hiddenPaths.some((p) => pathname.startsWith(p))) return null;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -60,6 +59,8 @@ export function SearchFloating() {
       setSuggestionsLoading(false);
     }
   }, []);
+
+  if (SEARCH_HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null;
 
   const handleInputChange = (value: string) => {
     setQuery(value);

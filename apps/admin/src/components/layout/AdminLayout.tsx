@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import {
   ArrowLeft,
+  Award,
   Bell,
   Building2,
   ChevronDown,
@@ -77,6 +78,7 @@ const navigation: NavItem[] = [
     ],
   },
   { label: "Users", href: "/users", icon: Users },
+  { label: "Ranks", href: "/ranks", icon: Award },
   { label: "Notifications", href: "/notifications", icon: FileText },
   { label: "Blog", href: "/blog", icon: Newspaper },
   { label: "Reviews", href: "/reviews", icon: MessageSquareText },

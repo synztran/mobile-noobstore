@@ -137,7 +137,7 @@ export function ProductConfigurator({
                   )}
                 >
                   <div className="inline-flex items-center gap-1">
-                    <p className="line-clamp-2 text-xs font-bold">
+                    <p className="line-clamp-2 text-left text-xs font-bold">
                       {v.variant_name}
                     </p>
                     <p

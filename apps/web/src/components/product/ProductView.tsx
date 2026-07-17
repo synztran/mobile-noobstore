@@ -206,7 +206,7 @@ export function ProductView({
     <div className="pb-4">
       <TopNav showBack backHref="/shop" showCart showFavorite />
 
-      <main className="my-auto space-y-4 pb-6">
+      <main className="my-auto space-y-4 pb-12">
         {/* ── Hero Image Gallery ── */}
         <section
           className="relative space-y-2 p-4"
@@ -611,13 +611,13 @@ export function ProductView({
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
-        className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-tl-4xl rounded-tr-4xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 shadow-float backdrop-blur-md"
+        className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-tl-4xl rounded-tr-4xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md"
       >
         <WishlistButton
           productId={product.id}
           showLabel
           size="md"
-          className="flex h-14 shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
+          className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
           iconOnly={false}
         />
         <AddToCartButton

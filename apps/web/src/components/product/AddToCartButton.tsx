@@ -49,7 +49,7 @@ export function AddToCartButton({
       onClick={onClick}
       disabled={isDisabled}
       className={clsx(
-        "flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-xs font-black uppercase tracking-widest transition-transform active:scale-[0.98]",
+        "flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-container text-xs font-black uppercase tracking-widest transition-transform active:scale-[0.98]",
         isDisabled ? "cursor-not-allowed text-white opacity-50" : "text-white",
         className
       )}

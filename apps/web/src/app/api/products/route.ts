@@ -158,7 +158,7 @@ export async function GET(req: NextRequest) {
 
     // Cache for 60 s — force-dynamic prevents Vercel CDN from honouring s-maxage,
     // so Redis is the only server-level cache layer available
-    await setCache(cacheKey, response, 60000); // 10 min
+    await setCache(cacheKey, response, 300000); // 5 min
 
     return NextResponse.json<ProductsResponse>(response);
   } catch (err) {

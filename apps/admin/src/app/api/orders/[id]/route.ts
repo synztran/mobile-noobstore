@@ -132,6 +132,80 @@ export async function GET(
   });
 }
 
+// ─── Rank computation on delivered ──────────────────────────────────────────
+async function handleRankUpdate(
+  supabase: ReturnType<typeof getAdminClient>,
+  orderId: string
+) {
+  try {
+    const { data: orderRow } = await supabase
+      .from("orders")
+      .select("user_id")
+      .eq("id", orderId)
+      .single();
+
+    if (!orderRow?.user_id) return;
+
+    const userId = orderRow.user_id;
+
+    // Fetch all active ranks
+    const { data: ranks } = await supabase
+      .from("customer_ranks")
+      .select("*")
+      .eq("is_active", true)
+      .order("level", { ascending: true });
+
+    if (!ranks || ranks.length === 0) return;
+
+    // Fetch user's order stats
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("total_price")
+      .eq("user_id", userId)
+      .eq("status", "delivered");
+
+    const totalSpent = (orders ?? []).reduce((s, o) => s + Number(o.total_price), 0);
+    const orderCount = (orders ?? []).length;
+
+    // Find highest qualifying rank
+    let newRankId = ranks[0].id;
+    for (const rank of ranks) {
+      if (totalSpent >= Number(rank.min_total_spent) && orderCount >= rank.min_order_count) {
+        newRankId = rank.id;
+      } else {
+        break;
+      }
+    }
+
+    // Get current rank
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("rank_id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const currentRankId = userRow?.rank_id ?? null;
+    if (currentRankId === newRankId) return;
+
+    // Update user
+    await supabase
+      .from("users")
+      .update({ rank_id: newRankId, rank_updated_at: new Date().toISOString() })
+      .eq("id", userId);
+
+    // Record history
+    await supabase.from("rank_history").insert({
+      user_id: userId,
+      from_rank_id: currentRankId,
+      to_rank_id: newRankId,
+      changed_by: "system",
+      reason: "Order delivered — rank upgrade",
+    });
+  } catch (err) {
+    console.error(`[orders] handleRankUpdate failed for order ${orderId}:`, err);
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -342,6 +416,11 @@ export async function PATCH(
         );
       }
     })();
+  }
+
+  // Compute rank when order is delivered (fire-and-forget)
+  if (body.status === "delivered") {
+    void handleRankUpdate(supabase, id);
   }
 
   // Earn store points when order is marked as delivered (fire-and-forget)

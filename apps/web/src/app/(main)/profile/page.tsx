@@ -1,8 +1,12 @@
 "use client";
 
 import { updateProfileName } from "@/app/actions/profile";
+import { RankBadge } from "@/components/rank/RankBadge";
+import { RankBenefitModal } from "@/components/rank/RankBenefitModal";
+import { RankProgressCard } from "@/components/rank/RankProgressCard";
 import Icon from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,11 +34,11 @@ const NAV_ITEMS = [
     label: "Thông báo",
     href: "/profile/notifications",
   },
-  {
-    icon: "redeem",
-    label: "Đổi thưởng",
-    href: "/rewards",
-  },
+  // {
+  //   icon: "redeem",
+  //   label: "Đổi thưởng",
+  //   href: "/rewards",
+  // },
   {
     icon: "help",
     label: "Trợ giúp & Hỗ trợ",
@@ -51,6 +55,8 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const [pointsBalance, setPointsBalance] = useState<number | null>(null);
+  const [rankModalOpen, setRankModalOpen] = useState(false);
+  const { data: rankData } = useMyRank();
 
   useEffect(() => {
     if (profile?.first_name) {
@@ -117,13 +123,25 @@ export default function ProfilePage() {
     .slice(0, 2);
 
   return (
-    <div className="px-6 pt-4">
+    <div className="px-4 pb-8 pt-4">
       {/* Avatar & name */}
       <div
-        className={`mb-8 flex items-center gap-4 ${!user ? "justify-center" : ""}`}
+        className={`mb-4 flex items-center gap-4 ${!user ? "justify-center" : ""}`}
       >
-        <div className="primary-gradient flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full">
-          <span className="text-xl font-black text-white">{initials}</span>
+        <div className="relative flex-shrink-0">
+          <div className="primary-gradient flex h-16 w-16 items-center justify-center rounded-full">
+            <span className="text-xl font-black text-white">{initials}</span>
+          </div>
+          {rankData?.currentRank && (
+            <div className="absolute -bottom-1 -right-1">
+              <RankBadge
+                rank={rankData.currentRank}
+                size="sm"
+                onClick={() => setRankModalOpen(true)}
+                className="ring-2 ring-surface"
+              />
+            </div>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           {editing ? (
@@ -214,6 +232,18 @@ export default function ProfilePage() {
         </Link>
       )}
 
+      {/* Rank Progress */}
+      {user && rankData?.currentRank && (
+        <div className="mb-2">
+          <RankProgressCard
+            currentRank={rankData.currentRank}
+            nextRank={rankData.nextRank}
+            progress={rankData.progress}
+            onBadgeClick={() => setRankModalOpen(true)}
+          />
+        </div>
+      )}
+
       {/* Menu items */}
       <div className={`space-y-3 ${!user ? "sr-only" : ""}`}>
         {NAV_ITEMS.map(({ icon, label, href }) => (
@@ -231,6 +261,16 @@ export default function ProfilePage() {
           </Link>
         ))}
       </div>
+
+      {/* Rank Benefit Modal */}
+      {rankData?.currentRank && (
+        <RankBenefitModal
+          open={rankModalOpen}
+          onClose={() => setRankModalOpen(false)}
+          currentRank={rankData.currentRank}
+          allRanks={rankData.allRanks}
+        />
+      )}
 
       {/* Auth CTA */}
       <div className="mt-8 space-y-3">

@@ -4,6 +4,7 @@ import Icon from "@/components/ui/Icon";
 import { useWishlist } from "@/hooks/useWishlist";
 import clsx from "clsx";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 
 interface WishlistButtonProps {
   productId: string;
@@ -20,11 +21,13 @@ export function WishlistButton({
   size = "md",
   iconOnly = true,
 }: WishlistButtonProps) {
+  const pathname = usePathname();
+  const isProductPage = /^\/shop\/.+$/.test(pathname);
   const { isInWishlist, isPendingFor, toggleWishlist } = useWishlist();
   const wished = isInWishlist(productId);
   const pending = isPendingFor(productId);
 
-  const sizeClass = size === "sm" ? "h-8 px-2 text-xs" : "h-10 px-2 text-sm";
+  const sizeClass = size === "sm" ? "h-8 px-2 text-xs" : "h-12 px-2 text-sm";
 
   return (
     <motion.button
@@ -39,6 +42,7 @@ export function WishlistButton({
       className={clsx(
         "inline-flex items-center justify-center gap-2 rounded-2xl font-black tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-60",
         sizeClass,
+        isProductPage ? "h-12" : "",
         wished
           ? "border border-green-600 text-green-700"
           : "bg-surface-container text-on-surface-variant",

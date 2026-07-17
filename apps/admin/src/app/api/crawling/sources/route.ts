@@ -69,8 +69,6 @@ export async function POST(req: NextRequest) {
       paused: payload.status === "paused",
     });
 
-    console.log("watchId", watchId);
-
     await supabase
       .from("crawling_sources")
       .update({ watch_id: watchId })

@@ -3,9 +3,12 @@
 import { SubmitOrderResponse } from "@/app/api/checkout/submit/route";
 import type { ValidateStockResponse } from "@/app/api/checkout/validate-stock/route";
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
+import { RankBadge } from "@/components/rank/RankBadge";
+import { RankBenefitModal } from "@/components/rank/RankBenefitModal";
 import VoucherComponent from "@/components/voucher/VoucherComponent";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
+import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { useNavigationStore } from "@/store/navigation";
@@ -20,6 +23,8 @@ export default function SummaryPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [oosProductIds, setOosProductIds] = useState<Set<string>>(new Set());
+  const [rankModalOpen, setRankModalOpen] = useState(false);
+  const { data: rankData } = useMyRank();
 
   const {
     items: rawItems,
@@ -28,7 +33,6 @@ export default function SummaryPage() {
     clearCart,
     removeItem,
   } = useCartStore();
-  console.log("SummaryPage:useCartStore:items", rawItems);
   const { shippingCost, shipping, setOrder } = useCheckoutStore();
   const {
     appliedVouchers,
@@ -39,8 +43,26 @@ export default function SummaryPage() {
 
   const items = mounted ? rawItems : [];
   const subtotal = mounted ? getSubtotal() : 0;
+  const rankDiscountPercent = rankData?.currentRank?.benefits.flags
+    .discountPercentEnabled
+    ? rankData.currentRank.benefits.discountPercent
+    : 0;
+  const rankFreeShippingEnabled = rankData?.currentRank?.benefits.flags
+    .freeShippingEnabled
+    ? rankData.currentRank.benefits.freeShipping
+    : false;
+  const rankDiscountAmount =
+    rankDiscountPercent > 0
+      ? Math.round((subtotal * rankDiscountPercent) / 100)
+      : 0;
+  const rankShippingDiscount = rankFreeShippingEnabled ? shippingCost : 0;
   const orderTotal =
-    subtotal + shippingCost - totalDiscountAmount - totalShippingDiscountAmount;
+    subtotal +
+    shippingCost -
+    totalDiscountAmount -
+    totalShippingDiscountAmount -
+    rankDiscountAmount -
+    rankShippingDiscount;
 
   if (!mounted) {
     return (
@@ -113,6 +135,15 @@ export default function SummaryPage() {
               notes: shipping.notes || null,
             }
           : null,
+        rank_discount:
+          rankData?.currentRank &&
+          (rankDiscountAmount > 0 || rankShippingDiscount > 0)
+            ? {
+                discount_amount: rankDiscountAmount,
+                free_shipping: rankFreeShippingEnabled,
+                rank_name: rankData.currentRank.name,
+              }
+            : undefined,
         vouchers: appliedVouchers.map((entry) => ({
           voucher_id: entry.voucherInfo.voucher_id,
           voucher_code: entry.voucherInfo.voucher_code,
@@ -315,6 +346,42 @@ export default function SummaryPage() {
               </div>
             )}
 
+            {rankDiscountAmount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-1 text-on-surface-variant">
+                  {rankData?.currentRank && (
+                    <RankBadge
+                      rank={rankData.currentRank}
+                      size="sm"
+                      onClick={() => setRankModalOpen(true)}
+                    />
+                  )}
+                  Giảm giá thành viên
+                </span>
+                <span className="font-bold text-emerald-600">
+                  -{formatVND(rankDiscountAmount)}
+                </span>
+              </div>
+            )}
+
+            {rankShippingDiscount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-1 text-on-surface-variant">
+                  {rankData?.currentRank && (
+                    <RankBadge
+                      rank={rankData.currentRank}
+                      size="sm"
+                      onClick={() => setRankModalOpen(true)}
+                    />
+                  )}
+                  Miễn ship thành viên
+                </span>
+                <span className="font-bold text-emerald-600">
+                  -{formatVND(rankShippingDiscount)}
+                </span>
+              </div>
+            )}
+
             <div className="h-px bg-outline-variant/30" />
 
             <div className="flex items-center justify-between text-base">
@@ -394,6 +461,26 @@ export default function SummaryPage() {
                 </span>
               </div>
             )}
+            {rankDiscountAmount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-on-surface-variant">
+                  Giảm giá thành viên
+                </span>
+                <span className="font-bold text-emerald-600">
+                  -{formatVND(rankDiscountAmount)}
+                </span>
+              </div>
+            )}
+            {rankShippingDiscount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-on-surface-variant">
+                  Miễn ship thành viên
+                </span>
+                <span className="font-bold text-emerald-600">
+                  -{formatVND(rankShippingDiscount)}
+                </span>
+              </div>
+            )}
             <div className="h-px bg-outline-variant/30" />
             <div className="flex items-center justify-between">
               <span className="font-bold text-on-surface">Tổng cộng</span>
@@ -430,6 +517,16 @@ export default function SummaryPage() {
           <button onClick={() => setShowConfirm(false)}>close</button>
         </form>
       </dialog>
+
+      {/* Rank Benefit Modal */}
+      {rankData?.currentRank && (
+        <RankBenefitModal
+          open={rankModalOpen}
+          onClose={() => setRankModalOpen(false)}
+          currentRank={rankData.currentRank}
+          allRanks={rankData.allRanks}
+        />
+      )}
     </div>
   );
 }
