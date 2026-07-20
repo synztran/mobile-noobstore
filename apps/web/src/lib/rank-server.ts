@@ -1,5 +1,5 @@
 import type { CustomerRank, RankProgress, RankResponse } from "@/types/rank";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getPublicClient } from "@/lib/supabase/public";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -49,7 +49,7 @@ export async function getAllRanks(): Promise<CustomerRank[]> {
 }
 
 async function getUserOrderStats(userId: string): Promise<{ totalSpent: number; orderCount: number }> {
-  const supabase = getPublicClient();
+  const supabase = getAdminClient();
   const { data: orders, error } = await supabase
     .from("orders")
     .select("total_price")

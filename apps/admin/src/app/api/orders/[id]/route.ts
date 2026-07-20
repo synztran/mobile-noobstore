@@ -124,11 +124,22 @@ export async function GET(
     }
   }
 
+  let pointsEarned = 0;
+  const { data: pointTxns } = await supabase
+    .from("point_transactions")
+    .select("delta")
+    .eq("source_ref", id)
+    .eq("source_type", "order_delivered");
+  if (pointTxns && pointTxns.length > 0) {
+    pointsEarned = pointTxns.reduce((sum, t) => sum + Number(t.delta), 0);
+  }
+
   return NextResponse.json({
     ...data,
     optionValueMap,
     shippingAddress,
     shippingMethodMap,
+    points_earned: pointsEarned,
   });
 }
 
@@ -312,7 +323,9 @@ export async function PATCH(
 
         const { data: items } = await supabase
           .from("order_items")
-          .select("product_name, quantity, unit_price")
+          .select(
+            "product_name, quantity, unit_price, order_item_components(component_group, variant_name)"
+          )
           .eq("order_id", id);
 
         if (order && items && order.delivery_address) {
@@ -321,11 +334,8 @@ export async function PATCH(
             .filter(Boolean)
             .join(" - ");
           const customerAddress = [
-            addr.street_address,
             addr.apartment,
-            addr.ward,
-            addr.district,
-            addr.city,
+            addr.street_address
           ]
             .filter(Boolean)
             .join(", ");
@@ -338,6 +348,12 @@ export async function PATCH(
               name: i.product_name,
               quantity: i.quantity,
               unit_cost: Number(i.unit_price),
+              components: (i.order_item_components ?? []).map(
+                (c: { component_group: string; variant_name: string }) => ({
+                  component_group: c.component_group,
+                  variant_name: c.variant_name,
+                })
+              ),
             })),
             shippingFee: Number(order.shipping_fee ?? 0),
             discount:

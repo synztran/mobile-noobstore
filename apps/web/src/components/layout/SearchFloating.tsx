@@ -1,139 +1,31 @@
 "use client";
 
 import SearchSuggestions from "@/components/ui/SearchSuggestions";
-import type { ProductSuggestion } from "@/components/ui/SearchSuggestions";
+import { useSearchFloating } from "@/hooks/useSearchFloating";
 import { AnimatePresence, motion } from "motion/react";
 import { Search, X } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-
-const SEARCH_HIDDEN_PATHS = ["/checkout", "/services", "/gacha", "/profile"];
 
 export function SearchFloating() {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const router = useRouter();
-  const pathname = usePathname();
+  const {
+    hidden,
+    open,
+    query,
+    suggestions,
+    suggestionsLoading,
+    showSuggestions,
+    selectedIndex,
+    inputRef,
+    containerRef,
+    handleInputChange,
+    handleKeyDown,
+    handleSubmit,
+    navigateToProduct,
+    handleOpen,
+    handleClose,
+    setShowSuggestions,
+  } = useSearchFloating();
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const fetchSuggestions = useCallback(async (q: string) => {
-    if (q.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    setSuggestionsLoading(true);
-    setShowSuggestions(true);
-
-    try {
-      const res = await fetch(
-        `/api/products/search?q=${encodeURIComponent(q)}&exclude_types=component`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setSuggestions(data.slice(0, 5));
-      }
-    } catch {
-      setSuggestions([]);
-    } finally {
-      setSuggestionsLoading(false);
-    }
-  }, []);
-
-  if (SEARCH_HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null;
-
-  const handleInputChange = (value: string) => {
-    setQuery(value);
-    setSelectedIndex(-1);
-
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(value), 300);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showSuggestions || suggestions.length === 0) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSubmit(e);
-      }
-      return;
-    }
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : 0
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedIndex((prev) =>
-          prev > 0 ? prev - 1 : suggestions.length - 1
-        );
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-          navigateToProduct(suggestions[selectedIndex]);
-        } else {
-          handleSubmit(e);
-        }
-        break;
-      case "Escape":
-        setShowSuggestions(false);
-        break;
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = query.trim();
-    if (trimmed) {
-      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-      handleClose();
-    }
-  };
-
-  function navigateToProduct(product: ProductSuggestion) {
-    router.push(`/shop/${product.slug}`);
-    handleClose();
-  }
-
-  const handleOpen = () => {
-    setOpen(true);
-    setTimeout(() => inputRef.current?.focus(), 200);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setQuery("");
-    setSuggestions([]);
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    inputRef.current?.blur();
-  };
+  if (hidden) return null;
 
   return (
     <div

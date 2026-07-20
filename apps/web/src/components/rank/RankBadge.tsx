@@ -17,9 +17,9 @@ export function RankBadge({
   onClick,
 }: Props) {
   const sizeClasses = {
-    sm: "h-6 w-6 text-[8px]",
-    md: "h-8 w-8 text-[10px]",
-    lg: "h-10 w-10 text-xs",
+    sm: "h-6 min-w-6 text-[8px]",
+    md: "h-10 min-w-10 text-[10px]",
+    lg: "h-12 min-w-12 text-xs",
   };
 
   return (

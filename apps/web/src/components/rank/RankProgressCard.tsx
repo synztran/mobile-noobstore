@@ -58,7 +58,7 @@ export function RankProgressCard({
         </div>
 
         {nextRank ? (
-          <div className="flex items-center gap-2 opacity-50">
+          <div className="flex items-center gap-2">
             <div className="text-right">
               <p className="text-xs font-bold text-on-surface-variant">
                 Mục tiêu
@@ -67,7 +67,7 @@ export function RankProgressCard({
                 {nextRank.name}
               </p>
             </div>
-            <RankBadge rank={nextRank} size="sm" />
+            <RankBadge rank={nextRank} size="md" />
           </div>
         ) : (
           <div className="rounded-xl bg-amber-100 px-3 py-1">
@@ -125,7 +125,7 @@ export function RankProgressCard({
           {/* Summary */}
           <p className="text-center text-[10px] font-bold text-on-surface-variant">
             {remainingSpent > 0 && remainingOrders > 0
-              ? `Còn ${formatVND(remainingSpent)} hoặc ${remainingOrders} đơn nữa để lên ${nextRank.name}`
+              ? `Còn ${formatVND(remainingSpent)} và ${remainingOrders} đơn nữa để lên ${nextRank.name}`
               : remainingSpent > 0
                 ? `Còn ${formatVND(remainingSpent)} để lên ${nextRank.name}`
                 : `Còn ${remainingOrders} đơn nữa để lên ${nextRank.name}`}

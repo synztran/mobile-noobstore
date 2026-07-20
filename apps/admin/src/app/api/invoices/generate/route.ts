@@ -34,10 +34,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Fetch order items
+    // Fetch order items with kit components
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
-      .select("product_name, quantity, unit_price")
+      .select(
+        "product_name, quantity, unit_price, order_item_components(component_group, variant_name)"
+      )
       .eq("order_id", orderId);
 
     if (itemsError) {
@@ -58,6 +60,12 @@ export async function POST(req: NextRequest) {
       name: item.product_name,
       quantity: item.quantity,
       unit_cost: Number(item.unit_price),
+      components: (item.order_item_components ?? []).map(
+        (c: { component_group: string; variant_name: string }) => ({
+          component_group: c.component_group,
+          variant_name: c.variant_name,
+        })
+      ),
     }));
 
     // Add services as items
@@ -67,6 +75,7 @@ export async function POST(req: NextRequest) {
           name: `Dịch vụ: ${s.service_name}`,
           quantity: 1,
           unit_cost: Number(s.price),
+          components: [],
         });
       });
     }
@@ -84,14 +93,7 @@ export async function POST(req: NextRequest) {
         typeof order.delivery_address === "string"
           ? JSON.parse(order.delivery_address)
           : order.delivery_address;
-      customerAddress = [
-        addr.street_address,
-        addr.ward,
-        addr.district,
-        addr.city,
-      ]
-        .filter(Boolean)
-        .join(", ");
+      customerAddress = [addr.street_address].filter(Boolean).join(", ");
     }
 
     // Get customer name

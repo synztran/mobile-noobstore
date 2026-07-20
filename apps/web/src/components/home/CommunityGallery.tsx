@@ -8,11 +8,10 @@ import { useEffect, useRef, useState } from "react";
 
 const PAGE_SIZE = 5;
 
-type ImageMeta = {
-  id: string;
-  ratio: number;
-  loaded: boolean;
-};
+type ImageMeta = Record<
+  string,
+  { id: string; ratio: number; loaded: boolean }
+>;
 
 function useIntersectionVisible(ref: React.RefObject<Element | null>) {
   const [visible, setVisible] = useState(false);
@@ -34,56 +33,15 @@ function useIntersectionVisible(ref: React.RefObject<Element | null>) {
   return visible;
 }
 
-function balanceColumns<T extends { id: string }>(
-  items: T[],
-  ratios: Record<string, number>,
-): T[] {
-  const cols: { items: T[]; height: number }[] = [
-    { items: [], height: 0 },
-    { items: [], height: 0 },
-  ];
-
-  const sorted = [...items].sort(
-    (a, b) => (ratios[b.id] ?? 1) - (ratios[a.id] ?? 1),
-  );
-
-  for (const item of sorted) {
-    const ratio = ratios[item.id] ?? 1;
-    const col = cols[0].height <= cols[1].height ? cols[0] : cols[1];
-    col.items.push(item);
-    col.height += 1 / ratio;
-  }
-
-  return cols.flatMap((c) => c.items);
-}
-
 export function CommunityGallery() {
   const sectionRef = useRef<HTMLElement>(null);
   const visible = useIntersectionVisible(sectionRef);
   const [limit, setLimit] = useState(PAGE_SIZE);
-  const { data, isLoading } = useHomeCommunityGallery(limit);
-  const [imageMeta, setImageMeta] = useState<Record<string, ImageMeta>>({});
-  const [sorted, setSorted] = useState<CommunityPhoto[] | null>(null);
+  const { data, isLoading, isFetching } = useHomeCommunityGallery(limit);
+  const [imageMeta, setImageMeta] = useState<ImageMeta>({});
 
   const photos = data?.photos ?? [];
   const hasMore = data?.hasMore ?? false;
-
-  useEffect(() => {
-    setSorted(null);
-  }, [limit]);
-
-  useEffect(() => {
-    if (photos.length === 0) return;
-    const allLoaded = photos.every((p) => imageMeta[p.id]?.loaded);
-    if (!allLoaded) return;
-    const ratios: Record<string, number> = {};
-    for (const p of photos) {
-      ratios[p.id] = imageMeta[p.id]?.ratio ?? 1;
-    }
-    setSorted(balanceColumns(photos, ratios));
-  }, [imageMeta, photos]);
-
-  const displayItems = sorted ?? photos;
 
   const handleLoadingComplete =
     (id: string) =>
@@ -114,10 +72,7 @@ export function CommunityGallery() {
   if (photos.length === 0) return null;
 
   return (
-    <section
-      ref={sectionRef}
-      className="px-6 transition-all duration-700"
-    >
+    <section ref={sectionRef} className="px-6">
       <div
         className={`mb-8 transition-all duration-700 ${
           visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
@@ -138,22 +93,14 @@ export function CommunityGallery() {
       </div>
 
       <div className="columns-2 gap-2 space-y-2">
-        {displayItems.map((photo, i) => {
+        {photos.map((photo) => {
           const meta = imageMeta[photo.id];
           const isLoaded = meta?.loaded ?? false;
 
           return (
             <div
               key={photo.id}
-              className={`group relative cursor-pointer break-inside-avoid overflow-hidden rounded-xl bg-surface-container-high transition-all duration-500 ${
-                visible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-8 opacity-0"
-              }`}
-              style={{
-                animationDelay: `${i * 80}ms`,
-                transitionDelay: `${i * 60}ms`,
-              }}
+              className="group relative cursor-pointer break-inside-avoid overflow-hidden rounded-xl bg-surface-container-high"
             >
               <div className="relative overflow-hidden">
                 <Image
@@ -199,9 +146,11 @@ export function CommunityGallery() {
       {hasMore && (
         <button
           onClick={() => setLimit((l) => l + PAGE_SIZE)}
-          className="mt-6 w-full rounded-xl border border-primary/30 py-3 text-xs font-black uppercase tracking-widest text-primary transition-all hover:bg-primary/5 hover:shadow-lg active:scale-95"
+          disabled={isFetching}
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 py-3 text-xs font-black uppercase tracking-widest text-primary transition-all hover:bg-primary/5 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Xem thêm
+          {isFetching && <span className="loading loading-spinner loading-xs" />}
+          {isFetching ? "Đang tải..." : "Xem thêm"}
         </button>
       )}
 

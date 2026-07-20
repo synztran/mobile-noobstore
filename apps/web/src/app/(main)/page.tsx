@@ -30,7 +30,6 @@ export default function HomePage() {
     <div className="relative clear-both space-y-8">
       <AnnouncementBanner />
       <HeroSection />
-      {/* <CategoryStrip /> */}
       <NoteworthySection />
       <HomeSaleSection />
       <OurStrongPoints />

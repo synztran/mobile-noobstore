@@ -12,6 +12,7 @@ interface AddressShape {
   ward_code?: string | null;
   city?: string | null;
   postal_code?: string | null;
+  notes?: string | null;
 }
 
 interface Props {
@@ -30,13 +31,13 @@ function formatDateTime(value: string | null): string {
 
 function buildAddressLine(address: AddressShape): string {
   const parts = [
-    address.street_address ?? address.address_line,
     address.apartment,
+    address.street_address ?? address.address_line,
   ];
   // Prefer explicit ward + district fields when available
-  if (address.ward) parts.push(address.ward);
-  if (address.district) parts.push(address.district);
-  parts.push(address.city, address.postal_code);
+  // if (address.ward) parts.push(address.ward);
+  // if (address.district) parts.push(address.district);
+  // parts.push(address.city, address.postal_code);
   return parts.filter(Boolean).join(", ");
 }
 
@@ -93,6 +94,12 @@ export default function OrderShippingDetails({
             {formatDateTime(expectedDeliveryAt)}
           </p>
         )}
+        {typeof displayAddress === "object" && displayAddress?.notes ? (
+          <p className="mt-1 text-sm text-slate-600">
+            <span className="font-medium text-slate-700">Notes:</span>{" "}
+            {displayAddress?.notes || ""}
+          </p>
+        ) : null}
       </div>
     </div>
   );

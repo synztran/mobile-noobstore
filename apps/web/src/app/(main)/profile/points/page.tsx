@@ -162,14 +162,14 @@ function PointsPage() {
                 key={tx.id}
                 className="rounded-3xl bg-surface-container-lowest p-4 shadow-ambient-sm"
               >
-                <div className="flex items-start justify-between gap-8">
+                <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-sm font-bold text-on-surface">
                         {getSourceLabel(tx.source_type)}
                       </span>
                     </div>
-                    <p className="line-clamp-1 text-sm text-on-surface-variant">
+                    <p className="line-clamp-1 text-xs text-on-surface-variant">
                       {tx.note || tx.source_ref || "Không có ghi chú"}
                     </p>
                     <p className="text-xs text-on-surface-variant/80">

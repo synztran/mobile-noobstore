@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import PDFDocument from "pdfkit";
+import bwipjs from "bwip-js";
 import fs from "fs";
 import path from "path";
 
@@ -16,6 +17,10 @@ interface GenerateInvoiceInput {
   items: Array<{
     name: string;
     description?: string[]; // Array of strings for multiline descriptions
+    components?: Array<{
+      component_group: string;
+      variant_name: string;
+    }>;
     quantity: number;
     unit_cost: number;
     gift_name?: string;
@@ -24,7 +29,6 @@ interface GenerateInvoiceInput {
 
 function resolveFont(rel: string): string | null {
   const root = process.cwd();
-  // CWD could be monorepo root or apps/admin
   const candidates = [path.join(root, rel), path.join(root, "apps/admin", rel)];
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
@@ -32,21 +36,36 @@ function resolveFont(rel: string): string | null {
   return null;
 }
 
-const REGULAR_PATH = resolveFont("public/fonts/Inter-Regular.ttf");
-const BOLD_PATH = resolveFont("public/fonts/Inter-SemiBold.ttf");
+function isValidFont(fp: string): boolean {
+  try {
+    const buf = fs.readFileSync(fp);
+    // TTF: 0x00010000, OTF: "OTTO"
+    const magic = buf.readUInt32BE(0);
+    return magic === 0x00010000 || magic === 0x4f54544f;
+  } catch {
+    return false;
+  }
+}
+
+const REGULAR_PATH = resolveFont("public/fonts/Nunito-Regular.ttf");
+const BOLD_PATH = resolveFont("public/fonts/Nunito-SemiBold.ttf");
 const LOGO_PATH = resolveFont("public/fonts/logo.png");
 
-const HAS_FONTS = REGULAR_PATH !== null && BOLD_PATH !== null;
+const HAS_FONTS =
+  REGULAR_PATH !== null &&
+  BOLD_PATH !== null &&
+  isValidFont(REGULAR_PATH) &&
+  isValidFont(BOLD_PATH);
 
 function formatVND(amount: number): string {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
+  const intPart = Math.round(Math.abs(amount));
+  const sign = amount < 0 ? "-" : "";
+  const formatted = intPart.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${sign}${formatted} ₫`;
 }
 
 function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const doc = new PDFDocument({ margin: 50, size: "A4" });
     const chunks: Buffer[] = [];
 
@@ -54,13 +73,27 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    const font = HAS_FONTS ? "Inter" : "Helvetica";
-    const fontBold = HAS_FONTS ? "Inter-Bold" : "Helvetica-Bold";
+    const font = HAS_FONTS ? "Nunito" : "Helvetica";
+    const fontBold = HAS_FONTS ? "Nunito-Bold" : "Helvetica-Bold";
 
     if (HAS_FONTS) {
-      doc.registerFont("Inter", REGULAR_PATH!);
-      doc.registerFont("Inter-Bold", BOLD_PATH!);
+      doc.registerFont("Nunito", REGULAR_PATH!);
+      doc.registerFont("Nunito-Bold", BOLD_PATH!);
     }
+
+    // ── Barcode ────────────────────────────────────────────────────────────
+    const barcodeBuf = await bwipjs
+      .toBuffer({
+        bcid: "code128",
+        text: input.orderNumber,
+        scaleX: 1,
+        scaleY: 1,
+        height: 12,
+        includetext: false,
+        paddingwidth: 5,
+        paddingheight: 3,
+      })
+      .catch(() => null);
 
     // ── Header: Logo & Company info (Left) ──────────────────────────────────
     let leftY = 50;
@@ -82,27 +115,27 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     );
     doc.text("Hồ Chí Minh, Việt Nam 700000", 50, leftY + 46);
 
-    // ── Header: Invoice Title & Number (Right) ──────────────────────────────
+    // ── Header: Invoice Title & Barcode (Right) ────────────────────────────
     doc.fontSize(28).fillColor("#333").font(fontBold).text("Hóa Đơn", 350, 40, {
       align: "right",
+      width: 195,
     });
-    doc
-      .fontSize(11)
-      .fillColor("#666")
-      .font(font)
-      .text(`# ${input.orderNumber}`, 250, 72, {
-        align: "right",
-        width: 295,
-      });
+    if (barcodeBuf) {
+      doc.image(barcodeBuf, 425, 75, { width: 120 });
+      // doc.fontSize(10).fillColor("#555").font(font).text(`#${input.orderNumber}`, 350, 96, {
+      //   align: "right",
+      //   width: 195,
+      // });
+    }
 
     // ── Invoice Metadata (Right) ────────────────────────────────────────────
-    let rightY = 110;
+    let rightY = 130;
     const addMetaLine = (label: string, value: string) => {
       doc
         .fontSize(10)
         .font(fontBold)
         .fillColor("#777")
-        .text(label, 350, rightY, { width: 100, align: "right" });
+        .text(label, 300, rightY, { width: 100, align: "right" });
       doc
         .font(font)
         .fillColor("#111")
@@ -116,23 +149,13 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     const dueDate = new Date();
     dueDate.setDate(currentDate.getDate() + 31);
 
-    addMetaLine(
-      "Ngày lập:",
-      currentDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    );
+    const fmtDate = (d: Date) =>
+      `${d.getDate().toString().padStart(2, "0")} tháng ${(d.getMonth() + 1).toString().padStart(2, "0")}, ${d.getFullYear()}`;
+
+    addMetaLine("Đơn hàng:", `#${input.orderNumber}`);
+    addMetaLine("Ngày lập:", fmtDate(currentDate));
     addMetaLine("Lập bởi:", "NoobStore");
-    addMetaLine(
-      "Ngày hết hạn:",
-      dueDate.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    );
+    addMetaLine("Ngày hết hạn:", fmtDate(dueDate));
 
     if (input.role) addMetaLine("Role:", input.role);
     if (input.discountPercentage)
@@ -141,20 +164,24 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     // Highlighted Balance Due Background
     doc
       .fillColor("#f3f4f6")
-      .rect(350, rightY - 4, 200, 22)
+      .rect(320, rightY - 4, 230, 22)
       .fill();
     doc
       .fontSize(10)
       .font(fontBold)
       .fillColor("#111")
-      .text("Cần thanh toán:", 350, rightY, { width: 110, align: "right" });
-    doc.text(formatVND(input.shippingFee), 410, rightY, {
+      .text("Cần thanh toán:", 290, rightY, { width: 110, align: "right" });
+    // doc.text(formatVND(input.shippingFee), 410, rightY, {
+    //   width: 135,
+    //   align: "right",
+    // });
+    doc.text(formatVND(0), 410, rightY, {
       width: 135,
       align: "right",
     });
 
     // ── Customer / Bill To (Left) ───────────────────────────────────────────
-    let currentY = Math.max(leftY + 80, rightY + 30);
+    let currentY = Math.max(leftY, rightY);
 
     doc
       .fontSize(10)
@@ -164,7 +191,7 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     doc.fontSize(10).fillColor("#111").font(fontBold);
     doc.text(input.customerName, 50, currentY + 15);
     if (input.customerAddress) {
-      doc.font(font).fillColor("#333");
+      doc.font(font).fillColor("#666");
       doc.text(input.customerAddress, 50, currentY + 30, { width: 250 });
     }
 
@@ -201,12 +228,12 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     );
 
     // Body rows
-    let y = tableTop + 32;
+    let y = tableTop + 26;
 
-    (input.items ?? []).forEach((item) => {
-      if (!item.name && !item.quantity && !item.unit_cost) return;
+    (input?.items ?? []).forEach((item) => {
+      if (!item?.name && !item?.quantity && !item?.unit_cost) return;
 
-      doc.fontSize(9).font(fontBold);
+      doc.fontSize(12).font(fontBold);
 
       const itemName = item.name || item.gift_name || "";
       const nameHeight = doc.heightOfString(itemName, { width: cols[0].w });
@@ -215,7 +242,7 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       doc.fillColor("#111");
       doc.text(itemName, cols[0].x, y, { width: cols[0].w, align: "left" });
 
-      doc.fontSize(9).font(font).fillColor("#333");
+      doc.fontSize(12).font(font).fillColor("#333");
       doc.text(String(item.quantity ?? 0), cols[1].x, y, {
         width: cols[1].w,
         align: "center",
@@ -232,6 +259,21 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       );
 
       let nextY = y + nameHeight + 6;
+
+      if (item.components && item.components.length > 0) {
+        doc.fontSize(10).fillColor("#777").font(font);
+        item.components.forEach((comp, ci) => {
+          const line = `${comp.component_group}: ${comp.variant_name}`;
+          doc.text(line, cols[0].x + 8, nextY, {
+            width: cols[0].w - 8,
+            align: "left",
+          });
+          nextY += doc.heightOfString(line, { width: cols[0].w - 8 }) + 2;
+          if (ci < item.components!.length - 1) nextY += 4;
+        });
+        nextY += 4;
+        doc.font(fontBold);
+      }
 
       if (item.description && item.description.length > 0) {
         doc.fontSize(9).fillColor("#666");
@@ -279,7 +321,9 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     });
     totals.push({
       label: "Đã thanh toán:",
-      value: formatVND(Math.max(0, subtotal - input.discount)),
+      value: formatVND(
+        Math.max(0, subtotal + input.shippingFee - input.discount)
+      ),
       bold: true,
     });
 
@@ -294,8 +338,33 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       y += t.bold ? 22 : 18;
     });
 
+    // ── Customer Signature (Bottom Right) ──────────────────────────────────
+    const sigY = Math.max(y + 30, 620) + 45;
+    doc
+      .fontSize(10)
+      .fillColor("#111")
+      .font(fontBold)
+      .text("Chữ ký xác nhận khách hàng:", 350, sigY - 80, {
+        align: "right",
+        width: 195,
+      });
+    doc
+      .fontSize(9)
+      .fillColor("#666")
+      .font(font)
+      .text("(Ký, ghi rõ họ tên)", 350, sigY + 14 - 80, {
+        align: "right",
+        width: 195,
+      });
+    doc
+      .moveTo(350, sigY + 40)
+      .lineTo(545, sigY + 40)
+      .strokeColor("#ccc")
+      .lineWidth(1)
+      .stroke();
+
     // ── Footer Notes & Terms (Bottom Left) ─────────────────────────────────
-    let footerY = Math.max(y + 30, 620);
+    let footerY = Math.max(y, 620);
 
     doc
       .fontSize(10)
@@ -306,9 +375,14 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       .fontSize(9)
       .fillColor("#666")
       .font(font)
-      .text("Hóa đơn được tạo từ động từ hệ thống NoobStore", 50, footerY + 14);
+      .text(
+        "Bằng việc ký xác nhận bên cạnh. Quý khách xác nhận đã kiểm tra và đồng ý với tình trạng ngoại quan cũng như chức năng của (các) sản phẩm trong đơn hàng.",
+        50,
+        footerY + 14,
+        { width: 260 }
+      );
 
-    footerY += 40;
+    footerY += 60;
 
     doc
       .fontSize(10)
@@ -316,11 +390,7 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       .font(fontBold)
       .text("Điều khoản:", 50, footerY);
     doc.fontSize(9).fillColor("#666").font(font);
-    doc.text(
-      "Đơn hàng đã thanh toán sẽ không hỗ trợ hoàn tiền.",
-      50,
-      footerY + 14
-    );
+    doc.text("Đơn hàng không hỗ trợ hoàn tiền sau 3 ngày.", 50, footerY + 14);
 
     doc.end();
   });
@@ -334,7 +404,7 @@ export async function generateAndStoreInvoice(
     // Check if invoice already exists
     const supabase = getAdminClient();
     const bucket = "invoices";
-    const storagePath = `${input.orderNumber}.pdf`;
+    const storagePath = `${input.orderNumber}_${new Date()}.pdf`;
 
     const { data: existing } = await supabase.storage
       .from(bucket)

@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/ImageUploader";
 import KitSelector, { type KitOption } from "@/components/ui/KitSelector";
 import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
+import { invalidateCacheByPattern } from "@/lib/redis/cache";
 import { Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -244,6 +245,7 @@ export default function EditProductModal({ product }: Props) {
 
     setOpen(false);
     queryClient.invalidateQueries({ queryKey: ["products"] });
+    invalidateCacheByPattern("*product*");
     router.refresh();
   }
 

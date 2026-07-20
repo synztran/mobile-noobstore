@@ -201,7 +201,7 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
                 {event.is_active ? (
                   <span className="text-green-600">Active</span>
                 ) : (
-                  <span className="text-muted">Inactive</span>
+                  <span className="text-red-600">Inactive</span>
                 )}
               </p>
             </div>

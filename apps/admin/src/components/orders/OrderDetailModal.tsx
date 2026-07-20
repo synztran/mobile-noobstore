@@ -115,6 +115,7 @@ export interface OrderDetail {
   order_services: OrderService[];
   optionValueMap: Record<string, { optionLabel: string; valueLabel: string }>;
   invoice_url: string | null;
+  points_earned?: number;
 }
 
 interface Props {
@@ -234,7 +235,14 @@ function OrderPriceSummary({ order }: { order: OrderDetail }) {
 
       {totalDiscount > 0 && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
-          You saved {totalDiscount.toLocaleString("vi-VN")}₫ on this order
+          Customer saved {totalDiscount.toLocaleString("vi-VN")}₫ on this order
+        </div>
+      )}
+
+      {order.status === "delivered" && (order.points_earned ?? 0) > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Customer earned {Number(order.points_earned).toLocaleString("vi-VN")}{" "}
+          points from this order
         </div>
       )}
 
@@ -277,9 +285,21 @@ export default function OrderDetailModal({
             <h2 className="text-lg font-semibold text-slate-900">
               Order Detail
             </h2>
-            <p className="mt-0.5 font-mono text-sm text-slate-500">
-              #{order.order_number}
-            </p>
+            <div className="mt-0.5 flex items-center gap-2">
+              <p className="font-mono text-sm text-slate-500">
+                #{order.order_number}
+              </p>
+              {order.invoice_url && (
+                <a
+                  href={order.invoice_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
+                >
+                  Invoice
+                </a>
+              )}
+            </div>
           </div>
           <button
             onClick={onClose}

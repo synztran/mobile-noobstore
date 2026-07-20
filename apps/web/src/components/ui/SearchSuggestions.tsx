@@ -4,14 +4,8 @@ import { Search } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 
-export interface ProductSuggestion {
-  id: string;
-  name: string;
-  slug: string;
-  thumbnail: string | null;
-  base_price: number;
-  product_type: string;
-}
+import type { ProductSuggestion } from "@/types/search";
+export type { ProductSuggestion };
 
 interface Props {
   suggestions: ProductSuggestion[];
@@ -37,7 +31,9 @@ export default function SearchSuggestions({
   if (!visible || query.length < 2) return null;
 
   return (
-    <div className={`absolute left-0 right-0 z-[60] overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-float ${className ?? "top-full mt-2"}`}>
+    <div
+      className={`pointer-events-auto absolute left-0 right-0 z-[100] overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-float ${className ?? "top-full mt-2"}`}
+    >
       {loading ? (
         <div className="space-y-1 p-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -56,10 +52,8 @@ export default function SearchSuggestions({
       ) : suggestions.length > 0 ? (
         <ul>
           {suggestions.map((product, idx) => (
-            <li key={product.id}>
+            <li key={product.id} onClick={() => onSelect(product)}>
               <button
-                type="button"
-                onMouseDown={() => onSelect(product)}
                 className={clsx(
                   "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
                   idx === selectedIndex
@@ -84,9 +78,6 @@ export default function SearchSuggestions({
                   </p>
                   <p className="text-xs font-medium text-on-surface-variant">
                     {product.base_price.toLocaleString()}đ
-                    {/* <span className="ml-2 rounded bg-surface-container px-1.5 py-0.5 text-[10px] uppercase">
-                      {product.product_type}
-                    </span> */}
                   </p>
                 </div>
               </button>

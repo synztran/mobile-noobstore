@@ -245,7 +245,7 @@ export default function OrderActionBar({
               Cancel Order
             </button>
           )}
-          {["confirm", "delivered", "delivering"].includes(order.status) &&
+          {["confirmed", "delivered", "delivering"].includes(order.status) &&
             !order.invoice_url && (
               <button
                 onClick={generateInvoice}

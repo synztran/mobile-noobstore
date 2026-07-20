@@ -128,8 +128,7 @@ export async function GET(req: NextRequest) {
   try {
     // Build a stable cache key from normalized params
     // Search queries are cached too — useful for repeated searches within 60 s
-    const normalizedTypes = productTypes.sort().join(",");
-    const cacheKey = `products:${search}:${categorySlug}:${normalizedTypes}:${priceMin}:${priceMax}:${sort}:${limit}:${offset}`;
+    const cacheKey = `products:${search || ""}:${sort}:${limit}:${offset}`;
 
     const cached = await getCache<ProductsResponse>(cacheKey);
     if (cached) {

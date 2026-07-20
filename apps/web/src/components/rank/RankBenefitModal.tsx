@@ -63,8 +63,8 @@ function BenefitRow({
         </p>
       </div>
       {enabled ? (
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10">
-          <Check className="h-3 w-3 text-primary" />
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600">
+          <Check className="h-3 w-3 text-white" />
         </span>
       ) : (
         <span className="bg-surface-container-higher flex h-5 w-5 items-center justify-center rounded-full">
@@ -83,24 +83,24 @@ function formatBenefitValue(benefitKey: string, rank: CustomerRank): string {
         ? `${b.pointsMultiplier}x điểm NSP`
         : b.pointsMultiplier > 1
           ? `${b.pointsMultiplier}x`
-          : "Cơ bản";
+          : "x1/đơn hàng";
     case "discountPercent":
       return b.flags.discountPercentEnabled && b.discountPercent > 0
         ? `Giảm ${b.discountPercent}% đơn hàng`
-        : "Không giảm giá";
+        : "Chiết khấu đơn hàng";
     case "freeShipping":
       return b.flags.freeShippingEnabled && b.freeShipping
         ? "Miễn phí vận chuyển"
-        : "Tính phí ship";
+        : "Hỗ trợ phí ship nội thành";
     case "exclusiveVoucher":
       return b.flags.exclusiveVoucherEnabled &&
         b.exclusiveVoucherFrequency !== "none"
         ? `Voucher ${b.exclusiveVoucherFrequency === "monthly" ? "hằng tháng" : "định kỳ"}`
-        : "Không có";
+        : "Voucher giành riêng";
     case "prioritySupport":
       return b.flags.prioritySupportEnabled && b.prioritySupport
         ? "Hỗ trợ ưu tiên"
-        : "Hỗ trợ thường";
+        : "Hỗ trợ kĩ thuật 24/24";
     default:
       return "";
   }
@@ -131,29 +131,29 @@ function getRankChips(rank: CustomerRank) {
   return [
     {
       key: "pointsMultiplier",
-      label: `${b.pointsMultiplier}x`,
-      enabled: b.flags.pointsMultiplierEnabled && b.pointsMultiplier > 1,
+      label: `x${b.pointsMultiplier}/đơn hàng`,
+      enabled: b.flags.pointsMultiplierEnabled && b.pointsMultiplier >= 1,
     },
     {
       key: "discountPercent",
-      label: `${b.discountPercent}%`,
+      label: `Chiết khấu ${b.discountPercent}%`,
       enabled: b.flags.discountPercentEnabled && b.discountPercent > 0,
     },
     {
       key: "freeShipping",
-      label: "ship",
+      label: "Hỗ trợ phí vận chuyển",
       enabled: b.flags.freeShippingEnabled && b.freeShipping,
     },
     {
       key: "exclusiveVoucher",
-      label: "vouch",
+      label: "Voucher độc quyền",
       enabled:
         b.flags.exclusiveVoucherEnabled &&
         b.exclusiveVoucherFrequency !== "none",
     },
     {
       key: "prioritySupport",
-      label: "support",
+      label: "Hỗ trợ kĩ thuật 24/24",
       enabled: b.flags.prioritySupportEnabled && b.prioritySupport,
     },
   ];
@@ -176,7 +176,7 @@ export function RankBenefitModal({
     >
       <div className="modal-box flex max-h-[80dvh] flex-col rounded-t-2xl bg-surface px-0 pb-0 pt-0">
         {/* Fixed Header */}
-        <div className="shrink-0 px-6 pb-4 pt-6">
+        <div className="shrink-0 p-4">
           <div className="flex items-center gap-3">
             <RankBadge rank={currentRank} size="lg" />
             <div>
@@ -191,7 +191,7 @@ export function RankBenefitModal({
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-6">
+        <div className="flex-1 overflow-y-auto px-4">
           {/* Current rank benefits */}
           <div className="mb-4 space-y-2">
             {Object.keys(RANK_BENEFIT_LABELS).map((key) => {
@@ -218,7 +218,7 @@ export function RankBenefitModal({
             <>
               <div className="mb-3 border-t border-outline-variant/20 pt-4">
                 <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
-                  Tất cả rank
+                  Các loại cấp bậc
                 </p>
               </div>
               <div className="space-y-2 pb-4">
@@ -235,30 +235,36 @@ export function RankBenefitModal({
                           : "bg-surface-container-low"
                       } ${isLocked ? "opacity-40" : ""}`}
                     >
-                      <RankBadge rank={rank} size="sm" />
+                      <RankBadge rank={rank} size="md" />
                       <div className="min-w-0 flex-1">
                         <p
                           className={`text-xs font-bold ${isCurrent ? "text-primary" : "text-on-surface"}`}
                         >
                           {rank.name}
-                          {isCurrent && " (Hiện tại)"}
                         </p>
-                        <p className="text-[10px] text-on-surface-variant">
-                          {formatVND(rank.minTotalSpent)} — {rank.minOrderCount}{" "}
-                          đơn
-                        </p>
+                        {!isCurrent ? (
+                          <p className="text-[10px] text-on-surface-variant">
+                            {formatVND(rank.minTotalSpent)} —{" "}
+                            {rank.minOrderCount} đơn
+                          </p>
+                        ) : null}
                         <div className="mt-1 flex flex-wrap gap-1">
-                          {chips.map((chip) => (
-                            <BenefitChip key={chip.key} enabled={chip.enabled}>
-                              {chip.label}
-                            </BenefitChip>
-                          ))}
+                          {chips
+                            .filter((c) => c.enabled)
+                            .map((chip) => (
+                              <BenefitChip
+                                key={chip.key}
+                                enabled={chip.enabled}
+                              >
+                                {chip.label}
+                              </BenefitChip>
+                            ))}
                         </div>
                       </div>
                       {isLocked ? (
                         <Lock className="h-3.5 w-3.5 shrink-0 text-on-surface-variant" />
                       ) : (
-                        <CheckCircle className="h-3.5 w-3.5 shrink-0 text-success" />
+                        <CheckCircle className="h-3.5 w-3.5 shrink-0 text-green-600" />
                       )}
                     </div>
                   );
@@ -269,7 +275,7 @@ export function RankBenefitModal({
         </div>
 
         {/* Fixed Footer */}
-        <div className="shrink-0 border-t border-outline-variant/20 px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
+        <div className="shrink-0 border-t border-outline-variant/20 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
           <button
             onClick={onClose}
             className="w-full rounded-xl bg-on-surface py-3 text-[10px] font-black uppercase tracking-widest text-surface transition-transform active:scale-95"

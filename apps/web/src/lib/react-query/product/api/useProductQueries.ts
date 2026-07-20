@@ -2,6 +2,7 @@ import type {
 	ComponentVariantRule,
 	ConfiguratorGroup,
 } from "@/app/api/products/[slug]/configurator/route";
+import type { ProductSuggestion } from "@/types/search";
 import type { ShopProduct } from "@/app/api/products/route";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +33,22 @@ export function useQuickPick(requestKey: string, enabled: boolean) {
 			);
 			if (!res.ok) throw new Error("Failed to fetch quick pick data");
 			return res.json() as Promise<QuickPickResponse>;
+		},
+	});
+}
+
+export function useProductSearch(q: string) {
+	return useQuery<ProductSuggestion[]>({
+		...appQueryKeys.product.search(q),
+		enabled: q.length >= 2,
+		staleTime: 30_000,
+		queryFn: async () => {
+			const res = await fetch(
+				`/api/products/search?q=${encodeURIComponent(q)}&exclude_types=component`,
+			);
+			if (!res.ok) throw new Error("Failed to search products");
+			const data: ProductSuggestion[] = await res.json();
+			return data.slice(0, 5);
 		},
 	});
 }
