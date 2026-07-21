@@ -1,10 +1,12 @@
 "use client";
 
-import { Download, RefreshCw, Search, ShoppingBag, X } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import ExportCSVButton from "@/components/ui/ExportCSVButton";
+import type { ExportColumn } from "@/lib/csv";
 import { formatVND } from "@/lib/currency";
+import { RefreshCw, Search, ShoppingBag, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 interface CartUser {
   id: string;
@@ -125,43 +127,33 @@ export default function CartsClient({
     );
   }
 
-  function exportCSV() {
-    const headers = [
-      "Cart ID",
-      "Status",
-      "Name",
-      "Email",
-      "Items",
-      "Total",
-      "Last Activity",
-    ];
-    const rows = carts.map((cart) => {
-      const user = cart.users;
-      const name =
-        `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "—";
-      return [
-        cart.id,
-        STATUS_LABELS[cart.cartStatus] ?? cart.cartStatus,
-        name,
-        user?.email ?? "(guest)",
-        String(cart.itemCount),
-        String(cart.cartTotal),
-        cart.updated_at || cart.created_at || "",
-      ];
-    });
-    const csv = [headers, ...rows]
-      .map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(","))
-      .join("\n");
-    const blob = new Blob(["\ufeff" + csv], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `carts-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  const exportColumns: ExportColumn<Cart>[] = useMemo(
+    () => [
+      { label: "Cart ID", accessor: (c) => c.id },
+      {
+        label: "Status",
+        accessor: (c) => STATUS_LABELS[c.cartStatus] ?? c.cartStatus,
+      },
+      {
+        label: "Name",
+        accessor: (c) => {
+          const user = c.users;
+          return `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "—";
+        },
+      },
+      {
+        label: "Email",
+        accessor: (c) => c.users?.email ?? "(guest)",
+      },
+      { label: "Items", accessor: (c) => String(c.itemCount) },
+      { label: "Total", accessor: (c) => c.cartTotal },
+      {
+        label: "Last Activity",
+        accessor: (c) => c.updated_at || c.created_at || "",
+      },
+    ],
+    [],
+  );
 
   const handleSearch = useCallback(
     (value: string, by?: string) => {
@@ -221,14 +213,11 @@ export default function CartsClient({
             <span className="text-xs text-slate-500">{count} carts</span>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={exportCSV}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Download className="h-4 w-4" />
-              CSV
-            </button>
+            <ExportCSVButton
+              data={carts}
+              columns={exportColumns}
+              filename="carts"
+            />
             <button
               type="button"
               onClick={() => setAutoRefresh(!autoRefresh)}

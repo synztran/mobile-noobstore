@@ -1,7 +1,7 @@
 "use client";
 
 import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Search, X } from "lucide-react";
 import type { ProductsResponse, ShopProduct } from "@/app/api/products/route";
@@ -9,6 +9,7 @@ import type { SortOption } from "@/app/api/products/route";
 import { buildShopUrl } from "@/lib/react-query/shop/api/useShopInfiniteQuery";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { appQueryKeys } from "@/lib/react-query/root";
+import { CATEGORIES } from "@/lib/data";
 
 interface Props {
   initialData: ProductsResponse | null;
@@ -18,8 +19,10 @@ interface Props {
 
 export function SearchPageClient({ initialData, query, initialSort }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchText, setSearchText] = useState(query);
   const [sort, setSort] = useState<SortOption>(initialSort || "newest");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "");
 
   useEffect(() => {
     setSearchText(query);
@@ -29,11 +32,11 @@ export function SearchPageClient({ initialData, query, initialSort }: Props) {
     () => ({
       search: query,
       sort,
-      category: "",
+      category,
       priceMin: "",
       priceMax: "",
     }),
-    [query, sort]
+    [query, sort, category]
   );
 
   const {
@@ -43,7 +46,7 @@ export function SearchPageClient({ initialData, query, initialSort }: Props) {
     fetchNextPage,
     isLoading,
   } = useInfiniteQuery<ProductsResponse>({
-    queryKey: appQueryKeys.shop.products(`search:${query}|${sort}`).queryKey,
+    queryKey: appQueryKeys.shop.products(`search:${query}|${sort}|${category}`).queryKey,
     queryFn: async ({ pageParam }) => {
       const res = await fetch(buildShopUrl(pageParam as number, filters));
       if (!res.ok) throw new Error("Failed to fetch products");
@@ -116,6 +119,41 @@ export function SearchPageClient({ initialData, query, initialSort }: Props) {
           </button>
         )}
       </form>
+
+      {/* Category chips */}
+      <div className="hide-scrollbar flex gap-2 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => {
+            setCategory("");
+            router.push(`/search?q=${encodeURIComponent(query)}`, { scroll: false });
+          }}
+          className={`shrink-0 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+            !category
+              ? "bg-primary text-on-primary"
+              : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+          }`}
+        >
+          Tất cả
+        </button>
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => {
+              setCategory(cat);
+              router.push(`/search?q=${encodeURIComponent(query)}&category=${encodeURIComponent(cat)}`, { scroll: false });
+            }}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+              category === cat
+                ? "bg-primary text-on-primary"
+                : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-on-surface-variant">

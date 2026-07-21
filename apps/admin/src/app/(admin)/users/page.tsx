@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import EditUserModal from "@/components/users/EditUserModal";
+import UsersExportWrapper from "@/components/users/UsersExportWrapper";
 
 export const metadata = {
   title: "Users - NoobStore Admin",
@@ -81,7 +82,10 @@ export default async function UsersPage(props: {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-slate-900">Users</h1>
+      <div className="flex items-center gap-4">
+        <h1 className="mr-auto text-3xl font-bold text-slate-900">Users</h1>
+        <UsersExportWrapper users={users ?? []} />
+      </div>
 
       {/* Search & Filter */}
       <form

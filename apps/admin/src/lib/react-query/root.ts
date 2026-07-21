@@ -15,6 +15,10 @@ export const adminQueryKeys = {
     detail: (id?: string) => ["user", id ?? ""] as const,
   },
 
+  stockAlerts: {
+    list: (page = 1) => ["stock-alerts", page] as const,
+  },
+
   gacha: {
     events: () => ["gacha-events"] as const,
     event: (id?: string) => ["gacha-event", id ?? ""] as const,

@@ -13,6 +13,7 @@ export function SearchFloating() {
     suggestions,
     suggestionsLoading,
     showSuggestions,
+    recentSearches,
     selectedIndex,
     inputRef,
     containerRef,
@@ -20,6 +21,8 @@ export function SearchFloating() {
     handleKeyDown,
     handleSubmit,
     navigateToProduct,
+    handleRecentSearch,
+    handleClearRecent,
     handleOpen,
     handleClose,
     setShowSuggestions,
@@ -64,20 +67,23 @@ export function SearchFloating() {
                   <X size={14} />
                 </button>
               </form>
+              <SearchSuggestions
+                suggestions={suggestions}
+                selectedIndex={selectedIndex}
+                loading={suggestionsLoading}
+                visible={showSuggestions}
+                query={query}
+                recentSearches={recentSearches}
+                onSelect={navigateToProduct}
+                onSearch={handleRecentSearch}
+                onClearRecent={handleClearRecent}
+                onClose={() => setShowSuggestions(false)}
+                className="absolute bottom-full mb-2"
+              />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-      <SearchSuggestions
-        suggestions={suggestions}
-        selectedIndex={selectedIndex}
-        loading={suggestionsLoading}
-        visible={showSuggestions}
-        query={query}
-        onSelect={navigateToProduct}
-        onClose={() => setShowSuggestions(false)}
-        className="bottom-full mb-2"
-      />
 
       <button
         type="button"

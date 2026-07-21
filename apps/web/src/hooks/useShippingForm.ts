@@ -135,7 +135,7 @@ const REQUIRED_FIELDS = ["fullName", "streetAddress", "city"] as const;
 
 export function useShippingForm() {
   const router = useRouter();
-  const { setShipping, shipping } = useCheckoutStore();
+  const { setShipping, shipping, shippingFormDraft, saveShippingDraft, clearShippingDraft } = useCheckoutStore();
   const { total, cartId } = useCartStore();
   const { profile, user } = useAuth();
 
@@ -251,6 +251,16 @@ export function useShippingForm() {
 
   useEffect(() => {
     if (initializedRef.current) return;
+
+    // Restore shipping form draft if available (higher priority than profile/shipping)
+    if (shippingFormDraft) {
+      initializedRef.current = true;
+      setForm((prev) => ({
+        ...prev,
+        ...shippingFormDraft,
+      }));
+      return;
+    }
 
     const hasProfile = !!profile;
     const hasAddress = !!addressFromUser;
@@ -397,6 +407,7 @@ export function useShippingForm() {
       }
 
       setIsSubmitting(true);
+      clearShippingDraft();
       setShipping(
         {
           ...form,
@@ -583,6 +594,20 @@ export function useShippingForm() {
       clearTimeout(id);
     };
   }, [form.streetAddress, form.district, form.ward, form.city]);
+
+  // Auto-save form draft (debounced)
+  const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    draftSaveTimerRef.current = setTimeout(() => {
+      const { fullName, apartment, phoneNumber, city, district, districtCode, ward, wardCode, streetAddress, notes } = form;
+      saveShippingDraft({ fullName, apartment, phoneNumber, city, district, districtCode, ward, wardCode, streetAddress, notes });
+    }, 800);
+    return () => {
+      if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    };
+  }, [form, saveShippingDraft]);
 
   return {
     ready,

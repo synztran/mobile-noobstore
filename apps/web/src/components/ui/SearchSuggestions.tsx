@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Clock, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 
@@ -13,7 +13,10 @@ interface Props {
   loading: boolean;
   visible: boolean;
   query: string;
+  recentSearches?: string[];
   onSelect: (product: ProductSuggestion) => void;
+  onSearch?: (query: string) => void;
+  onClearRecent?: () => void;
   onClose?: () => void;
   className?: string;
 }
@@ -24,11 +27,58 @@ export default function SearchSuggestions({
   loading,
   visible,
   query,
+  recentSearches = [],
   onSelect,
+  onSearch,
+  onClearRecent,
   onClose,
   className,
 }: Props) {
-  if (!visible || query.length < 2) return null;
+  const showRecent = visible && query.length < 2 && recentSearches.length > 0;
+
+  if (!visible || (query.length < 2 && recentSearches.length === 0))
+    return null;
+
+  if (showRecent) {
+    return (
+      <div
+        className={`pointer-events-auto absolute left-0 right-0 z-[100] overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-float ${className ?? "top-full mt-2"}`}
+      >
+        <div className="flex items-center justify-between px-4 py-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Tìm gần đây
+          </span>
+          <button
+            type="button"
+            onClick={onClearRecent}
+            className="flex items-center gap-1 text-[10px] text-on-surface-variant/60 transition-colors hover:text-error"
+          >
+            <Trash2 size={10} />
+            Xoá
+          </button>
+        </div>
+        <ul>
+          {recentSearches.map((term, idx) => (
+            <li key={`${term}-${idx}`}>
+              <button
+                type="button"
+                onClick={() => onSearch?.(term)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container"
+              >
+                <Clock
+                  size={14}
+                  className="shrink-0 text-outline-variant"
+                />
+                <span className="text-sm text-on-surface">{term}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  if (query.length < 2) return null;
 
   return (
     <div
@@ -92,7 +142,6 @@ export default function SearchSuggestions({
         </div>
       )}
 
-      {/* Footer: link to full results */}
       {query.length >= 2 && (
         <Link
           href={`/search?q=${encodeURIComponent(query)}`}

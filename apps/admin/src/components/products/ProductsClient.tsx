@@ -2,6 +2,8 @@
 
 import type { ProductCardProps } from "@/components/products/ProductCard";
 import ProductCard from "@/components/products/ProductCard";
+import ExportCSVButton from "@/components/ui/ExportCSVButton";
+import type { ExportColumn } from "@/lib/csv";
 import { adminQueryKeys } from "@/lib/react-query/root";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -63,6 +65,22 @@ export default function ProductsClient({
   const count = data?.count ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
+  const exportColumns: ExportColumn<ProductRow>[] = [
+    { label: "ID", accessor: (p) => p.id },
+    { label: "Name", accessor: (p) => p.name },
+    { label: "Slug", accessor: (p) => p.slug },
+    { label: "Price", accessor: (p) => p.base_price },
+    { label: "Stock", accessor: (p) => p.stock_quantity },
+    { label: "Type", accessor: (p) => p.product_type },
+    { label: "Brand", accessor: (p) => p.brand ?? "" },
+    { label: "Active", accessor: (p) => (p.is_active ? "Yes" : "No") },
+    {
+      label: "Category",
+      accessor: (p) =>
+        "categories" in p && p.categories ? p.categories.name : "",
+    },
+  ];
+
   const buildUrl = (p: number) => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
@@ -86,12 +104,20 @@ export default function ProductsClient({
         )}
       </div>
 
+      <div className="flex items-center justify-between pt-2">
+        <span className="text-sm text-slate-500">
+          {count} product{count !== 1 ? "s" : ""}
+          {totalPages > 1 && ` · Page ${page} of ${totalPages}`}
+        </span>
+        <ExportCSVButton
+          data={products}
+          columns={exportColumns}
+          filename="products"
+        />
+      </div>
+
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-sm text-slate-500">
-            {count} product{count !== 1 ? "s" : ""} · Page {page} of{" "}
-            {totalPages}
-          </span>
+        <div className="flex items-center justify-center pt-2">
           <div className="flex items-center gap-1">
             <Link
               href={buildUrl(page - 1)}

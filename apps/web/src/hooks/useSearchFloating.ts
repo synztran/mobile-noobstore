@@ -4,6 +4,7 @@ import type { ProductSuggestion } from "@/types/search";
 import { useProductSearch } from "@/lib/react-query/product/api/useProductQueries";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRecentSearches } from "./useRecentSearches";
 
 const SEARCH_HIDDEN_PATHS = ["/checkout", "/services", "/gacha", "/profile"];
 
@@ -19,6 +20,8 @@ export function useSearchFloating() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const { searches: recentSearches, addSearch, clearSearches } = useRecentSearches();
+
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const { data: suggestions, isLoading: suggestionsLoading } =
     useProductSearch(debouncedQuery);
@@ -28,12 +31,14 @@ export function useSearchFloating() {
   }, []);
 
   useEffect(() => {
-    if (debouncedQuery.length >= 2) {
+    if (open && recentSearches.length > 0 && query.length < 2) {
+      setShowSuggestions(true);
+    } else if (debouncedQuery.length >= 2) {
       setShowSuggestions(true);
     } else {
       setShowSuggestions(false);
     }
-  }, [debouncedQuery]);
+  }, [debouncedQuery, open, recentSearches.length, query]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -96,12 +101,14 @@ export function useSearchFloating() {
   const handleSubmit = () => {
     const trimmed = query.trim();
     if (trimmed) {
+      addSearch(trimmed);
       router.push(`/search?q=${encodeURIComponent(trimmed)}`);
       handleClose();
     }
   };
 
   function navigateToProduct(product: ProductSuggestion) {
+    addSearch(product.name);
     router.push(`/shop/${product.slug}`);
     handleClose();
   }
@@ -121,6 +128,14 @@ export function useSearchFloating() {
     inputRef.current?.blur();
   };
 
+  const handleRecentSearch = useCallback(
+    (term: string) => {
+      router.push(`/search?q=${encodeURIComponent(term)}`);
+      handleClose();
+    },
+    [router],
+  );
+
   return {
     hidden: false as const,
     open,
@@ -128,6 +143,7 @@ export function useSearchFloating() {
     suggestions: suggestions ?? [],
     suggestionsLoading: !!suggestionsLoading,
     showSuggestions,
+    recentSearches,
     selectedIndex,
     inputRef,
     containerRef,
@@ -138,6 +154,8 @@ export function useSearchFloating() {
       handleSubmit();
     },
     navigateToProduct,
+    handleRecentSearch,
+    handleClearRecent: clearSearches,
     handleOpen,
     handleClose,
     setShowSuggestions,

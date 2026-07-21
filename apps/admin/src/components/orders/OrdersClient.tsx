@@ -4,11 +4,13 @@ import BulkUpdateBar from "@/components/orders/BulkUpdateBar";
 import OrderDetailModal, {
   type OrderDetail,
 } from "@/components/orders/OrderDetailModal";
+import ExportCSVButton from "@/components/ui/ExportCSVButton";
+import type { ExportColumn } from "@/lib/csv";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 
 interface Order {
 	id: string;
@@ -113,8 +115,25 @@ export default function OrdersClient({
 	const [newOrderBadge, setNewOrderBadge] = useState(false);
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-	const queryClient = useQueryClient();
-	const queryKey = ["orders", q, searchBy, currentPage];
+  const exportColumns: ExportColumn<Order>[] = useMemo(
+    () => [
+      { label: "Order #", accessor: (o) => o.order_number },
+      {
+        label: "Customer",
+        accessor: (o) =>
+          o.users
+            ? `${o.users.first_name ?? ""} ${o.users.last_name ?? ""}`.trim()
+            : "",
+      },
+      { label: "Amount", accessor: (o) => o.total_price },
+      { label: "Status", accessor: (o) => o.status },
+      { label: "Date", accessor: (o) => o.created_at ?? "" },
+    ],
+    [],
+  );
+
+  const queryClient = useQueryClient();
+  const queryKey = ["orders", q, searchBy, currentPage];
 
 	const { data, isFetching } = useQuery({
 		queryKey,
@@ -192,6 +211,11 @@ export default function OrdersClient({
 						</button>
 					)}
 				</div>
+				<ExportCSVButton
+					data={orders}
+					columns={exportColumns}
+					filename="orders"
+				/>
 				<div className="input-base flex items-center rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
 					<select
 						defaultValue={searchBy}

@@ -181,6 +181,19 @@ export const useCartStore = create<CartStore>()(
 
 // ─── CheckoutStore ───────────────────────────────────────────────────────────
 
+export interface ShippingFormDraft {
+	fullName: string;
+	apartment: string;
+	phoneNumber: string;
+	city: string;
+	district: string;
+	districtCode: string;
+	ward: string;
+	wardCode: string;
+	streetAddress: string;
+	notes: string;
+}
+
 interface CheckoutStore {
 	shipping: ShippingDetails | null;
 	shippingCost: number;
@@ -188,6 +201,7 @@ interface CheckoutStore {
 	orderNumber: string | null;
 	totalPrice: number;
 	orderedItems: CartItem[];
+	shippingFormDraft: ShippingFormDraft | null;
 	setShipping: (data: ShippingDetails, cost: number) => void;
 	setOrder: (
 		id: string,
@@ -195,6 +209,8 @@ interface CheckoutStore {
 		totalPrice: number,
 		orderedItems: CartItem[],
 	) => void;
+	saveShippingDraft: (draft: ShippingFormDraft) => void;
+	clearShippingDraft: () => void;
 	clearCheckout: () => void;
 }
 
@@ -207,10 +223,15 @@ export const useCheckoutStore = create<CheckoutStore>()(
 			orderNumber: null,
 			totalPrice: 0,
 			orderedItems: [],
+			shippingFormDraft: null,
 			setShipping: (data, cost) =>
 				set({ shipping: data, shippingCost: cost }),
 			setOrder: (id, orderNumber, totalPrice, orderedItems) =>
 				set({ orderId: id, orderNumber, totalPrice, orderedItems }),
+			saveShippingDraft: (draft) =>
+				set({ shippingFormDraft: draft }),
+			clearShippingDraft: () =>
+				set({ shippingFormDraft: null }),
 			clearCheckout: () =>
 				set({
 					shipping: null,
@@ -219,6 +240,7 @@ export const useCheckoutStore = create<CheckoutStore>()(
 					orderNumber: null,
 					totalPrice: 0,
 					orderedItems: [],
+					shippingFormDraft: null,
 				}),
 		}),
 		{ name: "noobstore-checkout" },

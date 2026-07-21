@@ -8,6 +8,8 @@ import type {
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
 import { TopNav } from "@/components/layout/TopNav";
 import { AddToCartButton } from "@/components/product/AddToCartButton";
+import { StockAlertButton } from "@/components/product/StockAlertButton";
+import { ProductThumbnailStrip } from "@/components/product/ProductThumbnailStrip";
 import { ProductConfigurator } from "@/components/product/ProductConfigurator";
 import { ProductCard } from "@/components/product/ProductCard";
 import Icon from "@/components/ui/Icon";
@@ -198,6 +200,21 @@ export function ProductView({
     variants.length > 0 ||
     groups.length > 0;
 
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!heroRef.current) return;
+      const rect = heroRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setZoomOrigin({ x, y });
+    },
+    [],
+  );
+
   useEffect(() => {
     setActiveImageIndex(0);
   }, [product.slug]);
@@ -209,67 +226,75 @@ export function ProductView({
       <main className="my-auto space-y-4 pb-12">
         {/* ── Hero Image Gallery ── */}
         <section
-          className="relative space-y-2 p-4"
+          className="relative space-y-3 p-4"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <button
-            type="button"
-            onClick={() => mediaImages.length > 0 && setImageViewerOpen(true)}
+          <div
+            ref={heroRef}
+            onMouseMove={handleMouseMove}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
             className="relative h-80 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm"
           >
-            {heroImage ? (
-              <Image
-                src={heroImage}
-                alt={product.name}
-                fill
-                className="object-cover mix-blend-multiply"
-                sizes="(max-width: 768px) 100vw, 50vw"
-                priority
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Icon
-                  name="inventory_2"
-                  className="text-9xl text-outline-variant opacity-40"
-                />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent" />
-            {mediaImages.length > 0 && (
-              <div className="absolute bottom-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-                {activeImageIndex + 1}/{mediaImages.length}
-              </div>
-            )}
-            {hasDiscount && (
-              <div className="absolute right-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
-                -{discountPercent}%
-              </div>
-            )}
-            {product.sale_ends_at && (
-              <div className="absolute left-3 top-3">
-                <SaleCountdown endsAt={product.sale_ends_at} />
-              </div>
-            )}
-          </button>
-          {mediaImages.length > 1 && (
-            <div className="flex justify-center gap-2 px-4">
-              {mediaImages.map((img, i) => (
-                <button
-                  key={`${img}-${i}`}
-                  type="button"
-                  onClick={() => setActiveImageIndex(i)}
-                  aria-label={`View image ${i + 1}`}
-                  className={clsx(
-                    "rounded-full transition-all active:scale-90",
-                    i === activeImageIndex
-                      ? "h-1 w-8 bg-primary"
-                      : "h-1 w-2 bg-outline-variant"
-                  )}
-                />
-              ))}
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => mediaImages.length > 0 && setImageViewerOpen(true)}
+              className="relative h-full w-full"
+            >
+              {heroImage ? (
+                <div
+                  className="absolute inset-0 transition-transform duration-200 md:group-hover:scale-150"
+                  style={
+                    isHovering
+                      ? {
+                          transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
+                          transform: "scale(1.5)",
+                        }
+                      : undefined
+                  }
+                >
+                  <Image
+                    src={heroImage}
+                    alt={product.name}
+                    fill
+                    className="object-cover mix-blend-multiply"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                  />
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Icon
+                    name="inventory_2"
+                    className="text-9xl text-outline-variant opacity-40"
+                  />
+                </div>
+              )}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent" />
+              {mediaImages.length > 0 && (
+                <div className="absolute bottom-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                  {activeImageIndex + 1}/{mediaImages.length}
+                </div>
+              )}
+              {hasDiscount && (
+                <div className="absolute right-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
+                  -{discountPercent}%
+                </div>
+              )}
+              {product.sale_ends_at && (
+                <div className="absolute left-3 top-3">
+                  <SaleCountdown endsAt={product.sale_ends_at} />
+                </div>
+              )}
+            </button>
+          </div>
+          <ProductThumbnailStrip
+            images={mediaImages}
+            activeIndex={activeImageIndex}
+            onSelect={setActiveImageIndex}
+            productName={product.name}
+          />
         </section>
 
         {/* ── Product Info ── */}
@@ -620,14 +645,21 @@ export function ProductView({
           className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
           iconOnly={false}
         />
-        <AddToCartButton
-          isOutOfStock={isOutOfStock}
-          missingVariantSelection={missingVariantSelection}
-          missingConfiguration={missingConfiguration}
-          isLoading={isLoadingAddToCart}
-          isPreOrder={selectedPreOrderConfig !== null}
-          onClick={() => handleAddToCart(quantity)}
-        />
+        {isOutOfStock ? (
+          <StockAlertButton
+            productId={product.id}
+            variantId={selectedVariant?.id ?? ""}
+          />
+        ) : (
+          <AddToCartButton
+            isOutOfStock={isOutOfStock}
+            missingVariantSelection={missingVariantSelection}
+            missingConfiguration={missingConfiguration}
+            isLoading={isLoadingAddToCart}
+            isPreOrder={selectedPreOrderConfig !== null}
+            onClick={() => handleAddToCart(quantity)}
+          />
+        )}
       </motion.div>
     </div>
   );

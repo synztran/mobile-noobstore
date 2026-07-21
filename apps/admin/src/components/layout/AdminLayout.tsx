@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import AdminSearchPalette from "@/components/layout/AdminSearchPalette";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import {
   ArrowLeft,
@@ -35,7 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type NavItem =
   | { label: string; href: string; icon: React.ElementType; children?: never }
@@ -80,6 +81,7 @@ const navigation: NavItem[] = [
   { label: "Users", href: "/users", icon: Users },
   { label: "Ranks", href: "/ranks", icon: Award },
   { label: "Notifications", href: "/notifications", icon: FileText },
+  { label: "Stock Alerts", href: "/stock-alerts", icon: Bell },
   { label: "Blog", href: "/blog", icon: Newspaper },
   { label: "Reviews", href: "/reviews", icon: MessageSquareText },
   { label: "Support", href: "/support", icon: ShieldAlert },
@@ -118,10 +120,22 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([
     "Services",
     "Products",
   ]);
+  // cmd+K global shortcut
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen((p) => !p);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -259,7 +273,23 @@ export default function AdminLayout({
           <h2 className="text-xl font-semibold text-heading">
             Admin Dashboard
           </h2>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-500 transition-colors hover:bg-slate-50"
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">Search...</span>
+              <kbd className="rounded border border-slate-200 px-1 text-[10px] text-slate-400">
+                ⌘K
+              </kbd>
+            </button>
+            <AdminSearchPalette
+              open={paletteOpen}
+              onClose={() => setPaletteOpen(false)}
+            />
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Content */}

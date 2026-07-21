@@ -40,6 +40,11 @@ const NAV_ITEMS = [
   //   href: "/rewards",
   // },
   {
+    icon: "inventory_2",
+    label: "Hàng sắp về",
+    href: "/profile/stock-alerts",
+  },
+  {
     icon: "help",
     label: "Trợ giúp & Hỗ trợ",
     href: "/profile/support",
