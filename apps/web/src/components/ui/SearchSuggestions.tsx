@@ -65,10 +65,7 @@ export default function SearchSuggestions({
                 onClick={() => onSearch?.(term)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container"
               >
-                <Clock
-                  size={14}
-                  className="shrink-0 text-outline-variant"
-                />
+                <Clock size={14} className="shrink-0 text-outline-variant" />
                 <span className="text-sm text-on-surface">{term}</span>
               </button>
             </li>
@@ -82,7 +79,7 @@ export default function SearchSuggestions({
 
   return (
     <div
-      className={`pointer-events-auto absolute left-0 right-0 z-[100] overflow-hidden rounded-2xl border border-outline-variant/20 bg-surface-container-low shadow-float ${className ?? "top-full mt-2"}`}
+      className={`z-[100] pointer-events-auto absolute left-0 right-0 w-full overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-low shadow-float ${className ?? "top-full mt-2"}`}
     >
       {loading ? (
         <div className="space-y-1 p-3">

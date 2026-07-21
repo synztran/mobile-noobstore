@@ -33,7 +33,7 @@ export function SearchFloating() {
   return (
     <div
       ref={containerRef}
-      className={`pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] left-4 right-4 z-[55] flex items-center gap-2 ${open ? "" : ""}`}
+      className={`pointer-events-none fixed bottom-[4.5rem] left-4 right-4 z-[55] flex items-center gap-2 ${open ? "" : ""}`}
     >
       <AnimatePresence>
         {open && (
@@ -56,7 +56,7 @@ export function SearchFloating() {
                   value={query}
                   onChange={(e) => handleInputChange(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Tìm kiếm..."
+                  placeholder="Ít nhất 2 kỹ tự để tìm kiếm..."
                   className="w-full bg-transparent text-sm text-on-surface outline-none placeholder:text-on-surface-variant/40"
                 />
                 <button
@@ -67,19 +67,6 @@ export function SearchFloating() {
                   <X size={14} />
                 </button>
               </form>
-              <SearchSuggestions
-                suggestions={suggestions}
-                selectedIndex={selectedIndex}
-                loading={suggestionsLoading}
-                visible={showSuggestions}
-                query={query}
-                recentSearches={recentSearches}
-                onSelect={navigateToProduct}
-                onSearch={handleRecentSearch}
-                onClearRecent={handleClearRecent}
-                onClose={() => setShowSuggestions(false)}
-                className="absolute bottom-full mb-2"
-              />
             </div>
           </motion.div>
         )}
@@ -89,10 +76,24 @@ export function SearchFloating() {
         type="button"
         onClick={open ? handleClose : handleOpen}
         aria-label={open ? "Close search" : "Search"}
-        className="pointer-events-auto ml-auto flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-full bg-primary-gradient text-white shadow-ambient-lg transition-transform active:scale-90"
+        className="pointer-events-auto ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-gradient text-white shadow-ambient-lg transition-transform active:scale-90"
       >
         {open ? <X size={18} /> : <Search size={18} />}
       </button>
+
+      <SearchSuggestions
+        suggestions={suggestions}
+        selectedIndex={selectedIndex}
+        loading={suggestionsLoading}
+        visible={showSuggestions}
+        query={query}
+        recentSearches={recentSearches}
+        onSelect={navigateToProduct}
+        onSearch={handleRecentSearch}
+        onClearRecent={handleClearRecent}
+        onClose={() => setShowSuggestions(false)}
+        className="absolute bottom-full mb-1"
+      />
     </div>
   );
 }

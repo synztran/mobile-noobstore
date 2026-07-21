@@ -33,6 +33,7 @@ export function ToastProvider() {
 	useEffect(() => {
 		mountToaster({
 			position: "top-center",
+			offset: { top: "env(safe-area-inset-top, 0px)" },
 			options: {
 				roundness: 8,
 				timeoutIndicator: true,

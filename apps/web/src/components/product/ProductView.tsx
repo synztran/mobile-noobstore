@@ -204,16 +204,13 @@ export function ProductView({
   const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 });
   const [isHovering, setIsHovering] = useState(false);
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!heroRef.current) return;
-      const rect = heroRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      setZoomOrigin({ x, y });
-    },
-    [],
-  );
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomOrigin({ x, y });
+  }, []);
 
   useEffect(() => {
     setActiveImageIndex(0);
@@ -636,7 +633,7 @@ export function ProductView({
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
-        className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-tl-4xl rounded-tr-4xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md"
+        className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md"
       >
         <WishlistButton
           productId={product.id}

@@ -53,10 +53,6 @@ export function useSearchFloating() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (mounted && SEARCH_HIDDEN_PATHS.some((p) => pathname.startsWith(p))) {
-    return { hidden: true as const };
-  }
-
   const handleInputChange = (value: string) => {
     setQuery(value);
     setSelectedIndex(-1);
@@ -137,7 +133,7 @@ export function useSearchFloating() {
   );
 
   return {
-    hidden: false as const,
+    hidden: mounted && SEARCH_HIDDEN_PATHS.some((p) => pathname.startsWith(p)),
     open,
     query,
     suggestions: suggestions ?? [],

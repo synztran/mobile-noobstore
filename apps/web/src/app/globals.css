@@ -217,6 +217,11 @@
 	--gooey-state-action: #4f46e5;
 }
 
+[data-gooey-badge] {
+	color: var(--_tone);
+	background: color-mix(in srgb, var(--_tone) 18%, transparent);
+}
+
 [data-gooey-title] {
 	font-size: 0.8125rem;
 }
