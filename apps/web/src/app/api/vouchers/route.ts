@@ -1,3 +1,4 @@
+import { getCache, setCache } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { VoucherRow } from "@/types/voucher";
 import { NextResponse } from "next/server";
@@ -11,6 +12,10 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
 	try {
+		const cacheKey = "vouchers";
+		const cached = await getCache<{ vouchers: never[]; data: never[] }>(cacheKey);
+		if (cached) return NextResponse.json(cached);
+
 		const supabase = await createClient();
 		const voucherClient = supabase as typeof supabase & {
 			from: (relation: "vouchers") => {
@@ -66,10 +71,13 @@ export async function GET() {
 
 		const resolvedVouchers = (vouchers ?? []) as unknown as VoucherRow[];
 
-		return NextResponse.json({
+		const result = {
 			vouchers: resolvedVouchers,
 			data: resolvedVouchers,
-		});
+		};
+		await setCache(cacheKey, result, 60);
+
+		return NextResponse.json(result);
 	} catch (err) {
 		console.error("[GET /api/vouchers] Unexpected error:", err);
 		return NextResponse.json(

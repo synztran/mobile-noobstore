@@ -1,4 +1,5 @@
 import { getSaleProducts } from "@/lib/sale-products-server";
+import { getCache, setCache } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -20,12 +21,18 @@ export async function GET(req: NextRequest) {
     : 8;
 
   try {
+    const cacheKey = `sale-products:${categorySlug}:${safeLimit}:${sort}`;
+    const cached = await getCache<{ products: never[]; total: number }>(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const result = await getSaleProducts({
       categorySlug,
       limit: safeLimit,
       sort,
       excludeSoldOut: true,
     });
+
+    await setCache(cacheKey, result, 120);
 
     return NextResponse.json(result, {
       headers: {

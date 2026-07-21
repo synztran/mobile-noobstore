@@ -1,6 +1,6 @@
 import { appQueryKeys } from "@/lib/react-query/root";
 import type { HistoryResponse } from "@/lib/react-query/router/points";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 export function usePointsBalance() {
   return useQuery<number>({
@@ -17,6 +17,7 @@ export function usePointsBalance() {
 export function usePointsHistory() {
   return useInfiniteQuery<HistoryResponse>({
     ...appQueryKeys.points.history(1),
+    placeholderData: keepPreviousData,
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams({ page: String(pageParam) });
       const res = await fetch(`/api/points/history?${params}`);

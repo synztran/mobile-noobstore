@@ -4,7 +4,7 @@ import type {
   GachaHistoryPage,
   GachaMission,
 } from "@/lib/react-query/router/gacha";
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 
 export function useGachaEvent(eventId: number) {
   return useQuery<GachaEventResponse>({
@@ -18,6 +18,7 @@ export function useGachaEvent(eventId: number) {
 export function useGachaHistory(eventId: number, enabled: boolean) {
   return useInfiniteQuery<GachaHistoryPage>({
     ...appQueryKeys.gacha.history(eventId),
+    placeholderData: keepPreviousData,
     queryFn: async ({ pageParam }) => {
       const res = await fetch(
         `/api/gacha/history?event_id=${eventId}&page=${pageParam}`,

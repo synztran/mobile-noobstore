@@ -21,7 +21,7 @@ export async function getSaleProducts(
     // First, get all products to filter for sale items
     const { products: allProducts, total } = await getProductListByFilters({
       categorySlug,
-      limit: 100,
+      limit: 30,
       sort: "newest",
       productTypes: ["standard", "kit"],
       excludeUncategorized: true

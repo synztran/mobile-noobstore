@@ -9,12 +9,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const SLIDE_DURATION = 5000;
 
-export function HeroSection() {
+export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] }) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
-  const { data: slides = [], isLoading } = useHomeHero();
+  const { data: fetchedSlides = [], isLoading } = useHomeHero({
+    enabled: !initialSlides || initialSlides.length === 0,
+  });
+  const slides = (initialSlides?.length ? initialSlides : fetchedSlides) as HeroCampaign[];
 
   const goTo = useCallback(
     (idx: number) => {

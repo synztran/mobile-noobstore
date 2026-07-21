@@ -699,7 +699,8 @@ export const getFrequentlyBoughtTogether = cache(
       const { data: sameOrders } = await getPublicClient()
         .from("order_items")
         .select("order_id")
-        .eq("product_id", productId);
+        .eq("product_id", productId)
+        .limit(50);
 
       if (!sameOrders || sameOrders.length === 0) return [];
 

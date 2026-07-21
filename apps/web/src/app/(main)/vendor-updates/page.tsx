@@ -43,7 +43,8 @@ async function getReleases(): Promise<Release[]> {
   const { data } = await supabase
     .from("maker_releases")
     .select("*, vendor:vendors(*)")
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .limit(50);
 
   return (data ?? []) as Release[];
 }

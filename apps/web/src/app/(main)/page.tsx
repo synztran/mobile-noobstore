@@ -1,15 +1,14 @@
 import { AnnouncementBanner } from "@/components/home/AnnouncementBanner";
-import { CategoryStrip } from "@/components/home/CategoryStrip";
 import { CommunityGallery } from "@/components/home/CommunityGallery";
 import { CustomerTestimonial } from "@/components/home/CustomerTestimonial";
 import { OurStrongPoints } from "@/components/home/OurStrongPoints";
 import { HeroSection } from "@/components/home/HeroSection";
-import { HomePressStrip } from "@/components/home/HomePressStrip";
 import { HomeTestimonials } from "@/components/home/HomeTestimonials";
 import { NewsletterCTA } from "@/components/home/NewsletterCTA";
 import { NoteworthySection } from "@/components/home/NoteworthySection";
 import { HomeSaleSection } from "@/components/home/SaleSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { getHeroCampaigns } from "@/lib/hero-server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -25,11 +24,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [heroCampaigns] = await Promise.all([
+    getHeroCampaigns(),
+  ]);
+
   return (
     <div className="relative clear-both space-y-8">
       <AnnouncementBanner />
-      <HeroSection />
+      <HeroSection initialSlides={heroCampaigns} />
       <NoteworthySection />
       <HomeSaleSection />
       <OurStrongPoints />

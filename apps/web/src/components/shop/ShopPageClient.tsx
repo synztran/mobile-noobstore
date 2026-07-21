@@ -46,6 +46,15 @@ export function ShopPageClient({
 
   const total = data?.pages[0]?.total ?? initialData.total;
 
+  // ── Background prefetch: warm next page after current loads ──
+  const loaded = data?.pages.reduce((sum, p) => sum + p.products.length, 0) ?? 0;
+  const totalItems = data?.pages[0]?.total ?? initialData.total;
+  useEffect(() => {
+    if (loaded >= totalItems || isFetchingNextPage) return;
+    const timer = setTimeout(() => { fetchNextPage(); }, 800);
+    return () => clearTimeout(timer);
+  }, [loaded, totalItems, isFetchingNextPage, fetchNextPage]);
+
   // ── Infinite scroll sentinel ──
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useCallback(

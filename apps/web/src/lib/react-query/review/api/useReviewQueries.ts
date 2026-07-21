@@ -31,6 +31,7 @@ export interface RecentReviewItem {
 export function useReviews(productSlug: string) {
   return useQuery<ReviewsResponse>({
     ...appQueryKeys.review.list(productSlug),
+    staleTime: 120_000,
     queryFn: async () => {
       const res = await fetch(`/api/products/${productSlug}/reviews`);
       if (!res.ok) return { reviews: [], average: 0, total: 0 };
@@ -42,6 +43,7 @@ export function useReviews(productSlug: string) {
 export function useRecentReviews() {
   return useQuery<RecentReviewItem[]>({
     ...appQueryKeys.review.recent,
+    staleTime: 120_000,
     queryFn: async () => {
       const res = await fetch("/api/reviews/recent");
       if (!res.ok) return [];

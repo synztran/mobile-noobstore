@@ -35,7 +35,8 @@ async function getPosts(): Promise<BlogPost[]> {
 		.select("id, slug, title, excerpt, category, author, thumbnail, published_at, created_at")
 		.eq("published", true)
 		.order("published_at", { ascending: false })
-		.order("created_at", { ascending: false });
+		.order("created_at", { ascending: false })
+		.limit(20);
 
 	return (data ?? []) as BlogPost[];
 }

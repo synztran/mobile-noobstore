@@ -1,3 +1,4 @@
+import { getCache, setCache } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -77,6 +78,10 @@ export async function GET(
   }
 
   try {
+    const cacheKey = `product-detail:${slug}`;
+    const cached = await getCache<ProductDetail>(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const supabase = await createClient();
 
     const { data: product, error } = await supabase
@@ -251,6 +256,8 @@ export async function GET(
       sold_count: Number((p as any).sold_count ?? 0),
       gifts,
     };
+
+    await setCache(cacheKey, result, 60);
 
     return NextResponse.json(result);
   } catch (err: unknown) {

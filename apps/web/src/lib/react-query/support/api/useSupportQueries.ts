@@ -14,6 +14,7 @@ interface SupportListResponse {
 export function useSupportTickets(filters: SupportListFilters) {
   return useQuery<SupportListResponse>({
     ...appQueryKeys.support.list(filters),
+    staleTime: 60_000,
     queryFn: async () => {
       const sp = new URLSearchParams({
         page: String(filters.page),
@@ -31,6 +32,7 @@ export function useSupportTickets(filters: SupportListFilters) {
 export function useSupportTicket(id: string | null) {
   return useQuery<TicketDetail>({
     ...appQueryKeys.support.detail(id ?? ""),
+    staleTime: 60_000,
     queryFn: async () => {
       const res = await fetch(`/api/support/tickets/${id}`);
       if (!res.ok) throw new Error("Failed to fetch ticket detail");

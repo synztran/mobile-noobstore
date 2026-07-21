@@ -3,11 +3,12 @@ import type { OrderSummary } from "@/app/api/user/orders/route";
 import type { PaymentInformation } from "@/lib/payment-information";
 import { appQueryKeys } from "@/lib/react-query/root";
 import type { OrderListFilters, OrderStatusResult } from "@/lib/react-query/router/order";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 export function usePaymentInformation(enabled = true) {
 	return useQuery<PaymentInformation[]>({
 		...appQueryKeys.order.paymentInformation,
+		staleTime: 300_000,
 		enabled,
 		queryFn: async () => {
 			const res = await fetch("/api/payment-information");
@@ -62,6 +63,8 @@ type OrderListPage = {
 export function useOrders({ q, status }: { q: string; status: string }) {
 	return useInfiniteQuery<OrderListPage>({
 		queryKey: ["orders", "list", { q, status }],
+		staleTime: 60_000,
+		placeholderData: keepPreviousData,
 		queryFn: async ({ pageParam }) => {
 			const params = new URLSearchParams();
 			if (q) params.set("q", q);
@@ -83,6 +86,7 @@ export function useOrders({ q, status }: { q: string; status: string }) {
 export function useOrderDetail(id: string | null) {
 	return useQuery<OrderDetail | null>({
 		...appQueryKeys.order.detail(id ?? ""),
+		staleTime: 60_000,
 		enabled: !!id,
 		queryFn: async () => {
 			const res = await fetch(`/api/user/orders/${id}`);
@@ -96,6 +100,7 @@ export function useOrderDetail(id: string | null) {
 export function useOrderByNumber(orderNumber: string | null) {
 	return useQuery<OrderSummary | null>({
 		...appQueryKeys.order.byNumber(orderNumber ?? ""),
+		staleTime: 60_000,
 		enabled: !!orderNumber,
 		queryFn: async () => {
 			const res = await fetch(

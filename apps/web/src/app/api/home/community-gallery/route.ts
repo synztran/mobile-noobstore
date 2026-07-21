@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCache, setCache } from "@/lib/redis/cache";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,15 @@ export async function GET(request: Request) {
 		const limit = Math.min(Number(searchParams.get("limit") ?? 6), 50);
 		const offset = Number(searchParams.get("offset") ?? 0);
 
+		const cacheKey = `community-gallery:${limit}:${offset}`;
+		const cached = await getCache<CommunityPhoto[]>(cacheKey);
+		if (cached) return NextResponse.json(cached, {
+			headers: {
+				"Cache-Control":
+					"public, s-maxage=60, stale-while-revalidate=300",
+			},
+		});
+
 		const supabase = await createClient();
 
 		const { data: photos, error } = await supabase
@@ -33,7 +43,10 @@ export async function GET(request: Request) {
 			);
 		}
 
-		return NextResponse.json(photos as CommunityPhoto[], {
+		const result = photos as CommunityPhoto[];
+		await setCache(cacheKey, result, 60);
+
+		return NextResponse.json(result, {
 			headers: {
 				"Cache-Control":
 					"public, s-maxage=60, stale-while-revalidate=300",
