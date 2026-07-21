@@ -229,11 +229,11 @@ export function ProductInfoTabs({
                   </div>
                   <div>
                     <p className="font-bold text-on-surface">
-                      Đổi trả trong 7 ngày
+                      Đổi trả trong 3 ngày
                     </p>
                     <p className="mt-0.5">
-                      Sản phẩm lỗi hoặc chưa sử dụng được đổi trả trong vòng 7
-                      ngày kể từ khi nhận.
+                      Sản phẩm lỗi hoặc chưa sử dụng được đổi trả trong vòng 3
+                      ngày kể từ khi nhận. Phí vận chuyển người mua chi trả
                     </p>
                   </div>
                 </div>

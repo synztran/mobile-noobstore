@@ -71,16 +71,6 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
 
     const selectedVariant = product.variants[0] ?? null;
 
-    const { success, reason } = addStandardProduct(
-      product,
-      selectedVariant,
-      product.gifts
-    );
-    if (!success) {
-      toast.warning(reason ?? "Không thể thêm vào giỏ hàng");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -88,9 +78,13 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
         product_id: product.id,
         variant_id: selectedVariant?.id ?? null,
       });
-    } catch {
-      // non-fatal
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng");
+      setSubmitting(false);
+      return;
     }
+
+    addStandardProduct(product, selectedVariant, product.gifts);
 
     if (product.thumbnail && imageRef.current) {
       flyToCart(product.thumbnail, imageRef.current);

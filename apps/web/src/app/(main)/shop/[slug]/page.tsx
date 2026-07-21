@@ -32,10 +32,9 @@ export async function generateMetadata({
   const ogImage = rawImage?.startsWith("http")
     ? rawImage
     : `https://www.noobstore.xyz${rawImage ?? ""}`;
-  const cleanDescription =
-    product.description
-      ? product.description.replace(/<[^>]*>/g, "").slice(0, 160)
-      : `${product.name} - ${product.brand ?? "NoobStore"}`;
+  const cleanDescription = product.description
+    ? product.description.replace(/<[^>]*>/g, "").slice(0, 160)
+    : `${product.name} - ${product.brand ?? "NoobStore"}`;
 
   return {
     title: product.name,
@@ -46,9 +45,7 @@ export async function generateMetadata({
       title: product.name,
       description: cleanDescription,
       url: `https://www.noobstore.xyz/shop/${slug}`,
-      images: ogImage
-        ? [{ url: ogImage, width: 1200, height: 630 }]
-        : [],
+      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : [],
     },
     twitter: {
       card: "summary_large_image",
@@ -63,7 +60,7 @@ function ProductDetailSkeleton() {
   return (
     <>
       <TopNav showBack backHref="/shop" showCart showFavorite />
-      <main className="animate-pulse">
+      <main className="w-full animate-pulse overflow-x-hidden">
         <div className="mx-6 mb-4 mt-6">
           <div className="aspect-[4/3] w-full rounded-5xl bg-surface-container shadow-ambient-sm" />
         </div>

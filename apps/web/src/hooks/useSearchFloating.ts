@@ -132,8 +132,11 @@ export function useSearchFloating() {
     [router],
   );
 
+  const isPDP = pathname.startsWith("/shop/") && pathname !== "/shop";
+
   return {
     hidden: mounted && SEARCH_HIDDEN_PATHS.some((p) => pathname.startsWith(p)),
+    isPDP,
     open,
     query,
     suggestions: suggestions ?? [],

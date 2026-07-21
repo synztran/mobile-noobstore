@@ -18,7 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!event) {
     return {
       title: "Gacha",
-      description: "Tham gia sự kiện quay thưởng để nhận phần thưởng hấp dẫn từ NoobStore.",
+      description:
+        "Tham gia sự kiện quay thưởng để nhận phần thưởng hấp dẫn từ NoobStore.",
     };
   }
 
@@ -80,7 +81,7 @@ export default async function GachaPage() {
 
   if (!event) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="fixed top-0 my-auto h-[100dvh] w-screen translate-y-1/2 text-center">
         <p className="text-base-content/60">
           Không có sự kiện nào đang diễn ra.
         </p>

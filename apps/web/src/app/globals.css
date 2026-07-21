@@ -217,9 +217,28 @@
 	--gooey-state-action: #4f46e5;
 }
 
-[data-gooey-badge] {
-	color: var(--_tone);
+[data-gooey-badge][data-state="error"], [data-gooey-title][data-state="error"] {
+	color: #dc2626;
 	background: color-mix(in srgb, var(--_tone) 18%, transparent);
+  font-size: .8rem!important;
+}
+
+[data-gooey-badge][data-state="success"], [data-gooey-title][data-state="success"] {
+  color: #16a34a;
+  font-size: .8rem!important;
+}
+
+[data-gooey-header] {
+  padding: 0.55rem 0.45rem!important;
+}
+
+[data-gooey-description] {
+  padding: 0.575rem 0.575rem 0.65rem!important;
+  font-size: 0.8rem!important;
+}
+
+[data-gooey-time-fill] {
+  background-color: #9b3f1c!important;
 }
 
 [data-gooey-title] {

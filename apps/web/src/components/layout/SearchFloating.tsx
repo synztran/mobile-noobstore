@@ -26,6 +26,7 @@ export function SearchFloating() {
     handleOpen,
     handleClose,
     setShowSuggestions,
+    isPDP,
   } = useSearchFloating();
 
   if (hidden) return null;
@@ -33,7 +34,7 @@ export function SearchFloating() {
   return (
     <div
       ref={containerRef}
-      className={`pointer-events-none fixed bottom-[4.5rem] left-4 right-4 z-[55] flex items-center gap-2 ${open ? "" : ""}`}
+      className={`pointer-events-none fixed ${isPDP ? "bottom-[13dvh]" : "bottom-[12.5dvh]"} left-4 right-4 z-[55] flex items-center gap-2 ${open ? "" : ""}`}
     >
       <AnimatePresence>
         {open && (

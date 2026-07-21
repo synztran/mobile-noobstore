@@ -12,6 +12,41 @@ interface Props {
   onBadgeClick: () => void;
 }
 
+export function RankProgressCardSkeleton() {
+  return (
+    <div className="mb-2 animate-pulse rounded-2xl bg-surface-container-high p-4 shadow-ambient-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 rounded-full bg-surface-container" />
+          <div className="space-y-1.5">
+            <div className="h-2 w-16 rounded-full bg-surface-container" />
+            <div className="h-3 w-20 rounded-full bg-surface-container-high" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="space-y-1.5 text-right">
+            <div className="ml-auto h-2 w-12 rounded-full bg-surface-container" />
+            <div className="ml-auto h-3 w-16 rounded-full bg-surface-container-high" />
+          </div>
+          <div className="h-10 w-10 rounded-full bg-surface-container" />
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <div className="h-2 w-24 rounded-full bg-surface-container" />
+          <div className="h-2 w-full rounded-full bg-surface-container-high" />
+        </div>
+        <div className="space-y-1.5">
+          <div className="h-2 w-20 rounded-full bg-surface-container" />
+          <div className="h-2 w-full rounded-full bg-surface-container-high" />
+        </div>
+        <div className="mx-auto h-2 w-48 rounded-full bg-surface-container" />
+      </div>
+      <div className="mt-3 h-9 w-full rounded-xl bg-surface-container-lowest" />
+    </div>
+  );
+}
+
 export function RankProgressCard({
   currentRank,
   nextRank,
@@ -123,7 +158,7 @@ export function RankProgressCard({
           </div>
 
           {/* Summary */}
-          <p className="text-center text-[10px] font-bold text-on-surface-variant">
+          <p className="text-center text-xs font-bold text-on-surface-variant">
             {remainingSpent > 0 && remainingOrders > 0
               ? `Còn ${formatVND(remainingSpent)} và ${remainingOrders} đơn nữa để lên ${nextRank.name}`
               : remainingSpent > 0

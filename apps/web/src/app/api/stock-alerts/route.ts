@@ -67,12 +67,19 @@ export async function DELETE(req: NextRequest) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    let query = (supabase as any)
       .from("stock_alert_subscriptions")
       .delete()
       .eq("user_id", user.id)
-      .eq("product_id", product_id)
-      .eq("variant_id", variant_id ?? null);
+      .eq("product_id", product_id);
+
+    if (variant_id) {
+      query = query.eq("variant_id", variant_id);
+    } else {
+      query = query.is("variant_id", null);
+    }
+
+    const { error } = await query;
 
     if (error) throw error;
 

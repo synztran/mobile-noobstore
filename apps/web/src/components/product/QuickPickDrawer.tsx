@@ -381,8 +381,10 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
         components: hasComponents ? components.map((c) => ({ variant_id: c.variant_id })) : undefined,
       };
       await addCartItem.mutateAsync(body);
-    } catch {
-      console.warn("[QuickPickDrawer] cart/add API failed");
+    } catch (err) {
+      dispatch({ type: "SUBMIT_DONE" });
+      toast.error(err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng");
+      return;
     }
 
     addItem(

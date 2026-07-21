@@ -3,7 +3,10 @@
 import { updateProfileName } from "@/app/actions/profile";
 import { RankBadge } from "@/components/rank/RankBadge";
 import { RankBenefitModal } from "@/components/rank/RankBenefitModal";
-import { RankProgressCard } from "@/components/rank/RankProgressCard";
+import {
+  RankProgressCard,
+  RankProgressCardSkeleton,
+} from "@/components/rank/RankProgressCard";
 import Icon from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
@@ -248,6 +251,7 @@ export default function ProfilePage() {
           />
         </div>
       )}
+      {user && !rankData && <RankProgressCardSkeleton />}
 
       {/* Menu items */}
       <div className={`space-y-3 ${!user ? "sr-only" : ""}`}>
