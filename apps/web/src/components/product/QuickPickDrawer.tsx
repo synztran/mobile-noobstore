@@ -582,6 +582,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
             {isCategoryMode && state.view === "configurator" && (
               <button
                 type="button"
+                aria-label="Quay lại danh sách"
                 onClick={() => dispatch({ type: "BACK_TO_LIST" })}
                 className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
               >

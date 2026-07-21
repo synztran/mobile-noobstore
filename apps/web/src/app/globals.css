@@ -63,6 +63,7 @@
   }
 
   /* Match Trumbowyg resetCss output — used on dangerouslySetInnerHTML containers */
+
   .editor-content p {
     margin: 0 0 15px;
     line-height: 1.4em;

@@ -24,7 +24,7 @@ export async function GET() {
 
 		const methods = await getPaymentInformation();
 		const result: PaymentInformationResponse = { methods };
-		await setCache(cacheKey, result, 300);
+		await setCache(cacheKey, result);
 
 		return NextResponse.json(result, {
 			headers: {

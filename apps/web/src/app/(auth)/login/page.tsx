@@ -99,6 +99,7 @@ function LoginForm() {
           />
           <button
             type="button"
+            aria-label="Hiện/ẩn mật khẩu"
             onClick={() => setShowPassword(!showPassword)}
             className="text-outline transition-colors hover:text-on-surface"
           >

@@ -78,8 +78,9 @@ export default function RootLayout({
       lang="en"
       data-theme="noobstore"
       className={cn("font-sans", manrope.variable)}
+      suppressHydrationWarning
     >
-      <head>
+      <head suppressHydrationWarning>
         <meta property="fb:app_id" content="YOUR_FB_APP_ID" />
         <meta
           name="viewport"

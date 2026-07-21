@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  fetchKitSupplements,
+  type VariantRow,
+} from "@/lib/product-query-service";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +14,7 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient();
     let query = supabase
       .from("products")
-      .select("id, name, slug, thumbnail, base_price, product_type")
+      .select("id, name, slug, thumbnail, base_price, product_type, product_variants(id, price_adjustment)")
       .eq("is_active", true)
       .order("name", { ascending: true })
       .limit(20);
@@ -29,15 +33,47 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const { data, error } = await query;
+    const { data: rawData, error } = await query;
 
     if (error) throw error;
 
-    return NextResponse.json(data ?? []);
+    const rows = rawData ?? [];
+    const kitIds = rows
+      .filter((r: any) => r.product_type === "kit")
+      .map((r: any) => r.id);
+    const kitSupps =
+      kitIds.length > 0 ? await fetchKitSupplements(kitIds) : null;
+
+    const data = rows.map((row: any) => {
+      const basePrice = Number(row.base_price);
+      const directVariants: VariantRow[] = row.product_variants ?? [];
+      const childVariants =
+        kitSupps?.childVariantsByProductId.get(row.id) ?? [];
+      const allVariants = [...directVariants, ...childVariants];
+
+      const minPrice =
+        allVariants.length > 0
+          ? Math.min(
+              ...allVariants.map((v) => basePrice + Number(v.price_adjustment)),
+            )
+          : basePrice;
+
+      return {
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        thumbnail: row.thumbnail,
+        base_price: basePrice,
+        min_price: minPrice,
+        product_type: row.product_type,
+      };
+    });
+
+    return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

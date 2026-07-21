@@ -109,9 +109,10 @@ export function SearchPageClient({ initialData, query, initialSort }: Props) {
           placeholder="Tìm kiếm sản phẩm..."
           className="w-full rounded-2xl border border-outline-variant/30 bg-surface-container-low py-3 pl-12 pr-10 text-sm text-on-surface outline-none transition-all placeholder:text-on-surface-variant/40 focus:border-primary focus:ring-1 focus:ring-primary"
         />
-        {searchText && (
+          {searchText && (
           <button
             type="button"
+            aria-label="Xoá tìm kiếm"
             onClick={() => router.push("/search")}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface"
           >

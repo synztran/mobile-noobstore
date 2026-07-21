@@ -27,6 +27,7 @@ export function QuantityStepper({
     >
       <button
         type="button"
+        aria-label="Giảm số lượng"
         onClick={() => onChange(Math.max(min, (value ?? min) - 1))}
         className="flex h-6 w-6 items-center justify-center rounded-full text-on-surface transition-colors hover:bg-surface-container-high"
       >
@@ -42,6 +43,7 @@ export function QuantityStepper({
       />
       <button
         type="button"
+        aria-label="Tăng số lượng"
         onClick={() => onChange((value ?? 0) + 1)}
         className="flex h-6 w-6 items-center justify-center rounded-full text-on-surface transition-colors hover:bg-surface-container-high"
       >

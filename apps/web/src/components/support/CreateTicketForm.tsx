@@ -373,6 +373,7 @@ export function CreateTicketForm({ orderItems, orderId, orderNumber }: Props) {
                       {!section.isSubmitted && (
                         <button
                           type="button"
+                          aria-label="Xoá tệp"
                           onClick={() => removeFile(index, i)}
                           className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
                         >

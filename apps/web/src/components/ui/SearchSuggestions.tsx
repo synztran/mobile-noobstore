@@ -3,6 +3,7 @@
 import { Clock, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
+import { formatVND } from "@/lib/currency";
 
 import type { ProductSuggestion } from "@/types/search";
 export type { ProductSuggestion };
@@ -79,7 +80,7 @@ export default function SearchSuggestions({
 
   return (
     <div
-      className={`z-[100] pointer-events-auto absolute left-0 right-0 w-full overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-low shadow-float ${className ?? "top-full mt-2"}`}
+      className={`pointer-events-auto absolute left-0 right-0 z-[100] w-full overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-low shadow-float ${className ?? "top-full mt-2"}`}
     >
       {loading ? (
         <div className="space-y-1 p-3">
@@ -123,8 +124,12 @@ export default function SearchSuggestions({
                   <p className="truncate text-sm font-semibold text-on-surface">
                     {product.name}
                   </p>
-                  <p className="text-xs font-medium text-on-surface-variant">
-                    {product.base_price.toLocaleString()}đ
+                  <p className="text-xs font-medium text-primary">
+                    {product.min_price && !product.base_price ? (
+                      <> giá từ {formatVND(product.min_price)}</>
+                    ) : (
+                      formatVND(product.base_price)
+                    )}
                   </p>
                 </div>
               </button>

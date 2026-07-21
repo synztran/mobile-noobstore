@@ -135,6 +135,7 @@ export function KeycapStemEntryConfig({
             {groups.length > 1 ? (
               <button
                 type="button"
+                aria-label="Xoá nhóm"
                 onClick={() => removeGroup(idx)}
                 className="absolute -right-1 -top-3 flex h-5 w-5 items-center justify-center rounded-full border border-red-400 bg-white text-error transition-colors hover:bg-error/10"
               >

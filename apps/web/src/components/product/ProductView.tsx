@@ -236,6 +236,7 @@ export function ProductView({
           >
             <button
               type="button"
+              aria-label="Xem ảnh sản phẩm"
               onClick={() => mediaImages.length > 0 && setImageViewerOpen(true)}
               className="relative h-full w-full"
             >

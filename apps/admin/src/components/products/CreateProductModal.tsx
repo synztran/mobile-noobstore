@@ -47,10 +47,22 @@ export default function CreateProductModal({
   const [isActive, setIsActive] = useState(true);
   // const [isPreOrder, setIsPreOrder] = useState(false);
 
+  function resetForm() {
+    formRef.current?.reset();
+    setError(null);
+    setProductType("standard");
+    setSlug("");
+    setParentProductId("");
+    setCategoryType("");
+    setDescription("");
+    setAttributes({});
+    setIsActive(true);
+  }
+
   useEffect(() => {
     if (!open) return;
+    resetForm();
     setCreatedKitId(null);
-    setParentProductId("");
     setKitOptionsLoading(true);
     fetch("/api/products?productType=kit")
       .then((r) => r.json())
@@ -134,9 +146,7 @@ export default function CreateProductModal({
       return;
     }
 
-    formRef.current?.reset();
-    setSlug("");
-    setParentProductId("");
+    resetForm();
 
     queryClient.invalidateQueries({ queryKey: ["products"] });
     invalidateCacheByPattern("*product*");

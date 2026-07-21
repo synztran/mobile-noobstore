@@ -79,13 +79,14 @@ export function TopNav({
         )}
       </div>
 
-      <p className="text-center font-sans text-xl font-black tracking-tighter text-on-surface">
+      <p className="bg-gradient-to-br from-[#9b3f1c] to-[#bb5732] bg-clip-text text-center font-sans text-xl font-black tracking-tighter text-transparent">
         {title}
       </p>
 
       <div className="flex items-center justify-end gap-4 justify-self-end">
         {showFavorite && (
           <button
+            aria-label="Danh sách yêu thích"
             onClick={() => setWishlistOpen(true)}
             className="text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95"
           >
@@ -93,6 +94,7 @@ export function TopNav({
           </button>
         )}
         <button
+          aria-label="Giỏ hàng"
           disabled={hideCart}
           onClick={openCart}
           data-cart-icon

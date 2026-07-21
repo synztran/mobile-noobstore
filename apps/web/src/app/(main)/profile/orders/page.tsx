@@ -239,6 +239,7 @@ function OrdersPage() {
       <div className="mb-2 flex items-center gap-3">
         <Link
           href="/profile"
+          aria-label="Quay lại"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
         >
           <ArrowLeft size={18} className="text-on-surface" />
@@ -266,7 +267,7 @@ function OrdersPage() {
           className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
         />
         {q && (
-          <button onClick={() => setQ("")}>
+          <button aria-label="Xoá tìm kiếm" onClick={() => setQ("")}>
             <X size={18} className="text-outline-variant" />
           </button>
         )}

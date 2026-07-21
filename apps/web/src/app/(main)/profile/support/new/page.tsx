@@ -158,6 +158,7 @@ function NewTicketPageContent() {
         <div className="flex items-center gap-3">
           <Link
             href="/profile/support"
+            aria-label="Quay lại"
             className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
           >
             <ArrowLeft size={18} />
@@ -169,6 +170,7 @@ function NewTicketPageContent() {
         {handleOnChangeOrder && pickedOrderId && (
           <button
             type="button"
+            aria-label="Đổi đơn hàng"
             onClick={handleOnChangeOrder}
             className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-container-high transition-all active:scale-90"
           >

@@ -4,5 +4,6 @@ export interface ProductSuggestion {
   slug: string;
   thumbnail: string | null;
   base_price: number;
+  min_price: number;
   product_type: string;
 }

@@ -210,6 +210,7 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 				<div className="flex items-center gap-3">
 					<button
 						type="button"
+						aria-label="Giảm số lượng"
 						disabled={quantity <= 1}
 						onClick={() => setQuantity((q) => Math.max(1, q - 1))}
 						className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container transition-colors hover:bg-surface-container-high disabled:opacity-40 disabled:cursor-not-allowed"
@@ -224,6 +225,7 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 					</span>
 					<button
 						type="button"
+						aria-label="Tăng số lượng"
 						onClick={() => setQuantity((q) => q + 1)}
 						className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container transition-colors hover:bg-surface-container-high"
 					>

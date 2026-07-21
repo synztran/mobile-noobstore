@@ -56,6 +56,7 @@ export function NotificationCenter() {
       <div className="flex items-center gap-3">
         <button
           type="button"
+          aria-label="Quay lại"
           onClick={() => router.push("/profile")}
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container text-on-surface transition-transform active:scale-90"
         >

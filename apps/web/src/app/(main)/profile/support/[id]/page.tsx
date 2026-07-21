@@ -78,6 +78,7 @@ export default function TicketDetailPage({
       <div className="flex items-center gap-3">
         <Link
           href="/profile/support"
+          aria-label="Quay lại"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
         >
           <ArrowLeft size={18} strokeWidth={2} />

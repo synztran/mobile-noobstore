@@ -117,6 +117,7 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
                 <button
                   key={img}
                   type="button"
+                  aria-label={`Ảnh ${i + 1} / ${images.length}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIndex(i);

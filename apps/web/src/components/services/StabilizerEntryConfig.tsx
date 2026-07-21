@@ -128,6 +128,7 @@ export function StabilizerEntryConfig({
 								<div className="flex items-center gap-1 ml-auto">
 									<button
 										type="button"
+										aria-label="Giảm số lượng"
 										onClick={() =>
 											onUpdateEntry(
 												serviceId,
@@ -152,6 +153,7 @@ export function StabilizerEntryConfig({
 									</span>
 									<button
 										type="button"
+										aria-label="Tăng số lượng"
 										onClick={() =>
 											onUpdateEntry(
 												serviceId,

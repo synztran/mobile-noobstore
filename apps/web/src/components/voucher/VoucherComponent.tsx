@@ -152,6 +152,7 @@ export function VoucherComponent({
               </div>
               <button
                 type="button"
+                aria-label="Gỡ mã giảm giá"
                 onClick={() =>
                   removeAppliedVoucher(entry.voucherInfo.voucher_id)
                 }

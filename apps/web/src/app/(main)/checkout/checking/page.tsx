@@ -4,7 +4,7 @@ import { OrderItemsList } from "@/components/checkout/OrderItemsList";
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
-import type { PaymentInformation } from "@/lib/payment-information";
+import { usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
@@ -60,18 +60,7 @@ export default function CheckingPage() {
 		},
 	});
 
-	const paymentMethodsQuery = useQuery({
-		queryKey: ["payment-information"],
-		enabled: mounted,
-		queryFn: async () => {
-			const res = await fetch("/api/payment-information");
-			if (!res.ok) throw new Error("Failed to load payment info");
-			const data = (await res.json()) as {
-				methods?: PaymentInformation[];
-			};
-			return data.methods ?? [];
-		},
-	});
+	const paymentMethodsQuery = usePaymentInformation(mounted);
 
 	const orderStatus = orderStatusQuery.data ?? null;
 	const paymentMethods = paymentMethodsQuery.data ?? [];

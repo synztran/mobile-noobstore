@@ -66,6 +66,7 @@ function RewardsPage() {
       <div className="mb-2 flex items-center gap-3">
         <Link
           href="/profile"
+          aria-label="Quay lại"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
         >
           <ArrowLeft size={18} className="text-on-surface" />

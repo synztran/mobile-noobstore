@@ -41,6 +41,7 @@ export function PushNotificationPrompt() {
     <div className="fixed bottom-24 left-4 right-4 z-50 animate-slide-up">
       <div className="relative rounded-2xl bg-surface px-4 pb-4 pt-3 shadow-ambient-lg">
         <button
+          aria-label="Đóng"
           onClick={handleDismiss}
           className="absolute right-3 top-3 rounded-full p-1 text-on-surface-variant transition-colors hover:bg-surface-container active:scale-90"
         >
