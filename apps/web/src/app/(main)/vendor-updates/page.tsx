@@ -46,7 +46,22 @@ async function getReleases(): Promise<Release[]> {
     .order("published_at", { ascending: false })
     .limit(50);
 
-  return (data ?? []) as Release[];
+  return ((data ?? []) as unknown as Array<Record<string, unknown>>).map(
+    (row) => ({
+      id: row.id as string,
+      title: row.title as string,
+      content: row.content as string,
+      excerpt: (row.excerpt as string | null) ?? null,
+      source_url: (row.source_url as string | null) ?? null,
+      maker_name: (row.maker_name as string | null) ?? null,
+      thumbnail: (row.thumbnail as string | null) ?? null,
+      type: (row.type as string) ?? "NEW_RELEASE",
+      published_at: (row.published_at as string | null) ?? null,
+      vendor: row.vendor
+        ? (row.vendor as unknown as Vendor)
+        : null,
+    })
+  );
 }
 
 const TYPE_LABELS: Record<string, string> = {
