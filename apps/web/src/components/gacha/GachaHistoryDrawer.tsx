@@ -111,12 +111,13 @@ export function GachaHistoryDrawer({
 								: "linear-gradient(135deg, #e5e7eb, #d1d5db)",
 						}}>
 						{entry.reward?.thumbnail_url ? (
-							<Image
-								src={entry.reward.thumbnail_url}
-								alt=""
-								className="w-full h-full rounded-full object-cover"
-								fill
-							/>
+						<Image
+							src={entry.reward.thumbnail_url}
+							alt=""
+							className="w-full h-full rounded-full object-cover"
+							fill
+							sizes="48px"
+						/>
 						) : (
 							<span>
 								{entry.reward?.is_golden ? "★" : "🎱"}

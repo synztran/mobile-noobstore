@@ -84,6 +84,7 @@ type RawListRow = {
   images: unknown;
   product_type: string;
   is_used: boolean;
+  is_pre_order: boolean;
   created_at: string;
   sold_count: number;
   categories: { id: string; name: string } | null;
@@ -361,7 +362,12 @@ function shapeRow(
     effectiveStock = variants.reduce((s, v) => s + v.stock_quantity, 0);
   }
 
-  // 5. Build result
+  // 5. Build result — is_pre_order logic differs by product type
+  const is_pre_order =
+    productType === "kit"
+      ? variants.some((v) => v.is_pre_order)
+      : row.is_pre_order ?? false;
+
   const shaped: ProductListItem = {
     id: row.id,
     slug: row.slug,
@@ -377,7 +383,7 @@ function shapeRow(
     variants,
     min_price: minPrice,
     is_used: row.is_used ?? false,
-    is_pre_order: variants.some((v) => v.is_pre_order),
+    is_pre_order,
     tags: [],
     discount_price: minPrice < basePrice ? minPrice : 0,
     discount_percentage: discountPercentage,
@@ -489,7 +495,7 @@ export async function getProductListByFilters(
     if (countErr || count === null) return { products: [], total: 0 };
 
     // ── Fetch paginated products (sorted by user's choice) ──
-    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, created_at, sold_count,
+    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
        categories(id, name),
        product_variants(${VARIANT_COLUMNS})`;
 

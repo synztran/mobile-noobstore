@@ -45,7 +45,7 @@ export default function CreateProductModal({
   const [description, setDescription] = useState("");
   const [attributes, setAttributes] = useState<Record<string, string>>({});
   const [isActive, setIsActive] = useState(true);
-  // const [isPreOrder, setIsPreOrder] = useState(false);
+  const [isPreOrder, setIsPreOrder] = useState(false);
 
   function resetForm() {
     formRef.current?.reset();
@@ -72,19 +72,73 @@ export default function CreateProductModal({
 
   function toSlug(value: string) {
     const vietnameseMap: Record<string, string> = {
-      à: "a", á: "a", ả: "a", ã: "a", ạ: "a",
-      ă: "a", ắ: "a", ằ: "a", ẳ: "a", ẵ: "a", ặ: "a",
-      â: "a", ấ: "a", ầ: "a", ẩ: "a", ẫ: "a", ậ: "a",
+      à: "a",
+      á: "a",
+      ả: "a",
+      ã: "a",
+      ạ: "a",
+      ă: "a",
+      ắ: "a",
+      ằ: "a",
+      ẳ: "a",
+      ẵ: "a",
+      ặ: "a",
+      â: "a",
+      ấ: "a",
+      ầ: "a",
+      ẩ: "a",
+      ẫ: "a",
+      ậ: "a",
       đ: "d",
-      è: "e", é: "e", ẻ: "e", ẽ: "e", ẹ: "e",
-      ê: "e", ế: "e", ề: "e", ể: "e", ễ: "e", ệ: "e",
-      ì: "i", í: "i", ỉ: "i", ĩ: "i", ị: "i",
-      ò: "o", ó: "o", ỏ: "o", õ: "o", ọ: "o",
-      ô: "o", ố: "o", ồ: "o", ổ: "o", ỗ: "o", ộ: "o",
-      ơ: "o", ớ: "o", ờ: "o", ở: "o", ỡ: "o", ợ: "o",
-      ù: "u", ú: "u", ủ: "u", ũ: "u", ụ: "u",
-      ư: "u", ứ: "u", ừ: "u", ử: "u", ữ: "u", ự: "u",
-      ỳ: "y", ý: "y", ỷ: "y", ỹ: "y", ỵ: "y",
+      è: "e",
+      é: "e",
+      ẻ: "e",
+      ẽ: "e",
+      ẹ: "e",
+      ê: "e",
+      ế: "e",
+      ề: "e",
+      ể: "e",
+      ễ: "e",
+      ệ: "e",
+      ì: "i",
+      í: "i",
+      ỉ: "i",
+      ĩ: "i",
+      ị: "i",
+      ò: "o",
+      ó: "o",
+      ỏ: "o",
+      õ: "o",
+      ọ: "o",
+      ô: "o",
+      ố: "o",
+      ồ: "o",
+      ổ: "o",
+      ỗ: "o",
+      ộ: "o",
+      ơ: "o",
+      ớ: "o",
+      ờ: "o",
+      ở: "o",
+      ỡ: "o",
+      ợ: "o",
+      ù: "u",
+      ú: "u",
+      ủ: "u",
+      ũ: "u",
+      ụ: "u",
+      ư: "u",
+      ứ: "u",
+      ừ: "u",
+      ử: "u",
+      ữ: "u",
+      ự: "u",
+      ỳ: "y",
+      ý: "y",
+      ỷ: "y",
+      ỹ: "y",
+      ỵ: "y",
     };
     return value
       .toLowerCase()
@@ -135,7 +189,7 @@ export default function CreateProductModal({
         category_id,
         attributes: Object.keys(attributes).length > 0 ? attributes : null,
         is_active: isActive,
-        // is_pre_order: isPreOrder,
+        is_pre_order: isPreOrder,
       }),
     });
     const data = await res.json();
@@ -349,10 +403,7 @@ export default function CreateProductModal({
               </div>
 
               <div className="col-span-4">
-                <AttributesEditor
-                  value={attributes}
-                  onChange={setAttributes}
-                />
+                <AttributesEditor value={attributes} onChange={setAttributes} />
               </div>
 
               <div className="col-span-4">
@@ -372,22 +423,24 @@ export default function CreateProductModal({
                 </div>
               </div>
 
-              {/* <div className="col-span-4">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsPreOrder((v) => !v)}
-                    className={`relative h-6 w-10 rounded-full transition-colors ${isPreOrder ? "bg-violet-500" : "bg-slate-300"}`}
-                  >
-                    <span
-                      className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isPreOrder ? "translate-x-4" : ""}`}
-                    />
-                  </button>
-                  <span className="text-sm font-medium text-slate-700">
-                    {isPreOrder ? "Pre-order" : "Not pre-order"}
-                  </span>
+              {productType === "kit" ? null : (
+                <div className="col-span-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsPreOrder((v) => !v)}
+                      className={`relative h-6 w-10 rounded-full transition-colors ${isPreOrder ? "bg-violet-500" : "bg-slate-300"}`}
+                    >
+                      <span
+                        className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isPreOrder ? "translate-x-4" : ""}`}
+                      />
+                    </button>
+                    <span className="text-sm font-medium text-slate-700">
+                      {isPreOrder ? "Pre-order" : "Not pre-order"}
+                    </span>
+                  </div>
                 </div>
-              </div> */}
+              )}
             </div>
           </div>
 

@@ -49,7 +49,24 @@ export function useWishlistAddMutation() {
 			}
 			return res.json() as Promise<AddWishlistResponse>;
 		},
-		onSuccess: () => {
+		onMutate: async (productId) => {
+			await queryClient.cancelQueries({ queryKey: WISHLIST_KEY });
+			const previous = queryClient.getQueryData<WishlistItemResponse[]>(WISHLIST_KEY);
+			queryClient.setQueryData<WishlistItemResponse[]>(
+				WISHLIST_KEY,
+				(prev = []) => [
+					...prev,
+					{ product_id: productId, id: `opt-${productId}`, added_at: new Date().toISOString(), product: null },
+				],
+			);
+			return { previous };
+		},
+		onError: (_err, _productId, context) => {
+			if (context?.previous) {
+				queryClient.setQueryData(WISHLIST_KEY, context.previous);
+			}
+		},
+		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: WISHLIST_KEY });
 		},
 	});

@@ -48,6 +48,7 @@ export function QRPaymentSection({
 							alt="Payment QR Code"
 							className="object-contain"
 							fill
+							sizes="280px"
 							unoptimized
 							onError={() => setQrError(true)}
 						/>

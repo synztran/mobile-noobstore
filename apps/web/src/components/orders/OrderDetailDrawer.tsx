@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 
 const STATUS_CONFIG: Record<
@@ -28,31 +28,31 @@ const STATUS_CONFIG: Record<
     label: "Đang kiểm tra",
     Icon: HourglassIcon,
     color: "text-amber-600",
-    bg: "bg-amber-50",
+    bg: "bg-amber-100",
   },
   confirmed: {
     label: "Đã xác nhận",
     Icon: CheckCircle2,
     color: "text-emerald-600",
-    bg: "bg-emerald-50",
+    bg: "bg-emerald-100",
   },
   preparing: {
     label: "Đang chuẩn bị hàng",
     Icon: PackageCheck,
     color: "text-sky-700",
-    bg: "bg-sky-50",
+    bg: "bg-sky-100",
   },
   delivering: {
     label: "Đang vận chuyển",
     Icon: Truck,
     color: "text-blue-600",
-    bg: "bg-blue-50",
+    bg: "bg-blue-100",
   },
   paid: {
     label: "Đã thanh toán",
     Icon: CheckCircle2,
     color: "text-emerald-600",
-    bg: "bg-emerald-50",
+    bg: "bg-emerald-100",
   },
   shipped: {
     label: "Đang vận chuyển",
@@ -87,7 +87,6 @@ interface Props {
 
 const CANCELLABLE_STATUSES = ["pending"];
 const NON_TERMINAL_STATUSES = [
-  "pending",
   "confirmed",
   "preparing",
   "delivering",
@@ -99,6 +98,49 @@ const TIMELINE_STEPS = [
   { key: "delivering", label: "Đang giao" },
   { key: "delivered", label: "Đã giao" },
 ];
+
+function PaymentCountdown({ createdAt }: { createdAt: string }) {
+  const calcRemaining = useCallback(() => {
+    const created = new Date(createdAt);
+    const endOfDay = new Date(created);
+    endOfDay.setHours(23, 59, 59, 999);
+    return Math.max(0, endOfDay.getTime() - Date.now());
+  }, [createdAt]);
+
+  const [remaining, setRemaining] = useState(calcRemaining);
+
+  useEffect(() => {
+    setRemaining(calcRemaining());
+    const interval = setInterval(() => setRemaining(calcRemaining()), 1000);
+    return () => clearInterval(interval);
+  }, [calcRemaining]);
+
+  const hours = Math.floor(remaining / 3600000);
+  const minutes = Math.floor((remaining % 3600000) / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+
+  if (remaining <= 0) {
+    return (
+      <div className="flex w-full items-center justify-center gap-2 rounded-2xl border border-error/15 bg-error/5 px-4 py-2.5">
+        <p className="text-xs font-bold text-error">Hết hạn thanh toán</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full items-center justify-between rounded-md bg-surface-container px-4 py-2.5">
+      <p className="text-xs font-semibold">
+        Vui lòng thanh toán trong thời gian quy định, tránh bị hủy đơn do quá
+        hạn thanh toán
+      </p>
+      <p className="text-right font-black tabular-nums tracking-wide text-red-600">
+        <span className="text-[10px] text-black">còn</span>&nbsp;
+        {String(hours).padStart(2, "0")}:{String(minutes).padStart(2, "0")}:
+        {String(seconds).padStart(2, "0")}
+      </p>
+    </div>
+  );
+}
 
 function OrderDetailContent({
   detail,
@@ -150,13 +192,18 @@ function OrderDetailContent({
         const StatusIcon = cfg.Icon;
         return (
           <div
-            className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${cfg.bg}`}
+            className={`flex max-w-max items-center gap-2 rounded-2xl p-2 ${cfg.bg}`}
           >
             <StatusIcon size={22} className={cfg.color} />
             <p className={`text-sm font-black ${cfg.color}`}>{cfg.label}</p>
           </div>
         );
       })()}
+
+      {/* Payment countdown */}
+      {detail.status === "pending" && detail.created_at && (
+        <PaymentCountdown createdAt={detail.created_at} />
+      )}
 
       {/* Status timeline */}
       {NON_TERMINAL_STATUSES.includes(detail.status) && (
@@ -209,26 +256,15 @@ function OrderDetailContent({
         </div>
       )}
 
-      {/* Cancel button */}
-      {isCancellable && (
-        <button
-          onClick={() => setShowCancelModal(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-error/20 bg-error/5 py-3 text-sm font-black uppercase tracking-wider text-error transition-all active:scale-[0.98]"
-        >
-          <CircleX size={16} />
-          Huỷ đơn hàng
-        </button>
-      )}
-
       {/* Order items */}
       {detail.items.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
               Sản phẩm ({detail.items.length})
             </p>
-            <div className="flex items-center gap-2">
-              {isSupportAvailable && (
+            {isSupportAvailable && (
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     router.push(
@@ -241,8 +277,8 @@ function OrderDetailContent({
                   <AlertCircle size={12} className="text-error" />
                   Báo cáo vấn đề
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
           {detail.items.map((item) => (
             <div key={item.id} className="space-y-1">
@@ -253,6 +289,7 @@ function OrderDetailContent({
                       src={item.thumbnail}
                       alt={item.product_name}
                       fill
+                      sizes="96px"
                       className="rounded-xl object-cover"
                     />
                   ) : (
@@ -329,8 +366,7 @@ function OrderDetailContent({
       {/* Delivery information */}
       {detail.delivery_address && (
         <div className="space-y-2">
-          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            <Truck size={14} />
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
             Thông tin giao hàng
           </p>
           <div className="space-y-1 rounded-2xl bg-surface-container p-4">
@@ -344,19 +380,18 @@ function OrderDetailContent({
             )}
             <p className="text-sm text-on-surface-variant">
               {[
-                detail.delivery_address.street_address,
                 detail.delivery_address.apartment,
-                detail.delivery_address.ward,
-                detail.delivery_address.district,
-                detail.delivery_address.city,
+                detail.delivery_address.street_address,
               ]
                 .filter(Boolean)
                 .join(", ")}
             </p>
-            <p className="space-x-1">
-              <strong className="text-sm">Ghi chú:</strong>
-              <small>{detail.delivery_address.notes}</small>
-            </p>
+            {detail.delivery_address.notes ? (
+              <p className="space-x-1">
+                <strong className="text-sm">Ghi chú:</strong>
+                <small>{detail.delivery_address.notes}</small>
+              </p>
+            ) : null}
           </div>
         </div>
       )}
@@ -450,6 +485,17 @@ function OrderDetailContent({
           </a>
         )}
 
+      {/* Cancel button */}
+      {isCancellable && (
+        <button
+          onClick={() => setShowCancelModal(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-error/20 bg-error/5 py-3 text-sm font-black uppercase tracking-wider text-error transition-all active:scale-[0.98]"
+        >
+          <CircleX size={16} />
+          Huỷ đơn hàng
+        </button>
+      )}
+
       {/* Cancel confirmation modal */}
       <dialog
         className={`modal ${showCancelModal ? "modal-open" : ""}`}
@@ -534,7 +580,7 @@ function DrawerSkeleton() {
 export function OrderDetailDrawer({ orderId, onClose }: Props) {
   const isOpen = orderId !== null;
   const { data: detail, isLoading } = useOrderDetail(isOpen ? orderId : null);
-  usePreventScroll(isOpen)
+  usePreventScroll(isOpen);
 
   return (
     <>
@@ -579,7 +625,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+        <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {(() => {
             if (isLoading) return <DrawerSkeleton />;
             if (!detail)

@@ -14,12 +14,14 @@ interface Props {
 export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
   const [index, setIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const lastScale = useRef(1);
 
   useEffect(() => {
     setIndex(initialIndex);
     setScale(1);
+    setImageLoaded(false);
     lastScale.current = 1;
   }, [initialIndex, isOpen]);
 
@@ -94,14 +96,21 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
             transition={{ duration: 0.25, ease: "easeOut" }}
             style={{ transform: `scale(${scale})` }}
           >
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="loading loading-spinner loading-lg text-white/60" />
+              </div>
+            )}
             <Image
               src={images[index]}
               alt=""
               fill
-              className="object-contain"
+              className={`object-contain ${imageLoaded ? "opacity-100" : "opacity-0"}`}
               sizes="100vw"
               priority
               draggable={false}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageLoaded(true)}
             />
           </motion.div>
 

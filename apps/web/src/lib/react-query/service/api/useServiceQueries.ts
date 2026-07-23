@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 export function useServiceDetail(slug: string) {
 	return useQuery<Service>({
 		...appQueryKeys.service.detail(slug),
+		staleTime: 60_000,
 		queryFn: async () => {
 			const res = await fetch(`/api/services/${slug}`);
 			if (res.status === 404) throw new Error("NOT_FOUND");

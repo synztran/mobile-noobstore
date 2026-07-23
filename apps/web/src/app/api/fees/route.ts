@@ -79,7 +79,6 @@ export async function GET() {
     );
   }
 
-  // Cache indefinitely — fee config changes only via admin panel
-  await setCache(cacheKey, data);
+  await setCache(cacheKey, data, 600);
   return NextResponse.json(data);
 }

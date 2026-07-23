@@ -37,12 +37,13 @@ const RewardCard = memo(function RewardCard({ r }: { r: GachaRewardMeta }) {
 						: "linear-gradient(135deg, #f3f4f6, #e5e7eb)",
 				}}>
 				{r.thumbnail_url ? (
-					<Image
-						src={r.thumbnail_url}
-						alt="reward thumbnail"
-						fill
-						className="w-full h-full object-cover"
-					/>
+				<Image
+					src={r.thumbnail_url}
+					alt="reward thumbnail"
+					fill
+					sizes="80px"
+					className="w-full h-full object-cover"
+				/>
 				) : (
 					<span className="text-3xl">{r.is_golden ? "★" : "🎱"}</span>
 				)}

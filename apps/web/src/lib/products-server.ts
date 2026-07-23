@@ -87,6 +87,7 @@ type RawListRow = {
   images: unknown;
   product_type: string;
   is_used: boolean;
+  is_pre_order: boolean;
   sold_count: number;
   categories: { id: string; name: string } | null;
   product_variants: RawVariantRow[] | null;
@@ -205,6 +206,11 @@ function shapeRow(
     });
   }
 
+  const is_pre_order =
+    productType === "kit"
+      ? variants.some((v) => v.is_pre_order)
+      : p.is_pre_order ?? false;
+
   return {
     id: p.id,
     slug: p.slug,
@@ -221,7 +227,7 @@ function shapeRow(
     min_price: minPrice,
     is_used: p.is_used ?? false,
     tags,
-    is_pre_order: variants.some((v) => v.is_pre_order),
+    is_pre_order,
     sold_count: Number(p.sold_count ?? 0),
     gifts: giftsByProductId.get(p.id) ?? undefined,
   };
@@ -423,7 +429,7 @@ export const getQuickPickData = cache(
         const { data, error } = await getPublicClient()
           .from("products")
           .select(
-            `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, sold_count,
+            `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, is_pre_order, sold_count,
 						 categories(id, name),
 						 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
           )

@@ -50,8 +50,7 @@ export async function GET() {
 			);
 		}
 
-		// Cache indefinitely — only invalidated via admin mutations
-		await setCache(cacheKey, campaigns);
+		await setCache(cacheKey, campaigns, 600);
 		return NextResponse.json(campaigns as unknown as HeroCampaign[]);
 	} catch (err) {
 		console.error("[hero] error:", err);

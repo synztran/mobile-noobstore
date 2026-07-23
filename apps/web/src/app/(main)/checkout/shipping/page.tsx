@@ -1,7 +1,12 @@
 "use client";
 
+import dynamic from "next/dynamic";
+import { Suspense, memo, useMemo } from "react";
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
-import DistanceMap from "@/components/map/distanceMap";
+
+const DistanceMap = dynamic(() => import("@/components/map/distanceMap"), {
+  ssr: false,
+});
 import {
   CitySearchInput,
   DistrictSearchInput,
@@ -22,7 +27,6 @@ import {
   Phone,
   Truck,
 } from "lucide-react";
-import { memo, useMemo } from "react";
 import { ShippingPageSkeleton } from "./ShippingPageSkeleton";
 
 const FIELDS = [
@@ -357,15 +361,21 @@ const ShippingPage = () => {
           </div>
         </div>
 
-        <DistanceMap
-          targetLocation={customerLocation}
-          storeLocation={
-            storeCoords ? { ...storeCoords, label: "Noobstore HCM" } : null
+        <Suspense
+          fallback={
+            <div className="h-48 w-full animate-pulse rounded-2xl bg-surface-container-low" />
           }
-          routeCoordinates={routeCoordinates}
-          drivingDistanceKm={distanceKm !== null ? distanceKm.toFixed(1) : null}
-          isLoading={isCalculatingFee}
-        />
+        >
+          <DistanceMap
+            targetLocation={customerLocation}
+            storeLocation={
+              storeCoords ? { ...storeCoords, label: "Noobstore HCM" } : null
+            }
+            routeCoordinates={routeCoordinates}
+            drivingDistanceKm={distanceKm !== null ? distanceKm.toFixed(1) : null}
+            isLoading={isCalculatingFee}
+          />
+        </Suspense>
 
         {/* ── Delivery speed ───────────────────────────────────── */}
         <div className="space-y-3">

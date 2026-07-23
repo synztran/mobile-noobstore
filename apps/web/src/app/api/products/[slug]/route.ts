@@ -101,6 +101,7 @@ export async function GET(
 				product_type,
  				is_used,
  				is_active,
+          is_pre_order,
           attributes,
          sale_ends_at,
 				categories(id, name),
@@ -250,14 +251,17 @@ export async function GET(
       components,
       min_price: minPrice,
       is_used: p.is_used ?? false,
-      is_pre_order: variants.some((v) => v.is_pre_order),
+      is_pre_order:
+        p.product_type === "kit"
+          ? variants.some((v) => v.is_pre_order)
+          : p.is_pre_order ?? false,
       attributes: (p as any).attributes ?? null,
       sale_ends_at: (p as any).sale_ends_at ?? null,
       sold_count: Number((p as any).sold_count ?? 0),
       gifts,
     };
 
-    await setCache(cacheKey, result, 60);
+    await setCache(cacheKey, result, 300);
 
     return NextResponse.json(result);
   } catch (err: unknown) {

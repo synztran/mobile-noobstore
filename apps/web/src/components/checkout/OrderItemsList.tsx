@@ -68,6 +68,7 @@ export function OrderItemsList({
                       src={item.product.thumbnail}
                       alt={item.product.name}
                       fill
+                      sizes="96px"
                       className="rounded-lg object-cover"
                     />
                   ) : (
@@ -139,12 +140,13 @@ export function OrderItemsList({
                     >
                       <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-surface-container">
                         {gift.gift_thumbnail ? (
-                          <Image
-                            src={gift.gift_thumbnail}
-                            alt={gift.gift_name}
-                            fill
-                            className="rounded-lg object-cover"
-                          />
+                    <Image
+                      src={gift.gift_thumbnail}
+                      alt={gift.gift_name}
+                      fill
+                      sizes="80px"
+                      className="rounded-lg object-cover"
+                    />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-on-surface-variant">
                             <span className="text-[10px]">Gift</span>

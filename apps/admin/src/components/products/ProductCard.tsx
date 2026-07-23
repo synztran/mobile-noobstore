@@ -53,6 +53,7 @@ export type ProductCardProps = {
     categories?: CategoryRelation;
     product_variants?: VariantRow[] | null;
     product_components?: ComponentRow[] | null;
+    is_pre_order?: boolean;
   };
 };
 
@@ -108,9 +109,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           display_name: variant.variant_name,
         }));
 
-  const hasPreOrderVariant = effectiveVariants.some(
-    (variant) => variant.is_pre_order
-  );
+  const isPreorder =
+    product.is_pre_order ||
+    effectiveVariants.some((variant) => variant.is_pre_order);
 
   const componentGroups = components.reduce<Record<string, ComponentRow[]>>(
     (acc, component) => {
@@ -161,7 +162,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                   {product.is_used ? "Used" : "New"}
                 </Tag>
                 {product.is_active === false && <Tag tone="red">Inactive</Tag>}
-                {hasPreOrderVariant && <Tag tone="purple">Pre-order</Tag>}
+                {isPreorder && <Tag tone="purple">Pre-order</Tag>}
               </div>
               <div>
                 <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-xs">

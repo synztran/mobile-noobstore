@@ -13,13 +13,25 @@ const PAGE_SIZE = 20;
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; product_type?: string; exclude_sold_out?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+    product_type?: string;
+    exclude_sold_out?: string;
+  }>;
 }) {
   const { q, page, product_type, exclude_sold_out } = await searchParams;
-  const allowedProductTypes = new Set(["standard", "kit", "component", "gift", "all"]);
-  const selectedProductType = allowedProductTypes.has(product_type ?? "all") && product_type !== "all"
-    ? product_type
-    : undefined;
+  const allowedProductTypes = new Set([
+    "standard",
+    "kit",
+    "component",
+    "gift",
+    "all",
+  ]);
+  const selectedProductType =
+    allowedProductTypes.has(product_type ?? "all") && product_type !== "all"
+      ? product_type
+      : undefined;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10));
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
@@ -30,7 +42,7 @@ export default async function ProductsPage({
     .from("products")
     .select(
       `
-			id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail, attributes, is_active, parent_product_id,
+			id, name, slug, base_price, stock_quantity, product_type, brand, description, is_used, thumbnail, attributes, is_active, parent_product_id, is_pre_order,
 			categories(id, name),
 			product_variants(
 				id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config
@@ -68,7 +80,10 @@ export default async function ProductsPage({
     products = products.filter((p) => isInStock(p));
   }
 
-  const totalPages = Math.max(1, Math.ceil((excludeSoldOut ? products.length : count ?? 0) / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil((excludeSoldOut ? products.length : (count ?? 0)) / PAGE_SIZE)
+  );
   const { data: categories } = await categoryQuery;
 
   if (error) {

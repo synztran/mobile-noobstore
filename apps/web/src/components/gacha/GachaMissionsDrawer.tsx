@@ -155,8 +155,9 @@ function MissionCard({
             <Image
               src={TOKEN_ICON}
               alt="Token"
-              objectFit="contain"
-              layout="fill"
+              fill
+              sizes="24px"
+              className="object-contain"
             />
           </div>
           <span className="text-xs font-black text-amber-600">

@@ -247,6 +247,7 @@ export function CreateTicketForm({ orderItems, orderId, orderNumber }: Props) {
                             alt={item.id}
                             className="rounded-xl object-cover"
                             fill
+                            sizes="112px"
                           />
                         </div>
                       )}

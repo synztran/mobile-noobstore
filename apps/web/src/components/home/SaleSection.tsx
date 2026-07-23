@@ -54,8 +54,9 @@ export function HomeSaleSection() {
             <Image
               src={ICON_SALE}
               alt="Sale Icon"
+              fill
+              sizes="64px"
               className="object-cover drop-shadow-[0_0_6px_rgba(220,38,38,0.5)]"
-              layout="fill"
             />
           </div>
           <div

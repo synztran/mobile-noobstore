@@ -58,11 +58,27 @@ export default function DistanceMap({
     ];
   }, [routeCoordinates, store, targetLocation, hasRoute]);
 
-  if (!targetLocation) return null;
+  if (!targetLocation) {
+    return (
+      <div className="flex h-48 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50">
+        <p className="text-sm font-semibold text-slate-400">
+          Vui lòng chọn địa chỉ giao hàng
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="relative h-[300px] w-full overflow-hidden rounded-xl border border-slate-200">
+        {isLoading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+            <div className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-lg">
+              <span className="loading loading-spinner loading-sm" />
+              <span className="text-xs font-semibold text-slate-600">Đang tải bản đồ...</span>
+            </div>
+          </div>
+        )}
         <Map className="h-full w-full bg-slate-100">
           <FitMapToBounds coordinates={coordinatesToFrame} padding={80} />
           <MapControls position="bottom-right" showZoom showCompass />

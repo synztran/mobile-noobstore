@@ -47,6 +47,7 @@ export function ServiceSectionCard({
             src={section.heroImageUrl}
             alt={`${section.title} hero`}
             fill
+            sizes="100vw"
             className="rounded-t-2xl object-cover"
           />
         </div>

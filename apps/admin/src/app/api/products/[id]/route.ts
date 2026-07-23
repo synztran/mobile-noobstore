@@ -40,7 +40,28 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 	const body = await req.json();
 	const supabase = getAdminClient();
 
+	// Fetch product type to decide where is_pre_order lives
+	const { data: product } = await supabase
+		.from("products")
+		.select("product_type")
+		.eq("id", id)
+		.single();
+
+	const productType = product?.product_type ?? "standard";
 	const { is_pre_order, ...productBody } = body;
+
+	// For standard: save is_pre_order to products table directly
+	// For kit: save is_pre_order to product_variants (propagate to all variants)
+	if (typeof is_pre_order === "boolean") {
+		if (productType === "kit") {
+			await supabase
+				.from("product_variants")
+				.update({ is_pre_order })
+				.eq("product_id", id);
+		} else {
+			productBody.is_pre_order = is_pre_order;
+		}
+	}
 
 	const { error } = await supabase
 		.from("products")
@@ -49,14 +70,6 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
 	if (error) {
 		return NextResponse.json({ error: error.message }, { status: 400 });
-	}
-
-	// Propagate is_pre_order to all product variants
-	if (typeof is_pre_order === "boolean") {
-		await supabase
-			.from("product_variants")
-			.update({ is_pre_order })
-			.eq("product_id", id);
 	}
 
 	return NextResponse.json({ success: true }, { status: 200 });

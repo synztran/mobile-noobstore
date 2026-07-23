@@ -16,12 +16,13 @@ function itemUnitPrice(item: CartItem) {
 
 interface CartItemRowProps {
 	item: CartItem;
+	isRemoving?: boolean;
 	onRemove: () => void;
 	onMinus: () => void;
 	onPlus: () => void;
 }
 
-function CartItemRow({ item, onRemove, onMinus, onPlus }: CartItemRowProps) {
+function CartItemRow({ item, isRemoving, onRemove, onMinus, onPlus }: CartItemRowProps) {
 	const unitTotal = useMemo(() => itemUnitPrice(item) * item.quantity, [item]);
 	const isPreOrderComponent = useMemo(
 		() => item.components?.some((c) => c.is_pre_order) ?? false,
@@ -29,12 +30,21 @@ function CartItemRow({ item, onRemove, onMinus, onPlus }: CartItemRowProps) {
 	);
 
 	return (
-		<div className="relative flex items-start gap-2 rounded-xl bg-surface-container-low p-2">
+		<div
+			className={`relative flex items-start gap-2 rounded-xl bg-surface-container-low p-2 transition-opacity duration-300 ${
+				isRemoving ? "pointer-events-none opacity-50" : ""
+			}`}
+		>
 			<button
 				onClick={onRemove}
-				className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-400 transition-transform active:scale-90"
+				disabled={isRemoving}
+				className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-400 transition-transform active:scale-90 disabled:opacity-50"
 			>
-				<Trash className="text-white" size={14} />
+				{isRemoving ? (
+					<span className="loading loading-spinner loading-xs text-white" />
+				) : (
+					<Trash className="text-white" size={14} />
+				)}
 			</button>
 			<div className="relative h-20 w-24 flex-shrink-0 bg-surface-container">
 				{item.product.thumbnail ? (
@@ -109,21 +119,23 @@ function CartItemRow({ item, onRemove, onMinus, onPlus }: CartItemRowProps) {
 				))}
 				<div className="mt-4 flex items-center justify-between">
 					<div className="flex items-center gap-3 rounded-lg bg-gray-200 px-2 py-1">
-						<button
-							onClick={onMinus}
-							className="text-base font-bold leading-none text-on-surface transition-transform active:scale-90"
-						>
-							−
-						</button>
-						<span className="w-8 text-center text-sm font-bold text-on-surface">
-							{item.quantity}
-						</span>
-						<button
-							onClick={onPlus}
-							className="text-base font-bold leading-none text-on-surface transition-transform active:scale-90"
-						>
-							+
-						</button>
+					<button
+						onClick={onMinus}
+						disabled={isRemoving}
+						className="text-base font-bold leading-none text-on-surface transition-transform active:scale-90 disabled:opacity-30"
+					>
+						−
+					</button>
+					<span className="w-8 text-center text-sm font-bold text-on-surface">
+						{item.quantity}
+					</span>
+					<button
+						onClick={onPlus}
+						disabled={isRemoving}
+						className="text-base font-bold leading-none text-on-surface transition-transform active:scale-90 disabled:opacity-30"
+					>
+						+
+					</button>
 					</div>
 					<p className="font-black text-primary">{formatVND(unitTotal)}</p>
 				</div>

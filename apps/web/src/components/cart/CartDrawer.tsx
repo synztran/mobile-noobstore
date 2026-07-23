@@ -46,6 +46,7 @@ export function CartDrawer() {
   const drawerOpen = mounted && isOpen;
 
   const [pendingRemoval, setPendingRemoval] = useState<CartItem | null>(null);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [checkingOut, setCheckingOut] = useState(false);
   const [clearAllMode, setClearAllMode] = useState(false);
   const confirmDialogRef = useRef<HTMLDialogElement>(null);
@@ -68,7 +69,10 @@ export function CartDrawer() {
       setClearAllMode(false);
     } else if (pendingRemoval) {
       if (pendingRemoval.id) {
-        removeMutation.mutate(pendingRemoval.id);
+        setRemovingItemId(pendingRemoval.id);
+        removeMutation.mutate(pendingRemoval.id, {
+          onSettled: () => setRemovingItemId(null),
+        });
       } else {
         removeItem(
           pendingRemoval.product.id,
@@ -172,9 +176,14 @@ export function CartDrawer() {
             {visibleItems.length > 0 && (
               <button
                 onClick={handleClearAllClick}
-                className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-error transition-all active:scale-90"
+                disabled={clearCartMutation.isPending}
+                className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-error transition-all active:scale-90 disabled:opacity-50"
               >
-                Xóa tất cả
+                {clearCartMutation.isPending ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : (
+                  "Xóa tất cả"
+                )}
               </button>
             )}
             <button
@@ -190,6 +199,7 @@ export function CartDrawer() {
         <CartContent
           isHydrated={isHydrated}
           visibleItems={visibleItems}
+          removingItemId={removingItemId}
           closeCart={closeCart}
           onRemove={handleRemoveClick}
           onMinus={handleMinus}

@@ -43,6 +43,7 @@ type EditableProduct = {
     name: string;
   } | null;
   product_variants?: VariantRow[] | null;
+  is_pre_order?: boolean;
 };
 
 type Props = {
@@ -82,7 +83,9 @@ export default function EditProductModal({ product }: Props) {
   );
   const [isActive, setIsActive] = useState(product.is_active ?? true);
   const [isPreOrder, setIsPreOrder] = useState(
-    product.product_variants?.some((v) => v.is_pre_order) ?? false
+    product.product_type === "kit"
+      ? product.product_variants?.some((v) => v.is_pre_order)
+      : product.is_pre_order
   );
 
   useEffect(() => {
@@ -104,7 +107,9 @@ export default function EditProductModal({ product }: Props) {
     setAttributes(product.attributes ?? {});
     setIsActive(product.is_active ?? true);
     setIsPreOrder(
-      product.product_variants?.some((v) => v.is_pre_order) ?? false
+      product.product_type === "kit"
+        ? (product.product_variants?.some((v) => v.is_pre_order) ?? false)
+        : product.is_pre_order
     );
     // Fetch kit options whenever the modal opens
     setKitOptionsLoading(true);
@@ -411,28 +416,30 @@ export default function EditProductModal({ product }: Props) {
                     </div>
                   </div>
 
-                  <div className="col-span-2">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsPreOrder((v) => !v)}
-                        className={`relative h-6 w-10 rounded-full transition-colors ${isPreOrder ? "bg-violet-500" : "bg-slate-300"}`}
-                      >
-                        <span
-                          className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isPreOrder ? "translate-x-4" : ""}`}
-                        />
-                      </button>
-                      <span className="text-sm font-medium text-slate-700">
-                        {isPreOrder ? "Pre-order" : "Not pre-order"}
-                      </span>
-                      {product.product_variants?.length ? (
-                        <span className="text-xs text-slate-400">
-                          Applies to all {product.product_variants.length}{" "}
-                          variants
+                  {productType === "component" && (
+                    <div className="col-span-2">
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsPreOrder((v) => !v)}
+                          className={`relative h-6 w-10 rounded-full transition-colors ${isPreOrder ? "bg-violet-500" : "bg-slate-300"}`}
+                        >
+                          <span
+                            className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isPreOrder ? "translate-x-4" : ""}`}
+                          />
+                        </button>
+                        <span className="text-sm font-medium text-slate-700">
+                          {isPreOrder ? "Pre-order" : "Not pre-order"}
                         </span>
-                      ) : null}
+                        {product.product_variants?.length ? (
+                          <span className="text-xs text-slate-400">
+                            Applies to all {product.product_variants.length}{" "}
+                            variants
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {productType === "component" && (
                     <div className="col-span-2">

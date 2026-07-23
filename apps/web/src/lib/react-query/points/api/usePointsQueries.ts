@@ -5,6 +5,7 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-qu
 export function usePointsBalance() {
   return useQuery<number>({
     ...appQueryKeys.points.balance,
+    staleTime: 60_000,
     queryFn: async () => {
       const res = await fetch("/api/points/balance");
       if (!res.ok) return 0;
@@ -17,6 +18,7 @@ export function usePointsBalance() {
 export function usePointsHistory() {
   return useInfiniteQuery<HistoryResponse>({
     ...appQueryKeys.points.history(1),
+    staleTime: 60_000,
     placeholderData: keepPreviousData,
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams({ page: String(pageParam) });

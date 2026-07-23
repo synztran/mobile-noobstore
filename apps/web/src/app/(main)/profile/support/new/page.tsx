@@ -62,29 +62,29 @@ function OrderSummaryBanner({
           </p>
         </div>
       </div>
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2 flex shrink-0 flex-col gap-2">
         {totalPrice != null && (
-          <span className="rounded-lg bg-surface-container-high px-2.5 py-1 text-xs font-bold text-on-surface">
-            {formatVND(totalPrice)}
+          <span className="rounded-lg py-1 text-xs font-bold text-on-surface">
+            Tổng tiền: {formatVND(totalPrice)}
           </span>
         )}
         {shippingFee != null && shippingFee > 0 && (
-          <span className="rounded-lg bg-surface-container-high px-2.5 py-1 text-xs font-bold text-on-surface">
-            + {formatVND(shippingFee)} ship
+          <span className="rounded-lg py-1 text-xs font-bold text-on-surface">
+            Phí vận chuyển {formatVND(shippingFee)} ship
           </span>
         )}
         {(voucherDiscount ?? 0) > 0 && (
-          <span className="rounded-lg bg-error/10 px-2.5 py-1 text-xs font-bold text-error">
-            -{formatVND(voucherDiscount ?? 0)}
+          <span className="rounded-lg py-1 text-xs font-bold text-error">
+            Giảm giá sản phẩm: -{formatVND(voucherDiscount ?? 0)}
           </span>
         )}
         {(shippingDiscount ?? 0) > 0 && (
-          <span className="rounded-lg bg-error/10 px-2.5 py-1 text-xs font-bold text-error">
-            -{formatVND(shippingDiscount ?? 0)} ship
+          <span className="rounded-lg py-1 text-xs font-bold text-error">
+            Trợ giá vận chuyển -{formatVND(shippingDiscount ?? 0)}
           </span>
         )}
         <span className="ml-auto text-xs text-on-surface-variant">
-          {itemCount} sản phẩm
+          Tổng: {itemCount} sản phẩm
         </span>
       </div>
     </div>

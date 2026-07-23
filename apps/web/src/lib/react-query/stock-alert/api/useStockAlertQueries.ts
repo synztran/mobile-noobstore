@@ -5,6 +5,7 @@ export function useStockAlertCheck(productId: string, variantId: string) {
   return useQuery<{ subscribed: boolean }>({
     queryKey: appQueryKeys["stock-alert"].check(productId, variantId)
       .queryKey,
+    staleTime: 60_000,
     queryFn: async () => {
       const params = new URLSearchParams({ product_id: productId });
       if (variantId) params.set("variant_id", variantId);
@@ -26,6 +27,7 @@ export function useStockAlertList() {
     }>;
   }>({
     queryKey: appQueryKeys["stock-alert"].list.queryKey,
+    staleTime: 60_000,
     queryFn: async () => {
       const res = await fetch("/api/stock-alerts");
       if (!res.ok) return { subscriptions: [] };

@@ -36,6 +36,7 @@ export function RankBadge({
           alt={rank.name}
           className="h-full w-full rounded-full object-cover"
           fill
+          sizes="48px"
         />
       ) : (
         (rank.iconLabel ?? rank.name.charAt(0))

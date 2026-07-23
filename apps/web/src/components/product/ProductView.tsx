@@ -21,8 +21,14 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ImageViewer } from "@/components/product/ImageViewer";
+
+const ImageViewer = dynamic(
+  () => import("@/components/product/ImageViewer").then((m) => ({ default: m.ImageViewer })),
+  { ssr: false },
+);
 import { PreOrderBanner } from "@/components/product/PreOrderBanner";
 import { ProductInfoTabs } from "@/components/product/ProductInfoTabs";
 import { SaleCountdown } from "@/components/product/SaleCountdown";
@@ -514,6 +520,7 @@ export function ProductView({
                         src={gift.gift_thumbnail}
                         alt={gift.gift_name}
                         fill
+                        sizes="140px"
                         className="object-cover"
                       />
                     ) : (
@@ -538,12 +545,14 @@ export function ProductView({
       )}
 
       {/* ── Image Viewer ── */}
-      <ImageViewer
-        images={mediaImages}
-        initialIndex={activeImageIndex}
-        isOpen={imageViewerOpen}
-        onClose={() => setImageViewerOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <ImageViewer
+          images={mediaImages}
+          initialIndex={activeImageIndex}
+          isOpen={imageViewerOpen}
+          onClose={() => setImageViewerOpen(false)}
+        />
+      </Suspense>
 
       {/* ── Frequently Bought Together ── */}
       {boughtTogether.length > 0 && (

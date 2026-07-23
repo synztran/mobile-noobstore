@@ -58,20 +58,20 @@ export default function SearchSuggestions({
             Xoá
           </button>
         </div>
-        <ul>
+        {/* <ul>
           {recentSearches.map((term, idx) => (
             <li key={`${term}-${idx}`}>
               <button
                 type="button"
                 onClick={() => onSearch?.(term)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container"
+                className="flex w-full items-center gap-2 p-2 text-left transition-colors hover:bg-surface-container"
               >
                 <Clock size={14} className="shrink-0 text-outline-variant" />
                 <span className="text-sm text-on-surface">{term}</span>
               </button>
             </li>
           ))}
-        </ul>
+        </ul> */}
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function SearchSuggestions({
             <li key={product.id} onClick={() => onSelect(product)}>
               <button
                 className={clsx(
-                  "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
+                  "flex w-full items-center gap-2 p-2 text-left transition-colors",
                   idx === selectedIndex
                     ? "bg-primary/10"
                     : "hover:bg-surface-container"

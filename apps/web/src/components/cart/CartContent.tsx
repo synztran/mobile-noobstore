@@ -10,6 +10,7 @@ import CartItemRow from "./CartItemRow";
 interface CartContentProps {
   isHydrated: boolean;
   visibleItems: CartItem[];
+  removingItemId?: string | null;
   closeCart: () => void;
   onRemove: (item: CartItem) => void;
   onMinus: (item: CartItem) => void;
@@ -19,6 +20,7 @@ interface CartContentProps {
 function CartContent({
   isHydrated,
   visibleItems,
+  removingItemId,
   closeCart,
   onRemove,
   onMinus,
@@ -104,6 +106,7 @@ function CartContent({
           <CartItemRow
             key={itemKey}
             item={item}
+            isRemoving={removingItemId === item.id}
             onRemove={() => onRemove(item)}
             onMinus={() => onMinus(item)}
             onPlus={() => onPlus(item)}

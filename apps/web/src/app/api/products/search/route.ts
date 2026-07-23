@@ -1,3 +1,4 @@
+import { getCache, setCache } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -10,6 +11,11 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const q = req.nextUrl.searchParams.get("q") ?? "";
+    const excludeTypes = req.nextUrl.searchParams.get("exclude_types") ?? "";
+
+    const cacheKey = `search:suggestions:${q}:${excludeTypes}`;
+    const cached = await getCache<any[]>(cacheKey);
+    if (cached) return NextResponse.json(cached);
 
     const supabase = await createClient();
     let query = supabase
@@ -23,7 +29,6 @@ export async function GET(req: NextRequest) {
       query = query.ilike("name", `%${q.trim()}%`);
     }
 
-    const excludeTypes = req.nextUrl.searchParams.get("exclude_types") ?? "";
     if (excludeTypes) {
       const types = excludeTypes.split(",").map((t) => t.trim()).filter(Boolean);
       if (types.length > 0) {
@@ -68,6 +73,8 @@ export async function GET(req: NextRequest) {
         product_type: row.product_type,
       };
     });
+
+    await setCache(cacheKey, data, 60);
 
     return NextResponse.json(data);
   } catch (err) {

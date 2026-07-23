@@ -39,6 +39,7 @@ export function BundleProductCard({
             src={product.thumbnail}
             alt={product.name}
             fill
+            sizes="(max-width: 640px) 50vw, 25vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
