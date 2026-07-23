@@ -167,7 +167,8 @@ export function VoucherComponent({
           {(totalDiscountAmount > 0 || totalShippingDiscountAmount > 0) && (
             <div className="rounded-2xl bg-primary/5 p-3">
               <p className="text-center text-sm font-bold text-primary">
-                Tổng giảm giá: {formatVND(totalDiscountAmount + totalShippingDiscountAmount)}
+                Tổng giảm giá:{" "}
+                {formatVND(totalDiscountAmount + totalShippingDiscountAmount)}
               </p>
             </div>
           )}
@@ -198,7 +199,7 @@ export function VoucherComponent({
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-primary transition-colors hover:bg-primary/10"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-primary/15 bg-primary/5 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-primary transition-colors hover:bg-primary/10"
           >
             <Search className="h-4 w-4" />
             {appliedVouchers.length > 0

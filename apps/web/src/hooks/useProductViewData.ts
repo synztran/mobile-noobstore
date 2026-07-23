@@ -215,6 +215,8 @@ export function useProductViewData(
           component_group: group.component_group,
           price_adjustment: v.price_adjustment,
           thumbnail: v.thumbnail,
+          is_pre_order: v.is_pre_order,
+          pre_order_config: v.pre_order_config,
         },
       ];
     });
@@ -244,6 +246,7 @@ export function useProductViewData(
       base_price: product.base_price,
       stock_quantity: product.stock_quantity,
       thumbnail: product.thumbnail,
+      is_pre_order: product.is_pre_order,
     };
 
     addItem(

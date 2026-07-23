@@ -3,6 +3,7 @@
 import { SubmitOrderResponse } from "@/app/api/checkout/submit/route";
 import type { ValidateStockResponse } from "@/app/api/checkout/validate-stock/route";
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
+import { DepositPaymentSection } from "@/components/checkout/DepositPaymentSection";
 import { RankBadge } from "@/components/rank/RankBadge";
 import { RankBenefitModal } from "@/components/rank/RankBenefitModal";
 import VoucherComponent from "@/components/voucher/VoucherComponent";
@@ -12,9 +13,14 @@ import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { useNavigationStore } from "@/store/navigation";
-import { ArrowRight, CheckCircle, ShoppingBag, Truck } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle,
+  ShoppingBag,
+  Truck,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -33,7 +39,15 @@ export default function SummaryPage() {
     clearCart,
     removeItem,
   } = useCartStore();
-  const { shippingCost, shipping, setOrder } = useCheckoutStore();
+  const {
+    shippingCost,
+    shipping,
+    setOrder,
+    paymentType,
+    setPaymentType,
+    depositPercentage,
+    setDepositPercentage,
+  } = useCheckoutStore();
   const {
     appliedVouchers,
     totalDiscountAmount,
@@ -41,8 +55,29 @@ export default function SummaryPage() {
     totalGiftItems,
   } = useDiscountStore();
 
+  useEffect(() => {
+    setPaymentType("full");
+    setDepositPercentage(50);
+  }, []);
+
   const items = mounted ? rawItems : [];
   const subtotal = mounted ? getSubtotal() : 0;
+  const hasPreOrder = items.some(
+    (i) => i.is_pre_order || i.components?.some((c) => c.is_pre_order)
+  );
+  const earliestPreOrderDate = useMemo(() => {
+    const dates = items
+      .flatMap((i) => {
+        if (i.pre_order_config?.available_date)
+          return [i.pre_order_config.available_date];
+        return (i.components ?? [])
+          .filter((c) => c.pre_order_config?.available_date)
+          .map((c) => c.pre_order_config!.available_date!);
+      })
+      .filter(Boolean)
+      .sort();
+    return dates[0] ?? null;
+  }, [items]);
   const rankDiscountPercent = rankData?.currentRank?.benefits.flags
     .discountPercentEnabled
     ? rankData.currentRank.benefits.discountPercent
@@ -64,10 +99,13 @@ export default function SummaryPage() {
     rankDiscountAmount -
     rankShippingDiscount;
 
+  const depositAmount = Math.round((subtotal * depositPercentage) / 100);
+  const codAmount = Math.max(0, orderTotal - depositAmount);
+
   if (!mounted) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-32 rounded-3xl bg-surface-container" />
+        <div className="h-32 rounded-2xl bg-surface-container" />
         <div className="h-12 rounded-full bg-surface-container" />
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -118,6 +156,9 @@ export default function SummaryPage() {
       const payloadCheckoutSubmit = {
         cart_id: cartId,
         shipping_cost: shippingCost,
+        payment_type: paymentType,
+        deposit_percentage:
+          paymentType === "deposit_cod" ? depositPercentage : undefined,
         shipping_method_id:
           shipping?.shippingMethodId ?? shipping?.deliverySpeed ?? null,
         delivery_address: shipping
@@ -162,11 +203,15 @@ export default function SummaryPage() {
             i.product.thumbnail ??
             null,
           quantity: i.quantity,
+          is_pre_order: i.is_pre_order ?? false,
+          pre_order_config: i.pre_order_config ?? null,
           components: i.components?.map((c) => ({
             variant_id: c.variant_id,
             variant_name: c.variant_name,
             component_group: c.component_group,
             thumbnail: c.thumbnail,
+            is_pre_order: c.is_pre_order ?? false,
+            pre_order_config: c.pre_order_config ?? null,
           })),
         })),
       };
@@ -184,6 +229,8 @@ export default function SummaryPage() {
       }
       const result = data as SubmitOrderResponse;
       setOrder(result.order_id, result.order_number, orderTotal, items);
+      setPaymentType("full");
+      setDepositPercentage(50);
       clearCart();
       startNavigation();
       router.push(`/checkout/checking/${result.order_id}`);
@@ -200,7 +247,7 @@ export default function SummaryPage() {
   return (
     <div className="space-y-4">
       {/* ── Header ───────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-4">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-4">
         <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-secondary/10 blur-xl" />
         <div className="relative flex items-center gap-4">
@@ -242,7 +289,7 @@ export default function SummaryPage() {
 
       {/* ── Delivery Address ────────────────────────────── */}
       {shipping && (
-        <div className="space-y-1 overflow-hidden rounded-3xl bg-surface-container-low px-4 py-4">
+        <div className="space-y-1 overflow-hidden rounded-2xl bg-surface-container-low px-4 py-4">
           <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
             Thông tin nhận hàng
           </p>
@@ -253,25 +300,36 @@ export default function SummaryPage() {
             </span>
           </p>
           <p className="text-sm text-on-surface-variant">
-            {[
-              shipping.streetAddress,
-              shipping.apartment,
-              shipping.ward,
-              shipping.district,
-              shipping.city,
-            ]
+            {[shipping.apartment, shipping.streetAddress]
               .filter(Boolean)
               .join(", ")}
           </p>
-          <p className="space-x-1">
-            <strong className="text-sm">Ghi chú:</strong>
-            <small>{shipping.notes}</small>
-          </p>
+          {shipping.notes ? (
+            <p className="space-x-1">
+              <strong className="text-sm">Ghi chú:</strong>
+              <small>{shipping.notes}</small>
+            </p>
+          ) : null}
+        </div>
+      )}
+
+      {/* ── Pre-order Info Banner ────────────────────────────── */}
+      {hasPreOrder && (
+        <div className="overflow-hidden rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-violet-700">
+              Sản phẩm Pre-order
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-violet-600">
+              Đơn hàng có sản phẩm pre-order. Số tiền đặt cọc sẽ được dùng để
+              xác nhận đơn hàng. Phần còn lại thanh toán khi nhận hàng.
+            </p>
+          </div>
         </div>
       )}
 
       {/* ── Shipping Method ──────────────────────────────────── */}
-      <div className="overflow-hidden rounded-3xl bg-surface-container-low">
+      <div className="overflow-hidden rounded-2xl bg-surface-container-low">
         <div className="flex items-center justify-between px-4 py-4">
           <div className="flex flex-1 items-center gap-3">
             <div className="primary-gradient flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
@@ -302,8 +360,18 @@ export default function SummaryPage() {
         </div>
       </div>
 
+      {/* ── Payment Method ─────────────────────────────────── */}
+      <DepositPaymentSection
+        paymentType={paymentType}
+        setPaymentType={setPaymentType}
+        depositPercentage={depositPercentage}
+        setDepositPercentage={setDepositPercentage}
+        depositAmount={depositAmount}
+        codAmount={codAmount}
+      />
+
       {/* ── Order Summary ────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-3xl bg-surface-container-low">
+      <div className="overflow-hidden rounded-2xl bg-surface-container-low">
         <div className="space-y-4 px-4 pb-3 pt-4">
           <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
             Tóm tắt đơn hàng
@@ -411,7 +479,7 @@ export default function SummaryPage() {
 
       {/* Confirmation Dialog */}
       <dialog
-        className={`modal modal-bottom sm:modal-middle ${showConfirm ? "modal-open" : ""}`}
+        className={`modal modal-bottom !mt-0 sm:modal-middle ${showConfirm ? "modal-open" : ""}`}
       >
         <div className="modal-box rounded-2xl bg-surface px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6">
           <div className="flex flex-col items-center py-2 text-center">
@@ -489,6 +557,37 @@ export default function SummaryPage() {
               </span>
             </div>
           </div>
+
+          {paymentType === "deposit_cod" && (
+            <div className="mb-6 space-y-2 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+                Thanh toán
+              </p>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-on-surface-variant">
+                  Đặt cọc ({depositPercentage}%)
+                </span>
+                <span className="font-bold text-primary">
+                  {formatVND(depositAmount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-on-surface-variant">Còn lại (COD)</span>
+                <span className="font-bold text-secondary">
+                  {formatVND(codAmount)}
+                </span>
+              </div>
+              <div className="h-px bg-primary/10" />
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-bold text-on-surface">
+                  Cần chuyển khoản ngay
+                </span>
+                <span className="font-black text-primary">
+                  {formatVND(depositAmount)}
+                </span>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button

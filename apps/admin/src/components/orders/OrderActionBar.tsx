@@ -83,8 +83,8 @@ export default function OrderActionBar({
     currentStatus === "refunded";
 
   const refundStatuses = ["confirmed", "delivering", "cancelled"];
-  const canRefund =
-    order?.paid_at !== null && refundStatuses.includes(currentStatus);
+  const hasPayment = order?.paid_at !== null || (order?.payment_type === "deposit_cod" && order?.deposit_paid_at !== null);
+  const canRefund = hasPayment && refundStatuses.includes(currentStatus);
   const canAdvance = nextStatus !== null;
   const canCancel = !isTerminal;
 

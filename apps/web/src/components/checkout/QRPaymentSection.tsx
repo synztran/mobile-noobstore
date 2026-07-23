@@ -15,19 +15,28 @@ interface Props {
 	voucherDiscount?: number;
 	shippingDiscount?: number;
 	totalLabel?: string;
+	paymentType?: "full" | "deposit_cod";
+	depositAmount?: number;
+	remainingAmount?: number;
+	depositPercentage?: number;
 }
 
 export function QRPaymentSection({
 	bankMethod,
-	totalPrice,
+	totalPrice: _totalPrice,
 	orderNumber,
 	subtotal,
 	shippingCost,
 	voucherDiscount = 0,
 	shippingDiscount = 0,
 	totalLabel = "Tổng cộng",
+	paymentType = "full",
+	depositAmount = 0,
+	remainingAmount = 0,
+	depositPercentage = 0,
 }: Props) {
 	const [qrError, setQrError] = useState(false);
+	const qrPrice = paymentType === "deposit_cod" ? depositAmount : _totalPrice;
 
 	return (
 		<div className="bg-surface-container-low rounded-2xl flex flex-col items-center shadow-ambient relative overflow-hidden">
@@ -42,7 +51,7 @@ export function QRPaymentSection({
 						<Image
 							src={buildQRBank(
 								bankMethod,
-								totalPrice,
+								qrPrice,
 								`${orderNumber}`,
 							)}
 							alt="Payment QR Code"
@@ -109,14 +118,36 @@ export function QRPaymentSection({
 					</div>
 				)}
 				<div className="h-px bg-outline-variant/30" />
-				<div className="flex justify-between">
-					<span className="font-black text-on-surface">
-						{totalLabel}
-					</span>
-					<span className="font-black text-primary text-lg">
-						{formatVND(totalPrice)}
-					</span>
-				</div>
+				{paymentType === "deposit_cod" ? (
+					<>
+						<div className="flex justify-between text-sm">
+							<span className="text-on-surface-variant">Đặt cọc ({depositPercentage}%)</span>
+							<span className="font-bold text-primary">{formatVND(depositAmount)}</span>
+						</div>
+						<div className="flex justify-between text-sm">
+							<span className="text-on-surface-variant">Còn lại (COD)</span>
+							<span className="font-bold text-secondary">{formatVND(remainingAmount)}</span>
+						</div>
+						<div className="h-px bg-outline-variant/30" />
+						<div className="flex justify-between">
+							<span className="font-black text-on-surface">
+								Cần chuyển khoản
+							</span>
+							<span className="font-black text-primary text-lg">
+								{formatVND(depositAmount)}
+							</span>
+						</div>
+					</>
+				) : (
+					<div className="flex justify-between">
+						<span className="font-black text-on-surface">
+							{totalLabel}
+						</span>
+						<span className="font-black text-primary text-lg">
+							{formatVND(_totalPrice)}
+						</span>
+					</div>
+				)}
 			</div>
 		</div>
 	);

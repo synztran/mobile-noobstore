@@ -13,7 +13,10 @@ interface GenerateInvoiceInput {
   discountPercentage?: string;
   shippingFee: number;
   total: number;
-  balanceDue?: number;
+  balanceDue?: number; // type deposit is remainingAmount
+  paymentType?: "full" | "deposit_cod";
+  depositPercentage?: number;
+  depositAmount?: number;
   items: Array<{
     name: string;
     description?: string[]; // Array of strings for multiline descriptions
@@ -175,10 +178,17 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     //   width: 135,
     //   align: "right",
     // });
-    doc.text(formatVND(0), 410, rightY, {
-      width: 135,
-      align: "right",
-    });
+    if (input.paymentType === "deposit_cod") {
+      doc.text(formatVND(input.balanceDue || 0), 410, rightY, {
+        width: 135,
+        align: "right",
+      });
+    } else {
+      doc.text(formatVND(0), 410, rightY, {
+        width: 135,
+        align: "right",
+      });
+    }
 
     // ── Customer / Bill To (Left) ───────────────────────────────────────────
     let currentY = Math.max(leftY, rightY);
@@ -295,8 +305,8 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     y += 16;
 
     // ── Totals (Right Side) ────────────────────────────────────────────────
-    const subtotal = (input.items ?? []).reduce(
-      (s, i) => s + (i.unit_cost ?? 0) * (i.quantity ?? 0),
+    const subtotal = (input?.items ?? []).reduce(
+      (s, i) => s + (i?.unit_cost ?? 0) * (i?.quantity ?? 0),
       0
     );
 
@@ -319,13 +329,26 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       value: formatVND(input.total),
       bold: true,
     });
-    totals.push({
-      label: "Đã thanh toán:",
-      value: formatVND(
-        Math.max(0, subtotal + input.shippingFee - input.discount)
-      ),
-      bold: true,
-    });
+    if (input.paymentType === "deposit_cod") {
+      totals.push({
+        label: `Đã thanh toán (${input.depositPercentage ?? 0}%):`,
+        value: formatVND(input.depositAmount ?? 0),
+        bold: true,
+      });
+      totals.push({
+        label: "Còn lại (COD):",
+        value: formatVND(input.balanceDue ?? 0),
+        bold: true,
+      });
+    } else {
+      totals.push({
+        label: "Đã thanh toán:",
+        value: formatVND(
+          Math.max(0, subtotal + input.shippingFee - input.discount)
+        ),
+        bold: true,
+      });
+    }
 
     totals.forEach((t) => {
       doc
@@ -404,7 +427,7 @@ export async function generateAndStoreInvoice(
     // Check if invoice already exists
     const supabase = getAdminClient();
     const bucket = "invoices";
-    const storagePath = `${input.orderNumber}_${new Date()}.pdf`;
+    const storagePath = `${input.orderNumber}.pdf`;
 
     const { data: existing } = await supabase.storage
       .from(bucket)

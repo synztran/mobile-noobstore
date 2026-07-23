@@ -10,6 +10,7 @@ import {
 } from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
+import { formatVND } from "@/lib/currency";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -57,6 +58,12 @@ export default function CheckingPageContent() {
     orderStatusQuery.data?.voucher_discount_amount ?? 0;
   const orderShippingDiscount =
     orderStatusQuery.data?.shipping_discount_amount ?? 0;
+  const orderPaymentType = orderStatusQuery.data?.payment_type ?? "full";
+  const orderDepositAmount = orderStatusQuery.data?.deposit_amount ?? 0;
+  const orderRemainingAmount = orderStatusQuery.data?.remaining_amount ?? 0;
+  const orderDepositPercentage = orderStatusQuery.data?.deposit_percentage ?? 0;
+  const qrTotal =
+    orderPaymentType === "deposit_cod" ? orderDepositAmount : totalPrice;
   const paymentMethods = paymentMethodsQuery.data ?? [];
 
   // Calculate subtotal from ordered items
@@ -167,15 +174,32 @@ export default function CheckingPageContent() {
       </section>
 
       {/* QR Scan Section */}
-      <section className="mb-8">
+      <section className="mb-8 space-y-4">
+        {orderPaymentType === "deposit_cod" && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-100 p-3">
+            <p className="text-xs font-bold text-amber-800">
+              Thanh toán đặt cọc
+            </p>
+            <p className="text-xs leading-relaxed text-amber-700">
+              Đơn hàng đặt cọc {orderDepositPercentage}% (
+              {formatVND(orderDepositAmount)}). Vui lòng chuyển khoản đủ số tiền
+              đặt cọc. Số còn lại ({formatVND(orderRemainingAmount)}) sẽ thanh
+              toán khi nhận hàng.
+            </p>
+          </div>
+        )}
         <QRPaymentSection
           bankMethod={bankMethod}
-          totalPrice={totalPrice}
+          totalPrice={qrTotal}
           orderNumber={orderNumber}
           subtotal={subtotal}
           shippingCost={shippingCost}
           voucherDiscount={orderVoucherDiscount}
           shippingDiscount={orderShippingDiscount}
+          paymentType={orderPaymentType}
+          depositAmount={orderDepositAmount}
+          remainingAmount={orderRemainingAmount}
+          depositPercentage={orderDepositPercentage}
         />
       </section>
 
@@ -208,7 +232,7 @@ export default function CheckingPageContent() {
               {copyable === false ? null : (
                 <button
                   onClick={() => copyToClipboard(value, label)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container transition-transform hover:bg-surface-container-high active:scale-90"
+                  className="flex h-4 w-4 items-center justify-center rounded-full bg-surface-container transition-transform hover:bg-surface-container-high active:scale-90"
                 >
                   <Icon name="content_copy" className="text-xl text-primary" />
                 </button>
@@ -219,10 +243,7 @@ export default function CheckingPageContent() {
       </section>
 
       {/* Notice */}
-      <div className="bg-primary-fixed/12 mb-8 flex gap-2 rounded-2xl border border-primary-fixed/20 p-4">
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary-container text-white">
-          <Icon name="info" className="icon-filled text-sm text-white" />
-        </div>
+      <div className="mb-8 flex gap-2 rounded-2xl border border-primary-fixed bg-primary-fixed/20 p-4">
         <p className="text-sm leading-relaxed text-on-primary-fixed-variant">
           <span className="font-bold">Lưu ý:</span> Vui lòng kiểm tra <br />
           Mã đơn hàng{" "}
@@ -238,7 +259,9 @@ export default function CheckingPageContent() {
       {/* ── Actions ─────────────────────────────────────────── */}
       <div className="flex gap-2">
         <button
-          onClick={() => router.push(`/profile/orders?orderNumber=${orderNumber}`)}
+          onClick={() =>
+            router.push(`/profile/orders?orderNumber=${orderNumber}`)
+          }
           className="primary-gradient flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-xs font-black uppercase tracking-widest text-white transition-transform active:scale-[0.98]"
         >
           Theo dõi đơn hàng

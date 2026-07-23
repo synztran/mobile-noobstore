@@ -24,6 +24,8 @@ export interface OrderItemDetail {
     gift_thumbnail: string | null;
     quantity: number;
   }> | null;
+  isPreOrder: boolean;
+  preOrderConfig: any;
 }
 
 export interface OrderDetail {
@@ -32,6 +34,11 @@ export interface OrderDetail {
   status: "pending" | "confirmed" | "delivering" | "delivered" | "cancelled";
   total_price: number;
   shipping_fee: number;
+  payment_type: "full" | "deposit_cod";
+  deposit_percentage: number | null;
+  deposit_amount: number | null;
+  remaining_amount: number | null;
+  deposit_paid_at: string | null;
   voucher_code: string | null;
   voucher_discount_amount: number;
   shipping_discount_amount: number;
@@ -61,6 +68,11 @@ interface RawOrderRow {
   status: "pending" | "confirmed" | "delivering" | "delivered" | "cancelled";
   total_price: number;
   shipping_fee: number | null;
+  payment_type: string;
+  deposit_percentage: number | null;
+  deposit_amount: number | null;
+  remaining_amount: number | null;
+  deposit_paid_at: string | null;
   voucher_code: string | null;
   voucher_discount_amount: number | string | null;
   shipping_discount_amount: number | string | null;
@@ -98,7 +110,7 @@ export async function GET(
     const { data: order, error: orderError } = (await supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, shipping_fee, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, delivery_address, invoice_url"
+        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, delivery_address, invoice_url"
       )
       .eq("id", id)
       .eq("user_id", user.id)
@@ -114,10 +126,13 @@ export async function GET(
     const { data: rawItems } = await supabase
       .from("order_items")
       .select("id, product_id, product_name, unit_price, quantity, thumbnail")
-      .eq("order_id", id);
+      .eq("order_id", id) as unknown as {
+      data: Array<Record<string, unknown>> | null;
+      error: { message: string } | null;
+    };
 
-    const orderItems = rawItems ?? [];
-    const orderItemIds = orderItems.map((row) => row.id);
+    const orderItems = (rawItems ?? []) as Array<Record<string, unknown>>;
+    const orderItemIds = orderItems.map((row) => row.id as string);
 
     let rawComponents: Array<{
       order_item_id: string | null;
@@ -207,32 +222,35 @@ export async function GET(
     }, {});
 
     const items: OrderItemDetail[] = orderItems.map((row) => {
-      const components = componentsByOrderItemId[row.id] ?? [];
-      const componentsTotal = components.reduce(
-        (sum, comp) => sum + comp.price_adjustment,
+      const rowId = row.id as string;
+      const components = componentsByOrderItemId[rowId] ?? [];
+      const componentsTotal = (components as OrderItemComponentDetail[]).reduce(
+        (sum: number, comp: OrderItemComponentDetail) => sum + comp.price_adjustment,
         0
       );
 
-      const componentThumbnail = components.find(
-        (comp) => comp.thumbnail
+      const componentThumbnail = (components as OrderItemComponentDetail[]).find(
+        (comp: OrderItemComponentDetail) => comp.thumbnail
       )?.thumbnail;
 
       return {
-        id: row.id,
-        product_id: row.product_id,
-        product_name: row.product_name,
+        id: row.id as string,
+        product_id: (row.product_id as string | null),
+        product_name: row.product_name as string,
         unit_price: Number(row.unit_price),
-        quantity: row.quantity,
+        quantity: row.quantity as number,
         thumbnail:
-          row.thumbnail ??
+          (row.thumbnail as string | null) ??
           componentThumbnail ??
           (row.product_id
-            ? (productThumbnailById.get(row.product_id) ?? null)
+            ? (productThumbnailById.get(row.product_id as string) ?? null)
             : null),
         components,
         gifts: row.product_id
-          ? (giftsByProductId[row.product_id] ?? null)
+          ? (giftsByProductId[row.product_id as string] ?? null)
           : null,
+        isPreOrder: (row as Record<string, unknown>).is_pre_order as boolean ?? false,
+        preOrderConfig: (row as Record<string, unknown>).pre_order_config ?? null,
       };
     });
 
@@ -242,6 +260,11 @@ export async function GET(
       status: order.status,
       total_price: Number(order.total_price),
       shipping_fee: Number(order.shipping_fee ?? 0),
+      payment_type: order.payment_type as "full" | "deposit_cod",
+      deposit_percentage: order.deposit_percentage,
+      deposit_amount: order.deposit_amount,
+      remaining_amount: order.remaining_amount,
+      deposit_paid_at: order.deposit_paid_at,
       voucher_code: order.voucher_code ?? null,
       voucher_discount_amount: Number(order.voucher_discount_amount ?? 0),
       shipping_discount_amount: Number(order.shipping_discount_amount ?? 0),

@@ -14,17 +14,31 @@ export interface SubmitOrderRequestItem {
   product_name: string;
   thumbnail?: string | null;
   quantity: number;
+  is_pre_order?: boolean;
+  pre_order_config?: {
+    estimate?: string;
+    available_date?: string | null;
+    notes?: string | null;
+  } | null;
   components?: Array<{
     variant_id: string;
     variant_name: string;
     component_group: string;
     thumbnail: string | null;
+    is_pre_order?: boolean;
+    pre_order_config?: {
+      estimate?: string;
+      available_date?: string | null;
+      notes?: string | null;
+    } | null;
   }>;
 }
 
 export interface SubmitOrderRequest {
   cart_id: string;
   shipping_cost: number;
+  payment_type?: "full" | "deposit_cod";
+  deposit_percentage?: number;
   items: SubmitOrderRequestItem[];
   service_ids?: string[];
   shipping_method_id?: string | null;
@@ -351,7 +365,27 @@ export async function POST(req: NextRequest) {
     if (body.delivery_address || body.shipping_method_id) {
       const now = new Date();
       let expectedDeliveryAt: string | null = null;
-      if (body.shipping_method_id === "express") {
+
+      // If any item is pre-order, use the earliest available_date
+      const preOrderDates = body.items
+        .flatMap((i) => {
+          const dates: string[] = [];
+          if (i.is_pre_order && i.pre_order_config?.available_date) {
+            dates.push(i.pre_order_config.available_date);
+          }
+          for (const c of i.components ?? []) {
+            if (c.is_pre_order && c.pre_order_config?.available_date) {
+              dates.push(c.pre_order_config.available_date);
+            }
+          }
+          return dates;
+        })
+        .filter(Boolean)
+        .sort();
+
+      if (preOrderDates.length > 0) {
+        expectedDeliveryAt = new Date(preOrderDates[0]).toISOString();
+      } else if (body.shipping_method_id === "express") {
         expectedDeliveryAt = new Date(
           now.getTime() + 4 * 60 * 60 * 1000
         ).toISOString();
@@ -371,6 +405,36 @@ export async function POST(req: NextRequest) {
           expected_delivery_at: expectedDeliveryAt,
         })
         .eq("id", result.order_id);
+    }
+
+    // ── Persist deposit/cod payment fields ─────────────────────────────
+    if (body.payment_type === "deposit_cod") {
+      const pct = Math.min(80, Math.max(10, Math.round(body.deposit_percentage ?? 50)));
+      const depositBase = subtotal;
+      const depositAmt = Math.round(depositBase * pct / 100);
+      const remainingAmt = Math.max(0, recalculatedTotal - depositAmt);
+
+      const depositUpdatePayload = {
+        payment_type: "deposit_cod",
+        deposit_percentage: pct,
+        deposit_amount: depositAmt,
+        remaining_amount: remainingAmt,
+      } as Record<string, unknown>;
+      const { error: depositUpdateError } = await supabase
+        .from("orders")
+        .update(depositUpdatePayload as never)
+        .eq("id", result.order_id);
+
+      if (depositUpdateError) {
+        const { error: adminDepositError } = await admin
+          .from("orders")
+          .update(depositUpdatePayload as never)
+          .eq("id", result.order_id);
+
+        if (adminDepositError) {
+          console.error("[submit] failed to persist deposit fields:", adminDepositError);
+        }
+      }
     }
 
     // ── Persist gift items as order_items ─────────────────────────────────

@@ -4,6 +4,11 @@ export interface OrderStatusResult {
 	status: string;
 	voucher_discount_amount: number;
 	shipping_discount_amount: number;
+	payment_type?: "full" | "deposit_cod";
+	deposit_percentage?: number;
+	deposit_amount?: number;
+	remaining_amount?: number;
+	deposit_paid_at?: string | null;
 }
 
 export interface OrderListFilters {

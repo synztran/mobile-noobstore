@@ -10,6 +10,8 @@ export interface Product {
   variants?: ProductVariant[];
   is_used?: boolean;
   tags?: ITag[];
+  is_pre_order?: boolean;
+  pre_order_config?: PreOrderConfig | null;
 }
 
 export interface ProductVariant {
@@ -20,6 +22,13 @@ export interface ProductVariant {
   effective_price: number;
   thumbnail?: string | null;
   is_pre_order?: boolean;
+  pre_order_config?: PreOrderConfig | null;
+}
+
+export interface PreOrderConfig {
+  estimate: string;
+  available_date?: string | null;
+  notes?: string | null;
 }
 
 /**
@@ -36,6 +45,7 @@ export interface SelectedComponent {
   price_adjustment: number;
   thumbnail: string | null;
   is_pre_order?: boolean;
+  pre_order_config?: PreOrderConfig | null;
 }
 
 export interface CartItem {
@@ -47,6 +57,8 @@ export interface CartItem {
   components?: SelectedComponent[];
   quantity: number;
   gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
+  is_pre_order?: boolean;
+  pre_order_config?: PreOrderConfig | null;
 }
 
 export interface ShippingDetails {
@@ -62,7 +74,7 @@ export interface ShippingDetails {
   postalCode: string;
   phoneNumber: string;
   notes?: string;
-  deliverySpeed: "standard" | "express" | "shipment";
+  deliverySpeed: "standard" | "express" | "shipment" | "preorder";
   /** Matches shipping_methods.id — same value as deliverySpeed for now */
   shippingMethodId: string;
 }

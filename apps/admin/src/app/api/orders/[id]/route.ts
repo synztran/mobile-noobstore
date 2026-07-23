@@ -24,6 +24,7 @@ export async function GET(
 			delivery_address, shipping_method_id, expected_delivery_at,
 			user_id,
 			invoice_url,
+			payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at,
 			users(id, first_name, last_name, email, phone_number),
 			order_items(id, product_id, product_name, quantity, unit_price, thumbnail, order_item_components(id, component_group, variant_name, price_adjustment, product_variant_id, thumbnail, is_pre_order, pre_order_config)),
 			order_services(
@@ -80,7 +81,9 @@ export async function GET(
   if (data.user_id) {
     const { data: addr } = await supabase
       .from("user_addresses")
-      .select("full_name, phone_number, address_line, ward, ward_code, district, district_code, city")
+      .select(
+        "full_name, phone_number, address_line, ward, ward_code, district, district_code, city"
+      )
       .eq("user_id", data.user_id)
       .eq("is_default", true)
       .maybeSingle();
@@ -98,15 +101,28 @@ export async function GET(
   // Attach gift info to order items
   if (data.order_items?.length > 0) {
     const productIds = Array.from(
-      new Set(data.order_items.map((i: Record<string, unknown>) => i.product_id as string).filter(Boolean))
+      new Set(
+        data.order_items
+          .map((i: Record<string, unknown>) => i.product_id as string)
+          .filter(Boolean)
+      )
     ) as string[];
     const { data: giftRows } = await supabase
       .from("gift_products")
-      .select("product_id, quantity, gift:gift_product_id!inner(name, thumbnail)")
+      .select(
+        "product_id, quantity, gift:gift_product_id!inner(name, thumbnail)"
+      )
       .in("product_id", productIds);
 
     if (giftRows) {
-      const giftsByProductId: Record<string, Array<{ gift_name: string; gift_thumbnail: string | null; quantity: number }>> = {};
+      const giftsByProductId: Record<
+        string,
+        Array<{
+          gift_name: string;
+          gift_thumbnail: string | null;
+          quantity: number;
+        }>
+      > = {};
       for (const g of giftRows as unknown as Array<Record<string, unknown>>) {
         const pid = g.product_id as string;
         const gift = g.gift as Record<string, unknown>;
@@ -175,13 +191,19 @@ async function handleRankUpdate(
       .eq("user_id", userId)
       .eq("status", "delivered");
 
-    const totalSpent = (orders ?? []).reduce((s, o) => s + Number(o.total_price), 0);
+    const totalSpent = (orders ?? []).reduce(
+      (s, o) => s + Number(o.total_price),
+      0
+    );
     const orderCount = (orders ?? []).length;
 
     // Find highest qualifying rank
     let newRankId = ranks[0].id;
     for (const rank of ranks) {
-      if (totalSpent >= Number(rank.min_total_spent) && orderCount >= rank.min_order_count) {
+      if (
+        totalSpent >= Number(rank.min_total_spent) &&
+        orderCount >= rank.min_order_count
+      ) {
         newRankId = rank.id;
       } else {
         break;
@@ -213,7 +235,10 @@ async function handleRankUpdate(
       reason: "Order delivered — rank upgrade",
     });
   } catch (err) {
-    console.error(`[orders] handleRankUpdate failed for order ${orderId}:`, err);
+    console.error(
+      `[orders] handleRankUpdate failed for order ${orderId}:`,
+      err
+    );
   }
 }
 
@@ -239,11 +264,37 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  const supabase = getAdminClient();
+
   type OrderUpdate = Database["public"]["Tables"]["orders"]["Update"];
   const update: OrderUpdate = {};
   if (body.status) update.status = body.status;
+
+  // Fetch payment_type to determine deposit vs full payment
+  let paymentType: string | null = null;
+  if (body.status === "confirmed" || body.status === "delivered") {
+    const { data: orderRow } = await supabase
+      .from("orders")
+      .select("payment_type")
+      .eq("id", id)
+      .single();
+    paymentType =
+      (orderRow as { payment_type?: string } | null)?.payment_type ?? null;
+  }
+
   if (body.status === "confirmed") {
-    update.paid_at = new Date().toISOString();
+    if (paymentType === "deposit_cod") {
+      (update as Record<string, unknown>).deposit_paid_at =
+        new Date().toISOString();
+    } else {
+      update.paid_at = new Date().toISOString();
+    }
+  }
+  if (body.status === "delivered") {
+    (update as Record<string, unknown>).delivered_at = new Date().toISOString();
+    if (paymentType === "deposit_cod") {
+      update.paid_at = new Date().toISOString(); // COD collected on delivery
+    }
   }
   if (body.status === "cancelled") {
     update.cancelled_at = new Date().toISOString();
@@ -256,17 +307,14 @@ export async function PATCH(
     (update as Record<string, unknown>).delivering_at =
       new Date().toISOString();
   }
-  if (body.status === "delivered") {
-    (update as Record<string, unknown>).delivered_at = new Date().toISOString();
-  }
-
-  const supabase = getAdminClient();
 
   // Fetch old data for audit log
   const { data: oldOrder } = body.status
     ? await supabase
         .from("orders")
-        .select("status, paid_at, cancelled_at, cancelled_note, delivering_at, delivered_at, refunded_at")
+        .select(
+          "status, paid_at, cancelled_at, cancelled_note, delivering_at, delivered_at, refunded_at, deposit_paid_at, payment_type"
+        )
         .eq("id", id)
         .single()
     : { data: null };
@@ -294,7 +342,9 @@ export async function PATCH(
   // Log audit event
   if (body.status && oldOrder) {
     const newData: Record<string, unknown> = {};
-    for (const [key, val] of Object.entries(update as Record<string, unknown>)) {
+    for (const [key, val] of Object.entries(
+      update as Record<string, unknown>
+    )) {
       if (val !== undefined) newData[key] = val;
     }
     void logAuditEvent(
@@ -305,7 +355,7 @@ export async function PATCH(
         old_data: oldOrder as unknown as Record<string, unknown>,
         new_data: newData,
       },
-      supabase,
+      supabase
     );
   }
 
@@ -316,7 +366,7 @@ export async function PATCH(
         const { data: order } = await supabase
           .from("orders")
           .select(
-            "order_number, total_price, shipping_fee, shipping_discount_amount, voucher_discount_amount, delivery_address"
+            "order_number, total_price, shipping_fee, shipping_discount_amount, voucher_discount_amount, delivery_address, payment_type, deposit_percentage, deposit_amount, remaining_amount"
           )
           .eq("id", id)
           .single();
@@ -333,10 +383,7 @@ export async function PATCH(
           const customerName = [addr.full_name, addr.phone_number]
             .filter(Boolean)
             .join(" - ");
-          const customerAddress = [
-            addr.apartment,
-            addr.street_address
-          ]
+          const customerAddress = [addr.apartment, addr.street_address]
             .filter(Boolean)
             .join(", ");
 
@@ -360,6 +407,18 @@ export async function PATCH(
               Number(order.shipping_discount_amount ?? 0) +
               Number(order.voucher_discount_amount ?? 0),
             total: Number(order.total_price),
+            paymentType: (order as Record<string, unknown>).payment_type as
+              | "full"
+              | "deposit_cod"
+              | undefined,
+            depositPercentage: (order as Record<string, unknown>)
+              .deposit_percentage as number | undefined,
+            depositAmount: (order as Record<string, unknown>).deposit_amount as
+              | number
+              | undefined,
+            balanceDue: (order as Record<string, unknown>).remaining_amount as
+              | number
+              | undefined,
           });
         }
       } catch (invoiceErr) {

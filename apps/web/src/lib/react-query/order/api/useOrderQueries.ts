@@ -48,6 +48,11 @@ export function useOrderStatus(
 					Number(data.voucher_discount_amount ?? 0) || 0,
 				shipping_discount_amount:
 					Number(data.shipping_discount_amount ?? 0) || 0,
+				payment_type: (data.payment_type as "full" | "deposit_cod") ?? "full",
+				deposit_percentage: data.deposit_percentage as number | undefined,
+				deposit_amount: data.deposit_amount as number | undefined,
+				remaining_amount: data.remaining_amount as number | undefined,
+				deposit_paid_at: data.deposit_paid_at as string | null | undefined,
 			};
 		},
 	});

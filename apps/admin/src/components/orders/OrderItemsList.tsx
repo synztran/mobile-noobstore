@@ -82,13 +82,13 @@ export default function OrderItemsList({ items }: Props) {
               className="space-y-2 overflow-hidden rounded-lg border border-slate-200 p-4"
             >
               <div className="flex items-center justify-center gap-3">
-                <div className="relative h-24 w-24 rounded-md bg-slate-100">
+                <div className="relative h-24 w-24 rounded-lg bg-slate-100">
                   {item.thumbnail ? (
                     <Image
                       src={item.thumbnail}
                       alt={item.product_name}
                       fill
-                      className="object-contain mix-blend-darken"
+                      className="rounded-lg object-cover mix-blend-darken"
                       sizes="64px"
                     />
                   ) : (

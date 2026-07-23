@@ -65,6 +65,8 @@ export const useCartStore = create<CartStore>()(
 						}
 						return i.variant?.id === variant?.id;
 					});
+					const isPreOrder = product.is_pre_order ?? components?.some((c) => c.is_pre_order) ?? false;
+					const preOrderConfig = product.pre_order_config ?? components?.find((c) => c.pre_order_config)?.pre_order_config ?? null;
 					if (existing) {
 						return {
 							items: state.items.map((i) => {
@@ -89,6 +91,8 @@ export const useCartStore = create<CartStore>()(
 								components: components ?? [],
 								quantity: 1,
 								gifts: gifts ?? undefined,
+								is_pre_order: isPreOrder,
+								pre_order_config: preOrderConfig,
 							},
 						],
 					};
@@ -103,7 +107,7 @@ export const useCartStore = create<CartStore>()(
 						(i.variant?.id ?? null) === (variant?.id ?? null),
 				);
 				const currentQty = existingItem?.quantity ?? 0;
-				if (currentQty + 1 > product.stock_quantity) {
+				if (!product.is_pre_order && currentQty + 1 > product.stock_quantity) {
 					return {
 						success: false,
 						reason: `Sản phẩm này chỉ còn ${product.stock_quantity} trong kho`,
@@ -130,9 +134,10 @@ export const useCartStore = create<CartStore>()(
 								i.product.id === productId &&
 								(i.variant?.id ?? null) === variantId
 							) {
+								const maxQty = i.is_pre_order ? Infinity : i.product.stock_quantity;
 								const newQty =
 									delta > 0
-										? Math.min(i.quantity + delta, i.product.stock_quantity)
+										? Math.min(i.quantity + delta, maxQty)
 										: Math.max(0, i.quantity + delta);
 								return { ...i, quantity: newQty };
 							}
@@ -202,6 +207,8 @@ interface CheckoutStore {
 	totalPrice: number;
 	orderedItems: CartItem[];
 	shippingFormDraft: ShippingFormDraft | null;
+	paymentType: "full" | "deposit_cod";
+	depositPercentage: number;
 	setShipping: (data: ShippingDetails, cost: number) => void;
 	setOrder: (
 		id: string,
@@ -211,6 +218,8 @@ interface CheckoutStore {
 	) => void;
 	saveShippingDraft: (draft: ShippingFormDraft) => void;
 	clearShippingDraft: () => void;
+	setPaymentType: (type: "full" | "deposit_cod") => void;
+	setDepositPercentage: (pct: number) => void;
 	clearCheckout: () => void;
 }
 
@@ -224,6 +233,8 @@ export const useCheckoutStore = create<CheckoutStore>()(
 			totalPrice: 0,
 			orderedItems: [],
 			shippingFormDraft: null,
+			paymentType: "full",
+			depositPercentage: 50,
 			setShipping: (data, cost) =>
 				set({ shipping: data, shippingCost: cost }),
 			setOrder: (id, orderNumber, totalPrice, orderedItems) =>
@@ -232,6 +243,10 @@ export const useCheckoutStore = create<CheckoutStore>()(
 				set({ shippingFormDraft: draft }),
 			clearShippingDraft: () =>
 				set({ shippingFormDraft: null }),
+			setPaymentType: (type) =>
+				set({ paymentType: type }),
+			setDepositPercentage: (pct) =>
+				set({ depositPercentage: pct }),
 			clearCheckout: () =>
 				set({
 					shipping: null,
@@ -241,6 +256,8 @@ export const useCheckoutStore = create<CheckoutStore>()(
 					totalPrice: 0,
 					orderedItems: [],
 					shippingFormDraft: null,
+					paymentType: "full",
+					depositPercentage: 50,
 				}),
 		}),
 		{ name: "noobstore-checkout" },

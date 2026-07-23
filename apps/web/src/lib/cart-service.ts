@@ -1,3 +1,4 @@
+import type { PreOrderConfig } from "@/lib/data";
 import type { Database } from "@/lib/supabase/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -16,12 +17,16 @@ export interface CartApiItem {
     base_price: number;
     stock_quantity: number;
     thumbnail: string | null;
+    is_pre_order?: boolean;
+    pre_order_config?: PreOrderConfig | null;
   } | null;
   variant: {
     id: string;
     variant_name: string;
     price_adjustment: number;
     thumbnail: string | null;
+    is_pre_order?: boolean;
+    pre_order_config?: PreOrderConfig | null;
   } | null;
   children: CartApiItem[];
   component_group?: string | null;
@@ -68,8 +73,8 @@ async function fetchProducts(supabase: Supabase, productIds: string[]) {
 
   const { data } = await supabase
     .from("products")
-    .select("id, name, base_price, stock_quantity, thumbnail")
-    .in("id", productIds);
+    .select("id, name, base_price, stock_quantity, thumbnail, is_pre_order")
+    .in("id", productIds) as unknown as { data: any[] | null };
 
   const map = new Map<string, NonNullable<typeof data>[number]>();
   for (const p of data ?? []) {
@@ -83,8 +88,8 @@ async function fetchVariants(supabase: Supabase, variantIds: string[]) {
 
   const { data } = await supabase
     .from("product_variants")
-    .select("id, variant_name, price_adjustment, thumbnail")
-    .in("id", variantIds);
+    .select("id, variant_name, price_adjustment, thumbnail, is_pre_order, pre_order_config")
+    .in("id", variantIds) as unknown as { data: any[] | null };
 
   const map = new Map<string, NonNullable<typeof data>[number]>();
   for (const v of data ?? []) {
@@ -166,6 +171,7 @@ export async function getCartItems(
             base_price: Number(prod.base_price),
             stock_quantity: prod.stock_quantity,
             thumbnail: prod.thumbnail,
+            is_pre_order: (prod as any).is_pre_order ?? false,
           }
         : null,
       variant: varInfo
@@ -174,6 +180,8 @@ export async function getCartItems(
             variant_name: varInfo.variant_name,
             price_adjustment: Number(varInfo.price_adjustment),
             thumbnail: varInfo.thumbnail,
+            is_pre_order: (varInfo as any).is_pre_order ?? false,
+            pre_order_config: (varInfo as any).pre_order_config ?? null,
           }
         : null,
       component_group:
@@ -202,6 +210,7 @@ export async function getCartItems(
             base_price: Number(prod.base_price),
             stock_quantity: prod.stock_quantity,
             thumbnail: prod.thumbnail,
+            is_pre_order: (prod as any).is_pre_order ?? false,
           }
         : null,
       variant: varInfo
@@ -210,6 +219,8 @@ export async function getCartItems(
             variant_name: varInfo.variant_name,
             price_adjustment: Number(varInfo.price_adjustment),
             thumbnail: varInfo.thumbnail,
+            is_pre_order: (varInfo as any).is_pre_order ?? false,
+            pre_order_config: (varInfo as any).pre_order_config ?? null,
           }
         : null,
       children: childrenByParent.get(r.id) ?? [],

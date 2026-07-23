@@ -1247,6 +1247,9 @@ export type Database = {
           delivered_at: string | null
           delivering_at: string | null
           delivery_address: Json | null
+          deposit_amount: number | null
+          deposit_paid_at: string | null
+          deposit_percentage: number | null
           expected_delivery_at: string | null
           gift_items_snapshot: Json | null
           id: string
@@ -1254,7 +1257,9 @@ export type Database = {
           order_number: string
           paid_at: string | null
           payment_reminder_sent_at: string | null
+          payment_type: string
           refunded_at: string | null
+          remaining_amount: number | null
           shipping_discount_amount: number
           shipping_fee: number | null
           shipping_method_id: string | null
@@ -1274,6 +1279,9 @@ export type Database = {
           delivered_at?: string | null
           delivering_at?: string | null
           delivery_address?: Json | null
+          deposit_amount?: number | null
+          deposit_paid_at?: string | null
+          deposit_percentage?: number | null
           expected_delivery_at?: string | null
           gift_items_snapshot?: Json | null
           id: string
@@ -1281,7 +1289,9 @@ export type Database = {
           order_number: string
           paid_at?: string | null
           payment_reminder_sent_at?: string | null
+          payment_type?: string
           refunded_at?: string | null
+          remaining_amount?: number | null
           shipping_discount_amount?: number
           shipping_fee?: number | null
           shipping_method_id?: string | null
@@ -1301,6 +1311,9 @@ export type Database = {
           delivered_at?: string | null
           delivering_at?: string | null
           delivery_address?: Json | null
+          deposit_amount?: number | null
+          deposit_paid_at?: string | null
+          deposit_percentage?: number | null
           expected_delivery_at?: string | null
           gift_items_snapshot?: Json | null
           id?: string
@@ -1308,7 +1321,9 @@ export type Database = {
           order_number?: string
           paid_at?: string | null
           payment_reminder_sent_at?: string | null
+          payment_type?: string
           refunded_at?: string | null
+          remaining_amount?: number | null
           shipping_discount_amount?: number
           shipping_fee?: number | null
           shipping_method_id?: string | null

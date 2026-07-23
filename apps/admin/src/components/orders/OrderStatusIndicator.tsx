@@ -4,6 +4,8 @@ interface Props {
   status: string;
   paidAt: string | null;
   refundedAt: string | null;
+  paymentType?: "full" | "deposit_cod";
+  depositPaidAt?: string | null;
 }
 
 const STATUS_BADGES: Record<
@@ -42,7 +44,7 @@ const STATUS_BADGES: Record<
   },
 };
 
-function getPaymentStatus(paidAt: string | null, refundedAt: string | null) {
+function getPaymentStatus(paidAt: string | null, refundedAt: string | null, depositPaidAt?: string | null, paymentType?: string) {
   if (refundedAt)
     return {
       label: "Refunded",
@@ -52,6 +54,16 @@ function getPaymentStatus(paidAt: string | null, refundedAt: string | null) {
     return {
       label: "Paid",
       color: "text-green-600 bg-green-50 border-green-200",
+    };
+  if (paymentType === "deposit_cod" && depositPaidAt)
+    return {
+      label: "Deposit Paid",
+      color: "text-amber-600 bg-amber-50 border-amber-200",
+    };
+  if (paymentType === "deposit_cod")
+    return {
+      label: "Awaiting Deposit",
+      color: "text-amber-500 bg-amber-50 border-amber-200",
     };
   return {
     label: "Unpaid",
@@ -63,9 +75,11 @@ export default function OrderStatusIndicator({
   status,
   paidAt,
   refundedAt,
+  paymentType,
+  depositPaidAt,
 }: Props) {
   const badge = STATUS_BADGES[status];
-  const payment = getPaymentStatus(paidAt, refundedAt);
+  const payment = getPaymentStatus(paidAt, refundedAt, depositPaidAt, paymentType);
 
   return (
     <div className="space-y-2">

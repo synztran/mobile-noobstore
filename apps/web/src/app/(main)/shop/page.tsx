@@ -44,8 +44,6 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     getCategories(),
   ]);
 
-  console.log("initialData", initialData);
-
   return (
     <div className="clear-both p-4">
       <Suspense fallback={null}>

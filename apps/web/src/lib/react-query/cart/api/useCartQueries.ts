@@ -12,6 +12,8 @@ function transformToCartItem(item: CartApiItem): CartItem {
 		base_price: item.product?.base_price ?? 0,
 		stock_quantity: item.product?.stock_quantity ?? 0,
 		thumbnail: item.product?.thumbnail ?? null,
+		is_pre_order: item.product?.is_pre_order ?? false,
+		pre_order_config: item.product?.pre_order_config ?? null,
 	};
 
 	const variant: ProductVariant | null = item.variant
@@ -21,6 +23,8 @@ function transformToCartItem(item: CartApiItem): CartItem {
 				price_adjustment: item.variant.price_adjustment,
 				effective_price: (item.product?.base_price ?? 0) + (item.variant.price_adjustment ?? 0),
 				thumbnail: item.variant.thumbnail ?? null,
+				is_pre_order: item.variant.is_pre_order ?? false,
+				pre_order_config: item.variant.pre_order_config ?? null,
 			}
 		: null;
 
@@ -32,7 +36,12 @@ function transformToCartItem(item: CartApiItem): CartItem {
 			component_group: c.component_group ?? "",
 			price_adjustment: c.variant!.price_adjustment,
 			thumbnail: c.variant!.thumbnail ?? null,
+			is_pre_order: c.variant!.is_pre_order ?? false,
+			pre_order_config: c.variant!.pre_order_config ?? null,
 		}));
+
+	const hasAnyPreOrder = product.is_pre_order ?? variant?.is_pre_order ?? components.some((c) => c.is_pre_order) ?? false;
+	const preOrderConfig = product.pre_order_config ?? variant?.pre_order_config ?? components.find((c) => c.pre_order_config)?.pre_order_config ?? null;
 
 	return {
 		id: item.id,
@@ -40,6 +49,8 @@ function transformToCartItem(item: CartApiItem): CartItem {
 		variant,
 		components: components.length > 0 ? components : undefined,
 		quantity: item.quantity,
+		is_pre_order: hasAnyPreOrder,
+		pre_order_config: preOrderConfig,
 	};
 }
 

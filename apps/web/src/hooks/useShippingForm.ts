@@ -135,8 +135,31 @@ const REQUIRED_FIELDS = ["fullName", "streetAddress", "city"] as const;
 
 export function useShippingForm() {
   const router = useRouter();
-  const { setShipping, shipping, shippingFormDraft, saveShippingDraft, clearShippingDraft } = useCheckoutStore();
-  const { total, cartId } = useCartStore();
+  const {
+    setShipping,
+    shipping,
+    shippingFormDraft,
+    saveShippingDraft,
+    clearShippingDraft,
+  } = useCheckoutStore();
+  const { total, cartId, items: cartItems } = useCartStore();
+  const hasPreOrder = useMemo(
+    () =>
+      cartItems.some(
+        (i) => i.is_pre_order || i.components?.some((c) => c.is_pre_order)
+      ),
+    [cartItems]
+  );
+  const preOrderEstimate = useMemo(() => {
+    for (const item of cartItems) {
+      const config =
+        item.pre_order_config ??
+        item.components?.find((c) => c.pre_order_config)?.pre_order_config ??
+        null;
+      if (config?.estimate) return config.estimate;
+    }
+    return null;
+  }, [cartItems]);
   const { profile, user } = useAuth();
 
   const [mounted, setMounted] = useState(false);
@@ -416,7 +439,7 @@ export function useShippingForm() {
         },
         shippingCost
       );
-      router.push("/checkout/summary")
+      router.push("/checkout/summary");
     },
     [cartId, delivery, form, router, setShipping, shippingCost]
   );
@@ -601,8 +624,30 @@ export function useShippingForm() {
     if (!initializedRef.current) return;
     if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
     draftSaveTimerRef.current = setTimeout(() => {
-      const { fullName, apartment, phoneNumber, city, district, districtCode, ward, wardCode, streetAddress, notes } = form;
-      saveShippingDraft({ fullName, apartment, phoneNumber, city, district, districtCode, ward, wardCode, streetAddress, notes });
+      const {
+        fullName,
+        apartment,
+        phoneNumber,
+        city,
+        district,
+        districtCode,
+        ward,
+        wardCode,
+        streetAddress,
+        notes,
+      } = form;
+      saveShippingDraft({
+        fullName,
+        apartment,
+        phoneNumber,
+        city,
+        district,
+        districtCode,
+        ward,
+        wardCode,
+        streetAddress,
+        notes,
+      });
     }, 800);
     return () => {
       if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
@@ -642,5 +687,7 @@ export function useShippingForm() {
     routeCoordinates,
     storeCoords,
     handleAddressSelect,
+    hasPreOrder,
+    preOrderEstimate,
   };
 }

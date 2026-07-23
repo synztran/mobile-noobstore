@@ -1,6 +1,7 @@
 import {
   BanknoteIcon,
   CircleDashed,
+  Coins,
   PackageCheck,
   RotateCcw,
   Truck,
@@ -27,6 +28,8 @@ interface Props {
   refundedAt: string | null;
   status: string;
   updatedAt: string | null;
+  depositPaidAt?: string | null;
+  paymentType?: "full" | "deposit_cod";
 }
 
 function fmtDate(ts: string) {
@@ -50,6 +53,8 @@ export default function OrderTimeline({
   refundedAt,
   status,
   updatedAt,
+  depositPaidAt,
+  paymentType,
 }: Props) {
   const entries: TimelineEntry[] = [
     {
@@ -60,6 +65,18 @@ export default function OrderTimeline({
       color: "border-slate-300 text-slate-600",
       bg: "bg-slate-50",
     },
+    ...(paymentType === "deposit_cod"
+      ? [
+          {
+            key: "deposit_paid" as const,
+            label: "Deposit paid",
+            timestamp: depositPaidAt ?? null,
+            icon: <Coins className="h-4 w-4" />,
+            color: "border-amber-300 text-amber-700",
+            bg: "bg-amber-50",
+          },
+        ]
+      : []),
     {
       key: "paid",
       label: "Payment confirmed",

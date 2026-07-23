@@ -86,12 +86,7 @@ interface Props {
 }
 
 const CANCELLABLE_STATUSES = ["pending"];
-const NON_TERMINAL_STATUSES = [
-  "confirmed",
-  "preparing",
-  "delivering",
-  "delivered",
-];
+const NON_TERMINAL_STATUSES = ["delivered"];
 const TIMELINE_STEPS = [
   { key: "pending", label: "Đang kiểm tra" },
   { key: "confirmed", label: "Đã xác nhận" },
@@ -201,9 +196,11 @@ function OrderDetailContent({
       })()}
 
       {/* Payment countdown */}
-      {detail.status === "pending" && detail.created_at && (
-        <PaymentCountdown createdAt={detail.created_at} />
-      )}
+      {detail.status === "pending" &&
+        detail.created_at &&
+        !detail.deposit_percentage && (
+          <PaymentCountdown createdAt={detail.created_at} />
+        )}
 
       {/* Status timeline */}
       {NON_TERMINAL_STATUSES.includes(detail.status) && (
@@ -404,6 +401,10 @@ function OrderDetailContent({
           shippingFee={detail.shipping_fee}
           voucherDiscount={voucherDiscount}
           shippingDiscount={shippingDiscount}
+          paymentType={detail.payment_type}
+          depositAmount={detail.deposit_amount ?? 0}
+          remainingAmount={detail.remaining_amount ?? 0}
+          depositPercentage={detail.deposit_percentage ?? 0}
         />
       )}
 
@@ -453,6 +454,24 @@ function OrderDetailContent({
                 -{formatVND(shippingDiscount)}
               </span>
             </div>
+          )}
+          {detail.payment_type === "deposit_cod" && (
+            <>
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">
+                  Đặt cọc ({detail.deposit_percentage ?? 0}%)
+                </span>
+                <span className="font-bold text-primary">
+                  {formatVND(detail.deposit_amount ?? 0)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">Còn lại (COD)</span>
+                <span className="font-bold text-secondary">
+                  {formatVND(detail.remaining_amount ?? 0)}
+                </span>
+              </div>
+            </>
           )}
           <div className="h-px bg-outline-variant/30" />
           <div className="flex justify-between">

@@ -13,7 +13,7 @@ import {
   WardSearchInput,
 } from "@/components/ui/CityDistrictSelect";
 import Icon from "@/components/ui/Icon";
-import { DELIVERY_OPTIONS, mappingDisplayPrice } from "@/constants";
+import { DELIVERY_OPTIONS } from "@/constants";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm } from "@/hooks/useShippingForm";
 import { formatVND } from "@/lib/currency";
@@ -28,6 +28,7 @@ import {
   Truck,
 } from "lucide-react";
 import { ShippingPageSkeleton } from "./ShippingPageSkeleton";
+import DeliveryMethodSection from "./DeliveryMethodSection";
 
 const FIELDS = [
   {
@@ -87,6 +88,8 @@ const ShippingPage = () => {
     routeCoordinates,
     storeCoords,
     handleAddressSelect,
+    hasPreOrder,
+    preOrderEstimate,
   } = useShippingForm();
 
   const cityCode = useMemo(
@@ -134,7 +137,7 @@ const ShippingPage = () => {
   return (
     <div className="space-y-4">
       {/* ── Hero header ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-4">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-4">
         <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-secondary/10 blur-xl" />
         <div className="relative flex items-center gap-4">
@@ -372,134 +375,31 @@ const ShippingPage = () => {
               storeCoords ? { ...storeCoords, label: "Noobstore HCM" } : null
             }
             routeCoordinates={routeCoordinates}
-            drivingDistanceKm={distanceKm !== null ? distanceKm.toFixed(1) : null}
+            drivingDistanceKm={
+              distanceKm !== null ? distanceKm.toFixed(1) : null
+            }
             isLoading={isCalculatingFee}
           />
         </Suspense>
 
-        {/* ── Delivery speed ───────────────────────────────────── */}
-        <div className="space-y-3">
-          <div className="ml-1 flex items-center justify-between gap-2 text-[10px] font-black tracking-widest text-on-surface-variant">
-            <span className="uppercase">Phương thức giao hàng</span>
-            {isCalculatingFee ? (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant">
-                <span className="loading loading-spinner loading-sm" />
-                Đang tính phí...
-              </span>
-            ) : distanceKm !== null ? (
-              <span className="ml-2 text-sm font-bold text-on-surface-variant">
-                {distanceKm.toFixed(1)} km
-              </span>
-            ) : null}
-          </div>
-          <div className="space-y-3">
-            {isCalculatingFee ? (
-              <div className="space-y-3">
-                {[1, 2].map((idx) => (
-                  <div
-                    key={idx}
-                    className="flex w-full animate-pulse items-center gap-4 rounded-2xl border-2 border-transparent bg-surface-container p-4"
-                  >
-                    <div className="h-11 w-11 rounded-xl bg-surface-container-high" />
-                    <div className="min-w-0 flex-1 space-y-2 py-1">
-                      <div className="h-4 w-2/5 rounded-full bg-surface-container-high" />
-                      <div className="h-3 w-1/2 rounded-full bg-surface-container-high" />
-                    </div>
-                    <div className="h-5 w-16 rounded-full bg-surface-container-high" />
-                    <div className="h-5 w-5 rounded-full border-2 border-outline-variant bg-surface-container-high" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              deliveryOptions.map((opt) => {
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    disabled={opt.isHidden}
-                    onClick={() => !opt.isHidden && setDelivery(opt.id)}
-                    className={clsx(
-                      "flex w-full items-center gap-4 rounded-2xl border-2 p-4 transition-all",
-                      opt.isHidden && "hidden"
-                    )}
-                  >
-                    <div
-                      className={clsx(
-                        "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl transition-all",
-                        delivery === opt.id
-                          ? "primary-gradient shadow-ambient-sm"
-                          : "bg-surface-container-high"
-                      )}
-                    >
-                      {typeof opt.icon === "string" ? (
-                        <Icon
-                          name={opt.icon}
-                          className={clsx(
-                            delivery === opt.id
-                              ? "text-white"
-                              : "text-on-surface-variant",
-                            "text-xl"
-                          )}
-                        />
-                      ) : (
-                        <opt.icon
-                          className={`text-xl ${delivery === opt.id ? "text-white" : "text-on-surface-variant"}`}
-                        />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base font-black text-on-surface">
-                          {opt.label}
-                        </span>
-                        {opt.tag && (
-                          <span className="rounded bg-primary px-1.5 py-0.5 text-[9px] font-black tracking-wider text-on-primary">
-                            {opt.tag}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-sm text-on-surface-variant">
-                        {opt.sublabel}
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 text-right">
-                      <span
-                        className={clsx(
-                          "text-sm font-black",
-                          delivery === opt.id
-                            ? "text-primary"
-                            : "text-on-surface"
-                        )}
-                      >
-                        {mappingDisplayPrice[
-                          opt.price as keyof typeof mappingDisplayPrice
-                        ] ?? formatVND(opt.price as number)}
-                      </span>
-                    </div>
-                    <div
-                      className={clsx(
-                        "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all",
-                        delivery === opt.id
-                          ? "border-primary bg-primary"
-                          : "border-outline-variant"
-                      )}
-                    >
-                      {delivery === opt.id && (
-                        <div className="h-2 w-2 rounded-full bg-on-primary" />
-                      )}
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
+        {/* ── Delivery method ──────────────────────────────────── */}
+        <DeliveryMethodSection
+          hasPreOrder={hasPreOrder}
+          preOrderEstimate={preOrderEstimate}
+          delivery={delivery}
+          setDelivery={(id) => setDelivery(id as typeof delivery)}
+          deliveryOptions={deliveryOptions}
+          isCalculatingFee={isCalculatingFee}
+          distanceKm={distanceKm}
+          immediateFee={immediateFee}
+          basicFee={basicFee}
+        />
         {/* ── Discount teaser ──────────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-surface-container-low p-5">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-surface-container-low p-4">
           <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-amber-400/20 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-orange-400/15 blur-xl" />
-          <div className="relative flex items-start gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-ambient-sm">
+          <div className="relative flex items-start gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-ambient-sm">
               <PercentCircle className="text-lg text-white" />
             </div>
             <div className="min-w-0 flex-1">

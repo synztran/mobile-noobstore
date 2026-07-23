@@ -62,6 +62,11 @@ export interface OrderDetail {
   status: "pending" | "confirmed" | "delivering" | "delivered" | "refunded";
   total_price: number;
   shipping_fee: number | null;
+  payment_type?: "full" | "deposit_cod";
+  deposit_percentage?: number | null;
+  deposit_amount?: number | null;
+  remaining_amount?: number | null;
+  deposit_paid_at?: string | null;
   shipping_method_id: string | null;
   expected_delivery_at: string | null;
   delivery_address: {
@@ -239,6 +244,23 @@ function OrderPriceSummary({ order }: { order: OrderDetail }) {
         </div>
       )}
 
+      {order.payment_type === "deposit_cod" && (
+        <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">
+          <div className="flex justify-between">
+            <span>Deposit paid ({order.deposit_percentage ?? 0}%)</span>
+            <span className="font-medium">
+              {Number(order.deposit_amount ?? 0).toLocaleString("vi-VN")}₫
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span>COD remaining</span>
+            <span className="font-medium">
+              {Number(order.remaining_amount ?? 0).toLocaleString("vi-VN")}₫
+            </span>
+          </div>
+        </div>
+      )}
+
       {order.status === "delivered" && (order.points_earned ?? 0) > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
           Customer earned {Number(order.points_earned).toLocaleString("vi-VN")}{" "}
@@ -325,7 +347,47 @@ export default function OrderDetailModal({
                 status={order.status}
                 paidAt={order.paid_at}
                 refundedAt={order.refunded_at}
+                paymentType={order.payment_type}
+                depositPaidAt={order.deposit_paid_at}
               />
+
+              {/* {order.payment_type === "deposit_cod" && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-800">
+                    Deposit / COD Payment
+                  </p>
+                  <div className="mt-2 space-y-1 text-xs text-amber-700">
+                    <div className="flex justify-between">
+                      <span>Deposit ({order.deposit_percentage ?? 0}%)</span>
+                      <span className="font-medium">
+                        {Number(order.deposit_amount ?? 0).toLocaleString(
+                          "vi-VN"
+                        )}
+                        ₫
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>COD remaining</span>
+                      <span className="font-medium">
+                        {Number(order.remaining_amount ?? 0).toLocaleString(
+                          "vi-VN"
+                        )}
+                        ₫
+                      </span>
+                    </div>
+                    {order.deposit_paid_at && (
+                      <div className="flex justify-between border-t border-amber-200 pt-1">
+                        <span>Deposit paid</span>
+                        <span className="font-medium text-green-700">
+                          {new Date(order.deposit_paid_at).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )} */}
 
               <OrderShippingDetails
                 deliveryAddress={order.delivery_address}
@@ -362,6 +424,8 @@ export default function OrderDetailModal({
               refundedAt={order.refunded_at}
               status={order.status}
               updatedAt={order.updated_at}
+              depositPaidAt={order.deposit_paid_at}
+              paymentType={order.payment_type}
             />
             <OrderPriceSummary order={order} />
           </div>

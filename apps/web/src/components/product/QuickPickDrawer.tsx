@@ -370,6 +370,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
           price_adjustment: v.price_adjustment,
           thumbnail: v.thumbnail,
           is_pre_order: v.is_pre_order ?? false,
+          pre_order_config: v.pre_order_config ?? null,
         },
       ];
     });

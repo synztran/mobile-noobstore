@@ -30,11 +30,10 @@ export async function GET(
 			);
 		}
 
-		const { data: byOrderNumber, error: byOrderNumberError } =
-			await supabase
-				.from("orders")
+			const { data: byOrderNumber, error: byOrderNumberError } =
+			await (supabase.from("orders") as any)
 				.select(
-					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note",
+					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at",
 				)
 				.eq("user_id", user.id)
 				.eq("order_number", identifier)
@@ -55,10 +54,10 @@ export async function GET(
 		let order = byOrderNumber?.[0] ?? null;
 
 		if (!order) {
-			const { data: byId, error: byIdError } = await supabase
-				.from("orders")
+			const { data: byId, error: byIdError } = await (supabase
+				.from("orders") as any)
 				.select(
-					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note",
+					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at",
 				)
 				.eq("user_id", user.id)
 				.eq("id", identifier)
@@ -92,6 +91,7 @@ export async function GET(
 			cancelled: "Đã hủy",
 		};
 
+		const o = order as unknown as Record<string, unknown>;
 		return NextResponse.json({
 			order_id: order.id,
 			order_number: order.order_number,
@@ -99,19 +99,20 @@ export async function GET(
 				mappinStatus[order.status as keyof typeof mappinStatus] ||
 				"Trạng thái không xác định",
 			cancelled_at:
-				(order as { cancelled_at?: string | null }).cancelled_at ??
-				null,
+				(o.cancelled_at as string | null) ?? null,
 			cancelled_note:
-				(order as { cancelled_note?: string | null }).cancelled_note ??
-				null,
+				(o.cancelled_note as string | null) ?? null,
 			voucher_discount_amount: Number(
-				(order as { voucher_discount_amount?: number | string | null })
-					.voucher_discount_amount ?? 0,
+				o.voucher_discount_amount ?? 0,
 			),
 			shipping_discount_amount: Number(
-				(order as { shipping_discount_amount?: number | string | null })
-					.shipping_discount_amount ?? 0,
+				o.shipping_discount_amount ?? 0,
 			),
+			payment_type: (o.payment_type as "full" | "deposit_cod") ?? "full",
+			deposit_percentage: (o.deposit_percentage as number | undefined) ?? null,
+			deposit_amount: (o.deposit_amount as number | undefined) ?? null,
+			remaining_amount: (o.remaining_amount as number | undefined) ?? null,
+			deposit_paid_at: (o.deposit_paid_at as string | null) ?? null,
 		});
 	} catch (error) {
 		console.error("Error fetching order:", error);
