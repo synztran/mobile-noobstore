@@ -26,6 +26,7 @@ export interface OrderItemDetail {
   }> | null;
   isPreOrder: boolean;
   preOrderConfig: any;
+  preOrderTracking: unknown;
 }
 
 export interface OrderDetail {
@@ -125,7 +126,7 @@ export async function GET(
 
     const { data: rawItems } = await supabase
       .from("order_items")
-      .select("id, product_id, product_name, unit_price, quantity, thumbnail")
+      .select("id, product_id, product_name, unit_price, quantity, thumbnail, pre_order_tracking")
       .eq("order_id", id) as unknown as {
       data: Array<Record<string, unknown>> | null;
       error: { message: string } | null;
@@ -251,6 +252,7 @@ export async function GET(
           : null,
         isPreOrder: (row as Record<string, unknown>).is_pre_order as boolean ?? false,
         preOrderConfig: (row as Record<string, unknown>).pre_order_config ?? null,
+        preOrderTracking: (row as Record<string, unknown>).pre_order_tracking ?? null,
       };
     });
 

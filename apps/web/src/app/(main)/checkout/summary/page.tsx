@@ -13,12 +13,7 @@ import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { useNavigationStore } from "@/store/navigation";
-import {
-  ArrowRight,
-  CheckCircle,
-  ShoppingBag,
-  Truck,
-} from "lucide-react";
+import { ArrowRight, CheckCircle, ShoppingBag, Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -268,6 +263,22 @@ export default function SummaryPage() {
         </div>
       </div>
 
+      {/* ── Pre-order Info Banner ────────────────────────────── */}
+      {hasPreOrder && (
+        <div className="overflow-hidden rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-violet-700">
+              Sản phẩm Pre-order
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-violet-600">
+              Đơn hàng có sản phẩm pre-order. Thời gian giao hàng dự kiến dựa
+              vào thời gian hàng về đến shop. Do vấn đề hải quan, nên thời gian
+              có thể delay thêm
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Order Items ──────────────────────────────────────── */}
       <div className="space-y-4">
         <OrderItemsList
@@ -310,21 +321,6 @@ export default function SummaryPage() {
               <small>{shipping.notes}</small>
             </p>
           ) : null}
-        </div>
-      )}
-
-      {/* ── Pre-order Info Banner ────────────────────────────── */}
-      {hasPreOrder && (
-        <div className="overflow-hidden rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
-          <div>
-            <p className="text-xs font-black uppercase tracking-widest text-violet-700">
-              Sản phẩm Pre-order
-            </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-violet-600">
-              Đơn hàng có sản phẩm pre-order. Số tiền đặt cọc sẽ được dùng để
-              xác nhận đơn hàng. Phần còn lại thanh toán khi nhận hàng.
-            </p>
-          </div>
         </div>
       )}
 

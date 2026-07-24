@@ -2,6 +2,7 @@
 
 import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
 import { OrderPaymentPanel } from "@/components/orders/OrderPaymentPanel";
+import PreOrderTimeline from "@/components/orders/PreOrderTimeline";
 import { VoucherInfo } from "@/components/voucher/VoucherInfo";
 import { formatVND } from "@/lib/currency";
 import { toast } from "@/lib/toast";
@@ -227,6 +228,11 @@ function OrderDetailContent({
             );
           })}
         </ul>
+      )}
+
+      {/* Pre-order tracking timeline */}
+      {detail.items.some((item) => item.preOrderTracking) && (
+        <PreOrderTimeline items={detail.items} />
       )}
 
       {/* Cancelled details */}

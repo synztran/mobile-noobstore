@@ -72,8 +72,8 @@ export default function OrderTimeline({
             label: "Deposit paid",
             timestamp: depositPaidAt ?? null,
             icon: <Coins className="h-4 w-4" />,
-            color: "border-amber-300 text-amber-700",
-            bg: "bg-amber-50",
+            color: "border-green-200 text-green-600",
+            bg: "bg-green-100",
           },
         ]
       : []),
@@ -156,11 +156,11 @@ export default function OrderTimeline({
                   >
                     {entry.label}
                   </span>
-                  <div className="flex shrink-0 flex-col items-end">
-                    <span className="text-xs text-slate-400">
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span className="text-xs text-slate-600">
                       {fmtTime(entry.timestamp!)}
                     </span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-600">
                       {fmtDate(entry.timestamp!)}
                     </span>
                   </div>

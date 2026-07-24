@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, FileText, XCircle } from "lucide-react";
 
 interface Props {
   status: string;
@@ -6,6 +6,7 @@ interface Props {
   refundedAt: string | null;
   paymentType?: "full" | "deposit_cod";
   depositPaidAt?: string | null;
+  invoiceUrl?: string | null;
 }
 
 const STATUS_BADGES: Record<
@@ -44,7 +45,12 @@ const STATUS_BADGES: Record<
   },
 };
 
-function getPaymentStatus(paidAt: string | null, refundedAt: string | null, depositPaidAt?: string | null, paymentType?: string) {
+function getPaymentStatus(
+  paidAt: string | null,
+  refundedAt: string | null,
+  depositPaidAt?: string | null,
+  paymentType?: string
+) {
   if (refundedAt)
     return {
       label: "Refunded",
@@ -58,7 +64,7 @@ function getPaymentStatus(paidAt: string | null, refundedAt: string | null, depo
   if (paymentType === "deposit_cod" && depositPaidAt)
     return {
       label: "Deposit Paid",
-      color: "text-amber-600 bg-amber-50 border-amber-200",
+      color: "text-green-600 bg-green-50 border-green-200",
     };
   if (paymentType === "deposit_cod")
     return {
@@ -77,9 +83,16 @@ export default function OrderStatusIndicator({
   refundedAt,
   paymentType,
   depositPaidAt,
+  invoiceUrl,
 }: Props) {
   const badge = STATUS_BADGES[status];
-  const payment = getPaymentStatus(paidAt, refundedAt, depositPaidAt, paymentType);
+  const payment = getPaymentStatus(
+    paidAt,
+    refundedAt,
+    depositPaidAt,
+    paymentType
+  );
+  const invoiceGenerated = Boolean(invoiceUrl);
 
   return (
     <div className="space-y-2">
@@ -87,9 +100,11 @@ export default function OrderStatusIndicator({
         <Circle className="h-4 w-4" />
         Status
       </div>
-      <div className="flex flex-wrap gap-3 rounded-xl border border-slate-200 bg-white p-4">
+      <div className="flex flex-wrap items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Order:</span>
+          <span className="w-14 shrink-0 text-right text-xs text-slate-400">
+            Order:
+          </span>
           {badge ? (
             <span
               className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold ${badge.classes}`}
@@ -104,7 +119,9 @@ export default function OrderStatusIndicator({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Payment:</span>
+          <span className="w-14 shrink-0 text-right text-xs text-slate-400">
+            Payment:
+          </span>
           <span
             className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold ${payment.color}`}
           >
@@ -116,6 +133,21 @@ export default function OrderStatusIndicator({
               <XCircle className="h-3.5 w-3.5" />
             )}
             {payment.label}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-14 shrink-0 text-right text-xs text-slate-400">
+            Invoice:
+          </span>
+          <span
+            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold ${
+              invoiceGenerated
+                ? "border-green-200 bg-green-50 text-green-700"
+                : "border-slate-200 bg-slate-50 text-slate-500"
+            }`}
+          >
+            <FileText className="h-3.5 w-3.5" />
+            {invoiceGenerated ? "Generated" : "Not yet"}
           </span>
         </div>
       </div>

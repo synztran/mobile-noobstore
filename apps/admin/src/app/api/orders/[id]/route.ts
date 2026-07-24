@@ -26,7 +26,7 @@ export async function GET(
 			invoice_url,
 			payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at,
 			users(id, first_name, last_name, email, phone_number),
-			order_items(id, product_id, product_name, quantity, unit_price, thumbnail, order_item_components(id, component_group, variant_name, price_adjustment, product_variant_id, thumbnail, is_pre_order, pre_order_config)),
+			order_items(id, product_id, product_name, quantity, unit_price, thumbnail, pre_order_tracking, order_item_components(id, component_group, variant_name, price_adjustment, product_variant_id, thumbnail, is_pre_order, pre_order_config)),
 			order_services(
 				id, service_id, service_name, price, quantity, selected_options, customer_note,
 				services(base_price)
@@ -250,7 +250,79 @@ export async function PATCH(
   const body = (await req.json()) as {
     status?: string;
     cancelled_note?: string;
+    advance_pre_order?: {
+      item_ids: string[];
+    };
   };
+
+  const supabase = getAdminClient();
+
+  // ── Handle pre-order tracking advancement ───────────────────────────
+  if (body.advance_pre_order) {
+    const itemIds = body.advance_pre_order.item_ids;
+    if (!Array.isArray(itemIds) || itemIds.length === 0) {
+      return NextResponse.json({ error: "item_ids required" }, { status: 400 });
+    }
+
+    const PRE_ORDER_STEPS = [
+      "paid",
+      "placed",
+      "international_shipping",
+      "customs",
+      "local_delivering",
+      "ready",
+    ];
+
+    const { data: rawItems } = await supabase
+      .from("order_items")
+      .select("id, pre_order_tracking")
+      .in("id", itemIds) as unknown as {
+      data: Array<{ id: string; pre_order_tracking: unknown }> | null;
+    };
+
+    const items = rawItems as Array<{
+      id: string;
+      pre_order_tracking: Record<string, unknown> | null;
+    }> | null;
+
+    if (!items) {
+      return NextResponse.json({ error: "Items not found" }, { status: 404 });
+    }
+
+    const updates: Array<{ id: string; pre_order_tracking: unknown }> = [];
+    for (const item of items) {
+      const tracking = (item.pre_order_tracking as Record<string, unknown>) ?? {};
+      const currentStep = (tracking.current_step as string) ?? null;
+      const steps = (tracking.steps as Record<string, string | null>) ?? {};
+
+      const currentIdx = currentStep ? PRE_ORDER_STEPS.indexOf(currentStep) : -1;
+      const nextIdx = currentIdx + 1;
+
+      if (nextIdx >= PRE_ORDER_STEPS.length) continue;
+
+      const nextStep = PRE_ORDER_STEPS[nextIdx];
+      updates.push({
+        id: item.id,
+        pre_order_tracking: {
+          current_step: nextStep,
+          steps: { ...steps, [nextStep]: new Date().toISOString() },
+        },
+      });
+    }
+
+    for (const upd of updates) {
+      const { error: updErr } = await (supabase
+        .from("order_items") as any)
+        .update({ pre_order_tracking: upd.pre_order_tracking })
+        .eq("id", upd.id);
+
+      if (updErr) {
+        console.error(`[orders] failed to advance pre-order item ${upd.id}:`, updErr);
+      }
+    }
+
+    return NextResponse.json({ success: true, advanced: updates.length });
+  }
 
   const VALID_STATUSES = [
     "pending",
@@ -263,8 +335,6 @@ export async function PATCH(
   if (body.status && !VALID_STATUSES.includes(body.status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
-
-  const supabase = getAdminClient();
 
   type OrderUpdate = Database["public"]["Tables"]["orders"]["Update"];
   const update: OrderUpdate = {};

@@ -27,6 +27,7 @@ interface OrderItem {
   unit_price: number;
   thumbnail: string | null;
   order_item_components: KitComponent[];
+  pre_order_tracking: unknown;
   gifts?: {
     gift_name: string;
     gift_thumbnail: string;
@@ -316,7 +317,7 @@ export default function OrderDetailModal({
                   href={order.invoice_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-800"
                 >
                   Invoice
                 </a>
@@ -332,10 +333,10 @@ export default function OrderDetailModal({
         </div>
 
         {/* Body */}
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid min-h-0 flex-1 grid-cols-12 gap-4">
           {/* Left column */}
-          <div className="col-span-7 my-4 ml-4 flex min-h-0 flex-col gap-4 rounded-md border border-slate-200 bg-slate-50/80 p-4">
-            <div className="max-h-[65dvh] min-h-0 flex-1 space-y-4 overflow-y-auto">
+          <div className="col-span-8 my-4 ml-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-md border border-slate-200 bg-slate-50/80 p-4">
+            <div className="space-y-4">
               <OrderCustomerInfoCard
                 customerId={order.users?.id ?? "—"}
                 customerName={customerName}
@@ -343,13 +344,14 @@ export default function OrderDetailModal({
                 phoneNumber={order.users?.phone_number}
               />
 
-              <OrderStatusIndicator
+              {/* <OrderStatusIndicator
                 status={order.status}
                 paidAt={order.paid_at}
                 refundedAt={order.refunded_at}
                 paymentType={order.payment_type}
                 depositPaidAt={order.deposit_paid_at}
-              />
+                invoiceUrl={order.invoice_url}
+              /> */}
 
               {/* {order.payment_type === "deposit_cod" && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
@@ -413,7 +415,15 @@ export default function OrderDetailModal({
           </div>
 
           {/* Right column — Price summary */}
-          <div className="col-span-5 flex min-h-0 flex-col gap-4 py-4 pr-4">
+          <div className="col-span-4 flex min-h-0 flex-col gap-4 overflow-y-auto py-4 pr-4">
+            <OrderStatusIndicator
+              status={order.status}
+              paidAt={order.paid_at}
+              refundedAt={order.refunded_at}
+              paymentType={order.payment_type}
+              depositPaidAt={order.deposit_paid_at}
+              invoiceUrl={order.invoice_url}
+            />
             <OrderTimeline
               createdAt={order.created_at}
               paidAt={order.paid_at}
