@@ -1,4 +1,4 @@
-import { getCache, setCache } from "@/lib/redis/cache";
+import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const q = req.nextUrl.searchParams.get("q") ?? "";
     const excludeTypes = req.nextUrl.searchParams.get("exclude_types") ?? "";
 
-    const cacheKey = `search:suggestions:${q}:${excludeTypes}`;
+    const cacheKey = `${CACHE_VERSION}:search:suggestions:${q}:${excludeTypes}`;
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return NextResponse.json(cached);
 

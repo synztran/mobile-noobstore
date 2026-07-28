@@ -8,7 +8,6 @@ import type { CategoryItem } from "@/lib/products-server";
 import { SORT_OPTIONS } from "@/constants/shop";
 import { SortSheet } from "./SortSheet";
 import { useShopControls } from "@/hooks/useShopControls";
-import type { Filters } from "@/lib/react-query/shop/api/useShopInfiniteQuery";
 
 function formatFilterPills(filters: FilterState): string[] {
   const pills: string[] = [];
@@ -27,21 +26,12 @@ function formatFilterPills(filters: FilterState): string[] {
   return pills;
 }
 
-type ExternalFilters = Pick<
-  Filters,
-  "search" | "category" | "sort" | "priceMin" | "priceMax"
->;
-
 export function ShopControls({
   total,
   categories = [],
-  filters: externalFilters,
-  onFiltersChange,
 }: {
   total: number;
   categories?: CategoryItem[];
-  filters: ExternalFilters;
-  onFiltersChange: (f: ExternalFilters) => void;
 }) {
   const {
     search,
@@ -56,7 +46,7 @@ export function ShopControls({
     handleClearFilters,
     setShowFilter,
     setShowSort,
-  } = useShopControls(externalFilters, onFiltersChange);
+  } = useShopControls();
 
   return (
     <>

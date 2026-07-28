@@ -3,7 +3,7 @@ import {
   type ProductSortOption,
   type ProductType,
 } from "@/lib/product-query-service";
-import { getCache, setCache } from "@/lib/redis/cache";
+import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
   try {
     // Build a stable cache key from normalized params
     // Search queries are cached too — useful for repeated searches within 60 s
-    const cacheKey = `products:${search || ""}:${sort}:${limit}:${offset}`;
+    const cacheKey = `products:${CACHE_VERSION}:${search || ""}:${categorySlug}:${priceMin}:${priceMax}:${productTypes}:${sort}:${limit}:${offset}`;
 
     const cached = await getCache<ProductsResponse>(cacheKey);
     if (cached) {

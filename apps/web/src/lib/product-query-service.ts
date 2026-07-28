@@ -324,7 +324,7 @@ function shapeRow(
   // 3. Pricing
   const computedMinPrice =
     variants.length > 0
-      ? Math.min(...variants.map((v) => v.effective_price))
+      ? Math.min(...variants?.filter(v => v.effective_price > 0)?.map((v) => v.effective_price))
       : basePrice;
 
   const minPrice =
@@ -413,7 +413,6 @@ export interface GetProductListParams {
 export async function getProductListByFilters(
   params: GetProductListParams = {}
 ): Promise<{ products: ProductListItem[]; total: number }> {
-  let skipOOS = false;
   const {
     search = "",
     categorySlug = "",
@@ -436,11 +435,6 @@ export async function getProductListByFilters(
     typeof limit === "number"
       ? Math.min(Math.max(1, Math.floor(limit)), MAX_LIMIT)
       : DEFAULT_LIMIT;
-  const bundleSkipOOS = ["newest"];
-
-  if (bundleSkipOOS.includes(sort)) {
-    skipOOS = true;
-  }
 
   try {
     const supabase = getPublicClient();
@@ -510,6 +504,7 @@ export async function getProductListByFilters(
     } else if (sort === "price_desc") {
       dataQuery = dataQuery.order("base_price", { ascending: false });
     }
+    dataQuery = dataQuery.order("id", { ascending: true });
 
     const { data, error } = await dataQuery.range(
       safeOffset,

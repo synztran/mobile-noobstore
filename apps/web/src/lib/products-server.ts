@@ -14,7 +14,7 @@ import type {
 } from "@/app/api/products/[slug]/route";
 import type { ShopProduct } from "@/app/api/products/route";
 import { getProductListByFilters } from "@/lib/product-query-service";
-import { getCache, setCache } from "@/lib/redis/cache";
+import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
 import {
   fetchKitSupplements,
   fetchGiftSupplement,
@@ -157,10 +157,15 @@ function shapeRow(
     }
   }
 
-  const minPrice =
+  const computedMinPrice =
     variants.length > 0
-      ? Math.min(...variants.map((v) => v.effective_price))
+      ? Math.min(...variants.filter((v) => v.effective_price > 0).map((v) => v.effective_price))
       : Number(p.base_price);
+
+  const minPrice =
+    computedMinPrice === Infinity || (computedMinPrice === 0 && Number(p.base_price) > 0)
+      ? Number(p.base_price)
+      : computedMinPrice;
 
   const productType = (p.product_type ??
     "standard") as ShopProduct["product_type"];
@@ -211,6 +216,11 @@ function shapeRow(
       ? variants.some((v) => v.is_pre_order)
       : p.is_pre_order ?? false;
 
+  const discountPercentage =
+    minPrice < Number(p.base_price)
+      ? Math.round(((Number(p.base_price) - minPrice) / Number(p.base_price)) * 100)
+      : 0;
+
   return {
     id: p.id,
     slug: p.slug,
@@ -228,6 +238,8 @@ function shapeRow(
     is_used: p.is_used ?? false,
     tags,
     is_pre_order,
+    discount_price: minPrice < Number(p.base_price) ? minPrice : undefined,
+    discount_percentage: discountPercentage > 0 ? discountPercentage : undefined,
     sold_count: Number(p.sold_count ?? 0),
     gifts: giftsByProductId.get(p.id) ?? undefined,
   };
@@ -357,7 +369,7 @@ export const getRelatedProducts = cache(
 
     try {
       const cached = await getCache<ShopProduct[]>(
-        `related-products:${brand}:${excludeSlug}:${limit}`
+        `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`
       );
       if (cached) return cached;
 
@@ -373,7 +385,7 @@ export const getRelatedProducts = cache(
       );
 
       await setCache(
-        `related-products:${brand}:${excludeSlug}:${limit}`,
+        `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`,
         products,
         300
       );
@@ -404,7 +416,7 @@ export const getQuickPickData = cache(
     } = params;
 
   try {
-    const cacheKey = `quick-pick:${categorySlug}:${productId ?? ""}:${search}:${limit ?? ""}:${sort}`;
+    const cacheKey = `${CACHE_VERSION}:quick-pick:${categorySlug}:${productId ?? ""}:${search}:${limit ?? ""}:${sort}`;
     const cached = await getCache<QuickPickData>(cacheKey);
     if (cached) return cached;
 
@@ -456,7 +468,13 @@ export const getQuickPickData = cache(
 
     const configuratorByProductId: Record<string, ConfiguratorGroup[]> = {};
     const ids = Array.from(productIds);
-    if (ids.length > 0) {
+
+    // Only fetch configurator data if at least one product could have components.
+    // Kit products always use product_components; standard products rarely do.
+    // Skipping this for non-kit products saves a Supabase round-trip + join scan.
+    const needsConfigurator =
+      ids.length > 0 && products.some((p) => p.product_type === "kit");
+    if (needsConfigurator) {
       const { data: componentRows, error: componentError } =
         await getPublicClient()
           .from("product_components")
@@ -643,7 +661,7 @@ export const getNewestProducts = cache(async function getNewestProducts(
   limit: number
 ): Promise<ShopProduct[]> {
   try {
-    const cached = await getCache<ShopProduct[]>(`newest-products:${limit}`);
+    const cached = await getCache<ShopProduct[]>(`${CACHE_VERSION}:newest-products:${limit}`);
     if (cached) return cached;
 
     const { data, error } = await getPublicClient()
@@ -678,7 +696,7 @@ export const getNewestProducts = cache(async function getNewestProducts(
       shapeRow(row, kitSupplements, giftsByProductId)
     );
 
-    await setCache(`newest-products:${limit}`, products, 120);
+    await setCache(`${CACHE_VERSION}:newest-products:${limit}`, products, 120);
     return products;
   } catch (err) {
     console.error("[getNewestProducts] Unexpected error:", err);
@@ -698,7 +716,7 @@ export const getFrequentlyBoughtTogether = cache(
   ): Promise<ShopProduct[]> {
     try {
       const cached = await getCache<ShopProduct[]>(
-        `fbt:${productId}:${limit}`
+        `${CACHE_VERSION}:fbt:${productId}:${limit}`
       );
       if (cached) return cached;
 
@@ -765,7 +783,7 @@ export const getFrequentlyBoughtTogether = cache(
         shapeRow(row, kitSupplements, giftsByProductId)
       );
 
-      await setCache(`fbt:${productId}:${limit}`, result, 300);
+      await setCache(`${CACHE_VERSION}:fbt:${productId}:${limit}`, result, 300);
       return result;
     } catch {
       return [];
@@ -783,7 +801,7 @@ export const getProductPurchaseCount = cache(
   ): Promise<number> {
     try {
       const cached = await getCache<number>(
-        `purchase-count:${productId}`
+        `${CACHE_VERSION}:purchase-count:${productId}`
       );
       if (cached !== null) return cached;
 
@@ -800,7 +818,7 @@ export const getProductPurchaseCount = cache(
         0
       );
 
-      await setCache(`purchase-count:${productId}`, count, 300);
+      await setCache(`${CACHE_VERSION}:purchase-count:${productId}`, count, 300);
       return count;
     } catch {
       return 0;
@@ -946,7 +964,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
   slug: string
 ): Promise<ProductDetail | null> {
   try {
-    const cached = await getCache<ProductDetail>(`product:slug:${slug}`);
+    const cached = await getCache<ProductDetail>(`${CACHE_VERSION}:product:slug:${slug}`);
     if (cached) return cached;
 
     const { data: product, error } = await getPublicClient()
@@ -1122,7 +1140,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
       gifts,
     };
 
-    await setCache(`product:slug:${slug}`, productDetail, 60);
+    await setCache(`${CACHE_VERSION}:product:slug:${slug}`, productDetail, 60);
     return productDetail;
   } catch (err) {
     console.error("[getProductBySlug] Unexpected error:", err);

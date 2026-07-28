@@ -1,22 +1,16 @@
 "use client";
 
-import {
-  ProductCard,
-  ProductCardSkeleton,
-} from "@/components/product/ProductCard";
+import { AnimatePresence, motion } from "motion/react";
+import { ProductCard } from "@/components/product/ProductCard";
 import { ShopControls } from "@/components/shop/ShopControls";
 import type { CategoryItem } from "@/lib/products-server";
 import {
   buildShopFilters,
   useShopInfiniteQuery,
-  type Filters,
 } from "@/lib/react-query/shop/api/useShopInfiniteQuery";
 import type { ProductsResponse, ShopProduct } from "@/app/api/products/route";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
-
-const PAGE_SIZE = 12;
 
 export function ShopPageClient({
   initialData,
@@ -26,37 +20,30 @@ export function ShopPageClient({
   categories: CategoryItem[];
 }) {
   const sp = useSearchParams();
-  const [filters, setFilters] = useState<Filters>(() => buildShopFilters(sp));
+  const filters = useMemo(() => buildShopFilters(sp), [sp]);
 
-  // Sync URL → filters on mount & manual URL changes
-  useEffect(() => {
-    setFilters(buildShopFilters(sp));
-  }, [sp]);
-
-  const { data, isFetchingNextPage, hasNextPage, fetchNextPage } =
+  const { data, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useShopInfiniteQuery(filters, initialData);
 
-  // Sort: in-stock products first, sold-out last, preserving server sort within each group
   const products = useMemo(() => {
     const all = data?.pages.flatMap((p) => p.products as ShopProduct[]) ?? [];
-    const inStock = all.filter((p) => p.stock_quantity > 0);
-    const soldOut = all.filter((p) => p.stock_quantity === 0);
+    const seen = new Set<string>();
+    const unique: ShopProduct[] = [];
+    for (const p of all) {
+      if (!seen.has(p.id)) {
+        seen.add(p.id);
+        unique.push(p);
+      }
+    }
+    const inStock = unique.filter((p) => p.stock_quantity > 0);
+    const soldOut = unique.filter((p) => p.stock_quantity === 0);
     return [...inStock, ...soldOut];
   }, [data]);
 
   const total = data?.pages[0]?.total ?? initialData.total;
 
-  // ── Background prefetch: warm next page after current loads ──
-  const loaded =
-    data?.pages.reduce((sum, p) => sum + p.products.length, 0) ?? 0;
-  const totalItems = data?.pages[0]?.total ?? initialData.total;
-  useEffect(() => {
-    if (loaded >= totalItems || isFetchingNextPage) return;
-    const timer = setTimeout(() => {
-      fetchNextPage();
-    }, 800);
-    return () => clearTimeout(timer);
-  }, [loaded, totalItems, isFetchingNextPage, fetchNextPage]);
+  // Loading bar when fetching new filter/sort results
+  const isRefreshing = isFetching && !isFetchingNextPage;
 
   // ── Infinite scroll sentinel ──
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -68,7 +55,7 @@ export function ShopPageClient({
         (entries) => {
           if (entries[0]?.isIntersecting) fetchNextPage();
         },
-        { rootMargin: "400px" }
+        { rootMargin: "200px" }
       );
       observerRef.current.observe(node);
     },
@@ -77,14 +64,18 @@ export function ShopPageClient({
 
   return (
     <>
-      <ShopControls
-        total={total}
-        categories={categories}
-        filters={filters}
-        onFiltersChange={setFilters}
-      />
+      {/* Top loading bar */}
+      <div className="relative h-0.5">
+        <div
+          className={`absolute inset-0 bg-primary transition-opacity duration-300 ${
+            isRefreshing ? "animate-pulse opacity-100" : "opacity-0"
+          }`}
+        />
+      </div>
 
-      {products.length === 0 ? (
+      <ShopControls total={total} categories={categories} />
+
+      {products.length === 0 && !isFetching ? (
         <div className="flex items-center justify-center gap-4 py-16 text-center">
           <p className="font-semibold text-on-surface-variant">
             Không tìm thấy sản phẩm phù hợp
@@ -92,22 +83,31 @@ export function ShopPageClient({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          <AnimatePresence mode="popLayout">
+            {products.map((product) => (
+              <motion.div
+                key={product.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
       {/* Infinite scroll sentinel */}
-      {hasNextPage && (
-        <div ref={sentinelRef} className="flex justify-center py-6">
-          {isFetchingNextPage ? (
-            <span className="loading loading-spinner loading-sm text-primary" />
-          ) : (
-            <div className="h-4" />
-          )}
-        </div>
-      )}
+      <div ref={sentinelRef} className="flex justify-center py-6">
+        {isFetchingNextPage ? (
+          <span className="loading loading-spinner loading-sm text-primary" />
+        ) : hasNextPage ? (
+          <div className="h-4" />
+        ) : null}
+      </div>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { getCache, setCache } from "@/lib/redis/cache";
+import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -78,7 +78,7 @@ export async function GET(
   }
 
   try {
-    const cacheKey = `product-detail:${slug}`;
+    const cacheKey = `${CACHE_VERSION}:product-detail:${slug}`;
     const cached = await getCache<ProductDetail>(cacheKey);
     if (cached) return NextResponse.json(cached);
 

@@ -2,67 +2,68 @@
 
 import type { FilterState } from "@/components/product/FilterOverlay";
 import type { SortOption } from "@/app/api/products/route";
-import type { Filters } from "@/lib/react-query/shop/api/useShopInfiniteQuery";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-type ExternalFilters = Pick<
-  Filters,
-  "search" | "category" | "sort" | "priceMin" | "priceMax"
->;
+function readFilters(sp: URLSearchParams) {
+  return {
+    search: sp.get("search") ?? "",
+    sort: (sp.get("sort") as SortOption) ?? "newest",
+    filterState: {
+      category: sp.get("category") || null,
+      priceMin: Number(sp.get("priceMin") ?? 0),
+      priceMax: Number(sp.get("priceMax") ?? 0),
+    } as FilterState,
+  };
+}
 
-export function useShopControls(
-  externalFilters: ExternalFilters,
-  onFiltersChange: (f: ExternalFilters) => void
-) {
-  const [search, setSearch] = useState(externalFilters.search ?? "");
-  const [sort, setSort] = useState<SortOption>(
-    (externalFilters.sort as SortOption) ?? "newest"
-  );
+function buildQueryString(
+  search: string,
+  sort: SortOption,
+  filter: FilterState
+): string {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (sort !== "newest") params.set("sort", sort);
+  if (filter.category) params.set("category", filter.category);
+  if (filter.priceMin > 0) params.set("priceMin", String(filter.priceMin));
+  if (filter.priceMax > 0) params.set("priceMax", String(filter.priceMax));
+  const qs = params.toString();
+  return qs ? `/shop?${qs}` : "/shop";
+}
+
+export function useShopControls() {
+  const router = useRouter();
+  const sp = useSearchParams();
+
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortOption>("newest");
   const [filterState, setFilterState] = useState<FilterState>({
-    category: externalFilters.category || null,
-    priceMin: Number(externalFilters.priceMin ?? 0),
-    priceMax: Number(externalFilters.priceMax ?? 0),
+    category: null,
+    priceMin: 0,
+    priceMax: 0,
   });
   const [showFilter, setShowFilter] = useState(false);
   const [showSort, setShowSort] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const isFirstRender = useRef(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync external → internal when URL changes (browser back/forward)
+  // Sync URL → internal state (browser back/forward)
   useEffect(() => {
-    setSearch(externalFilters.search ?? "");
-    setSort((externalFilters.sort as SortOption) ?? "newest");
-    setFilterState({
-      category: externalFilters.category || null,
-      priceMin: Number(externalFilters.priceMin ?? 0),
-      priceMax: Number(externalFilters.priceMax ?? 0),
-    });
-  }, [externalFilters]);
+    const { search: s, sort: so, filterState: f } = readFilters(sp);
+    setSearch(s);
+    setSort(so);
+    setFilterState(f);
+  }, [sp]);
 
-  const commitFilters = useCallback(
+  const commit = useCallback(
     (newSearch: string, newSort: SortOption, newFilter: FilterState) => {
-      const params = new URLSearchParams();
-      if (newSearch) params.set("search", newSearch);
-      if (newSort !== "newest") params.set("sort", newSort);
-      if (newFilter.category) params.set("category", newFilter.category);
-      if (newFilter.priceMin > 0)
-        params.set("priceMin", String(newFilter.priceMin));
-      if (newFilter.priceMax > 0)
-        params.set("priceMax", String(newFilter.priceMax));
-      const qs = params.toString();
-      window.history.replaceState(null, "", qs ? `/shop?${qs}` : "/shop");
-
-      onFiltersChange({
-        search: newSearch || undefined,
-        category: newFilter.category ?? undefined,
-        sort: newSort === "newest" ? undefined : newSort,
-        priceMin:
-          newFilter.priceMin > 0 ? String(newFilter.priceMin) : undefined,
-        priceMax:
-          newFilter.priceMax > 0 ? String(newFilter.priceMax) : undefined,
+      router.replace(buildQueryString(newSearch, newSort, newFilter), {
+        scroll: false,
       });
     },
-    [onFiltersChange]
+    [router]
   );
 
   // Debounced search
@@ -73,7 +74,7 @@ export function useShopControls(
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(
-      () => commitFilters(search, sort, filterState),
+      () => commit(search, sort, filterState),
       search ? 400 : 0
     );
     return () => {
@@ -93,17 +94,17 @@ export function useShopControls(
   const handleSort = useCallback(
     (v: SortOption) => {
       setSort(v);
-      commitFilters(search, v, filterState);
+      commit(search, v, filterState);
     },
-    [search, filterState, commitFilters]
+    [search, filterState, commit]
   );
 
   const handleApplyFilter = useCallback(
     (state: FilterState) => {
       setFilterState(state);
-      commitFilters(search, sort, state);
+      commit(search, sort, state);
     },
-    [search, sort, commitFilters]
+    [search, sort, commit]
   );
 
   const handleClearFilters = useCallback(() => {
@@ -113,8 +114,8 @@ export function useShopControls(
       priceMax: 0,
     };
     setFilterState(cleared);
-    commitFilters(search, sort, cleared);
-  }, [search, sort, commitFilters]);
+    commit(search, sort, cleared);
+  }, [search, sort, commit]);
 
   const filterApplied =
     filterState.category !== null ||

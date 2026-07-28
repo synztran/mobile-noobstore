@@ -29,6 +29,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useReducer } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
+type QuickPickResponse = {
+    products: ShopProduct[];
+    configuratorByProductId: Record<string, ConfiguratorGroup[]>;
+    activeProduct: ShopProduct | null;
+    total: number;
+  };
+
 // ─── Add to Cart Button ─────────────────────────────────────────────────────
 
 type AddToCartButtonProps = {
@@ -127,13 +134,6 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
   const { addItem, openCart, items: cartItems } = useCartStore();
   const router = useRouter();
   const { user } = useAuth();
-
-  type QuickPickResponse = {
-    products: ShopProduct[];
-    configuratorByProductId: Record<string, ConfiguratorGroup[]>;
-    activeProduct: ShopProduct | null;
-    total: number;
-  };
 
   const view: DrawerView = isCategoryMode ? "product-list" : "configurator";
   const requestKey = isCategoryMode
@@ -498,8 +498,15 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
               {activeProduct.name}
             </p>
             <p className="mt-0.5 text-sm font-bold text-primary">
-              Giá từ{" "}
-              {formatVND(activeProduct.min_price || activeProduct.base_price)}
+              {activeProduct.min_price ? (
+                <>
+                  Giá từ{" "}
+                  {formatVND(activeProduct.min_price || activeProduct.base_price)}
+                </>
+              ) : (
+                <>{formatVND(activeProduct.min_price || activeProduct.base_price)}</>
+              )}
+
             </p>
           </div>
         </div>

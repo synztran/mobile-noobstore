@@ -2,6 +2,8 @@ import { getRedis } from "./client";
 
 const redis = getRedis();
 
+export const CACHE_VERSION = "v1";
+
 /**
  * Read a value from Redis cache.
  * Returns null on cache miss or if Redis is unavailable (fail-open).

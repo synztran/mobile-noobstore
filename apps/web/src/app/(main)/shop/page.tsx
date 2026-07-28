@@ -3,6 +3,7 @@ import { ShopPageClient } from "@/components/shop/ShopPageClient";
 import { getCategories, getProducts } from "@/lib/products-server";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import ShopLoading from "./loading";
 
 interface ShopPageProps {
   searchParams: Promise<{
@@ -46,7 +47,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   return (
     <div className="clear-both p-4">
-      <Suspense fallback={null}>
+      <Suspense fallback={<ShopLoading />}>
         <ShopPageClient initialData={initialData} categories={categories} />
       </Suspense>
     </div>

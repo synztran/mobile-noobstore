@@ -3,7 +3,6 @@
 import type { ShopProduct } from "@/app/api/products/route";
 import Icon from "@/components/ui/Icon";
 import WishlistButton from "@/components/wishlist/WishlistButton";
-import { formatVND } from "@/lib/currency";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
 import { useFlyToCartStore } from "@/store/useFlyToCart";
@@ -11,12 +10,18 @@ import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import ProductComponentTags from "./ProductComponentTags";
-import { QuickPickDrawer } from "./QuickPickDrawer";
 import { StockIndicator } from "./StockIndicator";
 import DiscountBadge from "./DiscountBadge";
+import { ProductCardDetails } from "./ProductCardDetails";
+
+const QuickPickDrawer = dynamic(
+  () => import("./QuickPickDrawer").then((m) => ({ default: m.QuickPickDrawer })),
+  { ssr: false }
+);
 
 // ─── Skeleton ─────────────────────────────────────────────────────────
 
@@ -97,7 +102,7 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
 
   return (
     <>
-      <div className="group relative flex flex-col justify-between gap-2">
+      <div className="group relative flex flex-col justify-between gap-2 h-full">
         <Link href={`/shop/${product.slug}`} className="block">
           {/* ── Image box ─────────────────────────────────────────────── */}
           <div
@@ -149,48 +154,10 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
             )}
           </div>
 
-          {/* ── Details ─────────────────────────────────────────────── */}
-          <div className="relative">
-            <p className="truncate text-[11px] font-extrabold capitalize tracking-[0.1em] text-primary">
-              {product.brand || product.category}
-            </p>
-            <h3 className="line-clamp-2 text-sm font-bold capitalize text-on-surface">
-              {product.name}
-            </h3>
-            {!isBundle ? (
-              <p className="line-clamp-3 text-[10px]">
-                {product.description?.replace(/<[^>]*>/g, "") || ""}
-              </p>
-            ) : null}
-            {product.sold_count > 0 && (
-              <p className="text-[9px] font-bold text-amber-600">
-                Đã bán {product.sold_count}
-              </p>
-            )}
-            {product.discount_price && product.discount_price > 0 ? (
-              <div>
-                <div className="text-right text-base font-extrabold text-red-600">
-                  {formatVND(product.discount_price)}
-                </div>
-                {!isBundle ? (
-                  <div className="text-right text-xs font-bold text-on-surface-variant line-through">
-                    {formatVND(product.base_price)}
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div className="text-right text-base font-extrabold text-primary">
-                {product.base_price === 0 ? (
-                  <span className="text-xs text-slate-500">giá chỉ từ</span>
-                ) : null}
-                &nbsp;
-                {formatVND(product.base_price || product.min_price)}
-              </div>
-            )}
-          </div>
+          <ProductCardDetails product={product} isBundle={isBundle} />
         </Link>
 
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-0.5 mt-auto">
           <StockIndicator stockQuantity={product.stock_quantity} />
           <div className="mt-auto flex items-center gap-1">
             <WishlistButton
