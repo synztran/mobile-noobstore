@@ -184,7 +184,7 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
         </div>
       </div>
 
-      {product.product_type === "kit" && (
+      {product.product_type === "kit" && drawerOpen && (
         <QuickPickDrawer
           product={product}
           isOpen={drawerOpen}

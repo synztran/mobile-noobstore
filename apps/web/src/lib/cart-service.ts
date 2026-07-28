@@ -107,7 +107,8 @@ export async function getCartItems(
     .select(
       "id, cart_id, product_id, variant_id, parent_cart_item_id, quantity"
     )
-    .eq("cart_id", cartId);
+    .eq("cart_id", cartId)
+    .order("created_at");
 
   if (error) throw new Error(error.message);
   if (!rows?.length) return [];

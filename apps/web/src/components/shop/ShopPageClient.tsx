@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { ProductCard } from "@/components/product/ProductCard";
+import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
 import { ShopControls } from "@/components/shop/ShopControls";
 import type { CategoryItem } from "@/lib/products-server";
 import {
@@ -12,11 +12,77 @@ import type { ProductsResponse, ShopProduct } from "@/app/api/products/route";
 import { useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 
+function ProductGridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {Array.from({ length: 8 }, (_, i) => (
+        <ProductCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
+function EmptyProductState({ search }: { search?: string }) {
+  return (
+    <div className="flex items-center justify-center gap-4 py-16 text-center">
+      <p className="font-semibold text-on-surface-variant">
+        Không tìm thấy sản phẩm phù hợp
+        {search ? (
+          <>
+            {" "}với từ khóa<span className="text-primary"> “{search}”</span>
+          </>
+        ) : null}
+      </p>
+    </div>
+  );
+}
+
+function ProductGrid({ products }: { products: ShopProduct[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <AnimatePresence mode="popLayout">
+        {products.map((product) => (
+          <motion.div
+            key={product.id}
+            layout
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ProductCard product={product} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function InfiniteScrollSentinel({
+  hasNextPage,
+  isFetchingNextPage,
+  sentinelRef,
+}: {
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  sentinelRef: (node: HTMLDivElement | null) => void;
+}) {
+  return (
+    <div ref={sentinelRef} className="flex justify-center py-6">
+      {isFetchingNextPage ? (
+        <span className="loading loading-spinner loading-sm text-primary" />
+      ) : hasNextPage ? (
+        <div className="h-4" />
+      ) : null}
+    </div>
+  );
+}
+
 export function ShopPageClient({
   initialData,
   categories,
 }: {
-  initialData: ProductsResponse;
+  initialData?: ProductsResponse;
   categories: CategoryItem[];
 }) {
   const sp = useSearchParams();
@@ -40,12 +106,11 @@ export function ShopPageClient({
     return [...inStock, ...soldOut];
   }, [data]);
 
-  const total = data?.pages[0]?.total ?? initialData.total;
+  const total = data?.pages[0]?.total ?? initialData?.total ?? 0;
 
-  // Loading bar when fetching new filter/sort results
   const isRefreshing = isFetching && !isFetchingNextPage;
+  const isInitialLoading = !data && isFetching;
 
-  // ── Infinite scroll sentinel ──
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -64,50 +129,27 @@ export function ShopPageClient({
 
   return (
     <>
-      {/* Top loading bar */}
-      <div className="relative h-0.5">
-        <div
-          className={`absolute inset-0 bg-primary transition-opacity duration-300 ${
-            isRefreshing ? "animate-pulse opacity-100" : "opacity-0"
-          }`}
-        />
+      <ShopControls total={total} categories={categories} isTotalLoading={isInitialLoading} isSearching={isRefreshing} />
+
+      <div
+        className={`transition-all duration-300 ${
+          isRefreshing ? "blur-sm opacity-60" : ""
+        }`}
+      >
+        {isInitialLoading ? (
+          <ProductGridSkeleton />
+        ) : products.length === 0 && !isFetching ? (
+          <EmptyProductState search={filters.search} />
+        ) : (
+          <ProductGrid products={products} />
+        )}
       </div>
 
-      <ShopControls total={total} categories={categories} />
-
-      {products.length === 0 && !isFetching ? (
-        <div className="flex items-center justify-center gap-4 py-16 text-center">
-          <p className="font-semibold text-on-surface-variant">
-            Không tìm thấy sản phẩm phù hợp
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-4">
-          <AnimatePresence mode="popLayout">
-            {products.map((product) => (
-              <motion.div
-                key={product.id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Infinite scroll sentinel */}
-      <div ref={sentinelRef} className="flex justify-center py-6">
-        {isFetchingNextPage ? (
-          <span className="loading loading-spinner loading-sm text-primary" />
-        ) : hasNextPage ? (
-          <div className="h-4" />
-        ) : null}
-      </div>
+      <InfiniteScrollSentinel
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        sentinelRef={sentinelRef}
+      />
     </>
   );
 }

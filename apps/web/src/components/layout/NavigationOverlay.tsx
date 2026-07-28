@@ -12,16 +12,14 @@ export function NavigationOverlay() {
   const prevPathname = useRef(pathname);
   const pathnameRef = useRef(pathname);
   const startedAt = useRef(0);
-  const scrollY = useRef(0);
 
   // Lock scroll when overlay is visible
   useEffect(() => {
     if (isNavigating) {
-      scrollY.current = window.scrollY;
       document.documentElement.style.overflow = "hidden";
     } else {
       document.documentElement.style.overflow = "";
-      window.scrollTo(0, scrollY.current);
+      window.scrollTo(0, 0);
     }
     return () => {
       document.documentElement.style.overflow = "";

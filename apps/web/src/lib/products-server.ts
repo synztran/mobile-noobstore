@@ -298,6 +298,10 @@ export const getProducts = cache(async function getProducts(
   } = params;
 
   try {
+    const cacheKey = `products:ssr:${CACHE_VERSION}:${search}:${categorySlug}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}`;
+    const cached = await getCache<{ products: ShopProduct[]; total: number }>(cacheKey);
+    if (cached) return cached;
+
     const result = await getProductListByFilters({
       search,
       categorySlug,
@@ -305,18 +309,59 @@ export const getProducts = cache(async function getProducts(
       priceMax,
       sort,
       limit,
-      // productTypes: params.productTypes ?? ["standard", "kit", "component"],
       excludeUncategorized: true,
       offset,
     });
 
-    return {
-      products: result.products as ShopProduct[],
-      total: result.total,
-    };
+    const response = { products: result.products as ShopProduct[], total: result.total };
+    await setCache(cacheKey, response, 300);
+    return response;
   } catch (err) {
     console.error("[getProducts] Unexpected error:", err);
     return { products: [], total: 0 };
+  }
+});
+
+export type ProductSeoInfo = {
+  id: string;
+  name: string;
+  slug: string;
+  base_price: number;
+  thumbnail: string | null;
+};
+
+/**
+ * Fetch minimal product data for SEO (JSON-LD structured data).
+ * Single-table query, no joins — fast even on Supabase free plan.
+ * Cached with React.cache() + Redis (600s TTL).
+ */
+export const getProductSeoData = cache(async function getProductSeoData(
+  limit = 48
+): Promise<ProductSeoInfo[]> {
+  try {
+    const cacheKey = `${CACHE_VERSION}:product-seo-data`;
+    const cached = await getCache<ProductSeoInfo[]>(cacheKey);
+    if (cached) return cached;
+
+    const { data, error } = await getPublicClient()
+      .from("products")
+      .select("id, name, slug, base_price, thumbnail")
+      .eq("is_active", true)
+      .neq("product_type", "gift")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("[getProductSeoData] Supabase error:", error.message);
+      return [];
+    }
+
+    const result = (data ?? []) as ProductSeoInfo[];
+    await setCache(cacheKey, result, 600);
+    return result;
+  } catch (err) {
+    console.error("[getProductSeoData] Unexpected error:", err);
+    return [];
   }
 });
 
@@ -421,153 +466,326 @@ export const getQuickPickData = cache(
     if (cached) return cached;
 
     const shouldFetchProductList = Boolean(categorySlug || search || limit);
-    const result = shouldFetchProductList
-      ? await getProducts({
-          categorySlug,
-          search,
-          limit,
-          sort,
-        })
-      : { products: [] as ShopProduct[], total: 0 };
 
-    const products = [...result.products];
-    const productIds = new Set(products.map((p) => p.id));
-
+    let products: ShopProduct[] = [];
     let activeProduct: ShopProduct | null = null;
-    if (productId) {
-      activeProduct = products.find((p) => p.id === productId) ?? null;
+    let configuratorByProductId: Record<string, ConfiguratorGroup[]> = {};
+    let rulesByProductId: Record<string, ComponentVariantRule[]> = {};
 
-      if (!activeProduct) {
-        const { data, error } = await getPublicClient()
-          .from("products")
-          .select(
-            `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, is_pre_order, sold_count,
-						 categories(id, name),
-						 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
-          )
-          .eq("is_active", true)
-          .neq("product_type", "gift")
-          .eq("id", productId)
-          .single();
+    if (!shouldFetchProductList && productId) {
+      // ── Single-product fast path: fire all independent queries in parallel ──
+      const productPromise = getPublicClient()
+        .from("products")
+        .select(
+          `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, is_pre_order, sold_count,
+           categories(id, name),
+           product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
+        )
+        .eq("is_active", true)
+        .neq("product_type", "gift")
+        .eq("id", productId)
+        .maybeSingle();
 
-        if (!error && data) {
-          const row = data as unknown as RawListRow;
-          const { kitSupplements, giftsByProductId } =
-            await prepareSupplements(
-              [row.id],
-              row.product_type === "kit" ? [row.id] : []
-            );
-          activeProduct = shapeRow(row, kitSupplements, giftsByProductId);
-          if (activeProduct) {
-            products.push(activeProduct);
-            productIds.add(activeProduct.id);
+      const configuratorPromise = getPublicClient()
+        .from("product_components")
+        .select(
+          `parent_product_id, component_group, is_required, component_product_id,
+           products!product_components_component_product_id_fkey(
+            product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
+           )`
+        )
+        .in("parent_product_id", [productId])
+        .order("component_group");
+
+      const rulesPromise = getPublicClient()
+        .from("component_variant_rules")
+        .select(
+          `id, kit_product_id, condition_variant_id, target_component_product_id,
+           component_variant_rule_allowed(variant_id)`
+        )
+        .in("kit_product_id", [productId]);
+
+      const giftPromise = fetchGiftSupplement([productId]);
+      const kitPromise = fetchKitSupplements([productId]);
+
+      const [productRes, compRes, ruleRes, giftsByProductId, kitSupplements] =
+        await Promise.all([
+          productPromise,
+          configuratorPromise,
+          rulesPromise,
+          giftPromise,
+          kitPromise,
+        ]);
+
+      if (productRes.data && !productRes.error) {
+        const row = productRes.data as unknown as RawListRow;
+        activeProduct = shapeRow(row, kitSupplements, giftsByProductId);
+        if (activeProduct) {
+          products = [activeProduct];
+
+          if (activeProduct.product_type === "kit") {
+            // Build configurator from parallel result
+            if (compRes.data && !compRes.error) {
+              type ComponentRow = {
+                parent_product_id: string;
+                component_group: string;
+                is_required: boolean;
+                component_product_id: string;
+                products?: {
+                  product_variants?: Array<{
+                    id: string;
+                    variant_name: string;
+                    price_adjustment: number;
+                    thumbnail: string | null;
+                    stock_quantity: number;
+                    is_pre_order: boolean;
+                    pre_order_config: unknown;
+                    attributes: unknown;
+                  }> | null;
+                } | null;
+              };
+
+              const parentMap = new Map<string, Map<string, ConfiguratorGroup>>();
+              for (const row of (compRes.data ?? []) as ComponentRow[]) {
+                if (!parentMap.has(row.parent_product_id)) {
+                  parentMap.set(row.parent_product_id, new Map());
+                }
+                const groups = parentMap.get(row.parent_product_id)!;
+                if (!groups.has(row.component_group)) {
+                  groups.set(row.component_group, {
+                    component_group: row.component_group,
+                    is_required: row.is_required,
+                    variants: [],
+                  });
+                }
+                const group = groups.get(row.component_group)!;
+                for (const v of row.products?.product_variants ?? []) {
+                  const sale_price_percent =
+                    Number(v.price_adjustment) < 0
+                      ? Math.round(
+                          (1 -
+                            (Number(v.price_adjustment) +
+                              Number(activeProduct?.base_price ?? 0)) /
+                              Number(activeProduct?.base_price ?? 1)) *
+                            100
+                        )
+                      : undefined;
+                  group.variants.push({
+                    id: v.id,
+                    variant_name: v.variant_name,
+                    price_adjustment: Number(v.price_adjustment),
+                    thumbnail: v.thumbnail ?? null,
+                    stock_quantity: Number(v.stock_quantity ?? 0),
+                    sale_price_percent,
+                    is_pre_order: v.is_pre_order ?? false,
+                    pre_order_config:
+                      (v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ??
+                      null,
+                    component_product_id: row.component_product_id,
+                    attributes:
+                      (v.attributes as Record<string, string> | null) ?? null,
+                  });
+                }
+              }
+              for (const [parentId, groups] of parentMap) {
+                configuratorByProductId[parentId] = Array.from(groups.values());
+              }
+            }
+
+            // Build rules from parallel result
+            for (const r of (ruleRes.data ?? []) as Array<{
+              id: string;
+              kit_product_id: string;
+              condition_variant_id: string;
+              target_component_product_id: string;
+              component_variant_rule_allowed: Array<{ variant_id: string }>;
+            }>) {
+              if (!rulesByProductId[r.kit_product_id]) {
+                rulesByProductId[r.kit_product_id] = [];
+              }
+              rulesByProductId[r.kit_product_id].push({
+                id: r.id,
+                condition_variant_id: r.condition_variant_id,
+                target_component_product_id: r.target_component_product_id,
+                allowed_variant_ids: r.component_variant_rule_allowed.map(
+                  (a) => a.variant_id
+                ),
+              });
+            }
           }
         }
       }
-    }
+    } else {
+      // ── Multi-product path (category/search mode) ──
+      const result = shouldFetchProductList
+        ? await getProducts({ categorySlug, search, limit, sort })
+        : { products: [] as ShopProduct[], total: 0 };
 
-    const configuratorByProductId: Record<string, ConfiguratorGroup[]> = {};
-    const ids = Array.from(productIds);
+      products = [...result.products];
+      const productIds = new Set(products.map((p) => p.id));
 
-    // Only fetch configurator data if at least one product could have components.
-    // Kit products always use product_components; standard products rarely do.
-    // Skipping this for non-kit products saves a Supabase round-trip + join scan.
-    const needsConfigurator =
-      ids.length > 0 && products.some((p) => p.product_type === "kit");
-    if (needsConfigurator) {
-      const { data: componentRows, error: componentError } =
-        await getPublicClient()
-          .from("product_components")
-          .select(
-            `parent_product_id, component_group, is_required, component_product_id,
-						 products!product_components_component_product_id_fkey(
-							product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
-						 )`
-          )
-          .in("parent_product_id", ids)
-          .order("component_group");
+      if (productId) {
+        activeProduct = products.find((p) => p.id === productId) ?? null;
 
-      if (componentError) {
-        console.error(
-          "[getQuickPickData] product_components error:",
-          componentError.message
-        );
-      } else {
-        type ComponentRow = {
-          parent_product_id: string;
-          component_group: string;
-          is_required: boolean;
-          component_product_id: string;
-          products?: {
-            product_variants?: Array<{
-              id: string;
-              variant_name: string;
-              price_adjustment: number;
-              thumbnail: string | null;
-              stock_quantity: number;
-              is_pre_order: boolean;
-              pre_order_config: unknown;
-              attributes: unknown;
-            }> | null;
-          } | null;
-        };
+        if (!activeProduct) {
+          const { data, error } = await getPublicClient()
+            .from("products")
+            .select(
+              `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, is_pre_order, sold_count,
+               categories(id, name),
+               product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
+            )
+            .eq("is_active", true)
+            .neq("product_type", "gift")
+            .eq("id", productId)
+            .single();
 
-        const parentMap = new Map<string, Map<string, ConfiguratorGroup>>();
-
-        for (const row of (componentRows ?? []) as ComponentRow[]) {
-          if (!parentMap.has(row.parent_product_id)) {
-            parentMap.set(row.parent_product_id, new Map());
-          }
-
-          const groups = parentMap.get(row.parent_product_id)!;
-          if (!groups.has(row.component_group)) {
-            groups.set(row.component_group, {
-              component_group: row.component_group,
-              is_required: row.is_required,
-              variants: [],
-            });
-          }
-
-          const group = groups.get(row.component_group)!;
-          for (const v of row.products?.product_variants ?? []) {
-            const sale_price_percent =
-              Number(v.price_adjustment) < 0
-                ? Math.round(
-                    (1 -
-                      (Number(v.price_adjustment) +
-                        Number(activeProduct?.base_price ?? 0)) /
-                        Number(activeProduct?.base_price ?? 1)) *
-                      100
-                  )
-                : undefined;
-            group.variants.push({
-              id: v.id,
-              variant_name: v.variant_name,
-              price_adjustment: Number(v.price_adjustment),
-              thumbnail: v.thumbnail ?? null,
-              stock_quantity: Number(v.stock_quantity ?? 0),
-              sale_price_percent,
-              is_pre_order: v.is_pre_order ?? false,
-              pre_order_config:
-                (v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ??
-                null,
-              component_product_id: row.component_product_id,
-              attributes:
-                (v.attributes as Record<string, string> | null) ?? null,
-            });
+          if (!error && data) {
+            const row = data as unknown as RawListRow;
+            const { kitSupplements, giftsByProductId } =
+              await prepareSupplements(
+                [row.id],
+                row.product_type === "kit" ? [row.id] : []
+              );
+            activeProduct = shapeRow(row, kitSupplements, giftsByProductId);
+            if (activeProduct) {
+              products.push(activeProduct);
+              productIds.add(activeProduct.id);
+            }
           }
         }
+      }
 
-        for (const [parentId, groups] of parentMap) {
-          configuratorByProductId[parentId] = Array.from(groups.values());
+      configuratorByProductId = {};
+      const ids = Array.from(productIds);
+
+      const needsConfigurator =
+        ids.length > 0 && products.some((p) => p.product_type === "kit");
+      if (needsConfigurator) {
+        const { data: componentRows, error: componentError } =
+          await getPublicClient()
+            .from("product_components")
+            .select(
+              `parent_product_id, component_group, is_required, component_product_id,
+               products!product_components_component_product_id_fkey(
+                product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
+               )`
+            )
+            .in("parent_product_id", ids)
+            .order("component_group");
+
+        if (componentError) {
+          console.error(
+            "[getQuickPickData] product_components error:",
+            componentError.message
+          );
+        } else {
+          type ComponentRow = {
+            parent_product_id: string;
+            component_group: string;
+            is_required: boolean;
+            component_product_id: string;
+            products?: {
+              product_variants?: Array<{
+                id: string;
+                variant_name: string;
+                price_adjustment: number;
+                thumbnail: string | null;
+                stock_quantity: number;
+                is_pre_order: boolean;
+                pre_order_config: unknown;
+                attributes: unknown;
+              }> | null;
+            } | null;
+          };
+
+          const parentMap = new Map<string, Map<string, ConfiguratorGroup>>();
+
+          for (const row of (componentRows ?? []) as ComponentRow[]) {
+            if (!parentMap.has(row.parent_product_id)) {
+              parentMap.set(row.parent_product_id, new Map());
+            }
+
+            const groups = parentMap.get(row.parent_product_id)!;
+            if (!groups.has(row.component_group)) {
+              groups.set(row.component_group, {
+                component_group: row.component_group,
+                is_required: row.is_required,
+                variants: [],
+              });
+            }
+
+            const group = groups.get(row.component_group)!;
+            for (const v of row.products?.product_variants ?? []) {
+              const sale_price_percent =
+                Number(v.price_adjustment) < 0
+                  ? Math.round(
+                      (1 -
+                        (Number(v.price_adjustment) +
+                          Number(activeProduct?.base_price ?? 0)) /
+                          Number(activeProduct?.base_price ?? 1)) *
+                        100
+                    )
+                  : undefined;
+              group.variants.push({
+                id: v.id,
+                variant_name: v.variant_name,
+                price_adjustment: Number(v.price_adjustment),
+                thumbnail: v.thumbnail ?? null,
+                stock_quantity: Number(v.stock_quantity ?? 0),
+                sale_price_percent,
+                is_pre_order: v.is_pre_order ?? false,
+                pre_order_config:
+                  (v.pre_order_config as ConfiguratorGroup["variants"][number]["pre_order_config"]) ??
+                  null,
+                component_product_id: row.component_product_id,
+                attributes:
+                  (v.attributes as Record<string, string> | null) ?? null,
+              });
+            }
+          }
+
+          for (const [parentId, groups] of parentMap) {
+            configuratorByProductId[parentId] = Array.from(groups.values());
+          }
+        }
+      }
+
+      // ── Fetch rules for kit products ──
+      const kitIds = Object.keys(configuratorByProductId);
+      rulesByProductId = {};
+      if (kitIds.length > 0) {
+        const { data: ruleRows } = await getPublicClient()
+          .from("component_variant_rules")
+          .select(
+            `id, kit_product_id, condition_variant_id, target_component_product_id,
+             component_variant_rule_allowed(variant_id)`
+          )
+          .in("kit_product_id", kitIds);
+
+        for (const r of (ruleRows ?? []) as Array<{
+          id: string;
+          kit_product_id: string;
+          condition_variant_id: string;
+          target_component_product_id: string;
+          component_variant_rule_allowed: Array<{ variant_id: string }>;
+        }>) {
+          if (!rulesByProductId[r.kit_product_id]) {
+            rulesByProductId[r.kit_product_id] = [];
+          }
+          rulesByProductId[r.kit_product_id].push({
+            id: r.id,
+            condition_variant_id: r.condition_variant_id,
+            target_component_product_id: r.target_component_product_id,
+            allowed_variant_ids: r.component_variant_rule_allowed.map(
+              (a) => a.variant_id
+            ),
+          });
         }
       }
     }
 
     // ── Recompute kit stock from component variant data ─────────────
-    // shapeRow falls back to products.stock_quantity for kits with no
-    // direct product_variants, which may be stale/wrong. Recompute
-    // using the same logic as getProductListByFilters/computeKitStockById.
     for (const product of products) {
       if (product.product_type !== "kit") continue;
       const groups = configuratorByProductId[product.id];
@@ -581,7 +799,6 @@ export const getQuickPickData = cache(
       );
       product.stock_quantity = Math.min(...groupStocks);
 
-      // Keep sold_out tag in sync
       product.tags = product.tags.filter((t) => t.value !== "sold_out");
       if (product.stock_quantity === 0) {
         product.tags.unshift({
@@ -592,43 +809,9 @@ export const getQuickPickData = cache(
       }
     }
 
-    // Sync activeProduct reference after stock recomputation
     if (activeProduct) {
       const refreshed = products.find((p) => p.id === activeProduct!.id);
       if (refreshed) activeProduct = refreshed;
-    }
-
-    // Fetch rules for all kit products
-    const kitIds = Object.keys(configuratorByProductId);
-    const rulesByProductId: Record<string, ComponentVariantRule[]> = {};
-    if (kitIds.length > 0) {
-      const { data: ruleRows } = await getPublicClient()
-        .from("component_variant_rules")
-        .select(
-          `id, kit_product_id, condition_variant_id, target_component_product_id,
-					 component_variant_rule_allowed(variant_id)`
-        )
-        .in("kit_product_id", kitIds);
-
-      for (const r of (ruleRows ?? []) as Array<{
-        id: string;
-        kit_product_id: string;
-        condition_variant_id: string;
-        target_component_product_id: string;
-        component_variant_rule_allowed: Array<{ variant_id: string }>;
-      }>) {
-        if (!rulesByProductId[r.kit_product_id]) {
-          rulesByProductId[r.kit_product_id] = [];
-        }
-        rulesByProductId[r.kit_product_id].push({
-          id: r.id,
-          condition_variant_id: r.condition_variant_id,
-          target_component_product_id: r.target_component_product_id,
-          allowed_variant_ids: r.component_variant_rule_allowed.map(
-            (a) => a.variant_id
-          ),
-        });
-      }
     }
 
     const quickPickResult: QuickPickData = {

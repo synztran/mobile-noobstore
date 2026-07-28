@@ -29,9 +29,13 @@ function formatFilterPills(filters: FilterState): string[] {
 export function ShopControls({
   total,
   categories = [],
+  isTotalLoading = false,
+  isSearching = false,
 }: {
   total: number;
   categories?: CategoryItem[];
+  isTotalLoading?: boolean;
+  isSearching?: boolean;
 }) {
   const {
     search,
@@ -54,12 +58,23 @@ export function ShopControls({
       <div className="mb-4 flex items-center gap-2 rounded-full bg-surface-container px-3 py-2">
         <Icon name="search" className="text-outline" />
         <input
-          type="search"
+          type="text"
           placeholder="Tìm kiếm sản phẩm..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1 bg-transparent font-medium text-on-surface outline-none placeholder:text-outline"
         />
+        {isSearching ? (
+          <span className="loading loading-spinner loading-sm text-primary" />
+        ) : search ? (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="flex items-center justify-center text-outline transition-colors hover:text-on-surface"
+          >
+            <Icon name="close" className="text-base" />
+          </button>
+        ) : null}
       </div>
 
       {/* Header row */}
@@ -68,9 +83,13 @@ export function ShopControls({
           <p className="mb-1 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
             Bộ sưu tập
           </p>
-          <p className="text-2xl font-black tracking-tighter">
-            {total} kết quả
-          </p>
+          {isTotalLoading ? (
+            <div className="skeleton h-7 w-28 rounded-md bg-surface-container" />
+          ) : (
+            <p className="text-xl font-black tracking-tighter">
+              {total} kết quả
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           <button

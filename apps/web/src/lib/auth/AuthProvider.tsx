@@ -94,12 +94,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: "include", // important if using cookies
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setProfile(data);
-      } else {
+      if (!res.ok) {
         setProfile(null);
+        return;
       }
+
+      const data = await res.json();
+      setProfile(data);
     } catch (err) {
       console.error("Failed to fetch profile:", err);
       setProfile(null);
@@ -128,9 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(session);
           setUser(session?.user ?? null);
 
-          if (session?.user) {
-            await fetchProfile();
-          } else {
+          if (!session?.user) {
             setProfile(null);
           }
         }
@@ -144,12 +143,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
 
     // 2. Listen to auth state changes
-    // Skip INITIAL_SESSION — already handled by initializeAuth above
+    // Skip INITIAL_SESSION (already handled by initializeAuth) and
+    // TOKEN_REFRESHED (fires on every page navigation, profile hasn't changed)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!mounted) return;
-      if (event === "INITIAL_SESSION") return;
+      if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
 
       setSession(newSession);
       setUser(newSession?.user ?? null);

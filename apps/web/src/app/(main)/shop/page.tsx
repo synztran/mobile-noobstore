@@ -1,9 +1,7 @@
-import type { SortOption } from "@/app/api/products/route";
 import { ShopPageClient } from "@/components/shop/ShopPageClient";
-import { getCategories, getProducts } from "@/lib/products-server";
-import { Suspense } from "react";
+import { ShopSeo } from "@/components/shop/ShopSeo";
+import { getCategories, getProductSeoData } from "@/lib/products-server";
 import type { Metadata } from "next";
-import ShopLoading from "./loading";
 
 interface ShopPageProps {
   searchParams: Promise<{
@@ -27,29 +25,16 @@ export const metadata: Metadata = {
   },
 };
 
-const PAGE_SIZE = 12;
-
-export default async function ShopPage({ searchParams }: ShopPageProps) {
-  const sp = await searchParams;
-
-  const [initialData, categories] = await Promise.all([
-    getProducts({
-      search: sp.search,
-      categorySlug: sp.category,
-      priceMin: sp.priceMin ? Number(sp.priceMin) : 0,
-      priceMax: sp.priceMax ? Number(sp.priceMax) : 0,
-      sort: (sp.sort as SortOption) ?? "newest",
-      limit: PAGE_SIZE,
-      offset: 0,
-    }),
+export default async function ShopPage(_props: ShopPageProps) {
+  const [categories, seoProducts] = await Promise.all([
     getCategories(),
+    getProductSeoData(),
   ]);
 
   return (
     <div className="clear-both p-4">
-      <Suspense fallback={<ShopLoading />}>
-        <ShopPageClient initialData={initialData} categories={categories} />
-      </Suspense>
+      <ShopSeo products={seoProducts} />
+      <ShopPageClient categories={categories} />
     </div>
   );
 }

@@ -40,7 +40,7 @@ function filtersToKey(f: Filters): string {
 
 export function useShopInfiniteQuery(
   filters: Filters,
-  initialData: ProductsResponse
+  initialData?: ProductsResponse
 ) {
   return useInfiniteQuery<ProductsResponse>({
     queryKey: appQueryKeys.shop.products(filtersToKey(filters)).queryKey,
@@ -55,6 +55,8 @@ export function useShopInfiniteQuery(
       const loaded = pages.reduce((sum, p) => sum + p.products.length, 0);
       return loaded < lastPage.total ? loaded : undefined;
     },
-    initialData: { pages: [initialData], pageParams: [0] },
+    ...(initialData
+      ? { initialData: { pages: [initialData], pageParams: [0] } }
+      : {}),
   });
 }
