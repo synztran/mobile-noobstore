@@ -14,7 +14,7 @@
 		"test:e2e": "playwright test --config=e2e/playwright.config.ts",
 		"test:e2e:ui": "playwright test --ui --config=e2e/playwright.config.ts",
 		"test:e2e:debug": "playwright test --debug --config=e2e/playwright.config.ts",
-	  "deploy:log": "bash scripts/add-deployment.sh"
+		"deploy:log": "bash scripts/add-deployment.sh"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.61.1",
