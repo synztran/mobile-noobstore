@@ -26,7 +26,7 @@ const SORTS = [
 export function HomeSaleSection() {
   const [activeCategory, setActiveCategory] = useState("");
   const [sort, setSort] = useState("discount_desc");
-  const { data, isLoading } = useHomeSaleProducts(activeCategory, 8, sort);
+  const { data, isLoading } = useHomeSaleProducts(activeCategory, 5, sort);
   const products = data?.products ?? [];
 
   return (

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function PolicyPage() {
   return (
     <>
-      <TopNav showBack backHref="/register" />
+      <TopNav showBack backHref="/" />
       <main className="space-y-10 px-6 py-6">
         <section id="policy">
           <p className="mb-6 text-2xl font-black tracking-tight">

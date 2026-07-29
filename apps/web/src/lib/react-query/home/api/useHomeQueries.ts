@@ -25,7 +25,8 @@ export function useHomeHero({ enabled = true }: { enabled?: boolean } = {}) {
 export function useHomeCommunityGallery(limit: number) {
   return useQuery<{ photos: CommunityPhoto[]; hasMore: boolean }>({
     ...appQueryKeys.home.communityGallery(limit),
-    staleTime: 120_000,
+    staleTime: Infinity,
+    gcTime: Infinity,
     queryFn: async () => {
       const res = await fetch(`/api/home/community-gallery?limit=${limit + 1}`);
       if (!res.ok) return { photos: [], hasMore: false };
@@ -43,9 +44,9 @@ export function useHomeCommunityGallery(limit: number) {
 export function useHomeNoteworthy(categorySlug: string) {
   return useQuery<ShopProduct[]>({
     ...appQueryKeys.home.noteworthy(categorySlug),
-    staleTime: 60_000,
+    staleTime: 120_000,
     queryFn: async () => {
-      const query = new URLSearchParams({ limit: "7" });
+      const query = new URLSearchParams({ limit: "5" });
       if (categorySlug) query.set("category", categorySlug);
       const res = await fetch(`/api/products/noteworthy?${query.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch noteworthy products");
@@ -62,7 +63,7 @@ export function useHomeSaleProducts(
 ) {
   return useQuery<{ products: ShopProduct[]; total: number }>({
     ...appQueryKeys.home.saleProducts(categorySlug, limit, sort),
-    staleTime: 60_000,
+    staleTime: 120_000,
     queryFn: async () => {
       const query = new URLSearchParams({ limit: String(limit), sort });
       if (categorySlug) query.set("category", categorySlug);
@@ -77,7 +78,8 @@ export function useHomeSaleProducts(
 export function useHomeTrustProps() {
   return useQuery<TrustProp[]>({
     ...appQueryKeys.home.trustProps,
-    staleTime: 600_000,
+    staleTime: Infinity,
+    gcTime: Infinity,
     queryFn: async () => {
       const res = await fetch("/api/home/trust-props");
       if (!res.ok) return [];
@@ -90,7 +92,8 @@ export function useHomeTrustProps() {
 export function useHomeCreators() {
   return useQuery<Creator[]>({
     ...appQueryKeys.home.creators,
-    staleTime: 600_000,
+    staleTime: Infinity,
+    gcTime: Infinity,
     queryFn: async () => {
       const res = await fetch("/api/home/creators");
       if (!res.ok) return [];
@@ -103,7 +106,8 @@ export function useHomeCreators() {
 export function useHomeTestimonials() {
   return useQuery<Testimonial[]>({
     ...appQueryKeys.home.testimonials,
-    staleTime: 600_000,
+    staleTime: Infinity,
+    gcTime: Infinity,
     queryFn: async () => {
       const res = await fetch("/api/home/testimonials");
       if (!res.ok) return [];

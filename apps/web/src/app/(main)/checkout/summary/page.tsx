@@ -60,6 +60,21 @@ export default function SummaryPage() {
   const hasPreOrder = items.some(
     (i) => i.is_pre_order || i.components?.some((c) => c.is_pre_order)
   );
+
+  const MIN_ORDER_SUBTOTAL = 1_000_000;
+
+  useEffect(() => {
+    if (subtotal < MIN_ORDER_SUBTOTAL && paymentType === "deposit_cod") {
+      setPaymentType("full");
+    }
+  }, [subtotal, paymentType, setPaymentType]);
+
+  useEffect(() => {
+    const minPct = hasPreOrder ? 20 : 10;
+    if (depositPercentage < minPct) {
+      setDepositPercentage(minPct);
+    }
+  }, [hasPreOrder, depositPercentage, setDepositPercentage]);
   const earliestPreOrderDate = useMemo(() => {
     const dates = items
       .flatMap((i) => {
@@ -364,6 +379,8 @@ export default function SummaryPage() {
         setDepositPercentage={setDepositPercentage}
         depositAmount={depositAmount}
         codAmount={codAmount}
+        hasPreOrder={hasPreOrder}
+        subtotal={subtotal}
       />
 
       {/* ── Order Summary ────────────────────────────────────── */}

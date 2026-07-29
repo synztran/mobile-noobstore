@@ -1,11 +1,17 @@
 "use client";
 
 import Icon from "@/components/ui/Icon";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { useRegisterForm } from "@/hooks/useRegisterForm";
 import { motion } from "motion/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function RegisterPage() {
+	const router = useRouter();
+	const { user, loading } = useAuth();
+
 	const {
 		values,
 		errors,
@@ -16,6 +22,14 @@ export default function RegisterPage() {
 		handleSubmit,
 		setFieldValue,
 	} = useRegisterForm();
+
+	useEffect(() => {
+		if (!loading && user) {
+			router.replace("/");
+		}
+	}, [user, loading, router]);
+
+	if (loading || user) return null;
 
 	return (
 		<div className="flex-1 flex flex-col px-8 pt-16 pb-12">

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <>
-      <TopNav showBack backHref="/register" />
+      <TopNav showBack backHref="/" />
       <main className="px-6 py-6">
         <section id="terms">
           <p className="mb-6 text-2xl font-black tracking-tight">
@@ -61,7 +61,7 @@ export default function TermsPage() {
             <div>
               <p className="mb-2 font-bold text-on-surface">5. Đổi trả</p>
               <p>
-                Sản phẩm có thể được đổi trả trong vòng 7 ngày kể từ ngày nhận
+                Sản phẩm có thể được đổi trả trong vòng 3 ngày kể từ ngày nhận
                 hàng với điều kiện sản phẩm còn nguyên tem mác, chưa qua sử dụng.
                 Chi phí vận chuyển đổi trả do khách hàng chịu trách nhiệm.
               </p>

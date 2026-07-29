@@ -1,3 +1,4 @@
+import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
@@ -14,6 +15,11 @@ export interface Testimonial {
 
 export async function GET() {
   try {
+    const cacheKey = `${CACHE_VERSION}:testimonials`;
+    console.log("cacheKey", cacheKey)
+    const cached = await getCache<Testimonial[]>(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
     const admin = getAdminClient();
 
     const { data: testimonials, error } = await admin
@@ -31,7 +37,13 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json(testimonials ?? []);
+    await setCache(cacheKey, testimonials ?? []);
+    return NextResponse.json(testimonials ?? [], {
+      headers: {
+        "Cache-Control":
+          "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
   } catch (err) {
     console.error("[testimonials] error:", err);
     return NextResponse.json(

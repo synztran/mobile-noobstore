@@ -25,7 +25,7 @@ export function HomeFooter() {
         <div className="flex w-full justify-between gap-4 text-[10px]">
           <Link href="/policy">Chính sách bảo mật</Link>
           <Link href="/terms">Điều khoản</Link>
-          <Link href="#">Vận chuyển</Link>
+          <Link href="/delivery-terms">Vận chuyển</Link>
         </div>
 
         <div className="flex w-full items-center justify-center gap-6">

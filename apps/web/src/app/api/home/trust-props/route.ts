@@ -1,4 +1,4 @@
-import { getCache, setCache } from "@/lib/redis/cache";
+import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -14,7 +14,7 @@ export interface TrustProp {
 
 export async function GET() {
 	try {
-		const cacheKey = "home:trust-props";
+		const cacheKey = `${CACHE_VERSION}:trust-props`;
 		const cached = await getCache<TrustProp[]>(cacheKey);
 		if (cached) return NextResponse.json(cached);
 
@@ -32,8 +32,13 @@ export async function GET() {
 			);
 		}
 
-		await setCache(cacheKey, props, 600);
-		return NextResponse.json(props as TrustProp[]);
+		await setCache(cacheKey, props);
+		return NextResponse.json(props as TrustProp[], {
+			headers: {
+				"Cache-Control":
+					"public, s-maxage=60, stale-while-revalidate=300",
+			},
+		});
 	} catch (err) {
 		console.error("[trust props] error:", err);
 		return NextResponse.json(
