@@ -1,6 +1,7 @@
 import { safeRedirect } from "@/lib/auth/redirect";
 import { type NextRequest, NextResponse } from "next/server";
-import { getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import { getAlertLimiter, getApiLimiter, getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import { notifyRateLimitHit } from "@/lib/telegram/telegram.service";
 
 /**
  * Lightweight session check — reads the Supabase auth cookie directly without
@@ -47,6 +48,22 @@ function hasValidSession(request: NextRequest): boolean {
   }
 }
 
+/**
+ * Fire-and-forget rate limit alert to Telegram (max 1 per 5 min).
+ */
+function fireRateLimitAlert(ip: string, path: string, isAuthenticated: boolean): void {
+  getAlertLimiter()
+    .limit("ratelimit-alert")
+    .then(({ success }) => {
+      if (success) {
+        notifyRateLimitHit(ip, path, isAuthenticated);
+      }
+    })
+    .catch(() => {
+      // alert failure is non-critical, silently ignore
+    });
+}
+
 export async function middleware(request: NextRequest) {
   try {
     const { pathname, hostname } = request.nextUrl;
@@ -64,6 +81,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const pathNames = ['/signin', '/signup']
+    const isLoggedIn = hasValidSession(request);
 
     // Rate limit auth endpoints (login, register) — 10 req/min per IP
     if (pathNames.includes(pathname)) {
@@ -72,6 +90,7 @@ export async function middleware(request: NextRequest) {
           getRateLimitKey(request)
         );
         if (!success) {
+          fireRateLimitAlert(getRateLimitKey(request), pathname, false);
           return NextResponse.json(
             { error: "Quá nhiều lần thử. Vui lòng chờ vài giây." },
             {
@@ -90,7 +109,35 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    const isLoggedIn = hasValidSession(request);
+    // Rate limit all /api/* routes — 100 req/min per IP
+    if (
+      pathname.startsWith("/api/") &&
+      !pathname.startsWith("/api/health") &&
+      !pathname.startsWith("/api/cron/") &&
+      !pathname.startsWith("/api/jobs/")
+    ) {
+      try {
+        const { success, reset } = await getApiLimiter().limit(
+          getRateLimitKey(request),
+        );
+        if (!success) {
+          fireRateLimitAlert(getRateLimitKey(request), pathname, isLoggedIn);
+          return NextResponse.json(
+            { error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
+            {
+              status: 429,
+              headers: {
+                "Retry-After": String(
+                  Math.ceil((reset - Date.now()) / 1000),
+                ),
+              },
+            },
+          );
+        }
+      } catch (err) {
+        console.warn("[middleware] API rate limiter unavailable:", err);
+      }
+    }
 
     // Redirect unauthenticated users away from protected routes
     if (pathname.startsWith("/checkout") && !isLoggedIn) {

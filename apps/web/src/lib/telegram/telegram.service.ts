@@ -207,6 +207,30 @@ export async function notifyPendingPaymentBatch(
 	await sendMessage(text);
 }
 
+/**
+ * Notify store when an IP hits the API rate limit.
+ */
+export async function notifyRateLimitHit(
+	ip: string,
+	path: string,
+	isAuthenticated: boolean,
+): Promise<void> {
+	const time = new Date().toLocaleString("vi-VN", {
+		timeZone: "Asia/Ho_Chi_Minh",
+	});
+
+	const text = [
+		`⚠️ <b>Cảnh báo Rate Limit!</b>`,
+		``,
+		`🌐 <b>IP:</b> ${escapeHtml(ip)}`,
+		`🔗 <b>Path:</b> ${escapeHtml(path)}`,
+		`🔐 <b>Auth:</b> ${isAuthenticated ? "Có token" : "Không token"}`,
+		`🕐 <b>Thời gian:</b> ${time}`,
+	].join("\n");
+
+	await sendMessage(text);
+}
+
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
 function escapeHtml(str: string): string {

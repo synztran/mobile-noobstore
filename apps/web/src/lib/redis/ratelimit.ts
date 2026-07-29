@@ -21,13 +21,23 @@ const rateLimiters = {
   }),
   apiAuth: new Ratelimit({
     redis: getRedis(),
-    limiter: Ratelimit.fixedWindow(50, "1 m"),
+    limiter: Ratelimit.fixedWindow(30, "1 m"),
     prefix: "ratelimit:api:auth",
   }),
   checkout: new Ratelimit({
     redis: getRedis(),
-    limiter: Ratelimit.fixedWindow(50, "1 m"),
+    limiter: Ratelimit.fixedWindow(40, "1 m"),
     prefix: "ratelimit:checkout",
+  }),
+  api: new Ratelimit({
+    redis: getRedis(),
+    limiter: Ratelimit.fixedWindow(60, "1 m"),
+    prefix: "ratelimit:api",
+  }),
+  alert: new Ratelimit({
+    redis: getRedis(),
+    limiter: Ratelimit.fixedWindow(1, "5 m"),
+    prefix: "ratelimit:alert",
   }),
 };
 
@@ -41,6 +51,14 @@ export function getApiAuthLimiter() {
 
 export function getCheckoutLimiter() {
   return rateLimiters.checkout;
+}
+
+export function getApiLimiter() {
+  return rateLimiters.api;
+}
+
+export function getAlertLimiter() {
+  return rateLimiters.alert;
 }
 
 export async function tryRateLimit(
