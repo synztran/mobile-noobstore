@@ -32,6 +32,7 @@ export async function setCache<T>(
 			await redis.set(key, value);
 		}
 	} catch {
+    console.log("fail setCache")
 		// non-fatal
 	}
 }
