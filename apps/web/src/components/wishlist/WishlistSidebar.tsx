@@ -66,7 +66,7 @@ export function WishlistSidebar({ drawerOpen, onClose }: WishlistSidebarProps) {
 					</div>
 
 					<div
-						className="flex-1 overflow-y-auto p-4 space-y-3"
+						className="flex-1 overflow-y-auto touch-pan-y p-4 space-y-3"
 						data-allow-scroll>
 						{loading ? (
 							<>

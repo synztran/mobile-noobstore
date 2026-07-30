@@ -16,7 +16,6 @@ export interface Testimonial {
 export async function GET() {
   try {
     const cacheKey = `${CACHE_VERSION}:testimonials`;
-    console.log("cacheKey", cacheKey)
     const cached = await getCache<Testimonial[]>(cacheKey);
     if (cached) return NextResponse.json(cached);
 

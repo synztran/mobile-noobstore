@@ -68,7 +68,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[80] bg-on-surface/25 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] bg-on-surface/25"
           onClick={onClose}
         />
       )}
@@ -83,7 +83,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
           animate={{ x: 0 }}
           exit={{ x: "-100%" }}
           transition={{ type: "spring", damping: 30, stiffness: 250 }}
-          className="fixed left-0 top-0 z-[81] flex h-full w-72 flex-col bg-surface shadow-ambient sm:w-80"
+          className="fixed left-0 top-0 z-[81] flex h-full w-72 flex-col bg-surface shadow-ambient will-change-transform sm:w-80"
         >
           <div className="flex items-center justify-between px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
             <p className="text-lg font-black text-on-surface">Danh mục</p>
@@ -91,7 +91,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
               type="button"
               onClick={onClose}
               aria-label="Close menu"
-              className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-all active:scale-90"
+              className="rounded-xl border border-outline-variant/40 bg-surface-container px-3 py-1.5 text-xs font-bold text-on-surface transition-colors active:scale-90"
             >
               Đóng
             </button>
@@ -118,14 +118,14 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
               <Link
                 href="/login"
                 onClick={onClose}
-                className="rounded-xl bg-primary-gradient px-4 py-2.5 text-center text-sm font-bold text-white transition-all active:scale-95"
+                className="rounded-xl bg-primary-gradient px-4 py-2.5 text-center text-sm font-bold text-white transition-transform active:scale-95"
               >
                 Đăng nhập
               </Link>
               <Link
                 href="/register"
                 onClick={onClose}
-                className="rounded-xl border border-outline-variant/40 bg-surface-container px-4 py-2.5 text-center text-sm font-bold text-on-surface transition-all active:scale-95"
+                className="rounded-xl border border-outline-variant/40 bg-surface-container px-4 py-2.5 text-center text-sm font-bold text-on-surface transition-transform active:scale-95"
               >
                 Tạo tài khoản
               </Link>
@@ -134,7 +134,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
 
           <div className="mx-4 border-t border-outline-variant/10" />
 
-          <nav className="mt-2 flex-1 overflow-y-auto">
+          <nav className="mt-2 flex-1 overflow-y-auto touch-pan-y">
             <motion.ul
               variants={containerVariants}
               initial="hidden"
@@ -149,7 +149,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
                       href={href}
                       onClick={onClose}
                       className={clsx(
-                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all hover:bg-surface-container-high",
+                        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-surface-container-high",
                         isActive
                           ? "bg-primary-fixed/30 font-bold text-primary"
                           : "text-on-surface"

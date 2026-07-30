@@ -650,7 +650,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="flex-1 space-y-4 overflow-y-auto touch-pan-y p-4">
           {(() => {
             if (isLoading) return <DrawerSkeleton />;
             if (!detail)

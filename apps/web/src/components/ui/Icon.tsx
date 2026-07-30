@@ -53,6 +53,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { memo } from "react";
 
 type IconProps = {
   name: string;
@@ -196,4 +197,4 @@ export function Icon({ name, className, title, fill }: IconProps) {
   );
 }
 
-export default Icon;
+export default memo(Icon);

@@ -12,7 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import ProductComponentTags from "./ProductComponentTags";
 import { StockIndicator } from "./StockIndicator";
 import DiscountBadge from "./DiscountBadge";
@@ -45,12 +45,15 @@ interface ProductCardProps {
   isBundle?: boolean;
 }
 
-export function ProductCard({ product, isBundle = false }: ProductCardProps) {
+export const ProductCard = memo(function ProductCard({
+  product,
+  isBundle = false,
+}: ProductCardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
   const addCartItem = useAddCartItem();
-  const { addStandardProduct, openCart } = useCartStore();
+  const addStandardProduct = useCartStore((s) => s.addStandardProduct);
   const flyToCart = useFlyToCartStore((s) => s.flyToCart);
   const router = useRouter();
   const { user } = useAuth();
@@ -193,4 +196,4 @@ export function ProductCard({ product, isBundle = false }: ProductCardProps) {
       )}
     </>
   );
-}
+});

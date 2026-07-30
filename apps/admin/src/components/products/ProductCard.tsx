@@ -41,6 +41,7 @@ export type ProductCardProps = {
     slug: string;
     base_price: number;
     stock_quantity: number | null;
+    max_quantity: number | null;
     product_type: string;
     brand: string | null;
     description?: string | null;
@@ -194,6 +195,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                       <dd className="truncate text-slate-600">
                         {product.brand}
                       </dd>
+                    </div>
+                  )}
+                  {product.max_quantity != null && (
+                    <div className="flex items-baseline gap-1">
+                      <dt className="shrink-0 text-slate-400">Max/cart</dt>
+                      <dd className="text-slate-600">{product.max_quantity}</dd>
                     </div>
                   )}
                   {categoryName && (

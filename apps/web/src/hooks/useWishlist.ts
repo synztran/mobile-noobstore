@@ -32,7 +32,6 @@ interface UseWishlistResult {
 	toggleWishlist: (productId: string) => Promise<void>;
 	isInWishlist: (productId: string) => boolean;
 	isPendingFor: (productId: string) => boolean;
-	wishlistProductIds: Set<string>;
 }
 
 export function useWishlist(
@@ -60,7 +59,8 @@ export function useWishlist(
 		error: queryError,
 	} = useWishlistQuery(!!user, initialItems);
 
-	const wishlistProductIds = useMemo(
+	const wishlistProductIdsRef = useRef(new Set<string>());
+	wishlistProductIdsRef.current = useMemo(
 		() => new Set(items.map((item) => item.product_id)),
 		[items],
 	);
@@ -78,7 +78,7 @@ export function useWishlist(
 
 	const addToWishlist = useCallback(
 		async (productId: string) => {
-			if (!productId || wishlistProductIds.has(productId)) return;
+			if (!productId || wishlistProductIdsRef.current.has(productId)) return;
 			markPending(productId);
 			try {
 				await addMutation.mutateAsync(productId);
@@ -94,7 +94,7 @@ export function useWishlist(
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[addMutation, wishlistProductIds],
+		[addMutation],
 	);
 
 	const removeFromWishlist = useCallback(
@@ -119,8 +119,8 @@ export function useWishlist(
 	);
 
 	const isInWishlist = useCallback(
-		(productId: string) => wishlistProductIds.has(productId),
-		[wishlistProductIds],
+		(productId: string) => wishlistProductIdsRef.current.has(productId),
+		[],
 	);
 
 	const isPendingFor = useCallback(
@@ -151,6 +151,5 @@ export function useWishlist(
 		toggleWishlist,
 		isInWishlist,
 		isPendingFor,
-		wishlistProductIds,
 	};
 }

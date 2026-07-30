@@ -2,13 +2,14 @@
 
 import type { ShopProduct } from "@/app/api/products/route";
 import { formatVND } from "@/lib/currency";
+import { memo } from "react";
 
 interface ProductCardDetailsProps {
   product: ShopProduct;
   isBundle?: boolean;
 }
 
-function Pricing({ product }: { product: ShopProduct }) {
+const Pricing = memo(function Pricing({ product }: { product: ShopProduct }) {
   if (product.discount_price && product.discount_price > 0) {
     return (
       <div>
@@ -39,9 +40,9 @@ function Pricing({ product }: { product: ShopProduct }) {
       {formatVND(product.base_price || product.min_price)}
     </div>
   );
-}
+});
 
-export function ProductCardDetails({
+export const ProductCardDetails = memo(function ProductCardDetails({
   product,
   isBundle = false,
 }: ProductCardDetailsProps) {
@@ -66,4 +67,4 @@ export function ProductCardDetails({
       <Pricing product={product} />
     </div>
   );
-}
+});

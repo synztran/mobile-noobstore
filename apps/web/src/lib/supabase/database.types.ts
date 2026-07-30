@@ -1625,6 +1625,7 @@ export type Database = {
           is_active: boolean
           is_pre_order: boolean
           is_used: boolean | null
+          max_quantity: number | null
           name: string
           parent_product_id: string | null
           product_type: string
@@ -1648,6 +1649,7 @@ export type Database = {
           is_active?: boolean
           is_pre_order?: boolean
           is_used?: boolean | null
+          max_quantity?: number | null
           name: string
           parent_product_id?: string | null
           product_type?: string
@@ -1671,6 +1673,7 @@ export type Database = {
           is_active?: boolean
           is_pre_order?: boolean
           is_used?: boolean | null
+          max_quantity?: number | null
           name?: string
           parent_product_id?: string | null
           product_type?: string

@@ -5,6 +5,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { memo, useMemo } from "react";
 
 interface WishlistButtonProps {
   productId: string;
@@ -14,7 +15,7 @@ interface WishlistButtonProps {
   iconOnly?: boolean;
 }
 
-export function WishlistButton({
+export const WishlistButton = memo(function WishlistButton({
   productId,
   className,
   showLabel = false,
@@ -24,8 +25,8 @@ export function WishlistButton({
   const pathname = usePathname();
   const isProductPage = /^\/shop\/.+$/.test(pathname);
   const { isInWishlist, isPendingFor, toggleWishlist } = useWishlist();
-  const wished = isInWishlist(productId);
-  const pending = isPendingFor(productId);
+  const wished = useMemo(() => isInWishlist(productId), [isInWishlist, productId]);
+  const pending = useMemo(() => isPendingFor(productId), [isPendingFor, productId]);
 
   const sizeClass = size === "sm" ? "h-8 px-2 text-xs" : "h-12 px-2 text-sm";
 
@@ -72,6 +73,6 @@ export function WishlistButton({
       )}
     </motion.button>
   );
-}
+});
 
 export default WishlistButton;

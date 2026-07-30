@@ -5,9 +5,10 @@ import Icon from "@/components/ui/Icon";
 import WishlistSidebar from "@/components/wishlist/WishlistSidebar";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore } from "@/store";
+import { motion } from "motion/react";
 import clsx from "clsx";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 interface TopNavProps {
   title?: string;
@@ -34,6 +35,18 @@ export function TopNav({
   const [menuOpen, setMenuOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [navigating, setNavigating] = useState(false);
+  const [cartBounce, setCartBounce] = useState(0);
+  const [menuBounce, setMenuBounce] = useState(0);
+
+  const handleCartClick = useCallback(() => {
+    openCart();
+    setCartBounce((n) => n + 1);
+  }, [openCart]);
+
+  const handleMenuClick = useCallback(() => {
+    setMenuOpen(true);
+    setMenuBounce((n) => n + 1);
+  }, []);
 
   const handleBack = () => {
     setNavigating(true);
@@ -52,13 +65,13 @@ export function TopNav({
         className
       )}
     >
-      <div className="flex items-center gap-4 justify-self-start">
+      <div className="clear-both relative">
         {showBack ? (
           <button
             aria-label="Go back"
             disabled={navigating}
             onClick={handleBack}
-            className="text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 disabled:opacity-40"
+            className="text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 disabled:opacity-40 flex items-center"
           >
             {navigating ? (
               <span className="loading loading-spinner loading-xs" />
@@ -71,10 +84,18 @@ export function TopNav({
             aria-label="Open menu"
             aria-controls="topnav-menu"
             aria-expanded={menuOpen}
-            onClick={() => setMenuOpen(true)}
-            className="text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95"
+            onClick={handleMenuClick}
+            className="text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 flex items-center"
           >
-            <Icon name="menu" className="text-[22px]" />
+            <motion.span
+              key={menuBounce}
+              initial={{ scale: 1 }}
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="inline-flex"
+            >
+              <Icon name="menu" className="text-[22px]" />
+            </motion.span>
           </button>
         )}
       </div>
@@ -96,21 +117,27 @@ export function TopNav({
         <button
           aria-label="Giỏ hàng"
           disabled={hideCart}
-          onClick={openCart}
+          onClick={handleCartClick}
           data-cart-icon
-          className={`relative text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 ${hideCart ? "cursor-not-allowed opacity-0" : ""}`}
+          className={`relative text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 flex items-center ${hideCart ? "cursor-not-allowed opacity-0" : ""}`}
         >
           {!isHydrated && showCart && !hideCart ? (
             <div className="skeleton h-[26px] w-[26px] rounded-full" />
           ) : (
-            <>
+            <motion.span
+              key={cartBounce}
+              initial={{ scale: 1 }}
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="inline-flex "
+            >
               <Icon name="shopping_cart" className="text-[26px]" />
               {count > 0 && (
                 <span className="w-4.5 h-4.5 absolute -right-1.5 -top-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-white">
                   {count}
                 </span>
               )}
-            </>
+            </motion.span>
           )}
         </button>
       </div>

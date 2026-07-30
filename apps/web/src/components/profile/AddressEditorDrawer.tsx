@@ -137,7 +137,7 @@ const AddressEditorDrawer = ({
           </button>
         </div>
 
-        <div className="hide-scrollbar flex-1 overflow-y-auto px-5 pb-8 pt-4">
+        <div className="hide-scrollbar flex-1 overflow-y-auto touch-pan-y px-5 pb-8 pt-4">
           <form onSubmit={formik.handleSubmit} className="space-y-4">
             <div>
               <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">

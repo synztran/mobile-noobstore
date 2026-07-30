@@ -97,10 +97,10 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
       {slides.map((s, i) => (
         <div
           key={s.id}
-          className={`absolute inset-0 transition-all duration-700 ${
+          className={`absolute inset-0 transition-opacity duration-700 ${
             i === current
-              ? "scale-100 opacity-100 blur-0"
-              : "pointer-events-none scale-105 opacity-0 blur-[2px]"
+              ? "opacity-100"
+              : "pointer-events-none opacity-0"
           }`}
         >
           <Image
@@ -125,14 +125,14 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
         >
           <div className="flex items-center gap-2">
             <div className="h-5 w-1 rounded-full bg-primary" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-primary-fixed-variant drop-shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-primary-fixed-variant">
               {slide.subtitle}
             </p>
           </div>
-          <p className="text-5xl font-black uppercase leading-tight tracking-tighter text-on-surface drop-shadow-sm">
+          <p className="text-5xl font-black uppercase leading-tight tracking-tighter text-on-surface">
             {slide.title}
           </p>
-          <p className="max-w-xs text-sm leading-relaxed text-on-surface-variant drop-shadow-sm">
+          <p className="max-w-xs text-sm leading-relaxed text-on-surface-variant">
             {slide.description}
           </p>
           <Link
@@ -154,7 +154,7 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
                 onClick={() => goTo(i)}
                 className={`rounded-full transition-all duration-300 ${
                   i === current
-                    ? "h-1.5 w-6 animate-[pulse-glow_2s_ease-in-out_infinite] bg-primary"
+                    ? "h-1.5 w-6 bg-primary"
                     : "h-1.5 w-1.5 bg-on-surface/30"
                 }`}
               />

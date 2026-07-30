@@ -324,7 +324,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
             {/* Scrollable body */}
             <div
               data-allow-scroll
-              className="max-h-full min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4"
+              className="max-h-full min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y px-4 pb-4"
             >
               {drawer.view === "product-list"
                 ? renderProductList()

@@ -170,6 +170,10 @@ export default function CreateProductModal({
       product_type === "kit" || !fd.get("stock_quantity")
         ? null
         : Number(fd.get("stock_quantity"));
+    const max_quantity =
+      product_type === "kit" || !fd.get("max_quantity")
+        ? null
+        : Number(fd.get("max_quantity"));
     const brand = (fd.get("brand") as string) || null;
     const parent_product_id =
       product_type === "component" ? parentProductId || null : null;
@@ -182,6 +186,7 @@ export default function CreateProductModal({
         slug,
         base_price,
         stock_quantity,
+        max_quantity,
         product_type,
         brand,
         description,
@@ -375,6 +380,16 @@ export default function CreateProductModal({
                   disabled={isKit}
                   placeholder={isKit ? "—" : "0"}
                   label="Stock Quantity"
+                />
+              </div>
+
+              <div className={`${productType !== "standard" ? "sr-only" : ""}`}>
+                <NumberInput
+                  name="max_quantity"
+                  min={0}
+                  disabled={isKit}
+                  placeholder={isKit ? "—" : "Unlimited"}
+                  label="Max Per Cart"
                 />
               </div>
 

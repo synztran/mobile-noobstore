@@ -1,5 +1,7 @@
 import {
 	getOrCreateCart,
+	MaxLimitExceededError,
+	StockExceededError,
 	upsertCartItem,
 	type UpsertCartInput,
 } from "@/lib/cart-service";
@@ -49,6 +51,18 @@ export async function POST(req: NextRequest) {
 			item_id: parentItemId,
 		});
 	} catch (err) {
+		if (err instanceof StockExceededError) {
+			return NextResponse.json(
+				{ error: err.message, available: err.available },
+				{ status: 409 },
+			);
+		}
+    if (err instanceof MaxLimitExceededError) {
+      return NextResponse.json(
+        { error: err.message, max: err.max},
+        { status: 409 },
+      )
+    }
 		console.error("[cart/items/POST] error:", err);
 		return NextResponse.json(
 			{ error: "Internal server error" },

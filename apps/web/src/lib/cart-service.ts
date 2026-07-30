@@ -4,6 +4,44 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 type Supabase = SupabaseClient<Database>;
 
+export class StockExceededError extends Error {
+	available: number;
+	constructor(available: number) {
+		super("Số lượng vượt quá tồn kho");
+		this.available = available;
+	}
+}
+
+export class MaxLimitExceededError extends Error {
+  max: number;
+  constructor(max: number) {
+    super("Giới hạn sản phẩm cho mỗi đơn hàng");
+    this.max = max
+  }
+}
+
+async function getProductEffectiveLimit(
+	supabase: Supabase,
+	productId: string,
+): Promise<{
+  stock: number;
+  max: number | null;
+}> {
+	const { data } = await supabase
+		.from("products")
+		.select("stock_quantity, max_quantity")
+		.eq("id", productId)
+		.single();
+
+	const stock = Number(data?.stock_quantity ?? 0);
+	const max = data?.max_quantity != null ? Number(data.max_quantity) : null;
+
+  return {
+    stock,
+    max
+  }
+}
+
 export interface CartApiItem {
   id: string;
   cart_id: string | null;
@@ -346,6 +384,9 @@ export async function upsertCartItem(
 
   if (existing) {
     const newQty = existing.quantity + (input.quantity ?? 1);
+    const { stock, max } = await getProductEffectiveLimit(supabase, input.product_id);
+    if (max && newQty > max ) throw new MaxLimitExceededError(max);
+    if (newQty > stock) throw new StockExceededError(stock);
     const { error: updateErr } = await supabase
       .from("cart_items")
       .update({ quantity: newQty })
@@ -355,6 +396,10 @@ export async function upsertCartItem(
 
     return { parentItemId: existing.id };
   }
+
+  const { stock, max } = await getProductEffectiveLimit(supabase, input.product_id);
+  const requestedQty = input.quantity ?? 1;
+  if (requestedQty > stock) throw new StockExceededError(stock);
 
   const itemId = crypto.randomUUID();
   const { error: insertErr } = await supabase.from("cart_items").insert({
@@ -385,9 +430,22 @@ export async function updateCartItemQuantity(
   itemId: string,
   quantity: number
 ): Promise<void> {
+  if (quantity < 1) return;
+
+  const { data: item } = await supabase
+    .from("cart_items")
+    .select("product_id")
+    .eq("id", itemId)
+    .single();
+
+  if (item?.product_id) {
+    const { stock, max } = await getProductEffectiveLimit(supabase, item.product_id);
+    if (quantity > stock) throw new StockExceededError(stock);
+  }
+
   await supabase
     .from("cart_items")
-    .update({ quantity: Math.max(1, quantity) })
+    .update({ quantity })
     .eq("id", itemId);
 }
 
