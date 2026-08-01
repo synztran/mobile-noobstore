@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [prd]
+  pull_request:
+
+jobs:
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable corepack (yarn 4)
+        run: corepack enable
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Type-check web
+        run: yarn workspace @noobstore/web type-check

@@ -29,5 +29,7 @@ supabase/.temp/
 .opencode/
 .cursor/
 .windsurf/
-.github/
+.github/*
+!.github/workflows/
+!.github/workflows/*
 supabase/

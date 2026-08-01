@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Type-checking is handled by CI (`yarn type-check`), so skip the duplicate
+  // tsc pass inside `next build` to keep production deploys fast.
+  typescript: { ignoreBuildErrors: true },
+
   // Externalize large server-only packages so they're require()'d at runtime
   // instead of bundled into every serverless function — faster cold starts.
   serverExternalPackages: ["resend", "@upstash/redis"],
