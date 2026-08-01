@@ -42,6 +42,7 @@ export interface SubmitOrderRequest {
   items: SubmitOrderRequestItem[];
   service_ids?: string[];
   shipping_method_id?: string | null;
+  pickup_at?: string | null;
   delivery_address?: {
     full_name: string;
     phone_number: string;
@@ -117,12 +118,17 @@ export async function POST(req: NextRequest) {
         { error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
         {
           status: 429,
-          headers: { "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)) },
+          headers: {
+            "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
+          },
         }
       );
     }
   } catch (rateLimitError) {
-    console.warn("[submit] rate limiter unavailable, allowing request:", rateLimitError);
+    console.warn(
+      "[submit] rate limiter unavailable, allowing request:",
+      rateLimitError
+    );
   }
 
   try {
@@ -131,6 +137,21 @@ export async function POST(req: NextRequest) {
     if (!body.items?.length) {
       return NextResponse.json(
         { error: "items are required" },
+        { status: 400 }
+      );
+    }
+
+    const hasPreOrder = body.items.some(
+      (i) => i.is_pre_order || (i.components ?? []).some((c) => c.is_pre_order)
+    );
+
+    if (
+      body.shipping_method_id === "pickup" &&
+      !hasPreOrder &&
+      (!body.pickup_at || Number.isNaN(new Date(body.pickup_at).getTime()))
+    ) {
+      return NextResponse.json(
+        { error: "pickup_at is required for store pickup" },
         { status: 400 }
       );
     }
@@ -157,7 +178,11 @@ export async function POST(req: NextRequest) {
       { data: productRows, error: productErr },
       { data: variantRows, error: variantErr },
     ] = await Promise.all([
-      supabase.from("products").select("id, base_price").eq("is_active", true).in("id", productIds),
+      supabase
+        .from("products")
+        .select("id, base_price")
+        .eq("is_active", true)
+        .in("id", productIds),
       allVariantIds.length > 0
         ? admin
             .from("product_variants")
@@ -256,13 +281,26 @@ export async function POST(req: NextRequest) {
     );
 
     // ── Rank-based discount ────────────────────────────────────────────
-    const requestedRankDiscount = toNumber(body.rank_discount?.discount_amount, 0);
-    const safeRankDiscount = Math.min(Math.max(0, requestedRankDiscount), subtotal - safeVoucherDiscount);
-    const safeRankShipping = body.rank_discount?.free_shipping ? Math.min(safeShippingCost - safeShippingDiscount, safeShippingCost) : 0;
+    const requestedRankDiscount = toNumber(
+      body.rank_discount?.discount_amount,
+      0
+    );
+    const safeRankDiscount = Math.min(
+      Math.max(0, requestedRankDiscount),
+      subtotal - safeVoucherDiscount
+    );
+    const safeRankShipping = body.rank_discount?.free_shipping
+      ? Math.min(safeShippingCost - safeShippingDiscount, safeShippingCost)
+      : 0;
 
     const recalculatedTotal = Math.max(
       0,
-      subtotal + safeShippingCost - safeVoucherDiscount - safeShippingDiscount - safeRankDiscount - safeRankShipping
+      subtotal +
+        safeShippingCost -
+        safeVoucherDiscount -
+        safeShippingDiscount -
+        safeRankDiscount -
+        safeRankShipping
     );
 
     const orderId = crypto.randomUUID();
@@ -308,7 +346,8 @@ export async function POST(req: NextRequest) {
         voucher_discount_amount: safeVoucherDiscount,
         shipping_discount_amount: safeShippingDiscount,
         voucher_snapshot: allSnapshots.length > 0 ? toJson(allSnapshots) : null,
-        gift_items_snapshot: allGiftItems.length > 0 ? toJson(allGiftItems) : null,
+        gift_items_snapshot:
+          allGiftItems.length > 0 ? toJson(allGiftItems) : null,
       };
 
       const { error: updateOrderError } = await supabase
@@ -402,16 +441,24 @@ export async function POST(req: NextRequest) {
             ? (body.delivery_address as unknown as Json)
             : null,
           shipping_method_id: body.shipping_method_id ?? null,
-          expected_delivery_at: expectedDeliveryAt,
+          expected_delivery_at:
+            body.shipping_method_id === "pickup" ? null : expectedDeliveryAt,
+          pickup_at:
+            body.shipping_method_id === "pickup" && body.pickup_at
+              ? new Date(body.pickup_at).toISOString()
+              : null,
         })
         .eq("id", result.order_id);
     }
 
     // ── Persist deposit/cod payment fields ─────────────────────────────
     if (body.payment_type === "deposit_cod") {
-      const pct = Math.min(80, Math.max(10, Math.round(body.deposit_percentage ?? 50)));
+      const pct = Math.min(
+        80,
+        Math.max(10, Math.round(body.deposit_percentage ?? 50))
+      );
       const depositBase = subtotal;
-      const depositAmt = Math.round(depositBase * pct / 100);
+      const depositAmt = Math.round((depositBase * pct) / 100);
       const remainingAmt = Math.max(0, recalculatedTotal - depositAmt);
 
       const depositUpdatePayload = {
@@ -432,7 +479,10 @@ export async function POST(req: NextRequest) {
           .eq("id", result.order_id);
 
         if (adminDepositError) {
-          console.error("[submit] failed to persist deposit fields:", adminDepositError);
+          console.error(
+            "[submit] failed to persist deposit fields:",
+            adminDepositError
+          );
         }
       }
     }
@@ -442,7 +492,9 @@ export async function POST(req: NextRequest) {
       (v) => v.gift_items_snapshot ?? []
     );
     if (allGiftItems.length > 0) {
-      const giftProductIds = [...new Set(allGiftItems.map((g) => g.product_id))];
+      const giftProductIds = [
+        ...new Set(allGiftItems.map((g) => g.product_id)),
+      ];
       const { data: giftProducts } = await admin
         .from("products")
         .select("id, name, thumbnail")
@@ -509,13 +561,18 @@ export async function POST(req: NextRequest) {
 
     // ── Mark old cart as converted (keeps data for admin analytics) ──────
     if (body.cart_id) {
-      await admin.from("carts").update({ status: "converted" }).eq("id", body.cart_id);
+      await admin
+        .from("carts")
+        .update({ status: "converted" })
+        .eq("id", body.cart_id);
     }
 
     // ── Create a fresh active cart for the customer ──────────────────────
     if (user) {
       const newCartId = crypto.randomUUID();
-      await admin.from("carts").insert({ id: newCartId, user_id: user.id, status: "active" });
+      await admin
+        .from("carts")
+        .insert({ id: newCartId, user_id: user.id, status: "active" });
     }
 
     // ── Gacha mission progress (fire-and-forget) ─────────────────────────
@@ -567,8 +624,7 @@ export async function POST(req: NextRequest) {
       status: result.status,
     } satisfies SubmitOrderResponse);
   } catch (err: unknown) {
-    const msg =
-      err instanceof Error ? err.message : "Internal server error";
+    const msg = err instanceof Error ? err.message : "Internal server error";
     console.error("[submit] unexpected error:", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }

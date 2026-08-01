@@ -6,16 +6,31 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
 	const body = await req.json();
 	const supabase = getAdminClient();
-	const payload = {
-		id: crypto.randomUUID(),
-		parent_product_id: body.parent_product_id,
-		component_product_id: body.component_product_id,
-		component_group: body.component_group,
-		is_required: body.is_required,
-		max_quantity: body.max_quantity,
-	};
 
-	const { error } = await supabase.from("product_components").insert(payload);
+	if (!Array.isArray(body)) {
+		return NextResponse.json(
+			{ error: "Request body must be an array of component rows" },
+			{ status: 400 },
+		);
+	}
+
+	const rows = body.map((row) => ({
+		id: crypto.randomUUID(),
+		parent_product_id: row?.parent_product_id ?? null,
+		component_product_id: row?.component_product_id ?? null,
+		component_group: row?.component_group ?? "",
+		is_required: row?.is_required ?? false,
+		max_quantity: row?.max_quantity ?? null,
+	}));
+
+	if (rows.length === 0) {
+		return NextResponse.json(
+			{ error: "At least one component row is required" },
+			{ status: 400 },
+		);
+	}
+
+	const { error } = await supabase.from("product_components").insert(rows);
 	if (error) {
 		return NextResponse.json({ error: error.message }, { status: 400 });
 	}

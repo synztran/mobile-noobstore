@@ -2,7 +2,7 @@
 
 import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
 import { OrderPaymentPanel } from "@/components/orders/OrderPaymentPanel";
-import PreOrderTimeline from "@/components/orders/PreOrderTimeline";
+import OrderTrackingTimeline from "@/components/orders/OrderTrackingTimeline";
 import { VoucherInfo } from "@/components/voucher/VoucherInfo";
 import { formatVND } from "@/lib/currency";
 import { toast } from "@/lib/toast";
@@ -88,12 +88,6 @@ interface Props {
 
 const CANCELLABLE_STATUSES = ["pending"];
 const NON_TERMINAL_STATUSES = ["delivered"];
-const TIMELINE_STEPS = [
-  { key: "pending", label: "Đang kiểm tra" },
-  { key: "confirmed", label: "Đã xác nhận" },
-  { key: "delivering", label: "Đang giao" },
-  { key: "delivered", label: "Đã giao" },
-];
 
 function PaymentCountdown({ createdAt }: { createdAt: string }) {
   const calcRemaining = useCallback(() => {
@@ -204,36 +198,7 @@ function OrderDetailContent({
         )}
 
       {/* Status timeline */}
-      {NON_TERMINAL_STATUSES.includes(detail.status) && (
-        <ul className="steps steps-horizontal w-full">
-          {TIMELINE_STEPS.map((step, i) => {
-            const currentIdx = TIMELINE_STEPS.findIndex(
-              (s) => s.key === detail.status
-            );
-            const isCompleted = i < currentIdx;
-            const isCurrent = i === currentIdx;
-            return (
-              <li
-                key={step.key}
-                className={`step text-[10px] font-bold ${
-                  isCompleted
-                    ? "step-neutral text-on-surface"
-                    : isCurrent
-                      ? "step-primary text-primary"
-                      : "text-on-surface-variant/50"
-                }`}
-              >
-                {step.label}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {/* Pre-order tracking timeline */}
-      {detail.items.some((item) => item.preOrderTracking) && (
-        <PreOrderTimeline items={detail.items} />
-      )}
+      <OrderTrackingTimeline order={detail} />
 
       {/* Cancelled details */}
       {detail.status === "cancelled" && (
@@ -366,8 +331,31 @@ function OrderDetailContent({
         </div>
       )}
 
+      {/* Pickup information */}
+      {detail.pickup_at && (
+        <div className="space-y-2">
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
+            Thông tin nhận hàng
+          </p>
+          <div className="space-y-1 rounded-2xl bg-surface-container p-4">
+            <p className="text-sm font-bold text-on-surface">
+              Nhận tại cửa hàng — Noobstore HCM
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              {new Date(detail.pickup_at).toLocaleString("vi-VN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Delivery information */}
-      {detail.delivery_address && (
+      {!detail.pickup_at && detail.delivery_address && (
         <div className="space-y-2">
           <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
             Thông tin giao hàng
@@ -523,12 +511,12 @@ function OrderDetailContent({
 
       {/* Cancel confirmation modal */}
       <dialog
-        className={`modal ${showCancelModal ? "modal-open" : ""}`}
+        className={`modal !mt-0 ${showCancelModal ? "modal-open" : ""}`}
         onClick={(e) => {
           if (e.target === e.currentTarget) setShowCancelModal(false);
         }}
       >
-        <div className="modal-box rounded-3xl">
+        <div className="modal-box rounded-2xl">
           <div className="flex flex-col items-center gap-2 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-error/10">
               <CircleX size={24} className="text-error" />
@@ -621,7 +609,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 
       {/* Drawer */}
       <div
-        className={`duration-250 fixed left-0 right-0 z-[999] flex max-h-[85dvh] flex-col rounded-t-5xl bg-surface transition-all ease-out ${
+        className={`duration-250 fixed left-0 right-0 z-[999] !mt-0 flex max-h-[85dvh] flex-col rounded-t-5xl bg-surface transition-all ease-out ${
           isOpen ? "bottom-0" : "-bottom-full"
         }`}
         style={{ height: "85dvh" }}
@@ -650,7 +638,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 space-y-4 overflow-y-auto touch-pan-y p-4">
+        <div className="flex-1 touch-pan-y space-y-4 overflow-y-auto p-4">
           {(() => {
             if (isLoading) return <DrawerSkeleton />;
             if (!detail)

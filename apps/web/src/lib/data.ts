@@ -56,7 +56,12 @@ export interface CartItem {
   /** For composite kits: the resolved component selections */
   components?: SelectedComponent[];
   quantity: number;
-  gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
+  gifts?: Array<{
+    gift_name: string;
+    gift_slug: string;
+    gift_thumbnail: string | null;
+    quantity: number;
+  }>;
   is_pre_order?: boolean;
   pre_order_config?: PreOrderConfig | null;
 }
@@ -74,9 +79,11 @@ export interface ShippingDetails {
   postalCode: string;
   phoneNumber: string;
   notes?: string;
-  deliverySpeed: "standard" | "express" | "shipment" | "preorder";
+  deliverySpeed: "standard" | "express" | "shipment" | "preorder" | "pickup";
   /** Matches shipping_methods.id — same value as deliverySpeed for now */
   shippingMethodId: string;
+  /** Chosen store pickup slot (ISO) when deliverySpeed === "pickup" */
+  pickupAt?: string | null;
 }
 
 export interface ProfileAddress {

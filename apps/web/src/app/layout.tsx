@@ -81,6 +81,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head suppressHydrationWarning>
+        <meta
+          name="facebook-domain-verification"
+          content="ouaw36c71sgi4fz07lkj2t0ot3kb3d"
+        />
         <meta property="fb:app_id" content="YOUR_FB_APP_ID" />
         <meta
           name="viewport"

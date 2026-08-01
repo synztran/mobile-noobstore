@@ -1,0 +1,298 @@
+<!DOCTYPE html><html class="light" lang="vi"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+<title>Theo dõi đơn hàng - NoobStore</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Load Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "sale-red": "#EF4444",
+                "secondary-fixed-dim": "#b9cf88",
+                "on-secondary-container": "#56692e",
+                "secondary-container": "#d1e99f",
+                "primary-fixed": "#ffdbcf",
+                "on-tertiary": "#ffffff",
+                "on-primary-fixed-variant": "#7f2b08",
+                "surface-bright": "#fbf9f5",
+                "background": "#fbf9f5",
+                "on-tertiary-fixed-variant": "#5516be",
+                "on-primary": "#ffffff",
+                "savings-green": "#16A34A",
+                "on-surface": "#1b1c1a",
+                "surface-tint": "#9e421e",
+                "outline-variant": "#ddc0b8",
+                "primary-container": "#BB5732",
+                "tertiary-fixed-dim": "#d0bcff",
+                "secondary": "#52652a",
+                "on-secondary": "#ffffff",
+                "on-error-container": "#93000a",
+                "error-container": "#ffdad6",
+                "surface-container-low": "#f5f3f0",
+                "surface-variant": "#e4e2df",
+                "surface": "#FBF9F5",
+                "on-tertiary-container": "#ddcdff",
+                "tertiary-fixed": "#e9ddff",
+                "surface-container-highest": "#e4e2df",
+                "on-surface-variant": "#56423c",
+                "on-primary-container": "#ffc8b6",
+                "tertiary": "#5210bc",
+                "primary": "#7c2805",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-high": "#e9e8e4",
+                "on-tertiary-fixed": "#23005c",
+                "on-secondary-fixed": "#141f00",
+                "inverse-primary": "#ffb59c",
+                "error": "#ba1a1a",
+                "surface-container": "#F0EEEA",
+                "primary-action": "#D46A43",
+                "inverse-on-surface": "#f2f1ed",
+                "on-primary-fixed": "#390c00",
+                "primary-fixed-dim": "#ffb59c",
+                "outline": "#89726A",
+                "on-secondary-fixed-variant": "#3b4d14",
+                "inverse-surface": "#30312e",
+                "on-error": "#ffffff",
+                "on-background": "#1b1c1a",
+                "surface-dim": "#dbdad6",
+                "secondary-fixed": "#d4eba2",
+                "tertiary-container": "#6b37d4"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "2xl": "1rem",
+                "3xl": "1.5rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "gutter-grid": "1rem",
+                "nav-height": "48px",
+                "bottom-nav-bottom": "1.25rem",
+                "margin-page": "1.5rem",
+                "stack-gap": "1rem"
+            },
+            "fontFamily": {
+                "headline-hero": ["manrope"],
+                "body-standard": ["manrope"],
+                "product-name": ["manrope"],
+                "headline-section": ["manrope"],
+                "price": ["manrope"],
+                "label-caps": ["manrope"],
+                "button-text": ["manrope"],
+                "nav-label": ["manrope"],
+                "body-small": ["manrope"]
+            },
+            "fontSize": {
+                "headline-hero": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                "body-standard": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                "product-name": ["14px", {"lineHeight": "20px", "fontWeight": "700"}],
+                "headline-section": ["24px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "900"}],
+                "price": ["16px", {"lineHeight": "24px", "fontWeight": "800"}],
+                "label-caps": ["10px", {"lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "900"}],
+                "button-text": ["11px", {"lineHeight": "16px", "letterSpacing": "0.14em", "fontWeight": "900"}],
+                "nav-label": ["9px", {"lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                "body-small": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+            },
+            "boxShadow": {
+                "ambient-sm": "0 4px 20px -2px rgba(124, 40, 5, 0.06)",
+                "ambient-lg": "0 12px 40px -4px rgba(124, 40, 5, 0.12)"
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: 0;
+            width: 2px;
+            background: #e4e2df;
+        }
+
+        .timeline-line-active {
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            height: 100%;
+            width: 2px;
+            background: linear-gradient(180deg, #7c2805 0%, #ffdbcf 100%);
+        }
+
+        .glow-active {
+            box-shadow: 0 0 15px rgba(124, 40, 5, 0.4);
+        }
+
+        .safe-pb {
+            padding-bottom: calc(env(safe-area-inset-bottom) + 1.25rem);
+        }
+        
+        .safe-pt {
+            padding-top: calc(env(safe-area-inset-top) + 1rem);
+        }
+
+        .premium-scroll::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased premium-scroll">
+<!-- Top AppBar (from JSON guidance) -->
+<header class="sticky top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-sm shadow-primary/5 flex justify-between items-center h-nav-height px-margin-page pt-[env(safe-area-inset-top)]">
+<button class="active:scale-95 transition-transform duration-200 text-primary">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h1 class="font-headline-section text-[18px] tracking-tight text-primary">Theo dõi đơn hàng</h1>
+<button class="active:scale-95 transition-transform duration-200 text-primary">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</header>
+<main class="px-margin-page pb-32 space-y-stack-gap mt-6">
+<!-- Order Identity Card -->
+<div class="bg-surface-container-lowest rounded-3xl p-5 shadow-ambient-sm flex items-center gap-4">
+<div class="w-14 h-14 bg-primary-fixed flex items-center justify-center rounded-2xl">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">package_2</span>
+</div>
+<div class="flex-1">
+<p class="font-label-caps text-on-surface-variant uppercase mb-0.5">Mã đơn hàng</p>
+<h3 class="font-product-name text-lg">#AV25841</h3>
+</div>
+<div class="text-right">
+<p class="font-label-caps text-on-surface-variant uppercase mb-0.5">Dự kiến giao</p>
+<span class="font-price text-primary">15 Th7</span>
+</div>
+</div>
+<!-- Timeline Section -->
+<div class="bg-surface-container-lowest rounded-3xl shadow-ambient-sm relative overflow-hidden p-5">
+<h4 class="font-headline-section text-base mb-8">Trạng thái vận chuyển</h4>
+<div class="relative"><!-- Step 1: Done -->
+<div class="flex gap-6 relative pb-6">
+<div class="timeline-line bg-primary-container !bottom-0"></div>
+<div class="z-10 w-6 h-6 rounded-full bg-savings-green flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-base">check</span>
+</div>
+<div class="flex-1 flex justify-between items-start">
+<div>
+<h5 class="font-product-name text-on-surface text-base font-extrabold">Đã đặt hàng</h5>
+<p class="font-body-small text-on-surface-variant">Đơn hàng của bạn đã được xác nhận</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps bg-surface-container text-on-surface-variant px-2 py-1 rounded-lg">DONE</span>
+<p class="font-label-caps mt-1 text-[9px]">23 TH7 • 10:30</p>
+</div>
+</div>
+</div>
+<!-- Step 2: Done -->
+<div class="flex gap-6 relative pb-6">
+<div class="timeline-line bg-primary-container !bottom-0"></div>
+<div class="z-10 w-6 h-6 rounded-full bg-savings-green flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-base">check</span>
+</div>
+<div class="flex-1 flex justify-between items-start">
+<div>
+<h5 class="font-product-name text-on-surface text-base font-extrabold">Đã đóng gói</h5>
+<p class="font-body-small text-on-surface-variant">Kiện hàng đã sẵn sàng tại kho</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps bg-surface-container text-on-surface-variant px-2 py-1 rounded-lg">DONE</span>
+<p class="font-label-caps mt-1 text-[9px]">23 TH7 • 14:15</p>
+</div>
+</div>
+</div>
+<!-- Step 3: Active (Shipping) -->
+<div class="flex gap-6 relative pb-6">
+<div class="timeline-line !bottom-0"></div>
+<div class="z-10 w-6 h-6 rounded-full bg-primary-container flex items-center justify-center glow-active ring-4 ring-primary-fixed/50 animate-pulse">
+<span class="material-symbols-outlined text-white text-base" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+</div>
+<div class="flex-1 flex justify-between items-start">
+<div>
+<h5 class="font-product-name text-primary text-base font-extrabold">Đang vận chuyển</h5>
+<p class="font-body-small text-primary/80 font-semibold italic">Đang giao đến bạn...</p>
+</div>
+<div class="text-right">
+<span class="font-label-caps bg-primary-fixed text-primary px-2 py-1 rounded-lg">LIVE</span>
+</div>
+</div>
+</div>
+<!-- Step 4: Pending -->
+<div class="flex gap-6">
+<div class="z-10 w-6 h-6 rounded-full border-2 border-surface-variant bg-surface flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+</div>
+<div class="flex-1 flex justify-between items-start">
+<div class="opacity-40">
+<h5 class="font-product-name text-on-surface text-base font-extrabold">Đã giao hàng</h5>
+<p class="font-body-small text-on-surface-variant">Xác nhận đã nhận hàng</p>
+</div>
+<div class="text-right opacity-40">
+<span class="font-label-caps bg-surface-container text-on-surface-variant px-2 py-1 rounded-lg">PENDING</span>
+<p class="font-label-caps mt-1 text-[9px]">DỰ KIẾN MAI</p>
+</div>
+</div>
+</div></div>
+</div>
+<!-- Map/Delivery Location Card -->
+
+<!-- Contact Support / Action -->
+<div class="flex gap-3">
+<button class="flex-1 bg-surface-container border border-outline-variant h-14 rounded-2xl font-button-text text-on-surface flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg">chat_bubble</span>
+                NHẮN TIN SHOP
+            </button>
+<button class="flex-1 bg-primary h-14 rounded-2xl font-button-text text-white flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-lg">support_agent</span>
+                HỖ TRỢ
+            </button>
+</div>
+</main>
+<!-- BottomNavBar (from JSON guidance) -->
+<nav class="fixed bottom-bottom-nav-bottom left-1/2 -translate-x-1/2 w-[85vw] rounded-full bg-surface-container-lowest/80 backdrop-blur-xl z-50 flex justify-around items-center px-4 py-3 shadow-ambient-lg border border-white/20">
+<button class="flex flex-col items-center justify-center text-on-surface-variant/70 p-2 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">home</span>
+<span class="font-nav-label uppercase mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/70 p-2 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-nav-label uppercase mt-1">Shop</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/70 p-2 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">search</span>
+<span class="font-nav-label uppercase mt-1">Search</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-fixed/60 text-primary rounded-full px-5 py-2 active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="font-nav-label uppercase mt-1">Orders</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/70 p-2 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">person</span>
+<span class="font-nav-label uppercase mt-1">Profile</span>
+</button>
+</nav>
+<script>
+        // Micro-interaction for feedback
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (window.navigator.vibrate) {
+                    window.navigator.vibrate(10);
+                }
+            });
+        });
+    </script>
+
+
+</body></html>

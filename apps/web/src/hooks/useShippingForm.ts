@@ -7,12 +7,18 @@ import { useCartStore, useCheckoutStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type DeliverySpeed = "standard" | "express" | "shipment";
+export type DeliverySpeed = "standard" | "express" | "shipment" | "pickup";
 const OPEN_WORKING = {
-  startAt: "09:00",
-  endAt: "18:00",
+  startAt: "08:00",
+  endAt: "19:00",
   days: [1, 2, 3, 4, 5], // Monday to Friday
 };
+const PICKUP_HOURS = {
+  startAt: "08:00",
+  endAt: "19:00",
+  days: [0, 1, 2, 3, 4, 5, 6], // Every day
+};
+const PICKUP_SLOT_MINUTES = 30; // every 30 min within PICKUP_HOURS
 
 type FormData = {
   fullName: string;
@@ -165,6 +171,8 @@ export function useShippingForm() {
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
   const [delivery, setDelivery] = useState<DeliverySpeed>("standard");
+  const [pickupDate, setPickupDate] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
   const [cityTouched, setCityTouched] = useState(false);
   const [immediatePricePerKm, setImmediatePricePerKm] = useState(12000);
   const [basicPricePerKm, setBasicPricePerKm] = useState(5500);
@@ -249,6 +257,38 @@ export function useShippingForm() {
 
   const fetchedRef = useRef(false);
   const initializedRef = useRef(false);
+  const restoredDeliveryRef = useRef(false);
+
+  // Restore delivery method + pickup slot from a previously saved shipping step
+  useEffect(() => {
+    if (restoredDeliveryRef.current) return;
+    if (!shipping || Object.keys(shipping).length === 0) return;
+
+    restoredDeliveryRef.current = true;
+    const speed = shipping.deliverySpeed;
+    if (
+      speed === "standard" ||
+      speed === "express" ||
+      speed === "shipment" ||
+      speed === "pickup"
+    ) {
+      setDelivery(speed);
+    }
+    if (speed === "pickup" && shipping.pickupAt) {
+      const d = new Date(shipping.pickupAt);
+      if (!Number.isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        setPickupDate(`${yyyy}-${mm}-${dd}`);
+        setPickupTime(
+          `${String(d.getHours()).padStart(2, "0")}:${String(
+            d.getMinutes()
+          ).padStart(2, "0")}`
+        );
+      }
+    }
+  }, [shipping]);
 
   useEffect(() => {
     if (fetchedRef.current) return;
@@ -362,7 +402,9 @@ export function useShippingForm() {
         wardCode: city !== prev.city ? "" : prev.wardCode,
       }));
       if (city !== HCM_CITY) {
-        setDelivery("shipment");
+        if (delivery === "standard" || delivery === "express") {
+          setDelivery("shipment");
+        }
       } else if (delivery === "shipment") {
         setDelivery("standard");
       }
@@ -376,6 +418,13 @@ export function useShippingForm() {
       touched[fieldName] &&
       !String(form[fieldName as keyof FormData] ?? "").trim(),
     [form, touched]
+  );
+
+  const isPickupFieldInvalid = useCallback(
+    (field: "pickupDate" | "pickupTime") =>
+      touched[field] &&
+      !String(field === "pickupDate" ? pickupDate : pickupTime).trim(),
+    [touched, pickupDate, pickupTime]
   );
 
   const subtotal = mounted ? total() : 0;
@@ -405,13 +454,128 @@ export function useShippingForm() {
     districtSurchargeRate + operationalSurchargeRate
   );
   const distanceFee = delivery === "express" ? rawImmediateCost : rawBasicCost;
-  const baseShippingCost = delivery === "express" ? immediateFee : basicFee;
+  const isPickup = delivery === "pickup";
+  const baseShippingCost = isPickup
+    ? 0
+    : delivery === "express"
+      ? immediateFee
+      : basicFee;
   const shippingCost = baseShippingCost;
   const orderTotal = subtotal + shippingCost;
+
+  const earliestPreOrderPickupDate = useMemo(() => {
+    let earliest: string | null = null;
+    for (const item of cartItems) {
+      const config =
+        item.pre_order_config ??
+        item.components?.find((c) => c.pre_order_config)?.pre_order_config ??
+        null;
+      if (config?.available_date) {
+        if (!earliest || config.available_date < earliest) {
+          earliest = config.available_date;
+        }
+      }
+    }
+    return earliest;
+  }, [cartItems]);
+
+  // Earliest allowed pickup date (YYYY-MM-DD): today (or tomorrow after close),
+  // never before the earliest pre-order available date.
+  const minPickupDate = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const [endHour, endMinute] = PICKUP_HOURS.endAt.split(":").map(Number);
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    let min = new Date(today);
+    if (nowMinutes >= endHour * 60 + endMinute) {
+      min.setDate(min.getDate() + 1);
+    }
+    if (earliestPreOrderPickupDate) {
+      const pre = new Date(earliestPreOrderPickupDate);
+      if (!Number.isNaN(pre.getTime()) && pre.getTime() > min.getTime()) {
+        min = pre;
+      }
+    }
+    return `${min.getFullYear()}-${String(min.getMonth() + 1).padStart(2, "0")}-${String(min.getDate()).padStart(2, "0")}`;
+  }, [earliestPreOrderPickupDate]);
+
+  const pickupSlots = useMemo(() => {
+    const [sh, sm] = PICKUP_HOURS.startAt.split(":").map(Number);
+    const [eh, em] = PICKUP_HOURS.endAt.split(":").map(Number);
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    const slots: string[] = [];
+    for (let m = startMin; m <= endMin; m += PICKUP_SLOT_MINUTES) {
+      const h = Math.floor(m / 60);
+      const min = m % 60;
+      slots.push(
+        `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`
+      );
+    }
+    return slots;
+  }, []);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
+
+      if (isPickup) {
+        setTouched((prev) => ({
+          ...prev,
+          fullName: true,
+          phoneNumber: true,
+          pickupDate: hasPreOrder ? prev.pickupDate : true,
+          pickupTime: hasPreOrder ? prev.pickupTime : true,
+        }));
+        setCityTouched(false);
+
+        if (!form.fullName.trim() || !form.phoneNumber.trim()) {
+          toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+          return;
+        }
+
+        let pickupAt: string | null = null;
+
+        if (!hasPreOrder) {
+          if (!pickupDate || !pickupTime) {
+            toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+            return;
+          }
+
+          const combined = new Date(`${pickupDate}T${pickupTime}:00`);
+          if (
+            Number.isNaN(combined.getTime()) ||
+            combined.getTime() <= Date.now()
+          ) {
+            toast.error("Vui lòng chọn thời gian nhận hàng trong tương lai");
+            return;
+          }
+
+          const [sh, sm] = PICKUP_HOURS.startAt.split(":").map(Number);
+          const [eh, em] = PICKUP_HOURS.endAt.split(":").map(Number);
+          const slotMin = combined.getHours() * 60 + combined.getMinutes();
+          if (slotMin < sh * 60 + sm || slotMin > eh * 60 + em) {
+            toast.error("Giờ nhận hàng trong khoảng 09:00 – 18:00");
+            return;
+          }
+
+          pickupAt = combined.toISOString();
+        }
+
+        setIsSubmitting(true);
+        clearShippingDraft();
+        setShipping(
+          {
+            ...form,
+            deliverySpeed: "pickup",
+            shippingMethodId: "pickup",
+            pickupAt,
+          },
+          0
+        );
+        router.push("/checkout/summary");
+        return;
+      }
 
       const allTouched = Object.fromEntries(
         FORM_FIELD_NAMES.map((name) => [name, true])
@@ -441,7 +605,16 @@ export function useShippingForm() {
       );
       router.push("/checkout/summary");
     },
-    [cartId, delivery, form, router, setShipping, shippingCost]
+    [
+      isPickup,
+      delivery,
+      form,
+      pickupDate,
+      pickupTime,
+      router,
+      setShipping,
+      shippingCost,
+    ]
   );
 
   const handleAddressSelect = useCallback(
@@ -663,14 +836,23 @@ export function useShippingForm() {
     form,
     setForm,
     touched,
+    setTouched,
     cityTouched,
     setCityTouched,
     delivery,
     setDelivery,
+    pickupDate,
+    setPickupDate,
+    pickupTime,
+    setPickupTime,
+    minPickupDate,
+    pickupSlots,
+    isPickup,
     handleChange,
     handleBlur,
     handleCityChange,
     isInvalid,
+    isPickupFieldInvalid,
     handleSubmit,
     isHCM,
     subtotal,

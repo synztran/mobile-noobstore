@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import SearchableProductSelect from "./SearchableProductSelect";
@@ -17,6 +17,22 @@ type Props = {
   component?: ProductComponentRow | null;
 };
 
+type ComponentRow = {
+  componentProductId: string;
+  componentGroup: string;
+  isRequired: boolean;
+  maxQuantity: string;
+};
+
+function emptyRow(): ComponentRow {
+  return {
+    componentProductId: "",
+    componentGroup: "",
+    isRequired: false,
+    maxQuantity: "",
+  };
+}
+
 export default function ProductComponentFormModal({
   open,
   onClose,
@@ -28,6 +44,7 @@ export default function ProductComponentFormModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [parentProductId, setParentProductId] = useState("");
+  const [rows, setRows] = useState<ComponentRow[]>([emptyRow()]);
   const [componentProductId, setComponentProductId] = useState("");
   const [componentGroup, setComponentGroup] = useState("");
   const [isRequired, setIsRequired] = useState(false);
@@ -35,12 +52,13 @@ export default function ProductComponentFormModal({
 
   const title = mode === "create" ? "Create New Component" : "Update Component";
   const submitLabel =
-    mode === "create" ? "Create Component" : "Update Component";
+    mode === "create" ? "Create Components" : "Update Component";
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     setParentProductId(component?.parent_product_id ?? "");
+    setRows([emptyRow()]);
     setComponentProductId(component?.component_product_id ?? "");
     setComponentGroup(component?.component_group ?? "");
     setIsRequired(Boolean(component?.is_required));
@@ -52,22 +70,40 @@ export default function ProductComponentFormModal({
   }, [open, component]);
 
   const parentOptions = useMemo(
-    () =>
-      products.filter(
-        (product) =>
-          product.product_type === "kit" && product.id !== componentProductId
-      ),
-    [products, componentProductId]
+    () => products.filter((product) => product.product_type === "kit"),
+    [products]
   );
 
   const componentOptions = useMemo(
-    () =>
-      products.filter(
-        (product) =>
-          product.id !== parentProductId && product.product_type === "component"
-      ),
-    [products, parentProductId]
+    () => products.filter((product) => product.product_type === "component"),
+    [products]
   );
+
+  function updateRow(index: number, patch: Partial<ComponentRow>) {
+    setRows((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, ...patch } : row))
+    );
+  }
+
+  function addRow() {
+    setRows((prev) => [...prev, emptyRow()]);
+  }
+
+  function removeRow(index: number) {
+    setRows((prev) =>
+      prev.length > 1 ? prev.filter((_, i) => i !== index) : [emptyRow()]
+    );
+  }
+
+  function disabledIdsFor(index: number): string[] {
+    const selectedIds = rows
+      .map((row) => row.componentProductId)
+      .filter(Boolean);
+    return [
+      parentProductId,
+      ...selectedIds.filter((id) => id !== rows[index]?.componentProductId),
+    ].filter(Boolean);
+  }
 
   if (!open) return null;
 
@@ -75,6 +111,48 @@ export default function ProductComponentFormModal({
     event.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (mode === "create") {
+      const payload = rows.map((row) => ({
+        parent_product_id: parentProductId || null,
+        component_product_id: row.componentProductId || null,
+        component_group: row.componentGroup.trim(),
+        is_required: row.isRequired,
+        max_quantity: row.maxQuantity.trim() ? Number(row.maxQuantity) : null,
+      }));
+
+      const incomplete = payload.some(
+        (item) =>
+          !item.parent_product_id ||
+          !item.component_product_id ||
+          !item.component_group
+      );
+      if (incomplete) {
+        setError(
+          "Please fill in parent product, component product, and component group for every row."
+        );
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/product-components", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      setLoading(false);
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "Failed to create components");
+        return;
+      }
+
+      onClose();
+      router.refresh();
+      return;
+    }
 
     const payload = {
       parent_product_id: parentProductId || null,
@@ -84,13 +162,8 @@ export default function ProductComponentFormModal({
       max_quantity: maxQuantity.trim() ? Number(maxQuantity) : null,
     };
 
-    const url =
-      mode === "create"
-        ? "/api/product-components"
-        : `/api/product-components/${component?.id ?? ""}`;
-
-    const res = await fetch(url, {
-      method: mode === "create" ? "POST" : "PATCH",
+    const res = await fetch(`/api/product-components/${component?.id ?? ""}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
@@ -99,7 +172,7 @@ export default function ProductComponentFormModal({
 
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      setError(data?.error ?? `Failed to ${mode} component`);
+      setError(data?.error ?? "Failed to update component");
       return;
     }
 
@@ -129,57 +202,154 @@ export default function ProductComponentFormModal({
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-4">
-              <SearchableProductSelect
-                label="Parent Product"
-                placeholder="Search parent product by name…"
-                products={parentOptions}
-                value={parentProductId}
-                onChange={setParentProductId}
-                required
-              />
-
-              <SearchableProductSelect
-                label="Component Product"
-                placeholder="Search component product by name…"
-                products={componentOptions}
-                value={componentProductId}
-                onChange={setComponentProductId}
-                required
-              />
-
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Component Group <span className="text-red-500">*</span>
-                </label>
-                <input
-                  value={componentGroup}
-                  onChange={(e) => setComponentGroup(e.target.value)}
+            {mode === "create" ? (
+              <div className="grid grid-cols-1 gap-4">
+                <SearchableProductSelect
+                  label="Parent Product"
+                  placeholder="Search parent product by name…"
+                  products={parentOptions}
+                  value={parentProductId}
+                  onChange={setParentProductId}
                   required
-                  placeholder="e.g. body, plate, accessory"
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+
+                {rows.map((row, index) => (
+                  <div
+                    key={index}
+                    className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-700">
+                        Component {index + 1}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => removeRow(index)}
+                        className="rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                        aria-label={`Remove component ${index + 1}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <SearchableProductSelect
+                      label="Component Product"
+                      placeholder="Search component product by name…"
+                      products={componentOptions}
+                      value={row.componentProductId}
+                      onChange={(value) =>
+                        updateRow(index, { componentProductId: value })
+                      }
+                      disabledIds={disabledIdsFor(index)}
+                      required
+                    />
+
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        Component Group <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        value={row.componentGroup}
+                        onChange={(e) =>
+                          updateRow(index, { componentGroup: e.target.value })
+                        }
+                        required
+                        placeholder="e.g. body, plate, accessory"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <NumberInput
+                      value={
+                        row.maxQuantity === "" ? null : Number(row.maxQuantity)
+                      }
+                      onChange={(value) =>
+                        updateRow(index, {
+                          maxQuantity: value != null ? String(value) : "",
+                        })
+                      }
+                      min={1}
+                      placeholder="Optional"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      label="Max Quantity (empty = unlimited)"
+                    />
+
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={row.isRequired}
+                        onChange={(e) =>
+                          updateRow(index, { isRequired: e.target.checked })
+                        }
+                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      Required component
+                    </label>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={addRow}
+                  className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:border-blue-400 hover:text-blue-600"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Component
+                </button>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                <SearchableProductSelect
+                  label="Parent Product"
+                  placeholder="Search parent product by name…"
+                  products={parentOptions}
+                  value={parentProductId}
+                  onChange={setParentProductId}
+                  required
+                />
 
-              <NumberInput
-                value={maxQuantity === "" ? null : Number(maxQuantity)}
-                onChange={(v) => setMaxQuantity(v != null ? String(v) : "")}
-                min={1}
-                placeholder="Optional"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                label="Max Quantity (empty = unlimited)"
-              />
-            </div>
+                <SearchableProductSelect
+                  label="Component Product"
+                  placeholder="Search component product by name…"
+                  products={componentOptions}
+                  value={componentProductId}
+                  onChange={setComponentProductId}
+                  required
+                />
 
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={isRequired}
-                onChange={(e) => setIsRequired(e.target.checked)}
-                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              Required component
-            </label>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Component Group <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    value={componentGroup}
+                    onChange={(e) => setComponentGroup(e.target.value)}
+                    required
+                    placeholder="e.g. body, plate, accessory"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <NumberInput
+                  value={maxQuantity === "" ? null : Number(maxQuantity)}
+                  onChange={(v) => setMaxQuantity(v != null ? String(v) : "")}
+                  min={1}
+                  placeholder="Optional"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  label="Max Quantity (empty = unlimited)"
+                />
+
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={isRequired}
+                    onChange={(e) => setIsRequired(e.target.checked)}
+                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  Required component
+                </label>
+              </div>
+            )}
           </div>
           <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
             <button

@@ -70,6 +70,7 @@ export interface OrderDetail {
   deposit_paid_at?: string | null;
   shipping_method_id: string | null;
   expected_delivery_at: string | null;
+  pickup_at: string | null;
   delivery_address: {
     full_name?: string | null;
     phone_number?: string | null;
@@ -396,6 +397,7 @@ export default function OrderDetailModal({
                 fallbackAddress={order.shippingAddress}
                 shippingMethodName={shippingMethodName}
                 expectedDeliveryAt={order.expected_delivery_at}
+                pickupAt={order.pickup_at}
               />
 
               <OrderItemsList items={order.order_items} />

@@ -32,7 +32,7 @@ export default async function CrawlingPage(props: {
         <p className="text-3xl font-bold text-slate-900">Crawling</p>
       </div>
 
-      <CrawlingClientWrapper sources={sources} detections={detections} initialTab={tab} />
+      {/* <CrawlingClientWrapper sources={sources} detections={detections} initialTab={tab} /> */}
     </div>
   );
 }

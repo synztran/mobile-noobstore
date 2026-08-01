@@ -47,3 +47,24 @@ export async function invalidateCacheByPattern(pattern: string): Promise<void> {
 		// non-fatal
 	}
 }
+
+export async function invalidateProductsCache(): Promise<void> {
+	await invalidateCacheByPattern("products:*");
+}
+
+export async function invalidateProductCaches(): Promise<void> {
+	await invalidateCache("categories", "v1:product-seo-data");
+	await Promise.all([
+		invalidateCacheByPattern("products:*"),
+		invalidateCacheByPattern("v1:product:slug:*"),
+		invalidateCacheByPattern("v1:product-detail:*"),
+		invalidateCacheByPattern("v1:related-products:*"),
+		invalidateCacheByPattern("v1:fbt:*"),
+		invalidateCacheByPattern("v1:purchase-count:*"),
+		invalidateCacheByPattern("v1:quick-pick:*"),
+		invalidateCacheByPattern("v1:noteworthy:*"),
+		invalidateCacheByPattern("v1:sale-products:*"),
+		invalidateCacheByPattern("v1:newest-products:*"),
+		invalidateCacheByPattern("v1:search:suggestions:*"),
+	]);
+}

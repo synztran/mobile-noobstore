@@ -1,4 +1,4 @@
-import { Flame, Motorbike, Truck } from "lucide-react";
+import { Flame, Motorbike, Store, Truck } from "lucide-react";
 
 export const MAIL_DOMAIN = "noobassembly@gmail.com";
 export const DELIVERY_OPTIONS = [
@@ -27,6 +27,15 @@ export const DELIVERY_OPTIONS = [
     icon: Truck,
     price: null as number | null, // resolved dynamically from fees
     isHidden: true,
+  },
+  {
+    id: "pickup" as const,
+    label: "Nhận tại cửa hàng",
+    sublabel: "Miễn phí — đến cửa hàng nhận đơn",
+    icon: Store,
+    price: 0,
+    tag: null,
+    isHidden: false,
   },
 ];
 

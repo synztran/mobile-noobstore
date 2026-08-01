@@ -4,6 +4,7 @@ import CreateProductModal from "@/components/products/CreateProductModal";
 import ExcludeSoldOutToggle from "@/components/products/ExcludeSoldOutToggle";
 import ProductSearchInput from "@/components/products/ProductSearchInput";
 import ProductTypeFilter from "@/components/products/ProductTypeFilter";
+import ClearCacheButton from "@/components/dashboard/ClearCacheButton";
 import { Plus } from "lucide-react";
 import { Suspense, useState } from "react";
 
@@ -32,6 +33,7 @@ export default function ProductsHeader({ categories }: IProps) {
           <Plus className="h-4 w-4" />
           Add Product
         </button>
+        <ClearCacheButton scope="products" label="Clear Products Cache" />
       </div>
 
       <CreateProductModal

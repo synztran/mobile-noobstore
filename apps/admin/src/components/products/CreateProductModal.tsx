@@ -4,7 +4,6 @@ import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import AttributesEditor from "@/components/ui/AttributesEditor";
 import KitSelector, { type KitOption } from "@/components/ui/KitSelector";
-import { invalidateCacheByPattern } from "@/lib/redis/cache";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -208,7 +207,6 @@ export default function CreateProductModal({
     resetForm();
 
     queryClient.invalidateQueries({ queryKey: ["products"] });
-    invalidateCacheByPattern("*product*");
 
     if (product_type === "kit" && data.id) {
       setCreatedKitId(data.id);
@@ -221,7 +219,6 @@ export default function CreateProductModal({
   function handleDone() {
     setCreatedKitId(null);
     queryClient.invalidateQueries({ queryKey: ["products"] });
-    invalidateCacheByPattern("*product*");
     router.refresh();
     onClose();
   }

@@ -1,64 +1,18 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { Suspense, memo, useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
-
-const DistanceMap = dynamic(() => import("@/components/map/distanceMap"), {
-  ssr: false,
-});
-import {
-  CitySearchInput,
-  DistrictSearchInput,
-  WardSearchInput,
-} from "@/components/ui/CityDistrictSelect";
-import Icon from "@/components/ui/Icon";
 import { DELIVERY_OPTIONS } from "@/constants";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
-import { useShippingForm } from "@/hooks/useShippingForm";
-import { formatVND } from "@/lib/currency";
-import { ShippingSubmitButton } from "@/components/checkout/ShippingSubmitButton";
-import AddressSuggest from "@/components/checkout/AddressSuggest";
-import clsx from "clsx";
-import {
-  MapPinHouse,
-  NotebookPen,
-  PercentCircle,
-  Phone,
-  Truck,
-} from "lucide-react";
-import { ShippingPageSkeleton } from "./ShippingPageSkeleton";
+import { useShippingForm, type DeliverySpeed } from "@/hooks/useShippingForm";
+import AddressFields from "./AddressFields";
+import ContactInfoFields from "./ContactInfoFields";
 import DeliveryMethodSection from "./DeliveryMethodSection";
-
-const FIELDS = [
-  {
-    name: "fullName",
-    label: "Họ và tên",
-    placeholder: "Nguyễn Văn A",
-    icon: "person",
-    type: "text",
-    required: true,
-    colSpan: 2,
-  },
-  {
-    name: "apartment",
-    label: "Căn hộ / Tầng",
-    placeholder: "Tầng 4B",
-    icon: <MapPinHouse size={20} />,
-    type: "text",
-    required: false,
-    colSpan: 1,
-  },
-  {
-    name: "phoneNumber",
-    label: "Số điện thoại",
-    placeholder: "0901 234 567",
-    icon: <Phone size={20} />,
-    type: "tel",
-    required: true,
-    colSpan: 1,
-  },
-] as const;
+import DiscountTeaser from "./DiscountTeaser";
+import OrderSummary from "./OrderSummary";
+import PickupSection from "./PickupSection";
+import ShippingHeroHeader from "./ShippingHeroHeader";
+import { ShippingPageSkeleton } from "./ShippingPageSkeleton";
 
 const ShippingPage = () => {
   const {
@@ -66,17 +20,25 @@ const ShippingPage = () => {
     form,
     setForm,
     distanceKm,
-    distanceFee,
     isCalculatingFee,
     isSubmitting,
     cityTouched,
     setCityTouched,
     delivery,
     setDelivery,
+    pickupDate,
+    setPickupDate,
+    pickupTime,
+    setPickupTime,
+    minPickupDate,
+    pickupSlots,
+    isPickup,
     handleChange,
     handleBlur,
     handleCityChange,
     isInvalid,
+    isPickupFieldInvalid,
+    setTouched,
     handleSubmit,
     isHCM,
     subtotal,
@@ -90,26 +52,68 @@ const ShippingPage = () => {
     handleAddressSelect,
     hasPreOrder,
     preOrderEstimate,
+    touched,
   } = useShippingForm();
 
   const cityCode = useMemo(
     () => VIETNAM_CITIES.find((c) => c.name === form.city)?.code ?? null,
     [form.city]
   );
-  const handleDistrictChange = (district: string) => {
-    const districtCode = cityCode
-      ? ((DISTRICT_MAP[cityCode] ?? []).find((d) => d.name === district)
-          ?.code ?? "")
-      : "";
-    setForm((prev) => ({
-      ...prev,
-      streetAddress: "",
-      district,
-      districtCode,
-      ward: "",
-      wardCode: "",
-    }));
-  };
+
+  const handleDistrictChange = useCallback(
+    (district: string) => {
+      const districtCode = cityCode
+        ? ((DISTRICT_MAP[cityCode] ?? []).find((d) => d.name === district)
+            ?.code ?? "")
+        : "";
+      setForm((prev) => ({
+        ...prev,
+        streetAddress: "",
+        district,
+        districtCode,
+        ward: "",
+        wardCode: "",
+      }));
+    },
+    [cityCode, setForm]
+  );
+
+  const handleWardChange = useCallback(
+    (ward: string) => {
+      setForm((prev) => ({ ...prev, streetAddress: "", ward }));
+    },
+    [setForm]
+  );
+
+  const handleWardCodeChange = useCallback(
+    (wardCode: string) => {
+      setForm((prev) => ({ ...prev, wardCode }));
+    },
+    [setForm]
+  );
+
+  const handleCityTouched = useCallback(
+    () => setCityTouched(true),
+    [setCityTouched]
+  );
+
+  const handleDeliveryChange = useCallback(
+    (id: string) => {
+      const speed = id as DeliverySpeed;
+      if (speed === delivery) return;
+      setDelivery(speed);
+      setPickupDate("");
+      setPickupTime("");
+    },
+    [delivery, setDelivery, setPickupDate, setPickupTime]
+  );
+
+  const handlePickupBlur = useCallback(
+    (field: "pickupDate" | "pickupTime") => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+    },
+    [setTouched]
+  );
 
   const mappingFees: Record<"express" | "standard", number> = {
     express: immediateFee,
@@ -122,10 +126,12 @@ const ShippingPage = () => {
         opt.id === "express" || opt.id === "standard"
           ? mappingFees[opt.id]
           : opt.price;
+      const isPickupOpt = opt.id === "pickup";
       return {
         ...opt,
         price: fee,
-        isHidden: isHCM ? opt.isHidden : !opt.isHidden, // shipment option only available for non-HCM cities
+        // shipment option only available for non-HCM cities; pickup always visible
+        isHidden: isPickupOpt ? false : isHCM ? opt.isHidden : !opt.isHidden,
       };
     });
   }, [immediateFee, basicFee, isHCM]);
@@ -136,333 +142,82 @@ const ShippingPage = () => {
 
   return (
     <div className="space-y-4">
-      {/* ── Hero header ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-4">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-secondary/10 blur-xl" />
-        <div className="relative flex items-center gap-4">
-          <div className="primary-gradient flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl shadow-ambient-sm">
-            <Truck className="text-2xl text-white" />
-          </div>
-          <div>
-            <p className="mb-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-              Bước 01 / 03
-            </p>
-            <h2 className="text-2xl font-black tracking-tight text-on-surface">
-              Thông tin giao hàng
-            </h2>
-            <p className="mt-0.5 text-xs text-on-surface-variant">
-              Nhập địa chỉ nhận hàng của bạn
-            </p>
-          </div>
-        </div>
-        {/* Progress bar */}
-        {/* <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface-container-high">
-          <div className="primary-gradient h-full w-1/3 rounded-full" />
-        </div> */}
-      </div>
+      <ShippingHeroHeader />
 
-      {/* ── Address form ─────────────────────────────────────────── */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* ── Other fields ──────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-4">
-          {FIELDS.map((field) => (
-            <div
-              key={field.name}
-              className={field.colSpan === 2 ? "col-span-2" : "col-span-1"}
-            >
-              <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-                {field.label}
-                {field.required && (
-                  <span className="ml-0.5 text-primary">*</span>
-                )}
-              </label>
-              <div
-                className={clsx(
-                  "flex items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
-                  isInvalid(field.name, field.required)
-                    ? "border-error"
-                    : "border-transparent focus-within:border-primary"
-                )}
-              >
-                {typeof field.icon === "string" ? (
-                  <Icon
-                    name={String(field.icon)}
-                    className={clsx(
-                      "flex-shrink-0 text-xl transition-colors",
-                      isInvalid(field.name, field.required)
-                        ? "text-error"
-                        : "text-outline-variant"
-                    )}
-                  />
-                ) : (
-                  <div
-                    className={clsx(
-                      "flex-shrink-0 text-xl transition-colors",
-                      isInvalid(field.name, field.required)
-                        ? "text-error"
-                        : "text-outline-variant"
-                    )}
-                  >
-                    {field.icon}
-                  </div>
-                )}
-                <input
-                  name={field.name}
-                  value={form[field.name]}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder={field.placeholder}
-                  type={field.type}
-                  autoComplete="off"
-                  className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
-                />
-                {form[field.name] && !isInvalid(field.name, field.required) && (
-                  <Icon
-                    name="check_circle"
-                    className="flex-shrink-0 text-base text-primary"
-                  />
-                )}
-              </div>
-              {isInvalid(field.name, field.required) && (
-                <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-                  Trường này là bắt buộc
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-        {/* ── City select ─────────────────────────────────────── */}
-        <div>
-          <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Tỉnh / Thành phố <span className="ml-0.5 text-primary">*</span>
-          </label>
-          <CitySearchInput
-            value={form.city}
-            onChange={handleCityChange}
-            onBlur={() => setCityTouched(true)}
-            disabled={false}
-            hasError={cityTouched && !form.city}
-          />
-          {cityTouched && !form.city && (
-            <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-              Vui lòng chọn tỉnh / thành phố
-            </p>
-          )}
-          {form.city && form.city !== "Thành phố Hồ Chí Minh" && (
-            <p className="ml-1 mt-1 text-xs font-bold text-on-surface-variant">
-              ⚠️ Khu vực ngoài TP.HCM — chỉ giao hàng bởi đơn vị vận chuyển
-            </p>
-          )}
-        </div>
+        <ContactInfoFields
+          fullName={form.fullName}
+          apartment={form.apartment}
+          phoneNumber={form.phoneNumber}
+          isPickup={isPickup}
+          fullNameInvalid={!!isInvalid("fullName", true)}
+          phoneNumberInvalid={!!isInvalid("phoneNumber", true)}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
 
-        {/* ── District / Ward ─────────────────────────────────── */}
-        <div>
-          <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Quận / Huyện <span className="ml-0.5 text-primary">*</span>
-          </label>
-          <DistrictSearchInput
-            value={form.district}
-            onChange={handleDistrictChange}
-            onBlur={() => {}}
-            disabled={false}
-            hasError={cityTouched && !form.district}
+        {!isPickup && (
+          <AddressFields
+            city={form.city}
+            district={form.district}
+            ward={form.ward}
+            streetAddress={form.streetAddress}
+            notes={form.notes}
             cityCode={cityCode}
-          />
-          {cityTouched && !form.district && (
-            <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-              Vui lòng chọn quận / huyện
-            </p>
-          )}
-
-          <label className="mb-2 ml-1 mt-3 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Phường / Xã <span className="ml-0.5 text-primary">*</span>
-          </label>
-          <WardSearchInput
-            value={form.ward}
-            onChange={(ward: string) =>
-              setForm((prev) => ({ ...prev, streetAddress: "", ward }))
-            }
-            onCodeChange={(code: string) =>
-              setForm((prev) => ({ ...prev, wardCode: code }))
-            }
-            onBlur={() => {}}
-            disabled={false}
-            hasError={cityTouched && !form.ward}
-            cityName={form.city}
-            districtName={form.district}
-          />
-          {cityTouched && !form.ward && (
-            <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-              Vui lòng chọn Phường / Xã
-            </p>
-          )}
-        </div>
-
-        {/* ── Street Address ─────────────────────────────────────── */}
-        <div>
-          <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Địa chỉ cụ thể <span className="ml-0.5 text-primary">*</span>
-          </label>
-          <div
-            className={clsx(
-              "relative flex items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
-              isInvalid("streetAddress", true)
-                ? "border-error"
-                : "border-transparent focus-within:border-primary"
-            )}
-          >
-            <Icon
-              name="home"
-              className={clsx(
-                "flex-shrink-0 text-xl transition-colors",
-                isInvalid("streetAddress", true)
-                  ? "text-error"
-                  : "text-outline-variant"
-              )}
-            />
-            <AddressSuggest
-              value={form.streetAddress}
-              onChange={handleAddressSelect}
-              onBlur={() =>
-                handleBlur({ target: { name: "streetAddress" } } as any)
-              }
-              city={form.city}
-              district={form.district}
-              ward={form.ward}
-              disabled={false}
-            />
-            {form.streetAddress && !isInvalid("streetAddress", true) && (
-              <Icon
-                name="check_circle"
-                className="flex-shrink-0 text-base text-primary"
-              />
-            )}
-          </div>
-          {isInvalid("streetAddress", true) && (
-            <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-              Trường này là bắt buộc
-            </p>
-          )}
-        </div>
-
-        {/* ── Notes ─────────────────────────────────────── */}
-        <div>
-          <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Ghi chú
-          </label>
-          <div className="flex items-start gap-3 rounded-2xl border-2 border-transparent bg-surface-container px-4 py-3.5 transition-all focus-within:border-primary">
-            <NotebookPen className="flex-shrink-0 text-xl text-outline-variant" />
-            <textarea
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              placeholder="Lưu ý về giờ giấc, địa điểm giao hàng,..."
-              rows={3}
-              className="min-w-0 flex-1 resize-none bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
-            />
-          </div>
-        </div>
-
-        <Suspense
-          fallback={
-            <div className="h-48 w-full animate-pulse rounded-2xl bg-surface-container-low" />
-          }
-        >
-          <DistanceMap
-            targetLocation={customerLocation}
-            storeLocation={
-              storeCoords ? { ...storeCoords, label: "Noobstore HCM" } : null
-            }
+            cityTouched={cityTouched}
+            streetTouched={!!touched.streetAddress}
+            isHCM={!!isHCM}
+            onCityChange={handleCityChange}
+            onDistrictChange={handleDistrictChange}
+            onWardChange={handleWardChange}
+            onWardCodeChange={handleWardCodeChange}
+            onAddressSelect={handleAddressSelect}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onCityTouched={handleCityTouched}
+            customerLocation={customerLocation}
+            storeCoords={storeCoords}
             routeCoordinates={routeCoordinates}
-            drivingDistanceKm={
-              distanceKm !== null ? distanceKm.toFixed(1) : null
-            }
-            isLoading={isCalculatingFee}
+            distanceKm={distanceKm}
+            isCalculatingFee={isCalculatingFee}
           />
-        </Suspense>
+        )}
 
-        {/* ── Delivery method ──────────────────────────────────── */}
         <DeliveryMethodSection
           hasPreOrder={hasPreOrder}
           preOrderEstimate={preOrderEstimate}
           delivery={delivery}
-          setDelivery={(id) => setDelivery(id as typeof delivery)}
+          setDelivery={handleDeliveryChange}
           deliveryOptions={deliveryOptions}
           isCalculatingFee={isCalculatingFee}
           distanceKm={distanceKm}
           immediateFee={immediateFee}
           basicFee={basicFee}
         />
-        {/* ── Discount teaser ──────────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-surface-container-low p-4">
-          <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-amber-400/20 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-orange-400/15 blur-xl" />
-          <div className="relative flex items-start gap-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-ambient-sm">
-              <PercentCircle className="text-lg text-white" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-black tracking-tight text-amber-700">
-                Thêm mã giảm giá ở bước tiếp theo
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                Mã giảm giá và các ưu đãi khác sẽ được áp dụng ở bước tiếp theo.
-                Bạn có thể nhập mã giảm giá hoặc chọn ưu đãi có sẵn.
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* ── Order summary + CTA ──────────────────────────────── */}
-        <div className="overflow-hidden rounded-3xl bg-surface-container-low">
-          <div className="space-y-3 px-5 pb-4 pt-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-              Tóm tắt đơn hàng
-            </p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant">Tạm tính</span>
-              <span className="font-bold text-on-surface">
-                {formatVND(subtotal)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant">Phí vận chuyển</span>
-              <span
-                className={clsx(
-                  "font-bold",
-                  isCalculatingFee
-                    ? "text-on-surface-variant"
-                    : shippingCost === 0
-                      ? "text-secondary"
-                      : "text-on-surface"
-                )}
-              >
-                {isCalculatingFee ? (
-                  <span className="inline-flex items-center gap-1">
-                    <span className="loading loading-spinner loading-xs" />
-                    Đang tính phí
-                  </span>
-                ) : shippingCost === 0 ? (
-                  "Miễn phí"
-                ) : (
-                  formatVND(shippingCost)
-                )}
-              </span>
-            </div>
-            <div className="h-px bg-outline-variant/30" />
-            <div className="flex items-center justify-between">
-              <span className="font-black text-on-surface">Tổng cộng</span>
-              <span className="text-2xl font-black text-on-surface">
-                {formatVND(orderTotal)}
-              </span>
-            </div>
-          </div>
-          <ShippingSubmitButton
-            isCalculatingFee={isCalculatingFee}
-            isSubmitting={isSubmitting}
+        {isPickup ? (
+          <PickupSection
+            hasPreOrder={hasPreOrder}
+            pickupDate={pickupDate}
+            pickupTime={pickupTime}
+            minPickupDate={minPickupDate}
+            pickupSlots={pickupSlots}
+            isPickupFieldInvalid={isPickupFieldInvalid}
+            onDateChange={setPickupDate}
+            onTimeChange={setPickupTime}
+            onBlur={handlePickupBlur}
           />
-        </div>
+        ) : null}
+
+        <DiscountTeaser />
+
+        <OrderSummary
+          subtotal={subtotal}
+          shippingCost={shippingCost}
+          orderTotal={orderTotal}
+          isCalculatingFee={isCalculatingFee}
+          isSubmitting={isSubmitting}
+        />
       </form>
     </div>
   );

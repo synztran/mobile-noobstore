@@ -21,7 +21,7 @@ export async function GET(
 			id, order_number, status, total_price, shipping_fee,
 			voucher_code, voucher_discount_amount, shipping_discount_amount,
 			created_at, updated_at, cancelled_at, cancelled_note, paid_at, refunded_at, delivering_at, delivered_at,
-			delivery_address, shipping_method_id, expected_delivery_at,
+			delivery_address, shipping_method_id, expected_delivery_at, pickup_at,
 			user_id,
 			invoice_url,
 			payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at,
@@ -273,10 +273,10 @@ export async function PATCH(
       "ready",
     ];
 
-    const { data: rawItems } = await supabase
+    const { data: rawItems } = (await supabase
       .from("order_items")
       .select("id, pre_order_tracking")
-      .in("id", itemIds) as unknown as {
+      .in("id", itemIds)) as unknown as {
       data: Array<{ id: string; pre_order_tracking: unknown }> | null;
     };
 
@@ -291,11 +291,14 @@ export async function PATCH(
 
     const updates: Array<{ id: string; pre_order_tracking: unknown }> = [];
     for (const item of items) {
-      const tracking = (item.pre_order_tracking as Record<string, unknown>) ?? {};
+      const tracking =
+        (item.pre_order_tracking as Record<string, unknown>) ?? {};
       const currentStep = (tracking.current_step as string) ?? null;
       const steps = (tracking.steps as Record<string, string | null>) ?? {};
 
-      const currentIdx = currentStep ? PRE_ORDER_STEPS.indexOf(currentStep) : -1;
+      const currentIdx = currentStep
+        ? PRE_ORDER_STEPS.indexOf(currentStep)
+        : -1;
       const nextIdx = currentIdx + 1;
 
       if (nextIdx >= PRE_ORDER_STEPS.length) continue;
@@ -311,13 +314,15 @@ export async function PATCH(
     }
 
     for (const upd of updates) {
-      const { error: updErr } = await (supabase
-        .from("order_items") as any)
+      const { error: updErr } = await (supabase.from("order_items") as any)
         .update({ pre_order_tracking: upd.pre_order_tracking })
         .eq("id", upd.id);
 
       if (updErr) {
-        console.error(`[orders] failed to advance pre-order item ${upd.id}:`, updErr);
+        console.error(
+          `[orders] failed to advance pre-order item ${upd.id}:`,
+          updErr
+        );
       }
     }
 

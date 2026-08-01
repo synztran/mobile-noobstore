@@ -1258,6 +1258,7 @@ export type Database = {
           paid_at: string | null
           payment_reminder_sent_at: string | null
           payment_type: string
+          pickup_at: string | null
           refunded_at: string | null
           remaining_amount: number | null
           shipping_discount_amount: number
@@ -1290,6 +1291,7 @@ export type Database = {
           paid_at?: string | null
           payment_reminder_sent_at?: string | null
           payment_type?: string
+          pickup_at?: string | null
           refunded_at?: string | null
           remaining_amount?: number | null
           shipping_discount_amount?: number
@@ -1322,6 +1324,7 @@ export type Database = {
           paid_at?: string | null
           payment_reminder_sent_at?: string | null
           payment_type?: string
+          pickup_at?: string | null
           refunded_at?: string | null
           remaining_amount?: number | null
           shipping_discount_amount?: number

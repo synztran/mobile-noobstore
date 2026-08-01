@@ -1,4 +1,5 @@
 import StatCard from "@/components/dashboard/StatCard";
+import ClearCacheButton from "@/components/dashboard/ClearCacheButton";
 import RevenueChart from "@/components/dashboard/RevenueChart";
 import OrdersChart from "@/components/dashboard/OrdersChart";
 import ReviewsChart from "@/components/dashboard/ReviewsChart";
@@ -77,6 +78,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+        <ClearCacheButton />
+      </div>
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />

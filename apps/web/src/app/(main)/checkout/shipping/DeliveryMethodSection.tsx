@@ -5,7 +5,7 @@ import { DELIVERY_OPTIONS, mappingDisplayPrice } from "@/constants";
 import { formatVND } from "@/lib/currency";
 import { Check } from "lucide-react";
 import clsx from "clsx";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 
 interface DeliveryOption {
   id: string;
@@ -174,4 +174,4 @@ function DeliveryMethodSection({
   );
 }
 
-export default DeliveryMethodSection;
+export default memo(DeliveryMethodSection);

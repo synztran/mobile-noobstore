@@ -48,6 +48,13 @@ export interface OrderDetail {
   cancelled_note: string | null;
   created_at: string | null;
   updated_at: string | null;
+  paid_at: string | null;
+  delivering_at: string | null;
+  delivered_at: string | null;
+  refunded_at: string | null;
+  expected_delivery_at: string | null;
+  shipping_method_id: string | null;
+  pickup_at: string | null;
   delivery_address: {
     full_name?: string | null;
     phone_number?: string | null;
@@ -82,6 +89,13 @@ interface RawOrderRow {
   cancelled_note: string | null;
   created_at: string | null;
   updated_at: string | null;
+  paid_at: string | null;
+  delivering_at: string | null;
+  delivered_at: string | null;
+  refunded_at: string | null;
+  expected_delivery_at: string | null;
+  shipping_method_id: string | null;
+  pickup_at: string | null;
   delivery_address: unknown | null;
   invoice_url: string | null;
 }
@@ -111,7 +125,7 @@ export async function GET(
     const { data: order, error: orderError } = (await supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, delivery_address, invoice_url"
+        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, paid_at, delivering_at, delivered_at, refunded_at, expected_delivery_at, shipping_method_id, pickup_at, delivery_address, invoice_url"
       )
       .eq("id", id)
       .eq("user_id", user.id)
@@ -124,10 +138,12 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const { data: rawItems } = await supabase
+    const { data: rawItems } = (await supabase
       .from("order_items")
-      .select("id, product_id, product_name, unit_price, quantity, thumbnail, pre_order_tracking")
-      .eq("order_id", id) as unknown as {
+      .select(
+        "id, product_id, product_name, unit_price, quantity, thumbnail, pre_order_tracking"
+      )
+      .eq("order_id", id)) as unknown as {
       data: Array<Record<string, unknown>> | null;
       error: { message: string } | null;
     };
@@ -226,17 +242,18 @@ export async function GET(
       const rowId = row.id as string;
       const components = componentsByOrderItemId[rowId] ?? [];
       const componentsTotal = (components as OrderItemComponentDetail[]).reduce(
-        (sum: number, comp: OrderItemComponentDetail) => sum + comp.price_adjustment,
+        (sum: number, comp: OrderItemComponentDetail) =>
+          sum + comp.price_adjustment,
         0
       );
 
-      const componentThumbnail = (components as OrderItemComponentDetail[]).find(
-        (comp: OrderItemComponentDetail) => comp.thumbnail
-      )?.thumbnail;
+      const componentThumbnail = (
+        components as OrderItemComponentDetail[]
+      ).find((comp: OrderItemComponentDetail) => comp.thumbnail)?.thumbnail;
 
       return {
         id: row.id as string,
-        product_id: (row.product_id as string | null),
+        product_id: row.product_id as string | null,
         product_name: row.product_name as string,
         unit_price: Number(row.unit_price),
         quantity: row.quantity as number,
@@ -250,9 +267,12 @@ export async function GET(
         gifts: row.product_id
           ? (giftsByProductId[row.product_id as string] ?? null)
           : null,
-        isPreOrder: (row as Record<string, unknown>).is_pre_order as boolean ?? false,
-        preOrderConfig: (row as Record<string, unknown>).pre_order_config ?? null,
-        preOrderTracking: (row as Record<string, unknown>).pre_order_tracking ?? null,
+        isPreOrder:
+          ((row as Record<string, unknown>).is_pre_order as boolean) ?? false,
+        preOrderConfig:
+          (row as Record<string, unknown>).pre_order_config ?? null,
+        preOrderTracking:
+          (row as Record<string, unknown>).pre_order_tracking ?? null,
       };
     });
 
@@ -275,6 +295,13 @@ export async function GET(
       cancelled_note: order.cancelled_note ?? null,
       created_at: order.created_at ?? null,
       updated_at: order.updated_at ?? null,
+      paid_at: order.paid_at ?? null,
+      delivering_at: order.delivering_at ?? null,
+      delivered_at: order.delivered_at ?? null,
+      refunded_at: order.refunded_at ?? null,
+      expected_delivery_at: order.expected_delivery_at ?? null,
+      shipping_method_id: order.shipping_method_id ?? null,
+      pickup_at: order.pickup_at ?? null,
       delivery_address:
         order.delivery_address as OrderDetail["delivery_address"],
       invoice_url: order.invoice_url ?? null,

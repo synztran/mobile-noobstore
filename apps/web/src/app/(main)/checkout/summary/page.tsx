@@ -13,9 +13,28 @@ import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { useNavigationStore } from "@/store/navigation";
-import { ArrowRight, CheckCircle, ShoppingBag, Truck } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle,
+  ShoppingBag,
+  Store,
+  Truck,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+
+function formatPickupSlot(value?: string | null): string {
+  if (!value) return "Chưa chọn thời gian";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -171,21 +190,26 @@ export default function SummaryPage() {
           paymentType === "deposit_cod" ? depositPercentage : undefined,
         shipping_method_id:
           shipping?.shippingMethodId ?? shipping?.deliverySpeed ?? null,
-        delivery_address: shipping
-          ? {
-              full_name: shipping.fullName,
-              phone_number: shipping.phoneNumber,
-              street_address: shipping.streetAddress,
-              apartment: shipping.apartment || null,
-              district: shipping.district,
-              ward: shipping.ward,
-              city: shipping.city,
-              district_code: shipping.districtCode || null,
-              ward_code: shipping.wardCode || null,
-              postal_code: shipping.postalCode || null,
-              notes: shipping.notes || null,
-            }
-          : null,
+        pickup_at:
+          shipping?.deliverySpeed === "pickup"
+            ? (shipping?.pickupAt ?? null)
+            : undefined,
+        delivery_address:
+          shipping && shipping.deliverySpeed !== "pickup"
+            ? {
+                full_name: shipping.fullName,
+                phone_number: shipping.phoneNumber,
+                street_address: shipping.streetAddress,
+                apartment: shipping.apartment || null,
+                district: shipping.district,
+                ward: shipping.ward,
+                city: shipping.city,
+                district_code: shipping.districtCode || null,
+                ward_code: shipping.wardCode || null,
+                postal_code: shipping.postalCode || null,
+                notes: shipping.notes || null,
+              }
+            : null,
         rank_discount:
           rankData?.currentRank &&
           (rankDiscountAmount > 0 || rankShippingDiscount > 0)
@@ -314,7 +338,7 @@ export default function SummaryPage() {
       <VoucherComponent subtotal={subtotal} shippingCost={shippingCost} />
 
       {/* ── Delivery Address ────────────────────────────── */}
-      {shipping && (
+      {shipping && shipping.deliverySpeed !== "pickup" && (
         <div className="space-y-1 overflow-hidden rounded-2xl bg-surface-container-low px-4 py-4">
           <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
             Thông tin nhận hàng
@@ -341,24 +365,36 @@ export default function SummaryPage() {
 
       {/* ── Shipping Method ──────────────────────────────────── */}
       <div className="overflow-hidden rounded-2xl bg-surface-container-low">
-        <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center justify-between p-4 gap-4">
           <div className="flex flex-1 items-center gap-3">
             <div className="primary-gradient flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
-              <Truck className="text-lg text-white" />
+              {shipping?.deliverySpeed === "pickup" ? (
+                <Store className="text-lg text-white" />
+              ) : (
+                <Truck className="text-lg text-white" />
+              )}
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-                Vận chuyển
+                {shipping?.deliverySpeed === "pickup"
+                  ? "Hình thức nhận hàng"
+                  : "Vận chuyển"}
               </p>
               <p className="text-sm font-bold text-on-surface">
-                {shipping?.deliverySpeed === "express"
-                  ? "Hỏa tốc"
-                  : "Tiêu chuẩn"}
+                {shipping?.deliverySpeed === "pickup"
+                  ? "Nhận tại cửa hàng"
+                  : shipping?.deliverySpeed === "express"
+                    ? "Hỏa tốc"
+                    : "Tiêu chuẩn"}
               </p>
               <p className="mt-0.5 text-xs text-on-surface-variant">
-                {shipping?.deliverySpeed === "express"
-                  ? "Dự kiến: 2–4 giờ"
-                  : "Dự kiến: 12–24 giờ"}
+                {shipping?.deliverySpeed === "pickup"
+                  ? shipping?.pickupAt
+                    ? `Hẹn giờ: ${formatPickupSlot(shipping.pickupAt)}`
+                    : "NoobStore sẽ chủ động liên hệ bạn khi sản phẩm đã về hàng"
+                  : shipping?.deliverySpeed === "express"
+                    ? "Dự kiến: 2–4 giờ"
+                    : "Dự kiến: 12–24 giờ"}
               </p>
             </div>
           </div>

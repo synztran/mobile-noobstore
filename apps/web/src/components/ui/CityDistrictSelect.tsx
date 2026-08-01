@@ -140,7 +140,7 @@ export function CitySearchInput({
           className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40 disabled:opacity-50"
         />
         {value && !open && (
-          <CheckCircle2 size={16} className="flex-shrink-0 text-primary" />
+          <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
         )}
         {open ? (
           <ChevronUp size={16} className="flex-shrink-0 text-outline-variant" />
@@ -339,7 +339,7 @@ export function DistrictSearchInput({
           className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40 disabled:cursor-not-allowed"
         />
         {value && !open && (
-          <CheckCircle2 size={16} className="flex-shrink-0 text-primary" />
+          <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
         )}
         {!isDisabled &&
           (open ? (
@@ -541,7 +541,7 @@ export function WardSearchInput({
           className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40 disabled:cursor-not-allowed"
         />
         {value && !open && (
-          <CheckCircle2 size={16} className="flex-shrink-0 text-primary" />
+          <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
         )}
         {!disabled &&
           (open ? (

@@ -20,6 +20,7 @@ interface Props {
   fallbackAddress: AddressShape | null;
   shippingMethodName: string | null;
   expectedDeliveryAt: string | null;
+  pickupAt?: string | null;
 }
 
 function formatDateTime(value: string | null): string {
@@ -46,11 +47,15 @@ export default function OrderShippingDetails({
   fallbackAddress,
   shippingMethodName,
   expectedDeliveryAt,
+  pickupAt,
 }: Props) {
   const displayAddress = deliveryAddress ?? fallbackAddress;
   const addressLine = displayAddress ? buildAddressLine(displayAddress) : "";
   const hasDetails =
-    !!displayAddress || !!shippingMethodName || !!expectedDeliveryAt;
+    !!displayAddress ||
+    !!shippingMethodName ||
+    !!expectedDeliveryAt ||
+    !!pickupAt;
 
   if (!hasDetails) return null;
 
@@ -62,6 +67,20 @@ export default function OrderShippingDetails({
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+        {shippingMethodName && (
+          <p className="text-sm text-slate-600">
+            <span className="font-medium text-slate-700">Shipping Method:</span>{" "}
+            {shippingMethodName}
+          </p>
+        )}
+
+        {pickupAt && (
+          <p className="mt-1 text-sm text-slate-600">
+            <span className="font-medium text-slate-700">Pickup At:</span>{" "}
+            {formatDateTime(pickupAt)}
+          </p>
+        )}
+
         {displayAddress && (
           <>
             <p className="text-sm font-medium text-slate-700">
@@ -77,13 +96,6 @@ export default function OrderShippingDetails({
               </p>
             )}
           </>
-        )}
-
-        {shippingMethodName && (
-          <p className="mt-2 text-sm text-slate-600">
-            <span className="font-medium text-slate-700">Shipping Method:</span>{" "}
-            {shippingMethodName}
-          </p>
         )}
 
         {expectedDeliveryAt && (
