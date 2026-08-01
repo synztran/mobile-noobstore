@@ -31,7 +31,7 @@ export const DELIVERY_OPTIONS = [
   {
     id: "pickup" as const,
     label: "Nhận tại cửa hàng",
-    sublabel: "Miễn phí — đến cửa hàng nhận đơn",
+    sublabel: "Đến cửa hàng nhận đơn",
     icon: Store,
     price: 0,
     tag: null,

@@ -85,7 +85,7 @@ export default function RootLayout({
           name="facebook-domain-verification"
           content="ouaw36c71sgi4fz07lkj2t0ot3kb3d"
         />
-        <meta property="fb:app_id" content="YOUR_FB_APP_ID" />
+        <meta property="fb:app_id" content="2148494311891572" />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1.0, viewport-fit=cover"

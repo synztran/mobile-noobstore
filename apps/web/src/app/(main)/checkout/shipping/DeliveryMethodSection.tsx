@@ -74,12 +74,12 @@ function DeliveryMethodSection({
       <div className="ml-1 flex items-center justify-between gap-2 text-[10px] font-black tracking-widest text-on-surface-variant">
         <span className="uppercase">Phương thức giao hàng</span>
         {isCalculatingFee ? (
-          <span className="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant">
+          <span className={`inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant ${delivery === "pickup" ? "sr-only" : ""}`}>
             <span className="loading loading-spinner loading-sm" />
             Đang tính phí...
           </span>
         ) : distanceKm !== null ? (
-          <span className="ml-2 text-sm font-bold text-on-surface-variant">
+          <span className={`ml-2 text-sm font-bold text-on-surface-variant ${delivery === "pickup" ? "sr-only" : ""}`}>
             {distanceKm.toFixed(1)} km
           </span>
         ) : null}
@@ -111,7 +111,7 @@ function DeliveryMethodSection({
                 type="button"
                 onClick={() => setDelivery(opt.id)}
                 className={clsx(
-                  "relative flex w-full items-center gap-2 rounded-2xl border-2 px-4 py-4 transition-all",
+                  "relative flex w-full items-center gap-2 rounded-xl border-2 p-4 transition-all",
                   delivery === opt.id
                     ? "border-primary/80 bg-primary/5"
                     : "border-transparent bg-surface-container"
@@ -126,8 +126,8 @@ function DeliveryMethodSection({
                   className={clsx(
                     "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-all",
                     delivery === opt.id
-                      ? "primary-gradient shadow-ambient-sm"
-                      : "bg-surface-container-high"
+                      ? "primary-gradient shadow-ambient-md"
+                      : "bg-surface-container-highest"
                   )}
                 >
                   {typeof opt.icon === "string" ? (

@@ -144,7 +144,7 @@ const ShippingPage = () => {
     <div className="space-y-4">
       <ShippingHeroHeader />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <ContactInfoFields
           fullName={form.fullName}
           apartment={form.apartment}
