@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type NavItem =
   | { label: string; href: string; icon: React.ElementType; children?: never }
@@ -127,6 +127,10 @@ export default function AdminLayout({
     "Services",
     "Products",
   ]);
+  const [flyout, setFlyout] = useState<{ label: string; top: number } | null>(
+    null
+  );
+  const flyoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // cmd+K global shortcut
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -141,10 +145,28 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  useEffect(() => {
+    if (sidebarOpen) setFlyout(null);
+  }, [sidebarOpen]);
+
   function toggleGroup(label: string) {
     setExpandedGroups((prev) =>
       prev.includes(label) ? prev.filter((g) => g !== label) : [...prev, label]
     );
+  }
+
+  function openFlyout(label: string, top: number) {
+    if (flyoutTimer.current) clearTimeout(flyoutTimer.current);
+    setFlyout({ label, top });
+  }
+
+  function scheduleCloseFlyout() {
+    if (flyoutTimer.current) clearTimeout(flyoutTimer.current);
+    flyoutTimer.current = setTimeout(() => setFlyout(null), 120);
+  }
+
+  function cancelCloseFlyout() {
+    if (flyoutTimer.current) clearTimeout(flyoutTimer.current);
   }
 
   async function handleLogout() {
@@ -162,7 +184,7 @@ export default function AdminLayout({
         } flex flex-col bg-slate-900 text-white transition-all duration-300`}
       >
         {/* Header */}
-        <div className="flex min-h-[70px] items-center justify-between border-b border-slate-700 p-4">
+        <div className={`flex min-h-[70px] items-center border-b border-slate-700 p-4 ${sidebarOpen ? "justify-between" : "justify-center"}`}>
           {sidebarOpen && <h1 className="text-xl font-bold">CMS Admin</h1>}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -190,10 +212,16 @@ export default function AdminLayout({
                 <div key={item.label}>
                   <button
                     onClick={() => toggleGroup(item.label)}
+                    onMouseEnter={(e) => {
+                      if (!sidebarOpen)
+                        openFlyout(item.label, e.currentTarget.getBoundingClientRect().top);
+                    }}
+                    onMouseLeave={() => !sidebarOpen && scheduleCloseFlyout()}
                     className={`flex w-full items-center rounded-lg px-4 py-2 transition-colors ${
                       isActive ? "bg-slate-700" : "hover:bg-slate-700"
                     }`}
                     title={!sidebarOpen ? item.label : ""}
+                    aria-haspopup={!sidebarOpen ? "menu" : undefined}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
                     {sidebarOpen && (
@@ -267,6 +295,43 @@ export default function AdminLayout({
           </button>
         </div>
       </div>
+
+      {flyout && !sidebarOpen && (
+        <div
+          onMouseEnter={cancelCloseFlyout}
+          onMouseLeave={scheduleCloseFlyout}
+          style={{ top: flyout.top, left: 96 }}
+          className="fixed z-50 min-w-[200px] rounded-lg border border-slate-700 bg-slate-900 p-1.5 shadow-2xl"
+        >
+          <div className="px-3 pb-1 pt-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
+            {flyout.label}
+          </div>
+          {navigation
+            .find((n) => n.label === flyout.label && n.children)
+            ?.children?.map((child) => {
+              const ChildIcon = child.icon;
+              const childActive =
+                pathname === child.href ||
+                (child.href !== "/services" &&
+                  pathname.startsWith(child.href));
+              return (
+                <Link
+                  key={child.href}
+                  href={child.href}
+                  onClick={() => setFlyout(null)}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                    childActive
+                      ? "bg-slate-600 text-white"
+                      : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                  }`}
+                >
+                  <ChildIcon className="h-4 w-4 shrink-0" />
+                  {child.label}
+                </Link>
+              );
+            })}
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">

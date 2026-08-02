@@ -28,7 +28,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
   const { isOpen, onClose, isCategoryMode, propCategory, propProduct } = props;
 
   // ── State ────────────────────────────────────────────────────────────────
-  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [submitting, setSubmitting] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
@@ -93,7 +93,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
   const disabledVariantIds = useMemo(() => {
     const disabled = new Set<string>();
     if (productRules.length === 0) return disabled;
-    const selectedIds = new Set(Object.values(selections));
+    const selectedIds = new Set(Object.values(selections).flat());
     const variantToProduct = new Map<string, string>();
     for (const group of groups) {
       for (const v of group.variants) {
@@ -120,17 +120,22 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
 
   // ── Price ─────────────────────────────────────────────────────────────────
   const componentAdjustment = groups.reduce((sum, group) => {
-    const selectedId = selections[group.component_group];
-    if (!selectedId) return sum;
-    const v = group.variants.find((v) => v.id === selectedId);
-    return sum + (v?.price_adjustment ?? 0);
+    const ids = selections[group.component_group] ?? [];
+    let groupSum = 0;
+    for (const id of ids) {
+      const v = group.variants.find((gv) => gv.id === id);
+      groupSum += v?.price_adjustment ?? 0;
+    }
+    return sum + groupSum;
   }, 0);
 
   const hasComponents = groups.length > 0;
   const totalPrice = (activeProduct?.base_price ?? 0) + componentAdjustment;
 
   const missingRequired = groups
-    .filter((g) => g.is_required && !selections[g.component_group])
+    .filter(
+      (g) => g.is_required && (selections[g.component_group] ?? []).length === 0
+    )
     .map((g) => g.component_group);
   const canAdd = missingRequired.length === 0;
   const isSubmittingOrPending = submitting || addCartItem.isPending;
@@ -140,16 +145,16 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
   // ── Pre-order config ──────────────────────────────────────────────────────
   const selectedPreOrderConfig = useMemo(() => {
     if (!activeProduct) return null;
-    const simpleSelectedId = selections["__variant__"];
+    const simpleSelectedId = selections["__variant__"]?.[0];
     if (simpleSelectedId) {
       const v = activeProduct.variants.find((v) => v.id === simpleSelectedId);
       if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
     }
     for (const group of groups) {
-      const selectedId = selections[group.component_group];
-      if (!selectedId) continue;
-      const v = group.variants.find((gv) => gv.id === selectedId);
-      if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+      for (const selectedId of selections[group.component_group] ?? []) {
+        const v = group.variants.find((gv) => gv.id === selectedId);
+        if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+      }
     }
     return null;
   }, [activeProduct, selections, groups]);
@@ -166,11 +171,25 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
 
   // ── Actions ───────────────────────────────────────────────────────────────
   const onSelect = (group: string, variantId: string) => {
-    setSelections((prev) =>
-      prev[group] === variantId
-        ? Object.fromEntries(Object.entries(prev).filter(([k]) => k !== group))
-        : { ...prev, [group]: variantId }
-    );
+    setSelections((prev) => {
+      const current = prev[group] ?? [];
+      const groupDef = groups.find((g) => g.component_group === group);
+      if (group === "__variant__" || groupDef?.is_required) {
+        const isSelected = current.includes(variantId);
+        return {
+          ...prev,
+          [group]: isSelected ? [] : [variantId],
+        };
+      }
+      const isSelected = current.includes(variantId);
+      if (isSelected) {
+        return { ...prev, [group]: current.filter((id) => id !== variantId) };
+      }
+      const cap =
+        groupDef?.max_quantity ?? groupDef?.variants.length ?? Infinity;
+      if (cap > 0 && current.length >= cap) return prev;
+      return { ...prev, [group]: [...current, variantId] };
+    });
   };
 
   const selectProduct = (id: string) => {
@@ -199,7 +218,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
       return;
     }
 
-    const selectedVariantId = selections["__variant__"] ?? null;
+    const selectedVariantId = selections["__variant__"]?.[0] ?? null;
     const isKit = activeProduct.product_type === "kit";
 
     const selectedSimpleVariant = !hasComponents
@@ -209,23 +228,24 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
     if (isKit) {
       const insufficientComponents: string[] = [];
       for (const group of groups) {
-        const selectedId = selections[group.component_group];
-        if (!selectedId) continue;
-        const v = group.variants.find((gv) => gv.id === selectedId);
-        if (!v) continue;
+        const selectedIds = selections[group.component_group] ?? [];
+        for (const selectedId of selectedIds) {
+          const v = group.variants.find((gv) => gv.id === selectedId);
+          if (!v) continue;
 
-        const usedQty = cartItems.reduce(
-          (sum, cartItem) =>
-            sum +
-            (cartItem.components ?? []).filter((c) => c.variant_id === v.id)
-              .length,
-          0
-        );
-
-        if (usedQty + 1 > v.stock_quantity) {
-          insufficientComponents.push(
-            `"${v.variant_name}" (còn ${v.stock_quantity})`
+          const usedQty = cartItems.reduce(
+            (sum, cartItem) =>
+              sum +
+              (cartItem.components ?? []).filter((c) => c.variant_id === v.id)
+                .length,
+            0
           );
+
+          if (usedQty + 1 > v.stock_quantity) {
+            insufficientComponents.push(
+              `"${v.variant_name}" (còn ${v.stock_quantity})`
+            );
+          }
         }
       }
       if (insufficientComponents.length > 0) {
@@ -249,23 +269,23 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
 
     setSubmitting(true);
 
-    const components: SelectedComponent[] = groups.flatMap((group) => {
-      const selectedId = selections[group.component_group];
-      if (!selectedId) return [];
-      const v = group.variants.find((v) => v.id === selectedId);
-      if (!v) return [];
-      return [
-        {
-          variant_id: v.id,
-          variant_name: v.variant_name,
-          component_group: group.component_group,
-          price_adjustment: v.price_adjustment,
-          thumbnail: v.thumbnail,
-          is_pre_order: v.is_pre_order ?? false,
-          pre_order_config: v.pre_order_config ?? null,
-        },
-      ];
-    });
+    const components: SelectedComponent[] = groups.flatMap((group) =>
+      (selections[group.component_group] ?? []).flatMap((selectedId) => {
+        const v = group.variants.find((gv) => gv.id === selectedId);
+        if (!v) return [];
+        return [
+          {
+            variant_id: v.id,
+            variant_name: v.variant_name,
+            component_group: group.component_group,
+            price_adjustment: v.price_adjustment,
+            thumbnail: v.thumbnail,
+            is_pre_order: v.is_pre_order ?? false,
+            pre_order_config: v.pre_order_config ?? null,
+          },
+        ];
+      })
+    );
 
     try {
       const body = {

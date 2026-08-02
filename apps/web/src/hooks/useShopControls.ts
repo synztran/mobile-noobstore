@@ -32,7 +32,7 @@ function buildQueryString(
   return qs ? `/shop?${qs}` : "/shop";
 }
 
-export function useShopControls() {
+export function useShopControls(onSearchCommitted?: (term: string) => void) {
   const router = useRouter();
   const sp = useSearchParams();
 
@@ -45,9 +45,15 @@ export function useShopControls() {
   });
   const [showFilter, setShowFilter] = useState(false);
   const [showSort, setShowSort] = useState(false);
+  const [isSearchPending, setIsSearchPending] = useState(false);
 
   const isFirstRender = useRef(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onSearchCommittedRef = useRef(onSearchCommitted);
+
+  useEffect(() => {
+    onSearchCommittedRef.current = onSearchCommitted;
+  }, [onSearchCommitted]);
 
   // Sync URL → internal state (browser back/forward)
   useEffect(() => {
@@ -73,9 +79,15 @@ export function useShopControls() {
       return;
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    setIsSearchPending(true);
     debounceRef.current = setTimeout(
-      () => commit(search, sort, filterState),
-      search ? 400 : 0
+      () => {
+        commit(search, sort, filterState);
+        setIsSearchPending(false);
+        const trimmed = search.trim();
+        if (trimmed) onSearchCommittedRef.current?.(trimmed);
+      },
+      search ? 500 : 0
     );
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -129,6 +141,7 @@ export function useShopControls() {
     showFilter,
     showSort,
     filterApplied,
+    isSearchPending,
     setSearch,
     handleSort,
     handleApplyFilter,

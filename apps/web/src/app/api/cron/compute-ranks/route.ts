@@ -1,17 +1,14 @@
 import { getAllRanks } from "@/lib/rank-server";
+import { requireCronSecret } from "@/lib/auth/requireCronSecret";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const CRON_SECRET = process.env.CRON_SECRET;
-
-export async function POST(req: Request) {
-  // Verify cron secret
-  const authHeader = req.headers.get("authorization");
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function POST(req: NextRequest) {
+  // Verify cron secret (fail-closed)
+  const authError = requireCronSecret(req);
+  if (authError) return authError;
 
   try {
     const supabase = getAdminClient();

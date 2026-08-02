@@ -78,6 +78,8 @@ test.describe("Checkout Flow", () => {
       // Check delivery options exist in DOM (may be scroll-hidden on mobile)
       const standard = page.getByText("Tiêu chuẩn").first();
       await expect(standard).toBeAttached({ timeout: 5000 });
+      const pickup = page.getByText("Nhận tại cửa hàng").first();
+      await expect(pickup).toBeAttached({ timeout: 5000 });
     }
   });
 });

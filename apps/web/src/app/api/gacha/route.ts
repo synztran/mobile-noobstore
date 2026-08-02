@@ -2,6 +2,7 @@ import { getCache, invalidateCache, setCache } from "@/lib/redis/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { earnPointsFromGachaReward } from "@/lib/points/service";
+import { randomFloat } from "@/lib/random";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -277,7 +278,7 @@ export async function POST(req: NextRequest) {
   }
 
   const totalWeight = eligible.reduce((sum, r) => sum + (r.weight ?? 0), 0);
-  let roll = Math.random() * totalWeight;
+  let roll = randomFloat() * totalWeight;
   let drawn = eligible[eligible.length - 1]; // safe fallback
   for (const reward of eligible) {
     roll -= reward.weight ?? 0;
@@ -287,7 +288,32 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Round-trip 4: history + claimed_count + cache invalidation in parallel ──
+  // ── Round-trip 4: ATOMIC claimed_count increment (guards oversell) ───────
+  // The earlier claimed_count read was advisory only. Incrementing with a
+  // `.eq("claimed_count", drawn.claimed_count)` condition makes the write
+  // compare-and-set: if another concurrent draw claimed the last unit first,
+  // zero rows are updated and we refund the token instead of overselling.
+  const { data: claimed, error: claimedError } = await admin
+    .from("gacha_rewards")
+    .update({ claimed_count: drawn.claimed_count + 1 })
+    .eq("id", drawn.id)
+    .eq("claimed_count", drawn.claimed_count)
+    .select("id");
+
+  if (claimedError || !claimed || claimed.length === 0) {
+    // Lost the race — reward just ran out. Refund the token.
+    await supabase
+      .from("user_event_tokens")
+      .update({ token_count: currentTokens })
+      .eq("user_id", user.id)
+      .eq("event_id", eventId);
+    return NextResponse.json(
+      { error: "Phần thưởng vừa hết lượt, vui lòng thử lại" },
+      { status: 409 }
+    );
+  }
+
+  // ── Round-trip 5: history + cache invalidation in parallel ────────────────
   try {
     await Promise.all([
       supabase.from("gacha_history").insert({
@@ -295,10 +321,6 @@ export async function POST(req: NextRequest) {
         event_id: eventId,
         reward_id: drawn.id,
       }),
-      admin
-        .from("gacha_rewards")
-        .update({ claimed_count: drawn.claimed_count + 1 })
-        .eq("id", drawn.id),
       invalidateCache(`gacha:event:${eventId}`, `gacha:winners:${eventId}`),
     ]);
   } catch (err) {

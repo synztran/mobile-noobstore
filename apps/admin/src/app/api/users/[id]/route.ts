@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,24 @@ type RouteContext = {
 export async function PATCH(req: NextRequest, context: RouteContext) {
   const { id } = await context.params;
   const body = await req.json();
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Prevent an admin from demoting themselves (avoids accidental lockout).
+  const isSelf = user?.id === id;
+  if (
+    isSelf &&
+    typeof body.role === "string" &&
+    body.role !== "admin"
+  ) {
+    return NextResponse.json(
+      { error: "Bạn không thể tự hạ quyền admin của chính mình" },
+      { status: 400 }
+    );
+  }
 
   const updates = {
     first_name:
@@ -46,8 +65,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     );
   }
 
-  const supabase = getAdminClient();
-  const { error } = await supabase.from("users").update(payload).eq("id", id);
+  const adminClient = getAdminClient();
+  const { error } = await adminClient.from("users").update(payload).eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

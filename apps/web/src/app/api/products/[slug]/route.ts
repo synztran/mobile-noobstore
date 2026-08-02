@@ -29,6 +29,7 @@ export interface ComponentProductDetail {
   base_price: number;
   thumbnail: string | null;
   images: string[] | null;
+  product_type: ProductType;
   variants: ShopVariantDetail[];
 }
 
@@ -36,6 +37,8 @@ export interface ProductComponentDetail {
   id: string;
   component_group: string;
   is_required: boolean;
+  /** Max selectable variants in this optional group; null = unlimited. */
+  max_quantity?: number | null;
   component_product: ComponentProductDetail;
 }
 
@@ -63,7 +66,12 @@ export interface ProductDetail {
   attributes?: Record<string, string> | null;
   sale_ends_at?: string | null;
   sold_count: number;
-  gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
+  gifts?: Array<{
+    gift_name: string;
+    gift_slug: string;
+    gift_thumbnail: string | null;
+    quantity: number;
+  }>;
 }
 
 // ─── GET /api/products/[slug] ─────────────────────────────────────────────────
@@ -110,6 +118,7 @@ export async function GET(
 					id,
 					component_group,
 					is_required,
+					max_quantity,
 					component_product_id
 				)
 			`
@@ -154,6 +163,7 @@ export async function GET(
       id: string;
       component_group: string;
       is_required: boolean;
+      max_quantity: number | null;
       component_product_id: string | null;
     }> = p.product_components ?? [];
 
@@ -166,7 +176,7 @@ export async function GET(
       const { data: compProducts } = await supabase
         .from("products")
         .select(
-          "id, is_active, name, slug, base_price, thumbnail, images, product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)"
+          "id, is_active, name, slug, base_price, product_type, thumbnail, images, product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)"
         )
         .eq("is_active", true)
         .in("id", componentProductIds);
@@ -198,6 +208,7 @@ export async function GET(
           images: Array.isArray(cpAny.images)
             ? (cpAny.images as string[])
             : null,
+          product_type: (cpAny.product_type as ProductType) ?? "component",
           variants: cpVariants,
         });
       }
@@ -213,6 +224,7 @@ export async function GET(
         id: c.id,
         component_group: c.component_group,
         is_required: c.is_required,
+        max_quantity: c.max_quantity,
         component_product: componentProductMap.get(c.component_product_id!)!,
       }));
 
@@ -220,18 +232,22 @@ export async function GET(
     let gifts: ProductDetail["gifts"];
     const { data: giftRows } = await supabase
       .from("gift_products")
-      .select(`product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`)
+      .select(
+        `product_id, quantity, gift:gift_product_id!inner(name, slug, thumbnail)`
+      )
       .eq("product_id", p.id);
     if (giftRows && giftRows.length > 0) {
-      gifts = (giftRows as unknown as Array<Record<string, unknown>>).map((g) => {
-        const gift = g.gift as Record<string, unknown>;
-        return {
-          gift_name: (gift.name as string) ?? "",
-          gift_slug: (gift.slug as string) ?? "",
-          gift_thumbnail: (gift.thumbnail as string) ?? null,
-          quantity: Number(g.quantity ?? 1),
-        };
-      });
+      gifts = (giftRows as unknown as Array<Record<string, unknown>>).map(
+        (g) => {
+          const gift = g.gift as Record<string, unknown>;
+          return {
+            gift_name: (gift.name as string) ?? "",
+            gift_slug: (gift.slug as string) ?? "",
+            gift_thumbnail: (gift.thumbnail as string) ?? null,
+            quantity: Number(g.quantity ?? 1),
+          };
+        }
+      );
     }
 
     const result: ProductDetail = {
@@ -254,7 +270,7 @@ export async function GET(
       is_pre_order:
         p.product_type === "kit"
           ? variants.some((v) => v.is_pre_order)
-          : p.is_pre_order ?? false,
+          : (p.is_pre_order ?? false),
       attributes: (p as any).attributes ?? null,
       sale_ends_at: (p as any).sale_ends_at ?? null,
       sold_count: Number((p as any).sold_count ?? 0),

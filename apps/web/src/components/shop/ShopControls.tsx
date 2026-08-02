@@ -2,12 +2,15 @@
 
 import type { FilterState } from "@/components/product/FilterOverlay";
 import { FilterOverlay } from "@/components/product/FilterOverlay";
+import { SearchExpandPanel } from "@/components/shop/SearchExpandPanel";
 import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
 import type { CategoryItem } from "@/lib/products-server";
 import { SORT_OPTIONS } from "@/constants/shop";
 import { SortSheet } from "./SortSheet";
 import { useShopControls } from "@/hooks/useShopControls";
+import { useRecentSearches } from "@/hooks/useRecentSearches";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 function formatFilterPills(filters: FilterState): string[] {
   const pills: string[] = [];
@@ -38,43 +41,107 @@ export function ShopControls({
   isSearching?: boolean;
 }) {
   const {
+    searches: recentSearches,
+    addSearch,
+    removeSearch,
+    clearSearches,
+  } = useRecentSearches();
+
+  const {
     search,
     sort,
     filterState,
     showFilter,
     showSort,
     filterApplied,
+    isSearchPending,
     setSearch,
     handleSort,
     handleApplyFilter,
     handleClearFilters,
     setShowFilter,
     setShowSort,
-  } = useShopControls();
+  } = useShopControls((term) => {
+    // Save to recents only once the search has settled (debounced commit fires)
+    if (term.trim().length >= 2) addSearch(term);
+  });
+
+  // Dropdown shows only while the input is focused with an empty/short query;
+  // once the user starts typing it hides and the grid filters live (as before).
+  const [focused, setFocused] = useState(false);
+  const showPanel = focused && search.length < 2;
+  const searchWrapRef = useRef<HTMLDivElement>(null);
+
+  const handlePanelSearch = useCallback(
+    (term: string) => {
+      addSearch(term);
+      setSearch(term);
+      setFocused(false);
+    },
+    [addSearch, setSearch]
+  );
+
+  const handleSelectCategory = useCallback(
+    (slug: string) => {
+      handleApplyFilter({ ...filterState, category: slug });
+      setFocused(false);
+    },
+    [handleApplyFilter, filterState]
+  );
+
+  // Close the dropdown on outside click
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (
+        searchWrapRef.current &&
+        !searchWrapRef.current.contains(e.target as Node)
+      ) {
+        setFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
 
   return (
     <>
-      {/* Search bar */}
-      <div className="mb-4 flex items-center gap-2 rounded-full bg-surface-container px-3 py-2">
-        <Icon name="search" className="text-outline" />
-        <input
-          type="text"
-          placeholder="Tìm kiếm sản phẩm..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 bg-transparent font-medium text-on-surface outline-none placeholder:text-outline"
+      {/* Search bar — typing filters the grid; focus reveals recent + category shortcuts */}
+      <div ref={searchWrapRef} className="relative mb-4">
+        <div className="flex items-center gap-2 rounded-md border border-slate-400/60 bg-white px-3 py-3.5">
+          <Icon name="search" className="text-outline" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm sản phẩm..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === "Escape") setFocused(false);
+            }}
+            className="flex-1 bg-transparent font-medium text-on-surface outline-none placeholder:text-outline"
+          />
+          {(isSearching || isSearchPending) && search ? (
+            <span className="loading loading-spinner loading-sm text-primary" />
+          ) : search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="flex items-center justify-center text-outline transition-colors hover:text-on-surface"
+            >
+              <Icon name="close" className="text-base" />
+            </button>
+          ) : null}
+        </div>
+
+        <SearchExpandPanel
+          open={showPanel}
+          categories={categories}
+          recentSearches={recentSearches}
+          onSearch={handlePanelSearch}
+          onRemoveRecent={removeSearch}
+          onClearRecent={clearSearches}
+          onSelectCategory={handleSelectCategory}
         />
-        {isSearching ? (
-          <span className="loading loading-spinner loading-sm text-primary" />
-        ) : search ? (
-          <button
-            type="button"
-            onClick={() => setSearch("")}
-            className="flex items-center justify-center text-outline transition-colors hover:text-on-surface"
-          >
-            <Icon name="close" className="text-base" />
-          </button>
-        ) : null}
       </div>
 
       {/* Header row */}

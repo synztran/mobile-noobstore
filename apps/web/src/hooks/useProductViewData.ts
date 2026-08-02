@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 export type UseProductViewDataReturn = {
   variants: ShopVariant[];
   groups: ConfiguratorGroup[];
-  selections: Record<string, string>;
+  selections: Record<string, string[]>;
   select: (group: string, variantId: string) => void;
   selectedVariant: ShopVariant | null;
   selectedPreOrderConfig: ShopVariantDetail["pre_order_config"];
@@ -46,7 +46,7 @@ export function useProductViewData(
   initialGroups: ConfiguratorGroup[] = [],
   initialRules: ComponentVariantRule[] = []
 ): UseProductViewDataReturn {
-  const [selections, setSelections] = useState<Record<string, string>>({});
+  const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [isLoadingAddToCart, setIsLoadingAddToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { addItem, openCart } = useCartStore();
@@ -57,7 +57,7 @@ export function useProductViewData(
   // Auto-select when there is only one variant
   useEffect(() => {
     if (product.variants.length === 1) {
-      setSelections({ __variant__: product.variants[0].id });
+      setSelections({ __variant__: [product.variants[0].id] });
     }
   }, [product.variants]);
 
@@ -67,11 +67,26 @@ export function useProductViewData(
   }, [product.id]);
 
   const select = (group: string, variantId: string) => {
-    const isExist = selections[group] === variantId;
-    setSelections((prev) => ({
-      ...prev,
-      [group]: isExist ? "" : variantId,
-    }));
+    setSelections((prev) => {
+      const current = prev[group] ?? [];
+      const groupDef = initialGroups.find((g) => g.component_group === group);
+      // Required groups (and the simple-variant bucket) are single-select.
+      if (group === "__variant__" || groupDef?.is_required) {
+        const isSelected = current.includes(variantId);
+        return {
+          ...prev,
+          [group]: isSelected ? [] : [variantId],
+        };
+      }
+      // Optional groups allow multiple, bounded by max_quantity (null = unlimited).
+      const isSelected = current.includes(variantId);
+      if (isSelected) {
+        return { ...prev, [group]: current.filter((id) => id !== variantId) };
+      }
+      const cap = groupDef?.max_quantity ?? groupDef?.variants.length ?? Infinity;
+      if (cap > 0 && current.length >= cap) return prev;
+      return { ...prev, [group]: [...current, variantId] };
+    });
   };
 
   // All component group variants mapped to ShopVariant shape (with computed effective_price)
@@ -98,17 +113,17 @@ export function useProductViewData(
     ShopVariantDetail["pre_order_config"]
   >(() => {
     // Simple variant path
-    const simpleId = selections["__variant__"];
+    const simpleId = selections["__variant__"]?.[0];
     if (simpleId) {
       const v = product.variants.find((v) => v.id === simpleId);
       if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
     }
     // Component group path — first pre-order selected variant wins
     for (const group of initialGroups) {
-      const selectedId = selections[group.component_group];
-      if (!selectedId) continue;
-      const v = group.variants.find((gv) => gv.id === selectedId);
-      if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+      for (const selectedId of selections[group.component_group] ?? []) {
+        const v = group.variants.find((gv) => gv.id === selectedId);
+        if (v?.is_pre_order && v.pre_order_config) return v.pre_order_config;
+      }
     }
     return null;
   }, [product.variants, initialGroups, selections]);
@@ -116,10 +131,9 @@ export function useProductViewData(
   // Derive selectedVariant only for simple variant products (not component-group kits)
   const selectedVariant = useMemo<ShopVariant | null>(() => {
     if (initialGroups.length > 0) return null;
+    const simpleId = selections["__variant__"]?.[0];
     return (
-      (product.variants.find(
-        (v) => v.id === selections["__variant__"]
-      ) as ShopVariant) ?? null
+      (product.variants.find((v) => v.id === simpleId) as ShopVariant) ?? null
     );
   }, [product.variants, selections, initialGroups]);
 
@@ -129,7 +143,9 @@ export function useProductViewData(
       : groupVariants;
 
   const missingRequiredGroups = initialGroups
-    .filter((g) => g.is_required && !selections[g.component_group])
+    .filter(
+      (g) => g.is_required && (selections[g.component_group] ?? []).length === 0
+    )
     .map((g) => g.component_group);
   const missingConfiguration = missingRequiredGroups.length > 0;
   const missingVariantSelection =
@@ -140,8 +156,11 @@ export function useProductViewData(
   const effectiveStockQuantity = useMemo(() => {
     if (initialGroups.length === 0) return product.stock_quantity;
     const selectedVariants = initialGroups
-      .map((g) =>
-        g.variants.find((v) => v.id === selections[g.component_group])
+      .flatMap((g) => selections[g.component_group] ?? [])
+      .map((id) =>
+        initialGroups
+          .flatMap((g) => g.variants)
+          .find((v) => v.id === id)
       )
       .filter((v): v is NonNullable<typeof v> => v !== undefined);
     if (selectedVariants.length === 0) return product.stock_quantity;
@@ -155,7 +174,7 @@ export function useProductViewData(
   const disabledVariantIds = useMemo(() => {
     const disabled = new Set<string>();
     if (initialRules.length === 0) return disabled;
-    const selectedIds = new Set(Object.values(selections));
+    const selectedIds = new Set(Object.values(selections).flat());
     // Build variant → component_product_id lookup
     const variantToProduct = new Map<string, string>();
     for (const group of initialGroups) {
@@ -203,23 +222,23 @@ export function useProductViewData(
 
     setIsLoadingAddToCart(true);
 
-    const components: SelectedComponent[] = initialGroups.flatMap((group) => {
-      const v = group.variants.find(
-        (v) => v.id === selections[group.component_group]
-      );
-      if (!v) return [];
-      return [
-        {
-          variant_id: v.id,
-          variant_name: v.variant_name,
-          component_group: group.component_group,
-          price_adjustment: v.price_adjustment,
-          thumbnail: v.thumbnail,
-          is_pre_order: v.is_pre_order,
-          pre_order_config: v.pre_order_config,
-        },
-      ];
-    });
+    const components: SelectedComponent[] = initialGroups.flatMap((group) =>
+      (selections[group.component_group] ?? []).flatMap((selectedId) => {
+        const v = group.variants.find((gv) => gv.id === selectedId);
+        if (!v) return [];
+        return [
+          {
+            variant_id: v.id,
+            variant_name: v.variant_name,
+            component_group: group.component_group,
+            price_adjustment: v.price_adjustment,
+            thumbnail: v.thumbnail,
+            is_pre_order: v.is_pre_order,
+            pre_order_config: v.pre_order_config,
+          },
+        ];
+      })
+    );
 
     try {
       if (initialGroups.length > 0) {

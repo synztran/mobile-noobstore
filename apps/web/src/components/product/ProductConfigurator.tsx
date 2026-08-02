@@ -51,12 +51,58 @@ function VariantStatusBadge(props: VariantStatusBadgeProps) {
   );
 }
 
+function configuratorButtonClass(
+  base: string,
+  o: {
+    selected: boolean;
+    soldOut: boolean;
+    ruleDisabled: boolean;
+    isDisabled: boolean;
+  },
+): string {
+  if (o.isDisabled && !o.soldOut && !o.ruleDisabled) {
+    return clsx(
+      base,
+      "cursor-not-allowed border-dashed border-outline-variant/60 opacity-40",
+    );
+  }
+  if (o.isDisabled) {
+    return clsx(
+      base,
+      "cursor-not-allowed border-transparent bg-surface-container opacity-40",
+    );
+  }
+  if (o.selected) {
+    return clsx(base, "border-primary bg-primary text-white shadow-lg");
+  }
+  return clsx(
+    base,
+    "border-transparent bg-gray-200 text-on-surface hover:border-outline-variant",
+  );
+}
+
+function simpleVariantButtonClass(
+  base: string,
+  o: { soldOut: boolean; isSelected: boolean },
+): string {
+  if (o.soldOut) {
+    return clsx(base, "cursor-not-allowed bg-surface-container opacity-40");
+  }
+  if (o.isSelected) {
+    return clsx(base, "bg-primary text-white shadow-lg");
+  }
+  return clsx(
+    base,
+    "bg-surface-container text-on-surface hover:bg-surface-container-high",
+  );
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export type ProductConfiguratorProps = {
   groups: ConfiguratorGroup[];
   variants: ShopVariant[];
-  selections: Record<string, string>;
+  selections: Record<string, string[]>;
   loadingConfigurator: boolean;
   basePrice?: number;
   onSelect: (group: string, variantId: string) => void;
@@ -101,11 +147,23 @@ export function ProductConfigurator({
   return (
     <div className="flex min-h-0 flex-wrap gap-4">
       {/* Component group selectors */}
-      {groups.map((group) => (
+      {groups.map((group) => {
+        const groupSelection = selections[group.component_group] ?? [];
+        const cap = group.is_required
+          ? 1
+          : (group.max_quantity ?? group.variants.length);
+        const selectedCount = groupSelection.length;
+        const capReached = cap > 0 && selectedCount >= cap;
+        return (
         <div key={group.component_group} className={`space-y-3`}>
           <div className="flex items-center gap-1">
             <span
-              className={`rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider ${group.is_required ? "bg-error/10 text-error" : "bg-surface-container"}`}
+              className={clsx(
+                "rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider",
+                group.is_required
+                  ? "bg-error/10 text-error"
+                  : "bg-surface-container",
+              )}
             >
               {group.is_required ? "Bắt buộc" : "Tùy chọn"}
             </span>
@@ -114,26 +172,28 @@ export function ProductConfigurator({
             >
               {group.component_group}
             </p>
+            {!group.is_required && groupSelection.length > 0 && (
+              <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                Đã chọn {selectedCount}/{group.variants.length}
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap items-start gap-3">
             {group.variants.map((v) => {
-              const selected = selections[group.component_group] === v.id;
+              const selected = groupSelection.includes(v.id);
               const soldOut = v.stock_quantity === 0;
               const ruleDisabled = disabledVariantIds?.has(v.id) ?? false;
-              const isDisabled = soldOut || ruleDisabled;
+              const overCap = !selected && capReached;
+              const isDisabled = soldOut || ruleDisabled || overCap;
               return (
                 <button
                   key={v.id}
                   type="button"
                   disabled={isDisabled}
                   onClick={() => onSelect(group.component_group, v.id)}
-                  className={clsx(
+                  className={configuratorButtonClass(
                     "relative flex min-w-20 items-center justify-center gap-2 rounded-md border px-2 py-1.5 font-bold transition-all",
-                    isDisabled
-                      ? "cursor-not-allowed border-transparent bg-surface-container opacity-40"
-                      : selected
-                        ? "border-primary bg-primary text-white shadow-lg"
-                        : "border-transparent bg-gray-200 text-on-surface hover:border-outline-variant"
+                    { selected, soldOut, ruleDisabled, isDisabled },
                   )}
                 >
                   <div className="inline-flex items-center gap-1">
@@ -172,7 +232,8 @@ export function ProductConfigurator({
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {/* Simple variant selector (non-composite products) */}
       {!hasComponents && variants.length > 0 && (
@@ -182,7 +243,8 @@ export function ProductConfigurator({
           </p>
           <div className="grid grid-cols-2 gap-2">
             {variants.map((v) => {
-              const isSelected = selections["__variant__"] === v.id;
+              const isSelected =
+                selections["__variant__"]?.includes(v.id) ?? false;
               const soldOut = v.stock_quantity === 0;
               return (
                 <button
@@ -190,13 +252,9 @@ export function ProductConfigurator({
                   type="button"
                   disabled={soldOut}
                   onClick={() => onSelect("__variant__", v.id)}
-                  className={clsx(
+                  className={simpleVariantButtonClass(
                     "rounded-xl px-4 py-3 text-left text-sm font-bold transition-all",
-                    soldOut
-                      ? "cursor-not-allowed bg-surface-container opacity-40"
-                      : isSelected
-                        ? "bg-primary text-white shadow-lg"
-                        : "bg-surface-container text-on-surface hover:bg-surface-container-high"
+                    { soldOut, isSelected },
                   )}
                 >
                   <p className="truncate font-black">{v.variant_name}</p>

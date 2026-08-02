@@ -2,6 +2,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
+import { randomBase36 } from "@/lib/random";
 import type { AppliedVoucherSummary } from "@/types/voucher";
 import { getCheckoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import { NextRequest, NextResponse } from "next/server";
@@ -163,6 +164,12 @@ export async function POST(req: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
+    // Checkout requires an authenticated account — the /checkout page is already
+    // auth-gated by middleware, so align the API and prevent anonymous orders.
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const productIds = [...new Set(body.items.map((i) => i.product_id))];
     const itemVariantIds = body.items
       .filter((i) => i.variant_id)
@@ -304,7 +311,7 @@ export async function POST(req: NextRequest) {
     );
 
     const orderId = crypto.randomUUID();
-    const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${randomBase36(4)}`;
 
     const { data, error } = await (
       admin.rpc as unknown as (

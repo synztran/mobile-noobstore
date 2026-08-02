@@ -41,15 +41,12 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     const viMessage = ERROR_MAP[error.message] ?? error.message;
     return NextResponse.json({ error: viMessage }, { status: 400 });
   }
 
-  return NextResponse.json({
-    ok: true,
-    session: data.session,
-  });
+  return NextResponse.json({ ok: true });
 }

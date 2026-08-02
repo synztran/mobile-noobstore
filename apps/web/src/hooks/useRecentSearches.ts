@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "noobstore-recent-searches";
-const MAX_ITEMS = 5;
+const MAX_ITEMS = 8;
 
 export function useRecentSearches() {
   const [searches, setSearches] = useState<string[]>([]);
@@ -23,7 +23,7 @@ export function useRecentSearches() {
     setSearches((prev) => {
       const next = [trimmed, ...prev.filter((s) => s !== trimmed)].slice(
         0,
-        MAX_ITEMS,
+        MAX_ITEMS
       );
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
@@ -35,5 +35,13 @@ export function useRecentSearches() {
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  return { searches, addSearch, clearSearches };
+  const removeSearch = useCallback((query: string) => {
+    setSearches((prev) => {
+      const next = prev.filter((s) => s !== query);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  return { searches, addSearch, clearSearches, removeSearch };
 }

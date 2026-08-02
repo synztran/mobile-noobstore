@@ -151,19 +151,23 @@ function shapeRow(
         pre_order_config:
           (cv.pre_order_config as import("@/app/api/products/route").ShopVariant["pre_order_config"]) ??
           null,
-        attributes:
-          (cv.attributes as Record<string, string> | null) ?? null,
+        attributes: (cv.attributes as Record<string, string> | null) ?? null,
       });
     }
   }
 
   const computedMinPrice =
     variants.length > 0
-      ? Math.min(...variants.filter((v) => v.effective_price > 0).map((v) => v.effective_price))
+      ? Math.min(
+          ...variants
+            .filter((v) => v.effective_price > 0)
+            .map((v) => v.effective_price)
+        )
       : Number(p.base_price);
 
   const minPrice =
-    computedMinPrice === Infinity || (computedMinPrice === 0 && Number(p.base_price) > 0)
+    computedMinPrice === Infinity ||
+    (computedMinPrice === 0 && Number(p.base_price) > 0)
       ? Number(p.base_price)
       : computedMinPrice;
 
@@ -214,11 +218,13 @@ function shapeRow(
   const is_pre_order =
     productType === "kit"
       ? variants.some((v) => v.is_pre_order)
-      : p.is_pre_order ?? false;
+      : (p.is_pre_order ?? false);
 
   const discountPercentage =
     minPrice < Number(p.base_price)
-      ? Math.round(((Number(p.base_price) - minPrice) / Number(p.base_price)) * 100)
+      ? Math.round(
+          ((Number(p.base_price) - minPrice) / Number(p.base_price)) * 100
+        )
       : 0;
 
   return {
@@ -239,7 +245,8 @@ function shapeRow(
     tags,
     is_pre_order,
     discount_price: minPrice < Number(p.base_price) ? minPrice : undefined,
-    discount_percentage: discountPercentage > 0 ? discountPercentage : undefined,
+    discount_percentage:
+      discountPercentage > 0 ? discountPercentage : undefined,
     sold_count: Number(p.sold_count ?? 0),
     gifts: giftsByProductId.get(p.id) ?? undefined,
   };
@@ -299,7 +306,9 @@ export const getProducts = cache(async function getProducts(
 
   try {
     const cacheKey = `products:ssr:${CACHE_VERSION}:${search}:${categorySlug}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}`;
-    const cached = await getCache<{ products: ShopProduct[]; total: number }>(cacheKey);
+    const cached = await getCache<{ products: ShopProduct[]; total: number }>(
+      cacheKey
+    );
     if (cached) return cached;
 
     const result = await getProductListByFilters({
@@ -313,7 +322,10 @@ export const getProducts = cache(async function getProducts(
       offset,
     });
 
-    const response = { products: result.products as ShopProduct[], total: result.total };
+    const response = {
+      products: result.products as ShopProduct[],
+      total: result.total,
+    };
     await setCache(cacheKey, response, 300);
     return response;
   } catch (err) {
@@ -369,78 +381,74 @@ export const getProductSeoData = cache(async function getProductSeoData(
  * Product feed for the home Noteworthy section.
  * Uses shared product query logic to keep API and server rendering consistent.
  */
-export const getNoteworthyProducts = cache(
-  async function getNoteworthyProducts(
-    params: GetNoteworthyProductsParams = {}
-  ): Promise<{ products: ShopProduct[]; total: number }> {
-    const { categorySlug = "", limit = 8 } = params;
+export const getNoteworthyProducts = cache(async function getNoteworthyProducts(
+  params: GetNoteworthyProductsParams = {}
+): Promise<{ products: ShopProduct[]; total: number }> {
+  const { categorySlug = "", limit = 8 } = params;
 
-    try {
-      const result = await getProductListByFilters({
-        categorySlug,
-        limit: limit * 2,
-        sort: "newest",
-        productTypes: ["standard", "kit"],
-        excludeUncategorized: true,
-      });
+  try {
+    const result = await getProductListByFilters({
+      categorySlug,
+      limit: limit * 2,
+      sort: "newest",
+      productTypes: ["standard", "kit"],
+      excludeUncategorized: true,
+    });
 
-      const notable = (result.products as ShopProduct[]).filter(
-        (p) => p.stock_quantity > 0
-      );
+    const notable = (result.products as ShopProduct[]).filter(
+      (p) => p.stock_quantity > 0
+    );
 
-      return {
-        products: notable.slice(0, limit),
-        total: result.total,
-      };
-    } catch (err) {
-      console.error("[getNoteworthyProducts] Unexpected error:", err);
-      return { products: [], total: 0 };
-    }
+    return {
+      products: notable.slice(0, limit),
+      total: result.total,
+    };
+  } catch (err) {
+    console.error("[getNoteworthyProducts] Unexpected error:", err);
+    return { products: [], total: 0 };
   }
-);
+});
 
 /**
  * Fetch products with the same brand as a given product.
  * Returns up to `limit` products, excluding the product itself.
  * Cached with React.cache() + Redis (300s TTL).
  */
-export const getRelatedProducts = cache(
-  async function getRelatedProducts(
-    brand: string | null,
-    excludeSlug: string,
-    limit = 8
-  ): Promise<ShopProduct[]> {
-    if (!brand) return [];
+export const getRelatedProducts = cache(async function getRelatedProducts(
+  brand: string | null,
+  excludeSlug: string,
+  limit = 8
+): Promise<ShopProduct[]> {
+  if (!brand) return [];
 
-    try {
-      const cached = await getCache<ShopProduct[]>(
-        `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`
-      );
-      if (cached) return cached;
+  try {
+    const cached = await getCache<ShopProduct[]>(
+      `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`
+    );
+    if (cached) return cached;
 
-      const result = await getProductListByFilters({
-        brand,
-        limit,
-        sort: "newest",
-        productTypes: ["standard", "kit"],
-        excludeUncategorized: true,
-      });
-      const products = (result.products as ShopProduct[]).filter(
-        (p) => p.slug !== excludeSlug
-      );
+    const result = await getProductListByFilters({
+      brand,
+      limit,
+      sort: "newest",
+      productTypes: ["standard", "kit"],
+      excludeUncategorized: true,
+    });
+    const products = (result.products as ShopProduct[]).filter(
+      (p) => p.slug !== excludeSlug
+    );
 
-      await setCache(
-        `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`,
-        products,
-        300
-      );
-      return products;
-    } catch (err) {
-      console.error("[getRelatedProducts] Unexpected error:", err);
-      return [];
-    }
+    await setCache(
+      `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`,
+      products,
+      300
+    );
+    return products;
+  } catch (err) {
+    console.error("[getRelatedProducts] Unexpected error:", err);
+    return [];
   }
-);
+});
 
 /**
  * Unified QuickPick data loader.
@@ -448,17 +456,16 @@ export const getRelatedProducts = cache(
  * in one server call so the client doesn't need to chain product + configurator fetches.
  * Cached with React.cache() + Redis (60s TTL).
  */
-export const getQuickPickData = cache(
-  async function getQuickPickData(
-    params: GetQuickPickDataParams = {}
-  ): Promise<QuickPickData> {
-    const {
-      categorySlug = "",
-      productId,
-      search = "",
-      limit,
-      sort = "newest",
-    } = params;
+export const getQuickPickData = cache(async function getQuickPickData(
+  params: GetQuickPickDataParams = {}
+): Promise<QuickPickData> {
+  const {
+    categorySlug = "",
+    productId,
+    search = "",
+    limit,
+    sort = "newest",
+  } = params;
 
   try {
     const cacheKey = `${CACHE_VERSION}:quick-pick:${categorySlug}:${productId ?? ""}:${search}:${limit ?? ""}:${sort}`;
@@ -489,7 +496,7 @@ export const getQuickPickData = cache(
       const configuratorPromise = getPublicClient()
         .from("product_components")
         .select(
-          `parent_product_id, component_group, is_required, component_product_id,
+          `parent_product_id, component_group, is_required, max_quantity, component_product_id,
            products!product_components_component_product_id_fkey(
             product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
            )`
@@ -530,6 +537,7 @@ export const getQuickPickData = cache(
                 parent_product_id: string;
                 component_group: string;
                 is_required: boolean;
+                max_quantity: number | null;
                 component_product_id: string;
                 products?: {
                   product_variants?: Array<{
@@ -545,7 +553,10 @@ export const getQuickPickData = cache(
                 } | null;
               };
 
-              const parentMap = new Map<string, Map<string, ConfiguratorGroup>>();
+              const parentMap = new Map<
+                string,
+                Map<string, ConfiguratorGroup>
+              >();
               for (const row of (compRes.data ?? []) as ComponentRow[]) {
                 if (!parentMap.has(row.parent_product_id)) {
                   parentMap.set(row.parent_product_id, new Map());
@@ -555,6 +566,7 @@ export const getQuickPickData = cache(
                   groups.set(row.component_group, {
                     component_group: row.component_group,
                     is_required: row.is_required,
+                    max_quantity: row.max_quantity,
                     variants: [],
                   });
                 }
@@ -666,7 +678,7 @@ export const getQuickPickData = cache(
           await getPublicClient()
             .from("product_components")
             .select(
-              `parent_product_id, component_group, is_required, component_product_id,
+              `parent_product_id, component_group, is_required, max_quantity, component_product_id,
                products!product_components_component_product_id_fkey(
                 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
                )`
@@ -684,6 +696,7 @@ export const getQuickPickData = cache(
             parent_product_id: string;
             component_group: string;
             is_required: boolean;
+            max_quantity: number | null;
             component_product_id: string;
             products?: {
               product_variants?: Array<{
@@ -711,6 +724,7 @@ export const getQuickPickData = cache(
               groups.set(row.component_group, {
                 component_group: row.component_group,
                 is_required: row.is_required,
+                max_quantity: row.max_quantity,
                 variants: [],
               });
             }
@@ -833,8 +847,7 @@ export const getQuickPickData = cache(
       total: 0,
     };
   }
-}
-);
+});
 
 /**
  * Fetch the N newest products for use in server components.
@@ -844,7 +857,9 @@ export const getNewestProducts = cache(async function getNewestProducts(
   limit: number
 ): Promise<ShopProduct[]> {
   try {
-    const cached = await getCache<ShopProduct[]>(`${CACHE_VERSION}:newest-products:${limit}`);
+    const cached = await getCache<ShopProduct[]>(
+      `${CACHE_VERSION}:newest-products:${limit}`
+    );
     if (cached) return cached;
 
     const { data, error } = await getPublicClient()
@@ -979,9 +994,7 @@ export const getFrequentlyBoughtTogether = cache(
  * Cached with React.cache() + Redis (300s TTL).
  */
 export const getProductPurchaseCount = cache(
-  async function getProductPurchaseCount(
-    productId: string
-  ): Promise<number> {
+  async function getProductPurchaseCount(productId: string): Promise<number> {
     try {
       const cached = await getCache<number>(
         `${CACHE_VERSION}:purchase-count:${productId}`
@@ -1001,7 +1014,11 @@ export const getProductPurchaseCount = cache(
         0
       );
 
-      await setCache(`${CACHE_VERSION}:purchase-count:${productId}`, count, 300);
+      await setCache(
+        `${CACHE_VERSION}:purchase-count:${productId}`,
+        count,
+        300
+      );
       return count;
     } catch {
       return 0;
@@ -1010,85 +1027,91 @@ export const getProductPurchaseCount = cache(
 );
 
 /**
+ * Fetch conditional variant rules for a kit product.
+ * Cached with React.cache() + Redis (60s TTL).
+ */
+export const getComponentRules = cache(async function getComponentRules(
+  productId: string
+): Promise<ComponentVariantRule[]> {
+  try {
+    const cached = await getCache<ComponentVariantRule[]>(
+      `${CACHE_VERSION}:component-rules:${productId}`
+    );
+    if (cached) return cached;
+
+    const { data: ruleRows } = await getPublicClient()
+      .from("component_variant_rules")
+      .select(
+        `id, condition_variant_id, target_component_product_id,
+					 component_variant_rule_allowed(variant_id)`
+      )
+      .eq("kit_product_id", productId);
+
+    const componentRules: ComponentVariantRule[] = (ruleRows ?? []).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (r: any) => ({
+        id: r.id,
+        condition_variant_id: r.condition_variant_id,
+        target_component_product_id: r.target_component_product_id,
+        allowed_variant_ids: (r.component_variant_rule_allowed ?? []).map(
+          (a: { variant_id: string }) => a.variant_id
+        ),
+      })
+    );
+
+    await setCache(
+      `${CACHE_VERSION}:component-rules:${productId}`,
+      componentRules,
+      60
+    );
+    return componentRules;
+  } catch (err) {
+    console.error("[getComponentRules] Unexpected error:", err);
+    return [];
+  }
+});
+
+/**
  * Fetch a product by slug with its selectable component groups for the
  * interactive product detail page.
  *
- * Three-step query:
- *   1. Parent product by slug  (via getProductBySlug)
- *   2. Child products where product_type = 'component', linked via product_components
- *   3. product_variants for each child product (fetched in step 2)
+ * Component groups are derived from the child products already fetched by
+ * getProductBySlug — no extra child-products query is needed. Conditional
+ * variant rules are fetched separately via the cached getComponentRules.
  *
  * Returns { product, componentGroups } ready for ProductView.
  */
-export async function getProductDetail(slug: string): Promise<{
+export const getProductDetail = cache(async function getProductDetail(
+  slug: string
+): Promise<{
   product: ProductDetail;
   componentGroups: ConfiguratorGroup[];
   componentRules: ComponentVariantRule[];
 } | null> {
   try {
-    // Step 1: Get parent product (reuses existing fetcher)
     const product = await getProductBySlug(slug);
     if (!product) return null;
 
-    const compIds = product.components.map((c) => c.component_product.id);
-    if (compIds.length === 0) {
-      return { product, componentGroups: [], componentRules: [] };
-    }
-
-    // Steps 2 & 3: Query child products filtered to product_type = 'component',
-    // including their product_variants in the same call.
-    type ChildRow = {
-      id: string;
-      product_variants: Array<{
-        id: string;
-        variant_name: string;
-        price_adjustment: number;
-        thumbnail: string | null;
-        stock_quantity: number;
-        is_pre_order: boolean;
-        pre_order_config: unknown;
-        attributes: unknown;
-      }>;
-    };
-
-    const { data: childRows, error } = await getPublicClient()
-      .from("products")
-      .select(
-        `id,
-				 is_active,
-				 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)`
-      )
-      .eq("is_active", true)
-      .in("id", compIds)
-      .eq("product_type", "component");
-
-    if (error) {
-      console.error("[getProductDetail] child products error:", error.message);
-      return { product, componentGroups: [], componentRules: [] };
-    }
-
-    const childById = new Map<string, ChildRow>(
-      ((childRows ?? []) as unknown as ChildRow[]).map((r) => [r.id, r])
-    );
-
-    // Group component links by component_group, collecting selectable variants
-    // from each matched child product.
+    // Build configurator groups from the already-fetched child products,
+    // keeping only linked products of type 'component' (same filter as the
+    // previous child-products query).
     const groupMap = new Map<string, ConfiguratorGroup>();
 
     for (const comp of product.components) {
-      const child = childById.get(comp.component_product.id);
-      if (!child) continue; // not a 'component' type product — skip
+      const child = comp.component_product;
+      if (child.product_type !== "component") continue; // not a 'component' type product — skip
 
       if (!groupMap.has(comp.component_group)) {
         groupMap.set(comp.component_group, {
           component_group: comp.component_group,
           is_required: comp.is_required,
+          max_quantity: comp.max_quantity,
           variants: [],
         });
       }
 
       const group = groupMap.get(comp.component_group)!;
-      for (const v of child.product_variants ?? []) {
+      for (const v of child.variants) {
         group.variants.push({
           id: v.id,
           variant_name: v.variant_name,
@@ -1106,26 +1129,8 @@ export async function getProductDetail(slug: string): Promise<{
       }
     }
 
-    // Fetch conditional variant rules
-    const { data: ruleRows } = await getPublicClient()
-      .from("component_variant_rules")
-      .select(
-        `id, condition_variant_id, target_component_product_id,
-				 component_variant_rule_allowed(variant_id)`
-      )
-      .eq("kit_product_id", product.id);
-
-    const componentRules: ComponentVariantRule[] = (ruleRows ?? []).map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (r: any) => ({
-        id: r.id,
-        condition_variant_id: r.condition_variant_id,
-        target_component_product_id: r.target_component_product_id,
-        allowed_variant_ids: (r.component_variant_rule_allowed ?? []).map(
-          (a: { variant_id: string }) => a.variant_id
-        ),
-      })
-    );
+    const componentRules =
+      groupMap.size > 0 ? await getComponentRules(product.id) : [];
 
     return {
       product,
@@ -1136,7 +1141,7 @@ export async function getProductDetail(slug: string): Promise<{
     console.error("[getProductDetail] Unexpected error:", err);
     return null;
   }
-}
+});
 
 /**
  * Fetch a single product by slug for the product detail page.
@@ -1147,7 +1152,9 @@ export const getProductBySlug = cache(async function getProductBySlug(
   slug: string
 ): Promise<ProductDetail | null> {
   try {
-    const cached = await getCache<ProductDetail>(`${CACHE_VERSION}:product:slug:${slug}`);
+    const cached = await getCache<ProductDetail>(
+      `${CACHE_VERSION}:product:slug:${slug}`
+    );
     if (cached) return cached;
 
     const { data: product, error } = await getPublicClient()
@@ -1157,7 +1164,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
 			 categories(id, name),
 			 product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes),
 				 product_components!product_components_parent_product_id_fkey(
-				 	id, component_group, is_required, component_product_id
+				 	id, component_group, is_required, max_quantity, component_product_id
 				 )`
       )
       .eq("is_active", true)
@@ -1171,6 +1178,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
       id: string;
       component_group: string;
       is_required: boolean;
+      max_quantity: number | null;
       component_product_id: string;
     };
 
@@ -1228,8 +1236,8 @@ export const getProductBySlug = cache(async function getProductBySlug(
           childVariantsByProductId: new Map(),
           kitStockById: new Map(),
         };
-        componentProducts = (compData as unknown as RawListRow[]).map(
-          (row) => shapeRow(row, emptySupplements)
+        componentProducts = (compData as unknown as RawListRow[]).map((row) =>
+          shapeRow(row, emptySupplements)
         );
       }
     }
@@ -1255,6 +1263,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
         id: c.id,
         component_group: c.component_group,
         is_required: c.is_required,
+        max_quantity: c.max_quantity,
         component_product: cp
           ? {
               id: cp.id,
@@ -1263,6 +1272,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
               base_price: cp.base_price,
               thumbnail: cp.thumbnail,
               images: cp.images,
+              product_type: cp.product_type,
               variants: cp.variants,
             }
           : {
@@ -1272,6 +1282,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
               base_price: 0,
               thumbnail: null,
               images: null,
+              product_type: "standard" as const,
               variants: [],
             },
       };

@@ -9,46 +9,13 @@ interface ProductCardDetailsProps {
   isBundle?: boolean;
 }
 
-const Pricing = memo(function Pricing({ product }: { product: ShopProduct }) {
-  if (product.discount_price && product.discount_price > 0) {
-    return (
-      <div>
-        <div className="text-right text-base font-extrabold text-red-600">
-          {formatVND(product.discount_price)}
-        </div>
-        <div className="text-right text-xs font-bold text-on-surface-variant line-through">
-          {formatVND(product.base_price)}
-        </div>
-      </div>
-    );
-  }
-
-  if (!product.base_price && !product.min_price) {
-    return (
-      <div className="text-right text-xs font-extrabold text-slate-500">
-        giá đang cập nhật
-      </div>
-    );
-  }
-
-  return (
-    <div className="text-right text-base font-extrabold text-primary">
-      {product.base_price === 0 && (
-        <span className="text-xs text-slate-500">giá chỉ từ</span>
-      )}
-      &nbsp;
-      {formatVND(product.base_price || product.min_price)}
-    </div>
-  );
-});
-
 export const ProductCardDetails = memo(function ProductCardDetails({
   product,
   isBundle = false,
 }: ProductCardDetailsProps) {
   return (
     <div className="relative">
-      <p className="truncate text-[11px] font-extrabold capitalize tracking-[0.1em] text-primary">
+      <p className="truncate text-xs font-extrabold capitalize tracking-[0.05em] text-primary">
         {product.brand || product.category}
       </p>
       <h3 className="line-clamp-2 text-sm font-bold capitalize text-on-surface">
@@ -64,7 +31,7 @@ export const ProductCardDetails = memo(function ProductCardDetails({
           Đã bán {product.sold_count}
         </p>
       )}
-      <Pricing product={product} />
+      {/* <Pricing product={product} /> */}
     </div>
   );
 });

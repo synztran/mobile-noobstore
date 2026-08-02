@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { randomBase36 } from "@/lib/random";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -184,7 +185,7 @@ export async function POST(req: NextRequest) {
 	});
 
 	const orderId = crypto.randomUUID();
-	const orderNumber = `SVC-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+	const orderNumber = `SVC-${Date.now().toString(36).toUpperCase()}-${randomBase36(4)}`;
 
 	const { error: orderErr } = await supabase.from("orders").insert({
 		id: orderId,

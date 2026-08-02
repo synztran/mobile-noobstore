@@ -1,7 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { ProductCard, ProductCardSkeleton } from "@/components/product/ProductCard";
+import {
+  ProductCard,
+  ProductCardSkeleton,
+} from "@/components/product/ProductCard";
 import { ShopControls } from "@/components/shop/ShopControls";
 import type { CategoryItem } from "@/lib/products-server";
 import {
@@ -29,7 +32,8 @@ function EmptyProductState({ search }: { search?: string }) {
         Không tìm thấy sản phẩm phù hợp
         {search ? (
           <>
-            {" "}với từ khóa<span className="text-primary"> “{search}”</span>
+            {" "}
+            với từ khóa<span className="text-primary"> “{search}”</span>
           </>
         ) : null}
       </p>
@@ -129,11 +133,16 @@ export function ShopPageClient({
 
   return (
     <>
-      <ShopControls total={total} categories={categories} isTotalLoading={isInitialLoading} isSearching={isRefreshing} />
+      <ShopControls
+        total={total}
+        categories={categories}
+        isTotalLoading={isInitialLoading}
+        isSearching={isRefreshing}
+      />
 
       <div
         className={`transition-all duration-300 ${
-          isRefreshing ? "blur-sm opacity-60" : ""
+          isRefreshing ? "opacity-60 blur-sm" : ""
         }`}
       >
         {isInitialLoading ? (

@@ -1,18 +1,17 @@
-import type { ShopProduct } from "@/app/api/products/route";
 import { TopNav } from "@/components/layout/TopNav";
 import { ProductView } from "@/components/product/ProductView";
 import {
-  getFrequentlyBoughtTogether,
   getProductBySlug,
   getProductDetail,
   getProductPurchaseCount,
-  getRelatedProducts,
 } from "@/lib/products-server";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { BoughtTogetherSection } from "@/components/product/BoughtTogetherSection";
+import { RelatedProductsSection } from "@/components/product/RelatedProductsSection";
 import { ScrollToTopOnNav } from "./ScrollToTopOnNav";
 
 export async function generateMetadata({
@@ -112,24 +111,48 @@ function ProductDetailSkeleton() {
   );
 }
 
-async function ProductLoader({ slug }: { slug: string }) {
-  const result = await getProductDetail(slug);
-  if (!result) notFound();
+function RailSkeleton() {
+  return (
+    <div className="mt-8 px-4">
+      <div className="mb-4 h-3 w-44 rounded-full bg-surface-container" />
+      <div className="flex gap-4">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="h-52 w-40 shrink-0 rounded-2xl bg-surface-container-high"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
-  const [relatedProducts, purchaseCount, boughtTogether] = await Promise.all([
-    getRelatedProducts(result.product.brand, slug, 8),
-    getProductPurchaseCount(result.product.id),
-    getFrequentlyBoughtTogether(result.product.id),
+async function ProductLoader({ slug }: { slug: string }) {
+  const [detail, purchaseCount] = await Promise.all([
+    getProductDetail(slug),
+    getProductBySlug(slug).then((p) => (p ? getProductPurchaseCount(p.id) : 0)),
   ]);
+  if (!detail) notFound();
 
   return (
     <ProductView
-      product={result.product}
-      componentGroups={result.componentGroups}
-      componentRules={result.componentRules}
-      relatedProducts={relatedProducts}
+      product={detail.product}
+      componentGroups={detail.componentGroups}
+      componentRules={detail.componentRules}
       purchaseCount={purchaseCount}
-      boughtTogether={boughtTogether}
+      relatedSlot={
+        <Suspense fallback={<RailSkeleton />}>
+          <RelatedProductsSection
+            brand={detail.product.brand}
+            slug={detail.product.slug}
+          />
+        </Suspense>
+      }
+      boughtTogetherSlot={
+        <Suspense fallback={<RailSkeleton />}>
+          <BoughtTogetherSection productId={detail.product.id} />
+        </Suspense>
+      }
     />
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import type { ShopProduct } from "@/app/api/products/route";
 import type {
   ComponentVariantRule,
   ConfiguratorGroup,
@@ -11,23 +10,25 @@ import { AddToCartButton } from "@/components/product/AddToCartButton";
 import { StockAlertButton } from "@/components/product/StockAlertButton";
 import { ProductThumbnailStrip } from "@/components/product/ProductThumbnailStrip";
 import { ProductConfigurator } from "@/components/product/ProductConfigurator";
-import { ProductCard } from "@/components/product/ProductCard";
 import Icon from "@/components/ui/Icon";
 import WishlistButton from "@/components/wishlist/WishlistButton";
 import { useProductViewData } from "@/hooks/useProductViewData";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
-import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const ImageViewer = dynamic(
-  () => import("@/components/product/ImageViewer").then((m) => ({ default: m.ImageViewer })),
-  { ssr: false },
+  () =>
+    import("@/components/product/ImageViewer").then((m) => ({
+      default: m.ImageViewer,
+    })),
+  { ssr: false }
 );
 import { PreOrderBanner } from "@/components/product/PreOrderBanner";
 import { ProductInfoTabs } from "@/components/product/ProductInfoTabs";
@@ -40,16 +41,16 @@ export function ProductView({
   product,
   componentGroups = [],
   componentRules = [],
-  relatedProducts = [],
   purchaseCount = 0,
-  boughtTogether = [],
+  relatedSlot,
+  boughtTogetherSlot,
 }: {
   product: ProductDetail;
   componentGroups?: ConfiguratorGroup[];
   componentRules?: ComponentVariantRule[];
-  relatedProducts?: ShopProduct[];
   purchaseCount?: number;
-  boughtTogether?: ShopProduct[];
+  relatedSlot?: ReactNode;
+  boughtTogetherSlot?: ReactNode;
 }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
@@ -122,10 +123,13 @@ export function ProductView({
   const componentAdjustment = useMemo(
     () =>
       groups.reduce((sum, group) => {
-        const v = group.variants.find(
-          (v) => v.id === selections[group.component_group]
-        );
-        return sum + (v?.price_adjustment ?? 0);
+        const ids = selections[group.component_group] ?? [];
+        let groupSum = 0;
+        for (const id of ids) {
+          const v = group.variants.find((gv) => gv.id === id);
+          groupSum += v?.price_adjustment ?? 0;
+        }
+        return sum + groupSum;
       }, 0),
     [groups, selections]
   );
@@ -555,88 +559,10 @@ export function ProductView({
       </Suspense>
 
       {/* ── Frequently Bought Together ── */}
-      {boughtTogether.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="mt-8 px-4"
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-lg font-black uppercase tracking-tight">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 text-primary"
-                fill="currentColor"
-              >
-                <path d="M16 6l2.29 2.29-9.88 9.88-4-4L10 12l4.71-4.71L16 6zm0-2.83l-3.29 3.29-4.71 4.71-4.71-4.71L0 6l10 10 10-10-4-4.83z" />
-              </svg>
-              Thường được mua cùng
-            </div>
-          </div>
-          <div className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain">
-            {boughtTogether.map((bp, i) => (
-              <motion.div
-                key={bp.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  delay: i * 0.06,
-                  duration: 0.35,
-                  ease: "easeOut",
-                }}
-                className="w-[140px] shrink-0 snap-start"
-              >
-                <ProductCard product={bp} isBundle />
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-      )}
+      {boughtTogetherSlot}
 
       {/* ── Related Products ── */}
-      {relatedProducts.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="mt-8 px-4"
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <div className="text-lg font-black uppercase tracking-tight">
-              Sản phẩm liên quan
-            </div>
-            {product.brand && (
-              <Link
-                href={`/shop?brand=${encodeURIComponent(product.brand)}`}
-                className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary transition-all hover:gap-2"
-              >
-                Xem tất cả
-                <ArrowRight size={10} />
-              </Link>
-            )}
-          </div>
-          <div className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-2">
-            {relatedProducts.map((rp, i) => (
-              <motion.div
-                key={rp.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  delay: i * 0.06,
-                  duration: 0.35,
-                  ease: "easeOut",
-                }}
-                className="w-[160px] shrink-0 snap-start"
-              >
-                <ProductCard product={rp} isBundle />
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-      )}
+      {relatedSlot}
 
       {/* ── Bottom Action Bar ── */}
       <motion.div

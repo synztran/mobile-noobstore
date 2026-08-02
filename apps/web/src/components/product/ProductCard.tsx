@@ -17,6 +17,7 @@ import ProductComponentTags from "./ProductComponentTags";
 import { StockIndicator } from "./StockIndicator";
 import DiscountBadge from "./DiscountBadge";
 import { ProductCardDetails } from "./ProductCardDetails";
+import ProductCardPricing from "./ProductCardPricing";
 
 const QuickPickDrawer = dynamic(
   () => import("./QuickPickDrawer").then((m) => ({ default: m.QuickPickDrawer })),
@@ -161,6 +162,7 @@ export const ProductCard = memo(function ProductCard({
         </Link>
 
         <div className="flex flex-col gap-0.5 mt-auto">
+          <ProductCardPricing product={product} />
           <StockIndicator stockQuantity={product.stock_quantity} />
           <div className="mt-auto flex items-center gap-1">
             <WishlistButton

@@ -1,8 +1,29 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getWatch, getLatestSnapshot } from "@/lib/changedetection";
+import { createHash, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Fail-closed shared-secret auth for the external changedetection.io webhook.
+ * The webhook has no browser session, so it cannot use requireAdmin(); instead
+ * the caller must present the configured secret.
+ */
+function isAuthorized(req: NextRequest): boolean {
+  const secret = process.env.CRAWLING_WEBHOOK_SECRET;
+  if (!secret) return false;
+
+  const provided =
+    req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
+    req.headers.get("x-webhook-secret") ??
+    "";
+  if (!provided) return false;
+
+  const a = createHash("sha256").update(provided).digest();
+  const b = createHash("sha256").update(secret).digest();
+  return timingSafeEqual(a, b);
+}
 
 async function extractWatchId(body: unknown): Promise<string | null> {
   if (typeof body === "object" && body !== null) {
@@ -96,6 +117,10 @@ async function createDetectionFromSnapshot(
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const supabase = getAdminClient();
 
   let body: unknown;

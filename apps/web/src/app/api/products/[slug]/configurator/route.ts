@@ -26,6 +26,9 @@ export interface ConfiguratorVariant {
 export interface ConfiguratorGroup {
 	component_group: string;
 	is_required: boolean;
+	/** Max number of variants that may be selected in this (optional) group.
+	 *  null/0/undefined = unlimited multi-select. Unused for required groups. */
+	max_quantity?: number | null;
 	variants: ConfiguratorVariant[];
 }
 
@@ -73,6 +76,7 @@ export async function GET(
 				`
 				component_group,
 				is_required,
+				max_quantity,
 				component_product_id,
 				products!product_components_component_product_id_fkey(
 					product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
@@ -102,6 +106,7 @@ export async function GET(
 			const rowAny = row as any;
 			const key = rowAny.component_group as string;
 			const isRequired = rowAny.is_required as boolean;
+			const maxQuantity = rowAny.max_quantity as number | null;
 			const rawVariants: Array<{
 				id: string;
 				variant_name: string;
@@ -116,6 +121,7 @@ export async function GET(
 				groupMap.set(key, {
 					component_group: key,
 					is_required: isRequired,
+					max_quantity: maxQuantity,
 					variants: [],
 				});
 			}

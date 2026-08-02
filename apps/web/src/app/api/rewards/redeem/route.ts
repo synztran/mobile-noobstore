@@ -1,14 +1,14 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { spendPoints, earnPointsFixed } from "@/lib/points/service";
+import { randomBase36 } from "@/lib/random";
 import type { RedeemResponse } from "@/types/reward";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 function genVoucherCode(): string {
-  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `RE-${rand}`;
+  return `RE-${randomBase36(6)}`;
 }
 
 function buildVoucherBenefit(meta: Record<string, unknown>): string {
@@ -61,6 +61,23 @@ export async function POST(req: NextRequest) {
     // Check stock
     if (stock !== null && (row.claimed_count as number) >= stock) {
       return NextResponse.json({ error: "Phần thưởng đã hết" }, { status: 400 });
+    }
+
+    // Reserve a unit atomically (compare-and-set) BEFORE spending points. The
+    // check above is advisory (stale read); this CAS fails if a concurrent
+    // redemption claimed the last unit first, so we can never oversell.
+    const { data: reserved, error: reserveError } = await admin
+      .from("reward_items")
+      .update({ claimed_count: (row.claimed_count as number) + 1 })
+      .eq("id", rewardItemId)
+      .eq("claimed_count", row.claimed_count)
+      .select("id");
+
+    if (reserveError || !reserved || reserved.length === 0) {
+      return NextResponse.json(
+        { error: "Phần thưởng vừa hết lượt, vui lòng thử lại" },
+        { status: 400 }
+      );
     }
 
     // Check balance
@@ -127,9 +144,6 @@ export async function POST(req: NextRequest) {
         voucher_id: (newVoucher as Record<string, unknown>).id as string,
         metadata: { voucher_code: code },
       });
-
-      // Increment claimed_count (admin client to bypass RLS)
-      await admin.from("reward_items").update({ claimed_count: (row.claimed_count as number) + 1 }).eq("id", rewardItemId);
 
       response = {
         success: true,

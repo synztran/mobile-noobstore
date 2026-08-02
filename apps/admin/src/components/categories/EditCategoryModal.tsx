@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { SingleImageUploader } from "@/components/ui/ImageUploader";
 
 export interface CategoryRecord {
   id: string;
@@ -31,11 +32,13 @@ export default function EditCategoryModal({ category, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     if (category) {
       setSlug(category.slug);
+      setThumbnail(category.thumbnail ?? "");
       setIsActive(category.is_active);
       setError(null);
     }
@@ -51,7 +54,6 @@ export default function EditCategoryModal({ category, onClose }: Props) {
 
     const fd = new FormData(e.currentTarget);
     const name = fd.get("name") as string;
-    const thumbnail = (fd.get("thumbnail") as string) || null;
 
     const res = await fetch("/api/categories", {
       method: "PATCH",
@@ -60,7 +62,7 @@ export default function EditCategoryModal({ category, onClose }: Props) {
         id: category.id,
         name,
         slug,
-        thumbnail,
+        thumbnail: thumbnail || null,
         is_active: isActive,
       }),
     });
@@ -135,17 +137,13 @@ export default function EditCategoryModal({ category, onClose }: Props) {
               />
             </div>
 
-            {/* Thumbnail URL */}
+            {/* Thumbnail */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Thumbnail URL
-              </label>
-              <input
-                name="thumbnail"
-                type="url"
-                defaultValue={category.thumbnail ?? ""}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://…"
+              <SingleImageUploader
+                label="Thumbnail"
+                value={thumbnail}
+                onChange={setThumbnail}
+                slug="category"
               />
             </div>
 

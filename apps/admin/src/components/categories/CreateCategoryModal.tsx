@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { SingleImageUploader } from "@/components/ui/ImageUploader";
 
 interface Props {
   open: boolean;
@@ -23,6 +24,7 @@ export default function CreateCategoryModal({ open, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
 
   if (!open) return null;
 
@@ -33,12 +35,11 @@ export default function CreateCategoryModal({ open, onClose }: Props) {
 
     const fd = new FormData(e.currentTarget);
     const name = fd.get("name") as string;
-    const thumbnail = (fd.get("thumbnail") as string) || null;
 
     const res = await fetch("/api/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, slug, thumbnail }),
+      body: JSON.stringify({ name, slug, thumbnail: thumbnail || null }),
     });
 
     setLoading(false);
@@ -51,6 +52,7 @@ export default function CreateCategoryModal({ open, onClose }: Props) {
 
     formRef.current?.reset();
     setSlug("");
+    setThumbnail("");
     onClose();
     router.refresh();
   }
@@ -112,16 +114,13 @@ export default function CreateCategoryModal({ open, onClose }: Props) {
               />
             </div>
 
-            {/* Thumbnail URL */}
+            {/* Thumbnail */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Thumbnail URL
-              </label>
-              <input
-                name="thumbnail"
-                type="url"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://…"
+              <SingleImageUploader
+                label="Thumbnail"
+                value={thumbnail}
+                onChange={setThumbnail}
+                slug="category"
               />
             </div>
           </div>
