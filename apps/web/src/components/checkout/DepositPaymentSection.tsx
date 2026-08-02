@@ -1,41 +1,53 @@
 "use client";
 
 import { formatVND } from "@/lib/currency";
-import { Landmark } from "lucide-react";
+import { memo, useEffect, useState } from "react";
+import { Percent } from "lucide-react";
 
 interface Props {
   paymentType: "full" | "deposit_cod";
   setPaymentType: (type: "full" | "deposit_cod") => void;
   depositPercentage: number;
   setDepositPercentage: (pct: number) => void;
-  depositAmount: number;
-  codAmount: number;
   hasPreOrder?: boolean;
   subtotal: number;
+  orderTotal: number;
 }
 
 const MIN_ORDER_SUBTOTAL = 1_000_000;
 
-export function DepositPaymentSection({
+export const DepositPaymentSection = memo(function DepositPaymentSection({
   paymentType,
   setPaymentType,
   depositPercentage,
   setDepositPercentage,
-  depositAmount,
-  codAmount,
   hasPreOrder = false,
   subtotal,
+  orderTotal,
 }: Props) {
   const minPercentage = hasPreOrder ? 20 : 10;
   const isDisabled = subtotal < MIN_ORDER_SUBTOTAL;
 
+  // Local draft while dragging so the store (and the whole summary page) only
+  // re-renders once when the user releases the slider.
+  const [draftPct, setDraftPct] = useState(depositPercentage);
+
+  useEffect(() => {
+    setDraftPct(depositPercentage);
+  }, [depositPercentage]);
+
+  const liveDeposit = Math.round((subtotal * draftPct) / 100);
+  const liveCod = Math.max(0, orderTotal - liveDeposit);
+
+  const commitPercentage = () => setDepositPercentage(draftPct);
+
   if (isDisabled) {
     return (
       <div className="overflow-hidden rounded-2xl bg-surface-container-low">
-        <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center justify-between p-4 gap-8">
           <div className="flex flex-1 items-center gap-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-surface-container-high">
-              <Landmark className="text-lg text-on-surface-variant" />
+              <Percent className="text-lg text-on-surface-variant" />
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
@@ -58,15 +70,18 @@ export function DepositPaymentSection({
 
   return (
     <div className="overflow-hidden rounded-2xl bg-surface-container-low">
-      <div className="flex items-center justify-between px-4 py-4">
-        <div className="flex flex-1 items-center gap-3">
+      <div className="flex items-center justify-between p-4 gap-8">
+        <div className="flex flex-1 items-start gap-2">
           <div className="primary-gradient flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
-            <Landmark className="text-lg text-white" />
+            <Percent className="text-lg text-white" />
           </div>
-          <div>
+          <div className="flex flex-col">
             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
               Đặt cọc đơn hàng
             </p>
+            <span className="text-xs text-on-surface-variant">
+              Đơn hàng của bạn được hỗ trợ thanh toán trước một phần
+            </span>
           </div>
         </div>
         <label className="flex cursor-pointer items-center gap-2">
@@ -95,17 +110,20 @@ export function DepositPaymentSection({
             min={minPercentage}
             max={80}
             step={5}
-            value={depositPercentage}
-            onChange={(e) => setDepositPercentage(Number(e.target.value))}
+            value={draftPct}
+            onChange={(e) => setDraftPct(Number(e.target.value))}
+            onPointerUp={commitPercentage}
+            onKeyUp={commitPercentage}
+            onBlur={commitPercentage}
             className="range range-primary range-sm"
           />
           <div className="space-y-1.5 rounded-2xl bg-surface-container px-3 py-2.5">
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">
-                Đặt cọc ({depositPercentage}%)
+                Đặt cọc ({draftPct}%)
               </span>
               <span className="font-bold text-primary">
-                {formatVND(depositAmount)}
+                {formatVND(liveDeposit)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
@@ -113,7 +131,7 @@ export function DepositPaymentSection({
                 Số tiền còn lại (COD)
               </span>
               <span className="font-bold text-secondary">
-                {formatVND(codAmount)}
+                {formatVND(liveCod)}
               </span>
             </div>
             <div className="h-px bg-outline-variant/30" />
@@ -122,16 +140,16 @@ export function DepositPaymentSection({
                 Cần chuyển khoản ngay
               </span>
               <span className="text-sm font-black text-primary">
-                {formatVND(depositAmount)}
+                {formatVND(liveDeposit)}
               </span>
             </div>
           </div>
           <div className="rounded-2xl border border-primary/15 bg-primary/5 px-3 py-2.5">
             <p className="text-xs leading-relaxed text-on-surface-variant">
               <span className="font-bold text-primary">Lưu ý:</span> Đặt cọc{" "}
-              {depositPercentage}% giá trị sản phẩm (
-              {formatVND(depositAmount)}). Số tiền còn lại (
-              {formatVND(codAmount)}) sẽ được thanh toán khi nhận hàng (COD).
+              {draftPct}% giá trị sản phẩm (
+              {formatVND(liveDeposit)}). Số tiền còn lại (
+              {formatVND(liveCod)}) sẽ được thanh toán khi nhận hàng (COD).
               {hasPreOrder && (
                 <>
                   {" "}
@@ -145,4 +163,4 @@ export function DepositPaymentSection({
       )}
     </div>
   );
-}
+});

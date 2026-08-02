@@ -21,7 +21,7 @@ import {
   Truck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 function formatPickupSlot(value?: string | null): string {
   if (!value) return "Chưa chọn thời gian";
@@ -130,6 +130,18 @@ export default function SummaryPage() {
 
   const depositAmount = Math.round((subtotal * depositPercentage) / 100);
   const codAmount = Math.max(0, orderTotal - depositAmount);
+
+  const handleRemoveItem = useCallback(
+    (productId: string, variantId: string | null) => {
+      removeItem(productId, variantId);
+      setOosProductIds((prev) => {
+        const next = new Set(prev);
+        next.delete(productId);
+        return next;
+      });
+    },
+    [removeItem],
+  );
 
   if (!mounted) {
     return (
@@ -323,14 +335,7 @@ export default function SummaryPage() {
         <OrderItemsList
           items={items}
           oosProductIds={oosProductIds}
-          onRemove={(productId, variantId) => {
-            removeItem(productId, variantId);
-            setOosProductIds((prev) => {
-              const next = new Set(prev);
-              next.delete(productId);
-              return next;
-            });
-          }}
+          onRemove={handleRemoveItem}
         />
       </div>
 
@@ -366,7 +371,7 @@ export default function SummaryPage() {
       {/* ── Shipping Method ──────────────────────────────────── */}
       <div className="overflow-hidden rounded-2xl bg-surface-container-low">
         <div className="flex items-center justify-between p-4 gap-4">
-          <div className="flex flex-1 items-center gap-3">
+          <div className="flex flex-1 items-start gap-2">
             <div className="primary-gradient flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
               {shipping?.deliverySpeed === "pickup" ? (
                 <Store className="text-lg text-white" />
@@ -413,10 +418,9 @@ export default function SummaryPage() {
         setPaymentType={setPaymentType}
         depositPercentage={depositPercentage}
         setDepositPercentage={setDepositPercentage}
-        depositAmount={depositAmount}
-        codAmount={codAmount}
         hasPreOrder={hasPreOrder}
         subtotal={subtotal}
+        orderTotal={orderTotal}
       />
 
       {/* ── Order Summary ────────────────────────────────────── */}

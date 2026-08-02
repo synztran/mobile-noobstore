@@ -5,7 +5,7 @@ import { formatVND } from "@/lib/currency";
 import { useDiscountStore } from "@/store";
 import type { VoucherRow } from "@/types/voucher";
 import { CheckCircle2, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { VoucherDrawer } from "./VoucherDrawer";
 
 type VoucherComponentProps = {
@@ -32,7 +32,7 @@ function VoucherSkeleton() {
   );
 }
 
-export function VoucherComponent({
+export const VoucherComponent = memo(function VoucherComponent({
   initialVouchers = [],
   className = "",
   subtotal = 0,
@@ -210,6 +210,6 @@ export function VoucherComponent({
       ) : null}
     </section>
   );
-}
+});
 
 export default VoucherComponent;

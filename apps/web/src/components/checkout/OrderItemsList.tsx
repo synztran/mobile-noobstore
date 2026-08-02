@@ -3,7 +3,7 @@
 import { formatVND } from "@/lib/currency";
 import type { CartItem } from "@/lib/data";
 import Image from "next/image";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 
 interface OrderItemsListProps {
   items: CartItem[];
@@ -11,7 +11,7 @@ interface OrderItemsListProps {
   onRemove?: (productId: string, variantId: string | null) => void;
 }
 
-export function OrderItemsList({
+export const OrderItemsList = memo(function OrderItemsList({
   items,
   oosProductIds,
   onRemove,
@@ -23,9 +23,9 @@ export function OrderItemsList({
   return (
     <section className="mb-6">
       <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-outline">
-        Đơn hàng của bạn
+        Đơn hàng của bạn ({items.length} sản phẩm)
       </h2>
-      <div className="space-y-2">
+      <div className="space-y-4">
         {items.map((item) => {
           const isOos = oosProductIds?.has(item.product.id) ?? false;
           const itemKey = item.components?.length
@@ -36,7 +36,7 @@ export function OrderItemsList({
           return (
             <div
               key={itemKey}
-              className={`relative overflow-hidden rounded-2xl p-4 transition-colors ${
+              className={`relative overflow-hidden rounded-2xl p-4 transition-colors shadow-md ${
                 isOos
                   ? "bg-error/10 ring-1 ring-error/40"
                   : "bg-surface-container-lowest"
@@ -62,7 +62,7 @@ export function OrderItemsList({
               )}
               {/* Product info */}
               <div
-                className={`flex items-start gap-2 ${isOos ? "opacity-50" : ""}`}
+                className={`flex gap-2 h-full ${isOos ? "opacity-50" : ""}`}
               >
                 {/* Product thumbnail */}
                 <div className="relative h-20 w-24 flex-shrink-0 rounded-lg bg-surface-container">
@@ -87,8 +87,8 @@ export function OrderItemsList({
                 </div>
 
                 {/* Product details */}
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <div className="line-clamp-3 text-xs font-bold text-on-surface">
+                <div className=" w-full space-y-0.5 min-h-full flex flex-col justify-between items-stretch">
+                  <div className="line-clamp-3 text-sm font-bold text-on-surface">
                     {item.product.name}
                   </div>
                   {item.variant && (
@@ -96,31 +96,33 @@ export function OrderItemsList({
                       {item.variant.variant_name}
                     </p>
                   )}
-                  {item.variant?.effective_price || item.product.base_price ? (
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-black text-primary">
-                        {formatVND(
-                          item.variant?.effective_price ??
-                            item.product.base_price
-                        )}
-                      </p>
-                      {item.variant?.price_adjustment != null &&
-                        item.variant.price_adjustment !== 0 && (
-                          <span
-                            className={`text-[10px] font-bold ${
-                              item.variant.price_adjustment > 0
-                                ? "text-red-500"
-                                : "text-emerald-600"
-                            }`}
-                          >
-                            {item.variant.price_adjustment > 0 ? "+" : ""}
-                            {formatVND(item.variant.price_adjustment)}
-                          </span>
-                        )}
+                  <div className="flex items-center justify-between mt-auto">
+                    {item.variant?.effective_price || item.product.base_price ? (
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-black text-primary">
+                          {formatVND(
+                            item.variant?.effective_price ??
+                              item.product.base_price
+                          )}
+                        </p>
+                        {item.variant?.price_adjustment != null &&
+                          item.variant.price_adjustment !== 0 && (
+                            <span
+                              className={`text-[10px] font-bold ${
+                                item.variant.price_adjustment > 0
+                                  ? "text-red-500"
+                                  : "text-emerald-600"
+                              }`}
+                            >
+                              {item.variant.price_adjustment > 0 ? "+" : ""}
+                              {formatVND(item.variant.price_adjustment)}
+                            </span>
+                          )}
+                      </div>
+                    ) : null}
+                    <div className="flex-shrink-0 text-xs font-bold text-on-surface-variant">
+                      Số lượng: {item.quantity}
                     </div>
-                  ) : null}
-                  <div className="flex-shrink-0 text-xs font-bold text-on-surface-variant">
-                    Số lượng: {item.quantity}
                   </div>
                 </div>
 
@@ -181,41 +183,45 @@ export function OrderItemsList({
                       )) *
                     item.quantity;
                   return (
-                    <div className="mt-2 space-y-2 border-t border-outline-variant/20 pt-3">
-                      {item.components.map((component) => (
-                        <div
-                          key={component.variant_id}
-                          className="flex items-center justify-between gap-2"
-                        >
-                          <div className="grid w-full grid-cols-[90px_auto_max-content] items-center gap-2">
-                            <span className="rounded-sm bg-gray-100 px-2 py-1 text-center text-xs font-black text-on-surface-variant">
-                              {component.component_group}
-                            </span>
-                            <div className="flex items-center gap-1.5 truncate">
-                              <span className="truncate text-xs font-semibold text-on-tertiary-fixed-variant">
-                                {component.variant_name}
-                              </span>
-                              {/* {component.is_pre_order && (
-                                <span className="shrink-0 rounded-sm bg-violet-500 px-1 py-0.5 text-[8px] font-black uppercase text-white">
-                                  Pre-order
+                    <div className="mt-2 border-t border-outline-variant/60 pt-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        {item.components.map((component) => (
+                          <div
+                            key={component.variant_id}
+                            className="flex items-center justify-between gap-2"
+                          >
+                            <div className="flex flex-col w-full bg-slate-100/50 rounded-md p-2">
+                              <label className="flex items-cen justify-between text-xs text-on-surface-variant">
+                                {component.component_group}
+                                <span
+                                  className={`ml-auto flex-shrink-0 text-[10px] font-bold ${
+                                    component.price_adjustment > 0
+                                      ? "text-red-500"
+                                      : component.price_adjustment < 0
+                                      ? "text-emerald-600"
+                                      : "text-on-surface-variant"
+                                  }`}
+                                >
+                                  {component.price_adjustment !== 0
+                                    ? `${component.price_adjustment > 0 ? "+" : ""}${formatVND(
+                                        component.price_adjustment
+                                      )}`
+                                    : ""}
                                 </span>
-                              )} */}
+                              </label>
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className="truncate text-sm text-on-tertiary-fixed-variant font-black">
+                                  {component.variant_name}
+                                </span>
+                              </div>
                             </div>
-                            <span
-                              className={`ml-auto flex-shrink-0 text-[10px] font-bold text-primary`}
-                            >
-                              {component.price_adjustment !== 0
-                                ? `${component.price_adjustment > 0 ? "+" : ""}${formatVND(
-                                    component.price_adjustment
-                                  )}`
-                                : ""}
-                            </span>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                       {/* Total price for item */}
-                      <div className="flex w-full items-center justify-end border-t border-outline-variant/20 pt-2 text-right">
-                        <span className="text-sm font-black text-primary">
+                      <div className="flex w-full items-center justify-end border-t border-outline-variant/60 pt-2 mt-2 text-right gap-2">
+                        <span className="text-base font-semibold">Tổng tiền:</span>
+                        <span className="text-lg font-black text-primary">
                           {formatVND(itemTotal)}
                         </span>
                       </div>
@@ -228,4 +234,4 @@ export function OrderItemsList({
       </div>
     </section>
   );
-}
+});
