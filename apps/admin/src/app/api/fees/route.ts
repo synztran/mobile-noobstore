@@ -11,6 +11,7 @@ export interface FeesData {
   insurance_fee: number;
   packing_fee: number;
   handling_fee: number;
+  max_vouchers_per_order: number;
   updated_at: string | null;
 }
 
@@ -50,6 +51,7 @@ export async function PATCH(req: NextRequest) {
       "insurance_fee",
       "packing_fee",
       "handling_fee",
+      "max_vouchers_per_order",
     ] as const;
 
     type FeeField = (typeof numericFields)[number];
@@ -62,6 +64,12 @@ export async function PATCH(req: NextRequest) {
         if (!Number.isFinite(num) || num < 0) {
           return NextResponse.json(
             { error: `${field} must be a non-negative number` },
+            { status: 400 }
+          );
+        }
+        if (field === "max_vouchers_per_order" && num < 1) {
+          return NextResponse.json(
+            { error: "max_vouchers_per_order must be at least 1" },
             { status: 400 }
           );
         }
