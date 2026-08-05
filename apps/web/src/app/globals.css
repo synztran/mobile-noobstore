@@ -158,8 +158,8 @@
   }
 
   .main-bottom-offset {
-    /* matches bottom-nav-pad height: 0.75rem + ~2.5rem content + safe-area + 0.75rem + extra */
-    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 4.5rem);
+    /* matches bottom-nav-pad height: 0.75rem + ~2.5rem content + safe-area + 0.5rem + extra */
+    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 4.25rem);
   }
 
   .min-main-content {
@@ -322,4 +322,59 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ── react-wheel-scroller theme ──
+   The library's wheel-select.css is styled entirely via CSS custom
+   properties that reference shadcn-style tokens (--popover, --foreground,
+   --accent, --border, ...) which this app does not define. Without them the
+   wheel pickers render unstyled. These overrides map those tokens to the
+   sneakerlab palette. Kept in :root and after the library import so the
+   cascade wins.                                            */
+:root {
+  /* Popup surface */
+  --background-popup: #ffffff;
+  --background-backdrop: rgb(0 0 0 / 0.5);
+  --background-hover: #f5f3ef;
+  --background-secondary: #f0eeea;
+  --background-tertiary: #eae8e4;
+
+  /* Divider / text */
+  --divider-main: #e4e2de;
+  --divider-popup: #e4e2de;
+  --text-main: #1b1c1a;
+  --text-secondary: #56423c;
+  --text-tertiary: #89726a;
+
+  /* Form */
+  --form-border-color: #e4e2de;
+  --form-placeholder-color: #89726a;
+  --form-focus-shadow: 0 0 0 3px color-mix(in srgb, #9b3f1c 35%, transparent);
+  --popover-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
+
+  /* Brand (terracotta) */
+  --primary-container: #bb5732;
+  --primary-contrast-text: #ffffff;
+  --primary-plain-text-color: #9b3f1c;
+  --primary-solid-text-color: #ffffff;
+  --primary-rgb: 155 63 28;
+
+  /* Shape / motion */
+  --radius: 0.75rem;
+  --radius-md: 0.5rem;
+  --ease-out-strong: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Low-level shadcn-style tokens the library may chain off */
+  --background: #fbf9f5;
+  --foreground: #1b1c1a;
+  --popover: #ffffff;
+  --popover-foreground: #1b1c1a;
+  --muted: #f0eeea;
+  --muted-foreground: #56423c;
+  --accent: #d46a43;
+  --accent-foreground: #ffffff;
+  --border: #e4e2de;
+  --input: #e4e2de;
+  --ring: #9b3f1c;
+  --primary-foreground: #ffffff;
 }

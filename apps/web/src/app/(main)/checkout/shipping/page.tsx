@@ -1,10 +1,12 @@
 "use client";
 
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
 import { DELIVERY_OPTIONS } from "@/constants";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm, type DeliverySpeed } from "@/hooks/useShippingForm";
+import { cartItemsToGA, trackBeginCheckout } from "@/lib/analytics";
+import { useCartStore } from "@/store";
 import AddressFields from "./AddressFields";
 import ContactInfoFields from "./ContactInfoFields";
 import DeliveryMethodSection from "./DeliveryMethodSection";
@@ -54,6 +56,15 @@ const ShippingPage = () => {
     preOrderEstimate,
     touched,
   } = useShippingForm();
+
+  const cartItems = useCartStore((s) => s.items);
+  const beginCheckoutFired = useRef(false);
+
+  useEffect(() => {
+    if (!ready || beginCheckoutFired.current || cartItems.length === 0) return;
+    beginCheckoutFired.current = true;
+    trackBeginCheckout(cartItemsToGA(cartItems), subtotal);
+  }, [ready, cartItems, subtotal]);
 
   const cityCode = useMemo(
     () => VIETNAM_CITIES.find((c) => c.name === form.city)?.code ?? null,

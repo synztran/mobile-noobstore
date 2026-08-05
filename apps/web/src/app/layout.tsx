@@ -1,4 +1,5 @@
 import { ReactQueryProvider } from "@/components/ui/ReactQueryProvider";
+import { RouteChangeTracker } from "@/components/ui/RouteChangeTracker";
 import { ServiceWorkerRegister } from "@/components/ui/ServiceWorkerRegister";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -6,7 +7,10 @@ import { FlyToCart } from "@/components/ui/FlyToCart";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import "gooey-toast/styles.css";
+import "react-wheel-scroller/styles.css";
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import "./globals.css";
 import localFont from "next/font/local";
@@ -94,12 +98,31 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
+        {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}');
+              `}
+            </Script>
+          </>
+        )}
       </head>
       <body className="bg-background font-sans text-on-surface antialiased">
         <ReactQueryProvider>
           <AuthProvider>
             <NavigationOverlay />
             <FlyToCart />
+            <Suspense fallback={null}>
+              <RouteChangeTracker />
+            </Suspense>
             {children}
             <MobileViewportGuard />
             <ToastProvider />

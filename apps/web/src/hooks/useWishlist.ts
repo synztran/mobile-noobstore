@@ -1,6 +1,7 @@
 "use client";
 
 import type { WishlistItemResponse } from "@/app/api/wishlist/route";
+import { toGAProduct, trackRemoveWishlist, trackWishlist } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { toast } from "@/lib/toast";
 import {
@@ -27,12 +28,22 @@ interface UseWishlistResult {
 	busy: boolean;
 	error: string | null;
 	fetchWishlist: () => Promise<void>;
-	addToWishlist: (productId: string) => Promise<void>;
-	removeFromWishlist: (productId: string) => Promise<void>;
-	toggleWishlist: (productId: string) => Promise<void>;
+	addToWishlist: (productId: string, meta?: ProductMeta) => Promise<void>;
+	removeFromWishlist: (productId: string, meta?: ProductMeta) => Promise<void>;
+	toggleWishlist: (productId: string, meta?: ProductMeta) => Promise<void>;
 	isInWishlist: (productId: string) => boolean;
 	isPendingFor: (productId: string) => boolean;
 }
+
+export type ProductMeta = {
+	id: string;
+	name: string;
+	category?: string | null;
+	brand?: string | null;
+	price?: number;
+	base_price?: number;
+	discount_price?: number;
+};
 
 export function useWishlist(
 	options: UseWishlistOptions = {},
@@ -77,11 +88,12 @@ export function useWishlist(
 	}, [queryClient]);
 
 	const addToWishlist = useCallback(
-		async (productId: string) => {
+		async (productId: string, meta?: ProductMeta) => {
 			if (!productId || wishlistProductIdsRef.current.has(productId)) return;
 			markPending(productId);
 			try {
 				await addMutation.mutateAsync(productId);
+				if (meta) trackWishlist(toGAProduct(meta));
 				toast.success("Đã thêm vào yêu thích");
 			} catch (err) {
 				toast.error(
@@ -98,11 +110,12 @@ export function useWishlist(
 	);
 
 	const removeFromWishlist = useCallback(
-		async (productId: string) => {
+		async (productId: string, meta?: ProductMeta) => {
 			if (!productId) return;
 			markPending(productId);
 			try {
 				await removeMutation.mutateAsync(productId);
+				if (meta) trackRemoveWishlist(toGAProduct(meta));
 				toast.success("Đã xóa khỏi yêu thích");
 			} catch (err) {
 				toast.error(
@@ -130,12 +143,12 @@ export function useWishlist(
 	);
 
 	const toggleWishlist = useCallback(
-		async (productId: string) => {
+		async (productId: string, meta?: ProductMeta) => {
 			if (isInWishlist(productId)) {
-				await removeFromWishlist(productId);
+				await removeFromWishlist(productId, meta);
 				return;
 			}
-			await addToWishlist(productId);
+			await addToWishlist(productId, meta);
 		},
 		[addToWishlist, isInWishlist, removeFromWishlist],
 	);

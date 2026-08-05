@@ -7,6 +7,7 @@ import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
 import { useFlyToCartStore } from "@/store/useFlyToCart";
 import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
+import { trackAddToCart, toGAProduct } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import Image from "next/image";
 import Link from "next/link";
@@ -94,6 +95,7 @@ export const ProductCard = memo(function ProductCard({
     }
 
     addStandardProduct(product, selectedVariant, product.gifts);
+    trackAddToCart(toGAProduct(product, selectedVariant));
 
     if (product.thumbnail && imageRef.current) {
       flyToCart(product.thumbnail, imageRef.current);
@@ -167,6 +169,7 @@ export const ProductCard = memo(function ProductCard({
           <div className="mt-auto flex items-center gap-1">
             <WishlistButton
               productId={product.id}
+              product={product}
               size="sm"
               showLabel
               className="w-[32px] rounded-xl"

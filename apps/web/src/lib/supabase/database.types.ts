@@ -550,6 +550,7 @@ export type Database = {
           handling_fee: number
           id: number
           insurance_fee: number
+          max_vouchers_per_order: number
           packing_fee: number
           updated_at: string | null
         }
@@ -559,6 +560,7 @@ export type Database = {
           handling_fee?: number
           id?: number
           insurance_fee?: number
+          max_vouchers_per_order?: number
           packing_fee?: number
           updated_at?: string | null
         }
@@ -568,6 +570,7 @@ export type Database = {
           handling_fee?: number
           id?: number
           insurance_fee?: number
+          max_vouchers_per_order?: number
           packing_fee?: number
           updated_at?: string | null
         }
@@ -2523,9 +2526,11 @@ export type Database = {
           amount_off: number | null
           applies_to_category_slugs: string[] | null
           applies_to_product_ids: string[] | null
+          applies_to_shipping_methods: string[] | null
           code: string
           created_at: string
           created_by: string | null
+          customer_ids: string[] | null
           deleted_at: string | null
           description: string | null
           end_at: string | null
@@ -2555,9 +2560,11 @@ export type Database = {
           amount_off?: number | null
           applies_to_category_slugs?: string[] | null
           applies_to_product_ids?: string[] | null
+          applies_to_shipping_methods?: string[] | null
           code: string
           created_at?: string
           created_by?: string | null
+          customer_ids?: string[] | null
           deleted_at?: string | null
           description?: string | null
           end_at?: string | null
@@ -2587,9 +2594,11 @@ export type Database = {
           amount_off?: number | null
           applies_to_category_slugs?: string[] | null
           applies_to_product_ids?: string[] | null
+          applies_to_shipping_methods?: string[] | null
           code?: string
           created_at?: string
           created_by?: string | null
+          customer_ids?: string[] | null
           deleted_at?: string | null
           description?: string | null
           end_at?: string | null

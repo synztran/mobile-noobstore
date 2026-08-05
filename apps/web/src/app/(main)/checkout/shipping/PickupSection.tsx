@@ -1,7 +1,9 @@
 "use client";
 
+import { WsDate } from "react-wheel-scroller/datetime";
+import { WsSelect } from "react-wheel-scroller/select";
 import clsx from "clsx";
-import { Store } from "lucide-react";
+import { Calendar, Clock, Store } from "lucide-react";
 import { memo } from "react";
 
 interface Props {
@@ -18,6 +20,43 @@ interface Props {
   onBlur: (field: "pickupDate" | "pickupTime") => void;
 }
 
+const PICKUP_HORIZON_DAYS = 7;
+
+const VIETNAMESE_MONTHS = [
+  "Tháng 1",
+  "Tháng 2",
+  "Tháng 3",
+  "Tháng 4",
+  "Tháng 5",
+  "Tháng 6",
+  "Tháng 7",
+  "Tháng 8",
+  "Tháng 9",
+  "Tháng 10",
+  "Tháng 11",
+  "Tháng 12",
+];
+
+function toYmd(date: Date): string {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function fromYmd(value: string): Date {
+  return new Date(`${value}T00:00:00`);
+}
+
+function formatPickupDate(value: string): string {
+  return new Date(`${value}T00:00:00`).toLocaleDateString("vi-VN", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 function PickupSection({
   hasPreOrder,
   pickupDate,
@@ -29,6 +68,11 @@ function PickupSection({
   onTimeChange,
   onBlur,
 }: Props) {
+  const minDate = fromYmd(minPickupDate);
+  const maxDate = new Date(minDate);
+  maxDate.setDate(maxDate.getDate() + PICKUP_HORIZON_DAYS);
+  const dateInvalid = isPickupFieldInvalid("pickupDate");
+
   return (
     <div className="space-y-3 rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
       <div className="flex items-center gap-2">
@@ -54,24 +98,44 @@ function PickupSection({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex items-stretch gap-2">
           <div>
             <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
               Ngày nhận hàng <span className="ml-0.5 text-primary">*</span>
             </label>
-            <input
-              type="date"
-              value={pickupDate}
-              min={minPickupDate}
-              onChange={(e) => onDateChange(e.target.value)}
-              onBlur={() => onBlur("pickupDate")}
-              className={clsx(
-                "w-full rounded-2xl border-2 bg-surface-container px-4 py-3.5 text-sm font-medium text-on-surface outline-none transition-all",
-                isPickupFieldInvalid("pickupDate")
-                  ? "border-error"
-                  : "border-transparent focus-within:border-primary"
-              )}
-            />
+            <div className="relative">
+              <WsDate
+                value={pickupDate ? fromYmd(pickupDate) : undefined}
+                min={minDate}
+                max={maxDate}
+                display="bottom"
+                touchUi
+                returnFormat="jsdate"
+                monthNames={VIETNAMESE_MONTHS}
+                dateFormat="dd/mm/yyyy"
+                setText="Chọn"
+                cancelText="Hủy"
+                onSet={(_event, inst) => {
+                  const date = inst.getDate();
+                  if (date) onDateChange(toYmd(date));
+                }}
+              >
+                <input
+                  type="text"
+                  readOnly
+                  placeholder="Chọn ngày"
+                  value={pickupDate ? formatPickupDate(pickupDate) : ""}
+                  onBlur={() => onBlur("pickupDate")}
+                  className={clsx(
+                    "relative w-full cursor-pointer rounded-2xl bg-surface-container p-3 text-left text-sm font-medium text-on-surface outline-none transition-all border",
+                    dateInvalid
+                      ? "border-error"
+                      : "border-primary focus-within:border-primary-action"
+                  )}
+                />
+              </WsDate>
+              <Calendar className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+            </div>
             <p className="ml-1 mt-1 text-[10px] font-bold text-on-surface-variant">
               Sớm nhất:{" "}
               {new Date(`${minPickupDate}T00:00:00`).toLocaleDateString(
@@ -83,7 +147,7 @@ function PickupSection({
                 }
               )}
             </p>
-            {isPickupFieldInvalid("pickupDate") && (
+            {dateInvalid && (
               <p className="ml-1 mt-1 text-[10px] font-bold text-error">
                 Trường này là bắt buộc
               </p>
@@ -94,24 +158,36 @@ function PickupSection({
             <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
               Giờ nhận hàng <span className="ml-0.5 text-primary">*</span>
             </label>
-            <select
-              value={pickupTime}
-              onChange={(e) => onTimeChange(e.target.value)}
-              onBlur={() => onBlur("pickupTime")}
-              className={clsx(
-                "w-full appearance-none rounded-2xl border-2 bg-surface-container px-4 py-3.5 text-sm font-medium text-on-surface outline-none transition-all",
-                isPickupFieldInvalid("pickupTime")
-                  ? "border-error"
-                  : "border-transparent focus-within:border-primary"
-              )}
-            >
-              <option value="">Chọn giờ</option>
-              {pickupSlots.map((slot) => (
-                <option key={slot} value={slot}>
-                  {slot}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <WsSelect
+                data={pickupSlots}
+                value={pickupTime}
+                display="bottom"
+                touchUi
+                placeholder="Chọn giờ"
+                setText="Chọn"
+                cancelText="Hủy"
+                onSet={(_event, inst) => {
+                  const val = inst.getVal();
+                  if (val) onTimeChange(String(val));
+                }}
+              >
+                <input
+                  type="text"
+                  readOnly
+                  placeholder="Chọn giờ"
+                  value={pickupTime}
+                  onBlur={() => onBlur("pickupTime")}
+                  className={clsx(
+                    "relative w-full cursor-pointer rounded-2xl bg-surface-container p-3 text-left text-sm font-medium text-on-surface outline-none transition-all border",
+                    isPickupFieldInvalid("pickupTime")
+                      ? "border-error"
+                      : "border-primary focus-within:border-primary-action"
+                  )}
+                />
+              </WsSelect>
+              <Clock className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-on-surface-variant" />
+            </div>
             {isPickupFieldInvalid("pickupTime") && (
               <p className="ml-1 mt-1 text-[10px] font-bold text-error">
                 Trường này là bắt buộc

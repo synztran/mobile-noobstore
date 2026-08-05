@@ -9,6 +9,7 @@ import type {
 import type { ShopProduct } from "@/app/api/products/route";
 import type { CategoryItem } from "@/lib/products-server";
 import type { SelectedComponent } from "@/lib/data";
+import { trackAddToCart, toGAProduct } from "@/lib/analytics";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/store";
@@ -310,6 +311,8 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
       hasComponents ? components : undefined,
       activeProduct.gifts
     );
+
+    trackAddToCart(toGAProduct(activeProduct, selectedSimpleVariant));
 
     setSubmitting(false);
     toast.success("Đã thêm vào giỏ hàng!");

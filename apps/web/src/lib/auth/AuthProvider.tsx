@@ -66,12 +66,14 @@ interface AuthContextValue {
   loading: boolean;
   signIn: (
     email: string,
-    password: string
+    password: string,
+    captchaToken?: string
   ) => Promise<{ error: string | null }>;
   signUp: (
     email: string,
     password: string,
-    fullName: string
+    fullName: string,
+    captchaToken?: string
   ) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error: string | null }>;
@@ -196,11 +198,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile]);
 
   // Auth methods
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, captchaToken?: string) => {
     const res = await fetch("/api/auth/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, captchaToken }),
     });
     const data = await res.json();
     if (data.error) return { error: data.error ?? null };
@@ -229,11 +231,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, captchaToken?: string) => {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, fullName }),
+      body: JSON.stringify({ email, password, fullName, captchaToken }),
     });
     const data = await res.json();
     return { error: data.error ?? null };
@@ -256,6 +258,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        // redirectTo: `https://zvjpabkpabvxfouupxgo.supabase.co/auth/v1/callback`
       },
     });
     return { error: error?.message ?? null };

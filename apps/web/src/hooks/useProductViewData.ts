@@ -8,6 +8,7 @@ import type {
 } from "@/app/api/products/[slug]/route";
 import type { ShopVariant } from "@/app/api/products/route";
 import type { Product, SelectedComponent } from "@/lib/data";
+import { cartItemToGA, trackAddToCart } from "@/lib/analytics";
 import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
 import { toast } from "@/lib/toast";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -273,6 +274,14 @@ export function useProductViewData(
       initialGroups.length > 0 ? null : selectedVariant,
       components,
       product.gifts
+    );
+    trackAddToCart(
+      cartItemToGA({
+        product: cartProduct,
+        variant: initialGroups.length > 0 ? null : selectedVariant,
+        components,
+        quantity: qty ?? 1,
+      })
     );
     toast.success("Added to cart!");
     openCart();

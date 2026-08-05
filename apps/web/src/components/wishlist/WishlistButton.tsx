@@ -1,7 +1,7 @@
 "use client";
 
 import Icon from "@/components/ui/Icon";
-import { useWishlist } from "@/hooks/useWishlist";
+import { useWishlist, type ProductMeta } from "@/hooks/useWishlist";
 import clsx from "clsx";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -9,6 +9,7 @@ import { memo, useMemo } from "react";
 
 interface WishlistButtonProps {
   productId: string;
+  product?: ProductMeta;
   className?: string;
   showLabel?: boolean;
   size?: "sm" | "md";
@@ -17,6 +18,7 @@ interface WishlistButtonProps {
 
 export const WishlistButton = memo(function WishlistButton({
   productId,
+  product,
   className,
   showLabel = false,
   size = "md",
@@ -33,7 +35,7 @@ export const WishlistButton = memo(function WishlistButton({
   return (
     <motion.button
       type="button"
-      onClick={() => void toggleWishlist(productId)}
+      onClick={() => void toggleWishlist(productId, product)}
       disabled={pending}
       aria-label={
         wished ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"

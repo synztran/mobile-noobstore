@@ -69,7 +69,17 @@ export async function GET() {
 			);
 		}
 
-		const resolvedVouchers = (vouchers ?? []) as unknown as VoucherRow[];
+		const allVouchers = (vouchers ?? []) as unknown as VoucherRow[];
+
+		// Public listing excludes:
+		//  - customer-specific vouchers (customer_ids set)
+		//  - product/category-scoped vouchers (surfaced only via /eligible auto-apply)
+		const resolvedVouchers = allVouchers.filter(
+			(v) =>
+				(v.scope_type === "order_total" ||
+					v.scope_type === "shipping_fee") &&
+				(!v.customer_ids || v.customer_ids.length === 0),
+		);
 
 		const result = {
 			vouchers: resolvedVouchers,

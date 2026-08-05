@@ -10,6 +10,7 @@ import {
   useUpdateCartItem,
 } from "@/lib/react-query/cart/api/useCartMutations";
 import { useCartStore } from "@/store";
+import { cartItemToGA, trackRemoveFromCart } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { CartItem } from "@/lib/data";
@@ -66,8 +67,10 @@ export function CartDrawer() {
   const confirmRemove = useCallback(() => {
     if (clearAllMode) {
       if (cartId) clearCartMutation.mutate(cartId);
+      for (const item of visibleItems) trackRemoveFromCart(cartItemToGA(item));
       setClearAllMode(false);
     } else if (pendingRemoval) {
+      trackRemoveFromCart(cartItemToGA(pendingRemoval));
       if (pendingRemoval.id) {
         setRemovingItemId(pendingRemoval.id);
         removeMutation.mutate(pendingRemoval.id, {
@@ -89,6 +92,7 @@ export function CartDrawer() {
     clearCartMutation,
     removeMutation,
     removeItem,
+    visibleItems,
   ]);
 
   const cancelRemove = useCallback(() => {

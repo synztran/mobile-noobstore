@@ -23,6 +23,7 @@ export interface VoucherRule {
 	applies_to_product_ids: string[] | null;
 	applies_to_category_slugs: string[] | null;
 	excluded_product_ids: string[] | null;
+	applies_to_shipping_methods: string[] | null;
 	stackable: boolean;
 	usage_limit_total: number | null;
 	usage_limit_per_user: number | null;
@@ -60,6 +61,8 @@ export interface VoucherRow {
 	applies_to_product_ids: string[] | null;
 	applies_to_category_slugs: string[] | null;
 	excluded_product_ids: string[] | null;
+	applies_to_shipping_methods: string[] | null;
+	customer_ids: string[] | null;
 	stackable: boolean;
 	usage_limit_total: number | null;
 	usage_limit_per_user: number | null;
@@ -105,10 +108,19 @@ export interface OrderVoucherFields {
 	gift_items_snapshot: VoucherGiftItem[] | null;
 }
 
+export interface VoucherApplyItem {
+	product_id: string;
+	quantity: number;
+	unit_price: number;
+	category_slug?: string | null;
+}
+
 export interface ApplyVoucherRequest {
 	voucherIds: string[];
 	subtotal?: number;
 	shippingCost?: number;
+	shippingMethodId?: string;
+	items?: VoucherApplyItem[];
 }
 
 export interface ApplyVoucherResponse {

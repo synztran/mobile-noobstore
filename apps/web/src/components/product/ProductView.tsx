@@ -13,6 +13,7 @@ import { ProductConfigurator } from "@/components/product/ProductConfigurator";
 import Icon from "@/components/ui/Icon";
 import WishlistButton from "@/components/wishlist/WishlistButton";
 import { useProductViewData } from "@/hooks/useProductViewData";
+import { trackViewItem, toGAProduct } from "@/lib/analytics";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
 import Image from "next/image";
@@ -104,6 +105,10 @@ export function ProductView({
     quantity,
     setQuantity,
   } = useProductViewData(product, componentGroups, componentRules);
+
+  useEffect(() => {
+    trackViewItem(toGAProduct(product, selectedVariant));
+  }, [product, selectedVariant]);
 
   const hasDiscount = product.min_price < product.base_price;
   const discountPercent = hasDiscount
@@ -573,6 +578,7 @@ export function ProductView({
       >
         <WishlistButton
           productId={product.id}
+          product={product}
           showLabel
           size="md"
           className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"

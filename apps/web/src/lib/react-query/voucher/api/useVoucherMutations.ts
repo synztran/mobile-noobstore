@@ -1,7 +1,8 @@
 import { appQueryKeys } from "@/lib/react-query/root";
+import { trackVoucherApply } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { useDiscountStore } from "@/store/useDiscount";
-import type { ApplyVoucherResponse } from "@/types/voucher";
+import type { ApplyVoucherResponse, VoucherApplyItem } from "@/types/voucher";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useApplyVouchers() {
@@ -12,11 +13,24 @@ export function useApplyVouchers() {
       voucherIds,
       subtotal = 0,
       shippingCost = 0,
+      shippingMethodId,
+      items,
     }: {
       voucherIds: string[];
       subtotal?: number;
       shippingCost?: number;
+      shippingMethodId?: string;
+      items?: VoucherApplyItem[];
     }) => {
+      const maxVouchers = useDiscountStore.getState().maxVouchersPerOrder;
+      const uniqueIds = [...new Set(voucherIds)];
+      if (uniqueIds.length > maxVouchers) {
+        toast.error(
+          `Chỉ được áp dụng tối đa ${maxVouchers} mã giảm giá. Vui lòng gỡ bỏ một mã đã áp dụng rồi thử lại.`
+        );
+        return null;
+      }
+
       if (voucherIds.length === 0) {
         useDiscountStore.getState().removeAllVouchers();
         return null;
@@ -26,9 +40,11 @@ export function useApplyVouchers() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          voucherIds: [...new Set(voucherIds)],
+          voucherIds: uniqueIds,
           subtotal,
           shippingCost,
+          shippingMethodId,
+          items,
         }),
       });
 
@@ -39,8 +55,15 @@ export function useApplyVouchers() {
 
       return res.json() as Promise<ApplyVoucherResponse>;
     },
+    onMutate: () => {
+      useDiscountStore.setState({ applyingVoucher: true, error: null });
+    },
     onSuccess: (data) => {
       if (!data) return;
+      trackVoucherApply(
+        data.vouchers.map((v) => v.voucherInfo.voucher_code),
+        data.totalDiscountAmount + data.totalShippingDiscountAmount
+      );
       useDiscountStore.getState().setAppliedVouchers(
         data.vouchers,
         data.totalDiscountAmount,
@@ -51,9 +74,13 @@ export function useApplyVouchers() {
       toast.success("Áp dụng voucher thành công");
     },
     onError: (error) => {
+      useDiscountStore.setState({ applyingVoucher: false });
       toast.error(
         error instanceof Error ? error.message : "Failed to apply voucher",
       );
+    },
+    onSettled: () => {
+      useDiscountStore.setState({ applyingVoucher: false });
     },
   });
 }

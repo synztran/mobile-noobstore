@@ -1,6 +1,7 @@
 "use client";
 
 import { toast } from "@/lib/toast";
+import { trackNewsletterSubscribe } from "@/lib/analytics";
 import { useState } from "react";
 
 export function NewsletterCTA() {
@@ -36,6 +37,7 @@ export function NewsletterCTA() {
       }
 
       toast.success("Đăng ký thành công! Bạn sẽ nhận được thông báo sớm nhất.");
+      trackNewsletterSubscribe();
       setEmail("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Đăng ký thất bại");

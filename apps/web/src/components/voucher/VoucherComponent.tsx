@@ -1,11 +1,10 @@
 "use client";
 
-import { useIsMounted } from "@/hooks/useIsMounted";
+import { useVouchers } from "@/hooks/useVouchers";
 import { formatVND } from "@/lib/currency";
-import { useDiscountStore } from "@/store";
-import type { VoucherRow } from "@/types/voucher";
-import { CheckCircle2, Search, X } from "lucide-react";
-import { memo, useEffect, useMemo, useState } from "react";
+import type { VoucherApplyItem, VoucherRow } from "@/types/voucher";
+import { CheckCircle2, Search, Ticket, X } from "lucide-react";
+import { memo } from "react";
 import { VoucherDrawer } from "./VoucherDrawer";
 
 type VoucherComponentProps = {
@@ -13,6 +12,8 @@ type VoucherComponentProps = {
   className?: string;
   subtotal?: number;
   shippingCost?: number;
+  shippingMethodId?: string;
+  items?: VoucherApplyItem[];
 };
 
 function VoucherSkeleton() {
@@ -37,76 +38,27 @@ export const VoucherComponent = memo(function VoucherComponent({
   className = "",
   subtotal = 0,
   shippingCost = 0,
+  shippingMethodId,
+  items = [],
 }: VoucherComponentProps) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const {
-    vouchers,
+    drawerOpen,
+    setDrawerOpen,
+    searchQuery,
+    setSearchQuery,
     appliedVouchers,
     totalDiscountAmount,
     totalShippingDiscountAmount,
+    maxVouchersPerOrder,
     loadingVouchers,
     error,
-    setVouchers,
-    fetchVouchers,
+    displayVouchers,
+    filteredVouchers,
+    validVouchers,
+    invalidVouchers,
+    applyingVoucher,
     removeAppliedVoucher,
-  } = useDiscountStore();
-
-  const displayVouchers = vouchers.length > 0 ? vouchers : initialVouchers;
-
-  useEffect(() => {
-    if (vouchers.length === 0 && initialVouchers.length > 0) {
-      setVouchers(initialVouchers);
-    }
-  }, [initialVouchers, setVouchers, vouchers.length]);
-
-  useEffect(() => {
-    if (vouchers.length === 0 && initialVouchers.length === 0) {
-      void fetchVouchers();
-    }
-  }, [fetchVouchers, initialVouchers.length, vouchers.length]);
-
-  const isVoucherValid = (voucher: VoucherRow): boolean => {
-    if (voucher.status !== "active" || voucher.deleted_at) {
-      return false;
-    }
-
-    const now = new Date();
-    if (voucher.start_at) {
-      const startDate = new Date(voucher.start_at);
-      if (now < startDate) return false;
-    }
-    if (voucher.end_at) {
-      const endDate = new Date(voucher.end_at);
-      if (now > endDate) return false;
-    }
-
-    if (voucher.min_order_amount > 0 && subtotal < voucher.min_order_amount) {
-      return false;
-    }
-
-    return true;
-  };
-
-  const filteredVouchers = useMemo(() => {
-    if (!searchQuery.trim()) return displayVouchers;
-
-    const query = searchQuery.toLowerCase();
-    return displayVouchers.filter(
-      (v) =>
-        v.code?.toLowerCase().includes(query) ||
-        v.description?.toLowerCase().includes(query)
-    );
-  }, [searchQuery, displayVouchers]);
-
-  const isMounted = useIsMounted();
-
-  const validVouchers = isMounted
-    ? filteredVouchers.filter(isVoucherValid)
-    : filteredVouchers;
-  const invalidVouchers = isMounted
-    ? filteredVouchers.filter((v) => !isVoucherValid(v))
-    : [];
+  } = useVouchers({ initialVouchers, subtotal, shippingCost, shippingMethodId, items });
 
   return (
     <section className={`space-y-2 ${className}`}>
@@ -115,6 +67,11 @@ export const VoucherComponent = memo(function VoucherComponent({
           <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-outline">
             Mã giảm giá
           </h3>
+          {maxVouchersPerOrder > 0 && appliedVouchers.length > 0 && (
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary">
+              {appliedVouchers.length}/{maxVouchersPerOrder}
+            </span>
+          )}
         </div>
       </div>
 
@@ -126,8 +83,8 @@ export const VoucherComponent = memo(function VoucherComponent({
               className="relative rounded-2xl border border-emerald-500/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(255,255,255,0.96))] p-4 shadow-[0_14px_40px_rgba(16,185,129,0.12)]"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white">
-                  <CheckCircle2 className="h-5 w-5" />
+                <div className="flex h-8 w-12 items-center justify-center rounded-md bg-emerald-500 text-white">
+                  <Ticket className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-black uppercase tracking-widest text-emerald-600">
@@ -195,6 +152,8 @@ export const VoucherComponent = memo(function VoucherComponent({
             filteredVouchers={filteredVouchers}
             subtotal={subtotal}
             shippingCost={shippingCost}
+            shippingMethodId={shippingMethodId}
+            items={items}
           />
           <button
             type="button"

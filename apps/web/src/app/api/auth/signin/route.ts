@@ -31,7 +31,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { email, password } = body as { email?: string; password?: string };
+  const { email, password, captchaToken } = body as {
+    email?: string;
+    password?: string;
+    captchaToken?: string;
+  };
 
   if (!email || !password) {
     return NextResponse.json(
@@ -41,7 +45,11 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    ...(captchaToken ? { options: { captchaToken } } : {}),
+  });
 
   if (error) {
     const viMessage = ERROR_MAP[error.message] ?? error.message;

@@ -3,6 +3,7 @@
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
+import { cartItemsToGA, trackPurchase } from "@/lib/analytics";
 import type { PaymentInformation } from "@/lib/payment-information";
 import {
   useOrderStatus,
@@ -44,6 +45,15 @@ export default function CheckingPageContent() {
       router.replace("/shop");
     }
   }, [mounted, orderNumber, router]);
+
+  // Fire GA4 purchase once per order (guarded via sessionStorage)
+  useEffect(() => {
+    if (!mounted || !orderNumber || orderedItems.length === 0) return;
+    const key = `ga_purchase_${orderNumber}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    trackPurchase(orderNumber, cartItemsToGA(orderedItems), totalPrice);
+  }, [mounted, orderNumber, orderedItems, totalPrice]);
 
   const orderStatusQuery = useOrderStatus(
     orderNumber,

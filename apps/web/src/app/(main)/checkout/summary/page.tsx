@@ -8,6 +8,7 @@ import { RankBadge } from "@/components/rank/RankBadge";
 import { RankBenefitModal } from "@/components/rank/RankBenefitModal";
 import VoucherComponent from "@/components/voucher/VoucherComponent";
 import { useIsMounted } from "@/hooks/useIsMounted";
+import { cartItemToGA, trackRemoveFromCart } from "@/lib/analytics";
 import { formatVND } from "@/lib/currency";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
@@ -80,6 +81,23 @@ export default function SummaryPage() {
     (i) => i.is_pre_order || i.components?.some((c) => c.is_pre_order)
   );
 
+  const voucherItems = useMemo(() => {
+    if (!mounted) return [];
+    return rawItems.map((i) => {
+      const basePrice =
+        i.variant?.effective_price ?? i.product.base_price;
+      const componentsTotal = (i.components ?? []).reduce(
+        (sum, c) => sum + c.price_adjustment,
+        0
+      );
+      return {
+        product_id: i.product.id,
+        quantity: i.quantity,
+        unit_price: basePrice + componentsTotal,
+      };
+    });
+  }, [rawItems, mounted]);
+
   const MIN_ORDER_SUBTOTAL = 1_000_000;
 
   useEffect(() => {
@@ -133,6 +151,12 @@ export default function SummaryPage() {
 
   const handleRemoveItem = useCallback(
     (productId: string, variantId: string | null) => {
+      const item = items.find(
+        (i) =>
+          i.product.id === productId &&
+          (i.variant?.id ?? null) === variantId
+      );
+      if (item) trackRemoveFromCart(cartItemToGA(item));
       removeItem(productId, variantId);
       setOosProductIds((prev) => {
         const next = new Set(prev);
@@ -140,7 +164,7 @@ export default function SummaryPage() {
         return next;
       });
     },
-    [removeItem],
+    [items, removeItem],
   );
 
   if (!mounted) {
@@ -340,7 +364,14 @@ export default function SummaryPage() {
       </div>
 
       {/* ── Voucher / Discount ───────────────────────────────── */}
-      <VoucherComponent subtotal={subtotal} shippingCost={shippingCost} />
+      <VoucherComponent
+        subtotal={subtotal}
+        shippingCost={shippingCost}
+        shippingMethodId={
+          shipping?.shippingMethodId ?? shipping?.deliverySpeed ?? undefined
+        }
+        items={voucherItems}
+      />
 
       {/* ── Delivery Address ────────────────────────────── */}
       {shipping && shipping.deliverySpeed !== "pickup" && (
@@ -445,17 +476,6 @@ export default function SummaryPage() {
               </span>
             </div>
 
-            {totalDiscountAmount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Giảm giá voucher
-                </span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(totalDiscountAmount)}
-                </span>
-              </div>
-            )}
-
             {totalShippingDiscountAmount > 0 && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-on-surface-variant">
@@ -463,6 +483,17 @@ export default function SummaryPage() {
                 </span>
                 <span className="font-bold text-emerald-600">
                   -{formatVND(totalShippingDiscountAmount)}
+                </span>
+              </div>
+            )}
+
+            {totalDiscountAmount > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-on-surface-variant">
+                  Giảm giá voucher
+                </span>
+                <span className="font-bold text-emerald-600">
+                  -{formatVND(totalDiscountAmount)}
                 </span>
               </div>
             )}
@@ -534,17 +565,17 @@ export default function SummaryPage() {
       <dialog
         className={`modal modal-bottom !mt-0 sm:modal-middle ${showConfirm ? "modal-open" : ""}`}
       >
-        <div className="modal-box rounded-2xl bg-surface px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6">
-          <div className="flex flex-col items-center py-2 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+        <div className="modal-box rounded-t-2xl bg-surface px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6">
+          <div className="flex flex-col items-center py-2 text-center mb-2">
+            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
               <CheckCircle size={32} className="text-emerald-600" />
             </div>
-            <p className="mb-6 text-lg font-black text-on-surface">
+            <p className="text-lg font-black text-on-surface">
               Xác nhận đặt hàng
             </p>
           </div>
 
-          <div className="mb-6 space-y-3 rounded-2xl bg-surface-container-low p-4">
+          <div className="mb-6 space-y-3 rounded-2xl bg-surface-container-low p-4 shadow-md border border-outline-variant/30">
             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
               Tóm tắt đơn hàng
             </p>
@@ -612,7 +643,7 @@ export default function SummaryPage() {
           </div>
 
           {paymentType === "deposit_cod" && (
-            <div className="mb-6 space-y-2 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+            <div className="mb-6 space-y-2 rounded-2xl border border-primary/15 bg-primary/5 p-4 shadow-md">
               <p className="text-[10px] font-black uppercase tracking-widest text-primary">
                 Thanh toán
               </p>

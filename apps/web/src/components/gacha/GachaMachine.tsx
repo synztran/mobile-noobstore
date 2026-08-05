@@ -7,6 +7,7 @@ import {
 import { appQueryKeys } from "@/lib/react-query/root";
 import { BALL_PALETTE } from "@/constants/gacha";
 import type { GachaEvent, GachaRewardData, GachaRewardMeta, Phase } from "@/types/gacha";
+import { trackGachaPlay, trackGachaWin } from "@/lib/analytics";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { GachaHistoryDrawer } from "./GachaHistoryDrawer";
@@ -87,9 +88,15 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
       setReward(null);
       setDrawError(null);
 
+      trackGachaPlay(10);
       drawMutation.mutate(eventId, {
         onSuccess: (data) => {
           if (data.reward) {
+            trackGachaWin({
+              type: data.reward.reward_type,
+              name: data.reward.name,
+              value: data.reward.value,
+            });
             setReward(data.reward);
             setRewardIndex(rewardToColorIndex(data.reward));
             setTokenCount((prev) =>
@@ -120,6 +127,7 @@ export function GachaMachine({ eventId }: GachaMachineProps) {
 
     // BallTank keeps shaking while API is in-flight.
     // Ball drops into tray only after API responds.
+    trackGachaPlay(1);
     drawMutation.mutate(eventId, {
       onSuccess: (data) => {
         if (data.reward) {

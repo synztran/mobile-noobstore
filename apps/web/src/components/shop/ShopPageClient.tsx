@@ -12,7 +12,8 @@ import {
   useShopInfiniteQuery,
 } from "@/lib/react-query/shop/api/useShopInfiniteQuery";
 import type { ProductsResponse, ShopProduct } from "@/app/api/products/route";
-import { useCallback, useMemo, useRef } from "react";
+import { trackViewItemList, toGAProduct } from "@/lib/analytics";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 
 function ProductGridSkeleton() {
@@ -114,6 +115,20 @@ export function ShopPageClient({
 
   const isRefreshing = isFetching && !isFetchingNextPage;
   const isInitialLoading = !data && isFetching;
+
+  const listName = useMemo(() => {
+    if (filters.search) return `search:${filters.search}`;
+    if (filters.category) return `category:${filters.category}`;
+    return "shop";
+  }, [filters]);
+
+  useEffect(() => {
+    if (products.length === 0) return;
+    trackViewItemList(
+      products.map((p) => toGAProduct(p)),
+      listName
+    );
+  }, [products, listName]);
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useCallback(

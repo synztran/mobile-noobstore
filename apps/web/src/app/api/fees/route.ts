@@ -10,6 +10,7 @@ type FeeRow = {
   insurance_fee: number | string;
   packing_fee: number | string;
   handling_fee: number | string;
+  max_vouchers_per_order: number | string;
   updated_at: string | null;
 };
 
@@ -24,7 +25,7 @@ async function getFeesConfig() {
   const { data, error } = await supabase
     .from("fees")
     .select(
-      "delivery_immediate_price, delivery_basic_price, insurance_fee, packing_fee, handling_fee, updated_at"
+      "delivery_immediate_price, delivery_basic_price, insurance_fee, packing_fee, handling_fee, max_vouchers_per_order, updated_at"
     )
     .eq("id", 1)
     .maybeSingle();
@@ -49,6 +50,10 @@ async function getFeesConfig() {
       insurance_fee: toNumber(feeRow.insurance_fee, 10000),
       packing_fee: toNumber(feeRow.packing_fee, 15000),
       handling_fee: toNumber(feeRow.handling_fee, 20000),
+      max_vouchers_per_order: Math.max(
+        1,
+        toNumber(feeRow.max_vouchers_per_order, 2)
+      ),
       updated_at: feeRow.updated_at,
     },
     error: null,
@@ -63,6 +68,7 @@ export async function GET() {
     insurance_fee: number;
     packing_fee: number;
     handling_fee: number;
+    max_vouchers_per_order: number;
     updated_at: string | null;
   };
   const cached = await getCache<FeesData>(cacheKey);

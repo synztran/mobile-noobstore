@@ -278,12 +278,170 @@ export async function POST(req: NextRequest) {
       0
     );
 
+    // ── Server-side voucher revalidation (security backstop) ──────────
+    // Re-fetch the applied vouchers to verify status, customer targeting,
+    // and scope eligibility against the actual cart items. Each voucher's
+    // discount is capped at its matched-subset subtotal.
+    const appliedVoucherIds = appliedVouchers
+      .map((v) => v.voucher_id)
+      .filter((id): id is string => Boolean(id));
+    const appliedVoucherIdsUnique = [...new Set(appliedVoucherIds)];
+    if (appliedVoucherIdsUnique.length > 0) {
+      const { data: voucherRows, error: voucherErr } = await supabase
+        .from("vouchers")
+        .select("*")
+        .in("id", appliedVoucherIdsUnique);
+
+      if (!voucherErr && voucherRows) {
+        // Resolve category slugs for the submitted items
+        const { data: categoryRows } = await supabase
+          .from("categories")
+          .select("id, slug");
+        const slugById = new Map(
+          (categoryRows ?? []).map((c) => [c.id, c.slug])
+        );
+        const { data: productRows } = await supabase
+          .from("products")
+          .select("id, category_id")
+          .in("id", productIds);
+        const slugByProductId = new Map<string, string | undefined>();
+        for (const p of productRows ?? []) {
+          if (p.category_id) {
+            slugByProductId.set(p.id, slugById.get(p.category_id));
+          }
+        }
+
+        const itemsForScope = body.items.map((i) => ({
+          product_id: i.product_id,
+          quantity: i.quantity,
+          unit_price: Number(
+            rpcItems.find((r) => r.product_id === i.product_id)?.unit_price ?? 0
+          ),
+          category_slug: slugByProductId.get(i.product_id) ?? null,
+        }));
+
+        const now = new Date();
+        const validIds = new Set<string>();
+        const cappedDiscount = new Map<string, number>();
+
+        for (const v of voucherRows) {
+          const row = v as unknown as {
+            id: string;
+            status: string;
+            deleted_at: string | null;
+            customer_ids: string[] | null;
+            applies_to_shipping_methods: string[] | null;
+            reward_type: string;
+            scope_type: string;
+            applies_to_product_ids: string[] | null;
+            applies_to_category_slugs: string[] | null;
+            excluded_product_ids: string[] | null;
+            amount_off: number | null;
+            percent_off: number | null;
+            max_discount_amount: number | null;
+            start_at: string | null;
+            end_at: string | null;
+            min_order_amount: number;
+            usage_limit_total: number | null;
+            used_count: number;
+            stackable: boolean;
+          };
+
+          if (row.status !== "active" || row.deleted_at) continue;
+          if (
+            (row.start_at && new Date(row.start_at) > now) ||
+            (row.end_at && new Date(row.end_at) < now)
+          ) {
+            continue;
+          }
+          if (row.usage_limit_total !== null && row.used_count >= row.usage_limit_total) continue;
+          if (row.customer_ids && row.customer_ids.length > 0) {
+            if (!row.customer_ids.includes(user.id)) continue;
+          }
+
+          // Shipping-method restriction (empty list = unrestricted)
+          const allowedMethods = row.applies_to_shipping_methods ?? [];
+          if (allowedMethods.length > 0) {
+            if (
+              !body.shipping_method_id ||
+              !allowedMethods.includes(body.shipping_method_id)
+            ) {
+              continue;
+            }
+          }
+
+          // Scope match + subset base
+          const excluded = new Set(row.excluded_product_ids ?? []);
+          let base = subtotal;
+          if (row.scope_type === "product") {
+            const targets = new Set(row.applies_to_product_ids ?? []);
+            const matching = itemsForScope.filter(
+              (i) => targets.has(i.product_id) && !excluded.has(i.product_id)
+            );
+            if (matching.length === 0) continue;
+            base = matching.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+          } else if (row.scope_type === "category") {
+            const targets = new Set(row.applies_to_category_slugs ?? []);
+            const matching = itemsForScope.filter(
+              (i) =>
+                targets.has(i.category_slug ?? "") &&
+                !excluded.has(i.product_id)
+            );
+            if (matching.length === 0) continue;
+            base = matching.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+          }
+          if (row.min_order_amount > 0 && base < row.min_order_amount) continue;
+
+          // Recompute discount against the eligible base
+          let capped = 0;
+          if (row.scope_type === "shipping_fee" || row.reward_type === "free_shipping") {
+            capped = 0; // shipping handled separately below
+          } else if (row.reward_type === "amount_off") {
+            capped = Math.min(Number(row.amount_off ?? 0), base);
+          } else if (row.reward_type === "percent_off") {
+            const pct = Number(row.percent_off ?? 0);
+            capped = Math.round((base * pct) / 100);
+            const maxAmt = Number(row.max_discount_amount ?? 0);
+            if (maxAmt > 0) capped = Math.min(capped, maxAmt);
+            capped = Math.min(capped, base);
+          }
+
+          validIds.add(row.id);
+          cappedDiscount.set(row.id, capped);
+        }
+
+        // Strip ineligible vouchers, cap discounts at recomputed values
+        const filtered = appliedVouchers.filter(
+          (v) => v.voucher_id && validIds.has(v.voucher_id)
+        );
+        appliedVouchers.length = 0;
+        appliedVouchers.push(
+          ...filtered.map((v) => ({
+            ...v,
+            voucher_discount_amount: Math.min(
+              toNumber(v.voucher_discount_amount, 0),
+              cappedDiscount.get(v.voucher_id!) ?? 0
+            ),
+          }))
+        );
+      }
+    }
+
+    const totalRequestedDiscountSafe = appliedVouchers.reduce(
+      (sum, v) => sum + toNumber(v.voucher_discount_amount, 0),
+      0
+    );
+    const totalRequestedShippingDiscountSafe = appliedVouchers.reduce(
+      (sum, v) => sum + toNumber(v.shipping_discount_amount, 0),
+      0
+    );
+
     const safeVoucherDiscount = Math.min(
-      Math.max(0, totalRequestedDiscount),
+      Math.max(0, totalRequestedDiscountSafe),
       subtotal
     );
     const safeShippingDiscount = Math.min(
-      Math.max(0, totalRequestedShippingDiscount),
+      Math.max(0, totalRequestedShippingDiscountSafe),
       safeShippingCost
     );
 

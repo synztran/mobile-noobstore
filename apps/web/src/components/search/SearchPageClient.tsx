@@ -7,6 +7,7 @@ import { Search, X } from "lucide-react";
 import type { ProductsResponse, ShopProduct } from "@/app/api/products/route";
 import type { SortOption } from "@/app/api/products/route";
 import { buildShopUrl } from "@/lib/react-query/shop/api/useShopInfiniteQuery";
+import { trackSearch } from "@/lib/analytics";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { CATEGORIES } from "@/lib/data";
@@ -75,6 +76,7 @@ export function SearchPageClient({ initialData, query, initialSort }: Props) {
     e.preventDefault();
     const trimmed = searchText.trim();
     if (trimmed) {
+      trackSearch(trimmed);
       router.push(`/search?q=${encodeURIComponent(trimmed)}`);
     }
   };

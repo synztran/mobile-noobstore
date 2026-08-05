@@ -5,6 +5,7 @@ import { toast } from "@/lib/toast";
 import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
+import { isCaptchaEnabled } from "@/components/ui/CaptchaWidget";
 
 const registerSchema = Yup.object({
   fullName: Yup.string()
@@ -28,7 +29,7 @@ const registerSchema = Yup.object({
 
 export type RegisterFormValues = Yup.InferType<typeof registerSchema>;
 
-export function useRegisterForm() {
+export function useRegisterForm(captchaToken?: string, resetCaptcha?: () => void) {
   const router = useRouter();
   const { signUp } = useAuth();
 
@@ -44,13 +45,20 @@ export function useRegisterForm() {
     validateOnBlur: true,
     validateOnChange: false,
     onSubmit: async (values, { setSubmitting }) => {
+      if (isCaptchaEnabled && !captchaToken) {
+        toast.error("Vui lòng hoàn thành xác thực captcha");
+        return;
+      }
+
       const { error } = await signUp(
         values.email,
         values.password,
-        values.fullName
+        values.fullName,
+        captchaToken ?? undefined
       );
 
       setSubmitting(false);
+      resetCaptcha?.();
 
       if (error) {
         const lower = error.toLowerCase();

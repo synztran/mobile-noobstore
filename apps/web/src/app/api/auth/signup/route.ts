@@ -31,7 +31,12 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { email, password, fullName } = body as { email?: string; password?: string; fullName?: string };
+  const { email, password, fullName, captchaToken } = body as {
+    email?: string;
+    password?: string;
+    fullName?: string;
+    captchaToken?: string;
+  };
 
   if (!email || !password) {
     return NextResponse.json(
@@ -44,7 +49,10 @@ export async function POST(req: NextRequest) {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+      ...(captchaToken ? { captchaToken } : {}),
+    },
   });
 
   if (error) {

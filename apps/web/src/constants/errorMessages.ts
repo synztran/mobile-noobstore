@@ -7,5 +7,7 @@ export const VOUCHER_ERROR_MESSAGES = {
   ALREADY_APPLIED: "Voucher đã được áp dụng",
   ALREADY_USED: "Voucher đã được sử dụng",
   VOUCHER_LIMIT_EXCEEDED: "Voucher đã đạt giới hạn sử dụng",
+  MAX_VOUCHERS_PER_ORDER: (max: number) =>
+    `Chỉ được áp dụng tối đa ${max} mã giảm giá. Vui lòng gỡ bỏ một mã đã áp dụng rồi thử lại.`,
   OUT_OF_RANGE: "Voucher không còn hiệu lực",
 };

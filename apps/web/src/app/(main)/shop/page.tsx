@@ -2,6 +2,7 @@ import { ShopPageClient } from "@/components/shop/ShopPageClient";
 import { ShopSeo } from "@/components/shop/ShopSeo";
 import { getCategories, getProductSeoData } from "@/lib/products-server";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 interface ShopPageProps {
   searchParams: Promise<{
@@ -34,7 +35,9 @@ export default async function ShopPage(_props: ShopPageProps) {
   return (
     <div className="clear-both p-4">
       <ShopSeo products={seoProducts} />
-      <ShopPageClient categories={categories} />
+      <Suspense fallback={null}>
+        <ShopPageClient categories={categories} />
+      </Suspense>
     </div>
   );
 }

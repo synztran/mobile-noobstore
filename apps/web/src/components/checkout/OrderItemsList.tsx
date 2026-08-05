@@ -191,7 +191,7 @@ export const OrderItemsList = memo(function OrderItemsList({
                             className="flex items-center justify-between gap-2"
                           >
                             <div className="flex flex-col w-full bg-slate-100/50 rounded-md p-2">
-                              <label className="flex items-cen justify-between text-xs text-on-surface-variant">
+                              <label className="flex items-center justify-between text-xs text-on-surface-variant font-semibold">
                                 {component.component_group}
                                 <span
                                   className={`ml-auto flex-shrink-0 text-[10px] font-bold ${

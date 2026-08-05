@@ -1,8 +1,9 @@
 "use client";
 
 import { usePreventScroll } from "@/hooks/usePreventScroll";
+import { useApplyVouchers } from "@/lib/react-query/voucher/api/useVoucherMutations";
 import { useDiscountStore } from "@/store";
-import type { VoucherRow } from "@/types/voucher";
+import type { VoucherApplyItem, VoucherRow } from "@/types/voucher";
 import { Search } from "lucide-react";
 import { VoucherCard } from "./VoucherCard";
 
@@ -16,6 +17,8 @@ interface VoucherDrawerProps {
   filteredVouchers: VoucherRow[];
   subtotal: number;
   shippingCost?: number;
+  shippingMethodId?: string;
+  items?: VoucherApplyItem[];
 }
 
 export function VoucherDrawer({
@@ -28,9 +31,11 @@ export function VoucherDrawer({
   filteredVouchers,
   subtotal,
   shippingCost = 0,
+  shippingMethodId,
+  items,
 }: VoucherDrawerProps) {
-  const { appliedVouchers, applyingVoucher, applyVouchers } =
-    useDiscountStore();
+  const appliedVouchers = useDiscountStore((s) => s.appliedVouchers);
+  const applyVouchersMutation = useApplyVouchers();
 
   usePreventScroll(drawerOpen);
 
@@ -43,7 +48,13 @@ export function VoucherDrawer({
     if (!currentIds.includes(voucherId)) {
       currentIds.push(voucherId);
     }
-    void applyVouchers(currentIds, subtotal, shippingCost);
+    applyVouchersMutation.mutate({
+      voucherIds: currentIds,
+      subtotal,
+      shippingCost,
+      shippingMethodId,
+      items,
+    });
   };
 
   return (
@@ -108,7 +119,7 @@ export function VoucherDrawer({
                       <VoucherCard
                         voucher={voucher}
                         isApplied={appliedIds.has(voucher.id)}
-                        isApplying={applyingVoucher}
+                        isApplying={applyVouchersMutation.isPending}
                         isValid={true}
                         subtotal={subtotal}
                         onApply={() => {

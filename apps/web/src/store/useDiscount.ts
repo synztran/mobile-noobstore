@@ -3,6 +3,7 @@ import type {
   AppliedVoucherEntry,
   AppliedVoucherSummary,
   ApplyVoucherResponse,
+  VoucherApplyItem,
   VoucherGiftItem,
   VoucherRow,
 } from "@/types/voucher";
@@ -14,6 +15,8 @@ type FetchVouchersResult = {
   data?: VoucherRow[];
 };
 
+export const MAX_VOUCHERS_PER_ORDER_DEFAULT = 2;
+
 type DiscountStore = {
   vouchers: VoucherRow[];
   appliedVouchers: AppliedVoucherEntry[];
@@ -23,6 +26,7 @@ type DiscountStore = {
   loadingVouchers: boolean;
   applyingVoucher: boolean;
   error: string | null;
+  maxVouchersPerOrder: number;
   setVouchers: (vouchers: VoucherRow[]) => void;
   setAppliedVouchers: (
     appliedVouchers: AppliedVoucherEntry[],
@@ -30,13 +34,16 @@ type DiscountStore = {
     totalShippingDiscountAmount: number,
     totalGiftItems: VoucherGiftItem[]
   ) => void;
+  setMaxVouchersPerOrder: (max: number) => void;
   fetchVouchers: () => Promise<void>;
   applyVouchers: (
     voucherIds: string[],
     subtotal?: number,
-    shippingCost?: number
+    shippingCost?: number,
+    items?: VoucherApplyItem[]
   ) => Promise<void>;
   removeAppliedVoucher: (voucherId: string) => void;
+  pruneAppliedVouchers: (invalidVoucherIds: string[]) => void;
   removeAllVouchers: () => void;
   resetDiscount: () => void;
 };
@@ -50,6 +57,7 @@ const INITIAL_STATE = {
   loadingVouchers: false,
   applyingVoucher: false,
   error: null,
+  maxVouchersPerOrder: MAX_VOUCHERS_PER_ORDER_DEFAULT,
 };
 
 export const useDiscountStore = create<DiscountStore>()(
@@ -62,6 +70,9 @@ export const useDiscountStore = create<DiscountStore>()(
           vouchers,
           error: null,
         }),
+
+      setMaxVouchersPerOrder: (maxVouchersPerOrder) =>
+        set({ maxVouchersPerOrder }),
 
       setAppliedVouchers: (appliedVouchers, totalDiscountAmount, totalShippingDiscountAmount, totalGiftItems) =>
         set({
@@ -103,9 +114,25 @@ export const useDiscountStore = create<DiscountStore>()(
         }
       },
 
-      applyVouchers: async (voucherIds, subtotal = 0, shippingCost = 0) => {
+      applyVouchers: async (
+        voucherIds,
+        subtotal = 0,
+        shippingCost = 0,
+        items?: VoucherApplyItem[]
+      ) => {
         if (voucherIds.length === 0) {
           get().removeAllVouchers();
+          return;
+        }
+
+        // Client-side cap pre-check: reject applying beyond the store cap.
+        const maxVouchers = get().maxVouchersPerOrder;
+        const uniqueIds = [...new Set(voucherIds)];
+        if (uniqueIds.length > maxVouchers) {
+          toast.error(
+            `Chỉ được áp dụng tối đa ${maxVouchers} mã giảm giá. Vui lòng gỡ bỏ một mã đã áp dụng rồi thử lại.`
+          );
+          set({ applyingVoucher: false });
           return;
         }
 
@@ -115,9 +142,10 @@ export const useDiscountStore = create<DiscountStore>()(
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              voucherIds: [...new Set(voucherIds)],
+              voucherIds: uniqueIds,
               subtotal,
               shippingCost,
+              items,
             }),
           });
 
@@ -172,6 +200,36 @@ export const useDiscountStore = create<DiscountStore>()(
           error: null,
         });
         toast.success("Đã loại bỏ voucher");
+      },
+
+      pruneAppliedVouchers: (invalidVoucherIds) => {
+        if (invalidVoucherIds.length === 0) return;
+        const state = get();
+        const invalid = new Set(invalidVoucherIds);
+        const remaining = state.appliedVouchers.filter(
+          (v) => !invalid.has(v.voucherInfo.voucher_id)
+        );
+
+        if (remaining.length === state.appliedVouchers.length) return;
+
+        if (remaining.length === 0) {
+          get().removeAllVouchers();
+          return;
+        }
+
+        set({
+          appliedVouchers: remaining,
+          totalDiscountAmount: remaining.reduce(
+            (sum, v) => sum + v.discountAmount,
+            0
+          ),
+          totalShippingDiscountAmount: remaining.reduce(
+            (sum, v) => sum + v.shippingDiscountAmount,
+            0
+          ),
+          totalGiftItems: remaining.flatMap((v) => v.gifts),
+          error: null,
+        });
       },
 
       removeAllVouchers: () =>
