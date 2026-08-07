@@ -52,3 +52,19 @@ export function useProductSearch(q: string) {
 		},
 	});
 }
+
+export function useRecentlyViewedProducts(ids: string[]) {
+	return useQuery<ShopProduct[]>({
+		...appQueryKeys.product.recentlyViewed(ids.join(",")),
+		enabled: ids.length > 0,
+		staleTime: 60_000,
+		queryFn: async () => {
+			const res = await fetch(
+				`/api/products?ids=${encodeURIComponent(ids.join(","))}`,
+			);
+			if (!res.ok) throw new Error("Failed to fetch recently viewed products");
+			const data: { products: ShopProduct[] } = await res.json();
+			return data.products;
+		},
+	});
+}

@@ -34,6 +34,12 @@ export default async function VouchersPage(props: {
 			usage_limit_per_user,
 			min_order_amount,
 			stackable,
+			scope_type,
+			applies_to_product_ids,
+			applies_to_category_slugs,
+			excluded_product_ids,
+			applies_to_shipping_methods,
+			customer_ids,
 			start_at,
 			end_at,
 			used_count,
@@ -63,6 +69,7 @@ export default async function VouchersPage(props: {
 			`,
       { count: "exact", head: false }
     )
+    .order("status", { ascending: true })
     .order("created_at", { ascending: false })
     .order("id", { ascending: false });
 

@@ -1,5 +1,4 @@
 import { ReactQueryProvider } from "@/components/ui/ReactQueryProvider";
-import { RouteChangeTracker } from "@/components/ui/RouteChangeTracker";
 import { ServiceWorkerRegister } from "@/components/ui/ServiceWorkerRegister";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
@@ -10,7 +9,6 @@ import "gooey-toast/styles.css";
 import "react-wheel-scroller/styles.css";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import "./globals.css";
 import localFont from "next/font/local";
@@ -120,9 +118,6 @@ export default function RootLayout({
           <AuthProvider>
             <NavigationOverlay />
             <FlyToCart />
-            <Suspense fallback={null}>
-              <RouteChangeTracker />
-            </Suspense>
             {children}
             <MobileViewportGuard />
             <ToastProvider />

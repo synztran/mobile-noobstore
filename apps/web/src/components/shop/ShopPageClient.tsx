@@ -6,6 +6,7 @@ import {
   ProductCardSkeleton,
 } from "@/components/product/ProductCard";
 import { ShopControls } from "@/components/shop/ShopControls";
+import { RecentlyViewedRail } from "@/components/recently-viewed/RecentlyViewedRail";
 import type { CategoryItem } from "@/lib/products-server";
 import {
   buildShopFilters,
@@ -168,6 +169,8 @@ export function ShopPageClient({
           <ProductGrid products={products} />
         )}
       </div>
+
+      <RecentlyViewedRail />
 
       <InfiniteScrollSentinel
         hasNextPage={hasNextPage}

@@ -113,6 +113,7 @@ export async function middleware(request: NextRequest) {
     if (
       pathname.startsWith("/api/") &&
       !pathname.startsWith("/api/health") &&
+      !pathname.startsWith("/api/analytics/") &&
       !pathname.startsWith("/api/cron/") &&
       !pathname.startsWith("/api/jobs/")
     ) {

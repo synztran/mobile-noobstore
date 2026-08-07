@@ -9,11 +9,17 @@ const PAGE_SIZE = 20;
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const q = sp.get("q") ?? "";
+  const idsParam = sp.get("ids") ?? "";
   const productType = sp.get("productType") ?? "";
   const excludeSoldOut = sp.get("excludeSoldOut") === "true";
   const page = Math.max(1, parseInt(sp.get("page") ?? "1", 10));
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
+
+  const ids = idsParam
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
 
   const allowedProductTypes = new Set(["standard", "kit", "component", "gift", "all"]);
   const selectedProductType = allowedProductTypes.has(productType) && productType !== "all"
@@ -44,6 +50,7 @@ export async function GET(req: NextRequest) {
 
   if (q) query = query.ilike("name", `%${q}%`);
   if (selectedProductType) query = query.eq("product_type", selectedProductType);
+  if (ids.length > 0) query = query.in("id", ids);
 
   const { data, error, count } = await query;
 

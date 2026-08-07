@@ -542,3 +542,56 @@ export async function getProductListByFilters(
     return { products: [], total: 0 };
   }
 }
+
+/**
+ * Fetch active, sellable products by their ids (standard + kit only).
+ * Returns only the products that exist and are active; archived/removed
+ * ids are omitted from the result. Used to hydrate recently-viewed entries.
+ */
+export async function getProductsByIds(
+  ids: string[]
+): Promise<ProductListItem[]> {
+  const safeIds = ids.filter((id) => typeof id === "string" && id.length > 0);
+  if (safeIds.length === 0) return [];
+
+  const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
+     categories(id, name),
+     product_variants(${VARIANT_COLUMNS})`;
+
+  try {
+    const supabase = getPublicClient();
+
+    const { data, error } = await supabase
+      .from("products")
+      .select(SELECT_COLUMNS)
+      .in("id", safeIds)
+      .eq("is_active", true)
+      .neq("product_type", "gift")
+      .in("product_type", ["standard", "kit"]);
+
+    if (error || !data) return [];
+
+    const rows = data as unknown as RawListRow[];
+
+    const kitIds = rows
+      .filter((r) => r.product_type === "kit")
+      .map((r) => r.id);
+
+    const [kitSupplements, giftsByProductId] = await Promise.all([
+      fetchKitSupplements(kitIds),
+      fetchGiftSupplement(rows.map((r) => r.id)),
+    ]);
+
+    const products = rows
+      .map((row) => shapeRow(row, kitSupplements))
+      .filter((p) => p.product_type !== "component")
+      .map((p) => ({
+        ...p,
+        gifts: giftsByProductId.get(p.id) ?? undefined,
+      }));
+
+    return products;
+  } catch {
+    return [];
+  }
+}

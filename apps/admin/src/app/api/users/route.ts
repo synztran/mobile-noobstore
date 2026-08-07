@@ -7,6 +7,12 @@ export async function GET(req: NextRequest) {
 	const supabase = getAdminClient();
 	const search = req.nextUrl.searchParams.get("search") ?? "";
 	const limit = Number(req.nextUrl.searchParams.get("limit")) || 20;
+	const idsParam = req.nextUrl.searchParams.get("ids") ?? "";
+
+	const ids = idsParam
+		.split(",")
+		.map((id) => id.trim())
+		.filter(Boolean);
 
 	let query = supabase
 		.from("users")
@@ -16,6 +22,9 @@ export async function GET(req: NextRequest) {
 
 	if (search.trim()) {
 		query = query.ilike("email", `%${search.trim()}%`);
+	}
+	if (ids.length > 0) {
+		query = query.in("id", ids);
 	}
 
 	const { data, error } = await query;

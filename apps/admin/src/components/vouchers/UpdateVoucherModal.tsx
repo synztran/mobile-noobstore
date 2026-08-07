@@ -11,6 +11,8 @@ type VoucherRewardType =
 
 type VoucherStatus = "draft" | "active" | "scheduled" | "expired" | "disabled";
 
+type VoucherScopeType = "order_total" | "shipping_fee" | "product" | "category";
+
 type VoucherRow = {
 	id: string;
 	name: string;
@@ -26,6 +28,12 @@ type VoucherRow = {
 	start_at: string | null;
 	end_at: string | null;
 	stackable: boolean;
+	scope_type?: VoucherScopeType;
+	applies_to_product_ids?: string[] | null;
+	applies_to_category_slugs?: string[] | null;
+	excluded_product_ids?: string[] | null;
+	applies_to_shipping_methods?: string[] | null;
+	customer_ids?: string[] | null;
 	created_by: string | null;
 	creator?: {
 		id: string;

@@ -13,6 +13,7 @@ import { ProductConfigurator } from "@/components/product/ProductConfigurator";
 import Icon from "@/components/ui/Icon";
 import WishlistButton from "@/components/wishlist/WishlistButton";
 import { useProductViewData } from "@/hooks/useProductViewData";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { trackViewItem, toGAProduct } from "@/lib/analytics";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
@@ -109,6 +110,22 @@ export function ProductView({
   useEffect(() => {
     trackViewItem(toGAProduct(product, selectedVariant));
   }, [product, selectedVariant]);
+
+  // Record the view once per product (not per variant selection).
+  const { addViewed } = useRecentlyViewed();
+  const lastRecordedId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (lastRecordedId.current === product.id) return;
+    lastRecordedId.current = product.id;
+    addViewed({
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      thumbnail: product.thumbnail ?? null,
+      viewedAt: Date.now(),
+    });
+  }, [product.id, product.slug, product.name, product.thumbnail, addViewed]);
 
   const hasDiscount = product.min_price < product.base_price;
   const discountPercent = hasDiscount

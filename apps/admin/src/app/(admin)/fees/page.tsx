@@ -8,7 +8,7 @@ export default async function FeesPage() {
 
   const { data } = await supabase
     .from("fees")
-    .select("delivery_immediate_price, delivery_basic_price, insurance_fee, packing_fee, handling_fee")
+    .select("delivery_immediate_price, delivery_basic_price, insurance_fee, packing_fee, handling_fee, max_vouchers_per_order")
     .eq("id", 1)
     .maybeSingle();
 
@@ -18,6 +18,7 @@ export default async function FeesPage() {
     insurance_fee: 10000,
     packing_fee: 15000,
     handling_fee: 20000,
+    max_vouchers_per_order: 2,
   };
 
   return (

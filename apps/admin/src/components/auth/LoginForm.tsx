@@ -1,20 +1,29 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { CaptchaWidget, isCaptchaEnabled, type CaptchaWidgetHandle } from "@/components/ui/CaptchaWidget";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 
 export default function LoginForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+	const captchaRef = useRef<CaptchaWidgetHandle>(null);
 	const router = useRouter();
 
 	async function handleSubmit(e: FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		setLoading(true);
 		setError(null);
+
+		if (isCaptchaEnabled && !captchaToken) {
+			setError("Please complete the CAPTCHA verification");
+			setLoading(false);
+			return;
+		}
 
 		try {
 			const supabase = createClient();
@@ -23,7 +32,9 @@ export default function LoginForm() {
 				await supabase.auth.signInWithPassword({
 					email,
 					password,
+					...(captchaToken ? { options: { captchaToken } } : {}),
 				});
+			captchaRef.current?.reset();
 
 			if (authError) {
 				setError(authError.message);
@@ -112,6 +123,13 @@ export default function LoginForm() {
 								<span>{error}</span>
 							</div>
 						)}
+
+						<div className="flex justify-center">
+							<CaptchaWidget
+								ref={captchaRef}
+								onTokenChange={setCaptchaToken}
+							/>
+						</div>
 
 						<button
 							type="submit"

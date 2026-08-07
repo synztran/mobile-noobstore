@@ -1,5 +1,6 @@
 import {
   getProductListByFilters,
+  getProductsByIds,
   type ProductSortOption,
   type ProductType,
 } from "@/lib/product-query-service";
@@ -125,7 +126,20 @@ export async function GET(req: NextRequest) {
 
   const sort = (sp.get("sort") as ProductSortOption | null) ?? "newest";
 
+  // Optional comma-separated `ids` filter — fetches only the requested products
+  // (active standard/kit only; missing ids are omitted from the response).
+  const ids = sp
+    .get("ids")
+    ?.split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+
   try {
+    if (ids && ids.length > 0) {
+      const products = (await getProductsByIds(ids.slice(0, 100))) as ShopProduct[];
+      return NextResponse.json<ProductsResponse>({ products, total: products.length });
+    }
+
     // Build a stable cache key from normalized params
     // Search queries are cached too — useful for repeated searches within 60 s
     const cacheKey = `products:${CACHE_VERSION}:${search || ""}:${categorySlug}:${priceMin}:${priceMax}:${productTypes}:${sort}:${limit}:${offset}`;

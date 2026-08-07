@@ -2,21 +2,81 @@ import type { CartItem } from "@/lib/data";
 
 const GA_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 
-declare global {
-  interface Window {
-    dataLayer: unknown[];
-  }
+const CLIENT_ID_STORAGE_KEY = "ga4_client_id";
+const SESSION_ID_STORAGE_KEY = "ga4_session_id";
+
+/**
+ * Read a cookie by name (client-side only).
+ */
+function getCookie(name: string): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : undefined;
 }
 
-function gtag(...args: unknown[]) {
-  if (typeof window === "undefined") return;
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(args);
+/**
+ * GA4 client id. Reuses the id gtag.js stores in the `_ga` cookie
+ * (GA1.1.<cid>.<timestamp>) so Measurement Protocol events attribute to the
+ * same user as the enhanced-measurement events. Falls back to a persisted
+ * random id when the cookie is unavailable.
+ */
+export function getClientId(): string {
+  if (typeof window === "undefined") return "";
+
+  const gaCookie = getCookie("_ga");
+  const match = gaCookie?.match(/^GA1\.\d+\.(\d+)\.(\d+)$/);
+  if (match) return `${match[1]}.${match[2]}`;
+
+  const stored = window.localStorage.getItem(CLIENT_ID_STORAGE_KEY);
+  if (stored) return stored;
+
+  const id = `${Math.floor(100000000 + Math.random() * 899999999)}.${Date.now()}`;
+  window.localStorage.setItem(CLIENT_ID_STORAGE_KEY, id);
+  return id;
 }
 
-export function trackPageView(url: string) {
+/**
+ * Positive numeric session id, persisted per browser tab/session so SPA
+ * navigations share it (used by GA4 realtime/session attribution).
+ */
+export function getSessionId(): number {
+  if (typeof window === "undefined") return 0;
+
+  const stored = window.sessionStorage.getItem(SESSION_ID_STORAGE_KEY);
+  const numeric = stored ? Number(stored) : NaN;
+  if (Number.isFinite(numeric) && numeric > 0) return numeric;
+
+  const id = Math.floor(Date.now() / 1000);
+  window.sessionStorage.setItem(SESSION_ID_STORAGE_KEY, String(id));
+  return id;
+}
+
+/**
+ * Send an event to GA4 via the server-side Measurement Protocol proxy.
+ * Fire-and-forget — analytics must never block the UI.
+ */
+function sendEvent(name: string, params?: Record<string, unknown>) {
   if (!GA_ID) return;
-  gtag("event", "page_view", { page_path: url });
+  if (typeof window === "undefined") return;
+
+  const body = JSON.stringify({
+    client_id: getClientId(),
+    session_id: getSessionId(),
+    events: [{ name, params: params ?? {} }],
+  });
+
+  try {
+    fetch("/api/analytics/collect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      keepalive: true,
+    }).catch(() => {
+      // ignore analytics failures
+    });
+  } catch {
+    // ignore analytics failures
+  }
 }
 
 export interface GAProduct {
@@ -88,15 +148,13 @@ function gaItem(p: GAProduct) {
   };
 }
 
-/** Generic gtag event push (no-op without a configured GA4 id). */
+/** Generic GA4 event sender (no-op without a configured GA4 id). */
 export function trackEvent(name: string, params?: Record<string, unknown>) {
-  if (!GA_ID) return;
-  gtag("event", name, params);
+  sendEvent(name, params);
 }
 
 export function trackViewItem(product: GAProduct) {
-  if (!GA_ID) return;
-  gtag("event", "view_item", {
+  sendEvent("view_item", {
     currency: "VND",
     value: product.price,
     items: [gaItem(product)],
@@ -104,8 +162,7 @@ export function trackViewItem(product: GAProduct) {
 }
 
 export function trackViewItemList(items: GAProduct[], list_name: string) {
-  if (!GA_ID) return;
-  gtag("event", "view_item_list", {
+  sendEvent("view_item_list", {
     items: items.map((item, index) => ({
       ...gaItem(item),
       index,
@@ -115,8 +172,7 @@ export function trackViewItemList(items: GAProduct[], list_name: string) {
 }
 
 export function trackAddToCart(product: GAProduct) {
-  if (!GA_ID) return;
-  gtag("event", "add_to_cart", {
+  sendEvent("add_to_cart", {
     currency: "VND",
     value: product.price * (product.quantity ?? 1),
     items: [gaItem(product)],
@@ -124,8 +180,7 @@ export function trackAddToCart(product: GAProduct) {
 }
 
 export function trackRemoveFromCart(product: GAProduct) {
-  if (!GA_ID) return;
-  gtag("event", "remove_from_cart", {
+  sendEvent("remove_from_cart", {
     currency: "VND",
     value: product.price * (product.quantity ?? 1),
     items: [gaItem(product)],
@@ -133,8 +188,7 @@ export function trackRemoveFromCart(product: GAProduct) {
 }
 
 export function trackBeginCheckout(items: GAProduct[], total: number) {
-  if (!GA_ID) return;
-  gtag("event", "begin_checkout", {
+  sendEvent("begin_checkout", {
     currency: "VND",
     value: total,
     items: items.map(gaItem),
@@ -146,8 +200,7 @@ export function trackPurchase(
   items: GAProduct[],
   total: number
 ) {
-  if (!GA_ID) return;
-  gtag("event", "purchase", {
+  sendEvent("purchase", {
     transaction_id: transactionId,
     currency: "VND",
     value: total,
@@ -165,8 +218,7 @@ export function trackSearch(term: string, resultsCount?: number) {
 }
 
 export function trackWishlist(product: GAProduct) {
-  if (!GA_ID) return;
-  gtag("event", "add_to_wishlist", {
+  sendEvent("add_to_wishlist", {
     currency: "VND",
     value: product.price,
     items: [gaItem(product)],
@@ -174,8 +226,7 @@ export function trackWishlist(product: GAProduct) {
 }
 
 export function trackRemoveWishlist(product: GAProduct) {
-  if (!GA_ID) return;
-  gtag("event", "remove_from_wishlist", {
+  sendEvent("remove_from_wishlist", {
     currency: "VND",
     value: product.price,
     items: [gaItem(product)],

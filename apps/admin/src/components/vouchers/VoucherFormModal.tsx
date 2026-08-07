@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import NumberInput from "@/components/ui/NumberInput";
 import InputSelection from "../ui/InputSelection";
+import VoucherTargetingFields from "./VoucherTargetingFields";
 import { formatVND } from "@/lib/currency";
 
 type VoucherRewardType =
@@ -12,6 +13,8 @@ type VoucherRewardType =
   | "percent_off"
   | "free_shipping"
   | "gift_item";
+
+type VoucherScopeType = "order_total" | "shipping_fee" | "product" | "category";
 
 type VoucherStatus = "draft" | "active" | "scheduled" | "expired" | "disabled";
 
@@ -30,6 +33,12 @@ type VoucherRow = {
   start_at: string | null;
   end_at: string | null;
   stackable: boolean;
+  scope_type?: VoucherScopeType;
+  applies_to_product_ids?: string[] | null;
+  applies_to_category_slugs?: string[] | null;
+  excluded_product_ids?: string[] | null;
+  applies_to_shipping_methods?: string[] | null;
+  customer_ids?: string[] | null;
   created_by: string | null;
   creator?: {
     id: string;
@@ -118,6 +127,12 @@ export default function VoucherFormModal({
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
   const [stackable, setStackable] = useState(false);
+  const [scopeType, setScopeType] = useState<VoucherScopeType>("order_total");
+  const [appliesToProductIds, setAppliesToProductIds] = useState<string[]>([]);
+  const [appliesToCategorySlugs, setAppliesToCategorySlugs] = useState<string[]>([]);
+  const [excludedProductIds, setExcludedProductIds] = useState<string[]>([]);
+  const [shippingMethodIds, setShippingMethodIds] = useState<string[]>([]);
+  const [customerIds, setCustomerIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -149,6 +164,12 @@ export default function VoucherFormModal({
       setStartAt(toDateTimeLocal(voucher.start_at));
       setEndAt(toDateTimeLocal(voucher.end_at));
       setStackable(Boolean(voucher.stackable));
+      setScopeType(voucher.scope_type ?? "order_total");
+      setAppliesToProductIds(voucher.applies_to_product_ids ?? []);
+      setAppliesToCategorySlugs(voucher.applies_to_category_slugs ?? []);
+      setExcludedProductIds(voucher.excluded_product_ids ?? []);
+      setShippingMethodIds(voucher.applies_to_shipping_methods ?? []);
+      setCustomerIds(voucher.customer_ids ?? []);
       return;
     }
 
@@ -165,6 +186,12 @@ export default function VoucherFormModal({
     setStartAt("");
     setEndAt("");
     setStackable(false);
+    setScopeType("order_total");
+    setAppliesToProductIds([]);
+    setAppliesToCategorySlugs([]);
+    setExcludedProductIds([]);
+    setShippingMethodIds([]);
+    setCustomerIds([]);
   }, [open, mode, voucher]);
 
   const title = mode === "create" ? "Create New Voucher" : "Update Voucher";
@@ -261,7 +288,18 @@ export default function VoucherFormModal({
       start_at: startAt ? new Date(startAt).toISOString() : null,
       end_at: endAt ? new Date(endAt).toISOString() : null,
       stackable,
-      scope_type: "order_total",
+      scope_type: scopeType,
+      applies_to_product_ids:
+        scopeType === "product" ? appliesToProductIds : [],
+      applies_to_category_slugs:
+        scopeType === "category" ? appliesToCategorySlugs : [],
+      excluded_product_ids:
+        scopeType === "product" || scopeType === "category"
+          ? excludedProductIds
+          : null,
+      applies_to_shipping_methods:
+        shippingMethodIds.length > 0 ? shippingMethodIds : null,
+      customer_ids: customerIds.length > 0 ? customerIds : null,
     };
 
     const url =
@@ -530,6 +568,21 @@ export default function VoucherFormModal({
               />
               Stackable with other vouchers
             </label>
+
+            <VoucherTargetingFields
+              scopeType={scopeType}
+              onScopeTypeChange={setScopeType}
+              productIds={appliesToProductIds}
+              onProductIdsChange={setAppliesToProductIds}
+              categorySlugs={appliesToCategorySlugs}
+              onCategorySlugsChange={setAppliesToCategorySlugs}
+              excludedProductIds={excludedProductIds}
+              onExcludedProductIdsChange={setExcludedProductIds}
+              shippingMethodIds={shippingMethodIds}
+              onShippingMethodIdsChange={setShippingMethodIds}
+              customerIds={customerIds}
+              onCustomerIdsChange={setCustomerIds}
+            />
           </div>
           <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
             <button

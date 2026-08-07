@@ -12,6 +12,7 @@ interface FeesFormProps {
     insurance_fee: number;
     packing_fee: number;
     handling_fee: number;
+    max_vouchers_per_order: number;
   };
 }
 
@@ -100,6 +101,20 @@ export default function FeesForm({ initial }: FeesFormProps) {
           step={1000}
         />
         <p className="text-right text-xs text-slate-400">{formatVND(fields.handling_fee)}</p>
+      </div>
+
+      <div className="space-y-1">
+        <NumberInput
+          label="Max Vouchers Per Order"
+          subLabel="Số voucher tối đa/đơn hàng"
+          value={fields.max_vouchers_per_order}
+          onChange={set("max_vouchers_per_order")}
+          min={1}
+          step={1}
+        />
+        <p className="text-right text-xs text-slate-400">
+          {fields.max_vouchers_per_order} vouchers
+        </p>
       </div>
 
       <button

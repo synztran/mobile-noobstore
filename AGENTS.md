@@ -7,8 +7,11 @@ A mobile-first e-commerce storefront built with Next.js 15, Supabase, and a Turb
 ```bash
 yarn dev          # Start all apps (Turbo)
 yarn build        # Build all apps
-yarn lint         # ESLint across workspace
+yarn lint         # ESLint across workspace (broken repo-wide — next lint deprecated in Next 15; non-TTY prompt)
 yarn type-check   # TypeScript check (tsc --noEmit)
+yarn test:unit    # Vitest unit tests (apps/web)
+yarn test:e2e     # Playwright end-to-end (needs dev servers + seeded creds)
+yarn check:admin-auth  # Guard: admin API must stay middleware-protected
 ```
 
 Run these from the workspace root. The only app currently is `apps/web`.

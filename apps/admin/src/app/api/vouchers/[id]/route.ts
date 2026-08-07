@@ -56,6 +56,21 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   if (Object.prototype.hasOwnProperty.call(body, "stackable")) {
     sanitized.stackable = body.stackable;
   }
+  if (Object.prototype.hasOwnProperty.call(body, "applies_to_product_ids")) {
+    sanitized.applies_to_product_ids = body.applies_to_product_ids;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, "applies_to_category_slugs")) {
+    sanitized.applies_to_category_slugs = body.applies_to_category_slugs;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, "excluded_product_ids")) {
+    sanitized.excluded_product_ids = body.excluded_product_ids;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, "applies_to_shipping_methods")) {
+    sanitized.applies_to_shipping_methods = body.applies_to_shipping_methods;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, "customer_ids")) {
+    sanitized.customer_ids = body.customer_ids;
+  }
 
   if (Object.keys(sanitized).length === 0) {
     return NextResponse.json(
