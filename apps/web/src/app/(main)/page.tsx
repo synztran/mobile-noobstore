@@ -8,6 +8,7 @@ import { NewsletterCTA } from "@/components/home/NewsletterCTA";
 import { NoteworthySection } from "@/components/home/NoteworthySection";
 import { HomeSaleSection } from "@/components/home/SaleSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { LazyNearViewport } from "@/components/ui/LazyNearViewport";
 import { getHeroCampaigns } from "@/lib/hero-server";
 import type { Metadata } from "next";
 
@@ -35,11 +36,21 @@ export default async function HomePage() {
       <HeroSection initialSlides={heroCampaigns} />
       <NoteworthySection />
       <HomeSaleSection />
-      <OurStrongPoints />
-      <CommunityGallery />
-      <CustomerTestimonial />
-      <HomeTestimonials />
-      <NewsletterCTA />
+      <LazyNearViewport>
+        <OurStrongPoints />
+      </LazyNearViewport>
+      <LazyNearViewport>
+        <CommunityGallery />
+      </LazyNearViewport>
+      <LazyNearViewport>
+        <CustomerTestimonial />
+      </LazyNearViewport>
+      <LazyNearViewport>
+        <HomeTestimonials />
+      </LazyNearViewport>
+      <LazyNearViewport>
+        <NewsletterCTA />
+      </LazyNearViewport>
       <HomeFooter />
     </div>
   );

@@ -498,7 +498,7 @@ export const getQuickPickData = cache(async function getQuickPickData(
         .select(
           `parent_product_id, component_group, is_required, max_quantity, component_product_id,
            products!product_components_component_product_id_fkey(
-            product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
+            product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)
            )`
         )
         .in("parent_product_id", [productId])
@@ -680,7 +680,7 @@ export const getQuickPickData = cache(async function getQuickPickData(
             .select(
               `parent_product_id, component_group, is_required, max_quantity, component_product_id,
                products!product_components_component_product_id_fkey(
-                product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
+                product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)
                )`
             )
             .in("parent_product_id", ids)

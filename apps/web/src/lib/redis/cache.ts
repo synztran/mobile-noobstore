@@ -2,7 +2,7 @@ import { getRedis } from "./client";
 
 const redis = getRedis();
 
-export const CACHE_VERSION = "v1";
+export const CACHE_VERSION = "v2";
 
 /**
  * Read a value from Redis cache.

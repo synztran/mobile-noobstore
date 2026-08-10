@@ -1,14 +1,25 @@
 "use client";
 
-import TopNavDrawer from "@/components/layout/TopNavDrawer";
 import Icon from "@/components/ui/Icon";
-import WishlistSidebar from "@/components/wishlist/WishlistSidebar";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore } from "@/store";
-import { motion } from "motion/react";
 import clsx from "clsx";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+
+const TopNavDrawer = dynamic(
+  () =>
+    import("@/components/layout/TopNavDrawer").then((m) => ({
+      default: m.default,
+    })),
+  { ssr: false }
+);
+const WishlistSidebar = dynamic(() =>
+  import("@/components/wishlist/WishlistSidebar").then((m) => ({
+    default: m.WishlistSidebar,
+  }))
+);
 
 interface TopNavProps {
   title?: string;
@@ -87,15 +98,12 @@ export function TopNav({
             onClick={handleMenuClick}
             className="text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 flex items-center"
           >
-            <motion.span
+            <span
               key={menuBounce}
-              initial={{ scale: 1 }}
-              animate={{ scale: [1, 1.3, 1] }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className="inline-flex"
+              className="inline-flex animate-[icon-bounce_0.35s_ease-out]"
             >
               <Icon name="menu" className="text-[22px]" />
-            </motion.span>
+            </span>
           </button>
         )}
       </div>
@@ -124,12 +132,9 @@ export function TopNav({
           {!isHydrated && showCart && !hideCart ? (
             <div className="skeleton h-[26px] w-[26px] rounded-full" />
           ) : (
-            <motion.span
+            <span
               key={cartBounce}
-              initial={{ scale: 1 }}
-              animate={{ scale: [1, 1.3, 1] }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className="inline-flex "
+              className="inline-flex animate-[icon-bounce_0.35s_ease-out] "
             >
               <Icon name="shopping_cart" className="text-[26px]" />
               {count > 0 && (
@@ -137,7 +142,7 @@ export function TopNav({
                   {count}
                 </span>
               )}
-            </motion.span>
+            </span>
           )}
         </button>
       </div>

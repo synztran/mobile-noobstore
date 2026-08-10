@@ -96,6 +96,11 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
+        <link
+          rel="preconnect"
+          href="https://zvjpabkpabvxfouupxgo.supabase.co"
+          crossOrigin="anonymous"
+        />
         {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID && (
           <>
             <Script

@@ -2,13 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import { DeferredMount } from "@/components/ui/DeferredMount";
+import { SearchDeferred } from "@/components/layout/SearchDeferred";
 
 const CartDrawer = dynamic(
 	() => import("@/components/cart/CartDrawer").then((m) => ({ default: m.CartDrawer })),
-	{ ssr: false },
-);
-const SearchFloating = dynamic(
-	() => import("@/components/layout/SearchFloating").then((m) => ({ default: m.SearchFloating })),
 	{ ssr: false },
 );
 const PushNotificationPrompt = dynamic(
@@ -19,9 +17,11 @@ const PushNotificationPrompt = dynamic(
 export function MainLayoutDynamic() {
 	return (
 		<>
-			<Suspense fallback={null}><SearchFloating /></Suspense>
+			<SearchDeferred />
 			<Suspense fallback={null}><CartDrawer /></Suspense>
-			<Suspense fallback={null}><PushNotificationPrompt /></Suspense>
+			<DeferredMount>
+				<Suspense fallback={null}><PushNotificationPrompt /></Suspense>
+			</DeferredMount>
 		</>
 	);
 }

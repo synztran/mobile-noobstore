@@ -18,6 +18,7 @@ const nextConfig = {
   images: {
     // Cache optimized images on Vercel's image CDN for 24 h
     minimumCacheTTL: 86400,
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "*.supabase.co" },
       { protocol: "https", hostname: "res.cloudinary.com" },

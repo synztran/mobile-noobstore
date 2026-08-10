@@ -79,7 +79,7 @@ export async function GET(
 				max_quantity,
 				component_product_id,
 				products!product_components_component_product_id_fkey(
-					product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config)
+					product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)
 				)
 			`,
 			)

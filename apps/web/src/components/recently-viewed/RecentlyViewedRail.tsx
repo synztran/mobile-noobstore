@@ -29,7 +29,7 @@ export function RecentlyViewedRail() {
 
   if (isLoading) {
     return (
-      <section className="mt-8 px-4">
+      <section className="mt-8">
         <div className="mb-4 h-6 w-40 animate-pulse rounded bg-on-surface/10" />
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 3 }, (_, i) => (

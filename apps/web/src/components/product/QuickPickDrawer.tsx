@@ -12,6 +12,15 @@ import clsx from "clsx";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 
+// ─── Tình trạng (condition) helper ─────────────────────────────────────────
+
+function getConditionText(
+  attrs?: Record<string, string> | null
+): string | null {
+  const text = attrs?.["Tình trạng"]?.trim();
+  return text ? text : null;
+}
+
 // ─── Add to Cart Button ─────────────────────────────────────────────────────
 
 type AddToCartButtonProps = {
@@ -231,10 +240,81 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
                     {g.quantity > 1 && ` x${g.quantity}`}
                   </p>
                 </div>
-              </div>
+</div>
             ))}
+        </div>
+      )}
+
+      {(() => {
+        const rows: Array<{ label: string; group: string; text: string }> =
+          [];
+        const hasComponents = drawer.groups.length > 0;
+
+        if (!hasComponents) {
+          const selectedId = drawer.selections["__variant__"]?.[0];
+          if (selectedId) {
+            const v = drawer.activeProduct?.variants.find(
+              (x) => x.id === selectedId
+            );
+            const text = getConditionText(v?.attributes);
+            if (text) {
+              rows.push({
+                label: v?.variant_name ?? "",
+                group: "",
+                text,
+              });
+            }
+          }
+        } else {
+          for (const group of drawer.groups) {
+            for (const id of drawer.selections[group.component_group] ?? []) {
+              const v = group.variants.find((gv) => gv.id === id);
+              const text = getConditionText(v?.attributes);
+              if (text) {
+                rows.push({
+                  label: v?.variant_name ?? "",
+                  group: group.component_group,
+                  text,
+                });
+              }
+            }
+          }
+        }
+
+        if (rows.length === 0) return null;
+
+        const countByLabel = new Map<string, number>();
+        for (const r of rows) {
+          countByLabel.set(r.label, (countByLabel.get(r.label) ?? 0) + 1);
+        }
+
+        return (
+          <div className="rounded-2xl bg-surface-container p-3">
+            <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
+              Tình trạng
+            </p>
+            <ul className="space-y-1">
+              {rows.map((r) => (
+                <li
+                  key={`${r.group}:${r.label}`}
+                  className="flex items-baseline gap-1 text-xs font-bold text-on-surface"
+                >
+                  <span className="flex-shrink-0">
+                    {(countByLabel.get(r.label) ?? 0) > 1 && r.group
+                      ? `${r.group} · `
+                      : ""}
+                    {r.label}:
+                  </span>
+                  <span className="font-semibold text-on-surface-variant">
+                    {r.text}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
+        );
+      })()}
+
       <div className="flex min-h-0 flex-col gap-4 pb-2">
         <ProductConfigurator
           groups={drawer.groups}

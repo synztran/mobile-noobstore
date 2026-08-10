@@ -178,7 +178,7 @@ function GiftCardPage() {
 
       {error && (
         <div className="rounded-2xl bg-error-container p-4">
-          <div className="flex items-start gap-3">
+          <div className="flex items-center gap-3">
             <XCircle
               size={18}
               className="mt-0.5 flex-shrink-0 text-on-error-container"
@@ -192,7 +192,7 @@ function GiftCardPage() {
 
       {checkQuery.error && !error && (
         <div className="rounded-2xl bg-error-container p-4">
-          <div className="flex items-start gap-3">
+          <div className="flex items-center gap-3">
             <XCircle
               size={18}
               className="mt-0.5 flex-shrink-0 text-on-error-container"
