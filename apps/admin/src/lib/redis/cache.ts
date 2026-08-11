@@ -49,7 +49,14 @@ export async function invalidateCacheByPattern(pattern: string): Promise<void> {
 }
 
 export async function invalidateProductsCache(): Promise<void> {
-	await invalidateCacheByPattern("products:*");
+	// `products:*` covers list/ssr keys; quick-pick is cleared here too because
+	// the kit configurator feeds off `/api/products/quick-pick` (route-level key
+	// `quick-pick:*`) and server components (self-cached `v2:quick-pick:*`).
+	await Promise.all([
+		invalidateCacheByPattern("products:*"),
+		invalidateCacheByPattern("quick-pick:*"),
+		invalidateCacheByPattern("v2:quick-pick:*"),
+	]);
 }
 
 export async function invalidateProductCaches(): Promise<void> {
@@ -61,7 +68,8 @@ export async function invalidateProductCaches(): Promise<void> {
 		invalidateCacheByPattern("v1:related-products:*"),
 		invalidateCacheByPattern("v1:fbt:*"),
 		invalidateCacheByPattern("v1:purchase-count:*"),
-		invalidateCacheByPattern("v1:quick-pick:*"),
+		invalidateCacheByPattern("quick-pick:*"),
+		invalidateCacheByPattern("v2:quick-pick:*"),
 		invalidateCacheByPattern("v1:noteworthy:*"),
 		invalidateCacheByPattern("v1:sale-products:*"),
 		invalidateCacheByPattern("v1:newest-products:*"),

@@ -1,5 +1,6 @@
 import { logAuditEvent } from "@/lib/audit-log";
 import { generateAndStoreInvoice } from "@/lib/invoice";
+import { invalidateProductCaches } from "@/lib/redis/cache";
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@db-types";
@@ -571,6 +572,11 @@ export async function PATCH(
   // Compute rank when order is delivered (fire-and-forget)
   if (body.status === "delivered") {
     void handleRankUpdate(supabase, id);
+  }
+
+  // Invalidate storefront product caches so sold_count reflects the delivery
+  if (body.status === "delivered") {
+    await invalidateProductCaches();
   }
 
   // Earn store points when order is marked as delivered (fire-and-forget)

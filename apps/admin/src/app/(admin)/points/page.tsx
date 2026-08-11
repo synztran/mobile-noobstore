@@ -58,6 +58,8 @@ interface GiftCard {
   redeemed_at: string | null;
   redeemed_by_user_id: string | null;
   redeemed_by_profile: { email: string; full_name: string | null } | null;
+  issued_to_user_id: string | null;
+  issued_to_profile: { email: string; full_name: string | null } | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -551,6 +553,140 @@ function RulesTab() {
 
 // ─── Tab: Gift Cards ──────────────────────────────────────────
 
+interface CustomerOption {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
+/**
+ * Search the users table and pick a fixed recipient for a gift card.
+ * Selection is bound to issued_to_user_id on the card.
+ */
+function CustomerSearchPicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string | null;
+  onChange: (id: string | null) => void;
+  disabled?: boolean;
+}) {
+  const [query, setQuery] = useState("");
+  const [, setLoading] = useState(false);
+  const [results, setResults] = useState<CustomerOption[]>([]);
+  const [open, setOpen] = useState(false);
+
+  // Debounced search against /api/users?search=…
+  useEffect(() => {
+    if (disabled) return;
+    if (query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/users?search=${encodeURIComponent(query.trim())}&limit=8`
+        );
+        const data = await res.json();
+        if (cancelled) return;
+        setResults(Array.isArray(data) ? data : []);
+        setOpen(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [query, disabled]);
+
+  return (
+    <div>
+      <label className="text-body mb-1 block text-sm font-medium">
+        Giới hạn cho khách hàng{" "}
+        <span className="text-muted font-normal">(optional)</span>
+      </label>
+      {value ? (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-700/50 dark:bg-amber-900/20">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-amber-700 dark:text-amber-300">
+              {results.find((r) => r.id === value)?.full_name ??
+                results.find((r) => r.id === value)?.email ??
+                ""}
+            </p>
+            <p className="truncate text-xs text-amber-600/70 dark:text-amber-400/70">
+              {results.find((r) => r.id === value)?.email ?? value}
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => {
+              onChange(null);
+              setResults([]);
+              setQuery("");
+              setOpen(false);
+            }}
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-amber-700 transition-colors hover:bg-amber-300 disabled:opacity-40 dark:bg-amber-800 dark:text-amber-200"
+            title="Bỏ giới hạn"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="relative">
+          <Search className="text-muted absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            disabled={disabled}
+            placeholder="Tìm theo email khách hàng…"
+            className="input-base w-full rounded-lg border py-2 pl-9 pr-3 text-sm disabled:opacity-50"
+          />
+          {open && results.length > 0 && (
+            <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border table-border bg-surface-card card-shadow dark:bg-slate-800">
+              {results.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => {
+                    onChange(r.id);
+                    setQuery("");
+                    setOpen(false);
+                  }}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-amber-50 dark:hover:bg-slate-700"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium text-heading">
+                      {r.full_name ?? "—"}
+                    </span>
+                    <span className="text-muted block truncate text-xs">
+                      {r.email}
+                    </span>
+                  </span>
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-amber-500" />
+                </button>
+              ))}
+            </div>
+          )}
+          {disabled && (
+            <p className="text-muted mt-1 text-xs">
+              Chỉ áp dụng khi tạo 1 thẻ (quantity = 1).
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GiftCardsTab() {
   const [cards, setCards] = useState<GiftCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -566,6 +702,7 @@ function GiftCardsTab() {
     batch_label: "",
     note: "",
     expires_at: "",
+    issued_to_user_id: null as string | null,
   });
   const [created, setCreated] = useState<
     { code: string; points_value: number }[]
@@ -599,6 +736,8 @@ function GiftCardsTab() {
         batch_label: createForm.batch_label || null,
         note: createForm.note || null,
         expires_at: createForm.expires_at || null,
+        issued_to_user_id:
+          (createForm.quantity ?? 1) === 1 ? createForm.issued_to_user_id : null,
       }),
     });
     const data = await res.json();
@@ -611,6 +750,7 @@ function GiftCardsTab() {
         batch_label: "",
         note: "",
         expires_at: "",
+        issued_to_user_id: null,
       });
       load();
     }
@@ -775,6 +915,16 @@ function GiftCardsTab() {
                     className="input-base w-full rounded-lg border px-3 py-2 text-sm"
                   />
                 </div>
+                <CustomerSearchPicker
+                  value={createForm.issued_to_user_id}
+                  onChange={(id) =>
+                    setCreateForm({ ...createForm, issued_to_user_id: id })
+                  }
+                  disabled={(createForm.quantity ?? 1) > 1}
+                />
+                <p className="text-muted -mt-1 text-xs">
+                  Để trống Issued To = thẻ không thể được nạp bởi bất kỳ ai.
+                </p>
                 <div className="flex justify-end gap-3 pt-1">
                   <button
                     type="button"
@@ -816,6 +966,9 @@ function GiftCardsTab() {
                   Batch
                 </th>
                 <th className="text-heading px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide">
+                  Issued To
+                </th>
+                <th className="text-heading px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide">
                   Redeemed By
                 </th>
                 <th className="text-heading px-5 py-3 text-center text-xs font-semibold uppercase tracking-wide">
@@ -833,7 +986,7 @@ function GiftCardsTab() {
               {loading
                 ? Array.from({ length: 8 }).map((_, i) => (
                     <tr key={i}>
-                      {Array.from({ length: 7 }).map((_, j) => (
+                      {Array.from({ length: 8 }).map((_, j) => (
                         <td key={j} className="px-5 py-3">
                           <div className="h-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
                         </td>
@@ -857,6 +1010,28 @@ function GiftCardsTab() {
                         </td>
                         <td className="text-muted px-5 py-3 text-sm">
                           {card.batch_label ?? "—"}
+                        </td>
+                        <td className="px-5 py-3 text-sm">
+                          {card.issued_to_user_id
+                            ? (card.issued_to_profile ? (
+                                <div>
+                                  <p className="text-body font-medium">
+                                    {card.issued_to_profile.full_name ?? "—"}
+                                  </p>
+                                  <p className="text-muted text-xs">
+                                    {card.issued_to_profile.email}
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                  Có hạn chế
+                                </span>
+                              ))
+                            : (
+                              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                                Chưa cấp
+                              </span>
+                            )}
                         </td>
                         <td className="px-5 py-3 text-sm">
                           {isRedeemed ? (

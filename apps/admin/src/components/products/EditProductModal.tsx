@@ -72,6 +72,7 @@ export default function EditProductModal({ product }: Props) {
   const [images, setImages] = useState<string[]>(
     Array.isArray(product.images) ? product.images : []
   );
+  const [imagesChanged, setImagesChanged] = useState(false);
   const [parentProductId, setParentProductId] = useState(
     product.parent_product_id ?? ""
   );
@@ -108,6 +109,7 @@ export default function EditProductModal({ product }: Props) {
     setDescription(product.description ?? "");
     setThumbnail(product.thumbnail ?? "");
     setImages(Array.isArray(product.images) ? product.images : []);
+    setImagesChanged(false);
     setParentProductId(product.parent_product_id ?? "");
     setCategoryType(product.categories?.id ?? ""); // Reset category selection when opening modal
     setAttributes(product.attributes ?? {});
@@ -235,7 +237,9 @@ export default function EditProductModal({ product }: Props) {
       brand: brand.trim() || null,
       description: description.trim() || null,
       thumbnail: thumbnail.trim() || null,
-      images: images.length > 0 ? images : null,
+      ...(imagesChanged
+        ? { images: images.length > 0 ? images : null }
+        : {}),
       parent_product_id:
         productType === "component" && parentProductId ? parentProductId : null,
       category_id: categoryType || null,
@@ -487,7 +491,10 @@ export default function EditProductModal({ product }: Props) {
                   <div className="col-span-2">
                     <MultiImageUploader
                       value={images}
-                      onChange={setImages}
+                      onChange={(urls) => {
+                        setImages(urls);
+                        setImagesChanged(true);
+                      }}
                       slug={slug}
                     />
                   </div>

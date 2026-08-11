@@ -40,7 +40,7 @@ export function ServiceSectionCard({
   onUpdateEntry,
 }: ServiceSectionCardProps) {
   return (
-    <section className="rounded-2xl bg-surface-container">
+    <section id={section.key} className="scroll-mt-24 rounded-2xl bg-surface-container">
       {section.heroImageUrl ? (
         <div className="relative h-40 w-full">
           <Image
@@ -53,13 +53,20 @@ export function ServiceSectionCard({
         </div>
       ) : null}
       <div className="space-y-2 p-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-black uppercase tracking-wide text-on-surface">
-            {section.title}
-          </h3>
-          <span className="text-[10px] uppercase tracking-wider text-on-surface-variant">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-sm font-black uppercase tracking-wide text-on-surface">
+              {section.title}
+            </h3>
+            {section.hint ? (
+              <p className="mt-0.5 text-xs text-on-surface-variant">
+                {section.hint}
+              </p>
+            ) : null}
+          </div>
+          <span className="shrink-0 text-[10px] uppercase tracking-wider text-on-surface-variant">
             <strong className="text-primary">{section.services.length}</strong>{" "}
-            dịch vụ khả dụng
+            dịch vụ
           </span>
         </div>
 

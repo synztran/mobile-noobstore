@@ -51,24 +51,25 @@ export async function GET(req: NextRequest) {
 
   const cards: any[] = data ?? [];
 
-  // Batch-fetch profiles for redeemed_by_user_id
-  const redeemerIds: string[] = [
+  // Batch-fetch profiles for redeemed_by_user_id and issued_to_user_id
+  const userIds: string[] = [
     ...new Set(
-      cards
-        .map((c: any) => c.redeemed_by_user_id as string | null)
-        .filter(Boolean) as string[]
+      cards.flatMap((c: any) => [
+        c.redeemed_by_user_id as string | null,
+        c.issued_to_user_id as string | null,
+      ]).filter(Boolean) as string[]
     ),
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let profileMap: Record<string, { email: string; full_name: string | null }> =
     {};
-  if (redeemerIds.length > 0) {
+  if (userIds.length > 0) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profileRows } = await (supabase as any)
       .from("users")
       .select("id, email, first_name, last_name")
-      .in("id", redeemerIds);
+      .in("id", userIds);
 
     for (const p of profileRows ?? []) {
       const fullName =
@@ -81,6 +82,9 @@ export async function GET(req: NextRequest) {
     ...c,
     redeemed_by_profile: c.redeemed_by_user_id
       ? (profileMap[c.redeemed_by_user_id] ?? null)
+      : null,
+    issued_to_profile: c.issued_to_user_id
+      ? (profileMap[c.issued_to_user_id] ?? null)
       : null,
   }));
 

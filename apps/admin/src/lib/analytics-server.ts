@@ -49,16 +49,17 @@ export async function getRevenueData(): Promise<MonthlyRevenue[]> {
 
   const { data, error } = await supabase
     .from("orders")
-    .select("total_price, created_at")
-    .in("status", ["delivered", "confirmed"])
-    .gte("created_at", new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString());
+    .select("total_price, created_at, delivered_at")
+    .eq("status", "delivered")
+    .gte("delivered_at", new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString());
 
   if (error || !data) return generateEmptyMonths<MonthlyRevenue>(12);
 
   const byMonth = new Map<string, number>();
   for (const row of data) {
-    if (!row.created_at) continue;
-    const label = monthLabel(row.created_at);
+    const revenueDate = row.delivered_at ?? row.created_at;
+    if (!revenueDate) continue;
+    const label = monthLabel(revenueDate);
     byMonth.set(label, (byMonth.get(label) || 0) + Number(row.total_price));
   }
 

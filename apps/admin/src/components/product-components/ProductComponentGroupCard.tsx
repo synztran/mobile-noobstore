@@ -2,7 +2,8 @@
 
 import UpdateProductComponentModal from "@/components/product-components/UpdateProductComponentModal";
 import Tag from "@/components/ui/Tag";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type {
 	ProductComponentGroup,
@@ -16,8 +17,33 @@ type Props = {
 };
 
 export default function ProductComponentGroupCard({ group, products }: Props) {
+	const router = useRouter();
 	const [editingComponent, setEditingComponent] =
 		useState<ProductComponentRow | null>(null);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
+
+	async function handleDelete(component: ProductComponentRow) {
+		const componentName =
+			component.component_product?.name ?? "this component";
+		if (
+			!window.confirm(
+				`Delete "${componentName}" from this product? This cannot be undone.`
+			)
+		)
+			return;
+
+		setDeletingId(component.id);
+		try {
+			const res = await fetch(`/api/product-components/${component.id}`, {
+				method: "DELETE",
+			});
+			if (!res.ok) throw new Error("Failed to delete");
+			router.refresh();
+		} catch {
+			alert("Failed to delete component");
+			setDeletingId(null);
+		}
+	}
 
 	return (
 		<>
@@ -77,15 +103,27 @@ export default function ProductComponentGroupCard({ group, products }: Props) {
 										Component ID: {component.id}
 									</p>
 								</div>
-								<button
-									type="button"
-									onClick={() =>
-										setEditingComponent(component)
-									}
-									className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 shrink-0">
-									<Pencil className="w-3.5 h-3.5" />
-									Edit
-								</button>
+								<div className="flex shrink-0 items-center gap-2">
+									<button
+										type="button"
+										onClick={() =>
+											setEditingComponent(component)
+										}
+										className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700">
+										<Pencil className="w-3.5 h-3.5" />
+										Edit
+									</button>
+									<button
+										type="button"
+										onClick={() => handleDelete(component)}
+										disabled={deletingId === component.id}
+										className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-600 disabled:opacity-50">
+										<Trash2 className="w-3.5 h-3.5" />
+										{deletingId === component.id
+											? "Deleting…"
+											: "Delete"}
+									</button>
+								</div>
 							</div>
 						</div>
 					))}

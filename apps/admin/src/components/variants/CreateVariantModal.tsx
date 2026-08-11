@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import NumberInput from "@/components/ui/NumberInput";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { buildVariantAttributes } from "@/lib/variantAttributes";
 
 interface PreOrderConfig {
   estimate: string;
@@ -35,6 +36,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isPreOrder, setIsPreOrder] = useState(false);
   const [thumbnail, setThumbnail] = useState("");
+  const [condition, setCondition] = useState("");
   const [preOrderConfig, setPreOrderConfig] = useState<PreOrderConfig>({
     estimate: "",
   });
@@ -96,6 +98,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
         stock_quantity,
         is_pre_order: isPreOrder,
         thumbnail: thumbnail.trim() || null,
+        attributes: buildVariantAttributes(null, condition),
         pre_order_config: isPreOrder
           ? {
               estimate: preOrderConfig.estimate,
@@ -120,6 +123,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
     setIsPreOrder(false);
     setPreOrderConfig({ estimate: "" });
     setThumbnail("");
+    setCondition("");
     setSelectedProductId(null);
     setProductSearch("");
     onClose();
@@ -355,6 +359,23 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
               value={thumbnail}
               onChange={setThumbnail}
             />
+
+            {/* Tình trạng (condition) */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Tình trạng (condition)
+              </label>
+              <input
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g. Mới 100% / Đã qua sử dụng"
+              />
+              <p className="mt-1 text-xs text-slate-400">
+                Lưu vào attributes["Tình trạng"], hiển thị khi variant được
+                chọn trên storefront.
+              </p>
+            </div>
           </div>
 
           {/* Actions */}

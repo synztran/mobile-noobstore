@@ -36,7 +36,7 @@ export default async function ProductVariantsPage({
     .from("product_variants")
     .select(
       `
-			id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config, thumbnail, product_id,
+			id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config, attributes, thumbnail, product_id,
 			products(id, name, product_type, slug, base_price, stock_quantity, thumbnail, brand, is_active)
 		`,
       { count: "exact" }
@@ -108,6 +108,13 @@ export default async function ProductVariantsPage({
                 ? (v.pre_order_config as Record<string, string>)
                 : null;
 
+            const variantAttrs =
+              v.attributes &&
+              typeof v.attributes === "object" &&
+              !Array.isArray(v.attributes)
+                ? (v.attributes as Record<string, string>)
+                : null;
+
             const priceAdj = v.price_adjustment ?? 0;
 
             return (
@@ -144,6 +151,11 @@ export default async function ProductVariantsPage({
                       {v.is_pre_order && (
                         <span className="inline-flex items-center rounded bg-purple-100 px-2 py-0.5 text-[10px] font-medium text-purple-700">
                           Pre-order
+                        </span>
+                      )}
+                      {variantAttrs?.["Tình trạng"] && (
+                        <span className="inline-flex items-center rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                          Tình trạng: {variantAttrs["Tình trạng"]}
                         </span>
                       )}
                     </div>
@@ -267,6 +279,7 @@ export default async function ProductVariantsPage({
                       is_pre_order: v.is_pre_order,
                       thumbnail: v.thumbnail ?? null,
                       pre_order_config: preOrderCfg as { estimate: string; notes?: string; available_date?: string } | null,
+                      attributes: variantAttrs,
                       product_id: v.product_id ?? "",
                       product_name: product?.name ?? "",
                       product_type: product?.product_type,

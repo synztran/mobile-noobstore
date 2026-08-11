@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
+import ServiceConfigButton from "@/components/services/ServiceConfigButton";
 
 export const metadata = {
 	title: "Services - NoobStore Admin",
@@ -19,6 +20,13 @@ export default async function ServicesPage() {
 			handling_days,
 			is_active,
 			is_bookable_on_services_page,
+			service_configs(
+				id,
+				base_price,
+				handling_days,
+				is_active,
+				updated_at
+			),
 			service_options(
 				id,
 				label,
@@ -60,6 +68,8 @@ export default async function ServicesPage() {
 						const options = [
 							...(service.service_options ?? []),
 						].sort((a, b) => a.display_order - b.display_order);
+						const config =
+							service.service_configs?.[0] ?? null;
 						return (
 							<div
 								key={service.id}
@@ -94,18 +104,37 @@ export default async function ServicesPage() {
 													Bookable
 												</span>
 											)}
+											{config && (
+												<span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+													Cấu hình riêng
+												</span>
+											)}
 										</div>
 									</div>
-									<div className="text-right shrink-0">
-										<div className="text-sm font-semibold text-slate-800">
-											{service.base_price.toLocaleString(
-												"vi-VN",
-											)}
-											₫
+									<div className="text-right shrink-0 flex items-center gap-3">
+										<div>
+											<div className="text-sm font-semibold text-slate-800">
+												{(config?.base_price ??
+													service.base_price).toLocaleString(
+													"vi-VN",
+												)}
+												₫
+											</div>
+											<div className="text-xs text-slate-500">
+												{(config?.handling_days ??
+													service.handling_days)}
+												&nbsp;days handling
+											</div>
 										</div>
-										<div className="text-xs text-slate-500">
-											{service.handling_days}d handling
-										</div>
+										<ServiceConfigButton
+											serviceId={service.id}
+											serviceName={service.name}
+											defaultPrice={service.base_price}
+											defaultHandlingDays={
+												service.handling_days
+											}
+											config={config}
+										/>
 									</div>
 								</div>
 

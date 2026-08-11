@@ -1,4 +1,5 @@
 import { logAuditEvent } from "@/lib/audit-log";
+import { invalidateProductCaches } from "@/lib/redis/cache";
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@db-types";
@@ -151,6 +152,11 @@ export async function POST(req: NextRequest) {
       ) {
         void triggerOrderSideEffects(supabase, id, body.status);
       }
+    }
+
+    // Invalidate storefront product caches so sold_count reflects the delivery
+    if (body.status === "delivered") {
+      await invalidateProductCaches();
     }
 
     // Log audit event for bulk action

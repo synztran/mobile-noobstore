@@ -28,3 +28,22 @@ export async function PATCH(
 
 	return NextResponse.json({ success: true }, { status: 200 });
 }
+
+export async function DELETE(
+	_req: NextRequest,
+	{ params }: { params: Promise<{ id: string }> },
+) {
+	const { id } = await params;
+	const supabase = getAdminClient();
+
+	const { error } = await supabase
+		.from("product_components")
+		.delete()
+		.eq("id", id);
+
+	if (error) {
+		return NextResponse.json({ error: error.message }, { status: 400 });
+	}
+
+	return NextResponse.json({ success: true }, { status: 200 });
+}

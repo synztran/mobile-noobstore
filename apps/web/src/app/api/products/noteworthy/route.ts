@@ -1,8 +1,12 @@
 import { getNoteworthyProducts } from "@/lib/products-server";
-import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
+import {
+	CACHE_KEYS,
+	publicCacheHeaders,
+	readThroughCache,
+} from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function GET(req: NextRequest) {
 	const sp = req.nextUrl.searchParams;
@@ -14,25 +18,13 @@ export async function GET(req: NextRequest) {
 		: 8;
 
 	try {
-		const cacheKey = `${CACHE_VERSION}:noteworthy:${categorySlug}:${safeLimit}`;
-		const cached = await getCache<{ products: never[]; total: number }>(cacheKey);
-		if (cached) {
-			return NextResponse.json(cached);
-		}
+		const result = await readThroughCache(
+			CACHE_KEYS.noteworthy(categorySlug, safeLimit),
+			120,
+			() => getNoteworthyProducts({ categorySlug, limit: safeLimit }),
+		);
 
-		const result = await getNoteworthyProducts({
-			categorySlug,
-			limit: safeLimit,
-		});
-
-		await setCache(cacheKey, result, 120);
-
-		return NextResponse.json(result, {
-			headers: {
-				"Cache-Control":
-					"public, s-maxage=60, stale-while-revalidate=300",
-			},
-		});
+		return NextResponse.json(result, { headers: publicCacheHeaders() });
 	} catch (err) {
 		return NextResponse.json(
 			{ error: err instanceof Error ? err.message : "Unknown error" },

@@ -183,7 +183,7 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 		return (
 			<ConfirmationScreen
 				orderNumber={mutation.data.order_number}
-				onBack={() => router.push("/middleman")}
+				onBack={() => router.push("/services")}
 			/>
 		);
 	}

@@ -1,6 +1,7 @@
+import { CACHE_KEYS, publicCacheHeaders, readThroughCache } from "@/lib/redis/cache";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 async function nominatimSearch(q: string) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
@@ -46,36 +47,43 @@ export async function GET(req: Request) {
       return NextResponse.json({ wards: [] });
     }
 
-    const nom = await nominatimSearch(`${district}, ${city}, Vietnam`);
-    if (!nom) {
-      return NextResponse.json({ wards: [] });
-    }
+    const wards = await readThroughCache<string[]>(
+      CACHE_KEYS.wards(city, district),
+      3600,
+      async () => {
+        const nom = await nominatimSearch(`${district}, ${city}, Vietnam`);
+        if (!nom) {
+          return [];
+        }
 
-    const osmType = String(nom.osm_type ?? "").toLowerCase();
-    const osmId = Number(nom.osm_id ?? 0);
-    let areaId: number | null = null;
-    if (osmType === "relation") areaId = 3600000000 + osmId;
-    else if (osmType === "way") areaId = 2400000000 + osmId;
+        const osmType = String(nom.osm_type ?? "").toLowerCase();
+        const osmId = Number(nom.osm_id ?? 0);
+        let areaId: number | null = null;
+        if (osmType === "relation") areaId = 3600000000 + osmId;
+        else if (osmType === "way") areaId = 2400000000 + osmId;
 
-    if (!areaId) {
-      return NextResponse.json({ wards: [] });
-    }
+        if (!areaId) {
+          return [];
+        }
 
-    const overpass = await queryOverpass(areaId);
-    if (!overpass || !Array.isArray(overpass.elements)) {
-      return NextResponse.json({ wards: [] });
-    }
+        const overpass = await queryOverpass(areaId);
+        if (!overpass || !Array.isArray(overpass.elements)) {
+          return [];
+        }
 
-    const names = new Set<string>();
-    for (const el of overpass.elements) {
-      const name = el?.tags?.name;
-      if (!name) continue;
-      const cleaned = String(name).trim();
-      if (cleaned) names.add(cleaned);
-    }
+        const names = new Set<string>();
+        for (const el of overpass.elements) {
+          const name = el?.tags?.name;
+          if (!name) continue;
+          const cleaned = String(name).trim();
+          if (cleaned) names.add(cleaned);
+        }
 
-    const list = Array.from(names).sort((a, b) => a.localeCompare(b, "vi"));
-    return NextResponse.json({ wards: list });
+        return Array.from(names).sort((a, b) => a.localeCompare(b, "vi"));
+      },
+    );
+
+    return NextResponse.json({ wards }, { headers: publicCacheHeaders() });
   } catch (err) {
     return NextResponse.json({ wards: [] });
   }

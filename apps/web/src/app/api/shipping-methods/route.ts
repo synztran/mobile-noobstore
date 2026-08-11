@@ -1,30 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
+import { getShippingMethods, type ShippingMethod } from "@/lib/shipping-methods";
+import {
+	CACHE_KEYS,
+	publicCacheHeaders,
+	readThroughCache,
+} from "@/lib/redis/cache";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-export interface ShippingMethod {
-	id: string;
-	name: string;
-	description: string | null;
-	estimated_hours_min: number | null;
-	estimated_hours_max: number | null;
-	is_active: boolean;
-	sort_order: number;
-}
+export type { ShippingMethod };
 
 export async function GET() {
-	const supabase = await createClient();
-	const { data, error } = await supabase
-		.from("shipping_methods")
-		.select(
-			"id, name, description, estimated_hours_min, estimated_hours_max, is_active, sort_order",
-		)
-		.order("sort_order");
+	try {
+		const data = await readThroughCache<ShippingMethod[]>(
+			CACHE_KEYS.shippingMethods,
+			300,
+			getShippingMethods,
+		);
 
-	if (error) {
-		return NextResponse.json({ error: error.message }, { status: 500 });
+		return NextResponse.json(data, { headers: publicCacheHeaders() });
+	} catch (err) {
+		return NextResponse.json(
+			{ error: err instanceof Error ? err.message : "Failed to load shipping methods" },
+			{ status: 500 },
+		);
 	}
-
-	return NextResponse.json(data ?? []);
 }

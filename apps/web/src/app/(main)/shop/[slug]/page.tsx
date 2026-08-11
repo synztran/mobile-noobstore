@@ -14,6 +14,12 @@ import { BoughtTogetherSection } from "@/components/product/BoughtTogetherSectio
 import { RelatedProductsSection } from "@/components/product/RelatedProductsSection";
 import { ScrollToTopOnNav } from "./ScrollToTopOnNav";
 
+// ISR — cache the rendered product page (incl. og tags) on the Vercel edge so
+// crawlers (Facebook's facebookexternalhit, etc.) get a fast hit instead of a
+// cold serverless run. 60s window is short enough that product edits publish
+// quickly; per-user state (cart/wishlist) is client-side and unaffected.
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: {
@@ -113,7 +119,7 @@ function ProductDetailSkeleton() {
 
 function RailSkeleton() {
   return (
-    <div className="mt-8 px-4">
+    <div className="mt-8">
       <div className="mb-4 h-3 w-44 rounded-full bg-surface-container" />
       <div className="flex gap-4">
         {[1, 2, 3].map((i) => (

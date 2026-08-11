@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 		supabase
 			.from("services")
 			.select(
-				"id, name, base_price, handling_days, is_active, service_section, is_bookable_on_services_page",
+				"id, name, base_price, handling_days, is_active, service_section, is_bookable_on_services_page, service_configs(id, base_price, handling_days, is_active)",
 			)
 			.in("id", serviceIds),
 		allOptionValueIds.length > 0
@@ -160,7 +160,11 @@ export async function POST(req: NextRequest) {
 			optionsAdj += adj;
 		}
 
-		const unitPrice = Number(svc.base_price) + optionsAdj;
+		const config = (svc.service_configs ?? []).find(
+			(c) => c.is_active,
+		);
+		const unitPrice =
+			(config?.base_price ?? Number(svc.base_price)) + optionsAdj;
 		const lineTotal = unitPrice * selection.quantity;
 		totalPrice += lineTotal;
 
@@ -180,7 +184,8 @@ export async function POST(req: NextRequest) {
 			customer_note: selection.line_note ?? body.customer_note ?? null,
 			pickup_at: pickupAtTs ? new Date(pickupAtTs).toISOString() : null,
 			pickup_note: body.pickup_note ?? null,
-			handling_days_snapshot: svc.handling_days,
+			handling_days_snapshot:
+				config?.handling_days ?? svc.handling_days,
 		};
 	});
 

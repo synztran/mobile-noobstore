@@ -42,6 +42,7 @@ export type ProductCardProps = {
     base_price: number;
     stock_quantity: number | null;
     max_quantity: number | null;
+    sold_count?: number | null;
     product_type: string;
     brand: string | null;
     description?: string | null;
@@ -49,6 +50,7 @@ export type ProductCardProps = {
     is_active: boolean | null;
     is_used: boolean | null;
     thumbnail: string | null;
+    images?: string[] | null;
     parent_product_id?: string | null;
     category_id?: string | null;
     categories?: CategoryRelation;
@@ -189,6 +191,14 @@ export default function ProductCard({ product }: ProductCardProps) {
                       {product.base_price.toLocaleString("vi-VN")}₫
                     </dd>
                   </div>
+                  {product.sold_count != null && product.sold_count > 0 && (
+                    <div className="flex items-baseline gap-1">
+                      <dt className="shrink-0 text-slate-400">Sold</dt>
+                      <dd className="font-semibold text-amber-600">
+                        {product.sold_count}
+                      </dd>
+                    </div>
+                  )}
                   {product.brand && (
                     <div className="flex items-baseline gap-1">
                       <dt className="shrink-0 text-slate-400">Brand</dt>
@@ -230,22 +240,24 @@ export default function ProductCard({ product }: ProductCardProps) {
                 className="flex flex-col rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs text-slate-700"
               >
                 <span className="font-medium">{variant.display_name}</span>
-                {variant.price_adjustment !== null &&
-                  variant.price_adjustment !== 0 && (
-                    <span
-                      className={
-                        variant.price_adjustment > 0
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
-                    >
-                      {variant.price_adjustment > 0 ? "+" : ""}
-                      {variant.price_adjustment.toLocaleString("vi-VN")}₫
-                    </span>
-                  )}
-                <span className="text-slate-400">
-                  {variant.stock_quantity ?? 0} in stock
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400">
+                    {variant.stock_quantity ?? 0} in stock
+                  </span>
+                  {variant.price_adjustment !== null &&
+                    variant.price_adjustment !== 0 && (
+                      <span
+                        className={
+                          variant.price_adjustment > 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        {variant.price_adjustment > 0 ? "+" : ""}
+                        {variant.price_adjustment.toLocaleString("vi-VN")}₫
+                      </span>
+                    )}
+                </div>
               </div>
             ))}
           </div>

@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatVND } from "@/lib/currency";
+import { buildVariantAttributes } from "@/lib/variantAttributes";
 
 interface PreOrderConfig {
   estimate: string;
@@ -23,6 +24,7 @@ export interface EditableVariant {
   is_pre_order: boolean;
   thumbnail: string | null;
   pre_order_config: PreOrderConfig | null;
+  attributes?: Record<string, string> | null;
   product_id: string;
   product_name: string;
   product_type?: string;
@@ -57,6 +59,9 @@ export default function EditVariantModal({ variant }: Props) {
   const [preOrderConfig, setPreOrderConfig] = useState<PreOrderConfig>(
     variant.pre_order_config ?? emptyConfig
   );
+  const [condition, setCondition] = useState(
+    variant.attributes?.["Tình trạng"] ?? ""
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -71,6 +76,7 @@ export default function EditVariantModal({ variant }: Props) {
     setIsPreOrder(variant.is_pre_order);
     setThumbnail(variant.thumbnail ?? "");
     setPreOrderConfig(variant.pre_order_config ?? emptyConfig);
+    setCondition(variant.attributes?.["Tình trạng"] ?? "");
   }, [open, variant]);
 
   function handleTogglePreOrder() {
@@ -100,6 +106,7 @@ export default function EditVariantModal({ variant }: Props) {
         stock_quantity: stockQuantity ?? 0,
         is_pre_order: isPreOrder,
         thumbnail: thumbnail.trim() || null,
+        attributes: buildVariantAttributes(variant.attributes ?? null, condition),
         pre_order_config: isPreOrder
           ? {
               estimate: preOrderConfig.estimate,
@@ -316,6 +323,23 @@ export default function EditVariantModal({ variant }: Props) {
                   onChange={setThumbnail}
                   slug={variant?.product_slug}
                 />
+
+                {/* Tình trạng (condition) */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Tình trạng (condition)
+                  </label>
+                  <input
+                    value={condition}
+                    onChange={(e) => setCondition(e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. Mới 100% / Đã qua sử dụng"
+                  />
+                  <p className="mt-1 text-xs text-slate-400">
+                    Lưu vào attributes["Tình trạng"], hiển thị khi variant được
+                    chọn trên storefront.
+                  </p>
+                </div>
 
                 {/* Compatibility Rules */}
                 <>

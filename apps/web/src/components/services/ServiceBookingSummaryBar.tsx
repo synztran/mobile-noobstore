@@ -32,9 +32,16 @@ export function ServiceBookingSummaryBar({
 	onSubmit,
 }: ServiceBookingSummaryBarProps) {
 	const [expanded, setExpanded] = useState(false);
+	const isEmpty = selectedCount === 0;
 
 	return (
 		<div className="fixed left-0 right-0 bottom-0 z-[60] border-t border-outline-variant/20 bg-surface/80 backdrop-blur-xl px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+			{isEmpty ? (
+				<p className="mb-2 text-center text-[10px] font-bold text-on-surface-variant">
+					Chọn dịch vụ bên trên để bắt đầu đặt lịch
+				</p>
+			) : (
+				<>
 			<div className="flex items-center justify-between mb-2">
 				<div>
 					<p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
@@ -110,15 +117,23 @@ export function ServiceBookingSummaryBar({
 					)}
 				</div>
 			) : null}
+			</>
+			)}
 
 			<button
 				type="button"
 				onClick={onSubmit}
-				disabled={disabled || isSubmitting}
-				className="w-full rounded-full bg-primary-gradient py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-opacity active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+				disabled={disabled || isSubmitting || isEmpty}
+				className={
+					isEmpty
+						? "w-full rounded-full border border-outline-variant/30 bg-surface-container px-4 py-3.5 text-xs font-black uppercase tracking-widest text-on-surface-variant"
+						: "w-full rounded-full bg-primary-gradient py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-opacity active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+				}
 			>
 				{isSubmitting ? (
 					<span className="loading loading-spinner loading-sm" />
+				) : isEmpty ? (
+					"Chọn dịch vụ để bắt đầu"
 				) : (
 					"Đặt lịch dịch vụ"
 				)}

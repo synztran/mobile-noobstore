@@ -1943,6 +1943,44 @@ export type Database = {
           },
         ]
       }
+      service_configs: {
+        Row: {
+          base_price: number
+          created_at: string | null
+          handling_days: number
+          id: string
+          is_active: boolean
+          service_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_price?: number
+          created_at?: string | null
+          handling_days?: number
+          id?: string
+          is_active?: boolean
+          service_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_price?: number
+          created_at?: string | null
+          handling_days?: number
+          id?: string
+          is_active?: boolean
+          service_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_configs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_options: {
         Row: {
           created_at: string

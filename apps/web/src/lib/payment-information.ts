@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getPublicClient } from "@/lib/supabase/public";
 
 export type PaymentPlatformType = "bank" | "momo" | "zalo_pay";
 
@@ -13,7 +13,7 @@ export interface PaymentInformation {
 
 export async function getPaymentInformation(): Promise<PaymentInformation[]> {
 	try {
-		const supabase = await createClient();
+		const supabase = getPublicClient();
 		const { data, error } = await supabase
 			.from("payment_information")
 			.select(
