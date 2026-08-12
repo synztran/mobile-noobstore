@@ -1,4 +1,6 @@
-import { getPublicClient } from "@/lib/supabase/public";
+import "server-only";
+
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export interface FeesData {
 	delivery_immediate_price: number;
@@ -29,7 +31,11 @@ function toNumber(
 }
 
 export async function getFeesConfig(): Promise<FeesData> {
-	const supabase = getPublicClient();
+	// Live DB restricts the fees table to authenticated reads only (no anon
+	// policy), so an anon session client throws/returns nothing here and the
+	// warm-up job records empty data. Tiny global config behind a 600s Redis
+	// cache, so the RLS-bypassing admin client (server-only) is the right path.
+	const supabase = getAdminClient();
 
 	const { data, error } = await supabase
 		.from("fees")

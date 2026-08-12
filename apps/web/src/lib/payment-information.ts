@@ -1,4 +1,6 @@
-import { getPublicClient } from "@/lib/supabase/public";
+import "server-only";
+
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export type PaymentPlatformType = "bank" | "momo" | "zalo_pay";
 
@@ -13,7 +15,12 @@ export interface PaymentInformation {
 
 export async function getPaymentInformation(): Promise<PaymentInformation[]> {
 	try {
-		const supabase = getPublicClient();
+		// Live DB restricts payment_information to authenticated reads only (no
+		// anon policy), so an anon session client returns [] and both the route
+		// cache and the warm-up job record empty data. This is a tiny global
+		// store config served behind a 300s Redis cache, so the RLS-bypassing
+		// admin client (server-only) is the correct access path.
+		const supabase = getAdminClient();
 		const { data, error } = await supabase
 			.from("payment_information")
 			.select(
