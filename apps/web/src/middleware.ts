@@ -49,6 +49,34 @@ function hasValidSession(request: NextRequest): boolean {
 }
 
 /**
+ * Public read endpoints whose responses are cached (Redis + CDN). Rate
+ * limiting them adds an Upstash round-trip (~100-190ms) to every request
+ * without meaningful abuse protection — the data is global and cached.
+ * Only GET requests are exempt; mutations and user-scoped routes stay
+ * rate-limited.
+ */
+const PUBLIC_CACHED_READ_PREFIXES = [
+	"/api/home/",
+	"/api/products",
+	"/api/services",
+	"/api/shipping-methods",
+	"/api/fees",
+	"/api/payment-information",
+	"/api/community/posts",
+	"/api/reviews/recent",
+	"/api/blog",
+	"/api/gacha/recent-winners",
+	"/api/location/wards",
+];
+
+function isPublicCachedRead(method: string, pathname: string): boolean {
+	if (method !== "GET") return false;
+	return PUBLIC_CACHED_READ_PREFIXES.some((prefix) =>
+		pathname.startsWith(prefix),
+	);
+}
+
+/**
  * Fire-and-forget rate limit alert to Telegram (max 1 per 5 min).
  */
 function fireRateLimitAlert(ip: string, path: string, isAuthenticated: boolean): void {
@@ -112,6 +140,7 @@ export async function middleware(request: NextRequest) {
     // Rate limit all /api/* routes — 100 req/min per IP
     if (
       pathname.startsWith("/api/") &&
+      !isPublicCachedRead(request.method, pathname) &&
       !pathname.startsWith("/api/health") &&
       !pathname.startsWith("/api/analytics/") &&
       !pathname.startsWith("/api/cron/") &&

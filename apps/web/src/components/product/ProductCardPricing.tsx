@@ -6,11 +6,11 @@ const ProductCardPricing = memo(({ product }: { product: ShopProduct }) => {
   if (product.discount_price && product.discount_price > 0) {
     return (
       <div>
-        <div className="text-right text-sm font-extrabold text-red-600">
-          {formatVND(product.discount_price)}
-        </div>
         <div className="text-right text-xs font-bold text-on-surface-variant line-through">
           {formatVND(product.base_price)}
+        </div>
+        <div className="text-right text-base font-extrabold text-red-600">
+          {formatVND(product.discount_price)}
         </div>
       </div>
     );

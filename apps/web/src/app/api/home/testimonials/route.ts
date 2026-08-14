@@ -1,8 +1,11 @@
-import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
+import { getCache, setCache, CACHE_KEYS } from "@/lib/redis/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+// Response is cached at the Next.js edge (60s) so repeat hits never run the
+// handler (no middleware Redis hop, no route Redis get). Redis is a second
+// layer for the first edge miss.
+export const revalidate = 60;
 
 export interface Testimonial {
   id: string;
@@ -15,7 +18,7 @@ export interface Testimonial {
 
 export async function GET() {
   try {
-    const cacheKey = `${CACHE_VERSION}:testimonials`;
+    const cacheKey = CACHE_KEYS.testimonials;
     const cached = await getCache<Testimonial[]>(cacheKey);
     if (cached) return NextResponse.json(cached);
 
@@ -37,12 +40,7 @@ export async function GET() {
     }
 
     await setCache(cacheKey, testimonials ?? []);
-    return NextResponse.json(testimonials ?? [], {
-      headers: {
-        "Cache-Control":
-          "public, s-maxage=60, stale-while-revalidate=300",
-      },
-    });
+    return NextResponse.json(testimonials ?? []);
   } catch (err) {
     console.error("[testimonials] error:", err);
     return NextResponse.json(

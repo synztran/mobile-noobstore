@@ -157,10 +157,6 @@ export async function getCartItems(
   const allVariantIds = [
     ...new Set(rows.map((r) => r.variant_id).filter(Boolean)),
   ] as string[];
-  const [productMap, variantMap] = await Promise.all([
-    fetchProducts(supabase, allProductIds),
-    fetchVariants(supabase, allVariantIds),
-  ]);
 
   const parentRows = rows.filter((r) => !r.parent_cart_item_id);
   const childRows = rows.filter((r) => r.parent_cart_item_id);
@@ -169,21 +165,30 @@ export async function getCartItems(
   const childVariantIds = [
     ...new Set(childRows.map((r) => r.variant_id).filter(Boolean)),
   ] as string[];
-  const componentGroupMap = new Map<string, string>();
-  if (childVariantIds.length > 0) {
-    const { data: compData } = await supabase
-      .from("kit_component_variants")
-      .select("product_variant_id, component_group, kit_product_id")
-      .in("product_variant_id", childVariantIds);
-    for (const row of compData ?? []) {
-      if (row.product_variant_id && row.component_group && row.kit_product_id) {
-        componentGroupMap.set(
-          `${row.product_variant_id}::${row.kit_product_id}`,
-          row.component_group
-        );
+
+  // All three lookups depend only on the cart_items rows — fire them in
+  // parallel instead of the component-group query running after products/variants.
+  const [productMap, variantMap, componentGroupMap] = await Promise.all([
+    fetchProducts(supabase, allProductIds),
+    fetchVariants(supabase, allVariantIds),
+    (async () => {
+      const map = new Map<string, string>();
+      if (childVariantIds.length === 0) return map;
+      const { data: compData } = await supabase
+        .from("kit_component_variants")
+        .select("product_variant_id, component_group, kit_product_id")
+        .in("product_variant_id", childVariantIds);
+      for (const row of compData ?? []) {
+        if (row.product_variant_id && row.component_group && row.kit_product_id) {
+          map.set(
+            `${row.product_variant_id}::${row.kit_product_id}`,
+            row.component_group
+          );
+        }
       }
-    }
-  }
+      return map;
+    })(),
+  ]);
 
   const childrenByParent = new Map<string, CartApiItem[]>();
   for (const child of childRows) {

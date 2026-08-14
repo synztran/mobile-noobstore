@@ -232,6 +232,100 @@ export type Database = {
         }
         Relationships: []
       }
+      community_config: {
+        Row: {
+          community_enabled: boolean
+          created_at: string
+          firmware_enabled: boolean
+          id: string
+          min_rank_level_firmware: number
+          min_rank_level_post: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          community_enabled?: boolean
+          created_at?: string
+          firmware_enabled?: boolean
+          id?: string
+          min_rank_level_firmware?: number
+          min_rank_level_post?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          community_enabled?: boolean
+          created_at?: string
+          firmware_enabled?: boolean
+          id?: string
+          min_rank_level_firmware?: number
+          min_rank_level_post?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          media: Json
+          post_type: string
+          published_at: string | null
+          status: string
+          status_reason: string | null
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          author_id: string
+          content?: string
+          created_at?: string
+          id?: string
+          media?: Json
+          post_type: string
+          published_at?: string | null
+          status?: string
+          status_reason?: string | null
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          media?: Json
+          post_type?: string
+          published_at?: string | null
+          status?: string
+          status_reason?: string | null
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       component_variant_rule_allowed: {
         Row: {
           rule_id: string
@@ -575,6 +669,74 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      firmwares: {
+        Row: {
+          author_id: string
+          created_at: string
+          download_count: number
+          file_name: string
+          file_size: number
+          file_url: string
+          files: Json
+          id: string
+          keyboard_name: string
+          mime_type: string
+          notes: string
+          published_at: string | null
+          status: string
+          status_reason: string | null
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          download_count?: number
+          file_name: string
+          file_size?: number
+          file_url: string
+          files?: Json
+          id?: string
+          keyboard_name?: string
+          mime_type?: string
+          notes?: string
+          published_at?: string | null
+          status?: string
+          status_reason?: string | null
+          title: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          download_count?: number
+          file_name?: string
+          file_size?: number
+          file_url?: string
+          files?: Json
+          id?: string
+          keyboard_name?: string
+          mime_type?: string
+          notes?: string
+          published_at?: string | null
+          status?: string
+          status_reason?: string | null
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firmwares_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gacha_event_blocked_users: {
         Row: {

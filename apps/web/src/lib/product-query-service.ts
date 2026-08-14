@@ -485,9 +485,6 @@ export async function getProductListByFilters(
     if (safePriceMax > 0)
       countQuery = countQuery.lte("base_price", safePriceMax);
 
-    const { count, error: countErr } = await countQuery;
-    if (countErr || count === null) return { products: [], total: 0 };
-
     // ── Fetch paginated products (sorted by user's choice) ──
     const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
        categories(id, name),
@@ -506,11 +503,13 @@ export async function getProductListByFilters(
     }
     dataQuery = dataQuery.order("id", { ascending: true });
 
-    const { data, error } = await dataQuery.range(
-      safeOffset,
-      safeOffset + safeLimit - 1
-    );
-
+    // Count and data are independent once categoryId is resolved — run them
+    // in parallel to cut one full round-trip off every list request.
+    const [{ count, error: countErr }, { data, error }] = await Promise.all([
+      countQuery,
+      dataQuery.range(safeOffset, safeOffset + safeLimit - 1),
+    ]);
+    if (countErr || count === null) return { products: [], total: 0 };
     if (error || !data) return { products: [], total: 0 };
 
     const rows = data as unknown as RawListRow[];

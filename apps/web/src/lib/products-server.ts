@@ -1220,26 +1220,35 @@ export const getProductBySlug = cache(async function getProductBySlug(
       (c) => c.component_product_id
     );
 
-    let componentProducts: ShopProduct[] = [];
-    if (compIds.length > 0) {
-      const { data: compData } = await getPublicClient()
-        .from("products")
-        .select(
-          `id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
+    // Fire the component-products and gift-products lookups in parallel — both
+    // depend only on the already-fetched product row.
+    const [compData, giftRows] = await Promise.all([
+      compIds.length > 0
+        ? getPublicClient()
+            .from("products")
+            .select(
+              `id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
 			categories(id, name),
 			product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, attributes)`
-        )
-        .eq("is_active", true)
-        .in("id", compIds);
-      if (compData) {
-        const emptySupplements: KitSupplement = {
-          childVariantsByProductId: new Map(),
-          kitStockById: new Map(),
-        };
-        componentProducts = (compData as unknown as RawListRow[]).map((row) =>
-          shapeRow(row, emptySupplements)
-        );
-      }
+            )
+            .eq("is_active", true)
+            .in("id", compIds)
+        : Promise.resolve({ data: null }),
+      getPublicClient()
+        .from("gift_products")
+        .select("quantity, gift:gift_product_id!inner(name, slug, thumbnail)")
+        .eq("product_id", raw.id),
+    ]);
+
+    let componentProducts: ShopProduct[] = [];
+    if (compData?.data) {
+      const emptySupplements: KitSupplement = {
+        childVariantsByProductId: new Map(),
+        kitStockById: new Map(),
+      };
+      componentProducts = (compData.data as unknown as RawListRow[]).map((row) =>
+        shapeRow(row, emptySupplements)
+      );
     }
 
     // Compute effective stock for kit products from required child component stocks.
@@ -1287,12 +1296,6 @@ export const getProductBySlug = cache(async function getProductBySlug(
             },
       };
     });
-
-    // Fetch gift products
-    const { data: giftRows } = await getPublicClient()
-      .from("gift_products")
-      .select("quantity, gift:gift_product_id!inner(name, slug, thumbnail)")
-      .eq("product_id", raw.id);
 
     const gifts: ProductDetail["gifts"] =
       (

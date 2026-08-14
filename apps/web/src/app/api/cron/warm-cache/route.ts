@@ -2,7 +2,14 @@ import { requireCronSecret } from "@/lib/auth/requireCronSecret";
 import { getBlogList } from "@/lib/blog-server";
 import { getFeesConfig } from "@/lib/fees";
 import { getPaymentInformation } from "@/lib/payment-information";
-import { getNoteworthyProducts } from "@/lib/products-server";
+import {
+	getNoteworthyProducts,
+	getProductSeoData,
+	getProductBySlug,
+	getProductPurchaseCount,
+	getRelatedProducts,
+	getFrequentlyBoughtTogether,
+} from "@/lib/products-server";
 import { CACHE_KEYS, readThroughCache } from "@/lib/redis/cache";
 import { getRewards } from "@/lib/rewards-server";
 import { getSaleProducts } from "@/lib/sale-products-server";
@@ -12,6 +19,7 @@ import {
 	getServicesList,
 } from "@/lib/services-server";
 import { getShippingMethods } from "@/lib/shipping-methods";
+import { getPublicClient } from "@/lib/supabase/public";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +81,27 @@ export async function POST(req: NextRequest) {
 					excludeSoldOut: true,
 				}),
 		),
+		warm(CACHE_KEYS.testimonials, 60, async () => {
+			const { data, error } = await getPublicClient()
+				.from("testimonials")
+				.select("id, name, rating, text, product, date")
+				.eq("is_active", true)
+				.order("order", { ascending: true })
+				.limit(20);
+			if (error) throw new Error(error.message);
+			return data ?? [];
+		}),
+		warm(CACHE_KEYS.creators, 60, async () => {
+			const { data, error } = await getPublicClient()
+				.from("creators")
+				.select(
+					"id, name, role, image_url, social_handle, color_theme, bio",
+				)
+				.order("created_at", { ascending: false })
+				.limit(4);
+			if (error) throw new Error(error.message);
+			return data ?? [];
+		}),
 	]);
 
 	// Warm each service detail page from the booking-config slugs.
@@ -91,6 +120,26 @@ export async function POST(req: NextRequest) {
 		}
 	} catch {
 		failed.push("service-detail-warm");
+	}
+
+	// Warm the newest product detail pages so /shop/[slug] first visits hit
+	// cache instead of the full query cascade. The getters self-cache in Redis.
+	try {
+		const seo = await getProductSeoData(24);
+		const warmSlugs = seo.slice(0, 12);
+		await Promise.allSettled(
+			warmSlugs.map(async (p) => {
+				const product = await getProductBySlug(p.slug);
+				if (!product) return;
+				await Promise.allSettled([
+					getProductPurchaseCount(product.id),
+					getRelatedProducts(product.brand, product.slug, 8),
+					getFrequentlyBoughtTogether(product.id),
+				]);
+			}),
+		);
+	} catch {
+		failed.push("product-pages-warm");
 	}
 
 	return NextResponse.json({
