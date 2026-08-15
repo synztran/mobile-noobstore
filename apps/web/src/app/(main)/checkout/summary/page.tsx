@@ -2,40 +2,24 @@
 
 import { SubmitOrderResponse } from "@/app/api/checkout/submit/route";
 import type { ValidateStockResponse } from "@/app/api/checkout/validate-stock/route";
-import { OrderItemsList } from "@/components/checkout/OrderItemsList";
+import { ConfirmOrderDialog } from "@/components/checkout/ConfirmOrderDialog";
+import { DeliveryAddressCard } from "@/components/checkout/DeliveryAddressCard";
 import { DepositPaymentSection } from "@/components/checkout/DepositPaymentSection";
-import { RankBadge } from "@/components/rank/RankBadge";
+import { OrderItemsList } from "@/components/checkout/OrderItemsList";
+import { OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
+import { PreOrderBanner } from "@/components/checkout/PreOrderBanner";
+import { ShippingMethodCard } from "@/components/checkout/ShippingMethodCard";
+import { SummaryHeader } from "@/components/checkout/SummaryHeader";
 import { RankBenefitModal } from "@/components/rank/RankBenefitModal";
 import VoucherComponent from "@/components/voucher/VoucherComponent";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { cartItemToGA, trackRemoveFromCart } from "@/lib/analytics";
-import { formatVND } from "@/lib/currency";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { useNavigationStore } from "@/store/navigation";
-import {
-  ArrowRight,
-  CheckCircle,
-  ShoppingBag,
-  Store,
-  Truck,
-} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-function formatPickupSlot(value?: string | null): string {
-  if (!value) return "Chưa chọn thời gian";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -67,7 +51,6 @@ export default function SummaryPage() {
     appliedVouchers,
     totalDiscountAmount,
     totalShippingDiscountAmount,
-    totalGiftItems,
   } = useDiscountStore();
 
   useEffect(() => {
@@ -80,12 +63,12 @@ export default function SummaryPage() {
   const hasPreOrder = items.some(
     (i) => i.is_pre_order || i.components?.some((c) => c.is_pre_order)
   );
+  const isDeliveryService = shipping?.deliverySpeed === "shipment";
 
   const voucherItems = useMemo(() => {
     if (!mounted) return [];
     return rawItems.map((i) => {
-      const basePrice =
-        i.variant?.effective_price ?? i.product.base_price;
+      const basePrice = i.variant?.effective_price ?? i.product.base_price;
       const componentsTotal = (i.components ?? []).reduce(
         (sum, c) => sum + c.price_adjustment,
         0
@@ -105,6 +88,12 @@ export default function SummaryPage() {
       setPaymentType("full");
     }
   }, [subtotal, paymentType, setPaymentType]);
+
+  useEffect(() => {
+    if (isDeliveryService && paymentType === "deposit_cod") {
+      setPaymentType("full");
+    }
+  }, [isDeliveryService, paymentType, setPaymentType]);
 
   useEffect(() => {
     const minPct = hasPreOrder ? 20 : 10;
@@ -153,8 +142,7 @@ export default function SummaryPage() {
     (productId: string, variantId: string | null) => {
       const item = items.find(
         (i) =>
-          i.product.id === productId &&
-          (i.variant?.id ?? null) === variantId
+          i.product.id === productId && (i.variant?.id ?? null) === variantId
       );
       if (item) trackRemoveFromCart(cartItemToGA(item));
       removeItem(productId, variantId);
@@ -164,7 +152,7 @@ export default function SummaryPage() {
         return next;
       });
     },
-    [items, removeItem],
+    [items, removeItem]
   );
 
   if (!mounted) {
@@ -316,45 +304,10 @@ export default function SummaryPage() {
 
   return (
     <div className="space-y-4">
-      {/* ── Header ───────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-surface-container to-surface-container-low p-4">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-secondary/10 blur-xl" />
-        <div className="relative flex items-center gap-4">
-          <div className="primary-gradient flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl shadow-ambient-sm">
-            <ShoppingBag className="text-white" />
-          </div>
-          <div>
-            <p className="mb-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-              Bước 02 / 03
-            </p>
-            <h2 className="text-2xl font-black tracking-tight text-on-surface">
-              Kiểm tra đơn hàng
-            </h2>
-            <p className="mt-0.5 text-xs text-on-surface-variant">
-              Xem lại thông tin trước khi xác nhận đơn hàng
-            </p>
-          </div>
-        </div>
-      </div>
+      <SummaryHeader />
 
-      {/* ── Pre-order Info Banner ────────────────────────────── */}
-      {hasPreOrder && (
-        <div className="overflow-hidden rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
-          <div>
-            <p className="text-xs font-black uppercase tracking-widest text-violet-700">
-              Sản phẩm Pre-order
-            </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-violet-600">
-              Đơn hàng có sản phẩm pre-order. Thời gian giao hàng dự kiến dựa
-              vào thời gian hàng về đến shop. Do vấn đề hải quan, nên thời gian
-              có thể delay thêm
-            </p>
-          </div>
-        </div>
-      )}
+      {hasPreOrder && <PreOrderBanner />}
 
-      {/* ── Order Items ──────────────────────────────────────── */}
       <div className="space-y-4">
         <OrderItemsList
           items={items}
@@ -363,7 +316,6 @@ export default function SummaryPage() {
         />
       </div>
 
-      {/* ── Voucher / Discount ───────────────────────────────── */}
       <VoucherComponent
         subtotal={subtotal}
         shippingCost={shippingCost}
@@ -373,77 +325,15 @@ export default function SummaryPage() {
         items={voucherItems}
       />
 
-      {/* ── Delivery Address ────────────────────────────── */}
       {shipping && shipping.deliverySpeed !== "pickup" && (
-        <div className="space-y-1 overflow-hidden rounded-2xl bg-surface-container-low px-4 py-4">
-          <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Thông tin nhận hàng
-          </p>
-          <p className="text-sm font-bold text-on-surface">
-            {shipping.fullName}{" "}
-            <span className="font-normal text-on-surface-variant">
-              · {shipping.phoneNumber}
-            </span>
-          </p>
-          <p className="text-sm text-on-surface-variant">
-            {[shipping.apartment, shipping.streetAddress]
-              .filter(Boolean)
-              .join(", ")}
-          </p>
-          {shipping.notes ? (
-            <p className="space-x-1">
-              <strong className="text-sm">Ghi chú:</strong>
-              <small>{shipping.notes}</small>
-            </p>
-          ) : null}
-        </div>
+        <DeliveryAddressCard
+          shipping={shipping}
+          isDeliveryService={isDeliveryService}
+        />
       )}
 
-      {/* ── Shipping Method ──────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low">
-        <div className="flex items-center justify-between p-4 gap-4">
-          <div className="flex flex-1 items-start gap-2">
-            <div className="primary-gradient flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
-              {shipping?.deliverySpeed === "pickup" ? (
-                <Store className="text-lg text-white" />
-              ) : (
-                <Truck className="text-lg text-white" />
-              )}
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-                {shipping?.deliverySpeed === "pickup"
-                  ? "Hình thức nhận hàng"
-                  : "Vận chuyển"}
-              </p>
-              <p className="text-sm font-bold text-on-surface">
-                {shipping?.deliverySpeed === "pickup"
-                  ? "Nhận tại cửa hàng"
-                  : shipping?.deliverySpeed === "express"
-                    ? "Hỏa tốc"
-                    : "Tiêu chuẩn"}
-              </p>
-              <p className="mt-0.5 text-xs text-on-surface-variant">
-                {shipping?.deliverySpeed === "pickup"
-                  ? shipping?.pickupAt
-                    ? `Hẹn giờ: ${formatPickupSlot(shipping.pickupAt)}`
-                    : "NoobStore sẽ chủ động liên hệ bạn khi sản phẩm đã về hàng"
-                  : shipping?.deliverySpeed === "express"
-                    ? "Dự kiến: 2–4 giờ"
-                    : "Dự kiến: 12–24 giờ"}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleEditShipping}
-            className="text-xs font-black uppercase tracking-widest text-primary transition-opacity hover:opacity-70"
-          >
-            Sửa
-          </button>
-        </div>
-      </div>
+      <ShippingMethodCard shipping={shipping} onEdit={handleEditShipping} />
 
-      {/* ── Payment Method ─────────────────────────────────── */}
       <DepositPaymentSection
         paymentType={paymentType}
         setPaymentType={setPaymentType}
@@ -452,256 +342,51 @@ export default function SummaryPage() {
         hasPreOrder={hasPreOrder}
         subtotal={subtotal}
         orderTotal={orderTotal}
+        disabledReason={
+          isDeliveryService
+            ? "Đặt cọc không hỗ trợ đơn hàng giao qua đơn vị vận chuyển."
+            : undefined
+        }
       />
 
-      {/* ── Order Summary ────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-2xl bg-surface-container-low">
-        <div className="space-y-4 px-4 pb-3 pt-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Tóm tắt đơn hàng
-          </p>
+      <OrderSummaryCard
+        subtotal={subtotal}
+        shippingCost={shippingCost}
+        isDeliveryService={isDeliveryService}
+        totalShippingDiscountAmount={totalShippingDiscountAmount}
+        totalDiscountAmount={totalDiscountAmount}
+        rankDiscountAmount={rankDiscountAmount}
+        rankShippingDiscount={rankShippingDiscount}
+        currentRank={rankData?.currentRank ?? null}
+        orderTotal={orderTotal}
+        submitting={submitting}
+        onConfirm={() => setShowConfirm(true)}
+        onRankClick={() => setRankModalOpen(true)}
+      />
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant">Tạm tính</span>
-              <span className="font-bold text-on-surface">
-                {formatVND(subtotal)}
-              </span>
-            </div>
+      <ConfirmOrderDialog
+        showConfirm={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => {
+          setShowConfirm(false);
+          handleConfirmOrder();
+        }}
+        submitting={submitting}
+        itemCount={items.length}
+        subtotal={subtotal}
+        shippingCost={shippingCost}
+        isDeliveryService={isDeliveryService}
+        totalDiscountAmount={totalDiscountAmount}
+        totalShippingDiscountAmount={totalShippingDiscountAmount}
+        rankDiscountAmount={rankDiscountAmount}
+        rankShippingDiscount={rankShippingDiscount}
+        orderTotal={orderTotal}
+        paymentType={paymentType}
+        depositPercentage={depositPercentage}
+        depositAmount={depositAmount}
+        codAmount={codAmount}
+      />
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant">Phí vận chuyển</span>
-              <span className="font-bold text-on-surface">
-                {shippingCost === 0 ? "Miễn phí" : formatVND(shippingCost)}
-              </span>
-            </div>
-
-            {totalShippingDiscountAmount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Giảm phí vận chuyển
-                </span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(totalShippingDiscountAmount)}
-                </span>
-              </div>
-            )}
-
-            {totalDiscountAmount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Giảm giá voucher
-                </span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(totalDiscountAmount)}
-                </span>
-              </div>
-            )}
-
-            {rankDiscountAmount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-1 text-on-surface-variant">
-                  {rankData?.currentRank && (
-                    <RankBadge
-                      rank={rankData.currentRank}
-                      size="sm"
-                      onClick={() => setRankModalOpen(true)}
-                    />
-                  )}
-                  Giảm giá thành viên
-                </span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(rankDiscountAmount)}
-                </span>
-              </div>
-            )}
-
-            {rankShippingDiscount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-1 text-on-surface-variant">
-                  {rankData?.currentRank && (
-                    <RankBadge
-                      rank={rankData.currentRank}
-                      size="sm"
-                      onClick={() => setRankModalOpen(true)}
-                    />
-                  )}
-                  Miễn ship thành viên
-                </span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(rankShippingDiscount)}
-                </span>
-              </div>
-            )}
-
-            <div className="h-px bg-outline-variant/30" />
-
-            <div className="flex items-center justify-between text-base">
-              <span className="font-bold text-on-surface">Tổng cộng</span>
-              <span className="text-lg font-black text-primary">
-                {formatVND(orderTotal)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setShowConfirm(true)}
-          disabled={submitting}
-          className="primary-gradient flex w-full items-center justify-center gap-2 rounded-b-3xl py-4 text-sm font-black uppercase tracking-widest text-white transition-opacity active:opacity-90 disabled:opacity-60"
-        >
-          {submitting ? (
-            <span className="loading loading-spinner loading-sm" />
-          ) : (
-            <>
-              Xác nhận đơn hàng
-              <ArrowRight className="text-lg" />
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Confirmation Dialog */}
-      <dialog
-        className={`modal modal-bottom !mt-0 sm:modal-middle ${showConfirm ? "modal-open" : ""}`}
-      >
-        <div className="modal-box rounded-t-2xl bg-surface px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6">
-          <div className="flex flex-col items-center py-2 text-center mb-2">
-            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-              <CheckCircle size={32} className="text-emerald-600" />
-            </div>
-            <p className="text-lg font-black text-on-surface">
-              Xác nhận đặt hàng
-            </p>
-          </div>
-
-          <div className="mb-6 space-y-3 rounded-2xl bg-surface-container-low p-4 shadow-md border border-outline-variant/30">
-            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-              Tóm tắt đơn hàng
-            </p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant">Số lượng sản phẩm</span>
-              <span className="font-bold text-on-surface">{items.length}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant">Tạm tính</span>
-              <span className="font-bold text-on-surface">
-                {formatVND(subtotal)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant">Phí vận chuyển</span>
-              <span className="font-bold text-on-surface">
-                {shippingCost === 0 ? "Miễn phí" : formatVND(shippingCost)}
-              </span>
-            </div>
-            {totalDiscountAmount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">Giảm giá</span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(totalDiscountAmount)}
-                </span>
-              </div>
-            )}
-            {totalShippingDiscountAmount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Giảm phí vận chuyển
-                </span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(totalShippingDiscountAmount)}
-                </span>
-              </div>
-            )}
-            {rankDiscountAmount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Giảm giá thành viên
-                </span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(rankDiscountAmount)}
-                </span>
-              </div>
-            )}
-            {rankShippingDiscount > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Miễn ship thành viên
-                </span>
-                <span className="font-bold text-emerald-600">
-                  -{formatVND(rankShippingDiscount)}
-                </span>
-              </div>
-            )}
-            <div className="h-px bg-outline-variant/30" />
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-on-surface">Tổng cộng</span>
-              <span className="text-lg font-black text-primary">
-                {formatVND(orderTotal)}
-              </span>
-            </div>
-          </div>
-
-          {paymentType === "deposit_cod" && (
-            <div className="mb-6 space-y-2 rounded-2xl border border-primary/15 bg-primary/5 p-4 shadow-md">
-              <p className="text-[10px] font-black uppercase tracking-widest text-primary">
-                Thanh toán
-              </p>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Đặt cọc ({depositPercentage}%)
-                </span>
-                <span className="font-bold text-primary">
-                  {formatVND(depositAmount)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-on-surface-variant">Còn lại (COD)</span>
-                <span className="font-bold text-secondary">
-                  {formatVND(codAmount)}
-                </span>
-              </div>
-              <div className="h-px bg-primary/10" />
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-bold text-on-surface">
-                  Cần chuyển khoản ngay
-                </span>
-                <span className="font-black text-primary">
-                  {formatVND(depositAmount)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShowConfirm(false)}
-              className="flex-1 rounded-2xl bg-surface-container py-4 text-xs font-black uppercase tracking-widest text-on-surface transition-transform active:scale-95"
-            >
-              Huỷ
-            </button>
-            <button
-              onClick={() => {
-                setShowConfirm(false);
-                handleConfirmOrder();
-              }}
-              disabled={submitting}
-              className="primary-gradient flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-xs font-black uppercase tracking-widest text-white transition-transform active:scale-95 disabled:opacity-60"
-            >
-              {submitting ? (
-                <span className="loading loading-spinner loading-sm" />
-              ) : (
-                "Xác nhận"
-              )}
-            </button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setShowConfirm(false)}>close</button>
-        </form>
-      </dialog>
-
-      {/* Rank Benefit Modal */}
       {rankData?.currentRank && (
         <RankBenefitModal
           open={rankModalOpen}

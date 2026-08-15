@@ -455,11 +455,14 @@ export function useShippingForm() {
   );
   const distanceFee = delivery === "express" ? rawImmediateCost : rawBasicCost;
   const isPickup = delivery === "pickup";
+  const isDeliveryService = delivery === "shipment";
   const baseShippingCost = isPickup
     ? 0
-    : delivery === "express"
-      ? immediateFee
-      : basicFee;
+    : isDeliveryService
+      ? 0
+      : delivery === "express"
+        ? immediateFee
+        : basicFee;
   const shippingCost = baseShippingCost;
   const orderTotal = subtotal + shippingCost;
 
@@ -697,9 +700,28 @@ export function useShippingForm() {
     return result;
   }
 
+  // Keep the delivery method consistent with the selected city. This covers
+  // restored drafts/shipping where the saved delivery no longer matches the
+  // city (e.g. city changed back to HCM with delivery_service persisted).
+  useEffect(() => {
+    if (!form.city) return;
+    if (form.city !== HCM_CITY) {
+      if (delivery === "standard" || delivery === "express") {
+        setDelivery("shipment");
+      }
+    } else if (delivery === "shipment") {
+      setDelivery("standard");
+    }
+  }, [form.city, delivery]);
+
   // Update distance fee when address changes (debounced)
   useEffect(() => {
     let cancelled = false;
+    if (delivery === "shipment") {
+      setDistanceKm(null);
+      setIsCalculatingFee(false);
+      return;
+    }
     const shouldCall =
       String(form.streetAddress).trim() &&
       String(form.city).trim() &&
@@ -789,7 +811,7 @@ export function useShippingForm() {
       cancelled = true;
       clearTimeout(id);
     };
-  }, [form.streetAddress, form.district, form.ward, form.city]);
+  }, [form.streetAddress, form.district, form.ward, form.city, delivery]);
 
   // Auto-save form draft (debounced)
   const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -848,6 +870,7 @@ export function useShippingForm() {
     minPickupDate,
     pickupSlots,
     isPickup,
+    isDeliveryService,
     handleChange,
     handleBlur,
     handleCityChange,

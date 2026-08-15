@@ -58,7 +58,13 @@ export const VoucherComponent = memo(function VoucherComponent({
     invalidVouchers,
     applyingVoucher,
     removeAppliedVoucher,
-  } = useVouchers({ initialVouchers, subtotal, shippingCost, shippingMethodId, items });
+  } = useVouchers({
+    initialVouchers,
+    subtotal,
+    shippingCost,
+    shippingMethodId,
+    items,
+  });
 
   return (
     <section className={`space-y-2 ${className}`}>
@@ -135,7 +141,7 @@ export const VoucherComponent = memo(function VoucherComponent({
       {loadingVouchers ? <VoucherSkeleton /> : null}
 
       {!loadingVouchers && !error && displayVouchers.length === 0 ? (
-        <div className="rounded-xl bg-surface-container px-4 py-3 text-sm text-on-surface-variant">
+        <div className="rounded-xl bg-surface-container px-4 py-3 text-center text-sm text-on-surface-variant">
           Hiện chưa có voucher khả dụng.
         </div>
       ) : null}

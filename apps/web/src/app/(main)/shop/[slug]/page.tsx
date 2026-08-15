@@ -119,7 +119,7 @@ function ProductDetailSkeleton() {
 
 function RailSkeleton() {
   return (
-    <div className="mt-8">
+    <div className="mt-8 px-4">
       <div className="mb-4 h-3 w-44 rounded-full bg-surface-container" />
       <div className="flex gap-4">
         {[1, 2, 3].map((i) => (

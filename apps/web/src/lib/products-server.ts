@@ -1246,8 +1246,8 @@ export const getProductBySlug = cache(async function getProductBySlug(
         childVariantsByProductId: new Map(),
         kitStockById: new Map(),
       };
-      componentProducts = (compData.data as unknown as RawListRow[]).map((row) =>
-        shapeRow(row, emptySupplements)
+      componentProducts = (compData.data as unknown as RawListRow[]).map(
+        (row) => shapeRow(row, emptySupplements)
       );
     }
 
@@ -1297,13 +1297,16 @@ export const getProductBySlug = cache(async function getProductBySlug(
       };
     });
 
-    const gifts: ProductDetail["gifts"] =
-      (
-        giftRows as unknown as Array<{
+    const giftData = giftRows?.data as unknown as
+      | Array<{
           quantity: number;
           gift: { name: string; slug: string; thumbnail: string | null };
-        }> | null
-      )?.map((g) => ({
+        }>
+      | null
+      | undefined;
+
+    const gifts: ProductDetail["gifts"] =
+      giftData?.map((g) => ({
         gift_name: g.gift.name,
         gift_slug: g.gift.slug,
         gift_thumbnail: g.gift.thumbnail,

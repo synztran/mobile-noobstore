@@ -2,6 +2,7 @@
 
 import { formatVND } from "@/lib/currency";
 import type { PaymentInformation } from "@/lib/payment-information";
+import { normalizeShippingMethodId, DELIVERY_SERVICE_ID } from "@/lib/shipping-method";
 import { usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
 import { Check, Copy, CreditCard } from "lucide-react";
 import Image from "next/image";
@@ -11,6 +12,7 @@ interface Props {
   orderNumber: string;
   totalPrice: number;
   shippingFee: number;
+  shippingMethodId?: string | null;
   voucherDiscount?: number;
   shippingDiscount?: number;
   paymentType?: "full" | "deposit_cod";
@@ -64,6 +66,7 @@ export function OrderPaymentPanel({
   orderNumber,
   totalPrice,
   shippingFee,
+  shippingMethodId = null,
   voucherDiscount = 0,
   shippingDiscount = 0,
   paymentType = "full",
@@ -73,6 +76,9 @@ export function OrderPaymentPanel({
 }: Props) {
   const subtotal =
     totalPrice - shippingFee + voucherDiscount + shippingDiscount;
+
+  const isDeliveryService =
+    normalizeShippingMethodId(shippingMethodId) === DELIVERY_SERVICE_ID;
 
   const { data, isLoading } = usePaymentInformation();
 
@@ -149,12 +155,18 @@ export function OrderPaymentPanel({
           <span className="text-on-surface-variant">Phí vận chuyển</span>
           <span
             className={
-              shippingFee === 0
-                ? "font-bold text-secondary"
-                : "font-bold text-on-surface"
+              isDeliveryService
+                ? "font-bold text-on-surface-variant"
+                : shippingFee === 0
+                  ? "font-bold text-secondary"
+                  : "font-bold text-on-surface"
             }
           >
-            {shippingFee === 0 ? "Miễn phí" : formatVND(shippingFee)}
+            {isDeliveryService
+              ? "Cập nhật sau"
+              : shippingFee === 0
+                ? "Miễn phí"
+                : formatVND(shippingFee)}
           </span>
         </div>
         {voucherDiscount > 0 && (

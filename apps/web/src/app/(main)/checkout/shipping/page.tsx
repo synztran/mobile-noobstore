@@ -35,6 +35,7 @@ const ShippingPage = () => {
     minPickupDate,
     pickupSlots,
     isPickup,
+    isDeliveryService,
     handleChange,
     handleBlur,
     handleCityChange,
@@ -228,6 +229,7 @@ const ShippingPage = () => {
           orderTotal={orderTotal}
           isCalculatingFee={isCalculatingFee}
           isSubmitting={isSubmitting}
+          deliveryService={isDeliveryService}
         />
       </form>
     </div>

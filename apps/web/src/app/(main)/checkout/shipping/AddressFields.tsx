@@ -108,26 +108,30 @@ function AddressFields({
             Vui lòng chọn quận / huyện
           </p>
         )}
-
-        <label className="mb-2 ml-1 mt-3 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-          Phường / Xã <span className="ml-0.5 text-primary">*</span>
-        </label>
-        <WardSearchInput
-          value={ward}
-          onChange={onWardChange}
-          onCodeChange={onWardCodeChange}
-          onBlur={() => {}}
-          disabled={false}
-          hasError={cityTouched && !ward}
-          cityName={city}
-          districtName={district}
-        />
-        {cityTouched && !ward && (
-          <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-            Vui lòng chọn Phường / Xã
-          </p>
-        )}
       </div>
+
+      {isHCM && (
+        <div>
+          <label className="mb-2 ml-1 mt-3 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Phường / Xã <span className="ml-0.5 text-primary">*</span>
+          </label>
+          <WardSearchInput
+            value={ward}
+            onChange={onWardChange}
+            onCodeChange={onWardCodeChange}
+            onBlur={() => {}}
+            disabled={false}
+            hasError={cityTouched && !ward}
+            cityName={city}
+            districtName={district}
+          />
+          {cityTouched && !ward && (
+            <p className="ml-1 mt-1 text-[10px] font-bold text-error">
+              Vui lòng chọn Phường / Xã
+            </p>
+          )}
+        </div>
+      )}
 
       <div>
         <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
@@ -148,19 +152,32 @@ function AddressFields({
               streetInvalid ? "text-error" : "text-outline-variant"
             )}
           />
-          <AddressSuggest
-            value={streetAddress}
-            onChange={onAddressSelect}
-            onBlur={() =>
-              onBlur({
-                target: { name: "streetAddress" },
-              } as React.FocusEvent<HTMLInputElement>)
-            }
-            city={city}
-            district={district}
-            ward={ward}
-            disabled={false}
-          />
+          {isHCM ? (
+            <AddressSuggest
+              value={streetAddress}
+              onChange={onAddressSelect}
+              onBlur={() =>
+                onBlur({
+                  target: { name: "streetAddress" },
+                } as React.FocusEvent<HTMLInputElement>)
+              }
+              city={city}
+              district={district}
+              ward={ward}
+              disabled={false}
+            />
+          ) : (
+            <input
+              type="text"
+              name="streetAddress"
+              value={streetAddress}
+              onChange={onChange}
+              onBlur={onBlur}
+              placeholder="Số nhà, tên đường..."
+              autoComplete="off"
+              className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+            />
+          )}
           {streetAddress && !streetInvalid && (
             <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
           )}
@@ -189,13 +206,15 @@ function AddressFields({
         </div>
       </div>
 
-      <ShippingDistanceMap
-        customerLocation={customerLocation}
-        storeCoords={storeCoords}
-        routeCoordinates={routeCoordinates}
-        distanceKm={distanceKm}
-        isCalculatingFee={isCalculatingFee}
-      />
+      {isHCM && (
+        <ShippingDistanceMap
+          customerLocation={customerLocation}
+          storeCoords={storeCoords}
+          routeCoordinates={routeCoordinates}
+          distanceKm={distanceKm}
+          isCalculatingFee={isCalculatingFee}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { VOUCHER_ERROR_MESSAGES } from "@/constants/errorMessages";
+import { sameShippingMethod } from "@/lib/shipping-method";
 import { createClient } from "@/lib/supabase/server";
 import type {
   AppliedVoucherEntry,
@@ -47,7 +48,7 @@ function matchesShippingMethod(
   const allowed = voucher.applies_to_shipping_methods ?? [];
   if (allowed.length === 0) return true;
   if (!shippingMethodId) return false;
-  return allowed.includes(shippingMethodId);
+  return allowed.some((m) => sameShippingMethod(m, shippingMethodId));
 }
 
 /**

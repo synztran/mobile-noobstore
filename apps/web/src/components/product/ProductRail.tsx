@@ -26,7 +26,7 @@ export function ProductRail({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="mt-8"
+      className="mt-8 px-4"
     >
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-lg font-black uppercase tracking-tight">

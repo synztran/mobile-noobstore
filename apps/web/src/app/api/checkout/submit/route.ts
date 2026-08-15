@@ -5,6 +5,11 @@ import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import { randomBase36 } from "@/lib/random";
 import type { AppliedVoucherSummary } from "@/types/voucher";
 import { getCheckoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import {
+  DELIVERY_SERVICE_ID,
+  normalizeShippingMethodId,
+  sameShippingMethod,
+} from "@/lib/shipping-method";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -135,6 +140,8 @@ export async function POST(req: NextRequest) {
   try {
     const body: SubmitOrderRequest = await req.json();
 
+    const shippingMethodId = normalizeShippingMethodId(body.shipping_method_id);
+
     if (!body.items?.length) {
       return NextResponse.json(
         { error: "items are required" },
@@ -147,7 +154,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (
-      body.shipping_method_id === "pickup" &&
+      shippingMethodId === "pickup" &&
       !hasPreOrder &&
       (!body.pickup_at || Number.isNaN(new Date(body.pickup_at).getTime()))
     ) {
@@ -251,10 +258,10 @@ export async function POST(req: NextRequest) {
     });
 
     const MAX_SHIPPING_VND = 500_000;
-    const safeShippingCost = Math.min(
-      Math.max(0, Number(body.shipping_cost) || 0),
-      MAX_SHIPPING_VND
-    );
+    const safeShippingCost =
+      shippingMethodId === DELIVERY_SERVICE_ID
+        ? 0
+        : Math.min(Math.max(0, Number(body.shipping_cost) || 0), MAX_SHIPPING_VND);
     const subtotal = rpcItems.reduce(
       (sum, i) => sum + i.unit_price * i.quantity,
       0
@@ -363,8 +370,8 @@ export async function POST(req: NextRequest) {
           const allowedMethods = row.applies_to_shipping_methods ?? [];
           if (allowedMethods.length > 0) {
             if (
-              !body.shipping_method_id ||
-              !allowedMethods.includes(body.shipping_method_id)
+              !shippingMethodId ||
+              !allowedMethods.some((m) => sameShippingMethod(m, shippingMethodId))
             ) {
               continue;
             }
@@ -589,11 +596,11 @@ export async function POST(req: NextRequest) {
 
       if (preOrderDates.length > 0) {
         expectedDeliveryAt = new Date(preOrderDates[0]).toISOString();
-      } else if (body.shipping_method_id === "express") {
+      } else if (shippingMethodId === "express") {
         expectedDeliveryAt = new Date(
           now.getTime() + 4 * 60 * 60 * 1000
         ).toISOString();
-      } else if (body.shipping_method_id === "standard") {
+      } else if (shippingMethodId === "standard") {
         expectedDeliveryAt = new Date(
           now.getTime() + 24 * 60 * 60 * 1000
         ).toISOString();
@@ -605,11 +612,11 @@ export async function POST(req: NextRequest) {
           delivery_address: body.delivery_address
             ? (body.delivery_address as unknown as Json)
             : null,
-          shipping_method_id: body.shipping_method_id ?? null,
+          shipping_method_id: shippingMethodId,
           expected_delivery_at:
-            body.shipping_method_id === "pickup" ? null : expectedDeliveryAt,
+            shippingMethodId === "pickup" ? null : expectedDeliveryAt,
           pickup_at:
-            body.shipping_method_id === "pickup" && body.pickup_at
+            shippingMethodId === "pickup" && body.pickup_at
               ? new Date(body.pickup_at).toISOString()
               : null,
         })
@@ -617,7 +624,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Persist deposit/cod payment fields ─────────────────────────────
-    if (body.payment_type === "deposit_cod") {
+    if (
+      body.payment_type === "deposit_cod" &&
+      shippingMethodId !== DELIVERY_SERVICE_ID
+    ) {
       const pct = Math.min(
         80,
         Math.max(10, Math.round(body.deposit_percentage ?? 50))

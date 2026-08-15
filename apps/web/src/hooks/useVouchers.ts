@@ -8,6 +8,7 @@ import {
 } from "@/lib/react-query/voucher/api/useVoucherQueries";
 import { useApplyVouchers } from "@/lib/react-query/voucher/api/useVoucherMutations";
 import { useDiscountStore } from "@/store";
+import { sameShippingMethod } from "@/lib/shipping-method";
 import type { VoucherApplyItem, VoucherRow } from "@/types/voucher";
 import { useEffect, useMemo, useState } from "react";
 
@@ -124,7 +125,7 @@ export function useVouchers({
         const allowedMethods = rule.applies_to_shipping_methods ?? [];
         if (
           allowedMethods.length > 0 &&
-          !allowedMethods.includes(shippingMethodId)
+          !allowedMethods.some((m) => sameShippingMethod(m, shippingMethodId))
         ) {
           return true;
         }

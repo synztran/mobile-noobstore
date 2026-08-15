@@ -5,6 +5,10 @@ import { OrderPaymentPanel } from "@/components/orders/OrderPaymentPanel";
 import OrderTrackingTimeline from "@/components/orders/OrderTrackingTimeline";
 import { VoucherInfo } from "@/components/voucher/VoucherInfo";
 import { formatVND } from "@/lib/currency";
+import {
+  DELIVERY_SERVICE_ID,
+  normalizeShippingMethodId,
+} from "@/lib/shipping-method";
 import { toast } from "@/lib/toast";
 import { useOrderDetail } from "@/lib/react-query/order/api/useOrderQueries";
 import { useCancelOrder } from "@/lib/react-query/order/api/useOrderMutations";
@@ -150,6 +154,9 @@ function OrderDetailContent({
   const voucherDiscount = detail.voucher_discount_amount ?? 0;
   const shippingDiscount = detail.shipping_discount_amount ?? 0;
   const totalDiscount = voucherDiscount + shippingDiscount;
+  const isDeliveryService =
+    normalizeShippingMethodId(detail.shipping_method_id) ===
+    DELIVERY_SERVICE_ID;
   const cancelledAtLabel = detail.cancelled_at
     ? new Date(detail.cancelled_at).toLocaleString("vi-VN", {
         day: "2-digit",
@@ -370,10 +377,19 @@ function OrderDetailContent({
               </p>
             )}
             <p className="text-sm text-on-surface-variant">
-              {[
-                detail.delivery_address.apartment,
-                detail.delivery_address.street_address,
-              ]
+              {(isDeliveryService
+                ? [
+                    detail.delivery_address.apartment,
+                    detail.delivery_address.street_address,
+                    detail.delivery_address.ward,
+                    detail.delivery_address.district,
+                    detail.delivery_address.city,
+                  ]
+                : [
+                    detail.delivery_address.apartment,
+                    detail.delivery_address.street_address,
+                  ]
+              )
                 .filter(Boolean)
                 .join(", ")}
             </p>
@@ -393,6 +409,7 @@ function OrderDetailContent({
           orderNumber={detail.order_number}
           totalPrice={detail.total_price}
           shippingFee={detail.shipping_fee}
+          shippingMethodId={detail.shipping_method_id}
           voucherDiscount={voucherDiscount}
           shippingDiscount={shippingDiscount}
           paymentType={detail.payment_type}
@@ -428,7 +445,9 @@ function OrderDetailContent({
           <div className="flex justify-between text-sm">
             <span className="text-on-surface-variant">Vận chuyển</span>
             <span className="font-bold text-on-surface">
-              {formatVND(detail.shipping_fee)}
+              {isDeliveryService
+                ? "Cập nhật sau"
+                : formatVND(detail.shipping_fee)}
             </span>
           </div>
           {voucherDiscount > 0 && (

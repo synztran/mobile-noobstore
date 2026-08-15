@@ -17,7 +17,13 @@ export const CACHE_KEYS = {
 	bookingConfig: "services:booking-config",
 	blogList: (category: string, page: number, limit: number) =>
 		`blog:list:${category}:${page}:${limit}`,
+	communityPostList: (type: string, page: number, limit: number) =>
+		`${CACHE_VERSION}:community:posts:${type}:${page}:${limit}`,
+	documentList: (page: number, limit: number, query?: string) =>
+		`${CACHE_VERSION}:community:firmwares:${page}:${limit}:${query ?? ""}`,
 	rewards: (offset: number, limit: number) => `rewards:${offset}:${limit}`,
+	testimonials: `${CACHE_VERSION}:testimonials`,
+	creators: `${CACHE_VERSION}:creators`,
 	quickPick: (
 		categorySlug: string,
 		productId: string,

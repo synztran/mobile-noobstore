@@ -11,6 +11,7 @@ interface Props {
   orderTotal: number;
   isCalculatingFee: boolean;
   isSubmitting: boolean;
+  deliveryService?: boolean;
 }
 
 function OrderSummary({
@@ -19,6 +20,7 @@ function OrderSummary({
   orderTotal,
   isCalculatingFee,
   isSubmitting,
+  deliveryService = false,
 }: Props) {
   return (
     <div className="overflow-hidden rounded-3xl bg-surface-container-low">
@@ -37,14 +39,18 @@ function OrderSummary({
           <span
             className={clsx(
               "font-bold",
-              isCalculatingFee
-                ? "text-on-surface-variant"
-                : shippingCost === 0
-                  ? "text-secondary"
-                  : "text-on-surface"
+              deliveryService
+                ? "text-xs text-on-surface-variant"
+                : isCalculatingFee
+                  ? "text-on-surface-variant"
+                  : shippingCost === 0
+                    ? "text-secondary"
+                    : "text-on-surface"
             )}
           >
-            {isCalculatingFee ? (
+            {deliveryService ? (
+              "Cập nhật bởi đơn vị vận chuyển"
+            ) : isCalculatingFee ? (
               <span className="inline-flex items-center gap-1">
                 <span className="loading loading-spinner loading-xs" />
                 Đang tính phí

@@ -13,7 +13,14 @@ const SearchFloating = dynamic(
   { ssr: false }
 );
 
-const SEARCH_HIDDEN_PATHS = ["/checkout", "/services", "/gacha", "/profile"];
+const SEARCH_HIDDEN_PATHS = [
+  "/checkout",
+  "/services",
+  "/gacha",
+  "/profile",
+  "/community",
+  "/documents",
+];
 
 export function SearchDeferred() {
   const pathname = usePathname();
@@ -26,7 +33,8 @@ export function SearchDeferred() {
 
   if (ready) return <SearchFloating />;
 
-  const hidden = mounted && SEARCH_HIDDEN_PATHS.some((p) => pathname.startsWith(p));
+  const hidden =
+    mounted && SEARCH_HIDDEN_PATHS.some((p) => pathname.startsWith(p));
   if (hidden) return null;
 
   const isPDP = pathname.startsWith("/shop/") && pathname !== "/shop";

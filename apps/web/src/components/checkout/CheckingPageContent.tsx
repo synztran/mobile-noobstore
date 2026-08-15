@@ -35,8 +35,10 @@ export default function CheckingPageContent() {
   const mounted = useIsMounted();
   const router = useRouter();
 
-  const { orderNumber, totalPrice, orderedItems, shippingCost } =
+  const { orderNumber, totalPrice, orderedItems, shippingCost, shipping } =
     useCheckoutStore();
+
+  const isDeliveryService = shipping?.deliverySpeed === "shipment";
 
   // Guard: redirect to shop if there is no active order
   useEffect(() => {
@@ -210,6 +212,7 @@ export default function CheckingPageContent() {
           depositAmount={orderDepositAmount}
           remainingAmount={orderRemainingAmount}
           depositPercentage={orderDepositPercentage}
+          deliveryService={isDeliveryService}
         />
       </section>
 

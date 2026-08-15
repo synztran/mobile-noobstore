@@ -40,7 +40,14 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const excludedPaths = ["/checkout", "/services", "/gacha", "/profile/support"];
+  const excludedPaths = [
+    "/checkout",
+    "/services",
+    "/gacha",
+    "/profile/support",
+    "/community",
+    "/documents",
+  ];
 
   if (excludedPaths.some((path) => pathname.startsWith(path))) {
     return null;
@@ -56,7 +63,7 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={clsx(
-              "flex flex-col items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 active:scale-90 select-none touch-manipulation",
+              "flex touch-manipulation select-none flex-col items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 active:scale-90",
               isActive
                 ? "bg-primary-fixed text-primary"
                 : "text-black opacity-50 hover:text-primary hover:opacity-100"

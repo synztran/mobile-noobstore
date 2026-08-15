@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { sameShippingMethod } from "@/lib/shipping-method";
 import type { VoucherRow } from "@/types/voucher";
 import { NextResponse } from "next/server";
 
@@ -106,7 +107,10 @@ export async function GET(req: Request) {
       // Shipping-method restriction (empty list = unrestricted)
       const allowedMethods = v.applies_to_shipping_methods ?? [];
       if (allowedMethods.length > 0) {
-        if (!shippingMethodId || !allowedMethods.includes(shippingMethodId)) {
+        if (
+          !shippingMethodId ||
+          !allowedMethods.some((m) => sameShippingMethod(m, shippingMethodId))
+        ) {
           continue;
         }
       }
