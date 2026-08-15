@@ -1,5 +1,6 @@
 import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
 import { createClient } from "@/lib/supabase/server";
+import { optimizeDescriptionHtml } from "@/lib/description-html";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -255,7 +256,7 @@ export async function GET(
       slug: p.slug,
       name: p.name,
       brand: p.brand ?? null,
-      description: p.description ?? null,
+      description: optimizeDescriptionHtml(p.description),
       category: p.categories?.name ?? "",
       category_id: p.category_id,
       base_price: Number(p.base_price),

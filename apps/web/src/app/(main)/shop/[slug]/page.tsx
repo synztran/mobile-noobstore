@@ -16,9 +16,10 @@ import { ScrollToTopOnNav } from "./ScrollToTopOnNav";
 
 // ISR — cache the rendered product page (incl. og tags) on the Vercel edge so
 // crawlers (Facebook's facebookexternalhit, etc.) get a fast hit instead of a
-// cold serverless run. 60s window is short enough that product edits publish
-// quickly; per-user state (cart/wishlist) is client-side and unaffected.
-export const revalidate = 60;
+// cold serverless run. 300s window keeps product edits reasonably fresh while
+// slashing the frequency of cold 5s+ renders that hurt LCP; per-user state
+// (cart/wishlist) is client-side and unaffected.
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,

@@ -15,6 +15,7 @@ import type {
 import type { ShopProduct } from "@/app/api/products/route";
 import { getProductListByFilters } from "@/lib/product-query-service";
 import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
+import { optimizeDescriptionHtml } from "@/lib/description-html";
 import {
   fetchKitSupplements,
   fetchGiftSupplement,
@@ -1319,7 +1320,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
       slug: raw.slug,
       name: raw.name,
       brand: raw.brand ?? null,
-      description: raw.description ?? null,
+      description: optimizeDescriptionHtml(raw.description),
       category: raw.categories?.name ?? "Unknown",
       category_id: raw.category_id,
       base_price: Number(raw.base_price),

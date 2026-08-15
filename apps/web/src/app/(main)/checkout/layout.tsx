@@ -54,7 +54,7 @@ export default function CheckoutLayout({
     <div className="min-h-screen bg-background">
       {/* TopAppBar */}
       <nav className="fixed top-0 z-50 w-full">
-        <div className="glass-nav top-nav-pad flex items-center justify-between px-6">
+        <div className="glass-nav top-nav-pad flex items-center justify-between px-4">
           <Link
             href="/"
             className="transition-opacity duration-200 hover:opacity-70 active:scale-95"
@@ -62,7 +62,7 @@ export default function CheckoutLayout({
             <Icon name="arrow_back" className="text-primary" />
           </Link>
           <h1 className="font-sans text-lg font-bold uppercase tracking-tight text-on-surface">
-            CHECKOUT
+            Thanh toán
           </h1>
           <Link
             href="/shop"

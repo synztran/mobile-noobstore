@@ -44,14 +44,16 @@ export function OrderSummaryCard({
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-on-surface-variant">Tạm tính</span>
-            <span className="font-bold text-on-surface">
+            <span className="font-black text-on-surface">
               {formatVND(subtotal)}
             </span>
           </div>
 
           <div className="flex items-center justify-between text-sm">
             <span className="text-on-surface-variant">Phí vận chuyển</span>
-            <span className="font-bold text-on-surface">
+            <span
+              className={`font-black ${shippingCost === 0 ? "text-emerald-600" : "text-on-surface"}`}
+            >
               {isDeliveryService
                 ? "Cập nhật bởi đơn vị vận chuyển"
                 : shippingCost === 0
@@ -120,7 +122,7 @@ export function OrderSummaryCard({
 
           <div className="flex items-center justify-between text-base">
             <span className="font-bold text-on-surface">Tổng cộng</span>
-            <span className="text-lg font-black text-primary">
+            <span className="text-xl font-black text-primary">
               {formatVND(orderTotal)}
             </span>
           </div>

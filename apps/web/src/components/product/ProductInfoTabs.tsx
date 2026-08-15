@@ -1,11 +1,30 @@
 "use client";
 
-import { ProductReviews } from "@/components/product/ProductReviews";
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
 import clsx from "clsx";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+
+// Reviews only render when the "Đánh giá" tab is opened — split them out of the
+// initial route bundle so the product page hydrates less client JS.
+const ProductReviews = dynamic(
+  () =>
+    import("@/components/product/ProductReviews").then((m) => ({
+      default: m.ProductReviews,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="animate-pulse space-y-3">
+        <div className="h-4 w-40 rounded bg-surface-container-high" />
+        <div className="h-24 rounded-xl bg-surface-container-low" />
+        <div className="h-24 rounded-xl bg-surface-container-low" />
+      </div>
+    ),
+  }
+);
 
 interface ShippingEstimate {
   id: string;

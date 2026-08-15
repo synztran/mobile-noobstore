@@ -267,6 +267,7 @@ export function useProductViewData(
       stock_quantity: product.stock_quantity,
       thumbnail: product.thumbnail,
       is_pre_order: product.is_pre_order,
+      brand: product.brand ?? "",
     };
 
     addItem(

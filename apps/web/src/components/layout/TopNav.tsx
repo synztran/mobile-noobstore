@@ -138,7 +138,10 @@ export function TopNav({
             >
               <Icon name="shopping_cart" className="text-[26px]" />
               {count > 0 && (
-                <span className="w-4.5 h-4.5 absolute -right-1.5 -top-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-white">
+                <span
+                  aria-hidden="true"
+                  className="w-4.5 h-4.5 absolute -right-1.5 -top-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-white"
+                >
                   {count}
                 </span>
               )}

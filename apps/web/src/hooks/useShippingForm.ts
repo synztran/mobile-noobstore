@@ -717,7 +717,7 @@ export function useShippingForm() {
   // Update distance fee when address changes (debounced)
   useEffect(() => {
     let cancelled = false;
-    if (delivery === "shipment") {
+    if (delivery === "shipment" || delivery === "pickup") {
       setDistanceKm(null);
       setIsCalculatingFee(false);
       return;

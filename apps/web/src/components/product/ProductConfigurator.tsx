@@ -205,8 +205,8 @@ export function ProductConfigurator({
                         "text-right text-[10px]",
                         v.price_adjustment !== 0 ? "" : "sr-only",
                         v.price_adjustment > 0
-                          ? "text-green-500"
-                          : "text-red-400"
+                          ? "text-green-700"
+                          : "text-red-700"
                       )}
                     >
                       (

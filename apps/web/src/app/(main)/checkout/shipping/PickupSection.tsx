@@ -2,6 +2,7 @@
 
 import { WsDate } from "react-wheel-scroller/datetime";
 import { WsSelect } from "react-wheel-scroller/select";
+import "react-wheel-scroller/styles.css";
 import clsx from "clsx";
 import { Calendar, Clock, Store } from "lucide-react";
 import { memo } from "react";

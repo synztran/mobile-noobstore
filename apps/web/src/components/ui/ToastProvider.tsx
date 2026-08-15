@@ -4,6 +4,14 @@ import { mountToaster, unmountToaster } from "gooey-toast";
 import { useCallback, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+// gooey-toast CSS is ~55KB and nearly unused on pages without an active toast.
+// Load it lazily (on the client) instead of a render-blocking <link> in <head>.
+let cssPromise: Promise<unknown> | null = null;
+function ensureToastCss() {
+  if (!cssPromise) cssPromise = import("gooey-toast/styles.css");
+  return cssPromise;
+}
+
 export function ToastProvider() {
 	const pathname = usePathname();
 
@@ -31,26 +39,35 @@ export function ToastProvider() {
 	}, []);
 
 	useEffect(() => {
-		mountToaster({
-			position: "top-center",
-			offset: { top: "env(safe-area-inset-top, 0px)" },
-			options: {
-				roundness: 8,
-				timeoutIndicator: true,
-			},
+		let disposed = false;
+		let ro: ResizeObserver | null = null;
+
+		void ensureToastCss().then(() => {
+			if (disposed) return;
+			mountToaster({
+				position: "top-center",
+				offset: { top: "env(safe-area-inset-top, 0px)" },
+				options: {
+					roundness: 8,
+					timeoutIndicator: true,
+				},
+			});
+
+			measure();
+			window.addEventListener("resize", measure);
+
+			const nav = document.querySelector("nav");
+			if (nav) {
+				ro = new ResizeObserver(measure);
+				ro.observe(nav);
+			}
 		});
 
-		measure();
-		window.addEventListener("resize", measure);
-
-		const nav = document.querySelector("nav");
-		const ro = new ResizeObserver(measure);
-		if (nav) ro.observe(nav);
-
 		return () => {
+			disposed = true;
 			unmountToaster();
 			window.removeEventListener("resize", measure);
-			ro.disconnect();
+			ro?.disconnect();
 		};
 	}, [measure]);
 

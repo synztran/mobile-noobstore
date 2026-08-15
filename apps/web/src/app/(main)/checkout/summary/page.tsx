@@ -47,11 +47,8 @@ export default function SummaryPage() {
     depositPercentage,
     setDepositPercentage,
   } = useCheckoutStore();
-  const {
-    appliedVouchers,
-    totalDiscountAmount,
-    totalShippingDiscountAmount,
-  } = useDiscountStore();
+  const { appliedVouchers, totalDiscountAmount, totalShippingDiscountAmount } =
+    useDiscountStore();
 
   useEffect(() => {
     setPaymentType("full");

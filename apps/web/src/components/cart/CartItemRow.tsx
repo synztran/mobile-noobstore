@@ -44,6 +44,7 @@ function CartItemRow({
       <button
         onClick={onRemove}
         disabled={isRemoving}
+        aria-label={`Xóa ${item.product.name} khỏi giỏ hàng`}
         className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-400 transition-transform active:scale-90 disabled:opacity-50"
       >
         {isRemoving ? (

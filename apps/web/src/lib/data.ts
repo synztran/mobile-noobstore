@@ -12,6 +12,7 @@ export interface Product {
   tags?: ITag[];
   is_pre_order?: boolean;
   pre_order_config?: PreOrderConfig | null;
+  brand: string;
 }
 
 export interface ProductVariant {

@@ -303,17 +303,23 @@ export function ProductView({
               )}
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent" />
               {mediaImages.length > 0 && (
-                <div className="absolute bottom-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                <div
+                  aria-hidden="true"
+                  className="absolute bottom-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm"
+                >
                   {activeImageIndex + 1}/{mediaImages.length}
                 </div>
               )}
               {hasDiscount && (
-                <div className="absolute right-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg">
+                <div
+                  aria-hidden="true"
+                  className="absolute right-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg"
+                >
                   -{discountPercent}%
                 </div>
               )}
               {product.sale_ends_at && (
-                <div className="absolute left-3 top-3">
+                <div className="absolute left-3 top-3" aria-hidden="true">
                   <SaleCountdown endsAt={product.sale_ends_at} />
                 </div>
               )}

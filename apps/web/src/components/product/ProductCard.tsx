@@ -94,7 +94,11 @@ export const ProductCard = memo(function ProductCard({
       return;
     }
 
-    addStandardProduct(product, selectedVariant, product.gifts);
+    addStandardProduct(
+      { ...product, brand: product.brand ?? "" },
+      selectedVariant,
+      product.gifts
+    );
     trackAddToCart(toGAProduct(product, selectedVariant));
 
     if (product.thumbnail && imageRef.current) {

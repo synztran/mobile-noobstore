@@ -57,6 +57,7 @@ export interface CartApiItem {
     thumbnail: string | null;
     is_pre_order?: boolean;
     pre_order_config?: PreOrderConfig | null;
+    brand: string | null;
   } | null;
   variant: {
     id: string;
@@ -111,7 +112,7 @@ async function fetchProducts(supabase: Supabase, productIds: string[]) {
 
   const { data } = await supabase
     .from("products")
-    .select("id, name, base_price, stock_quantity, thumbnail, is_pre_order")
+    .select("id, name, base_price, stock_quantity, thumbnail, is_pre_order, brand")
     .in("id", productIds) as unknown as { data: any[] | null };
 
   const map = new Map<string, NonNullable<typeof data>[number]>();
@@ -216,6 +217,7 @@ export async function getCartItems(
             stock_quantity: prod.stock_quantity,
             thumbnail: prod.thumbnail,
             is_pre_order: (prod as any).is_pre_order ?? false,
+            brand: prod.brand ?? null,
           }
         : null,
       variant: varInfo
@@ -255,6 +257,7 @@ export async function getCartItems(
             stock_quantity: prod.stock_quantity,
             thumbnail: prod.thumbnail,
             is_pre_order: (prod as any).is_pre_order ?? false,
+            brand: prod.brand ?? null,
           }
         : null,
       variant: varInfo

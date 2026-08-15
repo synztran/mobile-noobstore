@@ -55,7 +55,14 @@ export function useRemoveCartItem() {
 			});
 			if (!res.ok) throw new Error("Failed to remove cart item");
 		},
-		onSuccess: () => invalidateCart(queryClient),
+		// Await the refetch so callers that key UI state off `onSettled` only
+		// re-enable the row after the fresh cart has actually arrived — no gap
+		// where the removed item is rendered but clickable again.
+		onSuccess: async () => {
+			await queryClient.refetchQueries({
+				queryKey: appQueryKeys.cart.all.queryKey,
+			});
+		},
 	});
 }
 

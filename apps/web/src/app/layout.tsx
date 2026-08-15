@@ -5,8 +5,6 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import { FlyToCart } from "@/components/ui/FlyToCart";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
-import "gooey-toast/styles.css";
-import "react-wheel-scroller/styles.css";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import dynamic from "next/dynamic";
@@ -64,8 +62,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
   themeColor: "#9b3f1c",
 };
@@ -89,17 +85,8 @@ export default function RootLayout({
         />
         <meta property="fb:app_id" content="2148494311891572" />
         <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-        />
-        <meta
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
-        />
-        <link
-          rel="preconnect"
-          href="https://zvjpabkpabvxfouupxgo.supabase.co"
-          crossOrigin="anonymous"
         />
         {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID && (
           <>

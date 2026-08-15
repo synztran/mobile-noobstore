@@ -14,6 +14,7 @@ function transformToCartItem(item: CartApiItem): CartItem {
 		thumbnail: item.product?.thumbnail ?? null,
 		is_pre_order: item.product?.is_pre_order ?? false,
 		pre_order_config: item.product?.pre_order_config ?? null,
+		brand: item.product?.brand ?? "",
 	};
 
 	const variant: ProductVariant | null = item.variant

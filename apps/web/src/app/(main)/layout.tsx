@@ -1,7 +1,7 @@
 import { CartHydrator } from "@/components/ui/CartHydrator";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { MainContent } from "@/components/layout/MainContent";
-import { TopNav } from "@/components/layout/TopNav";
+import { TopNavGate } from "@/components/layout/TopNavGate";
 import { MainLayoutDynamic } from "@/components/layout/MainLayoutDynamic";
 
 export default function MainLayout({
@@ -12,7 +12,7 @@ export default function MainLayout({
 	return (
 		<>
 			<CartHydrator />
-			<TopNav />
+			<TopNavGate />
 			<MainContent>{children}</MainContent>
 			<BottomNav />
 			<MainLayoutDynamic />

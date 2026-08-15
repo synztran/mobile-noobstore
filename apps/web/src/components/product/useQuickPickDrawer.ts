@@ -306,7 +306,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
     }
 
     addItem(
-      { ...activeProduct },
+      { ...activeProduct, brand: activeProduct.brand ?? "" },
       selectedSimpleVariant,
       hasComponents ? components : undefined,
       activeProduct.gifts

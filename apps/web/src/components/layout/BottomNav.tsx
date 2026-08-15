@@ -66,7 +66,7 @@ export function BottomNav() {
               "flex touch-manipulation select-none flex-col items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 active:scale-90",
               isActive
                 ? "bg-primary-fixed text-primary"
-                : "text-black opacity-50 hover:text-primary hover:opacity-100"
+                : "text-on-surface-variant hover:text-primary"
             )}
           >
             {
@@ -79,7 +79,7 @@ export function BottomNav() {
                 {item.icon}
               </div>
             }
-            <span className="font-sans text-[8px] font-semibold uppercase tracking-widest">
+            <span className="font-sans text-[10px] font-semibold uppercase tracking-widest">
               {item.label}
             </span>
           </Link>
