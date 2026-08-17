@@ -59,7 +59,7 @@ export default function CheckoutLayout({
             href="/"
             className="transition-opacity duration-200 hover:opacity-70 active:scale-95"
           >
-            <Icon name="arrow_back" className="text-primary" />
+            <Icon name="arrow_back" className="text-2xl text-primary" />
           </Link>
           <h1 className="font-sans text-lg font-bold uppercase tracking-tight text-on-surface">
             Thanh toán
@@ -68,7 +68,7 @@ export default function CheckoutLayout({
             href="/shop"
             className="transition-opacity duration-200 hover:opacity-70 active:scale-95"
           >
-            <Icon name="shopping_bag" className="text-primary" />
+            <Icon name="shopping_bag" className="text-2xl text-primary" />
           </Link>
         </div>
 

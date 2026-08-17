@@ -2,10 +2,11 @@
 
 import Icon from "@/components/ui/Icon";
 import { useWishlist, type ProductMeta } from "@/hooks/useWishlist";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import clsx from "clsx";
 import { motion } from "framer-motion";
-import { usePathname } from "next/navigation";
-import { memo, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { memo, useCallback } from "react";
 
 interface WishlistButtonProps {
   productId: string;
@@ -25,17 +26,28 @@ export const WishlistButton = memo(function WishlistButton({
   iconOnly = true,
 }: WishlistButtonProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
   const isProductPage = /^\/shop\/.+$/.test(pathname);
   const { isInWishlist, isPendingFor, toggleWishlist } = useWishlist();
-  const wished = useMemo(() => isInWishlist(productId), [isInWishlist, productId]);
-  const pending = useMemo(() => isPendingFor(productId), [isPendingFor, productId]);
+  const wished = isInWishlist(productId);
+  const pending = isPendingFor(productId);
+
+  const handleClick = useCallback(() => {
+    if (!user) {
+      const currentPath = window.location.pathname + window.location.search;
+      router.push(`/login?next=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+    void toggleWishlist(productId, product);
+  }, [user, router, productId, product, toggleWishlist]);
 
   const sizeClass = size === "sm" ? "h-8 px-2 text-xs" : "h-12 px-2 text-sm";
 
   return (
     <motion.button
       type="button"
-      onClick={() => void toggleWishlist(productId, product)}
+      onClick={handleClick}
       disabled={pending}
       aria-label={
         wished ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"

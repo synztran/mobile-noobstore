@@ -1,6 +1,6 @@
 "use client";
 
-import { formatShortVND, formatVND } from "@/lib/currency";
+import { formatVND } from "@/lib/currency";
 import type { CartItem } from "@/lib/data";
 import { NOT_FOUND_IMAGE } from "@/lib/images";
 import Image from "next/image";
@@ -71,81 +71,52 @@ export const OrderItemsList = memo(function OrderItemsList({
               {/* Product info */}
               <div className={`flex h-full gap-2 ${isOos ? "opacity-50" : ""}`}>
                 {/* Product thumbnail */}
-                <div className="relative h-20 w-20 flex-shrink-0 rounded-lg">
+                <div className="relative h-20 min-w-24">
                   <Image
                     src={item.product.thumbnail || NOT_FOUND_IMAGE}
                     alt={item.product.name}
                     fill
                     sizes="96px"
-                    className="rounded-lg object-contain"
+                    className="rounded-xl object-cover"
                   />
                   {isPreorder ? (
-                    <span className="absolute -left-1.5 -top-2 max-w-max translate-x-1/2 rounded-sm bg-violet-500 px-1 py-0.5 text-[8px] font-black uppercase text-white">
+                    <span className="absolute -top-2 left-4 max-w-max rounded-sm bg-violet-500 px-2 py-0.5 text-[8px] font-black uppercase text-white">
                       Pre-order
                     </span>
                   ) : null}
                 </div>
 
                 {/* Product details */}
-                <div className="flex min-h-full w-full flex-col items-stretch">
-                  <div className="h-20 space-y-2 pb-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="line-clamp-2 text-sm font-bold text-on-surface">
-                        {item.product.name}
-                      </span>
-                      <span className="flex-shrink-0 rounded-lg bg-slate-400/10 px-2 py-0.5 text-xs font-bold text-on-surface-variant">
-                        x{item.quantity}
-                      </span>
+                <div className="flex min-h-full w-full flex-col items-stretch space-y-2">
+                  <span className="line-clamp-3 text-sm font-bold text-on-surface">
+                    {item.product.name}
+                  </span>
+                  {/* Components breakdown */}
+                  {item.components && item.components.length > 0 ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {item.components.map((component) => (
+                        <p
+                          key={`${item.id}-${component.variant_id}`}
+                          className="truncate rounded-md bg-gray-200 px-2 py-1 text-[10px] font-semibold leading-snug text-on-surface-variant"
+                        >
+                          {component.component_group}:{" "}
+                          <span className="font-bold text-on-surface">
+                            {component.variant_name}
+                          </span>
+                        </p>
+                      ))}
                     </div>
-                    {item.variant && (
-                      <p className="mt-0.5 text-xs font-semibold text-outline">
-                        {item.variant.variant_name}
-                      </p>
-                    )}
-                    {/* Components breakdown */}
-                    {item.components &&
-                      item.components.length > 0 &&
-                      (() => {
-                        return (
-                          <div className="relative clear-both">
-                            <div className="flex flex-wrap items-center gap-2">
-                              {item.components.map((component) => (
-                                <div
-                                  key={component.variant_id}
-                                  className="flex items-center justify-between gap-2"
-                                >
-                                  <div className="flex items-center justify-between gap-2 rounded-sm bg-amber-900/10 px-2 py-1 text-[11px] font-semibold text-on-surface-variant">
-                                    <span className="truncate text-on-tertiary-fixed-variant">
-                                      {component.variant_name}
-                                    </span>
-                                    {/* {component.price_adjustment !== 0 ? (
-                                    <span
-                                      className={`ml-[0.25rem] flex-shrink-0 ${
-                                        component.price_adjustment > 0
-                                          ? "text-green-500"
-                                          : component.price_adjustment < 0
-                                            ? "text-red-600"
-                                            : "text-on-surface-variant"
-                                      }`}
-                                    >
-                                      {component.price_adjustment !== 0
-                                        ? `(${component.price_adjustment > 0 ? "+" : ""}${formatShortVND(
-                                            component.price_adjustment
-                                          )})`
-                                        : ""}
-                                    </span>
-                                  ) : null} */}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                  </div>
+                  ) : null}
+
                   {/* Total price for item */}
-                  <div className="flex w-full items-center justify-end gap-2 border-t border-outline-variant/60 pt-1 text-right">
-                    <span className="text-base font-black text-primary">
+                  <div
+                    className={`${!item.components?.length ? "!mt-auto" : ""} flex items-center justify-between`}
+                  >
+                    <span className="text-xs text-on-surface-variant">
+                      Số lượng:{" "}
+                      <span className="font-black">{item.quantity}</span>
+                    </span>
+                    <span className="text-sm font-black text-primary">
                       {formatVND(itemTotal)}
                     </span>
                   </div>

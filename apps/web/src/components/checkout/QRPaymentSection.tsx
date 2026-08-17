@@ -86,7 +86,7 @@ export function QRPaymentSection({
             className={`text-xs font-bold ${shippingCost === 0 && deliveryService ? "text-emerald-600" : "text-on-surface-variant"}`}
           >
             {deliveryService
-              ? "Cập nhật bởi đơn vị vận chuyển"
+              ? "Cập nhật sau"
               : shippingCost === 0
                 ? "Miễn phí"
                 : formatVND(shippingCost)}

@@ -17,8 +17,8 @@ interface TopNavDrawerProps {
 const NAV_ITEMS = [
   { icon: "home", label: "Trang chủ", href: "/" },
   { icon: "shopping_bag", label: "Cửa hàng", href: "/shop" },
-  { icon: "forum", label: "Cộng đồng", href: "/community" },
-  { icon: "memory", label: "Tài liệu", href: "/documents" },
+  // { icon: "forum", label: "Cộng đồng", href: "/community" },
+  // { icon: "paper", label: "Tài liệu", href: "/documents" },
   { icon: "person", label: "Tài khoản người dùng", href: "/profile" },
   { icon: "favorite", label: "Sản phẩm yêu thích", href: "/wishlist" },
   { icon: "inventory_2", label: "Đơn hàng", href: "/profile/orders" },
@@ -136,7 +136,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
 
           <div className="mx-4 border-t border-outline-variant/10" />
 
-          <nav className="mt-2 flex-1 overflow-y-auto touch-pan-y">
+          <nav className="mt-2 flex-1 touch-pan-y overflow-y-auto">
             <motion.ul
               variants={containerVariants}
               initial="hidden"
@@ -161,9 +161,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
                         name={icon}
                         className={clsx(
                           "text-[18px]",
-                          isActive
-                            ? "text-primary"
-                            : "text-on-surface-variant"
+                          isActive ? "text-primary" : "text-on-surface-variant"
                         )}
                       />
                       {label}

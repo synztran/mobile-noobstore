@@ -30,6 +30,7 @@ export async function RelatedProductsSection({
         )
       }
       products={relatedProducts}
+      classNames="px-4"
     />
   );
 }

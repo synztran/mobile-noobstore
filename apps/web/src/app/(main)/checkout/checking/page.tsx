@@ -1,6 +1,7 @@
 "use client";
 
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
+import ShippingFeeLabel from "@/components/ui/ShippingFeeLabel";
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
@@ -210,21 +211,10 @@ export default function CheckingPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">Phí vận chuyển</span>
-              <span
-                className={
-                  isDeliveryService
-                    ? "text-xs font-bold text-on-surface-variant"
-                    : shippingCost === 0
-                      ? "font-bold text-emerald-600"
-                      : "font-bold text-on-surface"
-                }
-              >
-                {isDeliveryService
-                  ? "Cập nhật bởi đơn vị vận chuyển"
-                  : shippingCost === 0
-                    ? "Miễn phí"
-                    : formatVND(shippingCost)}
-              </span>
+              <ShippingFeeLabel
+                shippingCost={shippingCost}
+                deliveryService={isDeliveryService}
+              />
             </div>
             <div className="h-px bg-outline-variant/30" />
             <div className="flex justify-between">

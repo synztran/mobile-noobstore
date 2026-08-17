@@ -53,8 +53,13 @@ export function BottomNav() {
     return null;
   }
 
+  const isShopDetail = /^\/shop\/.+$/.test(pathname);
+  if (isShopDetail) {
+    return null;
+  }
+
   return (
-    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[95dvw] items-center justify-between rounded-xl border-gray-200/30 !bg-[rgba(255,255,255,0.8)] p-2 shadow-lg">
+    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[90dvw] items-center justify-between rounded-xl border-gray-200/30 !bg-[rgba(255,255,255,0.9)] p-2 shadow-lg">
       {navItems.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(item.href + "/");

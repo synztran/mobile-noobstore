@@ -11,12 +11,14 @@ export function ProductRail({
   trailing,
   products,
   cardWidth = "w-[140px]",
+  classNames,
 }: {
   title: string;
   icon?: ReactNode;
   trailing?: ReactNode;
   products: ShopProduct[];
   cardWidth?: string;
+  classNames?: string;
 }) {
   if (products.length === 0) return null;
 
@@ -26,7 +28,7 @@ export function ProductRail({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="mt-8"
+      className={`mt-8 pb-8 ${classNames ?? ""}`}
     >
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2 text-lg font-black uppercase tracking-tight">

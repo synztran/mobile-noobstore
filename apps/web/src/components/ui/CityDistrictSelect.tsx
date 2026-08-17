@@ -113,9 +113,9 @@ export function CitySearchInput({
 
   return (
     <div ref={triggerRef}>
-      <div
+      <label
         className={clsx(
-          "flex items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
+          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
           hasError
             ? "border-error"
             : open
@@ -150,7 +150,7 @@ export function CitySearchInput({
             className="flex-shrink-0 text-outline-variant"
           />
         )}
-      </div>
+      </label>
 
       {open &&
         createPortal(
@@ -311,9 +311,9 @@ export function DistrictSearchInput({
 
   return (
     <div ref={triggerRef}>
-      <div
+      <label
         className={clsx(
-          "flex items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
+          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
           isDisabled && "opacity-60",
           hasError
             ? "border-error"
@@ -353,7 +353,7 @@ export function DistrictSearchInput({
               className="flex-shrink-0 text-outline-variant"
             />
           ))}
-      </div>
+      </label>
 
       {open &&
         createPortal(
@@ -513,9 +513,9 @@ export function WardSearchInput({
 
   return (
     <div ref={triggerRef}>
-      <div
+      <label
         className={clsx(
-          "flex items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
+          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
           disabled && "opacity-60",
           hasError
             ? "border-error"
@@ -555,7 +555,7 @@ export function WardSearchInput({
               className="flex-shrink-0 text-outline-variant"
             />
           ))}
-      </div>
+      </label>
 
       {open &&
         createPortal(

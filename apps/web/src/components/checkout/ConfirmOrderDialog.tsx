@@ -76,7 +76,7 @@ export function ConfirmOrderDialog({
               className={`font-bold ${shippingCost === 0 ? "text-emerald-600" : "text-on-surface"}`}
             >
               {isDeliveryService
-                ? "Cập nhật bởi đơn vị vận chuyển"
+                ? "Cập nhật sau"
                 : shippingCost === 0
                   ? "Miễn phí"
                   : formatVND(shippingCost)}

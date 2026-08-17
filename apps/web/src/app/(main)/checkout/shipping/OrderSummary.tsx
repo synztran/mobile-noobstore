@@ -1,8 +1,8 @@
 "use client";
 
 import { ShippingSubmitButton } from "@/components/checkout/ShippingSubmitButton";
+import ShippingFeeLabel from "@/components/ui/ShippingFeeLabel";
 import { formatVND } from "@/lib/currency";
-import clsx from "clsx";
 import { memo } from "react";
 
 interface Props {
@@ -36,31 +36,11 @@ function OrderSummary({
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="text-on-surface-variant">Phí vận chuyển</span>
-          <span
-            className={clsx(
-              "font-bold",
-              deliveryService
-                ? "text-xs text-on-surface-variant"
-                : isCalculatingFee
-                  ? "text-on-surface-variant"
-                  : shippingCost === 0
-                    ? "text-secondary"
-                    : "text-on-surface"
-            )}
-          >
-            {deliveryService ? (
-              "Cập nhật bởi đơn vị vận chuyển"
-            ) : isCalculatingFee ? (
-              <span className="inline-flex items-center gap-1">
-                <span className="loading loading-spinner loading-xs" />
-                Đang tính phí
-              </span>
-            ) : shippingCost === 0 ? (
-              "Miễn phí"
-            ) : (
-              formatVND(shippingCost)
-            )}
-          </span>
+          <ShippingFeeLabel
+            shippingCost={shippingCost}
+            isCalculatingFee={isCalculatingFee}
+            deliveryService={deliveryService}
+          />
         </div>
         <div className="h-px bg-outline-variant/30" />
         <div className="flex items-center justify-between">

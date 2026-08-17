@@ -155,20 +155,31 @@
   .main-top-offset {
     /* matches top-nav-pad height: safe-area + 1rem pad + ~1.75rem content + 1rem pad */
     margin-top: calc(env(safe-area-inset-top, 0px) + 3.75rem);
+    /* margin-top: min(env(safe-area-inset-top, 0px), 3.75rem); */
   }
 
   .main-bottom-offset {
     /* matches bottom-nav-pad height: 0.75rem + ~2.5rem content + safe-area + 0.5rem + extra */
-    margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 4.25rem);
+    /* margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 4.25rem); */
+    margin-bottom: min(calc(env(safe-area-inset-bottom, 0px) + 2.25rem), 4.25rem);
   }
 
   .min-main-content {
-    min-height: calc(100dvh - calc(env(safe-area-inset-top, 0px) + 3.75rem) - calc(env(safe-area-inset-bottom, 0px), 4.25rem));
+    /* min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 9.25rem); */
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   }
 }
 
 .maplibregl-ctrl-bottom-right  {
   display: none;
+}
+
+@media (pointer: coarse) {
+  .shipping-form input:not([type="radio"]):not([type="checkbox"]),
+  .shipping-form select,
+  .shipping-form textarea {
+    font-size: 16px;
+  }
 }
 
 @keyframes fadeSlideUp {
