@@ -72,7 +72,9 @@ export function ConfirmOrderDialog({
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-on-surface-variant">Phí vận chuyển</span>
-            <span className="font-bold text-on-surface">
+            <span
+              className={`font-bold ${shippingCost === 0 ? "text-emerald-600" : "text-on-surface"}`}
+            >
               {isDeliveryService
                 ? "Cập nhật bởi đơn vị vận chuyển"
                 : shippingCost === 0

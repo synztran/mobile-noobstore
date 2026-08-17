@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { DeferredMount } from "@/components/ui/DeferredMount";
 import { SearchDeferred } from "@/components/layout/SearchDeferred";
+import { CreatePostFloating } from "@/components/community/CreatePostFloating";
+// import { DocumentUploadFloating } from "@/components/community/DocumentUploadFloating";
 
 const CartDrawer = dynamic(
 	() => import("@/components/cart/CartDrawer").then((m) => ({ default: m.CartDrawer })),
@@ -18,6 +20,8 @@ export function MainLayoutDynamic() {
 	return (
 		<>
 			<SearchDeferred />
+			<CreatePostFloating />
+			{/* <DocumentUploadFloating /> */}
 			<Suspense fallback={null}><CartDrawer /></Suspense>
 			<DeferredMount>
 				<Suspense fallback={null}><PushNotificationPrompt /></Suspense>

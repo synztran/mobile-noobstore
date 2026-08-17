@@ -207,7 +207,7 @@ function TimelineRow({
         ? "ĐÃ HOÀN"
         : "ĐÃ HỦY"
       : step.state === "done"
-        ? "XONG"
+        ? "Thành công"
         : step.state === "active"
           ? "ĐANG XỬ LÝ"
           : "SẮP TỚI";
@@ -365,16 +365,16 @@ export default function OrderTrackingTimeline({
   return (
     <div className="space-y-4 rounded-2xl bg-surface-container-lowest p-4 shadow-ambient-sm">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+        <p className="text-sm font-black uppercase tracking-widest text-on-surface-variant">
           {isPreOrder ? "Trạng thái đơn hàng Pre-order" : "Trạng thái đơn hàng"}
         </p>
-        {!isFinished && (
+        {/* {!isFinished && (
           <span
             className={`loading loading-spinner loading-sm ${
               tone === "violet" ? "text-violet-500" : "text-primary"
             }`}
           />
-        )}
+        )} */}
       </div>
       {isPreOrder && (
         <p className="mt-0.5 text-xs text-on-surface-variant">

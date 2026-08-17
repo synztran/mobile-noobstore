@@ -55,6 +55,14 @@ export interface OrderDetail {
   expected_delivery_at: string | null;
   shipping_method_id: string | null;
   pickup_at: string | null;
+  tracking_carrier_id: string | null;
+  tracking_number: string | null;
+  carriers: {
+    id: string;
+    name: string | null;
+    logo: string | null;
+    tracking_url_template: string | null;
+  } | null;
   delivery_address: {
     full_name?: string | null;
     phone_number?: string | null;
@@ -96,6 +104,9 @@ interface RawOrderRow {
   expected_delivery_at: string | null;
   shipping_method_id: string | null;
   pickup_at: string | null;
+  tracking_carrier_id: string | null;
+  tracking_number: string | null;
+  carriers: unknown | null;
   delivery_address: unknown | null;
   invoice_url: string | null;
 }
@@ -125,7 +136,7 @@ export async function GET(
     const { data: order, error: orderError } = (await supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, paid_at, delivering_at, delivered_at, refunded_at, expected_delivery_at, shipping_method_id, pickup_at, delivery_address, invoice_url"
+        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, paid_at, delivering_at, delivered_at, refunded_at, expected_delivery_at, shipping_method_id, pickup_at, delivery_address, invoice_url, tracking_carrier_id, tracking_number, carriers(id, name, logo, tracking_url_template)"
       )
       .eq("id", id)
       .eq("user_id", user.id)
@@ -302,6 +313,10 @@ export async function GET(
       expected_delivery_at: order.expected_delivery_at ?? null,
       shipping_method_id: order.shipping_method_id ?? null,
       pickup_at: order.pickup_at ?? null,
+      tracking_carrier_id: order.tracking_carrier_id ?? null,
+      tracking_number: order.tracking_number ?? null,
+      carriers:
+        order.carriers as OrderDetail["carriers"],
       delivery_address:
         order.delivery_address as OrderDetail["delivery_address"],
       invoice_url: order.invoice_url ?? null,

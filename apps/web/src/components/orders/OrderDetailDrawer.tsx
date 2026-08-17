@@ -9,13 +9,16 @@ import {
   DELIVERY_SERVICE_ID,
   normalizeShippingMethodId,
 } from "@/lib/shipping-method";
+import { buildTrackingUrl } from "@/lib/tracking";
 import { toast } from "@/lib/toast";
 import { useOrderDetail } from "@/lib/react-query/order/api/useOrderQueries";
 import { useCancelOrder } from "@/lib/react-query/order/api/useOrderMutations";
+import { CopyToClipboardButton } from "@/components/ui/CopyToClipboardButton";
 import {
   AlertCircle,
   CheckCircle2,
   CircleX,
+  ExternalLink,
   HourglassIcon,
   PackageCheck,
   Truck,
@@ -24,6 +27,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
+import { NOT_FOUND_IMAGE } from "@/lib/images";
 
 const STATUS_CONFIG: Record<
   string,
@@ -185,7 +189,7 @@ function OrderDetailContent({
   return (
     <>
       {/* Status */}
-      {(() => {
+      {/* {(() => {
         const StatusIcon = cfg.Icon;
         return (
           <div
@@ -195,7 +199,7 @@ function OrderDetailContent({
             <p className={`text-sm font-black ${cfg.color}`}>{cfg.label}</p>
           </div>
         );
-      })()}
+      })()} */}
 
       {/* Payment countdown */}
       {detail.status === "pending" &&
@@ -402,6 +406,63 @@ function OrderDetailContent({
           </div>
         </div>
       )}
+
+      {/* Shipment tracking */}
+      {isDeliveryService &&
+        detail.tracking_number &&
+        detail.carriers &&
+        detail.carriers.name && (
+          <div className="space-y-2">
+            <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
+              Theo dõi vận chuyển
+            </p>
+            <div className="flex items-start gap-2 rounded-2xl bg-surface-container p-4">
+              <div className="relative h-14 min-w-14">
+                <Image
+                  src={detail.carriers.logo || NOT_FOUND_IMAGE}
+                  alt={detail.carriers.name}
+                  className="shrink-0 rounded-full bg-surface-container-high"
+                  fill
+                  objectFit="cover"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-on-surface">
+                    {detail.carriers.name}
+                  </p>
+                  {buildTrackingUrl(
+                    detail.carriers.tracking_url_template,
+                    detail.tracking_number
+                  ) && (
+                    <a
+                      href={
+                        buildTrackingUrl(
+                          detail.carriers.tracking_url_template,
+                          detail.tracking_number
+                        ) ?? "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary underline underline-offset-1"
+                    >
+                      Kiêm tra trên {detail.carriers.name}
+                    </a>
+                  )}
+                </div>
+                <p className="mt-0.5 flex items-center gap-2">
+                  <span className="truncate font-mono text-xs text-on-surface-variant">
+                    {detail.tracking_number}
+                  </span>
+                  <CopyToClipboardButton
+                    value={detail.tracking_number}
+                    label="mã vận đơn"
+                  />
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* Payment panel */}
       {detail.status === "pending" && (

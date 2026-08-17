@@ -17,6 +17,8 @@ interface TopNavDrawerProps {
 const NAV_ITEMS = [
   { icon: "home", label: "Trang chủ", href: "/" },
   { icon: "shopping_bag", label: "Cửa hàng", href: "/shop" },
+  { icon: "forum", label: "Cộng đồng", href: "/community" },
+  { icon: "memory", label: "Tài liệu", href: "/documents" },
   { icon: "person", label: "Tài khoản người dùng", href: "/profile" },
   { icon: "favorite", label: "Sản phẩm yêu thích", href: "/wishlist" },
   { icon: "inventory_2", label: "Đơn hàng", href: "/profile/orders" },

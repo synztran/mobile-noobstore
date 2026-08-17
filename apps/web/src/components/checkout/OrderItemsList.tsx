@@ -17,7 +17,6 @@ export const OrderItemsList = memo(function OrderItemsList({
   oosProductIds,
   onRemove,
 }: OrderItemsListProps) {
-  console.log("items", items);
   if (items.length === 0) {
     return null;
   }
@@ -72,13 +71,13 @@ export const OrderItemsList = memo(function OrderItemsList({
               {/* Product info */}
               <div className={`flex h-full gap-2 ${isOos ? "opacity-50" : ""}`}>
                 {/* Product thumbnail */}
-                <div className="relative h-28 w-32 flex-shrink-0 rounded-lg bg-surface-container">
+                <div className="relative h-20 w-20 flex-shrink-0 rounded-lg">
                   <Image
                     src={item.product.thumbnail || NOT_FOUND_IMAGE}
                     alt={item.product.name}
                     fill
                     sizes="96px"
-                    className="rounded-lg object-cover"
+                    className="rounded-lg object-contain"
                   />
                   {isPreorder ? (
                     <span className="absolute -left-1.5 -top-2 max-w-max translate-x-1/2 rounded-sm bg-violet-500 px-1 py-0.5 text-[8px] font-black uppercase text-white">
@@ -88,37 +87,38 @@ export const OrderItemsList = memo(function OrderItemsList({
                 </div>
 
                 {/* Product details */}
-                <div className="flex min-h-full w-full flex-col items-stretch space-y-2">
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="line-clamp-2 text-base font-bold text-on-surface">
-                      {item.product.name}
-                    </span>
-                    <span className="flex-shrink-0 rounded-lg bg-slate-400/10 px-2 py-0.5 text-sm font-bold text-on-surface-variant">
-                      x{item.quantity}
-                    </span>
-                  </div>
-                  {item.variant && (
-                    <p className="mt-0.5 text-sm font-semibold text-outline">
-                      {item.variant.variant_name}
-                    </p>
-                  )}
-                  {/* Components breakdown */}
-                  {item.components &&
-                    item.components.length > 0 &&
-                    (() => {
-                      return (
-                        <div className="relative clear-both">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {item.components.map((component) => (
-                              <div
-                                key={component.variant_id}
-                                className="flex items-center justify-between gap-2"
-                              >
-                                <div className="flex items-center justify-between rounded-sm bg-amber-900/10 px-2 py-1 text-xs font-semibold text-on-surface-variant">
-                                  <span className="truncate text-on-tertiary-fixed-variant">
-                                    {component.variant_name}
-                                  </span>
-                                  {component.price_adjustment !== 0 ? (
+                <div className="flex min-h-full w-full flex-col items-stretch">
+                  <div className="h-20 space-y-2 pb-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="line-clamp-2 text-sm font-bold text-on-surface">
+                        {item.product.name}
+                      </span>
+                      <span className="flex-shrink-0 rounded-lg bg-slate-400/10 px-2 py-0.5 text-xs font-bold text-on-surface-variant">
+                        x{item.quantity}
+                      </span>
+                    </div>
+                    {item.variant && (
+                      <p className="mt-0.5 text-xs font-semibold text-outline">
+                        {item.variant.variant_name}
+                      </p>
+                    )}
+                    {/* Components breakdown */}
+                    {item.components &&
+                      item.components.length > 0 &&
+                      (() => {
+                        return (
+                          <div className="relative clear-both">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {item.components.map((component) => (
+                                <div
+                                  key={component.variant_id}
+                                  className="flex items-center justify-between gap-2"
+                                >
+                                  <div className="flex items-center justify-between gap-2 rounded-sm bg-amber-900/10 px-2 py-1 text-[11px] font-semibold text-on-surface-variant">
+                                    <span className="truncate text-on-tertiary-fixed-variant">
+                                      {component.variant_name}
+                                    </span>
+                                    {/* {component.price_adjustment !== 0 ? (
                                     <span
                                       className={`ml-[0.25rem] flex-shrink-0 ${
                                         component.price_adjustment > 0
@@ -134,26 +134,22 @@ export const OrderItemsList = memo(function OrderItemsList({
                                           )})`
                                         : ""}
                                     </span>
-                                  ) : null}
+                                  ) : null} */}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()}
+                  </div>
                   {/* Total price for item */}
-                  <div className="!mt-6 flex w-full items-center justify-end gap-2 border-t border-outline-variant/60 pt-2 text-right">
-                    <span className="text-xs font-semibold">Tổng tiền:</span>
+                  <div className="flex w-full items-center justify-end gap-2 border-t border-outline-variant/60 pt-1 text-right">
                     <span className="text-base font-black text-primary">
                       {formatVND(itemTotal)}
                     </span>
                   </div>
                 </div>
-
-                {/* <span className="flex-shrink-0 rounded-full bg-surface-container px-3 py-1 text-xs font-bold text-on-surface-variant">
-                x{item.quantity}
-              </span> */}
               </div>
 
               {/* Gift breakdown */}

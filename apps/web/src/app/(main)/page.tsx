@@ -1,5 +1,6 @@
 import { AnnouncementBanner } from "@/components/home/AnnouncementBanner";
 import { CommunityGallery } from "@/components/home/CommunityGallery";
+import { CommunityPromo } from "@/components/home/CommunityPromo";
 import { CustomerTestimonial } from "@/components/home/CustomerTestimonial";
 import { OurStrongPoints } from "@/components/home/OurStrongPoints";
 import { HeroSection } from "@/components/home/HeroSection";
@@ -38,6 +39,9 @@ export default async function HomePage() {
       <HomeSaleSection />
       <LazyNearViewport>
         <OurStrongPoints />
+      </LazyNearViewport>
+      <LazyNearViewport>
+        <CommunityPromo />
       </LazyNearViewport>
       <LazyNearViewport>
         <CommunityGallery />

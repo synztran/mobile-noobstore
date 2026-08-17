@@ -8,31 +8,31 @@ import { usePathname } from "next/navigation";
 const navItems = [
   {
     href: "/",
-    icon: <House size={16} />,
+    icon: <House size={20} />,
     label: "Trang chủ",
     iconFilled: true,
   },
   {
     href: "/shop",
-    icon: <ShoppingBasket size={16} />,
+    icon: <ShoppingBasket size={20} />,
     label: "Cửa hàng",
     iconFilled: false,
   },
   {
     href: "/gacha",
-    icon: <Dices size={16} />,
+    icon: <Dices size={20} />,
     label: "Gacha",
     iconFilled: false,
   },
   {
     href: "/rewards",
-    icon: <Gift size={16} />,
+    icon: <Gift size={20} />,
     label: "Đổi thưởng",
     iconFilled: false,
   },
   {
     href: "/profile",
-    icon: <UserRound size={16} />,
+    icon: <UserRound size={20} />,
     label: "Hồ sơ",
     iconFilled: false,
   },
@@ -54,7 +54,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[90vw] items-center justify-between rounded-xl border-gray-200/30 !bg-[rgba(255,255,255,0.8)] p-2 shadow-lg">
+    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[95dvw] items-center justify-between rounded-xl border-gray-200/30 !bg-[rgba(255,255,255,0.8)] p-2 shadow-lg">
       {navItems.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(item.href + "/");
@@ -79,7 +79,7 @@ export function BottomNav() {
                 {item.icon}
               </div>
             }
-            <span className="font-sans text-[10px] font-semibold uppercase tracking-widest">
+            <span className="text-[10px] font-semibold uppercase tracking-wide">
               {item.label}
             </span>
           </Link>

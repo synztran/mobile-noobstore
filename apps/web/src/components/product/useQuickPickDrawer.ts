@@ -6,7 +6,7 @@ import type {
   ComponentVariantRule,
   ConfiguratorGroup,
 } from "@/app/api/products/[slug]/configurator/route";
-import type { ShopProduct } from "@/app/api/products/route";
+import type { ShopVariant, ShopProduct } from "@/app/api/products/route";
 import type { CategoryItem } from "@/lib/products-server";
 import type { SelectedComponent } from "@/lib/data";
 import { trackAddToCart, toGAProduct } from "@/lib/analytics";
@@ -158,6 +158,28 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
       }
     }
     return null;
+  }, [activeProduct, selections, groups]);
+
+  // Currently selected variant(s) that drive delivery/pickup availability.
+  // Simple products contribute a single variant from `__variant__`; kit
+  // products contribute every selected component variant. Empty = nothing
+  // selected yet (section falls back to the product's variants).
+  const selectedVariants = useMemo<ShopVariant[]>(() => {
+    if (groups.length === 0) {
+      const simpleId = selections["__variant__"]?.[0];
+      const v = simpleId
+        ? activeProduct?.variants.find((x) => x.id === simpleId)
+        : null;
+      return v ? [v] : [];
+    }
+    const out: ShopVariant[] = [];
+    for (const group of groups) {
+      for (const selectedId of selections[group.component_group] ?? []) {
+        const v = group.variants.find((gv) => gv.id === selectedId);
+        if (v) out.push(v as ShopVariant);
+      }
+    }
+    return out;
   }, [activeProduct, selections, groups]);
 
   // ── Header ────────────────────────────────────────────────────────────────
@@ -341,6 +363,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
     canAdd,
     isInvalidPrice,
     selectedPreOrderConfig,
+    selectedVariants,
     headerCategory,
     headerTitle,
     handleAdd,

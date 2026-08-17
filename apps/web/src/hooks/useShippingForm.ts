@@ -1,6 +1,11 @@
 "use client";
 
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
+import {
+  PICKUP_SLOT_MINUTES,
+  dayEndMinutes,
+  dayStartMinutes,
+} from "@/lib/store-hours";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore } from "@/store";
@@ -8,17 +13,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type DeliverySpeed = "standard" | "express" | "shipment" | "pickup";
-const OPEN_WORKING = {
-  startAt: "08:00",
-  endAt: "19:00",
-  days: [1, 2, 3, 4, 5], // Monday to Friday
-};
-const PICKUP_HOURS = {
-  startAt: "08:00",
-  endAt: "19:00",
-  days: [0, 1, 2, 3, 4, 5, 6], // Every day
-};
-const PICKUP_SLOT_MINUTES = 30; // every 30 min within PICKUP_HOURS
 
 type FormData = {
   fullName: string;
@@ -105,20 +99,16 @@ function calculateShippingFeeWithSurcharge(
 
 function getOperationalSurchargeRate(now = new Date()) {
   const currentDay = now.getDay();
-  const isOutsideWorkingDays = !OPEN_WORKING.days.includes(currentDay);
 
-  const [startHour, startMinute] = OPEN_WORKING.startAt.split(":").map(Number);
-  const [endHour, endMinute] = OPEN_WORKING.endAt.split(":").map(Number);
+  const startMinutes = dayStartMinutes(currentDay);
+  const endMinutes = dayEndMinutes(currentDay);
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const startMinutes = startHour * 60 + startMinute;
-  const endMinutes = endHour * 60 + endMinute;
   const isOutsideWorkingHours =
     currentMinutes < startMinutes || currentMinutes > endMinutes;
 
   let surchargeRate = 0;
   if (isOutsideWorkingHours) surchargeRate += 0.15;
-  if (isOutsideWorkingDays) surchargeRate += 0.15;
 
   return surchargeRate;
 }
@@ -487,10 +477,9 @@ export function useShippingForm() {
   const minPickupDate = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const [endHour, endMinute] = PICKUP_HOURS.endAt.split(":").map(Number);
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     let min = new Date(today);
-    if (nowMinutes >= endHour * 60 + endMinute) {
+    if (nowMinutes >= dayEndMinutes(now.getDay())) {
       min.setDate(min.getDate() + 1);
     }
     if (earliestPreOrderPickupDate) {
@@ -503,10 +492,12 @@ export function useShippingForm() {
   }, [earliestPreOrderPickupDate]);
 
   const pickupSlots = useMemo(() => {
-    const [sh, sm] = PICKUP_HOURS.startAt.split(":").map(Number);
-    const [eh, em] = PICKUP_HOURS.endAt.split(":").map(Number);
-    const startMin = sh * 60 + sm;
-    const endMin = eh * 60 + em;
+    // Slots follow the schedule of the selected pickup day: weekdays end at
+    // 19:00, weekends at 17:00. Falls back to today's window when no date is
+    // picked yet.
+    const day = pickupDate ? new Date(`${pickupDate}T00:00:00`).getDay() : new Date().getDay();
+    const startMin = dayStartMinutes(day);
+    const endMin = dayEndMinutes(day);
     const slots: string[] = [];
     for (let m = startMin; m <= endMin; m += PICKUP_SLOT_MINUTES) {
       const h = Math.floor(m / 60);
@@ -516,7 +507,7 @@ export function useShippingForm() {
       );
     }
     return slots;
-  }, []);
+  }, [pickupDate]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -554,11 +545,13 @@ export function useShippingForm() {
             return;
           }
 
-          const [sh, sm] = PICKUP_HOURS.startAt.split(":").map(Number);
-          const [eh, em] = PICKUP_HOURS.endAt.split(":").map(Number);
+          const slotDay = combined.getDay();
           const slotMin = combined.getHours() * 60 + combined.getMinutes();
-          if (slotMin < sh * 60 + sm || slotMin > eh * 60 + em) {
-            toast.error("Giờ nhận hàng trong khoảng 09:00 – 18:00");
+          if (
+            slotMin < dayStartMinutes(slotDay) ||
+            slotMin > dayEndMinutes(slotDay)
+          ) {
+            toast.error("Giờ nhận hàng ngoài giờ mở cửa của cửa hàng");
             return;
           }
 

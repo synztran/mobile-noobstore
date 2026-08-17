@@ -53,7 +53,31 @@ type NavItem =
     };
 
 const navigation: NavItem[] = [
+  { label: "Audit Log", href: "/audit-log", icon: ShieldAlert },
+  { label: "Blog", href: "/blog", icon: Newspaper },
+  {
+    label: "Cart Monitoring",
+    icon: ShoppingBag,
+    children: [
+      { label: "All Carts", href: "/carts", icon: ShoppingBag },
+      { label: "Abandoned Recovery", href: "/carts/abandoned", icon: Bell },
+    ],
+  },
+  { label: "Content", href: "/content", icon: FileText },
+  {
+    label: "Community",
+    icon: MessageSquareText,
+    children: [
+      { label: "Documents", href: "/community/documents", icon: FileText },
+    ],
+  },
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Fees", href: "/fees", icon: DollarSign },
+  { label: "Gacha", href: "/gacha", icon: FerrisWheel },
+  { label: "Inventory", href: "/inventory", icon: ClipboardList },
+  { label: "Notifications", href: "/notifications", icon: FileText },
+  { label: "Orders", href: "/orders", icon: ShoppingCart },
+  { label: "Points", href: "/points", icon: Coins },
   {
     label: "Products",
     icon: Package,
@@ -69,23 +93,9 @@ const navigation: NavItem[] = [
       { label: "Gift Products", href: "/products/gifts", icon: Gift },
     ],
   },
-  { label: "Inventory", href: "/inventory", icon: ClipboardList },
-  { label: "Orders", href: "/orders", icon: ShoppingCart },
-  {
-    label: "Cart Monitoring",
-    icon: ShoppingBag,
-    children: [
-      { label: "All Carts", href: "/carts", icon: ShoppingBag },
-      { label: "Abandoned Recovery", href: "/carts/abandoned", icon: Bell },
-    ],
-  },
-  { label: "Users", href: "/users", icon: Users },
   { label: "Ranks", href: "/ranks", icon: Award },
-  { label: "Notifications", href: "/notifications", icon: FileText },
-  { label: "Stock Alerts", href: "/stock-alerts", icon: Bell },
-  { label: "Blog", href: "/blog", icon: Newspaper },
   { label: "Reviews", href: "/reviews", icon: MessageSquareText },
-  { label: "Support", href: "/support", icon: ShieldAlert },
+  { label: "Rewards", href: "/rewards", icon: Gift },
   {
     label: "Services",
     icon: Wrench,
@@ -99,13 +109,8 @@ const navigation: NavItem[] = [
       },
     ],
   },
-  { label: "Vouchers", href: "/vouchers", icon: Tickets },
-  { label: "Fees", href: "/fees", icon: DollarSign },
-  { label: "Rewards", href: "/rewards", icon: Gift },
-  { label: "Points", href: "/points", icon: Coins },
-  { label: "Content", href: "/content", icon: FileText },
-  { label: "Gacha", href: "/gacha", icon: FerrisWheel },
-  { label: "Audit Log", href: "/audit-log", icon: ShieldAlert },
+  { label: "Stock Alerts", href: "/stock-alerts", icon: Bell },
+  { label: "Support", href: "/support", icon: ShieldAlert },
   {
     label: "Tools",
     icon: Wrench,
@@ -114,6 +119,8 @@ const navigation: NavItem[] = [
       { label: "Vendors", href: "/vendors", icon: Building2 },
     ],
   },
+  { label: "Users", href: "/users", icon: Users },
+  { label: "Vouchers", href: "/vouchers", icon: Tickets },
 ];
 
 export default function AdminLayout({

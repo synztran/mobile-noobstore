@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildCustomerAddress } from "@/lib/order-address";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generateAndStoreInvoice } from "@/lib/invoice";
 import { IOrderDetailUser } from "@/components/orders/OrderDetailModal";
@@ -87,14 +88,10 @@ export async function POST(req: NextRequest) {
     ];
 
     // Parse delivery address
-    let customerAddress = "";
-    if (order.delivery_address) {
-      const addr =
-        typeof order.delivery_address === "string"
-          ? JSON.parse(order.delivery_address)
-          : order.delivery_address;
-      customerAddress = [addr.street_address].filter(Boolean).join(", ");
-    }
+    const customerAddress = buildCustomerAddress(
+      order.delivery_address,
+      order.shipping_method_id
+    );
 
     // Get customer name
     const customerName = `${customer?.first_name} ${customer.last_name}`;

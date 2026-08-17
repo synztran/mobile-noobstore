@@ -8,6 +8,7 @@ import OrderShippingDetails from "./OrderShippingDetails";
 import OrderServicesList from "./OrderServicesList";
 import OrderStatusIndicator from "./OrderStatusIndicator";
 import OrderTimeline from "./OrderTimeline";
+import ShippingTrackingSection from "./ShippingTrackingSection";
 
 interface KitComponent {
   id: string;
@@ -71,6 +72,14 @@ export interface OrderDetail {
   shipping_method_id: string | null;
   expected_delivery_at: string | null;
   pickup_at: string | null;
+  tracking_carrier_id: string | null;
+  tracking_number: string | null;
+  carriers: {
+    id: string;
+    name: string | null;
+    logo: string | null;
+    tracking_url_template: string | null;
+  } | null;
   delivery_address: {
     full_name?: string | null;
     phone_number?: string | null;
@@ -398,6 +407,11 @@ export default function OrderDetailModal({
                 shippingMethodName={shippingMethodName}
                 expectedDeliveryAt={order.expected_delivery_at}
                 pickupAt={order.pickup_at}
+              />
+
+              <ShippingTrackingSection
+                order={order}
+                onUpdated={onStatusUpdated ?? (() => {})}
               />
 
               <OrderItemsList items={order.order_items} />

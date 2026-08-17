@@ -215,7 +215,7 @@ export default function CheckingPage() {
                   isDeliveryService
                     ? "text-xs font-bold text-on-surface-variant"
                     : shippingCost === 0
-                      ? "font-bold text-secondary"
+                      ? "font-bold text-emerald-600"
                       : "font-bold text-on-surface"
                 }
               >

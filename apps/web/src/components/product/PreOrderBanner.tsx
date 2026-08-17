@@ -29,7 +29,7 @@ export function PreOrderBanner({ config }: PreOrderBannerProps) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="space-y-4 rounded-2xl border border-violet-500/25 bg-gradient-to-b from-violet-500/[0.08] to-violet-500/[0.04] p-4"
+      className="space-y-2 rounded-xl bg-gradient-to-b from-violet-500/[0.1] to-violet-500/[0.06] p-2"
     >
       {/* ── Header ── */}
       <div className="flex items-center gap-2">
@@ -48,8 +48,8 @@ export function PreOrderBanner({ config }: PreOrderBannerProps) {
       </div>
 
       {/* ── Info section ── */}
-      <div className="space-y-3 rounded-xl bg-violet-500/[0.06] px-2 py-2">
-        <div className="flex items-start gap-3">
+      <div className="grid grid-cols-2 gap-2 rounded-xl bg-violet-500/[0.06] px-2 py-2">
+        <div className="flex items-start gap-2">
           <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
             <svg
               viewBox="0 0 24 24"
@@ -117,7 +117,7 @@ export function PreOrderBanner({ config }: PreOrderBannerProps) {
       {/* ── Timeline ── */}
       {hasExtra && <div className="border-t border-violet-500/10" />}
 
-      <div>
+      <div className="pt-1.5">
         <motion.div
           initial="hidden"
           animate="visible"

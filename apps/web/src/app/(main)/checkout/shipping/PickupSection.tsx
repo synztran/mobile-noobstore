@@ -83,7 +83,7 @@ function PickupSection({
             Nhận tại cửa hàng
           </p>
           <p className="text-xs text-on-surface-variant">
-            Noobstore HCM hoạt động mỗi ngày 08:00 – 19:00
+            Noobstore HCM mở cửa mỗi ngày 08:00 – 19:00 (T7, CN: 08:00 – 17:00)
           </p>
         </div>
       </div>

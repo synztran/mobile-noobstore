@@ -1,5 +1,6 @@
 import { logAuditEvent } from "@/lib/audit-log";
 import { generateAndStoreInvoice } from "@/lib/invoice";
+import { buildCustomerAddress } from "@/lib/order-address";
 import { invalidateProductCaches } from "@/lib/redis/cache";
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -23,6 +24,8 @@ export async function GET(
 			voucher_code, voucher_discount_amount, shipping_discount_amount,
 			created_at, updated_at, cancelled_at, cancelled_note, paid_at, refunded_at, delivering_at, delivered_at,
 			delivery_address, shipping_method_id, expected_delivery_at, pickup_at,
+			tracking_carrier_id, tracking_number,
+			carriers(id, name, logo, tracking_url_template),
 			user_id,
 			invoice_url,
 			payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at,
@@ -254,6 +257,8 @@ export async function PATCH(
     advance_pre_order?: {
       item_ids: string[];
     };
+    tracking_carrier_id?: string | null;
+    tracking_number?: string | null;
   };
 
   const supabase = getAdminClient();
@@ -384,6 +389,13 @@ export async function PATCH(
       new Date().toISOString();
   }
 
+  if (body.tracking_carrier_id !== undefined) {
+    update.tracking_carrier_id = body.tracking_carrier_id || null;
+  }
+  if (body.tracking_number !== undefined) {
+    update.tracking_number = body.tracking_number?.trim() || null;
+  }
+
   // Fetch old data for audit log
   const { data: oldOrder } = body.status
     ? await supabase
@@ -442,7 +454,7 @@ export async function PATCH(
         const { data: order } = await supabase
           .from("orders")
           .select(
-            "order_number, total_price, shipping_fee, shipping_discount_amount, voucher_discount_amount, delivery_address, payment_type, deposit_percentage, deposit_amount, remaining_amount"
+            "order_number, total_price, shipping_fee, shipping_discount_amount, voucher_discount_amount, delivery_address, shipping_method_id, payment_type, deposit_percentage, deposit_amount, remaining_amount"
           )
           .eq("id", id)
           .single();
@@ -459,9 +471,10 @@ export async function PATCH(
           const customerName = [addr.full_name, addr.phone_number]
             .filter(Boolean)
             .join(" - ");
-          const customerAddress = [addr.apartment, addr.street_address]
-            .filter(Boolean)
-            .join(", ");
+          const customerAddress = buildCustomerAddress(
+            order.delivery_address,
+            order.shipping_method_id
+          );
 
           await generateAndStoreInvoice(id, {
             orderNumber: order.order_number,

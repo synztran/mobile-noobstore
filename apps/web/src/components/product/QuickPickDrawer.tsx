@@ -11,15 +11,8 @@ import { useQuickPickDrawer } from "@/components/product/useQuickPickDrawer";
 import clsx from "clsx";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
-
-// ─── Tình trạng (condition) helper ─────────────────────────────────────────
-
-function getConditionText(
-  attrs?: Record<string, string> | null
-): string | null {
-  const text = attrs?.["Tình trạng"]?.trim();
-  return text ? text : null;
-}
+import { DeliveryAvailabilitySection } from "./DeliveryAvailabilitySection";
+import { SelectedConditionSummary } from "./SelectedConditionSummary";
 
 // ─── Add to Cart Button ─────────────────────────────────────────────────────
 
@@ -104,7 +97,7 @@ type QuickPickDrawerProps = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function QuickPickDrawer(props: QuickPickDrawerProps) {
-  const { isOpen, onClose } = props;
+  const { isOpen, onClose, product } = props;
   const isCategoryMode = props.mode === "category";
   const propCategory: CategoryItem | null = isCategoryMode
     ? (props.category ?? null)
@@ -189,22 +182,25 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
   );
 
   const renderConfigurator = () => (
-    <div className="flex min-h-0 flex-col gap-3">
+    <div className="flex min-h-0 flex-col gap-2">
       {drawer.activeProduct && (
-        <div className="flex items-center gap-2 rounded-2xl bg-surface-container p-2">
+        <div className="flex items-center gap-2">
           <Thumbnail
             src={drawer.activeProduct.thumbnail}
             alt={drawer.activeProduct.name}
             className="h-20 w-24 rounded-xl"
           />
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 font-black leading-tight text-on-surface">
+            <p className="line-clamp-2 text-sm font-bold leading-tight text-on-surface">
               {drawer.activeProduct.name}
             </p>
-            <p className="mt-0.5 text-sm font-bold text-primary">
+            <p className="mt-0.5 font-bold text-primary">
               {drawer.activeProduct.min_price ? (
                 <>
-                  Giá từ{" "}
+                  <span className="text-xs font-black text-slate-600">
+                    Giá từ
+                  </span>
+                  &nbsp;
                   {formatVND(
                     drawer.activeProduct.min_price ||
                       drawer.activeProduct.base_price
@@ -222,100 +218,41 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
           </div>
         </div>
       )}
-      {drawer.activeProduct?.gifts &&
-        drawer.activeProduct.gifts.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {drawer.activeProduct.gifts.map((g) => (
-              <div
-                key={g.gift_name}
-                className="flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2"
-              >
-                <span className="text-base leading-none">🎁</span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-rose-500">
-                    Quà tặng kèm
-                  </p>
-                  <p className="truncate text-xs font-bold text-rose-700">
-                    {g.gift_name}
-                    {g.quantity > 1 && ` x${g.quantity}`}
-                  </p>
-                </div>
-</div>
-            ))}
+      {drawer.activeProduct?.gifts && drawer.activeProduct.gifts.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {drawer.activeProduct.gifts.map((g) => (
+            <div
+              key={g.gift_name}
+              className="flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2"
+            >
+              <span className="text-base leading-none">🎁</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black uppercase tracking-wider text-rose-500">
+                  Quà tặng kèm
+                </p>
+                <p className="truncate text-xs font-bold text-rose-700">
+                  {g.gift_name}
+                  {g.quantity > 1 && ` x${g.quantity}`}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {(() => {
-        const rows: Array<{ label: string; group: string; text: string }> =
-          [];
-        const hasComponents = drawer.groups.length > 0;
-
-        if (!hasComponents) {
-          const selectedId = drawer.selections["__variant__"]?.[0];
-          if (selectedId) {
-            const v = drawer.activeProduct?.variants.find(
-              (x) => x.id === selectedId
-            );
-            const text = getConditionText(v?.attributes);
-            if (text) {
-              rows.push({
-                label: v?.variant_name ?? "",
-                group: "",
-                text,
-              });
-            }
-          }
-        } else {
-          for (const group of drawer.groups) {
-            for (const id of drawer.selections[group.component_group] ?? []) {
-              const v = group.variants.find((gv) => gv.id === id);
-              const text = getConditionText(v?.attributes);
-              if (text) {
-                rows.push({
-                  label: v?.variant_name ?? "",
-                  group: group.component_group,
-                  text,
-                });
-              }
-            }
-          }
-        }
-
-        if (rows.length === 0) return null;
-
-        const countByLabel = new Map<string, number>();
-        for (const r of rows) {
-          countByLabel.set(r.label, (countByLabel.get(r.label) ?? 0) + 1);
-        }
-
-        return (
-          <div className="rounded-2xl bg-surface-container p-3">
-            <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
-              Tình trạng
-            </p>
-            <ul className="space-y-1">
-              {rows.map((r) => (
-                <li
-                  key={`${r.group}:${r.label}`}
-                  className="flex items-baseline gap-1 text-xs font-bold text-on-surface"
-                >
-                  <span className="flex-shrink-0">
-                    {(countByLabel.get(r.label) ?? 0) > 1 && r.group
-                      ? `${r.group} · `
-                      : ""}
-                    {r.label}:
-                  </span>
-                  <span className="font-semibold text-on-surface-variant">
-                    {r.text}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })()}
-
-      <div className="flex min-h-0 flex-col gap-4 pb-2">
+      <div className="flex min-h-0 flex-col gap-2">
+        <DeliveryAvailabilitySection
+          variants={drawer.activeProduct?.variants ?? []}
+          selectedVariants={drawer.selectedVariants}
+        />
+        <SelectedConditionSummary
+          groups={drawer.groups}
+          selections={drawer.selections}
+          productVariants={drawer.activeProduct?.variants ?? []}
+        />
+        {drawer.selectedPreOrderConfig && (
+          <PreOrderBanner config={drawer.selectedPreOrderConfig} />
+        )}
         <ProductConfigurator
           groups={drawer.groups}
           variants={drawer.activeProduct?.variants ?? []}
@@ -325,9 +262,6 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
           disabledVariantIds={drawer.disabledVariantIds}
           onSelect={drawer.onSelect}
         />
-        {drawer.selectedPreOrderConfig && (
-          <PreOrderBanner config={drawer.selectedPreOrderConfig} />
-        )}
       </div>
     </div>
   );
@@ -354,7 +288,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
         {isOpen && (
           <motion.div
             key="drawer"
-            className="fixed left-0 right-0 bottom-0 z-[999] flex max-h-[80dvh] flex-col rounded-t-3xl bg-surface shadow-2xl"
+            className="fixed bottom-0 left-0 right-0 z-[999] flex max-h-[80dvh] flex-col rounded-t-3xl bg-[#f2f2f2] shadow-2xl"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -387,7 +321,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
                   </button>
                 )}
 
-                <div className="min-w-0 flex-1 flex justify-between items-center">
+                <div className="flex min-w-0 flex-1 items-center justify-between">
                   <span className="text-sm font-bold uppercase leading-none tracking-widest text-primary">
                     Thêm nhanh sản phẩm
                   </span>
@@ -401,10 +335,12 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
               </div>
             </div>
 
+            <div className="mb-3 h-[0.25px] w-full border-b border-slate-200" />
+
             {/* Scrollable body */}
             <div
               data-allow-scroll
-              className="max-h-full min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y px-4 pb-4"
+              className="max-h-full min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-4 pb-4"
             >
               {drawer.view === "product-list"
                 ? renderProductList()
@@ -419,7 +355,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
                     Tạm tính
                   </p>
                   <p className="text-xl font-black text-primary">
-                    {formatVND(drawer.totalPrice)}
+                    {formatVND(Math.max(0, drawer.totalPrice))}
                   </p>
                 </div>
                 <AddToCartButton

@@ -1,4 +1,6 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
+import { cartQueryKeys } from "./router/cart";
+import { communityQueryKeys } from "./router/community";
 import { configQueryKeys } from "./router/config";
 import { gachaQueryKeys } from "./router/gacha";
 import { homeQueryKeys } from "./router/home";
@@ -10,7 +12,6 @@ import { shopQueryKeys } from "./router/shop";
 import { userQueryKeys } from "./router/user";
 import { productQueryKeys } from "./router/product";
 import { serviceQueryKeys } from "./router/service";
-import { cartQueryKeys } from "./router/cart";
 import { supportQueryKeys } from "./router/support";
 import { voucherQueryKeys } from "./router/voucher";
 import { rankQueryKeys } from "./router/rank";
@@ -18,6 +19,7 @@ import { stockAlertQueryKeys } from "./router/stock-alert";
 
 export const appQueryKeys = mergeQueryKeys(
   cartQueryKeys,
+  communityQueryKeys,
   configQueryKeys,
   homeQueryKeys,
   gachaQueryKeys,

@@ -58,18 +58,18 @@ function configuratorButtonClass(
     soldOut: boolean;
     ruleDisabled: boolean;
     isDisabled: boolean;
-  },
+  }
 ): string {
   if (o.isDisabled && !o.soldOut && !o.ruleDisabled) {
     return clsx(
       base,
-      "cursor-not-allowed border-dashed border-outline-variant/60 opacity-40",
+      "cursor-not-allowed border-dashed border-outline-variant/80 opacity-55"
     );
   }
   if (o.isDisabled) {
     return clsx(
       base,
-      "cursor-not-allowed border-transparent bg-surface-container opacity-40",
+      "cursor-not-allowed border-transparent bg-surface-container opacity-40"
     );
   }
   if (o.selected) {
@@ -77,13 +77,13 @@ function configuratorButtonClass(
   }
   return clsx(
     base,
-    "border-transparent bg-gray-200 text-on-surface hover:border-outline-variant",
+    "border-transparent bg-surface-container-highest text-on-surface hover:border-outline-variant"
   );
 }
 
 function simpleVariantButtonClass(
   base: string,
-  o: { soldOut: boolean; isSelected: boolean },
+  o: { soldOut: boolean; isSelected: boolean }
 ): string {
   if (o.soldOut) {
     return clsx(base, "cursor-not-allowed bg-surface-container opacity-40");
@@ -93,7 +93,7 @@ function simpleVariantButtonClass(
   }
   return clsx(
     base,
-    "bg-surface-container text-on-surface hover:bg-surface-container-high",
+    "bg-surface-container text-on-surface hover:bg-surface-container-high"
   );
 }
 
@@ -129,13 +129,10 @@ export function ProductConfigurator({
       <div className="space-y-4">
         {[1, 2].map((i) => (
           <div key={i} className="animate-pulse space-y-2">
-            <div className="h-3 w-32 rounded-full bg-surface-container" />
+            <div className="h-3 w-32 rounded-full bg-surface-dim" />
             <div className="flex gap-2">
               {[1, 2, 3].map((j) => (
-                <div
-                  key={j}
-                  className="h-14 w-24 rounded-xl bg-surface-container"
-                />
+                <div key={j} className="h-14 w-24 rounded-xl bg-surface-dim" />
               ))}
             </div>
           </div>
@@ -145,138 +142,146 @@ export function ProductConfigurator({
   }
 
   return (
-    <div className="flex min-h-0 flex-wrap gap-4">
-      {/* Component group selectors */}
-      {groups.map((group) => {
-        const groupSelection = selections[group.component_group] ?? [];
-        const cap = group.is_required
-          ? 1
-          : (group.max_quantity ?? group.variants.length);
-        const selectedCount = groupSelection.length;
-        const capReached = cap > 0 && selectedCount >= cap;
-        return (
-        <div key={group.component_group} className={`space-y-3`}>
-          <div className="flex items-center gap-1">
-            <span
-              className={clsx(
-                "rounded px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider",
-                group.is_required
-                  ? "bg-error/10 text-error"
-                  : "bg-surface-container",
-              )}
+    <div className="space-y-2 rounded-xl bg-[#f8f8f8] p-2">
+      <span className="text-sm font-black uppercase text-primary">
+        Cấu hình sản phẩm ({groups.length})
+      </span>
+      <div className="flex min-h-0 flex-wrap gap-2">
+        {/* Component group selectors */}
+        {groups?.map((group) => {
+          const groupSelection = selections[group.component_group] ?? [];
+          const cap = group.is_required
+            ? 1
+            : (group.max_quantity ?? group.variants.length);
+          const selectedCount = groupSelection.length;
+          const capReached = cap > 0 && selectedCount >= cap;
+          return (
+            <div
+              key={group.component_group}
+              className={`w-full max-w-max space-y-2 rounded-lg bg-surface-container-low p-2`}
             >
-              {group.is_required ? "Bắt buộc" : "Tùy chọn"}
-            </span>
-            <p
-              className={`text-xs font-black tracking-widest text-on-surface-variant`}
-            >
-              {group.component_group}
-            </p>
-            {!group.is_required && groupSelection.length > 0 && (
-              <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                Đã chọn {selectedCount}/{group.variants.length}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-wrap items-start gap-3">
-            {group.variants.map((v) => {
-              const selected = groupSelection.includes(v.id);
-              const soldOut = v.stock_quantity === 0;
-              const ruleDisabled = disabledVariantIds?.has(v.id) ?? false;
-              const overCap = !selected && capReached;
-              const isDisabled = soldOut || ruleDisabled || overCap;
-              return (
-                <button
-                  key={v.id}
-                  type="button"
-                  disabled={isDisabled}
-                  onClick={() => onSelect(group.component_group, v.id)}
-                  className={configuratorButtonClass(
-                    "relative flex min-w-20 items-center justify-center gap-2 rounded-md border px-2 py-1.5 font-bold transition-all",
-                    { selected, soldOut, ruleDisabled, isDisabled },
+              <div className="flex items-center gap-1">
+                <span
+                  className={clsx(
+                    "rounded px-1.5 py-0.5 text-[10px] font-black tracking-wider",
+                    group.is_required
+                      ? "bg-error/10 text-error"
+                      : "bg-surface-container"
                   )}
                 >
-                  <div className="inline-flex items-center gap-1">
-                    <p className="line-clamp-2 text-left text-xs font-bold">
-                      {v.variant_name}
-                    </p>
-                    <p
-                      className={clsx(
-                        "text-right text-[10px]",
-                        v.price_adjustment !== 0 ? "" : "sr-only",
-                        v.price_adjustment > 0
-                          ? "text-green-700"
-                          : "text-red-700"
+                  {group.is_required ? "Bắt buộc" : "Tùy chọn"}
+                </span>
+                <p
+                  className={`text-[10px] font-black tracking-widest text-on-surface-variant`}
+                >
+                  {group.component_group}
+                </p>
+                {!group.is_required && groupSelection.length > 0 && (
+                  <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                    Đã chọn {selectedCount}/{group.variants.length}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-start gap-3">
+                {group.variants.map((v) => {
+                  const selected = groupSelection.includes(v.id);
+                  const soldOut = v.stock_quantity === 0;
+                  const ruleDisabled = disabledVariantIds?.has(v.id) ?? false;
+                  const overCap = !selected && capReached;
+                  const isDisabled = soldOut || ruleDisabled || overCap;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => onSelect(group.component_group, v.id)}
+                      className={configuratorButtonClass(
+                        "relative flex min-w-20 items-center justify-center gap-2 rounded-sm border px-2 py-1.5 font-bold transition-all",
+                        { selected, soldOut, ruleDisabled, isDisabled }
                       )}
                     >
-                      (
-                      {v.price_adjustment &&
-                        (v.price_adjustment > 0 ? "+" : "")}
-                      {formatVND(v.price_adjustment)})
-                    </p>
-                  </div>
-                  {v.sale_price_percent ? (
-                    <strong className="absolute -top-2.5 right-1 rounded bg-red-600 px-2 py-1 text-[8px] leading-none text-white">
-                      Giảm {v.sale_price_percent}%
-                    </strong>
-                  ) : null}
-                  <div className="absolute -top-2 left-1">
-                    <VariantStatusBadge
-                      soldOut={soldOut}
-                      ruleDisabled={ruleDisabled}
-                      isPreOrder={v.is_pre_order}
-                    />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        );
-      })}
+                      <div className="inline-flex items-center gap-1">
+                        <p className="line-clamp-2 text-left text-xs font-black">
+                          {v.variant_name}
+                        </p>
+                        <p
+                          className={clsx(
+                            "text-right text-xs font-black",
+                            v.price_adjustment !== 0 ? "" : "sr-only",
+                            v.price_adjustment > 0
+                              ? `${selected ? "text-green-400" : "text-green-700"}`
+                              : `${selected ? "text-red-400" : "text-red-700"}`
+                          )}
+                        >
+                          (
+                          {v.price_adjustment &&
+                            (v.price_adjustment > 0 ? "+" : "")}
+                          {formatVND(v.price_adjustment)})
+                        </p>
+                      </div>
+                      {v.sale_price_percent ? (
+                        <strong className="absolute -top-2.5 right-1 rounded bg-red-600 px-2 py-1 text-[8px] leading-none text-white">
+                          Giảm {v.sale_price_percent}%
+                        </strong>
+                      ) : null}
+                      <div className="absolute -top-2 left-1">
+                        <VariantStatusBadge
+                          soldOut={soldOut}
+                          ruleDisabled={ruleDisabled}
+                          isPreOrder={v.is_pre_order}
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
 
-      {/* Simple variant selector (non-composite products) */}
-      {!hasComponents && variants.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Chọn tùy chọn
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {variants.map((v) => {
-              const isSelected =
-                selections["__variant__"]?.includes(v.id) ?? false;
-              const soldOut = v.stock_quantity === 0;
-              return (
-                <button
-                  key={v.id}
-                  type="button"
-                  disabled={soldOut}
-                  onClick={() => onSelect("__variant__", v.id)}
-                  className={simpleVariantButtonClass(
-                    "rounded-xl px-4 py-3 text-left text-sm font-bold transition-all",
-                    { soldOut, isSelected },
-                  )}
-                >
-                  <p className="truncate font-black">{v.variant_name}</p>
-                  {soldOut ? (
-                    <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-error">
-                      Hết hàng
-                    </p>
-                  ) : v.is_pre_order ? (
-                    <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-violet-400">
-                      Đặt trước
-                    </p>
-                  ) : (
-                    <p className="mt-0.5 text-xs opacity-70">
-                      {formatVND(v.effective_price)}
-                    </p>
-                  )}
-                </button>
-              );
-            })}
+        {/* Simple variant selector (non-composite products) */}
+        {!hasComponents && variants.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+              Chọn tùy chọn
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {variants.map((v) => {
+                const isSelected =
+                  selections["__variant__"]?.includes(v.id) ?? false;
+                const soldOut = v.stock_quantity === 0;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    disabled={soldOut}
+                    onClick={() => onSelect("__variant__", v.id)}
+                    className={simpleVariantButtonClass(
+                      "rounded-xl px-4 py-3 text-left text-sm font-bold transition-all",
+                      { soldOut, isSelected }
+                    )}
+                  >
+                    <p className="truncate font-black">{v.variant_name}</p>
+                    {soldOut ? (
+                      <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-error">
+                        Hết hàng
+                      </p>
+                    ) : v.is_pre_order ? (
+                      <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-violet-400">
+                        Đặt trước
+                      </p>
+                    ) : (
+                      <p className="mt-0.5 text-xs opacity-70">
+                        {formatVND(v.effective_price)}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

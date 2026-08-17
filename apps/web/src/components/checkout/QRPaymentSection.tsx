@@ -80,16 +80,10 @@ export function QRPaymentSection({
             {formatVND(subtotal)}
           </span>
         </div>
-        <div className="flex justify-between text-sm">
+        <div className="flex items-center justify-between text-sm">
           <span className="text-on-surface-variant">Phí vận chuyển</span>
           <span
-            className={
-              deliveryService
-                ? "font-bold text-on-surface-variant"
-                : shippingCost === 0
-                  ? "font-bold text-secondary"
-                  : "font-bold text-on-surface"
-            }
+            className={`text-xs font-bold ${shippingCost === 0 && deliveryService ? "text-emerald-600" : "text-on-surface-variant"}`}
           >
             {deliveryService
               ? "Cập nhật bởi đơn vị vận chuyển"
