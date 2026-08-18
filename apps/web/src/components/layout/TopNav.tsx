@@ -41,7 +41,7 @@ export function TopNav({
   const mounted = useIsMounted();
   const pathname = usePathname();
   const router = useRouter();
-  const { openCart, itemCount, isHydrated } = useCartStore();
+  const { openCart, itemCount, isHydrated, cartFetching } = useCartStore();
   const count = mounted ? itemCount() : 0;
   const [menuOpen, setMenuOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
@@ -131,6 +131,8 @@ export function TopNav({
         >
           {!isHydrated && showCart && !hideCart ? (
             <div className="skeleton h-[26px] w-[26px] rounded-full" />
+          ) : cartFetching ? (
+            <span className="loading loading-spinner loading-sm" />
           ) : (
             <span
               key={cartBounce}

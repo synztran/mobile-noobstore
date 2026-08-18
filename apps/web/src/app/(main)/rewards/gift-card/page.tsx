@@ -1,6 +1,7 @@
 "use client";
 
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { usePointsBalance } from "@/lib/react-query/points/api/usePointsQueries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,6 +18,7 @@ import { useState } from "react";
 
 function GiftCardPage() {
   const queryClient = useQueryClient();
+  const { refreshProfile } = useAuth();
   const { data: balance = 0, isLoading: balanceLoading } = usePointsBalance();
 
   const [code, setCode] = useState("");
@@ -67,6 +69,7 @@ function GiftCardPage() {
       setTypedCode("");
       queryClient.invalidateQueries({ queryKey: ["points"] });
       queryClient.invalidateQueries({ queryKey: ["gift-card"] });
+      void refreshProfile();
     },
     onError: (err: Error) => {
       setError(err.message);

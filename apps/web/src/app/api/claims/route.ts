@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { CACHE_KEYS, invalidateCache } from "@/lib/redis/cache";
 import { spendPoints } from "@/lib/points/service";
 import type { RewardClaim } from "@/types/reward";
 import { NextRequest, NextResponse } from "next/server";
@@ -120,6 +121,8 @@ export async function POST(req: NextRequest) {
       rewardItemId,
       `Đổi "${row.name as string}"`
     );
+
+    await invalidateCache(CACHE_KEYS.pointsBalance(user.id));
 
     // Record claim
     const { data: claimRow, error: insertError } = await sb

@@ -2,6 +2,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import CreateVoucherModal from "@/components/vouchers/CreateVoucherModal";
 import InactivateVoucherModal from "@/components/vouchers/InactivateVoucherModal";
 import UpdateVoucherModal from "@/components/vouchers/UpdateVoucherModal";
+import Link from "next/link";
 
 export const metadata = {
   title: "Vouchers - NoobStore Admin",
@@ -131,12 +132,12 @@ export default async function VouchersPage(props: {
           Tìm kiếm
         </button>
         {(search || statusFilter) && (
-          <a
+          <Link
             href="/admin/vouchers"
             className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200"
           >
             Xoá bộ lọc
-          </a>
+          </Link>
         )}
       </form>
 
@@ -241,7 +242,7 @@ export default async function VouchersPage(props: {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-4">
-          <a
+          <Link
             href={`/admin/vouchers?${new URLSearchParams({
               ...(search ? { search } : {}),
               ...(statusFilter ? { status: statusFilter } : {}),
@@ -254,11 +255,11 @@ export default async function VouchersPage(props: {
             }`}
           >
             ‹ Trước
-          </a>
+          </Link>
           <span className="text-sm text-slate-500">
             Trang {page} / {totalPages}
           </span>
-          <a
+          <Link
             href={`/admin/vouchers?${new URLSearchParams({
               ...(search ? { search } : {}),
               ...(statusFilter ? { status: statusFilter } : {}),
@@ -271,7 +272,7 @@ export default async function VouchersPage(props: {
             }`}
           >
             Sau ›
-          </a>
+          </Link>
         </div>
       )}
     </div>

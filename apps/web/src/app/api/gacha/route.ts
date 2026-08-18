@@ -1,4 +1,4 @@
-import { getCache, invalidateCache, setCache } from "@/lib/redis/cache";
+import { CACHE_KEYS, getCache, invalidateCache, setCache } from "@/lib/redis/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { earnPointsFromGachaReward } from "@/lib/points/service";
@@ -337,9 +337,11 @@ export async function POST(req: NextRequest) {
         user.id,
         drawn.id,
         pointValue
-      ).catch((err) =>
-        console.error("[gacha POST] failed to earn points:", err)
-      );
+      )
+        .then(() => invalidateCache(CACHE_KEYS.pointsBalance(user.id)))
+        .catch((err) =>
+          console.error("[gacha POST] failed to earn points:", err)
+        );
     }
   }
 

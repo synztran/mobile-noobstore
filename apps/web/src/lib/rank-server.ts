@@ -1,6 +1,7 @@
 import type { CustomerRank, RankProgress, RankResponse } from "@/types/rank";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getPublicClient } from "@/lib/supabase/public";
+import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
 import type { Database } from "@/lib/supabase/database.types";
 
 type CustomerRankRow = Database["public"]["Tables"]["customer_ranks"]["Row"];
@@ -50,16 +51,24 @@ export async function getAllRanks(): Promise<CustomerRank[]> {
 
 async function getUserOrderStats(userId: string): Promise<{ totalSpent: number; orderCount: number }> {
   const supabase = getAdminClient();
-  const { data: orders, error } = await supabase
-    .from("orders")
-    .select("total_price")
-    .eq("user_id", userId)
-    .eq("status", "delivered");
+  const { data, error } = await (
+    supabase.rpc as unknown as (
+      fn: "get_user_order_stats",
+      args: { p_user_id: string }
+    ) => Promise<{
+      data: Array<{ total_spent: number; order_count: number }> | null;
+      error: { message: string } | null;
+    }>
+  )("get_user_order_stats", { p_user_id: userId });
 
-  if (error || !orders) return { totalSpent: 0, orderCount: 0 };
+  if (error || !data || data.length === 0) {
+    return { totalSpent: 0, orderCount: 0 };
+  }
 
-  const totalSpent = orders.reduce((sum, o) => sum + Number(o.total_price), 0);
-  return { totalSpent, orderCount: orders.length };
+  return {
+    totalSpent: Number(data[0].total_spent ?? 0),
+    orderCount: Number(data[0].order_count ?? 0),
+  };
 }
 
 export async function computeRank(userId: string): Promise<{ rankId: string | null; changed: boolean }> {
@@ -126,6 +135,16 @@ export async function computeRank(userId: string): Promise<{ rankId: string | nu
 }
 
 export async function computeRankStats(userId: string): Promise<RankResponse> {
+  const cacheKey = `${CACHE_VERSION}:user-rank:${userId}`;
+  const cached = await getCache<RankResponse>(cacheKey);
+  if (cached) return cached;
+
+  const result = await computeRankStatsUncached(userId);
+  await setCache(cacheKey, result, 60);
+  return result;
+}
+
+async function computeRankStatsUncached(userId: string): Promise<RankResponse> {
   const [allRanks, stats] = await Promise.all([
     getAllRanks(),
     getUserOrderStats(userId),

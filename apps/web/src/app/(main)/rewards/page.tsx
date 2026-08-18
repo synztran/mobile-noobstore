@@ -7,6 +7,7 @@ import { RewardsGrid } from "@/components/rewards/RewardsGrid";
 import { ConfirmRedemptionModal } from "@/components/rewards/ConfirmRedemptionModal";
 import { SuccessModal } from "@/components/rewards/SuccessModal";
 import { usePointsBalance } from "@/lib/react-query/points/api/usePointsQueries";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import type { RewardItem, RedeemResponse, RewardClaim } from "@/types/reward";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Sparkles, Ticket } from "lucide-react";
@@ -16,6 +17,7 @@ import { useState } from "react";
 
 function RewardsPage() {
   const { data: balance = 0, isLoading: isBalanceLoading } = usePointsBalance();
+  const { refreshProfile } = useAuth();
   const queryClient = useQueryClient();
 
   const [selectedReward, setSelectedReward] = useState<RewardItem | null>(null);
@@ -52,6 +54,7 @@ function RewardsPage() {
       queryClient.invalidateQueries({ queryKey: ["rewards", "infinite"] });
       queryClient.invalidateQueries({ queryKey: ["points"] });
       queryClient.invalidateQueries({ queryKey: ["claims"] });
+      void refreshProfile();
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -97,21 +100,18 @@ function RewardsPage() {
       {/* Gift Card Link */}
       <Link
         href="/rewards/gift-card"
-        className="flex items-center gap-4 rounded-2xl bg-surface-container-lowest p-4 shadow-ambient-sm transition-transform active:scale-[0.98]"
+        className="flex items-center gap-2 rounded-2xl bg-surface-container-lowest p-4 shadow-ambient-sm transition-transform active:scale-[0.98]"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-fixed/20 text-primary">
           <Ticket size={20} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-black text-on-surface">Nạp thẻ quà tặng</p>
-          <p className="mt-0.5 text-[10px] text-on-surface-variant">
+          <p className="mt-0.5 text-xs text-on-surface-variant">
             Nhập mã thẻ để nhận điểm NSP
           </p>
         </div>
-        <ArrowRight
-          size={16}
-          className="flex-shrink-0 text-outline"
-        />
+        <ArrowRight size={16} className="flex-shrink-0 text-outline" />
       </Link>
 
       {/* Claims History */}
@@ -120,10 +120,7 @@ function RewardsPage() {
       )}
 
       {/* Rewards Grid */}
-      <RewardsGrid
-        balance={balance}
-        onRedeem={(r) => setSelectedReward(r)}
-      />
+      <RewardsGrid balance={balance} onRedeem={(r) => setSelectedReward(r)} />
 
       {/* Confirm Redemption Modal */}
       <ConfirmRedemptionModal

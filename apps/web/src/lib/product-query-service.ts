@@ -486,7 +486,9 @@ export async function getProductListByFilters(
       countQuery = countQuery.lte("base_price", safePriceMax);
 
     // ── Fetch paginated products (sorted by user's choice) ──
-    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
+    // Note: `images` is intentionally omitted — the list rails/cards only use
+    // `thumbnail`; the full gallery is fetched by the detail/configurator paths.
+    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
        categories(id, name),
        product_variants(${VARIANT_COLUMNS})`;
 
@@ -553,7 +555,7 @@ export async function getProductsByIds(
   const safeIds = ids.filter((id) => typeof id === "string" && id.length > 0);
   if (safeIds.length === 0) return [];
 
-  const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, images, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
+  const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
      categories(id, name),
      product_variants(${VARIANT_COLUMNS})`;
 

@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 const PROFILE_SELECT =
-  "id, email, first_name, last_name, phone_number, role, created_at, addresses:user_addresses(id, user_id, full_name, address, phone_number, city, city_code, district, ward, district_code, ward_code, is_default)";
+  "id, email, first_name, last_name, phone_number, points_balance, role, created_at, addresses:user_addresses(id, user_id, full_name, address, phone_number, city, city_code, district, ward, district_code, ward_code, is_default)";
 
 async function getProfileWithAddresses(
   supabase: Awaited<ReturnType<typeof createClient>>,

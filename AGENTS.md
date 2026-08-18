@@ -58,6 +58,7 @@ Run these from the workspace root. The only app currently is `apps/web`.
 - Use `<Icon>` (`src/components/ui/Icon.tsx`) for icons — wraps Material Symbols
 - Always include skeleton loaders for async content
 - Currency: use `formatVND()` from `src/lib/currency.ts`
+- Linking: use `next/link` for all internal navigation; use `<a>` only when `target="_blank"` is required (external links). `mailto:`/`tel:` protocol links may also stay `<a>`
 
 ### Auth
 

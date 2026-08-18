@@ -1431,6 +1431,8 @@ export type Database = {
           shipping_method_id: string | null
           status: string
           total_price: number
+          tracking_carrier_id: string | null
+          tracking_number: string | null
           updated_at: string | null
           user_id: string | null
           voucher_code: string | null
@@ -1464,6 +1466,8 @@ export type Database = {
           shipping_method_id?: string | null
           status?: string
           total_price: number
+          tracking_carrier_id?: string | null
+          tracking_number?: string | null
           updated_at?: string | null
           user_id?: string | null
           voucher_code?: string | null
@@ -1497,6 +1501,8 @@ export type Database = {
           shipping_method_id?: string | null
           status?: string
           total_price?: number
+          tracking_carrier_id?: string | null
+          tracking_number?: string | null
           updated_at?: string | null
           user_id?: string | null
           voucher_code?: string | null
@@ -1518,6 +1524,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "order_status"
             referencedColumns: ["status"]
+          },
+          {
+            foreignKeyName: "orders_tracking_carrier_id_fkey"
+            columns: ["tracking_carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "orders_user_id_fkey"
@@ -2268,6 +2281,33 @@ export type Database = {
           slug?: string | null
           thumbnail_url?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      carriers: {
+        Row: {
+          id: string
+          is_active: boolean
+          logo: string | null
+          name: string
+          sort_order: number
+          tracking_url_template: string | null
+        }
+        Insert: {
+          id: string
+          is_active?: boolean
+          logo?: string | null
+          name: string
+          sort_order?: number
+          tracking_url_template?: string | null
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          logo?: string | null
+          name?: string
+          sort_order?: number
+          tracking_url_template?: string | null
         }
         Relationships: []
       }

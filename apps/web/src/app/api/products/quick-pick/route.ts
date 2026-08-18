@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 				limit,
 				sort,
 			),
-			120,
+			600,
 			() =>
 				getQuickPickData({
 					categorySlug,

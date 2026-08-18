@@ -22,6 +22,7 @@ export const CACHE_KEYS = {
 	documentList: (page: number, limit: number, query?: string) =>
 		`${CACHE_VERSION}:community:firmwares:${page}:${limit}:${query ?? ""}`,
 	rewards: (offset: number, limit: number) => `rewards:${offset}:${limit}`,
+	pointsBalance: (userId: string) => `${CACHE_VERSION}:points-balance:${userId}`,
 	testimonials: `${CACHE_VERSION}:testimonials`,
 	creators: `${CACHE_VERSION}:creators`,
 	quickPick: (
@@ -37,6 +38,34 @@ export const CACHE_KEYS = {
 	saleProducts: (categorySlug: string, limit: number, sort: string) =>
 		`${CACHE_VERSION}:sale-products:${categorySlug}:${limit}:${sort}`,
 } as const;
+
+/**
+ * Build the canonical cache key for the product-list endpoint. Shared by the
+ * SSR `getProducts` path and the `/api/products` route so a single warm entry
+ * serves both, instead of the historical `products:ssr:` / `products:` split.
+ * Params whose only valid value is "default" (empty search, empty category,
+ * 0 price bounds) map to the same normalized forms on both callers today.
+ */
+export function buildProductListCacheKey(params: {
+	search?: string;
+	categorySlug?: string;
+	priceMin?: number;
+	priceMax?: number;
+	sort?: string;
+	limit?: number;
+	offset?: number;
+}): string {
+	const {
+		search = "",
+		categorySlug = "",
+		priceMin = 0,
+		priceMax = 0,
+		sort = "newest",
+		limit,
+		offset = 0,
+	} = params;
+	return `products:${CACHE_VERSION}:${search}:${categorySlug}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}`;
+}
 
 /**
  * Read a value from Redis cache.
@@ -84,21 +113,44 @@ export async function invalidateCache(...keys: string[]): Promise<void> {
 }
 
 /**
+ * In-flight read-through fetches, keyed by cache key. Lets N concurrent
+ * requests that miss the same key share one upstream Supabase query instead
+ * of stampeding it (each concurrent request used to run its own cascade).
+ */
+const inflight = new Map<string, Promise<unknown>>();
+
+/**
  * Read-through cache: return the cached value when present, otherwise run
  * `fetcher` and store the result for `ttlSeconds`. Callers use this for
  * global (non-personalized) read endpoints.
+ *
+ * Concurrent misses for the same key are coalesced into a single `fetcher`
+ * run (single-flight) — the rest of the in-flight requests await the same
+ * promise rather than re-running the query.
  */
 export async function readThroughCache<T>(
 	key: string,
 	ttlSeconds: number,
 	fetcher: () => Promise<T>,
 ): Promise<T> {
+	const existing = inflight.get(key);
+	if (existing) return existing as Promise<T>;
+
 	const cached = await getCache<T>(key);
 	if (cached !== null) return cached;
 
-	const value = await fetcher();
-	await setCache(key, value, ttlSeconds);
-	return value;
+	const promise = (async () => {
+		try {
+			const value = await fetcher();
+			await setCache(key, value, ttlSeconds);
+			return value;
+		} finally {
+			inflight.delete(key);
+		}
+	})();
+
+	inflight.set(key, promise);
+	return promise;
 }
 
 /**

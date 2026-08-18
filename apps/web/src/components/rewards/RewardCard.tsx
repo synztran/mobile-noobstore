@@ -19,27 +19,27 @@ export function RewardCard({ reward, onRedeem, balance }: Props) {
 
   return (
     <div className="flex flex-col gap-2 rounded-2xl bg-surface-container-lowest p-3 shadow-ambient-sm transition-all active:scale-[0.98]">
-      <div className="flex items-start gap-1">
-        <div className="flex h-8 min-w-8 items-center justify-center self-center rounded-sm bg-primary-fixed/50 text-primary">
+      <div className="gap- flex items-center gap-2">
+        <div className="flex h-8 min-w-8 items-center justify-center rounded-sm bg-primary-fixed/50 text-primary">
           {getRewardIcon(reward.rewardType, reward.metadata)}
         </div>
 
-        <div className="text-left">
-          <div className="max-w-max rounded bg-secondary-fixed/30 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-widest text-secondary">
+        <div className="space-y-1 text-left">
+          <div className="max-w-max rounded bg-secondary-fixed/30 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest text-secondary">
             {reward.rewardType === "point"
               ? "ĐIỂM"
               : reward.rewardType === "product"
                 ? "QUÀ"
                 : "VOUCHER"}
           </div>
-          <p className="truncate text-[10px] font-black text-on-surface">
+          <p className="truncate text-xs font-black text-on-surface">
             {reward.name}
           </p>
         </div>
       </div>
 
       {reward.description && (
-        <p className="line-clamp-2 text-[10px] leading-relaxed text-on-surface-variant">
+        <p className="line-clamp-2 text-xs text-on-surface-variant">
           {reward.description}
         </p>
       )}

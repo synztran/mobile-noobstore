@@ -7,7 +7,6 @@ export function useMyRank() {
   return useQuery<RankResponse>({
     queryKey: myRankQueryKey,
     staleTime: 60_000,
-    refetchInterval: 60_000,
     retry: false,
     queryFn: async () => {
       const res = await fetch("/api/user/rank");

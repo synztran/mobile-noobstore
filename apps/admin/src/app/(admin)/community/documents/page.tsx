@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import CreateDocumentButton from "@/components/documents/CreateDocumentButton";
 import DocumentsTable from "@/components/documents/DocumentsTable";
+import Link from "next/link";
 
 export const metadata = {
   title: "Documents - NoobStore Admin",
@@ -91,12 +92,12 @@ export default async function DocumentsPage(props: {
           Tìm kiếm
         </button>
         {(search || status) && (
-          <a
+          <Link
             href="/community/documents"
             className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200"
           >
             Xoá bộ lọc
-          </a>
+          </Link>
         )}
       </form>
 

@@ -404,7 +404,7 @@ export default function CartsClient({
               {totalPages}
             </span>
             <div className="flex items-center gap-1">
-              <a
+              <Link
                 href={buildUrl(
                   currentPage - 1,
                   status,
@@ -421,7 +421,7 @@ export default function CartsClient({
                 }`}
               >
                 ‹
-              </a>
+              </Link>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter(
                   (p) =>
@@ -444,7 +444,7 @@ export default function CartsClient({
                       …
                     </span>
                   ) : (
-                    <a
+                    <Link
                       key={p}
                       href={buildUrl(p, status, q, searchBy, sortBy, sortDir)}
                       className={`flex h-8 min-w-[2rem] items-center justify-center rounded-lg border text-sm ${
@@ -454,10 +454,10 @@ export default function CartsClient({
                       }`}
                     >
                       {p}
-                    </a>
+                    </Link>
                   )
                 )}
-              <a
+              <Link
                 href={buildUrl(
                   currentPage + 1,
                   status,
@@ -474,7 +474,7 @@ export default function CartsClient({
                 }`}
               >
                 ›
-              </a>
+              </Link>
             </div>
           </div>
         )}

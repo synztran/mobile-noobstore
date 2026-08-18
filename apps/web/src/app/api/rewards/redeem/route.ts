@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { CACHE_KEYS, invalidateCache } from "@/lib/redis/cache";
 import { spendPoints, earnPointsFixed } from "@/lib/points/service";
 import { randomBase36 } from "@/lib/random";
 import type { RedeemResponse } from "@/types/reward";
@@ -100,6 +101,8 @@ export async function POST(req: NextRequest) {
       rewardItemId,
       `Đổi "${row.name as string}"`
     );
+
+    await invalidateCache(CACHE_KEYS.pointsBalance(user.id));
 
     // Build response based on reward type
     let response: RedeemResponse;

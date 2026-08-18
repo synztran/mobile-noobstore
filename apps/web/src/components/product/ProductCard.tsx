@@ -45,11 +45,13 @@ export function ProductCardSkeleton() {
 interface ProductCardProps {
   product: ShopProduct;
   isBundle?: boolean;
+  imagePriority?: boolean;
 }
 
 export const ProductCard = memo(function ProductCard({
   product,
   isBundle = false,
+  imagePriority = false,
 }: ProductCardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -128,6 +130,7 @@ export const ProductCard = memo(function ProductCard({
                 src={product.thumbnail}
                 alt={product.name}
                 fill
+                priority={imagePriority}
                 className="object-cover"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />

@@ -47,7 +47,7 @@ function ProductGrid({ products }: { products: ShopProduct[] }) {
   return (
     <div className="grid grid-cols-2 gap-4">
       <AnimatePresence mode="popLayout">
-        {products.map((product) => (
+        {products.map((product, index) => (
           <motion.div
             key={product.id}
             layout
@@ -56,7 +56,10 @@ function ProductGrid({ products }: { products: ShopProduct[] }) {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
           >
-            <ProductCard product={product} />
+            <ProductCard
+              product={product}
+              imagePriority={index < 2}
+            />
           </motion.div>
         ))}
       </AnimatePresence>

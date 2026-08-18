@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 	try {
 		const result = await readThroughCache(
 			CACHE_KEYS.saleProducts(categorySlug, safeLimit, sort),
-			120,
+			600,
 			() =>
 				getSaleProducts({
 					categorySlug,

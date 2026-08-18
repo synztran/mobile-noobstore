@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { CACHE_KEYS, invalidateCache } from "@/lib/redis/cache";
 import { adminAdjustPoints } from "@/lib/points/service";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
       delta,
       note
     );
+    await invalidateCache(CACHE_KEYS.pointsBalance(user_id));
     return NextResponse.json(result);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

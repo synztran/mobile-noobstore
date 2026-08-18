@@ -14,9 +14,11 @@ interface CartStore {
 	cartId: string | null;
 	isOpen: boolean;
 	isHydrated: boolean;
+	cartFetching: boolean;
 
 	setCart: (items: CartItem[], cartId: string | null) => void;
 	setHydrated: (v: boolean) => void;
+	setCartFetching: (v: boolean) => void;
 	addItem: (
 		product: Product,
 		variant: ProductVariant | null,
@@ -49,9 +51,11 @@ export const useCartStore = create<CartStore>()(
 			cartId: null,
 			isOpen: false,
 			isHydrated: false,
+			cartFetching: false,
 
 			setCart: (items, cartId) => set({ items, cartId, isHydrated: true }),
 			setHydrated: (v) => set({ isHydrated: v }),
+			setCartFetching: (v) => set({ cartFetching: v }),
 
 			addItem: (product, variant, components, gifts) => {
 				set((state) => {

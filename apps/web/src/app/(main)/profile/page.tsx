@@ -62,9 +62,9 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [fullName, setFullName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const [pointsBalance, setPointsBalance] = useState<number | null>(null);
   const [rankModalOpen, setRankModalOpen] = useState(false);
   const { data: rankData } = useMyRank();
+  const pointsBalance = profile?.points_balance;
 
   useEffect(() => {
     if (profile?.first_name) {
@@ -74,15 +74,6 @@ export default function ProfilePage() {
       setFullName(name);
     }
   }, [profile]);
-
-  // Fetch NSP points balance
-  useEffect(() => {
-    if (!user) return;
-    fetch("/api/points/balance")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setPointsBalance(d.balance ?? 0))
-      .catch(() => {});
-  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -227,7 +218,7 @@ export default function ProfilePage() {
             </div>
             <div>
               <p className="text-xs font-bold text-white/90">Điểm NoobStore</p>
-              {pointsBalance === null ? (
+              {pointsBalance === undefined ? (
                 <div className="mt-0.5 h-5 w-16 animate-pulse rounded-full bg-white/30" />
               ) : (
                 <p className="text-lg font-black leading-none text-white">

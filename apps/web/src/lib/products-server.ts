@@ -14,7 +14,12 @@ import type {
 } from "@/app/api/products/[slug]/route";
 import type { ShopProduct } from "@/app/api/products/route";
 import { getProductListByFilters } from "@/lib/product-query-service";
-import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
+import {
+  buildProductListCacheKey,
+  getCache,
+  setCache,
+  CACHE_VERSION,
+} from "@/lib/redis/cache";
 import { optimizeDescriptionHtml } from "@/lib/description-html";
 import {
   fetchKitSupplements,
@@ -306,7 +311,15 @@ export const getProducts = cache(async function getProducts(
   } = params;
 
   try {
-    const cacheKey = `products:ssr:${CACHE_VERSION}:${search}:${categorySlug}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}`;
+    const cacheKey = buildProductListCacheKey({
+      search,
+      categorySlug,
+      priceMin,
+      priceMax,
+      sort,
+      limit,
+      offset,
+    });
     const cached = await getCache<{ products: ShopProduct[]; total: number }>(
       cacheKey
     );
@@ -327,7 +340,7 @@ export const getProducts = cache(async function getProducts(
       products: result.products as ShopProduct[],
       total: result.total,
     };
-    await setCache(cacheKey, response, 300);
+    await setCache(cacheKey, response, 600);
     return response;
   } catch (err) {
     console.error("[getProducts] Unexpected error:", err);

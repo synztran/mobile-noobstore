@@ -6,11 +6,11 @@ import OrderDetailModal, {
 } from "@/components/orders/OrderDetailModal";
 import ExportCSVButton from "@/components/ui/ExportCSVButton";
 import type { ExportColumn } from "@/lib/csv";
-import { createClient } from "@/lib/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Search } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 interface Order {
 	id: string;
@@ -135,36 +135,29 @@ export default function OrdersClient({
   const queryClient = useQueryClient();
   const queryKey = ["orders", q, searchBy, currentPage];
 
+	const prevCountRef = useRef(initialCount ?? 0);
+
 	const { data, isFetching } = useQuery({
 		queryKey,
 		queryFn: () => fetchOrders(q, searchBy, currentPage),
 		initialData: { orders: initialOrders, count: initialCount ?? 0 },
 		staleTime: 30_000,
+		refetchInterval: 30_000,
 	});
 
 	const orders = data?.orders ?? [];
 	const count = data?.count ?? 0;
 	const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
 
-	// Supabase realtime subscription
+	// Polling-based replacement for the old realtime subscription:
+	// flag a badge when the total order count grows between polls.
 	useEffect(() => {
-		const supabase = createClient();
-		const channel = supabase
-			.channel("orders-realtime")
-			.on(
-				"postgres_changes",
-				{ event: "*", schema: "public", table: "orders" },
-				() => {
-					queryClient.invalidateQueries({ queryKey });
-					setNewOrderBadge(true);
-				},
-			)
-			.subscribe();
-		return () => {
-			supabase.removeChannel(channel);
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [queryClient, q, searchBy, currentPage]);
+		setNewOrderBadge((prev) => {
+			if (prev) return true;
+			return count > prevCountRef.current;
+		});
+		prevCountRef.current = count;
+	}, [count]);
 
 	function buildUrl(p: number) {
 		const params = new URLSearchParams();
@@ -415,12 +408,12 @@ export default function OrdersClient({
 						{currentPage} of {totalPages}
 					</span>
 					<div className="flex items-center gap-1">
-						<a
+						<Link
 							href={buildUrl(currentPage - 1)}
 							aria-disabled={currentPage === 1}
 							className={`p-1.5 rounded-lg table-border text-body ${currentPage === 1 ? "pointer-events-none opacity-40" : "table-row-hover"}`}>
 							‹
-						</a>
+						</Link>
 						{Array.from({ length: totalPages }, (_, i) => i + 1)
 							.filter(
 								(p) =>
@@ -442,20 +435,20 @@ export default function OrdersClient({
 										…
 									</span>
 								) : (
-									<a
+									<Link
 										key={p}
 										href={buildUrl(p)}
 										className={`min-w-[2rem] h-8 flex items-center justify-center rounded-lg text-sm border ${p === currentPage ? "bg-blue-600 text-white border-blue-600 font-medium" : "table-border table-row-hover text-body"}`}>
 										{p}
-									</a>
+									</Link>
 								),
 							)}
-						<a
+						<Link
 							href={buildUrl(currentPage + 1)}
 							aria-disabled={currentPage === totalPages}
 							className={`p-1.5 rounded-lg table-border text-body ${currentPage === totalPages ? "pointer-events-none opacity-40" : "table-row-hover"}`}>
 							›
-						</a>
+						</Link>
 					</div>
 				</div>
 			)}

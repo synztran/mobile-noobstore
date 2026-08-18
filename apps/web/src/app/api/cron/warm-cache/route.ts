@@ -9,8 +9,14 @@ import {
 	getProductPurchaseCount,
 	getRelatedProducts,
 	getFrequentlyBoughtTogether,
+	getQuickPickData,
+	getProducts,
 } from "@/lib/products-server";
-import { CACHE_KEYS, readThroughCache } from "@/lib/redis/cache";
+import {
+	CACHE_KEYS,
+	buildProductListCacheKey,
+	readThroughCache,
+} from "@/lib/redis/cache";
 import { getRewards } from "@/lib/rewards-server";
 import { getSaleProducts } from "@/lib/sale-products-server";
 import {
@@ -31,8 +37,8 @@ export const dynamic = "force-dynamic";
 // the shared CRON_SECRET check.
 //
 // Warms the default variants the UI actually requests. Parameterized endpoints
-// (quick-pick, location/wards) are read-through cached on demand and are not
-// warmed here.
+// (location/wards, non-default quick-pick category/product pages) are
+// read-through cached on demand and are not warmed here.
 
 export async function POST(req: NextRequest) {
 	const authError = requireCronSecret(req);
@@ -102,6 +108,22 @@ export async function POST(req: NextRequest) {
 			if (error) throw new Error(error.message);
 			return data ?? [];
 		}),
+		// Warm the shop page's first product list page — the shared key is also
+		// used by /api/products, so the first visitor's infinite scroll and the
+		// SSR grid both hit cache instead of the full query cascade.
+		warm(
+			buildProductListCacheKey({ limit: 12, sort: "newest" }),
+			600,
+			() => getProducts({ limit: 12, sort: "newest" }),
+		),
+		// Warm the quick-pick category default the storefront drawer opens to
+		// (keyboards on the home rail). Previously quick-pick was never warmed
+		// and every open paid the full configurator/rules cascade.
+		warm(
+			CACHE_KEYS.quickPick("keyboards", "", "", "", "newest"),
+			600,
+			() => getQuickPickData({ categorySlug: "keyboards" }),
+		),
 	]);
 
 	// Warm each service detail page from the booking-config slugs.

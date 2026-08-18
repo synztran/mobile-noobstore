@@ -4,7 +4,7 @@ import {
   type ProductSortOption,
   type ProductType,
 } from "@/lib/product-query-service";
-import { getCache, setCache, CACHE_VERSION } from "@/lib/redis/cache";
+import { buildProductListCacheKey, getCache, setCache } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -140,9 +140,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json<ProductsResponse>({ products, total: products.length });
     }
 
-    // Build a stable cache key from normalized params
+    // Build a stable cache key from normalized params — shared with the SSR
+    // `getProducts` path so a single warm entry serves both.
     // Search queries are cached too — useful for repeated searches within 60 s
-    const cacheKey = `products:${CACHE_VERSION}:${search || ""}:${categorySlug}:${priceMin}:${priceMax}:${productTypes}:${sort}:${limit}:${offset}`;
+    const cacheKey = buildProductListCacheKey({
+      search,
+      categorySlug,
+      priceMin,
+      priceMax,
+      sort,
+      limit,
+      offset,
+    });
 
     const cached = await getCache<ProductsResponse>(cacheKey);
     if (cached) {
@@ -169,9 +178,10 @@ export async function GET(req: NextRequest) {
       total,
     };
 
-    // Cache for 60 s — force-dynamic prevents Vercel CDN from honouring s-maxage,
-    // so Redis is the only server-level cache layer available
-    await setCache(cacheKey, response, 300000); // 5 min
+    // Cache for 10 min — force-dynamic prevents Vercel CDN from honouring
+    // s-maxage, so Redis is the only server-level cache layer available.
+    // Matches the warm-up cron cadence (every 10 min, migration 108).
+    await setCache(cacheKey, response, 600);
 
     return NextResponse.json<ProductsResponse>(response);
   } catch (err) {

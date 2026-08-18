@@ -19,12 +19,12 @@ export function getRewardIcon(
   rewardType: string,
   metadata: Record<string, unknown>
 ) {
-  if (rewardType === "point") return <Coins size={18} />;
-  if (rewardType === "product") return <Gift size={18} />;
+  if (rewardType === "point") return <Coins size={20} />;
+  if (rewardType === "product") return <Gift size={20} />;
   const rt = metadata.reward_type as string;
-  if (rt === "free_shipping") return <Truck size={18} />;
-  if (rt === "percent_off") return <Percent size={18} />;
-  return <ShoppingBag size={18} />;
+  if (rt === "free_shipping") return <Truck size={20} />;
+  if (rt === "percent_off") return <Percent size={20} />;
+  return <ShoppingBag size={20} />;
 }
 
 type BenefitConfig = {

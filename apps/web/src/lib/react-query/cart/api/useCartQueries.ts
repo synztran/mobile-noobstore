@@ -3,6 +3,7 @@ import type { CartItem, Product, ProductVariant, SelectedComponent } from "@/lib
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useCartStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 function transformToCartItem(item: CartApiItem): CartItem {
 	const product: Product = {
@@ -56,7 +57,7 @@ function transformToCartItem(item: CartApiItem): CartItem {
 }
 
 export function useCartQuery() {
-	return useQuery({
+	const query = useQuery({
 		...appQueryKeys.cart.all,
 		queryFn: async () => {
 			const res = await fetch("/api/cart");
@@ -71,4 +72,12 @@ export function useCartQuery() {
 		staleTime: 30_000,
 		retry: 1,
 	});
+
+	// Surface the in-flight state (initial load + refetches after mutations)
+	// so the TopNav cart icon can show a loading indicator.
+	useEffect(() => {
+		useCartStore.getState().setCartFetching(query.isFetching);
+	}, [query.isFetching]);
+
+	return query;
 }

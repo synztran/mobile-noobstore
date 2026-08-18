@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import BlogTable from "@/components/blog/BlogTable";
 import CreateBlogPostButton from "@/components/blog/CreateBlogPostButton";
+import Link from "next/link";
 
 export const metadata = {
   title: "Blog - NoobStore Admin",
@@ -68,12 +69,12 @@ export default async function BlogPage(props: {
           Tìm kiếm
         </button>
         {(search || status) && (
-          <a
+          <Link
             href="/blog"
             className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200"
           >
             Xoá bộ lọc
-          </a>
+          </Link>
         )}
       </form>
 

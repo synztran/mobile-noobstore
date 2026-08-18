@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import EditUserModal from "@/components/users/EditUserModal";
 import UsersExportWrapper from "@/components/users/UsersExportWrapper";
+import Link from "next/link";
 
 export const metadata = {
   title: "Users - NoobStore Admin",
@@ -115,12 +116,12 @@ export default async function UsersPage(props: {
           Tìm kiếm
         </button>
         {(search || roleFilter) && (
-          <a
+          <Link
             href="/admin/users"
             className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-200"
           >
             Xoá bộ lọc
-          </a>
+          </Link>
         )}
       </form>
 
@@ -209,7 +210,7 @@ export default async function UsersPage(props: {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-4">
-          <a
+          <Link
             href={`/admin/users?${new URLSearchParams({
               ...(search ? { search } : {}),
               ...(roleFilter ? { role: roleFilter } : {}),
@@ -222,11 +223,11 @@ export default async function UsersPage(props: {
             }`}
           >
             ‹ Trước
-          </a>
+          </Link>
           <span className="text-sm text-slate-500">
             Trang {page} / {totalPages}
           </span>
-          <a
+          <Link
             href={`/admin/users?${new URLSearchParams({
               ...(search ? { search } : {}),
               ...(roleFilter ? { role: roleFilter } : {}),
@@ -239,7 +240,7 @@ export default async function UsersPage(props: {
             }`}
           >
             Sau ›
-          </a>
+          </Link>
         </div>
       )}
     </div>
