@@ -4,7 +4,10 @@ import {
   type ProductSortOption,
   type ProductType,
 } from "@/lib/product-query-service";
-import { buildProductListCacheKey, getCache, setCache } from "@/lib/redis/cache";
+import {
+	buildProductListCacheKey,
+	readThroughCache,
+} from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -153,35 +156,30 @@ export async function GET(req: NextRequest) {
       offset,
     });
 
-    const cached = await getCache<ProductsResponse>(cacheKey);
-    if (cached) {
-      return NextResponse.json<ProductsResponse>(cached);
-    }
+    const response = await readThroughCache<ProductsResponse>(
+      cacheKey,
+      600,
+      async () => {
+        const { products, total } = await getProductListByFilters({
+          search,
+          categorySlug,
+          priceMin,
+          priceMax,
+          sort,
+          limit,
+          offset,
+          productTypes:
+            productTypes.length > 0
+              ? productTypes
+              : (["standard", "kit", "component"] as ProductType[]),
+        });
 
-    const { products, total } = await getProductListByFilters({
-      search,
-      categorySlug,
-      priceMin,
-      priceMax,
-      sort,
-      limit,
-      offset,
-      productTypes:
-        productTypes.length > 0
-          ? productTypes
-          : (["standard", "kit", "component"] as ProductType[]),
-    });
-
-    // Return paginated results with accurate total count
-    const response: ProductsResponse = {
-      products: products as ShopProduct[],
-      total,
-    };
-
-    // Cache for 10 min — force-dynamic prevents Vercel CDN from honouring
-    // s-maxage, so Redis is the only server-level cache layer available.
-    // Matches the warm-up cron cadence (every 10 min, migration 108).
-    await setCache(cacheKey, response, 600);
+        return {
+          products: products as ShopProduct[],
+          total,
+        };
+      }
+    );
 
     return NextResponse.json<ProductsResponse>(response);
   } catch (err) {
