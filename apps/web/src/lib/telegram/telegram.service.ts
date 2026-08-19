@@ -39,6 +39,7 @@ export type NewUserPayload = {
 	fullName: string;
 	email: string;
 	registeredAt?: string;
+	provider?: "google" | "email";
 };
 
 /**
@@ -51,13 +52,18 @@ export async function notifyNewUserRegistered(
 		payload.registeredAt ??
 		new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 
+	const source =
+		payload.provider === "google"
+			? `🔗 <b>Nguồn:</b> Google`
+			: `🛜 <b>Nguồn:</b> mobile web`;
+
 	const text = [
 		`🎉 <b>Khách hàng mới đăng ký!</b>`,
 		``,
 		`👤 <b>Họ tên:</b> ${escapeHtml(payload.fullName)}`,
 		`📧 <b>Email:</b> ${escapeHtml(payload.email)}`,
 		`🕐 <b>Thời gian:</b> ${time}`,
-		`🛜 <b>Nguồn:</b> mobile web`,
+		source,
 	].join("\n");
 
 	await sendMessage(text);

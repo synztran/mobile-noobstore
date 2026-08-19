@@ -3,16 +3,18 @@
 import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
 import Icon from "@/components/ui/Icon";
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface FilterState {
   category: string | null;
+  brand: string | null;
   priceMin: number;
   priceMax: number;
 }
 
 const DEFAULT_FILTER_STATE: FilterState = {
   category: null,
+  brand: null,
   priceMin: 0,
   priceMax: 0,
 };
@@ -23,6 +25,7 @@ interface FilterOverlayProps {
   onApply?: (state: FilterState) => void;
   initialState?: Partial<FilterState>;
   categories?: { id: string; slug: string; name: string }[];
+  brands?: string[];
 }
 
 export function FilterOverlay({
@@ -31,9 +34,13 @@ export function FilterOverlay({
   onApply,
   initialState,
   categories = [],
+  brands = [],
 }: FilterOverlayProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     initialState?.category ?? null
+  );
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(
+    initialState?.brand ?? null
   );
   const [selectedPriceMin, setSelectedPriceMin] = useState<number>(
     initialState?.priceMin ?? 0
@@ -42,11 +49,28 @@ export function FilterOverlay({
     initialState?.priceMax ?? 0
   );
 
+  const uniqueBrands = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const b of brands) {
+      const trimmed = b.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (!seen.has(key)) seen.set(key, trimmed);
+    }
+    return Array.from(seen.values());
+  }, [brands]);
+
   useEffect(() => {
     setSelectedCategory(initialState?.category ?? null);
+    setSelectedBrand(initialState?.brand ?? null);
     setSelectedPriceMin(initialState?.priceMin ?? 0);
     setSelectedPriceMax(initialState?.priceMax ?? 0);
-  }, [initialState?.category, initialState?.priceMin, initialState?.priceMax]);
+  }, [
+    initialState?.category,
+    initialState?.brand,
+    initialState?.priceMin,
+    initialState?.priceMax,
+  ]);
 
   return (
     <>
@@ -118,6 +142,44 @@ export function FilterOverlay({
             </section>
           )}
 
+          {/* Brand */}
+          {uniqueBrands.length > 0 && (
+            <section>
+              <h3 className="mb-3 text-base font-black text-on-surface">
+                Thương hiệu
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedBrand(null)}
+                  className={clsx(
+                    "rounded-xl px-4 py-2 text-sm font-bold transition-all",
+                    selectedBrand === null
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-container text-on-surface"
+                  )}
+                >
+                  Tất cả
+                </button>
+                {uniqueBrands.map((b) => (
+                  <button
+                    key={b}
+                    onClick={() =>
+                      setSelectedBrand(selectedBrand === b ? null : b)
+                    }
+                    className={clsx(
+                      "rounded-xl px-4 py-2 text-sm font-bold transition-all",
+                      selectedBrand === b
+                        ? "bg-primary text-on-primary"
+                        : "bg-surface-container text-on-surface"
+                    )}
+                  >
+                    {b}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Price range */}
           <section>
             <h3 className="mb-3 text-base font-black text-on-surface">
@@ -139,10 +201,11 @@ export function FilterOverlay({
           <button
             onClick={() => {
               setSelectedCategory(null);
+              setSelectedBrand(null);
               setSelectedPriceMin(0);
               setSelectedPriceMax(0);
             }}
-            className="text-sm font-bold text-on-surface"
+            className="btn btn-outline px-6 py-2 text-sm font-bold text-on-surface"
           >
             Đặt lại
           </button>
@@ -150,12 +213,13 @@ export function FilterOverlay({
             onClick={() => {
               onApply?.({
                 category: selectedCategory,
+                brand: selectedBrand,
                 priceMin: selectedPriceMin,
                 priceMax: selectedPriceMax,
               });
               onClose();
             }}
-            className="primary-gradient btn h-auto rounded-2xl border-0 px-8 py-3 font-bold normal-case text-white"
+            className="primary-gradient btn btn-sm h-full rounded-md border-0 px-6 py-2 font-bold normal-case text-white"
           >
             Áp dụng
           </button>

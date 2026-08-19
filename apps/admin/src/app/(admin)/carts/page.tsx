@@ -40,6 +40,14 @@ interface RawVariant {
 	thumbnail: string | null;
 }
 
+interface RawComponentVariant {
+	product_variant_id: string | null;
+	kit_product_id: string | null;
+	component_product_id: string | null;
+	component_product_name: string | null;
+	price_adjustment: number | null;
+}
+
 interface EnrichedCartItem {
 	id: string;
 	quantity: number;
@@ -201,6 +209,37 @@ export default async function CartsPage({ searchParams }: Props) {
 		(variants ?? []).map((v: RawVariant) => [v.id, v]),
 	);
 
+	// Child (component) cart_items store the kit's product_id, so the embedded
+	// `products` join resolves to the kit name. Resolve the real component
+	// identity via the kit_component_variants view (same keying as the web cart).
+	const childVariantIds = [
+		...new Set(
+			cartList.flatMap((c: RawCart) =>
+				(c.cart_items ?? [])
+					.filter((i: RawCartItem) => i.parent_cart_item_id)
+					.map((i: RawCartItem) => i.variant_id)
+					.filter(Boolean),
+			),
+		),
+	] as string[];
+
+	const { data: componentVariants } =
+		childVariantIds.length > 0
+			? await supabase
+					.from("kit_component_variants")
+					.select(
+						"product_variant_id, kit_product_id, component_product_id, component_product_name, price_adjustment",
+					)
+					.in("product_variant_id", childVariantIds)
+			: { data: [] };
+
+	const componentVariantMap = new Map<string, RawComponentVariant>(
+		(componentVariants ?? []).map(
+			(v: RawComponentVariant) =>
+				[`${v.product_variant_id}::${v.kit_product_id}`, v] as const,
+		),
+	);
+
 	const enriched: EnrichedCart[] = cartList.map((cart: RawCart) => {
 		const allItems = cart.cart_items ?? [];
 		const parentItems = allItems.filter((i: RawCartItem) => !i.parent_cart_item_id);
@@ -251,20 +290,36 @@ export default async function CartsPage({ searchParams }: Props) {
 		}
 
 		function enrichItem(item: RawCartItem) {
-			const variant = item.variant_id && variantMap.has(item.variant_id)
-				? variantMap.get(item.variant_id)!
-				: null;
+			const variant =
+				item.variant_id && variantMap.has(item.variant_id)
+					? variantMap.get(item.variant_id)!
+					: null;
+			const isChild = Boolean(item.parent_cart_item_id);
+			const component =
+				isChild && item.variant_id && item.product_id
+					? (componentVariantMap.get(
+							`${item.variant_id}::${item.product_id}`,
+						) ?? null)
+					: null;
 			return {
 				id: item.id,
 				quantity: item.quantity,
-				product_id: item.product_id,
-				product_name: item.products?.name ?? null,
+				product_id: component?.component_product_id ?? item.product_id,
+				product_name:
+					component?.component_product_name ??
+					item.products?.name ??
+					null,
 				product_thumbnail: item.products?.thumbnail ?? null,
 				base_price: item.products?.base_price ?? 0,
 				variant_id: item.variant_id,
 				parent_cart_item_id: item.parent_cart_item_id,
 				variant_name: variant?.variant_name ?? null,
-				unit_price: (item.products?.base_price ?? 0) + Number(variant?.price_adjustment ?? 0),
+				unit_price: isChild
+					? Number(component?.price_adjustment ?? 0) ||
+						(item.products?.base_price ?? 0) +
+							Number(variant?.price_adjustment ?? 0)
+					: (item.products?.base_price ?? 0) +
+						Number(variant?.price_adjustment ?? 0),
 				children: [] as EnrichedCartItem[],
 			};
 		}

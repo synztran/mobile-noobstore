@@ -7,6 +7,7 @@ const PAGE_SIZE = 12;
 export interface Filters {
   search?: string;
   category?: string;
+  brand?: string;
   sort?: string;
   priceMin?: string;
   priceMax?: string;
@@ -16,6 +17,7 @@ export function buildShopFilters(sp: URLSearchParams): Filters {
   return {
     search: sp.get("search") ?? "",
     category: sp.get("category") ?? "",
+    brand: sp.get("brand") ?? "",
     sort: sp.get("sort") ?? "newest",
     priceMin: sp.get("priceMin") ?? "",
     priceMax: sp.get("priceMax") ?? "",
@@ -28,6 +30,7 @@ export function buildShopUrl(offset: number, filters: Filters): string {
   params.set("limit", String(PAGE_SIZE));
   if (filters.search) params.set("search", filters.search);
   if (filters.category) params.set("category", filters.category);
+  if (filters.brand) params.set("brand", filters.brand);
   if (filters.sort && filters.sort !== "newest") params.set("sort", filters.sort);
   if (filters.priceMin) params.set("priceMin", filters.priceMin);
   if (filters.priceMax) params.set("priceMax", filters.priceMax);
@@ -35,7 +38,7 @@ export function buildShopUrl(offset: number, filters: Filters): string {
 }
 
 function filtersToKey(f: Filters): string {
-  return `${f.search ?? ""}|${f.category ?? ""}|${f.sort ?? ""}|${f.priceMin ?? ""}|${f.priceMax ?? ""}`;
+  return `${f.search ?? ""}|${f.category ?? ""}|${f.brand ?? ""}|${f.sort ?? ""}|${f.priceMin ?? ""}|${f.priceMax ?? ""}`;
 }
 
 export function useShopInfiniteQuery(

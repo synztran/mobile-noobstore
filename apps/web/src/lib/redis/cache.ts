@@ -49,6 +49,7 @@ export const CACHE_KEYS = {
 export function buildProductListCacheKey(params: {
 	search?: string;
 	categorySlug?: string;
+	brand?: string;
 	priceMin?: number;
 	priceMax?: number;
 	sort?: string;
@@ -59,6 +60,7 @@ export function buildProductListCacheKey(params: {
 	const {
 		search = "",
 		categorySlug = "",
+		brand = "",
 		priceMin = 0,
 		priceMax = 0,
 		sort = "newest",
@@ -66,7 +68,7 @@ export function buildProductListCacheKey(params: {
 		offset = 0,
 		slim = false,
 	} = params;
-	return `products:${CACHE_VERSION}:${search}:${categorySlug}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}:${slim ? "slim" : "full"}`;
+	return `products:${CACHE_VERSION}:${search}:${categorySlug}:${brand}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}:${slim ? "slim" : "full"}`;
 }
 
 /**

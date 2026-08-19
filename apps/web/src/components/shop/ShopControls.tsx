@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 function formatFilterPills(filters: FilterState): string[] {
   const pills: string[] = [];
   if (filters.category) pills.push(filters.category);
+  if (filters.brand) pills.push(filters.brand);
   const hasMin = filters.priceMin > 0;
   const hasMax = filters.priceMax > 0;
   if (hasMin && hasMax) {
@@ -32,11 +33,13 @@ function formatFilterPills(filters: FilterState): string[] {
 export function ShopControls({
   total,
   categories = [],
+  brands = [],
   isTotalLoading = false,
   isSearching = false,
 }: {
   total: number;
   categories?: CategoryItem[];
+  brands?: string[];
   isTotalLoading?: boolean;
   isSearching?: boolean;
 }) {
@@ -206,6 +209,7 @@ export function ShopControls({
         onApply={handleApplyFilter}
         initialState={filterState}
         categories={categories}
+        brands={brands}
       />
 
       <SortSheet

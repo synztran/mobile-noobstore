@@ -78,12 +78,12 @@ export default async function AbandonedCartsPage(props: {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-3xl font-bold text-slate-900">
+          <p className="text-3xl font-bold text-heading">
             Abandoned Cart Recovery
           </p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-body">
             {count ?? 0} giỏ hàng bị bỏ quên — tổng giá trị{" "}
-            <span className="font-semibold text-slate-700">
+            <span className="font-semibold text-heading">
               {grandTotal.toLocaleString()}đ
             </span>
           </p>

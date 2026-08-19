@@ -40,6 +40,48 @@ export type CategoryItem = {
 };
 
 /**
+ * Fetch the distinct non-null brands among active saleable products.
+ * Cached with React.cache() + Redis (600s TTL), mirrors getCategories().
+ */
+export const getBrands = cache(async function getBrands(): Promise<string[]> {
+  try {
+    const cached = await getCache<string[]>("brands");
+    if (cached) return cached;
+
+    const { data, error } = await getPublicClient()
+      .from("products")
+      .select("brand")
+      .eq("is_active", true)
+      .not("brand", "is", null)
+      .neq("brand", "")
+      .order("brand");
+
+    if (error) {
+      console.error("[getBrands] Supabase error:", error.message);
+      return [];
+    }
+
+    const seen = new Map<string, string>();
+    for (const raw of data ?? []) {
+      if (!raw.brand) continue;
+      const trimmed = raw.brand.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (!seen.has(key)) seen.set(key, trimmed);
+    }
+    const brands = Array.from(seen.values()).sort((a, b) =>
+      a.localeCompare(b, "vi")
+    );
+
+    await setCache("brands", brands, 600);
+    return brands;
+  } catch (err) {
+    console.error("[getBrands] Unexpected error:", err);
+    return [];
+  }
+});
+
+/**
  * Fetch all categories for use in server components.
  * Cached with React.cache() + Redis (600s TTL).
  */
@@ -263,6 +305,7 @@ function shapeRow(
 export interface GetProductsParams {
   search?: string;
   categorySlug?: string;
+  brand?: string;
   priceMin?: number;
   priceMax?: number;
   sort?: "newest" | "price_asc" | "price_desc";
@@ -305,6 +348,7 @@ export const getProducts = cache(async function getProducts(
   const {
     search = "",
     categorySlug = "",
+    brand = "",
     priceMin = 0,
     priceMax = 0,
     sort = "newest",
@@ -317,6 +361,7 @@ export const getProducts = cache(async function getProducts(
     const cacheKey = buildProductListCacheKey({
       search,
       categorySlug,
+      brand,
       priceMin,
       priceMax,
       sort,
@@ -332,6 +377,7 @@ export const getProducts = cache(async function getProducts(
     const result = await getProductListByFilters({
       search,
       categorySlug,
+      brand,
       priceMin,
       priceMax,
       sort,

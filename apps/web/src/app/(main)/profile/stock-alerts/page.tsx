@@ -13,7 +13,7 @@ export default function StockAlertsPage() {
   const subscriptions = data?.subscriptions ?? [];
 
   return (
-    <div className="min-main-content px-4 pb-8 pt-4">
+    <div className="min-main-content px-4 pb-16 pt-4">
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/profile"

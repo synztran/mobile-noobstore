@@ -3,10 +3,17 @@
 import ExportCSVButton from "@/components/ui/ExportCSVButton";
 import type { ExportColumn } from "@/lib/csv";
 import { formatVND } from "@/lib/currency";
-import { RefreshCw, Search, ShoppingBag, X } from "lucide-react";
+import { RefreshCw, Search, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 
 interface CartUser {
   id: string;
@@ -61,10 +68,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  guest: "bg-slate-100 text-slate-700",
-  active: "bg-green-100 text-green-800",
-  abandoned: "bg-yellow-100 text-yellow-800",
-  converted: "bg-blue-100 text-blue-800",
+  guest: "bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300",
+  active:
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  abandoned:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  converted: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
 };
 
 const FILTER_TABS = [
@@ -138,7 +147,9 @@ export default function CartsClient({
         label: "Name",
         accessor: (c) => {
           const user = c.users;
-          return `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "—";
+          return (
+            `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "—"
+          );
         },
       },
       {
@@ -152,7 +163,7 @@ export default function CartsClient({
         accessor: (c) => c.updated_at || c.created_at || "",
       },
     ],
-    [],
+    []
   );
 
   const handleSearch = useCallback(
@@ -485,13 +496,7 @@ export default function CartsClient({
         className="modal modal-bottom sm:modal-middle"
         onClose={closeDetail}
       >
-        <div className="modal-box max-w-2xl">
-          <form method="dialog">
-            <button className="btn btn-circle btn-ghost btn-sm absolute right-3 top-3">
-              <X className="h-4 w-4" />
-            </button>
-          </form>
-
+        <div className="card-bg text-heading modal-box !max-w-[60vw]">
           {selectedCart && <CartDetail cart={selectedCart} />}
         </div>
         <form method="dialog" className="modal-backdrop">
@@ -503,6 +508,7 @@ export default function CartsClient({
 }
 
 function CartDetail({ cart }: { cart: Cart }) {
+  console.log(cart);
   const user = cart.users;
   const fullName =
     `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "—";
@@ -510,10 +516,11 @@ function CartDetail({ cart }: { cart: Cart }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-xl font-bold text-slate-900">Cart Details</p>
+        <p className="text-heading text-xl font-bold">Cart Details</p>
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-            STATUS_COLORS[cart.cartStatus] ?? "bg-slate-100 text-slate-700"
+            STATUS_COLORS[cart.cartStatus] ??
+            "bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300"
           }`}
         >
           <ShoppingBag className="h-3 w-3" />
@@ -521,24 +528,22 @@ function CartDetail({ cart }: { cart: Cart }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 rounded-lg bg-slate-50 p-4 text-sm">
+      <div className="grid grid-cols-2 gap-4 rounded-lg bg-[rgb(var(--admin-hover))] p-4 text-sm">
         <div>
-          <p className="text-slate-500">User</p>
-          <p className="font-medium text-slate-900">{fullName}</p>
+          <p className="text-muted">User</p>
+          <p className="text-heading font-medium">{fullName}</p>
         </div>
         <div>
-          <p className="text-slate-500">Email</p>
-          <p className="font-medium text-slate-900">
-            {user?.email ?? "(guest)"}
-          </p>
+          <p className="text-muted">Email</p>
+          <p className="text-heading font-medium">{user?.email ?? "(guest)"}</p>
         </div>
         <div>
-          <p className="text-slate-500">Cart ID</p>
-          <p className="font-mono text-xs text-slate-600">{cart.id}</p>
+          <p className="text-muted">Cart ID</p>
+          <p className="text-body font-mono text-xs">{cart.id}</p>
         </div>
         <div>
-          <p className="text-slate-500">Last Activity</p>
-          <p className="font-medium text-slate-900">
+          <p className="text-muted">Last Activity</p>
+          <p className="text-heading font-medium">
             {cart.updated_at || cart.created_at
               ? new Date(cart.updated_at || cart.created_at!).toLocaleString(
                   "vi-VN"
@@ -549,19 +554,19 @@ function CartDetail({ cart }: { cart: Cart }) {
       </div>
 
       <div>
-        <p className="mb-3 text-sm font-bold text-slate-900">
+        <p className="text-heading mb-3 text-sm font-bold">
           Items ({cart.itemCount})
         </p>
-        <div className="divide-y divide-slate-200">
+        <div className="table-divide divide-y">
           {cart.cart_items.map((item) => (
             <CartItemRow key={item.id} item={item} depth={0} />
           ))}
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-slate-200 pt-3">
-        <p className="text-sm text-slate-500">Total</p>
-        <p className="text-lg font-bold text-slate-900">
+      <div className="table-border flex items-center justify-between border-t pt-3">
+        <p className="text-muted text-sm">Total</p>
+        <p className="text-heading text-lg font-bold">
           {formatVND(cart.cartTotal)}
         </p>
       </div>
@@ -584,23 +589,21 @@ function CartItemRow({
       <div className="flex items-center justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            {indent && (
-              <span className="font-mono text-xs text-slate-400">└</span>
-            )}
-            <p className="truncate text-sm font-medium text-slate-900">
+            {indent && <span className="text-muted font-mono text-xs">└</span>}
+            <p className="text-heading truncate text-sm font-medium">
               {item.product_name ?? "Unknown"}
             </p>
           </div>
           {item.variant_name && (
-            <p className={`text-xs text-slate-500 ${indent ? "ml-4" : ""}`}>
+            <p className={`text-body text-xs ${indent ? "ml-4" : ""}`}>
               {item.variant_name}
             </p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-4 text-sm">
-          <span className="text-slate-500">{formatVND(item.unit_price)}</span>
-          <span className="text-slate-400">x{item.quantity}</span>
-          <span className="w-24 text-right font-medium text-slate-900">
+          <span className="text-body">{formatVND(item.unit_price)}</span>
+          <span className="text-muted">x{item.quantity}</span>
+          <span className="text-heading w-24 text-right font-medium">
             {formatVND(subtotal)}
           </span>
         </div>

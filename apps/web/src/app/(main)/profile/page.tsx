@@ -122,7 +122,7 @@ export default function ProfilePage() {
     .slice(0, 2);
 
   return (
-    <div className="px-4 pb-8 pt-4">
+    <div className="px-4 pb-16 pt-4">
       {/* Avatar & name */}
       <div
         className={`mb-4 flex items-center gap-4 ${!user ? "justify-center" : ""}`}
@@ -273,7 +273,7 @@ export default function ProfilePage() {
       )}
 
       {/* Auth CTA */}
-      <div className="mt-8 space-y-3">
+      <div className="mt-6 space-y-2">
         {user ? (
           <button
             onClick={handleSignOut}

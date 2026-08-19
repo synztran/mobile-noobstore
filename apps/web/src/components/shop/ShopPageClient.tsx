@@ -90,9 +90,11 @@ function InfiniteScrollSentinel({
 export function ShopPageClient({
   initialData,
   categories,
+  brands = [],
 }: {
   initialData?: ProductsResponse;
   categories: CategoryItem[];
+  brands?: string[];
 }) {
   const sp = useSearchParams();
   const filters = useMemo(() => buildShopFilters(sp), [sp]);
@@ -155,6 +157,7 @@ export function ShopPageClient({
       <ShopControls
         total={total}
         categories={categories}
+        brands={brands}
         isTotalLoading={isInitialLoading}
         isSearching={isRefreshing}
       />

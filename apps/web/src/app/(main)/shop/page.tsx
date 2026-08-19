@@ -1,6 +1,7 @@
 import { ShopPageClient } from "@/components/shop/ShopPageClient";
 import { ShopSeo } from "@/components/shop/ShopSeo";
 import {
+  getBrands,
   getCategories,
   getProductSeoData,
   getProducts,
@@ -14,6 +15,7 @@ interface ShopPageProps {
     search?: string;
     sort?: string;
     category?: string;
+    brand?: string;
     priceMin?: string;
     priceMax?: string;
   }>;
@@ -39,13 +41,15 @@ export default async function ShopPage(props: ShopPageProps) {
   const hasFilters = Boolean(
     searchParams.search?.trim() ||
       searchParams.category?.trim() ||
+      searchParams.brand?.trim() ||
       searchParams.priceMin?.trim() ||
       searchParams.priceMax?.trim() ||
       (searchParams.sort && searchParams.sort !== "newest")
   );
 
-  const [categories, seoProducts, initialQuery] = await Promise.all([
+  const [categories, brands, seoProducts, initialQuery] = await Promise.all([
     getCategories(),
+    getBrands(),
     getProductSeoData(),
     hasFilters
       ? Promise.resolve(null)
@@ -60,7 +64,11 @@ export default async function ShopPage(props: ShopPageProps) {
     <div className="clear-both p-4">
       <ShopSeo products={seoProducts} />
       <Suspense fallback={null}>
-        <ShopPageClient categories={categories} initialData={initialData ?? undefined} />
+        <ShopPageClient
+          categories={categories}
+          brands={brands}
+          initialData={initialData ?? undefined}
+        />
       </Suspense>
     </div>
   );

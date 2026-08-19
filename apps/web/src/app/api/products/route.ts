@@ -111,6 +111,7 @@ export async function GET(req: NextRequest) {
   // Validate and sanitize input parameters
   const search = sp.get("search")?.trim().slice(0, 100) ?? "";
   const categorySlug = sp.get("category")?.trim().slice(0, 100) ?? "";
+  const brand = sp.get("brand")?.trim().slice(0, 100) ?? "";
   const productTypeParam =
     sp.get("productType")?.trim() ?? "standard,kit,component";
   const productTypes = productTypeParam
@@ -150,6 +151,7 @@ export async function GET(req: NextRequest) {
     const cacheKey = buildProductListCacheKey({
       search,
       categorySlug,
+      brand,
       priceMin,
       priceMax,
       sort,
@@ -165,6 +167,7 @@ export async function GET(req: NextRequest) {
         const { products, total } = await getProductListByFilters({
           search,
           categorySlug,
+          brand,
           priceMin,
           priceMax,
           sort,

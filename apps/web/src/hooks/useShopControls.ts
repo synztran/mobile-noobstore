@@ -11,6 +11,7 @@ function readFilters(sp: URLSearchParams) {
     sort: (sp.get("sort") as SortOption) ?? "newest",
     filterState: {
       category: sp.get("category") || null,
+      brand: sp.get("brand") || null,
       priceMin: Number(sp.get("priceMin") ?? 0),
       priceMax: Number(sp.get("priceMax") ?? 0),
     } as FilterState,
@@ -26,6 +27,7 @@ function buildQueryString(
   if (search) params.set("search", search);
   if (sort !== "newest") params.set("sort", sort);
   if (filter.category) params.set("category", filter.category);
+  if (filter.brand) params.set("brand", filter.brand);
   if (filter.priceMin > 0) params.set("priceMin", String(filter.priceMin));
   if (filter.priceMax > 0) params.set("priceMax", String(filter.priceMax));
   const qs = params.toString();
@@ -40,6 +42,7 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
   const [sort, setSort] = useState<SortOption>("newest");
   const [filterState, setFilterState] = useState<FilterState>({
     category: null,
+    brand: null,
     priceMin: 0,
     priceMax: 0,
   });
@@ -122,6 +125,7 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
   const handleClearFilters = useCallback(() => {
     const cleared: FilterState = {
       category: null,
+      brand: null,
       priceMin: 0,
       priceMax: 0,
     };
@@ -131,6 +135,7 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
 
   const filterApplied =
     filterState.category !== null ||
+    filterState.brand !== null ||
     filterState.priceMin > 0 ||
     filterState.priceMax > 0;
 

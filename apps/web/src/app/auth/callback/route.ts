@@ -1,6 +1,11 @@
+import { notifyNewUserRegistered } from "@/lib/telegram/telegram.service";
 import { safeRedirect } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+
+// A newly created auth user (e.g. first Google OAuth sign-in) must land in the
+// callback within seconds of its created_at — far below this window.
+const NEW_USER_WINDOW_MS = 120_000;
 
 export async function GET(request: Request) {
 	const requestUrl = new URL(request.url);
@@ -8,7 +13,34 @@ export async function GET(request: Request) {
 
 	if (code) {
 		const supabase = await createClient();
-		await supabase.auth.exchangeCodeForSession(code);
+		const { data } = await supabase.auth.exchangeCodeForSession(code);
+
+		const user = data?.user;
+		const isGoogleProvider = user?.app_metadata?.provider === "google";
+		const createdMs = user?.created_at
+			? Date.parse(user.created_at)
+			: NaN;
+		const isNew = !Number.isNaN(createdMs) &&
+			Date.now() - createdMs < NEW_USER_WINDOW_MS;
+
+		// Email/password sign-ups are already reported by the register form;
+		// only report brand-new Google sign-ups here (no double reporting).
+		if (user && isGoogleProvider && isNew) {
+			const meta = user.user_metadata ?? {};
+			const fullName =
+				String(meta.full_name ?? meta.name ?? "").trim() ||
+				(user.email?.split("@")[0] ?? "Google user");
+			const email = user.email ?? "";
+
+			void notifyNewUserRegistered({
+				fullName,
+				email,
+				registeredAt: user.created_at ?? undefined,
+				provider: "google",
+			}).catch(() => {
+				// Notification failure must never break auth redirect
+			});
+		}
 	}
 
 	// Password reset passes next inside redirect_to:
