@@ -6,6 +6,7 @@ import {
 } from "@/lib/product-query-service";
 import {
 	buildProductListCacheKey,
+	publicCacheHeaders,
 	readThroughCache,
 } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
@@ -154,6 +155,7 @@ export async function GET(req: NextRequest) {
       sort,
       limit,
       offset,
+      slim: true,
     });
 
     const response = await readThroughCache<ProductsResponse>(
@@ -182,7 +184,9 @@ export async function GET(req: NextRequest) {
       }
     );
 
-    return NextResponse.json<ProductsResponse>(response);
+    return NextResponse.json<ProductsResponse>(response, {
+      headers: publicCacheHeaders(),
+    });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Unknown error" },
