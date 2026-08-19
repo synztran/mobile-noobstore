@@ -269,6 +269,8 @@ export interface GetProductsParams {
   limit?: number;
   offset?: number;
   productTypes?: Array<"standard" | "kit" | "component">;
+  /** Trim list payload (excerpt description, one variant for standards). */
+  slim?: boolean;
 }
 
 export interface GetNoteworthyProductsParams {
@@ -308,6 +310,7 @@ export const getProducts = cache(async function getProducts(
     sort = "newest",
     limit,
     offset = 0,
+    slim = false,
   } = params;
 
   try {
@@ -319,6 +322,7 @@ export const getProducts = cache(async function getProducts(
       sort,
       limit,
       offset,
+      slim,
     });
     const cached = await getCache<{ products: ShopProduct[]; total: number }>(
       cacheKey
@@ -334,6 +338,7 @@ export const getProducts = cache(async function getProducts(
       limit,
       excludeUncategorized: true,
       offset,
+      slim,
     });
 
     const response = {

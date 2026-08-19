@@ -123,6 +123,23 @@ const VARIANT_COLUMNS = `id, variant_name, price_adjustment, thumbnail, stock_qu
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
+/**
+ * Convert a product's full HTML description into a short plain-text excerpt.
+ * The shop grid only renders a 3-line excerpt (ProductCardDetails clamps and
+ * strips tags client-side), so shipping the full HTML (~70% of the list
+ * payload) is wasted bytes that inflate the Redis read + response time.
+ */
+export function descriptionToExcerpt(html: string, maxLength = 160): string {
+  if (!html) return "";
+  const text = html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text.length > maxLength
+    ? `${text.slice(0, maxLength).trimEnd()}…`
+    : text;
+}
+
 function parseVariant(v: VariantRow, basePrice: number): ProductVariant {
   return {
     id: v.id,
@@ -302,7 +319,8 @@ export async function fetchGiftSupplement(
 
 function shapeRow(
   row: RawListRow,
-  kitSupplements: KitSupplement
+  kitSupplements: KitSupplement,
+  slim = false
 ): ProductListItem {
   const basePrice = Number(row.base_price);
 
@@ -368,19 +386,30 @@ function shapeRow(
       ? variants.some((v) => v.is_pre_order)
       : row.is_pre_order ?? false;
 
+  // 6. Slim list payload — the grid card only quick-adds the first variant
+  //    (ProductCard.tsx reads `variants[0]`) and kits open the drawer which
+  //    re-fetches full configurator data via /api/products/quick-pick. Keep
+  //    kits' full variant list (drawer fallback reads propProduct.variants
+  //    while loading), but standards only need the first variant.
+  const slimVariants = slim
+    ? productType === "kit"
+      ? variants
+      : variants.slice(0, 1)
+    : variants;
+
   const shaped: ProductListItem = {
     id: row.id,
     slug: row.slug,
     name: row.name,
     brand: row.brand ?? null,
     category: row.categories?.name ?? "Unknown",
-    description: row.description ?? "",
+    description: slim ? descriptionToExcerpt(row.description ?? "") : (row.description ?? ""),
     base_price: basePrice,
     stock_quantity: effectiveStock,
     thumbnail: row.thumbnail,
     images: Array.isArray(row.images) ? (row.images as string[]) : null,
     product_type: productType,
-    variants,
+    variants: slimVariants,
     min_price: minPrice,
     is_used: row.is_used ?? false,
     is_pre_order,
@@ -408,6 +437,8 @@ export interface GetProductListParams {
   offset?: number;
   productTypes?: ProductType[];
   excludeUncategorized?: boolean;
+  /** Trim list payload: excerpt description, keep one variant for standards. */
+  slim?: boolean;
 }
 
 export async function getProductListByFilters(
@@ -424,6 +455,7 @@ export async function getProductListByFilters(
     offset = 0,
     // productTypes = ["standard", "kit", "component"],
     excludeUncategorized = false,
+    slim = false,
   } = params;
 
   const safeSearch = search.trim().slice(0, 100);
@@ -527,7 +559,7 @@ export async function getProductListByFilters(
     ]);
 
     // ── Shape rows (pure) ──
-    let products = rows.map((row) => shapeRow(row, kitSupplements));
+    let products = rows.map((row) => shapeRow(row, kitSupplements, slim));
 
     // Strip components from shop display — they're only fetched for kit processing
     products = products.filter((p) => p.product_type !== "component");

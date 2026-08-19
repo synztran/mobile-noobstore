@@ -54,6 +54,7 @@ export function buildProductListCacheKey(params: {
 	sort?: string;
 	limit?: number;
 	offset?: number;
+	slim?: boolean;
 }): string {
 	const {
 		search = "",
@@ -63,8 +64,9 @@ export function buildProductListCacheKey(params: {
 		sort = "newest",
 		limit,
 		offset = 0,
+		slim = false,
 	} = params;
-	return `products:${CACHE_VERSION}:${search}:${categorySlug}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}`;
+	return `products:${CACHE_VERSION}:${search}:${categorySlug}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}:${slim ? "slim" : "full"}`;
 }
 
 /**

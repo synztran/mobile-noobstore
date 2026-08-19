@@ -168,6 +168,7 @@ export async function GET(req: NextRequest) {
           sort,
           limit,
           offset,
+          slim: true,
           productTypes:
             productTypes.length > 0
               ? productTypes

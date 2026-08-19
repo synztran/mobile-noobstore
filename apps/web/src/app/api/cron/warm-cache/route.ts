@@ -108,13 +108,15 @@ export async function POST(req: NextRequest) {
 			if (error) throw new Error(error.message);
 			return data ?? [];
 		}),
-		// Warm the shop page's first product list page — the shared key is also
-		// used by /api/products, so the first visitor's infinite scroll and the
-		// SSR grid both hit cache instead of the full query cascade.
+		// Warm the shop page's first product list page — the shared slim key is
+		// also used by /api/products and the shop SSR grid, so the first
+		// visitor's infinite scroll and the SSR grid both hit cache instead of
+		// the full query cascade (full-variant entries are only needed by the
+		// quick-pick configurator and warm themselves on demand).
 		warm(
-			buildProductListCacheKey({ limit: 12, sort: "newest" }),
+			buildProductListCacheKey({ limit: 12, sort: "newest", slim: true }),
 			600,
-			() => getProducts({ limit: 12, sort: "newest" }),
+			() => getProducts({ limit: 12, sort: "newest", slim: true }),
 		),
 		// Warm the quick-pick category default the storefront drawer opens to
 		// (keyboards on the home rail). Previously quick-pick was never warmed

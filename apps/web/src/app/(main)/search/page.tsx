@@ -35,6 +35,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         sort: (sort as SortOption) ?? "newest",
         limit: PAGE_SIZE,
         offset: 0,
+        slim: true,
       })
     : null;
 

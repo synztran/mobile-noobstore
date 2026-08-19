@@ -49,7 +49,7 @@ export default async function ShopPage(props: ShopPageProps) {
     getProductSeoData(),
     hasFilters
       ? Promise.resolve(null)
-      : getProducts({ limit: 12, sort: "newest" }),
+      : getProducts({ limit: 12, sort: "newest", slim: true }),
   ]);
 
   const initialData: ProductsResponse | null = initialQuery
