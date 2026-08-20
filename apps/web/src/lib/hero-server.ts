@@ -1,6 +1,6 @@
 import type { HeroCampaign } from "@/app/api/home/hero/route";
 import { getCache, setCache } from "@/lib/redis/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getPublicClient } from "@/lib/supabase/public";
 import "server-only";
 
 export async function getHeroCampaigns(): Promise<HeroCampaign[]> {
@@ -8,7 +8,7 @@ export async function getHeroCampaigns(): Promise<HeroCampaign[]> {
 	const cached = await getCache<HeroCampaign[]>(cacheKey);
 	if (cached) return cached;
 
-	const supabase = await createClient();
+	const supabase = getPublicClient();
 	const { data: campaigns, error } = await supabase
 		.from("hero_campaigns")
 		.select(

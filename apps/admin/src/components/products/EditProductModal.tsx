@@ -35,6 +35,7 @@ type EditableProduct = {
   description?: string | null;
   attributes?: Record<string, string> | null;
   is_active?: boolean | null;
+  is_used?: boolean | null;
   thumbnail?: string | null;
   images?: string[] | null;
   parent_product_id?: string | null;
@@ -86,6 +87,7 @@ export default function EditProductModal({ product }: Props) {
     product.attributes ?? {}
   );
   const [isActive, setIsActive] = useState(product.is_active ?? true);
+  const [isUsed, setIsUsed] = useState(product.is_used ?? false);
   const [isPreOrder, setIsPreOrder] = useState(
     product.product_type === "kit"
       ? product.product_variants?.some((v) => v.is_pre_order)
@@ -114,6 +116,7 @@ export default function EditProductModal({ product }: Props) {
     setCategoryType(product.categories?.id ?? ""); // Reset category selection when opening modal
     setAttributes(product.attributes ?? {});
     setIsActive(product.is_active ?? true);
+    setIsUsed(product.is_used ?? false);
     setIsPreOrder(
       product.product_type === "kit"
         ? (product.product_variants?.some((v) => v.is_pre_order) ?? false)
@@ -246,6 +249,7 @@ export default function EditProductModal({ product }: Props) {
       attributes: Object.keys(attributes).length > 0 ? attributes : null,
       is_active: isActive,
       is_pre_order: isPreOrder,
+      is_used: isUsed,
     };
 
     const res = await fetch(`/api/products/${product.id}`, {
@@ -437,6 +441,23 @@ export default function EditProductModal({ product }: Props) {
                       </button>
                       <span className="text-sm font-medium text-slate-700">
                         {isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsUsed((v) => !v)}
+                        className={`relative h-6 w-10 rounded-full transition-colors ${isUsed ? "bg-amber-500" : "bg-slate-300"}`}
+                      >
+                        <span
+                          className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isUsed ? "translate-x-4" : ""}`}
+                        />
+                      </button>
+                      <span className="text-sm font-medium text-slate-700">
+                        {isUsed ? "2nd product" : "New product"}
                       </span>
                     </div>
                   </div>

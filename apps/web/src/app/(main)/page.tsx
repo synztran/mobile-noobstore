@@ -12,6 +12,9 @@ import { HomeFooter } from "@/components/home/HomeFooter";
 import { LazyNearViewport } from "@/components/ui/LazyNearViewport";
 import { getHeroCampaigns } from "@/lib/hero-server";
 import type { Metadata } from "next";
+import { Suspense } from "react";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "NoobStore - Bàn phím cơ, Switch & Phụ kiện chính hãng",
@@ -26,15 +29,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function HomePage() {
-  const [heroCampaigns] = await Promise.all([
-    getHeroCampaigns(),
-  ]);
-
+export default function HomePage() {
   return (
     <div className="relative clear-both space-y-8">
       <AnnouncementBanner />
-      <HeroSection initialSlides={heroCampaigns} />
+      <Suspense fallback={<HeroFallback />}>
+        <HeroSectionInitial />
+      </Suspense>
       <NoteworthySection />
       <HomeSaleSection />
       <LazyNearViewport>
@@ -57,5 +58,35 @@ export default async function HomePage() {
       </LazyNearViewport>
       <HomeFooter />
     </div>
+  );
+}
+
+async function HeroSectionInitial() {
+  const heroCampaigns = await getHeroCampaigns();
+  return <HeroSection initialSlides={heroCampaigns} />;
+}
+
+function HeroFallback() {
+  return (
+    <section className="relative !mt-0 h-[680px] animate-pulse overflow-hidden bg-surface-container">
+      <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-surface-container-high" />
+      <div className="absolute inset-0 z-10 flex flex-col justify-end p-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-1 rounded-full bg-primary/40" />
+            <div className="h-3 w-40 rounded bg-surface-container-high" />
+          </div>
+          <div className="space-y-3">
+            <div className="h-10 w-5/6 rounded bg-surface-container-high" />
+            <div className="h-10 w-2/3 rounded bg-surface-container-high" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-3 w-3/4 rounded bg-surface-container-high" />
+            <div className="h-3 w-2/3 rounded bg-surface-container-high" />
+          </div>
+          <div className="mt-2 h-12 w-full rounded-xl bg-surface-container-high" />
+        </div>
+      </div>
+    </section>
   );
 }

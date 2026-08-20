@@ -33,18 +33,32 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function ShopPage(props: ShopPageProps) {
-  const searchParams = await props.searchParams;
+export default function ShopPage(props: ShopPageProps) {
+  return (
+    <div className="clear-both p-4">
+      <Suspense fallback={<ShopFallback />}>
+        <ShopContent searchParams={props.searchParams} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function ShopContent({
+  searchParams,
+}: {
+  searchParams: ShopPageProps["searchParams"];
+}) {
+  const sp = await searchParams;
 
   // Only seed with server-rendered data on the unfiltered landing view —
   // filtered queries must hydrate from the client to match the URL state.
   const hasFilters = Boolean(
-    searchParams.search?.trim() ||
-      searchParams.category?.trim() ||
-      searchParams.brand?.trim() ||
-      searchParams.priceMin?.trim() ||
-      searchParams.priceMax?.trim() ||
-      (searchParams.sort && searchParams.sort !== "newest")
+    sp.search?.trim() ||
+      sp.category?.trim() ||
+      sp.brand?.trim() ||
+      sp.priceMin?.trim() ||
+      sp.priceMax?.trim() ||
+      (sp.sort && sp.sort !== "newest")
   );
 
   const [categories, brands, seoProducts, initialQuery] = await Promise.all([
@@ -61,15 +75,30 @@ export default async function ShopPage(props: ShopPageProps) {
     : null;
 
   return (
-    <div className="clear-both p-4">
+    <>
       <ShopSeo products={seoProducts} />
-      <Suspense fallback={null}>
-        <ShopPageClient
-          categories={categories}
-          brands={brands}
-          initialData={initialData ?? undefined}
-        />
-      </Suspense>
+      <ShopPageClient
+        categories={categories}
+        brands={brands}
+        initialData={initialData ?? undefined}
+      />
+    </>
+  );
+}
+
+function ShopFallback() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {Array.from({ length: 8 }, (_, i) => (
+        <div key={i} className="animate-pulse">
+          <div className="mb-3 aspect-[4/5] rounded-xl bg-surface-container" />
+          <div className="space-y-1.5">
+            <div className="h-2 w-1/3 rounded-full bg-surface-container" />
+            <div className="h-3 w-4/5 rounded-full bg-surface-container" />
+            <div className="h-3 w-2/5 rounded-full bg-surface-container" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
