@@ -28,13 +28,11 @@ export async function GET() {
 							column: string,
 							value: null,
 						) => {
-							lte: (
-								column: string,
-								value: string,
+							or: (
+								filters: string,
 							) => {
-								gte: (
-									column: string,
-									value: string,
+								or: (
+									filters: string,
 								) => {
 									order: (
 										column: string,
@@ -51,14 +49,17 @@ export async function GET() {
 			};
 		};
 
-		// Fetch all active vouchers (not deleted, within valid date range, active status)
+		// Fetch all active vouchers (not deleted, within valid date range, active status).
+		// start_at/end_at are nullable — NULL means open-ended (no start/no expiry),
+		// matching the DB CHECK (vouchers_time_window) and the RLS policy semantics.
+		const now = new Date().toISOString();
 		const { data: vouchers, error } = await voucherClient
 			.from("vouchers")
 			.select("*")
 			.eq("status", "active")
 			.is("deleted_at", null)
-			.lte("start_at", new Date().toISOString())
-			.gte("end_at", new Date().toISOString())
+			.or(`start_at.is.null,start_at.lte.${now}`)
+			.or(`end_at.is.null,end_at.gte.${now}`)
 			.order("created_at", { ascending: false });
 
 		if (error) {

@@ -72,13 +72,14 @@ export async function GET(req: Request) {
 
     const now = new Date();
 
+    // start_at/end_at are nullable — NULL = open-ended, so skip the date check.
     const { data: raw, error } = await supabase
       .from("vouchers")
       .select("*")
       .eq("status", "active")
       .is("deleted_at", null)
-      .lte("start_at", now.toISOString())
-      .gte("end_at", now.toISOString())
+      .or(`start_at.is.null,start_at.lte.${now.toISOString()}`)
+      .or(`end_at.is.null,end_at.gte.${now.toISOString()}`)
       .order("created_at", { ascending: false });
 
     if (error) {
