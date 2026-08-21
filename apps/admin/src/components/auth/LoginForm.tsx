@@ -82,7 +82,7 @@ export default function LoginForm() {
 							<input
 								type="email"
 								placeholder="admin@example.com"
-								className="input input-bordered w-full"
+								className="input-base w-full rounded-lg px-3 py-2 text-sm"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								required
@@ -99,7 +99,7 @@ export default function LoginForm() {
 							<input
 								type="password"
 								placeholder="••••••••"
-								className="input input-bordered w-full"
+								className="input-base w-full rounded-lg px-3 py-2 text-sm"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
 								required

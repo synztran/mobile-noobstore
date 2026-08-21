@@ -53,7 +53,7 @@ export default function NotificationsPage() {
         <div>
           <label className="block text-sm font-medium">Title</label>
           <input
-            className="input input-bordered w-full"
+            className="input-base w-full rounded-lg px-3 py-2 text-sm"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -63,7 +63,7 @@ export default function NotificationsPage() {
         <div>
           <label className="block text-sm font-medium">Body</label>
           <textarea
-            className="textarea textarea-bordered w-full"
+            className="input-base min-h-24 w-full rounded-lg px-3 py-2 text-sm"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             required
@@ -75,7 +75,7 @@ export default function NotificationsPage() {
             Deep link (optional)
           </label>
           <input
-            className="input input-bordered w-full"
+            className="input-base w-full rounded-lg px-3 py-2 text-sm"
             value={deepLink}
             onChange={(e) => setDeepLink(e.target.value)}
             placeholder="/profile/notifications"
@@ -85,7 +85,7 @@ export default function NotificationsPage() {
         <div>
           <label className="block text-sm font-medium">Target</label>
           <select
-            className="select select-bordered w-full"
+            className="input-base w-full rounded-lg px-3 py-2 text-sm"
             value={target}
             onChange={(e) => setTarget(e.target.value as any)}
           >
@@ -99,7 +99,7 @@ export default function NotificationsPage() {
           <div>
             <label className="block text-sm font-medium">User ID</label>
             <input
-              className="input input-bordered w-full"
+              className="input-base w-full rounded-lg px-3 py-2 text-sm"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
             />
@@ -112,7 +112,7 @@ export default function NotificationsPage() {
               User IDs (comma separated)
             </label>
             <input
-              className="input input-bordered w-full"
+              className="input-base w-full rounded-lg px-3 py-2 text-sm"
               value={userIdsCsv}
               onChange={(e) => setUserIdsCsv(e.target.value)}
               placeholder="id1,id2,id3"

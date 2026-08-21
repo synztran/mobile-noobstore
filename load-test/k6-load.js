@@ -24,7 +24,7 @@ export const options = {
   scenarios: {
     products: {
       executor: "constant-vus",
-      vus: 50,
+      vus: 100,
       duration: "1m",
     },
     cart: {

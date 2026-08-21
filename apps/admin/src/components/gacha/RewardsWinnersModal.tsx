@@ -91,7 +91,7 @@ export default function RewardsWinnersModal({
           {!loading && winners.length > 0 && (
             <div className="mb-3 flex gap-2">
               <select
-                className="select select-bordered select-sm w-36"
+                className="input-base w-36 rounded-lg px-3 py-2 text-sm"
                 value={searchField}
                 onChange={(e) =>
                   handleFieldChange(e.target.value as SearchField)

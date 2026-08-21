@@ -129,7 +129,7 @@ export default function ShippingTrackingSection({
             value={carrierId}
             onChange={(e) => setCarrierId(e.target.value)}
             disabled={loadingCarriers}
-            className="select select-bordered select-sm w-full text-sm disabled:opacity-50"
+            className="input-base w-full rounded-lg px-3 py-2 text-sm disabled:opacity-50"
           >
             <option value="">— Select carrier —</option>
             {carriers.map((c) => (
@@ -148,7 +148,7 @@ export default function ShippingTrackingSection({
             value={trackingNumber}
             onChange={(e) => setTrackingNumber(e.target.value)}
             placeholder="e.g. GVJH123456789"
-            className="input input-bordered input-sm w-full font-mono text-sm placeholder:text-slate-400"
+            className="input-base w-full rounded-lg px-3 py-2 font-mono text-sm placeholder:text-slate-400"
           />
         </div>
       </div>

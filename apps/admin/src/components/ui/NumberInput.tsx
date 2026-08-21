@@ -89,7 +89,7 @@ export default function NumberInput({
           value={local}
           onChange={handleChange}
           onBlur={handleBlur}
-          className="input input-bordered max-h-[38px] w-full pr-10 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="input-base max-h-[38px] w-full rounded-lg px-3 py-2 pr-10 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           {...rest}
         />
 

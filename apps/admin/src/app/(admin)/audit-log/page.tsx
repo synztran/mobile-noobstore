@@ -60,7 +60,7 @@ export default function AuditLogPage() {
             setActionFilter(e.target.value as ActionFilter);
             setPage(1);
           }}
-          className="select select-bordered select-sm"
+          className="input-base rounded-lg px-3 py-2 text-sm"
         >
           <option value="">All actions</option>
           <option value="order.update_status">Order status update</option>

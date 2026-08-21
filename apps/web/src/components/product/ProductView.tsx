@@ -163,6 +163,21 @@ export function ProductView({
 
   const heroImage = mediaImages[activeImageIndex] ?? product.thumbnail ?? null;
 
+  // ── Preload all gallery images so thumbnail switches are instant ──
+  useEffect(() => {
+    for (const src of mediaImages) {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = src;
+      document.head.appendChild(link);
+    }
+    return () => {
+      // clean up preload links on unmount / gallery change
+      document.querySelectorAll('link[rel="preload"][as="image"]').forEach((el) => el.remove());
+    };
+  }, [mediaImages]);
+
   const badges = useMemo(() => {
     const list: { label: string; className: string }[] = [];
     if (isOutOfStock) {
@@ -285,12 +300,13 @@ export function ProductView({
                   }
                 >
                   <Image
+                    key={heroImage}
                     src={heroImage}
                     alt={product.name}
                     fill
-                    className="object-cover mix-blend-multiply"
+                    className="animate-fade-in object-cover mix-blend-multiply"
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    priority
+                    priority={activeImageIndex === 0}
                   />
                 </div>
               ) : (

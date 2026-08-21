@@ -259,6 +259,9 @@ export async function POST(req: NextRequest) {
   const isGoldenBlocked = !!blocked;
 
   const eligible = allRewards.filter((r) => {
+    // Display-only rewards (weight 0) such as the golden ball show a virtual
+    // percent_display but must never be drawn — skip them here.
+    if (!r.weight || r.weight <= 0) return false;
     if (isGoldenBlocked && r.is_golden) return false;
     if (r.max_quantity !== null && r.claimed_count >= r.max_quantity)
       return false;
