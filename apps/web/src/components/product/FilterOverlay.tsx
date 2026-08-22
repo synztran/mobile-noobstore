@@ -91,7 +91,7 @@ export function FilterOverlay({
         }`}
       >
         {/* Header */}
-        <div className="flex flex-none items-center justify-between border-b border-outline-variant/20 px-6 py-5">
+        <div className="flex flex-none items-center justify-between border-b border-outline-variant/20 px-6 pb-5 pt-[calc(1.25rem+env(safe-area-inset-top))]">
           <h2 className="text-xl font-black text-on-surface">Lọc sản phẩm</h2>
           <button
             onClick={onClose}
