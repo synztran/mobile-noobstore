@@ -1,11 +1,12 @@
 "use client";
 
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
+import { useShippingEstimate } from "@/lib/react-query/shipping/api/useShippingQueries";
 import clsx from "clsx";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 // Reviews only render when the "Đánh giá" tab is opened — split them out of the
 // initial route bundle so the product page hydrates less client JS.
@@ -26,16 +27,6 @@ const ProductReviews = dynamic(
   }
 );
 
-interface ShippingEstimate {
-  id: string;
-  name: string;
-  description: string | null;
-  estimated_hours_min: number | null;
-  estimated_hours_max: number | null;
-  estimated_date_min: string;
-  estimated_date_max: string;
-}
-
 interface Props {
   product: ProductDetail;
   editorialContent: string;
@@ -54,17 +45,10 @@ export function ProductInfoTabs({
 }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("Mô tả");
   const [descExpanded, setDescExpanded] = useState(false);
-  const [estimates, setEstimates] = useState<ShippingEstimate[]>([]);
-  const [estimatesLoading, setEstimatesLoading] = useState(false);
-  useEffect(() => {
-    if (activeTab !== "Vận chuyển" || estimates.length > 0) return;
-    setEstimatesLoading(true);
-    fetch("/api/shipping/estimate")
-      .then((r) => r.json())
-      .then((d) => setEstimates(d.estimates ?? []))
-      .catch(() => {})
-      .finally(() => setEstimatesLoading(false));
-  }, [activeTab, estimates.length]);
+  const { data: shippingData, isLoading: estimatesLoading } = useShippingEstimate(
+    activeTab === "Vận chuyển"
+  );
+  const estimates = shippingData?.estimates ?? [];
 
   return (
     <section className="px-4">

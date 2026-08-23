@@ -173,7 +173,8 @@ export async function getServicesList(): Promise<Service[]> {
 	}
 
 	return (data ?? []).map((svc) => {
-		const config = (svc.service_configs ?? []).find(
+		const configs = Array.isArray(svc.service_configs) ? svc.service_configs : svc.service_configs ? [svc.service_configs] : [];
+		const config = configs.find(
 			(c) => c.is_active,
 		);
 		return {
@@ -234,7 +235,8 @@ export async function getServiceBySlug(
 		return null;
 	}
 
-	const config = (data.service_configs ?? []).find(
+	const configs = Array.isArray(data.service_configs) ? data.service_configs : data.service_configs ? [data.service_configs] : [];
+	const config = configs.find(
 		(c) => c.is_active,
 	);
 
@@ -284,7 +286,8 @@ export async function getBookingConfigData(): Promise<BookingConfigResponse> {
 	);
 
 	const services: BookingService[] = serviceRows.map((svc) => {
-		const config = (svc.service_configs ?? []).find(
+		const configs = Array.isArray(svc.service_configs) ? svc.service_configs : svc.service_configs ? [svc.service_configs] : [];
+		const config = configs.find(
 			(c) => c.is_active,
 		);
 		return {

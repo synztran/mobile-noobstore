@@ -3,7 +3,7 @@
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { usePointsBalance } from "@/lib/react-query/points/api/usePointsQueries";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useGiftCardCheck, useGiftCardRedeem } from "@/lib/react-query/gift-cards/api/useGiftCardQueries";
 import {
   ArrowLeft,
   CheckCircle,
@@ -17,7 +17,6 @@ import Link from "next/link";
 import { useState } from "react";
 
 function GiftCardPage() {
-  const queryClient = useQueryClient();
   const { refreshProfile } = useAuth();
   const { data: balance = 0, isLoading: balanceLoading } = usePointsBalance();
 
@@ -32,50 +31,25 @@ function GiftCardPage() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const checkQuery = useQuery<{ code: string; pointsValue: number }>({
-    queryKey: ["gift-card-check", typedCode],
-    queryFn: async () => {
-      const res = await fetch(
-        `/api/gift-cards/check?code=${encodeURIComponent(typedCode)}`
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Kiểm tra thẻ thất bại");
-      return data;
-    },
-    enabled: typedCode.length > 0,
-    retry: false,
-  });
+  const checkQuery = useGiftCardCheck(typedCode, typedCode.length > 0);
+  const redeemMutation = useGiftCardRedeem();
 
-  const redeemMutation = useMutation({
-    mutationFn: async (redeemCode: string) => {
-      const res = await fetch("/api/gift-cards/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: redeemCode }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Nạp thẻ thất bại");
-      return data as {
-        giftCardId: number;
-        pointsCredited: number;
-        newBalance: number;
-      };
-    },
-    onSuccess: (data) => {
-      setResult({ ...data, code: typedCode });
-      setShowConfirm(false);
-      setShowSuccess(true);
-      setCode("");
-      setTypedCode("");
-      queryClient.invalidateQueries({ queryKey: ["points"] });
-      queryClient.invalidateQueries({ queryKey: ["gift-card"] });
-      void refreshProfile();
-    },
-    onError: (err: Error) => {
-      setError(err.message);
-      setShowConfirm(false);
-    },
-  });
+  const handleRedeem = (redeemCode: string) => {
+    redeemMutation.mutate(redeemCode, {
+      onSuccess: (data) => {
+        setResult({ ...data, code: typedCode });
+        setShowConfirm(false);
+        setShowSuccess(true);
+        setCode("");
+        setTypedCode("");
+        void refreshProfile();
+      },
+      onError: (err: Error) => {
+        setError(err.message);
+        setShowConfirm(false);
+      },
+    });
+  };
 
   const handleCheck = () => {
     const trimmed = code.trim().toUpperCase();
@@ -86,7 +60,7 @@ function GiftCardPage() {
 
   const handleConfirm = () => {
     if (!typedCode) return;
-    redeemMutation.mutate(typedCode);
+    handleRedeem(typedCode);
   };
 
   const clearCheck = () => {

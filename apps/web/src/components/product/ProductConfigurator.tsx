@@ -2,7 +2,7 @@
 
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ShopVariant } from "@/app/api/products/route";
-import { formatVND } from "@/lib/currency";
+import { formatShortVND, formatVND } from "@/lib/currency";
 import { Thumbnail } from "@/components/ui/Thumbnail";
 import clsx from "clsx";
 
@@ -106,9 +106,9 @@ export type ProductConfiguratorProps = {
   loadingConfigurator: boolean;
   basePrice?: number;
   onSelect: (group: string, variantId: string) => void;
-  isHideComppGroup?: boolean;
   /** Variant IDs that are unavailable due to conditional rules. */
   disabledVariantIds?: Set<string>;
+  showTitle?: boolean;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -121,6 +121,7 @@ export function ProductConfigurator({
   basePrice,
   onSelect,
   disabledVariantIds,
+  showTitle = true,
 }: ProductConfiguratorProps) {
   const hasComponents = groups.length > 0;
 
@@ -142,10 +143,14 @@ export function ProductConfigurator({
   }
 
   return (
-    <div className="space-y-2 rounded-xl bg-[#f8f8f8] p-2">
-      <span className="text-sm font-black uppercase text-primary">
-        Cấu hình sản phẩm ({groups.length})
-      </span>
+    <div
+      className={`space-y-2 rounded-xl bg-[#f8f8f8] ${showTitle ? "p-2" : ""}`}
+    >
+      {showTitle ? (
+        <span className="text-sm font-black uppercase text-primary">
+          Lựa chọn cấu hình ({groups.length})
+        </span>
+      ) : null}
       <div className="flex min-h-0 flex-wrap gap-2">
         {/* Component group selectors */}
         {groups?.map((group) => {
@@ -158,7 +163,7 @@ export function ProductConfigurator({
           return (
             <div
               key={group.component_group}
-              className={`w-full max-w-max space-y-2 rounded-lg bg-surface-container-low p-2`}
+              className={`w-full max-w-max space-y-2.5 rounded-lg bg-surface-container-low p-2`}
             >
               <div className="flex items-center gap-1">
                 <span
@@ -182,12 +187,12 @@ export function ProductConfigurator({
                   </span>
                 )}
               </div>
-              <div className="flex flex-wrap items-start gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {group.variants.map((v) => {
                   const selected = groupSelection.includes(v.id);
                   const soldOut = v.stock_quantity === 0;
                   const ruleDisabled = disabledVariantIds?.has(v.id) ?? false;
-                  const overCap = !selected && capReached;
+                  const overCap = !selected && capReached && !group.is_required;
                   const isDisabled = soldOut || ruleDisabled || overCap;
                   return (
                     <button
@@ -196,7 +201,7 @@ export function ProductConfigurator({
                       disabled={isDisabled}
                       onClick={() => onSelect(group.component_group, v.id)}
                       className={configuratorButtonClass(
-                        "relative flex min-w-20 items-center justify-center gap-2 rounded-sm border px-2 py-1.5 font-bold transition-all",
+                        "relative flex min-w-20 items-center justify-center gap-2 rounded-sm border px-2 pb-1 pt-1.5 font-bold transition-all",
                         { selected, soldOut, ruleDisabled, isDisabled }
                       )}
                     >
@@ -216,13 +221,15 @@ export function ProductConfigurator({
                           (
                           {v.price_adjustment &&
                             (v.price_adjustment > 0 ? "+" : "")}
-                          {formatVND(v.price_adjustment)})
+                          {formatShortVND(v.price_adjustment)})
                         </p>
                       </div>
                       {v.sale_price_percent ? (
-                        <strong className="absolute -top-2.5 right-1 rounded bg-red-600 px-2 py-1 text-[8px] leading-none text-white">
-                          Giảm {v.sale_price_percent}%
-                        </strong>
+                        <div className="absolute -top-2 right-0.5">
+                          <div className="rounded bg-red-600 px-2 text-[9px] text-white">
+                            Giảm {v.sale_price_percent}%
+                          </div>
+                        </div>
                       ) : null}
                       <div className="absolute -top-2 left-1">
                         <VariantStatusBadge

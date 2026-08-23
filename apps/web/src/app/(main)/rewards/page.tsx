@@ -8,8 +8,8 @@ import { ConfirmRedemptionModal } from "@/components/rewards/ConfirmRedemptionMo
 import { SuccessModal } from "@/components/rewards/SuccessModal";
 import { usePointsBalance } from "@/lib/react-query/points/api/usePointsQueries";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import type { RewardItem, RedeemResponse, RewardClaim } from "@/types/reward";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useClaims, useRedeemReward } from "@/lib/react-query/rewards/api/useRewardsMutations";
+import type { RewardItem, RedeemResponse } from "@/types/reward";
 import { ArrowLeft, ArrowRight, Sparkles, Ticket } from "lucide-react";
 import { toast } from "@/lib/toast";
 import Link from "next/link";
@@ -18,48 +18,28 @@ import { useState } from "react";
 function RewardsPage() {
   const { data: balance = 0, isLoading: isBalanceLoading } = usePointsBalance();
   const { refreshProfile } = useAuth();
-  const queryClient = useQueryClient();
 
   const [selectedReward, setSelectedReward] = useState<RewardItem | null>(null);
   const [redeemResult, setRedeemResult] = useState<RedeemResponse | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  const { data: claimsData, isLoading: claimsLoading } = useQuery<{
-    claims: RewardClaim[];
-  }>({
-    queryKey: ["claims"],
-    queryFn: async () => {
-      const res = await fetch("/api/claims");
-      if (!res.ok) return { claims: [] };
-      return res.json();
-    },
-  });
+  const { data: claimsData, isLoading: claimsLoading } = useClaims();
+  const redeemMutation = useRedeemReward();
 
-  const redeemMutation = useMutation({
-    mutationFn: async (rewardItemId: string) => {
-      const res = await fetch("/api/rewards/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rewardItemId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Đổi thưởng thất bại");
-      return data as RedeemResponse;
-    },
-    onSuccess: (result) => {
-      setRedeemResult(result);
-      setSelectedReward(null);
-      setShowSuccess(true);
-      queryClient.invalidateQueries({ queryKey: ["rewards", "infinite"] });
-      queryClient.invalidateQueries({ queryKey: ["points"] });
-      queryClient.invalidateQueries({ queryKey: ["claims"] });
-      void refreshProfile();
-    },
-    onError: (err: Error) => {
-      toast.error(err.message);
-    },
-  });
+  const handleRedeem = (rewardItemId: string) => {
+    redeemMutation.mutate(rewardItemId, {
+      onSuccess: (result) => {
+        setRedeemResult(result);
+        setSelectedReward(null);
+        setShowSuccess(true);
+        void refreshProfile();
+      },
+      onError: (err: Error) => {
+        toast.error(err.message);
+      },
+    });
+  };
 
   const claims = claimsData?.claims ?? [];
 
@@ -127,7 +107,7 @@ function RewardsPage() {
         reward={selectedReward}
         isPending={redeemMutation.isPending}
         onClose={() => setSelectedReward(null)}
-        onConfirm={(id) => redeemMutation.mutate(id)}
+        onConfirm={handleRedeem}
       />
 
       {/* Success Modal */}

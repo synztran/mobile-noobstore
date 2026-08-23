@@ -250,9 +250,6 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
           selections={drawer.selections}
           productVariants={drawer.activeProduct?.variants ?? []}
         />
-        {drawer.selectedPreOrderConfig && (
-          <PreOrderBanner config={drawer.selectedPreOrderConfig} />
-        )}
         <ProductConfigurator
           groups={drawer.groups}
           variants={drawer.activeProduct?.variants ?? []}
@@ -262,6 +259,9 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
           disabledVariantIds={drawer.disabledVariantIds}
           onSelect={drawer.onSelect}
         />
+        {drawer.selectedPreOrderConfig && (
+          <PreOrderBanner config={drawer.selectedPreOrderConfig} />
+        )}
       </div>
     </div>
   );

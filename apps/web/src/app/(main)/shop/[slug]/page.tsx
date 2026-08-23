@@ -148,7 +148,7 @@ async function ProductLoader({ slug }: { slug: string }) {
       componentRules={detail.componentRules}
       purchaseCount={purchaseCount}
       relatedSlot={
-        <Suspense fallback={<RailSkeleton />}>
+        <Suspense key="related" fallback={<RailSkeleton />}>
           <RelatedProductsSection
             brand={detail.product.brand}
             slug={detail.product.slug}
@@ -156,7 +156,7 @@ async function ProductLoader({ slug }: { slug: string }) {
         </Suspense>
       }
       boughtTogetherSlot={
-        <Suspense fallback={<RailSkeleton />}>
+        <Suspense key="bought-together" fallback={<RailSkeleton />}>
           <BoughtTogetherSection productId={detail.product.id} />
         </Suspense>
       }

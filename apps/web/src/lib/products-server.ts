@@ -1288,16 +1288,16 @@ export const getProductBySlug = cache(async function getProductBySlug(
     // Fire the component-products and gift-products lookups in parallel — both
     // depend only on the already-fetched product row.
     const [compData, giftRows] = await Promise.all([
-      compIds.length > 0
-        ? getPublicClient()
-            .from("products")
-            .select(
-              `id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
+		compIds.length > 0
+			? getPublicClient()
+				.from("products")
+				.select(
+					`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
 			categories(id, name),
-			product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, attributes)`
-            )
-            .eq("is_active", true)
-            .in("id", compIds)
+			product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
+				)
+				.eq("is_active", true)
+				.in("id", compIds)
         : Promise.resolve({ data: null }),
       getPublicClient()
         .from("gift_products")

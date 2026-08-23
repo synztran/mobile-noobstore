@@ -1,7 +1,5 @@
 "use client";
 
-import { SubmitOrderResponse } from "@/app/api/checkout/submit/route";
-import type { ValidateStockResponse } from "@/app/api/checkout/validate-stock/route";
 import { ConfirmOrderDialog } from "@/components/checkout/ConfirmOrderDialog";
 import { DeliveryAddressCard } from "@/components/checkout/DeliveryAddressCard";
 import { DepositPaymentSection } from "@/components/checkout/DepositPaymentSection";
@@ -15,6 +13,7 @@ import VoucherComponent from "@/components/voucher/VoucherComponent";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { cartItemToGA, trackRemoveFromCart } from "@/lib/analytics";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
+import { useValidateStock, useSubmitOrder } from "@/lib/react-query/checkout/api/useCheckoutMutations";
 import { toast } from "@/lib/toast";
 import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
 import { useNavigationStore } from "@/store/navigation";
@@ -30,6 +29,8 @@ export default function SummaryPage() {
   const [oosProductIds, setOosProductIds] = useState<Set<string>>(new Set());
   const [rankModalOpen, setRankModalOpen] = useState(false);
   const { data: rankData } = useMyRank();
+  const validateStockMutation = useValidateStock();
+  const submitOrderMutation = useSubmitOrder();
 
   const {
     items: rawItems,
@@ -172,20 +173,15 @@ export default function SummaryPage() {
     setSubmitting(true);
     try {
       // ── Pre-check: validate stock before deducting ──────────────────
-      const stockRes = await fetch("/api/checkout/validate-stock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((i) => ({
-            product_id: i.product.id,
-            product_name: i.product.name,
-            variant_id: i.variant?.id ?? null,
-            quantity: i.quantity,
-            components: i.components,
-          })),
-        }),
-      });
-      const stockData: ValidateStockResponse = await stockRes.json();
+      const stockData = await validateStockMutation.mutateAsync(
+        items.map((i) => ({
+          product_id: i.product.id,
+          product_name: i.product.name,
+          variant_id: i.variant?.id ?? null,
+          quantity: i.quantity,
+          components: i.components,
+        }))
+      );
 
       if (!stockData.valid) {
         setOosProductIds(new Set(stockData.oos_items.map((o) => o.product_id)));
@@ -203,7 +199,7 @@ export default function SummaryPage() {
       }
       setOosProductIds(new Set());
 
-      const payloadCheckoutSubmit = {
+      const result = await submitOrderMutation.mutateAsync({
         cart_id: cartId,
         shipping_cost: shippingCost,
         payment_type: paymentType,
@@ -269,28 +265,16 @@ export default function SummaryPage() {
             pre_order_config: c.pre_order_config ?? null,
           })),
         })),
-      };
-      // ────────────────────────────────────────────────────────────────
-      const res = await fetch("/api/checkout/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payloadCheckoutSubmit),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Không thể tạo đơn hàng");
-        setSubmitting(false);
-        return;
-      }
-      const result = data as SubmitOrderResponse;
+
       setOrder(result.order_id, result.order_number, orderTotal, items);
       setPaymentType("full");
       setDepositPercentage(50);
       clearCart();
       startNavigation();
       router.push(`/checkout/checking/${result.order_id}`);
-    } catch {
-      toast.error("Lỗi kết nối, vui lòng thử lại");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Lỗi kết nối, vui lòng thử lại");
       setSubmitting(false);
     }
   };

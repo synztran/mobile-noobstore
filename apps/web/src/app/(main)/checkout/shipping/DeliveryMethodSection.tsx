@@ -40,9 +40,6 @@ function DeliveryMethodSection({
   immediateFee,
   basicFee,
 }: Props) {
-  // const preOrderSuffix = preOrderEstimate
-  //   ? `Sau khi có hàng (ước tính ${preOrderEstimate})`
-  //   : "Sau khi có hàng";
   const preOrderSuffix = `Sau khi có hàng`;
 
   const options = useMemo(() => {
@@ -74,12 +71,16 @@ function DeliveryMethodSection({
       <div className="ml-1 flex items-center justify-between gap-2 text-[10px] font-black tracking-widest text-on-surface-variant">
         <span className="uppercase">Phương thức giao hàng</span>
         {isCalculatingFee ? (
-          <span className={`inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant ${delivery === "pickup" ? "sr-only" : ""}`}>
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant ${delivery === "pickup" ? "sr-only" : ""}`}
+          >
             <span className="loading loading-spinner loading-sm" />
             Đang tính phí...
           </span>
         ) : distanceKm !== null ? (
-          <span className={`ml-2 text-sm font-bold text-on-surface-variant ${delivery === "pickup" ? "sr-only" : ""}`}>
+          <span
+            className={`ml-2 text-sm font-bold text-on-surface-variant ${delivery === "pickup" ? "sr-only" : ""}`}
+          >
             {distanceKm.toFixed(1)} km
           </span>
         ) : null}

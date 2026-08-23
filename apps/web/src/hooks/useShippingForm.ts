@@ -804,7 +804,7 @@ export function useShippingForm() {
       cancelled = true;
       clearTimeout(id);
     };
-  }, [form.streetAddress, form.district, form.ward, form.city, delivery]);
+  }, [form.streetAddress, form.district, form.ward, form.city]);
 
   // Auto-save form draft (debounced)
   const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout>>();

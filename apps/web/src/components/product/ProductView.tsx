@@ -8,9 +8,8 @@ import type { ProductDetail } from "@/app/api/products/[slug]/route";
 import { TopNav } from "@/components/layout/TopNav";
 import { AddToCartButton } from "@/components/product/AddToCartButton";
 import { StockAlertButton } from "@/components/product/StockAlertButton";
-import { ProductThumbnailStrip } from "@/components/product/ProductThumbnailStrip";
+import { HeroImageGallery } from "@/components/product/HeroImageGallery";
 import { ProductConfigurator } from "@/components/product/ProductConfigurator";
-import Icon from "@/components/ui/Icon";
 import WishlistButton from "@/components/wishlist/WishlistButton";
 import { useProductViewData } from "@/hooks/useProductViewData";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
@@ -19,7 +18,7 @@ import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
@@ -34,10 +33,7 @@ const ImageViewer = dynamic(
 );
 import { PreOrderBanner } from "@/components/product/PreOrderBanner";
 import { ProductInfoTabs } from "@/components/product/ProductInfoTabs";
-import { SaleCountdown } from "@/components/product/SaleCountdown";
 import { ShareButton } from "@/components/product/ShareButton";
-import { Minus, Plus } from "lucide-react";
-import CopyToClipboardButton from "./CopyToClipboardButton";
 
 export function ProductView({
   product,
@@ -56,7 +52,6 @@ export function ProductView({
 }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
-  const touchStartX = useRef<number | null>(null);
 
   const mediaImages = useMemo(() => {
     const all = [product.thumbnail, ...(product.images ?? [])].filter(
@@ -64,27 +59,6 @@ export function ProductView({
     );
     return Array.from(new Set(all));
   }, [product.thumbnail, product.images]);
-
-  const goTo = useCallback(
-    (idx: number) => {
-      setActiveImageIndex((idx + mediaImages.length) % mediaImages.length);
-    },
-    [mediaImages.length]
-  );
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  }, []);
-
-  const handleTouchEnd = useCallback(
-    (e: React.TouchEvent) => {
-      if (touchStartX.current === null) return;
-      const delta = e.changedTouches[0].clientX - touchStartX.current;
-      if (Math.abs(delta) > 40) goTo(activeImageIndex + (delta < 0 ? 1 : -1));
-      touchStartX.current = null;
-    },
-    [activeImageIndex, goTo]
-  );
 
   const {
     variants,
@@ -161,23 +135,6 @@ export function ProductView({
       ? product.min_price + componentAdjustment
       : (selectedVariant?.effective_price ?? minVariantPrice);
 
-  const heroImage = mediaImages[activeImageIndex] ?? product.thumbnail ?? null;
-
-  // ── Preload all gallery images so thumbnail switches are instant ──
-  useEffect(() => {
-    for (const src of mediaImages) {
-      const link = document.createElement("link");
-      link.rel = "preload";
-      link.as = "image";
-      link.href = src;
-      document.head.appendChild(link);
-    }
-    return () => {
-      // clean up preload links on unmount / gallery change
-      document.querySelectorAll('link[rel="preload"][as="image"]').forEach((el) => el.remove());
-    };
-  }, [mediaImages]);
-
   const badges = useMemo(() => {
     const list: { label: string; className: string }[] = [];
     if (isOutOfStock) {
@@ -247,18 +204,6 @@ export function ProductView({
     variants.length > 0 ||
     groups.length > 0;
 
-  const heroRef = useRef<HTMLDivElement>(null);
-  const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 });
-  const [isHovering, setIsHovering] = useState(false);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setZoomOrigin({ x, y });
-  }, []);
-
   useEffect(() => {
     setActiveImageIndex(0);
   }, [product.slug]);
@@ -269,85 +214,16 @@ export function ProductView({
 
       <main className="my-auto space-y-4 pb-12">
         {/* ── Hero Image Gallery ── */}
-        <section
-          className="relative space-y-3 p-4"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div
-            ref={heroRef}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
-            className="relative h-80 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm"
-          >
-            <button
-              type="button"
-              aria-label="Xem ảnh sản phẩm"
-              onClick={() => mediaImages.length > 0 && setImageViewerOpen(true)}
-              className="relative h-full w-full"
-            >
-              {heroImage ? (
-                <div
-                  className="absolute inset-0 transition-transform duration-200 md:group-hover:scale-150"
-                  style={
-                    isHovering
-                      ? {
-                          transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
-                          transform: "scale(1.5)",
-                        }
-                      : undefined
-                  }
-                >
-                  <Image
-                    key={heroImage}
-                    src={heroImage}
-                    alt={product.name}
-                    fill
-                    className="animate-fade-in object-cover mix-blend-multiply"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority={activeImageIndex === 0}
-                  />
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Icon
-                    name="inventory_2"
-                    className="text-9xl text-outline-variant opacity-40"
-                  />
-                </div>
-              )}
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-primary/5 to-transparent" />
-              {mediaImages.length > 0 && (
-                <div
-                  aria-hidden="true"
-                  className="absolute bottom-2 right-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm"
-                >
-                  {activeImageIndex + 1}/{mediaImages.length}
-                </div>
-              )}
-              {hasDiscount && (
-                <div
-                  aria-hidden="true"
-                  className="absolute right-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg"
-                >
-                  -{discountPercent}%
-                </div>
-              )}
-              {product.sale_ends_at && (
-                <div className="absolute left-3 top-3" aria-hidden="true">
-                  <SaleCountdown endsAt={product.sale_ends_at} />
-                </div>
-              )}
-            </button>
-          </div>
-          <ProductThumbnailStrip
-            images={mediaImages}
-            activeIndex={activeImageIndex}
-            onSelect={setActiveImageIndex}
-            productName={product.name}
-          />
-        </section>
+        <HeroImageGallery
+          images={mediaImages}
+          productName={product.name}
+          activeIndex={activeImageIndex}
+          onSelect={setActiveImageIndex}
+          hasDiscount={hasDiscount}
+          discountPercent={discountPercent}
+          saleEndsAt={product.sale_ends_at}
+          onImageClick={() => setImageViewerOpen(true)}
+        />
 
         {/* ── Product Info ── */}
         <section className="!mt-0 px-4">
@@ -421,11 +297,11 @@ export function ProductView({
 
         {/* ── Configurator (variants + component groups) ── */}
         {hasConfigurator && (
-          <section className="px-4">
+          <section className="space-y-2 px-4">
             <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
               Lựa chọn cấu hình
             </div>
-            <div className="space-y-4 rounded-xl bg-surface-container-low p-4">
+            <div className="space-y-4 rounded-xl">
               {loadingVariants ? (
                 <div className="grid grid-cols-2 gap-3">
                   {[1, 2].map((i) => (
@@ -443,8 +319,8 @@ export function ProductView({
                   loadingConfigurator={loadingConfigurator}
                   basePrice={product.base_price}
                   onSelect={select}
-                  isHideComppGroup
                   disabledVariantIds={disabledVariantIds}
+                  showTitle={false}
                 />
               )}
             </div>

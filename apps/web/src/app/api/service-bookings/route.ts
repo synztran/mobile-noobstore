@@ -160,7 +160,8 @@ export async function POST(req: NextRequest) {
 			optionsAdj += adj;
 		}
 
-		const config = (svc.service_configs ?? []).find(
+		const configs = Array.isArray(svc.service_configs) ? svc.service_configs : svc.service_configs ? [svc.service_configs] : [];
+		const config = configs.find(
 			(c) => c.is_active,
 		);
 		const unitPrice =

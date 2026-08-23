@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import Image from "next/image";
+import { useState } from "react";
 
 interface Props {
   images: string[];
@@ -16,6 +17,8 @@ export function ProductThumbnailStrip({
   onSelect,
   productName,
 }: Props) {
+  const [loaded, setLoaded] = useState<Record<number, boolean>>({});
+
   if (images.length <= 1) return null;
 
   return (
@@ -32,12 +35,19 @@ export function ProductThumbnailStrip({
               : "border-transparent opacity-60 hover:opacity-100",
           )}
         >
+          {!loaded[i] && (
+            <div className="absolute inset-0 animate-pulse bg-surface-container-high" />
+          )}
           <Image
             src={img}
             alt={`${productName} - ${i + 1}`}
             fill
-            className="object-cover"
+            className={clsx(
+              "object-cover transition-opacity duration-300",
+              loaded[i] ? "opacity-100" : "opacity-0",
+            )}
             sizes="64px"
+            onLoad={() => setLoaded((prev) => ({ ...prev, [i]: true }))}
           />
         </button>
       ))}

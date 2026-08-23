@@ -1,12 +1,16 @@
 "use client";
 
+import { useNewsletterSubscribe, useReleaseSubscribe } from "@/lib/react-query/newsletter/api/useNewsletterMutations";
 import { toast } from "@/lib/toast";
 import { trackNewsletterSubscribe } from "@/lib/analytics";
 import { useState } from "react";
 
 export function NewsletterCTA() {
   const [email, setEmail] = useState("");
-  const [isPending, setIsPending] = useState(false);
+  const newsletterMutation = useNewsletterSubscribe();
+  const releaseMutation = useReleaseSubscribe();
+
+  const isPending = newsletterMutation.isPending || releaseMutation.isPending;
 
   const handleSubmit = async () => {
     const trimmed = email.trim();
@@ -15,34 +19,17 @@ export function NewsletterCTA() {
       return;
     }
 
-    setIsPending(true);
-
     try {
-      const [newsletterRes, releaseRes] = await Promise.all([
-        fetch("/api/newsletter/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: trimmed }),
-        }),
-        fetch("/api/release-subscribers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: trimmed }),
-        }),
+      await Promise.all([
+        newsletterMutation.mutateAsync(trimmed),
+        releaseMutation.mutateAsync(trimmed),
       ]);
-
-      if (!newsletterRes.ok && !releaseRes.ok) {
-        const data = await newsletterRes.json().catch(() => null);
-        throw new Error(data?.error ?? "Đăng ký thất bại");
-      }
 
       toast.success("Đăng ký thành công! Bạn sẽ nhận được thông báo sớm nhất.");
       trackNewsletterSubscribe();
       setEmail("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Đăng ký thất bại");
-    } finally {
-      setIsPending(false);
     }
   };
 

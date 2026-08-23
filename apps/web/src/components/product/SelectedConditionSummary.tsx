@@ -44,11 +44,7 @@ export function SelectedConditionSummary({
       const v = productVariants.find((x) => x.id === selectedId);
       const text = getConditionText(v?.attributes);
       if (text) {
-        rows.push({
-          label: v?.variant_name ?? "",
-          group: "",
-          text,
-        });
+        rows.push({ label: v?.variant_name ?? "", group: "", text });
       }
     }
   } else {
@@ -67,8 +63,6 @@ export function SelectedConditionSummary({
     }
   }
 
-  if (rows.length === 0) return null;
-
   const countByLabel = new Map<string, number>();
   for (const r of rows) {
     countByLabel.set(r.label, (countByLabel.get(r.label) ?? 0) + 1);
@@ -79,24 +73,32 @@ export function SelectedConditionSummary({
       <p className="mb-1.5 text-sm font-black uppercase tracking-wider text-primary">
         Tình trạng
       </p>
-      <ul className="space-y-1">
-        {rows.map((r) => (
-          <li
-            key={`${r.group}:${r.label}`}
-            className="flex items-baseline gap-1 font-bold text-on-surface"
-          >
-            <span className="flex-shrink-0 rounded bg-surface-container-high px-2 py-1 text-xs">
-              {(countByLabel.get(r.label) ?? 0) > 1 && r.group
-                ? `${r.group} · `
-                : ""}
-              {r.label}
-            </span>
-            <span className="text-xs font-semibold text-on-surface-variant">
-              {r.text}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {rows.length > 0 ? (
+        <ul className="space-y-1">
+          {rows.map((r) => (
+            <li
+              key={`${r.group}:${r.label}`}
+              className="flex items-center gap-1 font-bold text-on-surface"
+            >
+              <span className="flex-shrink-0 rounded bg-surface-container-high px-2 py-1 text-xs">
+                {(countByLabel.get(r.label) ?? 0) > 1 && r.group
+                  ? `${r.group} · `
+                  : ""}
+                {r.label}
+              </span>
+              <span className="text-sm font-semibold text-on-surface-variant">
+                {r.text}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="relative clear-both flex min-h-6 items-center">
+          <p className="text-xs font-semibold text-on-surface-variant">
+            Chưa có cấu hình nào được thiết lập tình trạng
+          </p>
+        </div>
+      )}
     </div>
   );
 }

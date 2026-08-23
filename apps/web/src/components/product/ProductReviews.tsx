@@ -1,11 +1,9 @@
 "use client";
 
 import { useReviews } from "@/lib/react-query/review/api/useReviewQueries";
-import { useSubmitReview } from "@/lib/react-query/review/api/useReviewMutations";
-import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
 import clsx from "clsx";
-import { useState } from "react";
+import { ReviewSubmitForm } from "./ReviewSubmitForm";
 
 interface Props {
   productSlug: string;
@@ -13,27 +11,15 @@ interface Props {
 
 function StarRating({
   value,
-  onChange,
   size = "sm",
 }: {
   value: number;
-  onChange?: (v: number) => void;
   size?: "sm" | "lg";
 }) {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => onChange?.(star)}
-          disabled={!onChange}
-          className={clsx(
-            "transition-colors",
-            onChange && "hover:scale-110 active:scale-90",
-            !onChange && "cursor-default"
-          )}
-        >
+        <span key={star} className="cursor-default">
           <svg
             viewBox="0 0 24 24"
             className={clsx(
@@ -44,7 +30,7 @@ function StarRating({
           >
             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
           </svg>
-        </button>
+        </span>
       ))}
     </div>
   );
@@ -52,26 +38,6 @@ function StarRating({
 
 export function ProductReviews({ productSlug }: Props) {
   const { data, isLoading } = useReviews(productSlug);
-  const submitReview = useSubmitReview(productSlug);
-  const [showForm, setShowForm] = useState(false);
-  const [formRating, setFormRating] = useState(5);
-  const [formBody, setFormBody] = useState("");
-
-  const handleSubmit = async () => {
-    submitReview.mutate(
-      { rating: formRating, body: formBody || undefined },
-      {
-        onSuccess: () => {
-          toast.success("Đã gửi đánh giá");
-          setShowForm(false);
-          setFormBody("");
-          setFormRating(5);
-        },
-        onError: (err) =>
-          toast.error(err instanceof Error ? err.message : "Gửi đánh giá thất bại"),
-      }
-    );
-  };
 
   if (isLoading) {
     return (
@@ -174,52 +140,7 @@ export function ProductReviews({ productSlug }: Props) {
       )}
 
       {/* Submit form */}
-      {!showForm ? (
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          className="w-full rounded-2xl border border-primary/30 bg-primary/5 py-3 text-xs font-black uppercase tracking-widest text-primary transition-colors hover:bg-primary/10"
-        >
-          Viết đánh giá
-        </button>
-      ) : (
-        <div className="space-y-3 rounded-2xl bg-surface-container p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-black uppercase tracking-wider text-on-surface-variant">
-              Đánh giá của bạn
-            </p>
-            <StarRating
-              value={formRating}
-              onChange={setFormRating}
-              size="lg"
-            />
-          </div>
-          <textarea
-            value={formBody}
-            onChange={(e) => setFormBody(e.target.value)}
-            placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-            rows={3}
-            className="w-full resize-none rounded-xl border border-outline-variant/30 bg-surface px-3 py-2 text-xs text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
-          />
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="flex-1 rounded-xl border border-outline-variant/30 py-2 text-xs font-bold text-on-surface-variant"
-            >
-              Hủy
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={submitReview.isPending}
-              className="flex-1 rounded-xl bg-primary py-2 text-xs font-black uppercase tracking-widest text-white disabled:opacity-50"
-            >
-              {submitReview.isPending ? "Đang gửi..." : "Gửi đánh giá"}
-            </button>
-          </div>
-        </div>
-      )}
+      <ReviewSubmitForm productSlug={productSlug} />
     </div>
   );
 }

@@ -95,7 +95,7 @@ export function DeliveryAvailabilitySection({
       >
         <div className="inline-flex w-full flex-wrap items-center justify-between">
           <div className="space-x-1">
-            <span className="text-sm font-bold uppercase text-primary">
+            <span className="text-sm font-black uppercase text-primary">
               Vận chuyển
             </span>
           </div>

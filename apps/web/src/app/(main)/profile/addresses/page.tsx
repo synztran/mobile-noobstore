@@ -8,6 +8,7 @@ import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
 import type { ProfileAddress } from "@/lib/data";
+import { useProfileAddresses, useUpdateProfileAddresses } from "@/lib/react-query/user/api/useUserQueries";
 import { toast } from "@/lib/toast";
 import clsx from "clsx";
 import { AlertTriangle, Trash } from "lucide-react";
@@ -127,13 +128,19 @@ function ProfileAddressesPage() {
   const router = useRouter();
   const { user, loading: authLoading, refreshProfile } = useAuth();
 
-  const [addresses, setAddresses] = useState<ProfileAddress[]>([]);
-  const [loadingAddresses, setLoadingAddresses] = useState(true);
-  const [saving, setSaving] = useState(false);
-
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const { data: profileData, isLoading: loadingAddresses } = useProfileAddresses(
+    !authLoading && !!user
+  );
+  const updateAddressesMutation = useUpdateProfileAddresses();
+
+  const addresses = useMemo(
+    () => normalizeAddressList(profileData?.addresses),
+    [profileData?.addresses]
+  );
 
   usePreventScroll(drawerOpen || Boolean(deleteConfirmId));
 
@@ -153,39 +160,9 @@ function ProfileAddressesPage() {
     [addresses, deleteConfirmId]
   );
 
-  const fetchProfileAddresses = useCallback(async () => {
-    setLoadingAddresses(true);
-    try {
-      const res = await fetch("/api/user/profile", {
-        credentials: "include",
-      });
-      if (res.status === 401) {
-        router.push("/login");
-        return;
-      }
-      if (!res.ok) {
-        toast.error("Không thể tải địa chỉ");
-        return;
-      }
-      const data = (await res.json()) as { addresses?: unknown };
-      setAddresses(normalizeAddressList(data.addresses));
-    } catch {
-      toast.error("Không thể tải địa chỉ");
-    } finally {
-      setLoadingAddresses(false);
-    }
-  }, [router]);
-
   // authentication redirect handled by withAuthRedirect HOC
 
-  useEffect(() => {
-    if (!authLoading && user) {
-      fetchProfileAddresses();
-    }
-  }, [authLoading, user, fetchProfileAddresses]);
-
   const persistAddresses = async (next: ProfileAddress[]) => {
-    setSaving(true);
     try {
       const payload = next.map((a) => ({
         full_name: a.full_name,
@@ -200,27 +177,13 @@ function ProfileAddressesPage() {
         is_default: a.is_default,
       }));
 
-      const res = await fetch("/api/user/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ addresses: payload }),
-      });
-
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? "Save failed");
-      }
-
-      const data = (await res.json()) as { addresses?: unknown };
-      setAddresses(normalizeAddressList(data.addresses));
+      await updateAddressesMutation.mutateAsync(payload);
       await refreshProfile();
       toast.success("Đã cập nhật địa chỉ");
       setDrawerOpen(false);
       setEditingAddressId(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Không thể lưu địa chỉ");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -289,13 +252,8 @@ function ProfileAddressesPage() {
       next = next.map((a, idx) => ({ ...a, is_default: idx === 0 }));
     }
 
-    setSaving(true);
-    try {
-      setDeleteConfirmId(null);
-      await persistAddresses(next);
-    } finally {
-      setSaving(false);
-    }
+    setDeleteConfirmId(null);
+    await persistAddresses(next);
   };
 
   const openDeleteConfirm = (addressId: string) => {
@@ -381,10 +339,10 @@ function ProfileAddressesPage() {
                 <button
                   type="button"
                   onClick={() => openDeleteConfirm(address.id)}
-                  disabled={saving}
+                  disabled={updateAddressesMutation.isPending}
                   className={clsx(
                     "flex h-8 w-8 items-center justify-center rounded-lg transition-transform active:scale-90",
-                    saving
+                    updateAddressesMutation.isPending
                       ? "bg-surface-container text-outline-variant"
                       : "bg-error/10 text-error"
                   )}
@@ -435,7 +393,7 @@ function ProfileAddressesPage() {
               "pointer-events-auto opacity-100"
             )}
             onClick={() => {
-              if (saving) return;
+              if (updateAddressesMutation.isPending) return;
               setDeleteConfirmId(null);
             }}
           />
@@ -474,7 +432,7 @@ function ProfileAddressesPage() {
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   type="button"
-                  disabled={saving}
+                  disabled={updateAddressesMutation.isPending}
                   onClick={() => setDeleteConfirmId(null)}
                   className="h-11 rounded-2xl bg-surface-container text-xs font-black uppercase tracking-widest text-on-surface disabled:opacity-50"
                 >
@@ -482,13 +440,13 @@ function ProfileAddressesPage() {
                 </button>
                 <button
                   type="button"
-                  disabled={saving}
+                  disabled={updateAddressesMutation.isPending}
                   onClick={() => {
                     void handleDeleteAddress(deleteConfirmId);
                   }}
                   className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-error text-xs font-black uppercase tracking-widest text-white disabled:opacity-50"
                 >
-                  {saving ? (
+                  {updateAddressesMutation.isPending ? (
                     <>
                       <span className="loading loading-spinner loading-xs" />
                       Đang xoá...
@@ -506,14 +464,14 @@ function ProfileAddressesPage() {
       <AddressEditorDrawer
         open={drawerOpen}
         onClose={() => {
-          if (saving) return;
+          if (updateAddressesMutation.isPending) return;
           setDrawerOpen(false);
           setEditingAddressId(null);
         }}
         onSubmit={handleSaveAddress}
         title={editingAddress ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
         initialValues={toFormValues(editingAddress ?? undefined)}
-        isSubmitting={saving}
+        isSubmitting={updateAddressesMutation.isPending}
       />
     </div>
   );
