@@ -13,6 +13,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      # Restore/persist the Turborepo remote-cache local mirror between runs
+      - name: Turbo cache
+        uses: rharkor/caching-for-turbo@v1.5
+      # Cache installed dependencies keyed by lockfile so install is instant
+      # when nothing changed
+      - name: Dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: node-modules-${{ runner.os }}-yarn-
       - name: Enable corepack (yarn 4)
         run: corepack enable
       - name: Install dependencies
