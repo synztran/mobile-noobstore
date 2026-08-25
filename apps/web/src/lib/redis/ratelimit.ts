@@ -13,52 +13,68 @@ export function getRateLimitKey(request: Request, userId?: string): string {
   return userId || getIp(request);
 }
 
-const rateLimiters = {
-  auth: new Ratelimit({
-    redis: getRedis(),
+const LIMITER_CONFIGS = {
+  auth: {
     limiter: Ratelimit.fixedWindow(30, "1 m"),
     prefix: "ratelimit:auth",
-  }),
-  apiAuth: new Ratelimit({
-    redis: getRedis(),
+  },
+  apiAuth: {
     limiter: Ratelimit.fixedWindow(30, "1 m"),
     prefix: "ratelimit:api:auth",
-  }),
-  checkout: new Ratelimit({
-    redis: getRedis(),
+  },
+  checkout: {
     limiter: Ratelimit.fixedWindow(40, "1 m"),
     prefix: "ratelimit:checkout",
-  }),
-  api: new Ratelimit({
-    redis: getRedis(),
+  },
+  api: {
     limiter: Ratelimit.fixedWindow(60, "1 m"),
     prefix: "ratelimit:api",
-  }),
-  alert: new Ratelimit({
-    redis: getRedis(),
+  },
+  alert: {
     limiter: Ratelimit.fixedWindow(1, "5 m"),
     prefix: "ratelimit:alert",
-  }),
-};
+  },
+} as const;
+
+type LimiterKey = keyof typeof LIMITER_CONFIGS;
+
+// Lazily constructed — instantiating Ratelimit at module scope would call
+// getRedis() during `next build`'s page-data collection and crash when the
+// Upstash env vars are absent from the build environment.
+const instances = new Map<LimiterKey, Ratelimit>();
+
+function getLimiter(key: LimiterKey): Ratelimit {
+  let instance = instances.get(key);
+  if (!instance) {
+    const config = LIMITER_CONFIGS[key];
+    instance = new Ratelimit({
+      redis: getRedis(),
+      limiter: config.limiter,
+      prefix: config.prefix,
+    });
+    instances.set(key, instance);
+  }
+  return instance;
+}
 
 export function getAuthLimiter() {
-  return rateLimiters.auth;
+  return getLimiter("auth");
 }
 
 export function getApiAuthLimiter() {
-  return rateLimiters.apiAuth;
+  return getLimiter("apiAuth");
 }
 
 export function getCheckoutLimiter() {
-  return rateLimiters.checkout;
+  return getLimiter("checkout");
 }
 
 export function getApiLimiter() {
-  return rateLimiters.api;
+  return getLimiter("api");
 }
 
 export function getAlertLimiter() {
-  return rateLimiters.alert;
+  return getLimiter("alert");
 }
 
 export async function tryRateLimit(
