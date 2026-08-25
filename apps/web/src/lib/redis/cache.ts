@@ -1,6 +1,14 @@
 import { getRedis } from "./client";
 
-const redis = getRedis();
+/**
+ * Lazy accessor — resolving the Redis client at module scope would throw
+ * during `next build` when Upstash env vars are absent from the build
+ * environment (route modules get evaluated for the manifest). Errors now
+ * surface only if a handler actually runs unconfigured.
+ */
+function redis() {
+	return getRedis();
+}
 
 export const CACHE_VERSION = "v2";
 
@@ -77,7 +85,7 @@ export function buildProductListCacheKey(params: {
  */
 export async function getCache<T>(key: string): Promise<T | null> {
 	try {
-		return await redis.get<T>(key);
+		return await redis().get<T>(key);
 	} catch {
 		return null;
 	}
@@ -94,9 +102,9 @@ export async function setCache<T>(
 ): Promise<void> {
 	try {
 		if (ttlSeconds !== undefined) {
-			await redis.set(key, value, { ex: ttlSeconds });
+			await redis().set(key, value, { ex: ttlSeconds });
 		} else {
-			await redis.set(key, value);
+			await redis().set(key, value);
 		}
 	} catch {
 		// non-fatal
@@ -110,7 +118,7 @@ export async function setCache<T>(
 export async function invalidateCache(...keys: string[]): Promise<void> {
 	if (keys.length === 0) return;
 	try {
-		await redis.del(...keys);
+		await redis().del(...keys);
 	} catch {
 		// non-fatal
 	}
