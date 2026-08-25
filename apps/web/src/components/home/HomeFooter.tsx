@@ -22,7 +22,7 @@ export function HomeFooter() {
   return (
     <footer className="!mt-0 bg-surface-container p-4">
       <div className="flex flex-col items-center gap-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-        <div className="flex w-full justify-between gap-4 text-[10px]">
+        <div className="flex w-full justify-between gap-2 text-[10px]">
           <Link href="/news">Tin tức</Link>
           <Link href="/policy">Chính sách bảo mật</Link>
           <Link href="/terms">Điều khoản</Link>

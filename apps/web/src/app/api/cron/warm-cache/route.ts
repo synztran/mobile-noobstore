@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
 	await Promise.allSettled([
 		warm(CACHE_KEYS.fees, 600, getFeesConfig),
-		warm(CACHE_KEYS.paymentInformation, 300, async () => {
+		warm(CACHE_KEYS.paymentInformation, 86400, async () => {
 			const methods = await getPaymentInformation();
 			return { methods };
 		}),

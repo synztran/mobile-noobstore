@@ -19,7 +19,9 @@ export async function GET() {
 	try {
 		const result = await readThroughCache<PaymentInformationResponse>(
 			CACHE_KEYS.paymentInformation,
-			300,
+			// 24h safety net — payment info changes rarely; staleness after an
+			// edit is capped at 24h, or instant via admin cache purge.
+			86400,
 			async () => {
 				const methods = await getPaymentInformation();
 				return { methods };
