@@ -7,9 +7,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Module-level singleton — avoids recreating the admin client on every request.
-const admin = getAdminClient();
-
 // ─── GET /api/gacha?event_id=X ──────────────────────────────
 // Returns: event info, rewards (with computed percent), user token count
 export async function GET(req: NextRequest) {
@@ -132,6 +129,9 @@ export async function GET(req: NextRequest) {
 // Atomically deducts 1 token, runs weighted draw, records history
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
+  // Resolved per-request (not module scope) so builds never require the
+  // service-role key to be present in the build environment.
+  const admin = getAdminClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
