@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_config: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author: string
@@ -71,6 +86,33 @@ export type Database = {
           thumbnail?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      carriers: {
+        Row: {
+          id: string
+          is_active: boolean
+          logo: string | null
+          name: string
+          sort_order: number
+          tracking_url_template: string | null
+        }
+        Insert: {
+          id: string
+          is_active?: boolean
+          logo?: string | null
+          name: string
+          sort_order?: number
+          tracking_url_template?: string | null
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          logo?: string | null
+          name?: string
+          sort_order?: number
+          tracking_url_template?: string | null
         }
         Relationships: []
       }
@@ -202,36 +244,6 @@ export type Database = {
         }
         Relationships: []
       }
-      community_gallery: {
-        Row: {
-          alt_text: string
-          author: string
-          build_info: Json | null
-          created_at: string | null
-          id: string
-          image_url: string
-          order: number
-        }
-        Insert: {
-          alt_text: string
-          author?: string
-          build_info?: Json | null
-          created_at?: string | null
-          id?: string
-          image_url: string
-          order?: number
-        }
-        Update: {
-          alt_text?: string
-          author?: string
-          build_info?: Json | null
-          created_at?: string | null
-          id?: string
-          image_url?: string
-          order?: number
-        }
-        Relationships: []
-      }
       community_config: {
         Row: {
           community_enabled: boolean
@@ -272,6 +284,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      community_gallery: {
+        Row: {
+          alt_text: string
+          author: string
+          build_info: Json | null
+          created_at: string | null
+          id: string
+          image_url: string
+          order: number
+        }
+        Insert: {
+          alt_text: string
+          author?: string
+          build_info?: Json | null
+          created_at?: string | null
+          id?: string
+          image_url: string
+          order?: number
+        }
+        Update: {
+          alt_text?: string
+          author?: string
+          build_info?: Json | null
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          order?: number
+        }
+        Relationships: []
       }
       community_posts: {
         Row: {
@@ -1155,6 +1197,70 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_ledger: {
+        Row: {
+          balance_after: number
+          created_at: string
+          id: string
+          note: string | null
+          product_id: string
+          quantity_change: number
+          reference_id: string
+          reference_type: string
+          total_value: number
+          unit_cost: number
+          variant_id: string | null
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          product_id: string
+          quantity_change: number
+          reference_id: string
+          reference_type: string
+          total_value: number
+          unit_cost: number
+          variant_id?: string | null
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          product_id?: string
+          quantity_change?: number
+          reference_id?: string
+          reference_type?: string
+          total_value?: number
+          unit_cost?: number
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_ledger_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_ledger_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "kit_component_variants"
+            referencedColumns: ["product_variant_id"]
+          },
+          {
+            foreignKeyName: "inventory_ledger_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maker_releases: {
         Row: {
           content: string
@@ -1276,6 +1382,7 @@ export type Database = {
         Row: {
           id: string
           order_id: string | null
+          pre_order_tracking: Json | null
           product_id: string | null
           product_name: string
           quantity: number
@@ -1285,6 +1392,7 @@ export type Database = {
         Insert: {
           id: string
           order_id?: string | null
+          pre_order_tracking?: Json | null
           product_id?: string | null
           product_name: string
           quantity: number
@@ -1294,6 +1402,7 @@ export type Database = {
         Update: {
           id?: string
           order_id?: string | null
+          pre_order_tracking?: Json | null
           product_id?: string | null
           product_name?: string
           quantity?: number
@@ -1319,6 +1428,7 @@ export type Database = {
       }
       order_services: {
         Row: {
+          attachments: Json
           created_at: string
           customer_note: string | null
           handling_days_snapshot: number
@@ -1337,6 +1447,7 @@ export type Database = {
           service_name: string | null
         }
         Insert: {
+          attachments?: Json
           created_at?: string
           customer_note?: string | null
           handling_days_snapshot?: number
@@ -1355,6 +1466,7 @@ export type Database = {
           service_name?: string | null
         }
         Update: {
+          attachments?: Json
           created_at?: string
           customer_note?: string | null
           handling_days_snapshot?: number
@@ -2086,6 +2198,44 @@ export type Database = {
         }
         Relationships: []
       }
+      service_configs: {
+        Row: {
+          base_price: number
+          created_at: string
+          handling_days: number
+          id: string
+          is_active: boolean
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number
+          created_at?: string
+          handling_days?: number
+          id?: string
+          is_active?: boolean
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          handling_days?: number
+          id?: string
+          is_active?: boolean
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_configs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: true
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_option_values: {
         Row: {
           display_order: number
@@ -2114,44 +2264,6 @@ export type Database = {
             columns: ["option_id"]
             isOneToOne: false
             referencedRelation: "service_options"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      service_configs: {
-        Row: {
-          base_price: number
-          created_at: string | null
-          handling_days: number
-          id: string
-          is_active: boolean
-          service_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          base_price?: number
-          created_at?: string | null
-          handling_days?: number
-          id?: string
-          is_active?: boolean
-          service_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          base_price?: number
-          created_at?: string | null
-          handling_days?: number
-          id?: string
-          is_active?: boolean
-          service_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "service_configs_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
@@ -2284,33 +2396,6 @@ export type Database = {
         }
         Relationships: []
       }
-      carriers: {
-        Row: {
-          id: string
-          is_active: boolean
-          logo: string | null
-          name: string
-          sort_order: number
-          tracking_url_template: string | null
-        }
-        Insert: {
-          id: string
-          is_active?: boolean
-          logo?: string | null
-          name: string
-          sort_order?: number
-          tracking_url_template?: string | null
-        }
-        Update: {
-          id?: string
-          is_active?: boolean
-          logo?: string | null
-          name?: string
-          sort_order?: number
-          tracking_url_template?: string | null
-        }
-        Relationships: []
-      }
       shipping_methods: {
         Row: {
           description: string | null
@@ -2396,6 +2481,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       support_tickets: {
         Row: {
@@ -2895,6 +3022,222 @@ export type Database = {
           },
         ]
       }
+      warehouse_export_items: {
+        Row: {
+          export_id: string
+          id: string
+          product_id: string
+          quantity: number
+          total_cost: number
+          unit_cost: number
+          variant_id: string | null
+        }
+        Insert: {
+          export_id: string
+          id?: string
+          product_id: string
+          quantity: number
+          total_cost: number
+          unit_cost: number
+          variant_id?: string | null
+        }
+        Update: {
+          export_id?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          total_cost?: number
+          unit_cost?: number
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_export_items_export_id_fkey"
+            columns: ["export_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_exports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_export_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_export_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "kit_component_variants"
+            referencedColumns: ["product_variant_id"]
+          },
+          {
+            foreignKeyName: "warehouse_export_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_exports: {
+        Row: {
+          created_at: string
+          created_by: string
+          export_number: string | null
+          id: string
+          notes: string | null
+          reason: Database["public"]["Enums"]["warehouse_export_reason"]
+          reference_id: string | null
+          reference_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          export_number?: string | null
+          id?: string
+          notes?: string | null
+          reason: Database["public"]["Enums"]["warehouse_export_reason"]
+          reference_id?: string | null
+          reference_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          export_number?: string | null
+          id?: string
+          notes?: string | null
+          reason?: Database["public"]["Enums"]["warehouse_export_reason"]
+          reference_id?: string | null
+          reference_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_exports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_receipt_items: {
+        Row: {
+          id: string
+          product_id: string
+          quantity: number
+          receipt_id: string
+          total_cost: number
+          unit_cost: number
+          variant_id: string | null
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          quantity: number
+          receipt_id: string
+          total_cost: number
+          unit_cost: number
+          variant_id?: string | null
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          quantity?: number
+          receipt_id?: string
+          total_cost?: number
+          unit_cost?: number
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_receipt_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_items_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "warehouse_receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "kit_component_variants"
+            referencedColumns: ["product_variant_id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipt_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warehouse_receipts: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          receipt_number: string | null
+          status: string
+          supplier_id: string | null
+          supplier_name: string | null
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          receipt_number?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_name?: string | null
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          receipt_number?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_name?: string | null
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warehouse_receipts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warehouse_receipts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wishlists: {
         Row: {
           added_at: string
@@ -2977,6 +3320,7 @@ export type Database = {
           transaction_id: number
         }[]
       }
+      can_post_community: { Args: { kind: string }; Returns: boolean }
       cancel_expired_orders: { Args: never; Returns: Json }
       claim_mission_reward: {
         Args: { p_event_id: number; p_mission_id: number; p_user_id: string }
@@ -2999,7 +3343,9 @@ export type Database = {
           transaction_id: number
         }[]
       }
+      generate_export_number: { Args: { prefix: string }; Returns: string }
       generate_id: { Args: never; Returns: string }
+      generate_warehouse_number: { Args: { prefix: string }; Returns: string }
       get_gacha_reward_winners: {
         Args: { event_id: number; reward_id: number }
         Returns: {
@@ -3032,6 +3378,13 @@ export type Database = {
           rate_value: number
         }[]
       }
+      get_user_order_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          order_count: number
+          total_spent: number
+        }[]
+      }
       increment_voucher_used_count: {
         Args: { p_voucher_id: string }
         Returns: undefined
@@ -3053,6 +3406,10 @@ export type Database = {
         }[]
       }
       process_payment_reminders: { Args: never; Returns: undefined }
+      reconcile_product_sold_count: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
       redeem_gift_card: {
         Args: { p_code: string; p_user_id: string }
         Returns: {
@@ -3088,6 +3445,7 @@ export type Database = {
         Returns: Json
       }
       validate_and_deduct_stock: { Args: { p_items: Json }; Returns: Json }
+      warm_cache: { Args: never; Returns: undefined }
     }
     Enums: {
       voucher_reward_type:
@@ -3101,6 +3459,12 @@ export type Database = {
         | "product"
         | "category"
       voucher_status: "draft" | "active" | "scheduled" | "expired" | "disabled"
+      warehouse_export_reason:
+        | "sale"
+        | "adjustment"
+        | "damage"
+        | "return_to_supplier"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3241,6 +3605,13 @@ export const Constants = {
         "category",
       ],
       voucher_status: ["draft", "active", "scheduled", "expired", "disabled"],
+      warehouse_export_reason: [
+        "sale",
+        "adjustment",
+        "damage",
+        "return_to_supplier",
+        "other",
+      ],
     },
   },
 } as const
