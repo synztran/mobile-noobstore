@@ -10,9 +10,11 @@ import { computeEntryPreviewPrice } from "./bookingHelpers";
 import { CleaningEntryConfig } from "./CleaningEntryConfig";
 import { KeycapStemEntryConfig } from "./KeycapStemEntryConfig";
 import { QuantityStepper } from "./QuantityStepper";
+import { RepairEntryConfig } from "./RepairEntryConfig";
 import { StabilizerEntryConfig } from "./StabilizerEntryConfig";
 import { SwitchLubeEntryConfig } from "./SwitchLubeEntryConfig";
 import type { ServiceEntryDraft, ServiceSectionCardProps } from "./types";
+import { Trash } from "lucide-react";
 
 // ─── ServiceEntryHeader ───────────────────────────────────────────────────────
 
@@ -25,15 +27,15 @@ function ServiceEntryHeader({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <p className="text-[11px] font-black uppercase tracking-wider text-on-surface">
-        Mục {index + 1}
+      <p className="text-xs font-black uppercase tracking-wider text-on-surface">
+        Dịch vụ {index + 1}
       </p>
       <button
         type="button"
         onClick={onRemove}
-        className="flex h-full items-center justify-center rounded-full bg-error/10 px-2 py-1 text-xs font-bold text-error transition-colors hover:bg-error/20"
+        className="flex h-full items-center justify-center rounded-md bg-error/10 p-1 font-bold text-error transition-colors hover:bg-error/20"
       >
-        Xoá dịch vụ
+        <Trash size={16} />
       </button>
     </div>
   );
@@ -122,6 +124,7 @@ interface ServiceEntryCardProps {
   service: BookingService;
   entry: ServiceEntryDraft;
   index: number;
+  error?: string;
   onRemoveEntry: ServiceSectionCardProps["onRemoveEntry"];
   onUpdateEntry: ServiceSectionCardProps["onUpdateEntry"];
   onSelectOptionValue: ServiceSectionCardProps["onSelectOptionValue"];
@@ -133,6 +136,7 @@ export function ServiceEntryCard({
   service,
   entry,
   index,
+  error,
   onRemoveEntry,
   onUpdateEntry,
   onSelectOptionValue,
@@ -146,6 +150,14 @@ export function ServiceEntryCard({
         index={index}
         onRemove={() => onRemoveEntry(service.id, entry.entryId)}
       />
+
+      {section.key === "repair" ? (
+        <RepairEntryConfig
+          entry={entry}
+          serviceId={service.id}
+          onUpdateEntry={onUpdateEntry}
+        />
+      ) : null}
 
       {section.key === "stabilizer" ? (
         <StabilizerEntryConfig
@@ -221,6 +233,8 @@ export function ServiceEntryCard({
         entry={entry}
         onSelectOptionValue={onSelectOptionValue}
       />
+
+      {error ? <p className="text-xs font-bold text-error">{error}</p> : null}
 
       {previewPrice !== null && previewPrice > 0 ? (
         <p className="text-[11px] text-on-surface-variant">

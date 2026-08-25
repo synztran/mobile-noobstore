@@ -9,9 +9,9 @@ import { useMemo } from "react";
 import { ServiceEntryCard } from "./ServiceEntryCard";
 import type { ServiceEntryDraft, ServiceSectionCardProps } from "./types";
 import {
-	buildPricingMaps,
-	computeEntryPreviewPrice,
-	type PricingMaps,
+  buildPricingMaps,
+  computeEntryPreviewPrice,
+  type PricingMaps,
 } from "./bookingHelpers";
 
 // Re-exports for external consumers (useServiceBookingFlow, validators, handlers)
@@ -33,6 +33,7 @@ export type { ServiceEntryDraft } from "./types";
 export function ServiceSectionCard({
   section,
   selections,
+  entryErrors,
   onAddEntry,
   onRemoveEntry,
   onSelectOptionValue,
@@ -40,9 +41,12 @@ export function ServiceSectionCard({
   onUpdateEntry,
 }: ServiceSectionCardProps) {
   return (
-    <section id={section.key} className="scroll-mt-24 rounded-2xl bg-surface-container">
+    <section
+      id={section.key}
+      className="scroll-mt-24 rounded-2xl bg-surface-container"
+    >
       {section.heroImageUrl ? (
-        <div className="relative h-40 w-full">
+        <div className="relative h-52 w-full">
           <Image
             src={section.heroImageUrl}
             alt={`${section.title} hero`}
@@ -54,20 +58,24 @@ export function ServiceSectionCard({
       ) : null}
       <div className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="text-sm font-black uppercase tracking-wide text-on-surface">
-              {section.title}
-            </h3>
+          <div className="w-full min-w-0">
+            <div className="flex w-full items-center justify-between gap-4">
+              <span className="font-black uppercase tracking-wide text-on-surface">
+                {section.title}
+              </span>
+              <span className="shrink-0 text-xs tracking-wider text-on-surface-variant">
+                <strong className="text-primary">
+                  {section.services.length}
+                </strong>{" "}
+                dịch vụ khả dụng
+              </span>
+            </div>
             {section.hint ? (
-              <p className="mt-0.5 text-xs text-on-surface-variant">
+              <p className="mt-0.5 text-sm text-on-surface-variant">
                 {section.hint}
               </p>
             ) : null}
           </div>
-          <span className="shrink-0 text-[10px] uppercase tracking-wider text-on-surface-variant">
-            <strong className="text-primary">{section.services.length}</strong>{" "}
-            dịch vụ
-          </span>
         </div>
 
         <div className="space-y-4">
@@ -76,6 +84,7 @@ export function ServiceSectionCard({
               key={service.id}
               service={service}
               entries={selections[service.id] ?? []}
+              entryErrors={entryErrors?.[service.id]}
               section={section}
               onAddEntry={onAddEntry}
               onRemoveEntry={onRemoveEntry}
@@ -95,6 +104,7 @@ export function ServiceSectionCard({
 function ServiceCard({
   service,
   entries,
+  entryErrors,
   section,
   onAddEntry,
   onRemoveEntry,
@@ -104,6 +114,7 @@ function ServiceCard({
 }: {
   service: BookingService;
   entries: ServiceEntryDraft[];
+  entryErrors?: Record<string, string>;
   section: ServiceSectionCardProps["section"];
   onAddEntry: ServiceSectionCardProps["onAddEntry"];
   onRemoveEntry: ServiceSectionCardProps["onRemoveEntry"];
@@ -120,15 +131,23 @@ function ServiceCard({
           sum +
           service.base_price *
             (service.service_section === "switch"
-              ? entry.switchCount ?? 1
+              ? (entry.switchCount ?? 1)
               : 1)
         );
       }, 0),
-    [entries, service],
+    [entries, service]
   );
 
-  return (
-    <div className="space-y-2 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-3">
+  const hasError = entryErrors != null && Object.keys(entryErrors).length > 0;
+
+  const cardContent = (
+    <div
+      className={`space-y-2 rounded-[14px] p-3 ${
+        hasError
+          ? "border border-error/20 bg-error/5"
+          : "border border-outline-variant/20 bg-surface-container-lowest"
+      }`}
+    >
       <div className="flex flex-col">
         <p className="text-sm font-black leading-tight text-on-surface">
           {service.name}
@@ -169,17 +188,18 @@ function ServiceCard({
               service={service}
               entry={entry}
               index={idx}
+              error={entryErrors?.[entry.entryId]}
               onRemoveEntry={onRemoveEntry}
               onUpdateEntry={onUpdateEntry}
               onSelectOptionValue={onSelectOptionValue}
               onChangeLineNote={onChangeLineNote}
             />
           ))}
-          <div className="flex items-center justify-between border-t border-outline-variant/20 pt-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-              Tạm tính
+          <div className="flex items-center justify-between border-t border-outline-variant/20 pt-2 text-sm">
+            <span className="font-black tracking-widest text-on-surface-variant">
+              Tổng tiền
             </span>
-            <span className="text-sm font-black text-primary">
+            <span className="font-black text-primary">
               {formatVND(subtotal)}
             </span>
           </div>
@@ -201,4 +221,10 @@ function ServiceCard({
       </button>
     </div>
   );
+
+  if (hasError) {
+    return <div className="rounded-2xl p-[2px]">{cardContent}</div>;
+  }
+
+  return cardContent;
 }

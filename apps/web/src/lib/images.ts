@@ -12,6 +12,8 @@ export const SERVICE_PAGE_CLEANING_SECTION_IMAGE =
   "/services/sections/clean.jpg";
 export const SERVICE_PAGE_KEYCAP_SECTION_IMAGE =
   "/services/sections/fix_stem.jpg";
+export const SERVICE_PAGE_REPAIR_SECTION_IMAGE =
+  "/services/sections/pcb.avif";
 
 // Root
 export const IMAGE_APPLE_TOUCH_ICON = "/apple-touch-icon.png";

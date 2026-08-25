@@ -27,6 +27,8 @@ interface TopNavProps {
   backHref?: string;
   showCart?: boolean;
   showFavorite?: boolean;
+  showHelp?: boolean;
+  onHelpClick?: () => void;
   className?: string;
 }
 
@@ -36,6 +38,8 @@ export function TopNav({
   backHref = "/",
   showCart = true,
   showFavorite = false,
+  showHelp = false,
+  onHelpClick,
   className,
 }: TopNavProps) {
   const mounted = useIsMounted();
@@ -122,34 +126,45 @@ export function TopNav({
             <Icon name="favorite" />
           </button>
         )}
-        <button
-          aria-label="Giỏ hàng"
-          disabled={hideCart}
-          onClick={handleCartClick}
-          data-cart-icon
-          className={`relative text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 flex items-center ${hideCart ? "cursor-not-allowed opacity-0" : ""}`}
-        >
-          {!isHydrated && showCart && !hideCart ? (
-            <div className="skeleton h-[26px] w-[26px] rounded-full" />
-          ) : cartFetching ? (
-            <span className="loading loading-spinner loading-sm" />
-          ) : (
-            <span
-              key={cartBounce}
-              className="inline-flex animate-[icon-bounce_0.35s_ease-out] "
-            >
-              <Icon name="shopping_cart" className="text-[26px]" />
-              {count > 0 && (
-                <span
-                  aria-hidden="true"
-                  className="w-4.5 h-4.5 absolute -right-1.5 -top-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-white"
-                >
-                  {count}
-                </span>
-              )}
-            </span>
-          )}
-        </button>
+        {showHelp ? (
+          <button
+            aria-label="Hướng dẫn sử dụng"
+            onClick={onHelpClick}
+            className="relative text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95"
+          >
+            <span className="absolute -inset-1 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] rounded-full bg-primary/20" />
+            <Icon name="help" className="relative text-[22px]" />
+          </button>
+        ) : (
+          <button
+            aria-label="Giỏ hàng"
+            disabled={hideCart}
+            onClick={handleCartClick}
+            data-cart-icon
+            className={`relative text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95 flex items-center ${hideCart ? "cursor-not-allowed opacity-0" : ""}`}
+          >
+            {!isHydrated && showCart && !hideCart ? (
+              <div className="skeleton h-[26px] w-[26px] rounded-full" />
+            ) : cartFetching ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <span
+                key={cartBounce}
+                className="inline-flex animate-[icon-bounce_0.35s_ease-out] "
+              >
+                <Icon name="shopping_cart" className="text-[26px]" />
+                {count > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="w-4.5 h-4.5 absolute -right-1.5 -top-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-white"
+                  >
+                    {count}
+                  </span>
+                )}
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       <TopNavDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />

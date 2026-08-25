@@ -8,6 +8,17 @@ const nextConfig = {
   // instead of bundled into every serverless function — faster cold starts.
   serverExternalPackages: ["resend", "@upstash/redis"],
 
+  // /new-release content moved into the aggregated /news hub
+  async redirects() {
+    return [
+      {
+        source: "/new-release",
+        destination: "/news?type=release",
+        permanent: false,
+      },
+    ];
+  },
+
   experimental: {
     // Enables per-import tree-shaking for icon and UI libraries.
     // Next.js rewrites e.g. `import { X } from "lucide-react"` to a direct

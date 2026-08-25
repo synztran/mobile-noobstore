@@ -2,6 +2,7 @@ import {
 	SERVICE_PAGE_CLEANING_SECTION_IMAGE,
 	SERVICE_PAGE_KEYCAP_SECTION_IMAGE,
 	SERVICE_PAGE_PCB_SECTION_IMAGE,
+	SERVICE_PAGE_REPAIR_SECTION_IMAGE,
 	SERVICE_PAGE_STABILIZER_SECTION_IMAGE,
 	SERVICE_PAGE_SWITCH_SECTION_IMAGE,
 } from "@/lib/images";
@@ -38,6 +39,7 @@ export interface Service {
 }
 
 export type BookingSectionKey =
+	| "repair"
 	| "switch"
 	| "stabilizer"
 	| "lubricant"
@@ -94,6 +96,7 @@ export interface BookingConfigResponse {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SECTION_ORDER: BookingSectionKey[] = [
+	"repair",
 	"switch",
 	"stabilizer",
 	"lubricant",
@@ -103,6 +106,7 @@ const SECTION_ORDER: BookingSectionKey[] = [
 ];
 
 const SECTION_TITLES: Record<BookingSectionKey, string> = {
+	repair: "Dịch vụ Sửa chữa",
 	switch: "Dịch vụ Switch",
 	stabilizer: "Dịch vụ Stabilizer",
 	lubricant: "Dịch vụ Bôi trơn",
@@ -112,6 +116,7 @@ const SECTION_TITLES: Record<BookingSectionKey, string> = {
 };
 
 const SECTION_HINTS: Record<BookingSectionKey, string> = {
+	repair: "Chẩn đoán và sửa lỗi bàn phím — kèm ảnh mô tả",
 	switch: "Lube, thay và hiệu chỉnh switch",
 	stabilizer: "Cắt chân, bôi trơn và lắp đặt stabilizer",
 	lubricant: "Bôi trơn switch theo loại dầu / grease",
@@ -121,6 +126,7 @@ const SECTION_HINTS: Record<BookingSectionKey, string> = {
 };
 
 const SECTION_HERO_IMAGE: Record<BookingSectionKey, string> = {
+	repair: SERVICE_PAGE_REPAIR_SECTION_IMAGE,
 	switch: SERVICE_PAGE_SWITCH_SECTION_IMAGE,
 	stabilizer: SERVICE_PAGE_STABILIZER_SECTION_IMAGE,
 	lubricant: "",

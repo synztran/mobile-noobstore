@@ -48,6 +48,11 @@ const NAV_ITEMS = [
     href: "/profile/stock-alerts",
   },
   {
+    icon: "newspaper",
+    label: "Tin tức & Ưu đãi",
+    href: "/news",
+  },
+  {
     icon: "help",
     label: "Trợ giúp & Hỗ trợ",
     href: "/profile/support",

@@ -100,7 +100,7 @@ body {
 		@apply text-[rgb(var(--admin-text-muted))];
 	}
 	.input-base {
-		@apply bg-[rgb(var(--admin-surface))] border-[rgb(var(--admin-border))] text-[rgb(var(--admin-text))];
+		@apply border rounded-lg border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-surface))] text-[rgb(var(--admin-text))] placeholder:text-[rgb(var(--admin-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500;
 	}
 	.btn-icon-edit {
 		@apply bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40;

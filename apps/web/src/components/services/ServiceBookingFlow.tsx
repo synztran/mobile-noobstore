@@ -16,13 +16,17 @@ import {
   Plus,
   SlidersHorizontal,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const STEPS = [
-  { icon: Plus, title: "Thêm dịch vụ", caption: "Chọn 1 hoặc nhiều mục" },
-  { icon: SlidersHorizontal, title: "Tuỳ chỉnh", caption: "Số lượng & tuỳ chọn" },
+  { icon: Plus, title: "Thêm dịch vụ", caption: "Lựa chọn các mục" },
+  {
+    icon: SlidersHorizontal,
+    title: "Tuỳ chỉnh",
+    caption: "Số lượng & tuỳ chọn",
+  },
   { icon: CalendarClock, title: "Chọn giờ hẹn", caption: "Thời gian lấy hàng" },
-  { icon: PackageCheck, title: "Nhận bàn phím", caption: "Xác nhận đơn" },
+  { icon: PackageCheck, title: "Tiếp nhận", caption: "Xác nhận đơn" },
 ];
 
 const FAQS = [
@@ -50,20 +54,23 @@ function StepsStrip() {
       <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
         Cách đặt lịch
       </p>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4">
         {STEPS.map((step, idx) => (
-          <div key={step.title} className="flex flex-col items-center gap-1.5 text-center">
+          <div
+            key={step.title}
+            className="flex flex-col items-center gap-1.5 text-center"
+          >
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary-gradient text-white shadow-sm shadow-primary/20">
-              <step.icon className="h-5 w-5" />
-              <span className="absolute -left-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-surface text-[9px] font-black text-primary ring-1 ring-outline-variant/30">
+              <step.icon className="h-6 w-6" />
+              <span className="absolute -left-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-surface text-[10px] font-black text-primary ring-1 ring-outline-variant/30">
                 {idx + 1}
               </span>
             </div>
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-wider text-on-surface">
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-black uppercase tracking-wider text-on-surface">
                 {step.title}
               </p>
-              <p className="mt-0.5 text-[8px] leading-tight text-on-surface-variant">
+              <p className="text-[9px] leading-tight text-on-surface-variant">
                 {step.caption}
               </p>
             </div>
@@ -81,6 +88,19 @@ function SectionQuickNav({
   sections: BookingSection[];
   counts: Record<string, number>;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showFade, setShowFade] = useState(false);
+
+  const updateFade = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setShowFade(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    updateFade();
+  }, [updateFade, sections.length]);
+
   const scrollTo = (key: string) => {
     document
       .getElementById(key)
@@ -88,29 +108,43 @@ function SectionQuickNav({
   };
 
   return (
-    <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-      <span className="shrink-0 self-center text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+    <div className="-mx-4 flex items-center gap-3 px-4">
+      <span className="shrink-0 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
         Chọn nhanh
       </span>
-      {sections.map((section) => {
-        const count = counts[section.key] ?? 0;
-        const label = section.title.replace(/^Dịch vụ /, "");
-        return (
-          <button
-            key={section.key}
-            type="button"
-            onClick={() => scrollTo(section.key)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-outline-variant/30 bg-surface-container px-3 py-1.5 text-[11px] font-bold text-on-surface transition-colors active:scale-95"
-          >
-            {label}
-            {count > 0 ? (
-              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-on-primary">
-                {count}
-              </span>
-            ) : null}
-          </button>
-        );
-      })}
+      <div className="relative min-w-0 flex-1">
+        <div
+          ref={scrollRef}
+          onScroll={updateFade}
+          className="hide-scrollbar flex gap-3 overflow-x-auto px-0.5 py-2"
+        >
+          {sections.map((section) => {
+            const count = counts[section.key] ?? 0;
+            const label = section.title.replace(/^Dịch vụ /, "");
+            return (
+              <button
+                key={section.key}
+                type="button"
+                onClick={() => scrollTo(section.key)}
+                className="relative inline-flex shrink-0 items-center gap-1.5 rounded-md border border-outline-variant/30 bg-surface-container px-3 py-1.5 text-[11px] font-bold text-on-surface transition-colors active:scale-95"
+              >
+                {label}
+                {count > 0 ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-black text-on-primary ring-2 ring-surface"
+                  >
+                    {count > 9 ? `9+` : count}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+        {showFade ? (
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface to-transparent" />
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -160,8 +194,6 @@ function FaqAccordion() {
 }
 
 // Placeholder contact info — replace with real hotline / Zalo.
-const HOTLINE = "0123456789";
-const ZALO_URL = "https://zalo.me/0123456789";
 
 function ContactCard() {
   return (
@@ -179,19 +211,12 @@ function ContactCard() {
       </div>
       <div className="grid grid-cols-2 gap-2">
         <a
-          href={`tel:${HOTLINE}`}
-          className="inline-flex items-center justify-center gap-1.5 rounded-full bg-primary-gradient px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm shadow-primary/20 active:scale-95"
-        >
-          <Phone size={13} />
-          Gọi hotline
-        </a>
-        <a
-          href={ZALO_URL}
+          href={process.env.NEXT_PUBLIC_FACEBOOK_URL}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center justify-center gap-1.5 rounded-full border border-outline-variant/30 bg-surface-container px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-on-surface active:scale-95"
+          className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-full border border-outline-variant/30 bg-primary px-4 py-2.5 text-xs font-black uppercase tracking-widest text-on-surface text-surface-variant active:scale-95"
         >
-          Nhắn Zalo
+          Hỗ trợ 24/7
         </a>
       </div>
     </div>
@@ -227,7 +252,8 @@ export function ServiceBookingFlow() {
     setPickupAt,
     pickupNote,
     setPickupNote,
-    validationError,
+    globalError,
+    entryErrors,
     summary,
     bookingMutation,
     successOpen,
@@ -247,8 +273,9 @@ export function ServiceBookingFlow() {
     for (const section of bookingConfigQuery.data?.sections ?? []) {
       let total = 0;
       for (const service of section.services) {
-        total += (selections[service.id] as ServiceEntryDraft[] | undefined)
-          ?.length ?? 0;
+        total +=
+          (selections[service.id] as ServiceEntryDraft[] | undefined)?.length ??
+          0;
       }
       counts[section.key] = total;
     }
@@ -290,10 +317,12 @@ export function ServiceBookingFlow() {
   const sections = bookingConfigQuery.data?.sections ?? [];
 
   return (
-    <section className="space-y-5 pb-8">
+    <section className={`space-y-4 pb-8`}>
       <StepsStrip />
 
-      <SectionQuickNav sections={sections} counts={sectionCounts} />
+      <div id="tour-quick-nav">
+        <SectionQuickNav sections={sections} counts={sectionCounts} />
+      </div>
 
       {authLoading ? (
         <div className="animate-pulse rounded-2xl bg-surface-container p-4">
@@ -301,34 +330,45 @@ export function ServiceBookingFlow() {
         </div>
       ) : null}
 
-      <div className="space-y-4">
-        {sections.map((section) => (
-          <ServiceSectionCard
-            key={section.key}
-            section={section}
-            selections={selections}
-            onAddEntry={handleAddEntry}
-            onRemoveEntry={handleRemoveEntry}
-            onSelectOptionValue={handleSelectOptionValue}
-            onChangeLineNote={handleChangeLineNote}
-            onUpdateEntry={handleUpdateEntry}
-          />
+      <div id="tour-sections" className="relative clear-both">
+        {sections.map((section, idx) => (
+          <div key={section.key}>
+            <ServiceSectionCard
+              section={section}
+              selections={selections}
+              entryErrors={entryErrors}
+              onAddEntry={handleAddEntry}
+              onRemoveEntry={handleRemoveEntry}
+              onSelectOptionValue={handleSelectOptionValue}
+              onChangeLineNote={handleChangeLineNote}
+              onUpdateEntry={handleUpdateEntry}
+            />
+            {idx < sections.length - 1 ? (
+              <div className="flex items-center justify-center gap-2 py-4">
+                <span className="h-1 w-1 rounded-full bg-outline-variant/40" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary/30" />
+                <span className="h-1 w-1 rounded-full bg-outline-variant/40" />
+              </div>
+            ) : null}
+          </div>
         ))}
       </div>
 
-      <BookingAppointmentSection
-        pickupAt={pickupAt}
-        setPickupAt={setPickupAt}
-        pickupNote={pickupNote}
-        setPickupNote={setPickupNote}
-      />
+      <div id="tour-appointment">
+        <BookingAppointmentSection
+          pickupAt={pickupAt}
+          setPickupAt={setPickupAt}
+          pickupNote={pickupNote}
+          setPickupNote={setPickupNote}
+        />
+      </div>
 
       <FaqAccordion />
 
       <ContactCard />
 
-      {validationError ? (
-        <p className="text-xs font-bold text-error">{validationError}</p>
+      {globalError ? (
+        <p className="text-xs font-bold text-error">{globalError}</p>
       ) : null}
 
       {bookingMutation.error ? (
@@ -342,6 +382,7 @@ export function ServiceBookingFlow() {
         totalHandlingDays={summary.totalHandlingDays}
         selectedCount={summary.selectedCount}
         summaryItems={summary.summaryItems}
+        pickupAt={pickupAt}
         disabled={!user || authLoading || bookingConfigQuery.isPending}
         isSubmitting={bookingMutation.isPending}
         onSubmit={handleSubmit}

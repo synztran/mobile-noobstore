@@ -49,6 +49,7 @@ export interface ProductListItem {
   tags: ProductTag[];
   discount_price: number;
   discount_percentage: number;
+  sale_ends_at: string | null;
   created_at: string;
   sold_count: number;
   gifts?: Array<{
@@ -79,6 +80,7 @@ type RawListRow = {
   brand: string | null;
   description: string;
   base_price: number;
+  sale_ends_at: string | null;
   stock_quantity: number;
   thumbnail: string | null;
   images: unknown;
@@ -416,6 +418,7 @@ function shapeRow(
     tags: [],
     discount_price: minPrice < basePrice ? minPrice : 0,
     discount_percentage: discountPercentage,
+    sale_ends_at: row.sale_ends_at ?? null,
     created_at: row.created_at,
     sold_count: Number(row.sold_count ?? 0),
   };
@@ -520,7 +523,7 @@ export async function getProductListByFilters(
     // ── Fetch paginated products (sorted by user's choice) ──
     // Note: `images` is intentionally omitted — the list rails/cards only use
     // `thumbnail`; the full gallery is fetched by the detail/configurator paths.
-    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
+    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count, sale_ends_at,
        categories(id, name),
        product_variants(${VARIANT_COLUMNS})`;
 
@@ -587,7 +590,7 @@ export async function getProductsByIds(
   const safeIds = ids.filter((id) => typeof id === "string" && id.length > 0);
   if (safeIds.length === 0) return [];
 
-  const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count,
+  const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count, sale_ends_at,
      categories(id, name),
      product_variants(${VARIANT_COLUMNS})`;
 

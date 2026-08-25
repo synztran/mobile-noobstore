@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { SaleCountdown } from "@/components/product/SaleCountdown";
 
 const MESSAGES = [
   { text: "Ưu đãi đặc biệt cho đơn hàng đầu tiên", href: "/shop" },
@@ -14,22 +15,36 @@ const MESSAGES = [
 
 const ROTATE_INTERVAL = 3500;
 
-export function AnnouncementBanner() {
+export interface FlashSalePromo {
+  text: string;
+  href: string;
+  endsAt: string;
+}
+
+export function AnnouncementBanner({
+  flashSale,
+}: {
+  flashSale?: FlashSalePromo | null;
+}) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [visible, setVisible] = useState(true);
+
+  const messages = flashSale
+    ? [{ text: flashSale.text, href: flashSale.href }, ...MESSAGES]
+    : MESSAGES;
 
   useEffect(() => {
     const timer = setInterval(() => {
       setVisible(false);
       setTimeout(() => {
-        setActiveIdx((i) => (i + 1) % MESSAGES.length);
+        setActiveIdx((i) => (i + 1) % messages.length);
         setVisible(true);
       }, 300);
     }, ROTATE_INTERVAL);
     return () => clearInterval(timer);
-  }, []);
+  }, [messages.length]);
 
-  const msg = MESSAGES[activeIdx];
+  const msg = messages[activeIdx];
 
   return (
     <div className="relative flex w-full items-center justify-center overflow-hidden bg-on-surface px-4 py-2.5 text-surface">
@@ -42,11 +57,16 @@ export function AnnouncementBanner() {
         }`}
       >
         {msg.text}
+        {flashSale && activeIdx === 0 && (
+          <span className="ml-2 inline-block align-middle">
+            <SaleCountdown endsAt={flashSale.endsAt} />
+          </span>
+        )}
       </Link>
 
       {/* Dot indicators */}
       <div className="absolute right-4 flex items-center gap-1">
-        {MESSAGES.map((_, i) => (
+        {messages.map((_, i) => (
           <button
             key={i}
             aria-label={`Go to announcement ${i + 1}`}

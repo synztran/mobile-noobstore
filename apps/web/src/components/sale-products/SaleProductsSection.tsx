@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useHomeSaleProducts } from "@/lib/react-query/home/api/useHomeQueries";
+import { SaleCountdown } from "@/components/product/SaleCountdown";
 
 function SaleProductCard({ product }: { product: ShopProduct }) {
   // Calculate discount percentage
@@ -51,6 +52,14 @@ function SaleProductCard({ product }: { product: ShopProduct }) {
             -{discountPercent}%
           </div>
         )}
+
+        {/* Flash sale countdown */}
+        {product.sale_ends_at &&
+          new Date(product.sale_ends_at).getTime() > Date.now() && (
+            <div className="absolute bottom-3 left-3">
+              <SaleCountdown endsAt={product.sale_ends_at} />
+            </div>
+          )}
 
         {/* Sold out overlay */}
         {product.stock_quantity === 0 && (

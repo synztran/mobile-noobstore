@@ -4,6 +4,41 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Defense-in-depth: verifies the caller may mutate this cart item before any
+ * write happens, instead of relying solely on RLS.
+ *
+ * Mirrors the cart RLS policies:
+ *   - signed-in user  → item's parent cart must belong to them
+ *   - anonymous guest → item's parent cart must be a guest cart (user_id NULL)
+ */
+async function assertCartAccess(
+	supabase: Awaited<ReturnType<typeof createClient>>,
+	itemId: string,
+): Promise<boolean> {
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	const { data: item } = await supabase
+		.from("cart_items")
+		.select("cart_id, carts(user_id)")
+		.eq("id", itemId)
+		.maybeSingle();
+
+	if (!item) return false;
+
+	// Nested relation shape varies (object | array) depending on FK inference.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const ownerUserId: string | null = Array.isArray(item.carts)
+		? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+		  ((item.carts as any)[0]?.user_id ?? null)
+		: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+		  ((item.carts as any)?.user_id ?? null);
+
+	return user ? ownerUserId === user.id : ownerUserId === null;
+}
+
 export async function PATCH(
 	req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
@@ -26,6 +61,10 @@ export async function PATCH(
 		}
 
 		const supabase = await createClient();
+		if (!(await assertCartAccess(supabase, id))) {
+			return NextResponse.json({ error: "Item not found" }, { status: 404 });
+		}
+
 		await updateCartItemQuantity(supabase, id, quantity);
 
 		return NextResponse.json({ success: true });
@@ -62,6 +101,10 @@ export async function DELETE(
 		}
 
 		const supabase = await createClient();
+		if (!(await assertCartAccess(supabase, id))) {
+			return NextResponse.json({ error: "Item not found" }, { status: 404 });
+		}
+
 		await removeCartItem(supabase, id);
 
 		return NextResponse.json({ success: true });

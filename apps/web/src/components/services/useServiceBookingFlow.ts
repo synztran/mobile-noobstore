@@ -9,6 +9,7 @@ import type {
 	BookingService,
 } from "@/app/api/services/booking-config/route";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { toast } from "@/lib/toast";
 import {
 	useBookingConfig,
 	useServiceBookingMutation,
@@ -142,6 +143,7 @@ function computeBookingSummary(
 			grouped.set(serviceId, {
 				serviceId,
 				serviceName: service.name,
+				sectionKey: service.service_section,
 				count: entries.length,
 				handlingDays: service.handling_days * entries.length,
 				price: servicePrice,
@@ -166,6 +168,9 @@ function buildSelectionsForPayload(
 		if (!service) return [];
 		return entries.map((entry) => {
 			const { quantity, noteParts } = resolveSectionEntry(entry, service);
+			if (entry.repairIssue) {
+				noteParts.unshift(`Mô tả lỗi: ${entry.repairIssue}`);
+			}
 			if (entry.lineNote) noteParts.push(entry.lineNote);
 			return {
 				service_id: serviceId,
@@ -175,6 +180,10 @@ function buildSelectionsForPayload(
 				),
 				line_note:
 					noteParts.length > 0 ? noteParts.join(" | ") : undefined,
+				attachments:
+					entry.attachmentUploads && entry.attachmentUploads.length > 0
+						? entry.attachmentUploads.map((u) => u.path)
+						: undefined,
 			};
 		});
 	});
@@ -190,7 +199,8 @@ export function useServiceBookingFlow() {
 	const [pickupAt, setPickupAt] = useState("");
 	const [pickupNote, setPickupNote] = useState("");
 	const [customerNote, setCustomerNote] = useState("");
-	const [validationError, setValidationError] = useState<string | null>(null);
+	const [globalError, setGlobalError] = useState<string | null>(null);
+	const [entryErrors, setEntryErrors] = useState<Record<string, Record<string, string>>>({});
 	const [successOpen, setSuccessOpen] = useState(false);
 	const [successOrderNumber, setSuccessOrderNumber] = useState<string | null>(
 		null,
@@ -224,7 +234,12 @@ export function useServiceBookingFlow() {
 	const bookingMutation = useServiceBookingMutation();
 
 	const handleAddEntry = (service: BookingService) => {
-		setValidationError(null);
+		setGlobalError(null);
+		setEntryErrors((prev) => {
+			const next = { ...prev };
+			delete next[service.id];
+			return next;
+		});
 		setSelections((prev) => {
 			const current = prev[service.id] ?? [];
 			return {
@@ -239,6 +254,18 @@ export function useServiceBookingFlow() {
 		entryId: string,
 		update: Partial<ServiceEntryDraft>,
 	) => {
+		setEntryErrors((prev) => {
+			if (!prev[serviceId]) return prev;
+			const next = { ...prev };
+			const serviceErrors = { ...next[serviceId] };
+			delete serviceErrors[entryId];
+			if (Object.keys(serviceErrors).length === 0) {
+				delete next[serviceId];
+			} else {
+				next[serviceId] = serviceErrors;
+			}
+			return next;
+		});
 		setSelections((prev) => {
 			const entries = prev[serviceId] ?? [];
 			return {
@@ -251,6 +278,18 @@ export function useServiceBookingFlow() {
 	};
 
 	const handleRemoveEntry = (serviceId: string, entryId: string) => {
+		setEntryErrors((prev) => {
+			if (!prev[serviceId]) return prev;
+			const next = { ...prev };
+			const serviceErrors = { ...next[serviceId] };
+			delete serviceErrors[entryId];
+			if (Object.keys(serviceErrors).length === 0) {
+				delete next[serviceId];
+			} else {
+				next[serviceId] = serviceErrors;
+			}
+			return next;
+		});
 		setSelections((prev) => {
 			const next = (prev[serviceId] ?? []).filter(
 				(e) => e.entryId !== entryId,
@@ -271,7 +310,19 @@ export function useServiceBookingFlow() {
 		valueId: number,
 		isRequired: boolean,
 	) => {
-		setValidationError(null);
+		setGlobalError(null);
+		setEntryErrors((prev) => {
+			if (!prev[service.id]) return prev;
+			const next = { ...prev };
+			const serviceErrors = { ...next[service.id] };
+			delete serviceErrors[entryId];
+			if (Object.keys(serviceErrors).length === 0) {
+				delete next[service.id];
+			} else {
+				next[service.id] = serviceErrors;
+			}
+			return next;
+		});
 		setSelections((prev) => {
 			const entries = prev[service.id] ?? [];
 			return {
@@ -309,12 +360,20 @@ export function useServiceBookingFlow() {
 
 	const handleSubmit = () => {
 		if (!user) {
-			setValidationError("Vui lòng đăng nhập để đặt dịch vụ.");
+			const msg = "Vui lòng đăng nhập để đặt dịch vụ.";
+			setGlobalError(msg);
+			setEntryErrors({});
+			toast.error(msg);
 			return;
 		}
-		const error = validateSelections(servicesById, selections, pickupAt);
-		if (error) {
-			setValidationError(error);
+		const result = validateSelections(servicesById, selections, pickupAt);
+		if (result.globalError || Object.keys(result.entryErrors).length > 0) {
+			setGlobalError(result.globalError ?? null);
+			setEntryErrors(result.entryErrors);
+			const firstEntryError = Object.values(result.entryErrors)
+				.flatMap((byEntry) => Object.values(byEntry))
+				.find(Boolean);
+			toast.error(result.globalError ?? firstEntryError ?? "Vui lòng kiểm tra lại thông tin.");
 			return;
 		}
 		bookingMutation.mutate(
@@ -336,7 +395,8 @@ export function useServiceBookingFlow() {
 					setPickupAt("");
 					setPickupNote("");
 					setCustomerNote("");
-					setValidationError(null);
+					setGlobalError(null);
+					setEntryErrors({});
 				},
 			},
 		);
@@ -349,7 +409,8 @@ export function useServiceBookingFlow() {
 		setPickupAt("");
 		setPickupNote("");
 		setCustomerNote("");
-		setValidationError(null);
+		setGlobalError(null);
+		setEntryErrors({});
 	};
 
 	return {
@@ -367,7 +428,8 @@ export function useServiceBookingFlow() {
 		setPickupNote,
 		customerNote,
 		setCustomerNote,
-		validationError,
+		globalError,
+		entryErrors,
 		// summary
 		summary,
 		// mutation

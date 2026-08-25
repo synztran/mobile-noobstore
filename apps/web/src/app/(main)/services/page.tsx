@@ -3,17 +3,33 @@
 import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
 import { TopNav } from "@/components/layout/TopNav";
 import { ServiceBookingFlow } from "@/components/services/ServiceBookingFlow";
+import { ServicesTour } from "@/components/services/ServicesTour";
 import { SERVICE_PAGE_HERO_IMAGE } from "@/lib/images";
 import { ShieldCheck } from "lucide-react";
 import Image from "next/image";
+import { useCallback, useRef } from "react";
 
 const ServicesPage = () => {
+  const startTourRef = useRef<(() => void) | null>(null);
+  const handleTourReady = useCallback((start: () => void) => {
+    startTourRef.current = start;
+  }, []);
+
   return (
     <>
-      <TopNav showBack backHref="/" title="Dịch vụ" showCart />
+      <TopNav
+        showBack
+        backHref="/"
+        title="Dịch vụ"
+        showHelp
+        onHelpClick={() => startTourRef.current?.()}
+      />
 
-      <main className="space-y-5 pb-24">
-        <div className="relative h-[55vw] max-h-72 w-full overflow-hidden">
+      <main className="space-y-5 pb-12">
+        <div
+          id="tour-hero"
+          className="relative h-[55vw] max-h-72 w-full overflow-hidden"
+        >
           <Image
             src={SERVICE_PAGE_HERO_IMAGE}
             alt="Dịch vụ bàn phím cơ Noobstore"
@@ -33,7 +49,7 @@ const ServicesPage = () => {
           </div>
         </div>
 
-        <div className="space-y-5 px-4">
+        <div className="space-y-4 px-4">
           <div className="relative flex items-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-surface-container-lowest to-surface-container-low p-4 shadow-ambient-sm">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-gradient text-white shadow-lg shadow-primary/20">
               <ShieldCheck className="h-6 w-6" />
@@ -52,6 +68,8 @@ const ServicesPage = () => {
           <ServiceBookingFlow />
         </div>
       </main>
+
+      <ServicesTour onReady={handleTourReady} />
     </>
   );
 };

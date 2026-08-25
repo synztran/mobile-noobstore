@@ -347,7 +347,5 @@ export function computeEntryPreviewPrice(
 	if (section === "switch" && service.id === "svc-switch-lube") return null;
 	if (section === "switch")
 		return service.base_price * (entry.switchCount ?? 1);
-	if (section === "lubricant" || section === "stabilizer")
-		return service.base_price + computeOptionAdjustment(service, entry);
-	return null;
+	return service.base_price + computeOptionAdjustment(service, entry);
 }

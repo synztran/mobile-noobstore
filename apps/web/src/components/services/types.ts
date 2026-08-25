@@ -26,11 +26,15 @@ export interface ServiceEntryDraft {
 	switchStatus?: "new-unlube" | "new-factory-lube" | "used-lubed";
 	// Keycap stem repair
 	keycapStemGroups?: { unit: "1u" | "2u"; quantity: number }[];
+	// Repair section
+	repairIssue?: string;
+	attachmentUploads?: Array<{ path: string; url: string }>;
 }
 
 export interface ServiceSectionCardProps {
 	section: BookingSection;
 	selections: Record<string, ServiceEntryDraft[]>;
+	entryErrors?: Record<string, Record<string, string>>;
 	onAddEntry: (service: BookingService) => void;
 	onRemoveEntry: (serviceId: string, entryId: string) => void;
 	onSelectOptionValue: (

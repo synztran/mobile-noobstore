@@ -2,6 +2,7 @@ import { AnnouncementBanner } from "@/components/home/AnnouncementBanner";
 import { CommunityGallery } from "@/components/home/CommunityGallery";
 import { CommunityPromo } from "@/components/home/CommunityPromo";
 import { CustomerTestimonial } from "@/components/home/CustomerTestimonial";
+import { FlashSaleStrip } from "@/components/home/FlashSaleStrip";
 import { OurStrongPoints } from "@/components/home/OurStrongPoints";
 import { HeroSection } from "@/components/home/HeroSection";
 import { HomeTestimonials } from "@/components/home/HomeTestimonials";
@@ -11,6 +12,7 @@ import { HomeSaleSection } from "@/components/home/SaleSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { LazyNearViewport } from "@/components/ui/LazyNearViewport";
 import { getHeroCampaigns } from "@/lib/hero-server";
+import { getSoonestFlashSale } from "@/lib/flash-sale-server";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -32,11 +34,16 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="relative clear-both space-y-8">
-      <AnnouncementBanner />
+      <Suspense fallback={<AnnouncementBanner />}>
+        <AnnouncementBannerInitial />
+      </Suspense>
       <Suspense fallback={<HeroFallback />}>
         <HeroSectionInitial />
       </Suspense>
       <NoteworthySection />
+      <Suspense fallback={null}>
+        <FlashSaleStripInitial />
+      </Suspense>
       <HomeSaleSection />
       <LazyNearViewport>
         <OurStrongPoints />
@@ -64,6 +71,27 @@ export default function HomePage() {
 async function HeroSectionInitial() {
   const heroCampaigns = await getHeroCampaigns();
   return <HeroSection initialSlides={heroCampaigns} />;
+}
+
+async function FlashSaleStripInitial() {
+  return <FlashSaleStrip />;
+}
+
+async function AnnouncementBannerInitial() {
+  const sale = await getSoonestFlashSale();
+  return (
+    <AnnouncementBanner
+      flashSale={
+        sale
+          ? {
+              text: `⚡ Flash Sale: ${sale.name} — giảm đến hết giờ!`,
+              href: `/shop/${sale.slug}`,
+              endsAt: sale.sale_ends_at,
+            }
+          : null
+      }
+    />
+  );
 }
 
 function HeroFallback() {

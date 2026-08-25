@@ -11,6 +11,8 @@ export interface ServiceBookingSelection {
 	quantity: number;
 	selected_option_value_ids: number[];
 	line_note?: string;
+	/** Public URLs of issue photos uploaded via /api/service-bookings/attachments */
+	attachments?: string[];
 }
 
 export interface ServiceBookingRequest {
@@ -73,6 +75,26 @@ export async function POST(req: NextRequest) {
 	if (invalidQuantity) {
 		return NextResponse.json(
 			{ error: "quantity must be at least 1" },
+			{ status: 400 },
+		);
+	}
+
+	const invalidAttachments = body.selections.some(
+		(s) =>
+			s.attachments !== undefined &&
+			(!Array.isArray(s.attachments) ||
+				s.attachments.length > 5 ||
+				s.attachments.some(
+					(path) =>
+						typeof path !== "string" ||
+						path.length === 0 ||
+						path.length > 512 ||
+						path.includes(".."),
+				)),
+	);
+	if (invalidAttachments) {
+		return NextResponse.json(
+			{ error: "attachments must be a list of at most 5 valid upload paths" },
 			{ status: 400 },
 		);
 	}
@@ -176,18 +198,28 @@ export async function POST(req: NextRequest) {
 			}),
 		);
 
-		return {
-			service_id: selection.service_id,
-			service_name: svc.name,
-			price: unitPrice,
-			quantity: selection.quantity,
-			selected_options: selectedOptions,
-			customer_note: selection.line_note ?? body.customer_note ?? null,
-			pickup_at: pickupAtTs ? new Date(pickupAtTs).toISOString() : null,
-			pickup_note: body.pickup_note ?? null,
-			handling_days_snapshot:
-				config?.handling_days ?? svc.handling_days,
-		};
+	// Convert client-uploaded storage paths to public URLs server-side so we
+	// never persist arbitrary client-supplied URLs.
+	const attachmentUrls = (selection.attachments ?? []).map((path) => {
+		const { data } = supabase.storage
+			.from("ticket-attachments")
+			.getPublicUrl(path);
+		return data.publicUrl;
+	});
+
+	return {
+		service_id: selection.service_id,
+		service_name: svc.name,
+		price: unitPrice,
+		quantity: selection.quantity,
+		selected_options: selectedOptions,
+		customer_note: selection.line_note ?? body.customer_note ?? null,
+		pickup_at: pickupAtTs ? new Date(pickupAtTs).toISOString() : null,
+		pickup_note: body.pickup_note ?? null,
+		handling_days_snapshot:
+			config?.handling_days ?? svc.handling_days,
+		attachments: attachmentUrls,
+	};
 	});
 
 	const orderId = crypto.randomUUID();
