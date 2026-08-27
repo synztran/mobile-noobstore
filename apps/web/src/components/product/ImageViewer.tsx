@@ -17,6 +17,8 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const lastScale = useRef(1);
+  // URLs whose bytes are already in the browser cache (preloaded or viewed).
+  const preloadedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     setIndex(initialIndex);
@@ -24,6 +26,41 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
     setImageLoaded(false);
     lastScale.current = 1;
   }, [initialIndex, isOpen]);
+
+  // Spinner must reflect the CURRENT slide: without this reset the flag stays
+  // true after the first load and later slides pop in with no indication.
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [index]);
+
+  // ── Preloading ────────────────────────────────────────────────────────────
+  // Warm the browser cache for neighbouring slides so a swipe gesture finishes
+  // decoding before the finger leaves the screen; once idle, progressively
+  // warm the whole gallery.
+  const preload = useCallback((url: string) => {
+    if (!url || preloadedRef.current.has(url)) return;
+    preloadedRef.current.add(url);
+    const img = new window.Image();
+    img.src = url;
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || images.length === 0) return;
+
+    const neighbours = [
+      images[(index + 1) % images.length],
+      images[(index - 1 + images.length) % images.length],
+    ];
+    neighbours.forEach(preload);
+
+    // Progressive full-gallery warm-up — staggered so it never competes with
+    // the currently displayed image's bandwidth.
+    const timers = images.map((img, i) => {
+      if (Math.abs(i - index) <= 1) return null;
+      return setTimeout(() => preload(img), 300 * i);
+    });
+    return () => timers.forEach((t) => t && clearTimeout(t));
+  }, [isOpen, index, images, preload]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 2) return;
@@ -96,50 +133,51 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
             transition={{ duration: 0.25, ease: "easeOut" }}
             style={{ transform: `scale(${scale})` }}
           >
+            {/* Keep the previously loaded slide visible underneath so swiping
+                never flashes to black while the next image decodes. */}
+            {images.map(
+              (img, i) =>
+                i !== index &&
+                preloadedRef.current.has(img) && (
+                  <Image
+                    key={`underlay-${img}`}
+                    src={img}
+                    alt=""
+                    fill
+                    className="object-contain opacity-0 pointer-events-none"
+                    sizes="100vw"
+                    draggable={false}
+                  />
+                )
+            )}
             {!imageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="loading loading-spinner loading-lg text-white/60" />
               </div>
             )}
-            <Image
-              src={images[index]}
-              alt=""
-              fill
-              className={`object-contain ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-              sizes="100vw"
-              priority
-              draggable={false}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageLoaded(true)}
-            />
-          </motion.div>
-
-          {images.length > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ delay: 0.2, duration: 0.2, ease: "easeOut" }}
-              className="absolute bottom-10 left-0 right-0 flex justify-center gap-2"
-            >
-              {images.map((img, i) => (
-                <button
-                  key={img}
-                  type="button"
-                  aria-label={`Ảnh ${i + 1} / ${images.length}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIndex(i);
-                  }}
-                  className={`h-1.5 rounded-full transition-all ${
-                    i === index
-                      ? "w-6 bg-white"
-                      : "w-1.5 bg-white/40"
-                  }`}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={images[index]}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={images[index]}
+                  alt=""
+                  fill
+                  className={`object-contain ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                  sizes="100vw"
+                  priority
+                  draggable={false}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageLoaded(true)}
                 />
-              ))}
-            </motion.div>
-          )}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

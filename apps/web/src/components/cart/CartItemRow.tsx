@@ -77,7 +77,7 @@ function CartItemRow({
         )}
       </div>
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="mr-6 line-clamp-3 text-sm font-bold leading-tight text-on-surface">
+        <p className="mr-6 line-clamp-3 text-sm font-semibold tracking-wide text-on-surface">
           {item.product.name}
         </p>
         {item.variant && (
@@ -100,9 +100,10 @@ function CartItemRow({
             {item.components.map((c) => (
               <span
                 key={c.variant_id}
-                className="inline-flex items-center gap-1 rounded-lg bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-on-surface-variant"
+                className="inline-flex items-center gap-1 rounded-sm bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant"
               >
-                {c.component_group}: <strong>{c.variant_name}</strong>
+                {c.component_group}:{" "}
+                <span className="font-black">{c.variant_name}</span>
               </span>
             ))}
           </div>
@@ -125,7 +126,7 @@ function CartItemRow({
           </div>
         ))}
         <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 rounded-lg bg-gray-200 px-2 py-1">
+          <div className="flex items-center gap-2 rounded-lg bg-gray-200 px-2 py-1">
             <button
               onClick={onMinus}
               disabled={isRemoving}

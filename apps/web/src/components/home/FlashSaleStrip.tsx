@@ -21,9 +21,9 @@ function FlashSaleCard({ product }: { product: FlashSaleProduct }) {
 
   return (
     <Link
-      href={`/shop/${product.slug}`}
-      className="group w-[160px] flex-shrink-0 transition-transform active:scale-95"
-    >
+        href={`/shop/${product.slug}`}
+        className="group w-[180px] flex-shrink-0 transition-transform active:scale-95"
+      >
       <div className="relative mb-2.5 aspect-square overflow-hidden rounded-2xl bg-surface-container-high">
         {product.thumbnail ? (
           <Image
@@ -42,7 +42,7 @@ function FlashSaleCard({ product }: { product: FlashSaleProduct }) {
         )}
 
         {discountPercent > 0 && (
-          <div className="absolute left-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-white">
+          <div className="absolute left-3 top-3 rounded-md bg-red-500 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
             -{discountPercent}%
           </div>
         )}
@@ -52,7 +52,7 @@ function FlashSaleCard({ product }: { product: FlashSaleProduct }) {
         </div>
 
         {lowStock && (
-          <div className="absolute right-3 top-3 rounded-md bg-on-surface px-2 py-1 text-[8px] font-black uppercase tracking-widest text-surface">
+          <div className="absolute right-3 top-3 rounded-md bg-on-surface px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-surface">
             Chỉ còn {product.stock_quantity}
           </div>
         )}
@@ -84,14 +84,14 @@ function FlashSaleTimerHeader({ endsAt }: { endsAt: string }) {
   return (
     <div className="mb-6 flex items-center justify-between px-6">
       <div className="flex items-center gap-3">
-        <h2 className="text-2xl font-black uppercase tracking-tight">
+        <h2 className="text-2xl font-bold uppercase tracking-tight">
           Flash Sale
         </h2>
         <SaleCountdown endsAt={endsAt} />
       </div>
       <Link
         href="/shop"
-        className="hidden text-[10px] font-bold uppercase tracking-widest text-primary sm:block"
+        className="text-[11px] font-semibold uppercase tracking-wide text-primary"
       >
         Xem tất cả →
       </Link>

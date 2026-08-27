@@ -72,11 +72,17 @@ export function HomeTestimonials() {
           ))}
         </div>
       ) : testimonials.length === 0 ? null : (
-        <div className="relative">
+        <div className="relative group">
           <div
             className="flex w-max gap-4"
             style={{
               animation: "testimonial-scroll 40s linear infinite",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.animationPlayState = "paused";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.animationPlayState = "running";
             }}
           >
             {[...testimonials, ...testimonials].map((t, i) => (
@@ -86,7 +92,7 @@ export function HomeTestimonials() {
               >
                 <div className="flex items-center gap-2">
                   <GoogleIcon className="h-4 w-4" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-outline">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-outline">
                     Google Reviews
                   </span>
                 </div>
@@ -115,7 +121,7 @@ export function HomeTestimonials() {
                     <p className="text-sm font-bold text-on-surface">
                       {t.name}
                     </p>
-                    <p className="text-[10px] font-semibold text-outline">
+                    <p className="text-[11px] font-medium text-outline">
                       {t.product}
                     </p>
                   </div>

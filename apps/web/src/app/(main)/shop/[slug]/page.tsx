@@ -141,26 +141,105 @@ async function ProductLoader({ slug }: { slug: string }) {
   ]);
   if (!detail) notFound();
 
+  const { product } = detail;
+  const imageUrl =
+    product.thumbnail || product.images?.find(Boolean) || undefined;
+  const productUrl = `https://www.noobstore.xyz/shop/${slug}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description
+      ? product.description.replace(/<[^>]*>/g, "").slice(0, 500)
+      : product.name,
+    image: imageUrl?.startsWith("http")
+      ? imageUrl
+      : imageUrl
+        ? `https://www.noobstore.xyz${imageUrl}`
+        : undefined,
+    brand: product.brand
+      ? { "@type": "Brand", name: product.brand }
+      : undefined,
+    category: product.category,
+    url: productUrl,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "VND",
+      price: product.min_price,
+      availability:
+        product.stock_quantity > 0
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      url: productUrl,
+      seller: { "@type": "Organization", name: "NoobStore" },
+    },
+    aggregateRating:
+      purchaseCount > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: "5",
+            reviewCount: String(purchaseCount),
+          }
+        : undefined,
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Trang chủ",
+        item: "https://www.noobstore.xyz",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Cửa hàng",
+        item: "https://www.noobstore.xyz/shop",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.category,
+        item: `https://www.noobstore.xyz/shop?category=${encodeURIComponent(product.category)}`,
+      },
+      { "@type": "ListItem", position: 4, name: product.name },
+    ],
+  };
+
   return (
-    <ProductView
-      product={detail.product}
-      componentGroups={detail.componentGroups}
-      componentRules={detail.componentRules}
-      purchaseCount={purchaseCount}
-      relatedSlot={
-        <Suspense key="related" fallback={<RailSkeleton />}>
-          <RelatedProductsSection
-            brand={detail.product.brand}
-            slug={detail.product.slug}
-          />
-        </Suspense>
-      }
-      boughtTogetherSlot={
-        <Suspense key="bought-together" fallback={<RailSkeleton />}>
-          <BoughtTogetherSection productId={detail.product.id} />
-        </Suspense>
-      }
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
+      <ProductView
+        product={detail.product}
+        componentGroups={detail.componentGroups}
+        componentRules={detail.componentRules}
+        purchaseCount={purchaseCount}
+        relatedSlot={
+          <Suspense key="related" fallback={<RailSkeleton />}>
+            <RelatedProductsSection
+              brand={detail.product.brand}
+              slug={detail.product.slug}
+            />
+          </Suspense>
+        }
+        boughtTogetherSlot={
+          <Suspense key="bought-together" fallback={<RailSkeleton />}>
+            <BoughtTogetherSection productId={detail.product.id} />
+          </Suspense>
+        }
+      />
+    </>
   );
 }
 

@@ -209,8 +209,17 @@ export function ProductView({
   }, [product.slug]);
 
   return (
-    <div className="pb-4">
+    <article className="pb-4">
       <TopNav showBack backHref="/shop" showCart showFavorite />
+
+      {/* <Breadcrumbs
+        items={[
+          { label: "Trang chủ", href: "/" },
+          { label: "Cửa hàng", href: "/shop" },
+          { label: product.category, href: `/shop?category=${encodeURIComponent(product.category)}` },
+          { label: product.name },
+        ]}
+      /> */}
 
       <main className="my-auto space-y-4 pb-12">
         {/* ── Hero Image Gallery ── */}
@@ -515,6 +524,6 @@ export function ProductView({
           />
         )}
       </motion.div>
-    </div>
+    </article>
   );
 }

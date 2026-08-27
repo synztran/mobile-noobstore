@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import DiscountBadge from "../product/DiscountBadge";
 import ProductComponentTags from "../product/ProductComponentTags";
+import { ProductTags } from "../product/ProductTags";
 
 interface Props {
   product: ShopProduct;
@@ -50,26 +51,13 @@ export function BundleProductCard({
           </div>
         )}
         <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1">
-          {/* {isBestseller && (
-            <div className="rounded-md bg-amber-500 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow-sm">
-              Bán chạy
-            </div>
-          )}
-          {isPreOrder && (
-            <div className="rounded-md bg-violet-500 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-white shadow-sm">
-              Pre-order
-            </div>
-          )}
-          {isUsed && (
-            <div className="rounded-md bg-surface-container-highest px-2 py-1 text-[8px] font-black uppercase tracking-widest text-on-surface-variant shadow-sm">
-              Cũ
-            </div>
-          )}
-          {isNew && (
-            <div className="rounded-md bg-primary px-2 py-1 text-[8px] font-black uppercase tracking-widest text-on-primary shadow-sm">
-              MỚI
-            </div>
-          )} */}
+          <ProductTags
+            soldOut={isSoldOut}
+            preOrder={isPreOrder}
+            used={isUsed}
+            isNew={isNew}
+            bestseller={isBestseller}
+          />
         </div>
         {isSoldOut && (
           <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-surface/70">

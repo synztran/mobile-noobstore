@@ -168,24 +168,24 @@ export function ProductConfigurator({
               <div className="flex items-center gap-1">
                 <span
                   className={clsx(
-                    "rounded px-1.5 py-0.5 text-[10px] font-black tracking-wider",
+                    "rounded px-1.5 py-0.5 text-[8px] font-black tracking-wider",
                     group.is_required
                       ? "bg-error/10 text-error"
-                      : "bg-surface-container"
+                      : "bg-surface-container-highest"
                   )}
                 >
                   {group.is_required ? "Bắt buộc" : "Tùy chọn"}
                 </span>
                 <p
-                  className={`text-[10px] font-black tracking-widest text-on-surface-variant`}
+                  className={`text-xs font-black tracking-widest text-on-surface-variant`}
                 >
                   {group.component_group}
                 </p>
-                {!group.is_required && groupSelection.length > 0 && (
+                {/* {!group.is_required && groupSelection.length > 0 && (
                   <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
                     Đã chọn {selectedCount}/{group.variants.length}
                   </span>
-                )}
+                )} */}
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {group.variants.map((v) => {
@@ -201,12 +201,12 @@ export function ProductConfigurator({
                       disabled={isDisabled}
                       onClick={() => onSelect(group.component_group, v.id)}
                       className={configuratorButtonClass(
-                        "relative flex min-w-20 items-center justify-center gap-2 rounded-sm border px-2 pb-1 pt-1.5 font-bold transition-all",
+                        "relative flex min-w-24 items-center justify-center gap-2 rounded-sm border px-2 pb-1 pt-1.5 font-bold transition-all",
                         { selected, soldOut, ruleDisabled, isDisabled }
                       )}
                     >
                       <div className="inline-flex items-center gap-1">
-                        <p className="line-clamp-2 text-left text-xs font-black">
+                        <p className="text-left text-xs font-black">
                           {v.variant_name}
                         </p>
                         <p

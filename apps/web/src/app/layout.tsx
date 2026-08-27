@@ -3,10 +3,11 @@ import { ServiceWorkerRegister } from "@/components/ui/ServiceWorkerRegister";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { FlyToCart } from "@/components/ui/FlyToCart";
+import { CookieConsent } from "@/components/ui/CookieConsent";
+import { GoogleAnalytics } from "@/components/ui/GoogleAnalytics";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import dynamic from "next/dynamic";
 import "./globals.css";
 import localFont from "next/font/local";
@@ -88,24 +89,21 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID}');
-              `}
-            </Script>
-          </>
-        )}
+        <GoogleAnalytics />
+        <noscript>
+          <div style={{ padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
+            <h2>Vui lòng bật JavaScript</h2>
+            <p>NoobStore cần JavaScript để hoạt động. Vui lòng bật JavaScript trong trình duyệt của bạn.</p>
+          </div>
+        </noscript>
       </head>
       <body className="bg-background font-sans text-on-surface antialiased">
+        <a
+          href="#main-layout"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[200] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white focus:shadow-lg"
+        >
+          Chuyển đến nội dung chính
+        </a>
         <ReactQueryProvider>
           <AuthProvider>
             <NavigationOverlay />
@@ -113,6 +111,7 @@ export default function RootLayout({
             {children}
             <MobileViewportGuard />
             <ToastProvider />
+            <CookieConsent />
             <StoreHydrator />
             <ServiceWorkerRegister />
           </AuthProvider>

@@ -10,9 +10,19 @@ import type { CategoryItem } from "@/lib/products-server";
 import { useQuickPickDrawer } from "@/components/product/useQuickPickDrawer";
 import clsx from "clsx";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
+import { useMemo } from "react";
 import { DeliveryAvailabilitySection } from "./DeliveryAvailabilitySection";
 import { SelectedConditionSummary } from "./SelectedConditionSummary";
+import { Images } from "lucide-react";
+
+// Lazy: the full-screen viewer is only needed after a tap, keep it out of the
+// drawer's initial bundle.
+const ImageViewer = dynamic(
+  () => import("./ImageViewer").then((m) => ({ default: m.ImageViewer })),
+  { ssr: false }
+);
 
 // ─── Add to Cart Button ─────────────────────────────────────────────────────
 
@@ -114,6 +124,17 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     propProduct,
   });
 
+  // Gallery for the full-screen viewer: active image first, then the rest of
+  // the product's media, deduped.
+  const viewerImages = useMemo(() => {
+    const all = [
+      drawer.activeThumbnail,
+      drawer.activeProduct?.thumbnail,
+      ...(drawer.activeProduct?.images ?? []),
+    ];
+    return Array.from(new Set(all.filter(Boolean))) as string[];
+  }, [drawer.activeThumbnail, drawer.activeProduct]);
+
   // ── Render helpers ────────────────────────────────────────────────────
   const renderProductList = () => (
     <div className="space-y-3">
@@ -185,11 +206,31 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     <div className="flex min-h-0 flex-col gap-2">
       {drawer.activeProduct && (
         <div className="flex items-center gap-2">
-          <Thumbnail
-            src={drawer.activeProduct.thumbnail}
-            alt={drawer.activeProduct.name}
-            className="h-20 w-24 rounded-xl"
-          />
+          <button
+            type="button"
+            aria-label="Xem ảnh lớn"
+            onClick={drawer.openViewer}
+            className="group/thumb relative flex-shrink-0 transition-transform active:scale-95"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={drawer.activeThumbnail ?? "placeholder"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+              >
+                <Thumbnail
+                  src={drawer.activeThumbnail}
+                  alt={drawer.activeProduct.name}
+                  className="h-20 w-24 rounded-xl"
+                />
+              </motion.div>
+            </AnimatePresence>
+            <span className="absolute bottom-1 right-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-surface/80 text-on-surface-variant backdrop-blur-sm group-active/thumb:bg-surface">
+              <Images size={16} />
+            </span>
+          </button>
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-sm font-bold leading-tight text-on-surface">
               {drawer.activeProduct.name}
@@ -372,6 +413,14 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Full-screen image viewer (renders above the drawer) */}
+      <ImageViewer
+        images={viewerImages}
+        initialIndex={0}
+        isOpen={drawer.imageViewerOpen}
+        onClose={drawer.closeViewer}
+      />
     </>
   );
 }

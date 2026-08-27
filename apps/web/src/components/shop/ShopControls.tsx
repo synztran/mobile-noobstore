@@ -110,7 +110,7 @@ export function ShopControls({
     <>
       {/* Search bar — typing filters the grid; focus reveals recent + category shortcuts */}
       <div ref={searchWrapRef} className="relative mb-4">
-        <div className="flex items-center gap-2 rounded-md border border-slate-400/60 bg-white px-3 py-3.5">
+        <div className="flex items-center gap-2 rounded-md border border-outline-variant bg-white px-3 py-3.5">
           <Icon name="search" className="text-outline" />
           <input
             type="text"
@@ -150,13 +150,13 @@ export function ShopControls({
       {/* Header row */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <p className="mb-1 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
             Bộ sưu tập
           </p>
           {isTotalLoading ? (
             <div className="skeleton h-7 w-28 rounded-md bg-surface-container" />
           ) : (
-            <p className="text-xl font-black tracking-tighter">
+            <p className="text-xl font-bold tracking-tighter">
               {total} kết quả
             </p>
           )}
@@ -175,7 +175,7 @@ export function ShopControls({
           </button>
           <button
             onClick={() => setShowSort(true)}
-            className="primary-gradient flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold text-white"
+            className="flex items-center gap-2 rounded-full bg-surface-container px-4 py-2.5 text-xs font-bold text-on-surface transition-colors"
           >
             {SORT_OPTIONS.find((o) => o.value === sort)?.icon}
             Sắp xếp
@@ -189,14 +189,14 @@ export function ShopControls({
           {formatFilterPills(filterState).map((p) => (
             <span
               key={p}
-              className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-primary"
+              className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary"
             >
               {p}
             </span>
           ))}
           <button
             onClick={handleClearFilters}
-            className="text-[10px] font-bold text-outline underline"
+            className="text-[11px] font-semibold text-outline underline"
           >
             Xóa tất cả
           </button>

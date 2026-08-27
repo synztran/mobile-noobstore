@@ -59,7 +59,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[90dvw] items-center justify-between rounded-xl border-gray-200/30 !bg-[rgba(255,255,255,0.9)] p-2 shadow-lg">
+    <nav className="glass-nav fixed bottom-5 left-2 right-2 z-50 mx-auto flex w-full max-w-[90dvw] items-center justify-between rounded-xl border-gray-200/30 p-2 shadow-lg">
       {navItems.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(item.href + "/");
@@ -67,8 +67,9 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             className={clsx(
-              "flex touch-manipulation select-none flex-col items-center justify-center rounded-lg px-2 py-1 transition-all duration-200 active:scale-90",
+              "flex min-h-[44px] min-w-[44px] touch-manipulation select-none flex-col items-center justify-center gap-1 rounded-lg p-2 transition-all duration-200 active:scale-90",
               isActive
                 ? "bg-primary-fixed text-primary"
                 : "text-on-surface-variant hover:text-primary"
@@ -78,13 +79,13 @@ export function BottomNav() {
               <div
                 className={clsx(
                   isActive && item.iconFilled && "icon-filled",
-                  "mb-1"
+                  ""
                 )}
               >
                 {item.icon}
               </div>
             }
-            <span className="text-[10px] font-semibold uppercase tracking-wide">
+            <span className="text-[10px] font-semibold leading-tight">
               {item.label}
             </span>
           </Link>

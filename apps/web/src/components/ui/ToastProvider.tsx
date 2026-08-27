@@ -53,6 +53,13 @@ export function ToastProvider() {
 				},
 			});
 
+			// Add ARIA live region to gooey-toast container for screen reader announcements
+			const toastViewport = document.querySelector<HTMLElement>("section[data-gooey-viewport]");
+			if (toastViewport) {
+				toastViewport.setAttribute("aria-live", "polite");
+				toastViewport.setAttribute("aria-atomic", "false");
+			}
+
 			measure();
 			window.addEventListener("resize", measure);
 

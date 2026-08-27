@@ -22,35 +22,35 @@ export function HomeFooter() {
   return (
     <footer className="!mt-0 bg-surface-container p-4">
       <div className="flex flex-col items-center gap-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-        <div className="flex w-full justify-between gap-2 text-[10px]">
-          <Link href="/news">Tin tức</Link>
+        <div className="flex w-full justify-between gap-2 text-[11px]">
+          {/* <Link href="/news">Tin tức</Link> */}
           <Link href="/policy">Chính sách bảo mật</Link>
           <Link href="/terms">Điều khoản</Link>
           <Link href="/delivery-terms">Vận chuyển</Link>
         </div>
 
-        <div className="flex w-full items-center justify-center gap-6">
+        <div className="flex w-full items-center justify-center gap-2">
           <a
             href="https://facebook.com/noobstore"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-on-surface-variant transition-colors hover:text-primary"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary"
           >
-            <FacebookIcon className="h-4 w-4" />
+            <FacebookIcon className="h-5 w-5" />
           </a>
           <a
             href="https://instagram.com/noobstore"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-on-surface-variant transition-colors hover:text-primary"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary"
           >
-            <InstagramIcon className="h-4 w-4" />
+            <InstagramIcon className="h-5 w-5" />
           </a>
           <a
             href={`mailto:${MAIL_DOMAIN}`}
-            className="flex items-center gap-1.5 text-on-surface-variant transition-colors hover:text-primary"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary"
           >
-            <Mail size={16} />
+            <Mail size={20} />
           </a>
         </div>
 

@@ -48,10 +48,6 @@ export function OurStrongPoints() {
         </div>
       ) : (
         <>
-          {/* Background accent */}
-          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary-fixed/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-secondary-fixed/10 blur-2xl" />
-
           {props.map(({ id, icon: iconName, heading, body }) => {
             const Icon = ICON_MAP[iconName] || Truck;
             return (
@@ -60,7 +56,7 @@ export function OurStrongPoints() {
                   <Icon size={24} className="text-primary-fixed-dim" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-black uppercase leading-tight tracking-widest">
+                  <p className="text-xs font-semibold uppercase leading-tight tracking-wide">
                     {heading}
                   </p>
                   <p className="mt-2 text-xs leading-relaxed text-outline">

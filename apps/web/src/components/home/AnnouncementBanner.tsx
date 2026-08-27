@@ -50,7 +50,7 @@ export function AnnouncementBanner({
     <div className="relative flex w-full items-center justify-center overflow-hidden bg-on-surface px-4 py-2.5 text-surface">
       <Link
         href={msg.href}
-        className={`text-center text-[9px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${
+        className={`text-center text-[11px] font-semibold uppercase tracking-wide transition-all duration-300 ${
           visible
             ? "translate-y-0 opacity-100"
             : "translate-y-1 opacity-0"

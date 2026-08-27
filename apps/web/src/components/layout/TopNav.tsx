@@ -74,11 +74,14 @@ export function TopNav({
     pathHideCart.some((path) => pathname.startsWith(path));
 
   return (
-    <nav
+    <header
       className={clsx(
-        "top-nav-pad fixed top-0 z-[51] grid w-full grid-cols-3 items-center bg-gray-50 px-4",
+        "top-nav-pad fixed top-0 z-[51] w-full bg-surface",
         className
       )}
+    >
+    <nav
+      className="grid w-full grid-cols-3 items-center px-4"
     >
       <div className="clear-both relative">
         {showBack ? (
@@ -112,7 +115,7 @@ export function TopNav({
         )}
       </div>
 
-      <p className="bg-gradient-to-br from-[#9b3f1c] to-[#bb5732] bg-clip-text text-center font-sans text-xl font-black tracking-tighter text-transparent">
+      <p className="text-center font-sans text-xl font-black tracking-tighter text-primary">
         {title}
       </p>
 
@@ -175,5 +178,6 @@ export function TopNav({
         />
       ) : null}
     </nav>
+    </header>
   );
 }

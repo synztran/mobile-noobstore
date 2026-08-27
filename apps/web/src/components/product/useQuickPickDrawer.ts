@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   ComponentVariantRule,
@@ -193,7 +193,37 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
       : headerCategory;
 
   // ── Actions ───────────────────────────────────────────────────────────────
+  // ── Linked image ──────────────────────────────────────────────────────────
+  // Track the option the customer tapped most recently so the header image can
+  // reflect it when the variant carries a linked photo.
+  const [lastInteractedVariantId, setLastInteractedVariantId] = useState<
+    string | null
+  >(null);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+
+  const activeThumbnail = useMemo(() => {
+    if (lastInteractedVariantId && activeProduct) {
+      const variant =
+        activeProduct.variants.find((v) => v.id === lastInteractedVariantId) ??
+        groups
+          .flatMap((g) => g.variants)
+          .find((v) => v.id === lastInteractedVariantId);
+      if (variant?.thumbnail) return variant.thumbnail;
+    }
+    return activeProduct?.thumbnail ?? null;
+  }, [lastInteractedVariantId, activeProduct, groups]);
+
+  const openViewer = useCallback(() => setImageViewerOpen(true), []);
+  const closeViewer = useCallback(() => setImageViewerOpen(false), []);
+
   const onSelect = (group: string, variantId: string) => {
+    // Show the tapped option's linked image when it's being added (deselect
+    // keeps the previous image until another option is picked).
+    const currentlySelected = (selections[group] ?? []).includes(variantId);
+    if (!currentlySelected) {
+      setLastInteractedVariantId(variantId);
+    }
+
     setSelections((prev) => {
       const current = prev[group] ?? [];
       const groupDef = groups.find((g) => g.component_group === group);
@@ -364,6 +394,10 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
     isInvalidPrice,
     selectedPreOrderConfig,
     selectedVariants,
+    activeThumbnail,
+    imageViewerOpen,
+    openViewer,
+    closeViewer,
     headerCategory,
     headerTitle,
     handleAdd,

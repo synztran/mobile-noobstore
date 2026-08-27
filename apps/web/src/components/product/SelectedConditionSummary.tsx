@@ -1,7 +1,10 @@
 "use client";
 
+"use client";
+
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ShopVariant } from "@/app/api/products/route";
+import Image from "next/image";
 
 // ─── Condition helper ─────────────────────────────────────────────────────────
 
@@ -24,10 +27,11 @@ interface SelectedConditionSummaryProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
- * Shows the "Tình trạng" attribute of every currently-selected variant.
- * Simple products contribute the selected `__variant__`; kit products
- * contribute each selected component variant. Renders nothing when no
- * selected variant carries a condition text.
+ * Shows every currently-selected variant with its linked image (so a
+ * selection is represented visually, not only by name) plus its "Tình trạng"
+ * attribute when present. Simple products contribute the selected
+ * `__variant__`; kit products contribute each selected component variant.
+ * Renders nothing when nothing is selected.
  */
 export function SelectedConditionSummary({
   groups,
@@ -36,27 +40,36 @@ export function SelectedConditionSummary({
 }: SelectedConditionSummaryProps) {
   const hasComponents = groups.length > 0;
 
-  const rows: Array<{ label: string; group: string; text: string }> = [];
+  const rows: Array<{
+    label: string;
+    group: string;
+    text: string | null;
+    thumbnail: string | null;
+  }> = [];
 
   if (!hasComponents) {
     const selectedId = selections["__variant__"]?.[0];
     if (selectedId) {
       const v = productVariants.find((x) => x.id === selectedId);
-      const text = getConditionText(v?.attributes);
-      if (text) {
-        rows.push({ label: v?.variant_name ?? "", group: "", text });
+      if (v) {
+        rows.push({
+          label: v.variant_name ?? "",
+          group: "",
+          text: getConditionText(v.attributes),
+          thumbnail: v.thumbnail,
+        });
       }
     }
   } else {
     for (const group of groups) {
       for (const id of selections[group.component_group] ?? []) {
         const v = group.variants.find((gv) => gv.id === id);
-        const text = getConditionText(v?.attributes);
-        if (text) {
+        if (v) {
           rows.push({
-            label: v?.variant_name ?? "",
+            label: v.variant_name ?? "",
             group: group.component_group,
-            text,
+            text: getConditionText(v.attributes),
+            thumbnail: v.thumbnail,
           });
         }
       }
@@ -74,23 +87,36 @@ export function SelectedConditionSummary({
         Tình trạng
       </p>
       {rows.length > 0 ? (
-        <ul className="space-y-1">
-          {rows.map((r) => (
-            <li
-              key={`${r.group}:${r.label}`}
-              className="flex items-center gap-1 font-bold text-on-surface"
-            >
-              <span className="flex-shrink-0 rounded bg-surface-container-high px-2 py-1 text-xs">
-                {(countByLabel.get(r.label) ?? 0) > 1 && r.group
-                  ? `${r.group} · `
-                  : ""}
-                {r.label}
-              </span>
-              <span className="text-sm font-semibold text-on-surface-variant">
-                {r.text}
-              </span>
-            </li>
-          ))}
+        <ul className="space-y-1.5">
+          {rows
+            ?.filter((r) => r.text)
+            .map((r) => (
+              <li
+                key={`${r.group}:${r.label}`}
+                className="flex items-center gap-1.5"
+              >
+                {r.thumbnail ? (
+                  <Image
+                    src={r.thumbnail}
+                    alt={r.label}
+                    width={32}
+                    height={24}
+                    className="h-6 w-8 flex-shrink-0 rounded object-cover"
+                  />
+                ) : null}
+                <span className="flex-shrink-0 rounded bg-surface-container-high px-2 py-1 text-xs font-bold text-on-surface">
+                  {(countByLabel.get(r.label) ?? 0) > 1 && r.group
+                    ? `${r.group} · `
+                    : ""}
+                  {r.label}
+                </span>
+                {r.text && (
+                  <span className="text-sm font-semibold text-on-surface-variant">
+                    {r.text}
+                  </span>
+                )}
+              </li>
+            ))}
         </ul>
       ) : (
         <div className="relative clear-both flex min-h-6 items-center">
