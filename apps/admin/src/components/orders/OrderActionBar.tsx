@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   ChevronRight,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { OrderDetail } from "./OrderDetailModal";
+import { adminQueryKeys } from "@/lib/react-query/root";
 
 const STATUS_FLOW = [
   "pending",
@@ -138,7 +140,7 @@ function PreOrderProgressSection({
   order: OrderDetail;
   onUpdated: () => void;
 }) {
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const preOrderItems = useMemo(
     () =>
@@ -162,9 +164,8 @@ function PreOrderProgressSection({
   const allReady = collectiveStepIndex >= PRE_ORDER_STEPS.length - 1;
   const isFirstStep = collectiveStepIndex < 0;
 
-  const handleAdvance = async () => {
-    setLoading(true);
-    try {
+  const advanceMutation = useMutation({
+    mutationFn: async () => {
       const itemIds = preOrderItems.map((i) => i.id);
       const res = await fetch(`/api/orders/${order.id}`, {
         method: "PATCH",
@@ -173,13 +174,15 @@ function PreOrderProgressSection({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Advance failed");
+      return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminQueryKeys.orderDetail(order.id),
+      });
       onUpdated();
-    } catch (e) {
-      console.error("[PreOrderProgress] advance failed:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   if (preOrderItems.length === 0) return null;
 
@@ -224,11 +227,11 @@ function PreOrderProgressSection({
       </div>
 
       <button
-        onClick={handleAdvance}
-        disabled={loading || allReady}
+        onClick={() => advanceMutation.mutate()}
+        disabled={advanceMutation.isPending || allReady}
         className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
       >
-        {loading
+        {advanceMutation.isPending
           ? "Đang cập nhật…"
           : allReady
             ? "Hoàn thành"
@@ -243,9 +246,7 @@ export default function OrderActionBar({
   currentStatus,
   onUpdated,
 }: Props) {
-  const [actionLoading, setActionLoading] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [showCancel, setShowCancel] = useState(false);
   const [cancelNote, setCancelNote] = useState("");
   const [showRefund, setShowRefund] = useState(false);
@@ -274,10 +275,8 @@ export default function OrderActionBar({
   const canAdvance = nextStatus !== null;
   const canCancel = !isTerminal;
 
-  const patch = async (body: Record<string, unknown>) => {
-    setActionLoading(true);
-    setActionError(null);
-    try {
+  const patchMutation = useMutation({
+    mutationFn: async (body: Record<string, unknown>) => {
       const res = await fetch(`/api/orders/${order.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -285,22 +284,22 @@ export default function OrderActionBar({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Update failed");
-      onUpdated();
+      return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminQueryKeys.orderDetail(order.id),
+      });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
       setShowCancel(false);
       setShowRefund(false);
       setCancelNote("");
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Unknown error");
-    } finally {
-      setActionLoading(false);
-    }
-  };
+      onUpdated();
+    },
+  });
 
-  const generateInvoice = async () => {
-    setActionLoading(true);
-    setActionError(null);
-    setSuccessMessage(null);
-    try {
+  const invoiceMutation = useMutation({
+    mutationFn: async () => {
       const res = await fetch(`/api/invoices/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -312,14 +311,15 @@ export default function OrderActionBar({
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to generate invoice");
-      setSuccessMessage("Hoá đơn đã được tạo!");
+      return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminQueryKeys.orderDetail(order.id),
+      });
       onUpdated();
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : "Unknown error");
-    } finally {
-      setActionLoading(false);
-    }
-  };
+    },
+  });
 
   if (isTerminal && !canRefund) return null;
 
@@ -346,14 +346,14 @@ export default function OrderActionBar({
 
       {/* <div className="h-px w-full bg-slate-300" /> */}
       <div className="border-t border-slate-400 pt-4">
-        {actionError && (
+        {patchMutation.isError && (
           <p className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-600">
-            {actionError}
+            {patchMutation.error.message}
           </p>
         )}
-        {successMessage && (
-          <p className="rounded border border-green-200 bg-green-50 px-2 py-1.5 text-xs text-green-700">
-            {successMessage}
+        {invoiceMutation.isError && (
+          <p className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-600">
+            {invoiceMutation.error.message}
           </p>
         )}
 
@@ -370,15 +370,15 @@ export default function OrderActionBar({
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={() =>
-                  patch({
+                  patchMutation.mutate({
                     status: "cancelled",
                     cancelled_note: cancelNote,
                   })
                 }
-                disabled={actionLoading}
+                disabled={patchMutation.isPending}
                 className="whitespace-nowrap rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
-                {actionLoading ? "Cancelling…" : "Confirm cancel"}
+                {patchMutation.isPending ? "Cancelling…" : "Confirm cancel"}
               </button>
               <button
                 onClick={() => setShowCancel(false)}
@@ -397,11 +397,11 @@ export default function OrderActionBar({
               Mark this order as refunded?
             </p>
             <button
-              onClick={() => patch({ status: "refunded" })}
-              disabled={actionLoading}
+              onClick={() => patchMutation.mutate({ status: "refunded" })}
+              disabled={patchMutation.isPending}
               className="whitespace-nowrap rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50"
             >
-              {actionLoading ? "Processing…" : "Confirm refund"}
+              {patchMutation.isPending ? "Processing…" : "Confirm refund"}
             </button>
             <button
               onClick={() => setShowRefund(false)}
@@ -417,8 +417,8 @@ export default function OrderActionBar({
           <div className="flex flex-wrap items-center gap-2">
             {canAdvance && (
               <button
-                onClick={() => patch({ status: nextStatus! })}
-                disabled={actionLoading}
+                onClick={() => patchMutation.mutate({ status: nextStatus! })}
+                disabled={patchMutation.isPending}
                 className="flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium capitalize text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -428,7 +428,7 @@ export default function OrderActionBar({
             {canRefund && (
               <button
                 onClick={() => setShowRefund(true)}
-                disabled={actionLoading}
+                disabled={patchMutation.isPending}
                 className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-orange-300 px-3 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
               >
                 <RotateCcw className="h-4 w-4" />
@@ -438,7 +438,7 @@ export default function OrderActionBar({
             {canCancel && (
               <button
                 onClick={() => setShowCancel(true)}
-                disabled={actionLoading}
+                disabled={patchMutation.isPending}
                 className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
@@ -448,8 +448,8 @@ export default function OrderActionBar({
             {["confirmed", "delivered", "delivering"].includes(order.status) &&
               !order.invoice_url && (
                 <button
-                  onClick={generateInvoice}
-                  disabled={actionLoading}
+                  onClick={() => invoiceMutation.mutate()}
+                  disabled={invoiceMutation.isPending}
                   className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-green-300 px-3 py-2 text-sm font-medium text-green-600 transition-colors hover:bg-green-50 disabled:opacity-50"
                 >
                   <FileText className="h-4 w-4" />

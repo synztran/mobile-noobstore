@@ -388,16 +388,9 @@ function shapeRow(
       ? variants.some((v) => v.is_pre_order)
       : row.is_pre_order ?? false;
 
-  // 6. Slim list payload — the grid card only quick-adds the first variant
-  //    (ProductCard.tsx reads `variants[0]`) and kits open the drawer which
-  //    re-fetches full configurator data via /api/products/quick-pick. Keep
-  //    kits' full variant list (drawer fallback reads propProduct.variants
-  //    while loading), but standards only need the first variant.
-  const slimVariants = slim
-    ? productType === "kit"
-      ? variants
-      : variants.slice(0, 1)
-    : variants;
+  // 6. Always return all variants — ProductCard swatches need the full list
+  //    to render variant options. Kits still get the full list for the drawer.
+  const slimVariants = variants;
 
   const shaped: ProductListItem = {
     id: row.id,

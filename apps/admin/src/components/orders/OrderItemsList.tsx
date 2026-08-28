@@ -70,70 +70,64 @@ export default function OrderItemsList({ items }: Props) {
         <Package className="h-4 w-4" />
         Products ({items.length})
       </div>
-      <div className="space-y-2">
-        {items.map((item) => {
-          const hasPreOrderComponent = item.order_item_components.some(
-            (c) => c.is_pre_order
-          );
+      {items.map((item) => {
+        const hasPreOrderComponent = item.order_item_components.some(
+          (c) => c.is_pre_order
+        );
 
-          return (
-            <div
-              key={item.id}
-              className="space-y-2 overflow-hidden rounded-lg border border-slate-200 p-4"
-            >
-              <div className="flex items-center justify-center gap-3">
-                <div className="relative h-24 w-24 rounded-lg bg-slate-100">
-                  {item.thumbnail ? (
-                    <Image
-                      src={item.thumbnail}
-                      alt={item.product_name}
-                      fill
-                      className="rounded-lg object-cover mix-blend-darken"
-                      sizes="64px"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded bg-slate-200 text-slate-300">
-                      <Package className="h-5 w-5" />
-                    </div>
+        return (
+          <div
+            key={item.id}
+            className="space-y-2 overflow-hidden rounded-lg border border-slate-200 p-4"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <div className="relative h-28 min-w-32 rounded-lg">
+                {item.thumbnail ? (
+                  <Image
+                    src={item.thumbnail}
+                    alt={item.product_name}
+                    fill
+                    className="rounded-lg object-cover mix-blend-darken"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded bg-slate-200 text-slate-300">
+                    <Package className="h-5 w-5" />
+                  </div>
+                )}
+                <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600">
+                  {item.quantity}
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="line-clamp-2 flex items-center gap-2 text-sm font-medium text-slate-900">
+                  {item.product_name}
+                  {hasPreOrderComponent && (
+                    <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-700">
+                      Pre-order
+                    </span>
                   )}
-                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-xs font-medium text-slate-600">
-                    {item.quantity}
+                </div>
+                <div className="text-xs text-slate-500">
+                  {item.unit_price.toLocaleString("vi-VN")}₫
+                </div>
+                <div className="text-right text-sm font-semibold text-slate-800">
+                  Tổng tiền:{" "}
+                  <span className="font-bold text-secondary">
+                    {(item.unit_price * item.quantity).toLocaleString("vi-VN")}₫
                   </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="line-clamp-2 flex items-center gap-2 text-sm font-medium text-slate-900">
-                    {item.product_name}
-                    {hasPreOrderComponent && (
-                      <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-700">
-                        Pre-order
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-slate-500">
-                    {item.unit_price.toLocaleString("vi-VN")}₫
-                  </div>
-                  <div className="text-right text-sm font-semibold text-slate-800">
-                    Tổng tiền:{" "}
-                    <span className="font-bold text-secondary">
-                      {(item.unit_price * item.quantity).toLocaleString(
-                        "vi-VN"
-                      )}
-                      ₫
-                    </span>
-                  </div>
-                </div>
               </div>
-              {item.order_item_components.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {item.order_item_components.map((c) => (
-                    <KitComponentBadge key={c.id} c={c} />
-                  ))}
-                </div>
-              )}
             </div>
-          );
-        })}
-      </div>
+            {item.order_item_components.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {item.order_item_components.map((c) => (
+                  <KitComponentBadge key={c.id} c={c} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {allGifts.length > 0 && (
         <div className="mt-4">

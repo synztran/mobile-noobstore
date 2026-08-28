@@ -74,7 +74,7 @@ export function CommunityFeed() {
 
   return (
     <div>
-      <div className="sticky top-14 z-10 -mx-4 mb-5 flex gap-2 overflow-x-auto bg-surface px-4 py-2">
+      <div className="sticky top-14 z-10 -mx-4 mb-5 flex gap-2 overflow-x-auto hide-scrollbar bg-surface px-4 py-2">
         {TABS.map((tab) => (
           <button
             key={tab.value}

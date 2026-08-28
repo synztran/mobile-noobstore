@@ -17,7 +17,7 @@ interface Props {
 const OrderStatusTabs = ({ value, onChange, options }: Props) => {
 	return (
 		<div
-			className="-mx-4 px-4 overflow-x-auto [&::-webkit-scrollbar]:hidden"
+			className="-mx-4 px-4 overflow-x-auto hide-scrollbar"
 			style={{ scrollbarWidth: "none" }}>
 			<div className="inline-flex gap-2 min-w-max pb-0.5">
 				{options.map((option) => {

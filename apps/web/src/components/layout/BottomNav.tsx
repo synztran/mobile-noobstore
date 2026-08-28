@@ -8,31 +8,31 @@ import { usePathname } from "next/navigation";
 const navItems = [
   {
     href: "/",
-    icon: <House size={20} />,
+    icon: <House size={24} />,
     label: "Trang chủ",
     iconFilled: true,
   },
   {
     href: "/shop",
-    icon: <ShoppingBasket size={20} />,
+    icon: <ShoppingBasket size={24} />,
     label: "Cửa hàng",
     iconFilled: false,
   },
   {
     href: "/gacha",
-    icon: <Dices size={20} />,
+    icon: <Dices size={24} />,
     label: "Gacha",
     iconFilled: false,
   },
   {
     href: "/rewards",
-    icon: <Gift size={20} />,
+    icon: <Gift size={24} />,
     label: "Đổi thưởng",
     iconFilled: false,
   },
   {
     href: "/profile",
-    icon: <UserRound size={20} />,
+    icon: <UserRound size={24} />,
     label: "Hồ sơ",
     iconFilled: false,
   },
@@ -69,7 +69,7 @@ export function BottomNav() {
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={clsx(
-              "flex min-h-[44px] min-w-[44px] touch-manipulation select-none flex-col items-center justify-center gap-1 rounded-lg p-2 transition-all duration-200 active:scale-90",
+              "flex min-h-[44px] flex-1 touch-manipulation select-none flex-col items-center justify-center gap-1 rounded-lg p-2 transition-all duration-200 active:scale-90",
               isActive
                 ? "bg-primary-fixed text-primary"
                 : "text-on-surface-variant hover:text-primary"
@@ -85,7 +85,7 @@ export function BottomNav() {
                 {item.icon}
               </div>
             }
-            <span className="text-[10px] font-semibold leading-tight">
+            <span className="truncate whitespace-nowrap text-[12px] font-semibold leading-tight">
               {item.label}
             </span>
           </Link>

@@ -13,15 +13,17 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { memo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ProductComponentTags from "./ProductComponentTags";
 import { StockIndicator } from "./StockIndicator";
 import DiscountBadge from "./DiscountBadge";
 import { ProductCardDetails } from "./ProductCardDetails";
 import ProductCardPricing from "./ProductCardPricing";
+import { ProductSwatches } from "./ProductSwatches";
 
 const QuickPickDrawer = dynamic(
-  () => import("./QuickPickDrawer").then((m) => ({ default: m.QuickPickDrawer })),
+  () =>
+    import("./QuickPickDrawer").then((m) => ({ default: m.QuickPickDrawer })),
   { ssr: false }
 );
 
@@ -35,6 +37,11 @@ export function ProductCardSkeleton() {
         <div className="h-2 w-1/3 rounded-full bg-surface-container" />
         <div className="h-3 w-4/5 rounded-full bg-surface-container" />
         <div className="h-3 w-2/5 rounded-full bg-surface-container" />
+        <div className="flex gap-1.5 pt-1">
+          <div className="h-6 w-6 rounded-full bg-surface-container" />
+          <div className="h-6 w-6 rounded-full bg-surface-container" />
+          <div className="h-6 w-6 rounded-full bg-surface-container" />
+        </div>
       </div>
     </div>
   );
@@ -55,12 +62,30 @@ export const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [activeVariantId, setActiveVariantId] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
+  const prevDisplayImageRef = useRef<string | null>(null);
   const addCartItem = useAddCartItem();
   const addStandardProduct = useCartStore((s) => s.addStandardProduct);
   const flyToCart = useFlyToCartStore((s) => s.flyToCart);
   const router = useRouter();
   const { user } = useAuth();
+
+  const displayImage = useMemo(() => {
+    if (activeVariantId) {
+      const v = product.variants.find((vr) => vr.id === activeVariantId);
+      if (v?.thumbnail) return v.thumbnail;
+    }
+    return product.thumbnail;
+  }, [activeVariantId, product.variants, product.thumbnail]);
+
+  useEffect(() => {
+    if (prevDisplayImageRef.current !== displayImage) {
+      setImageLoading(true);
+      prevDisplayImageRef.current = displayImage;
+    }
+  }, [displayImage]);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -81,7 +106,11 @@ export const ProductCard = memo(function ProductCard({
       return;
     }
 
-    const selectedVariant = product.variants[0] ?? null;
+    const selectedVariant = activeVariantId
+      ? (product.variants.find((v) => v.id === activeVariantId) ??
+        product.variants[0] ??
+        null)
+      : (product.variants[0] ?? null);
 
     setSubmitting(true);
 
@@ -91,7 +120,9 @@ export const ProductCard = memo(function ProductCard({
         variant_id: selectedVariant?.id ?? null,
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng");
+      toast.error(
+        err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng"
+      );
       setSubmitting(false);
       return;
     }
@@ -103,8 +134,8 @@ export const ProductCard = memo(function ProductCard({
     );
     trackAddToCart(toGAProduct(product, selectedVariant));
 
-    if (product.thumbnail && imageRef.current) {
-      flyToCart(product.thumbnail, imageRef.current);
+    if (displayImage && imageRef.current) {
+      flyToCart(displayImage, imageRef.current);
     }
 
     toast.success("Đã thêm vào giỏ hàng!");
@@ -114,7 +145,7 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <>
-      <div className="group relative flex flex-col justify-between gap-2 h-full">
+      <div className="group relative flex h-full flex-col justify-between gap-2">
         <Link href={`/shop/${product.slug}`} className="block">
           {/* ── Image box ─────────────────────────────────────────────── */}
           <div
@@ -125,15 +156,23 @@ export const ProductCard = memo(function ProductCard({
             }}
           >
             {/* Thumbnail or placeholder */}
-            {product.thumbnail ? (
-              <Image
-                src={product.thumbnail}
-                alt={product.name}
-                fill
-                priority={imagePriority}
-                className="object-cover"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              />
+            {displayImage ? (
+              <>
+                <Image
+                  src={displayImage}
+                  alt={product.name}
+                  fill
+                  priority={imagePriority}
+                  className="object-cover"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  onLoad={() => setImageLoading(false)}
+                />
+                {imageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-surface-container/80">
+                    <span className="loading loading-spinner loading-sm text-primary" />
+                  </div>
+                )}
+              </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <Icon
@@ -170,8 +209,14 @@ export const ProductCard = memo(function ProductCard({
           <ProductCardDetails product={product} isBundle={isBundle} />
         </Link>
 
-        <div className="flex flex-col gap-0.5 mt-auto">
+        <div className="mt-auto flex flex-col gap-0.5 overflow-hidden">
           <ProductCardPricing product={product} />
+          <ProductSwatches
+            variants={product.variants}
+            activeVariantId={activeVariantId}
+            onSelect={setActiveVariantId}
+            productThumbnail={product.thumbnail}
+          />
           <StockIndicator stockQuantity={product.stock_quantity} />
           <div className="mt-auto flex items-center gap-1">
             <WishlistButton
