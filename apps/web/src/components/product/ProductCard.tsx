@@ -80,12 +80,17 @@ export const ProductCard = memo(function ProductCard({
     return product.thumbnail;
   }, [activeVariantId, product.variants, product.thumbnail]);
 
+  const hasSwatches = useMemo(
+    () => product.variants.some((v) => v.attributes?.color != null),
+    [product.variants]
+  );
+
   useEffect(() => {
-    if (prevDisplayImageRef.current !== displayImage) {
+    if (hasSwatches && prevDisplayImageRef.current !== displayImage) {
       setImageLoading(true);
       prevDisplayImageRef.current = displayImage;
     }
-  }, [displayImage]);
+  }, [displayImage, hasSwatches]);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -167,7 +172,7 @@ export const ProductCard = memo(function ProductCard({
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   onLoad={() => setImageLoading(false)}
                 />
-                {imageLoading && (
+                {hasSwatches && imageLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-surface-container/80">
                     <span className="loading loading-spinner loading-sm text-primary" />
                   </div>
