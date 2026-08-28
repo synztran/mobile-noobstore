@@ -37,6 +37,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
   const [isPreOrder, setIsPreOrder] = useState(false);
   const [thumbnail, setThumbnail] = useState("");
   const [condition, setCondition] = useState("");
+  const [color, setColor] = useState("");
   const [preOrderConfig, setPreOrderConfig] = useState<PreOrderConfig>({
     estimate: "",
   });
@@ -98,7 +99,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
         stock_quantity,
         is_pre_order: isPreOrder,
         thumbnail: thumbnail.trim() || null,
-        attributes: buildVariantAttributes(null, condition),
+        attributes: buildVariantAttributes(null, condition, color),
         pre_order_config: isPreOrder
           ? {
               estimate: preOrderConfig.estimate,
@@ -124,6 +125,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
     setPreOrderConfig({ estimate: "" });
     setThumbnail("");
     setCondition("");
+    setColor("");
     setSelectedProductId(null);
     setProductSearch("");
     onClose();
@@ -374,6 +376,31 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
               <p className="mt-1 text-xs text-slate-400">
                 Lưu vào attributes["Tình trạng"], hiển thị khi variant được
                 chọn trên storefront.
+              </p>
+            </div>
+
+            {/* Color */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Color (hex or name)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={color || "#cccccc"}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="h-9 w-9 shrink-0 cursor-pointer rounded border border-slate-300 p-0.5"
+                />
+                <input
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. #FF0000 / red"
+                />
+              </div>
+              <p className="mt-1 text-xs text-slate-400">
+                Lưu vào attributes["color"], hiển thị dưới dạng swatch trên
+                storefront.
               </p>
             </div>
           </div>

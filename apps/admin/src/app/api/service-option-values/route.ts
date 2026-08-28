@@ -1,0 +1,103 @@
+import { logAuditEvent } from "@/lib/audit-log";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { NextRequest, NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+// POST /api/service-option-values
+// Create a new value under a service option.
+export async function POST(req: NextRequest) {
+	const supabase = getAdminClient();
+
+	const body = (await req.json().catch(() => null)) as {
+		option_id?: number;
+		label?: unknown;
+		price_adjustment?: unknown;
+		display_order?: unknown;
+	} | null;
+
+	const optionId = Number(body?.option_id);
+	const label =
+		typeof body?.label === "string" ? body.label.trim() : "";
+
+	if (!Number.isFinite(optionId)) {
+		return NextResponse.json(
+			{ error: "option_id is required" },
+			{ status: 400 },
+		);
+	}
+	if (!label) {
+		return NextResponse.json({ error: "label is required" }, { status: 400 });
+	}
+
+	const { data: option } = await supabase
+		.from("service_options")
+		.select("id")
+		.eq("id", optionId)
+		.maybeSingle();
+	if (!option) {
+		return NextResponse.json({ error: "Option not found" }, { status: 404 });
+	}
+
+	let priceAdjustment = 0;
+	if (body?.price_adjustment !== undefined) {
+		const num = Number(body.price_adjustment);
+		if (!Number.isFinite(num)) {
+			return NextResponse.json(
+				{ error: "price_adjustment must be a number" },
+				{ status: 400 },
+			);
+		}
+		priceAdjustment = num;
+	}
+
+	let displayOrder = 0;
+	if (body?.display_order !== undefined) {
+		const num = Number(body.display_order);
+		if (!Number.isFinite(num)) {
+			return NextResponse.json(
+				{ error: "display_order must be a number" },
+				{ status: 400 },
+			);
+		}
+		displayOrder = Math.round(num);
+	} else {
+		const { data: last } = await supabase
+			.from("service_option_values")
+			.select("display_order")
+			.eq("option_id", optionId)
+			.order("display_order", { ascending: false })
+			.limit(1)
+			.maybeSingle();
+		displayOrder = (last?.display_order ?? -1) + 1;
+	}
+
+	const insert = {
+		option_id: optionId,
+		label,
+		price_adjustment: priceAdjustment,
+		display_order: displayOrder,
+	};
+
+	const { data, error } = await supabase
+		.from("service_option_values")
+		.insert(insert)
+		.select()
+		.maybeSingle();
+
+	if (error) {
+		return NextResponse.json({ error: error.message }, { status: 500 });
+	}
+
+	void logAuditEvent(
+		{
+			action: "service_option_values.insert",
+			entity_type: "service_option_values",
+			entity_id: String(data?.id ?? ""),
+			new_data: data ?? insert,
+		},
+		supabase,
+	);
+
+	return NextResponse.json(data);
+}

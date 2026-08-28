@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getWatch, getLatestSnapshot } from "@/lib/changedetection";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { createHash, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -82,7 +83,7 @@ async function createDetectionFromSnapshot(
         source_id: sourceId,
         content_hash: `${watchId}-${Date.now()}`,
         detected_title: pageTitle.slice(0, 200),
-        detected_content: snapshot,
+        detected_content: sanitizeHtml(snapshot),
         detected_url: detectedUrl,
         status: "pending",
       });

@@ -72,11 +72,11 @@ export default function NumberInput({
   return (
     <div className="relative w-full rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
       <div className="flex items-center justify-between">
-        <label className="mb-1 block text-sm font-medium text-slate-700">
+        <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
           {label}
         </label>
         {subLabel && (
-          <p className="text-xs text-slate-500">{subLabel}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{subLabel}</p>
         )}
       </div>
       <div className={`relative`}>

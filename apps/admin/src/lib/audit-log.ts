@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 
 export interface AuditEvent {
@@ -11,8 +12,12 @@ export interface AuditEvent {
 
 /**
  * Log an admin action to admin_audit_log.
- * Extracts admin email from the current session.
- * Pass supabase if you already have a client (otherwise creates one internally).
+ * The acting admin's identity is read from the request's auth cookies via the
+ * SSR client (the service-role client has no session, so calling getUser() on
+ * it always returns null).
+ * Pass supabase if you already have an admin client (otherwise creates one
+ * internally) — the insert itself uses the admin client so the audit table is
+ * writable regardless of RLS.
  */
 export async function logAuditEvent(
   event: AuditEvent,
@@ -21,11 +26,18 @@ export async function logAuditEvent(
   try {
     const client = supabase ?? getAdminClient();
 
+    const ssr = await createServerClient();
     const {
       data: { user },
-    } = await client.auth.getUser();
+    } = await ssr.auth.getUser();
 
-    if (!user?.email) return;
+    if (!user?.email) {
+      console.error(
+        "[audit-log] No authenticated user on request; event not logged:",
+        event.action,
+      );
+      return;
+    }
 
     const headersList = await headers();
     const ipAddress =

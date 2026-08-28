@@ -1,5 +1,6 @@
 "use client";
 
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Check, Eye, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -138,7 +139,9 @@ export default function CrawlingDetectionsTable({ detections }: Props) {
             )}
             <div
               className="prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: preview.detected_content }}
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(preview.detected_content ?? ""),
+              }}
             />
           </div>
           <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">

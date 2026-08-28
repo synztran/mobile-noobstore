@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { recheckWatch, pollLatestSnapshot, getWatch } from "@/lib/changedetection";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +63,7 @@ export async function POST(_req: NextRequest, context: RouteContext) {
         source_id: id,
         content_hash: `${source.watch_id}-${Date.now()}`,
         detected_title: pageTitle.slice(0, 200),
-        detected_content: snapshot,
+        detected_content: sanitizeHtml(snapshot),
         detected_url: detectedUrl,
         status: "pending",
       });
