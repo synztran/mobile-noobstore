@@ -11,11 +11,18 @@ import Icon from "@/components/ui/Icon";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
+import { Newspaper } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
-const NAV_ITEMS = [
+type NavItem = {
+  icon: string | ReactNode;
+  label: string;
+  href: string;
+};
+
+const NAV_ITEMS: NavItem[] = [
   {
     icon: "shopping_bag",
     label: "Đơn hàng của tôi",
@@ -48,7 +55,7 @@ const NAV_ITEMS = [
     href: "/profile/stock-alerts",
   },
   {
-    icon: "newspaper",
+    icon: <Newspaper size={14} />,
     label: "Tin tức & Ưu đãi",
     href: "/news",
   },
@@ -257,7 +264,11 @@ export default function ProfilePage() {
             href={href}
             className="flex w-full items-center gap-4 rounded-2xl bg-surface-container-lowest px-5 py-4 shadow-ambient-sm transition-colors hover:bg-surface-container-low"
           >
-            <Icon name={icon} className="text-primary" />
+            {typeof icon === "string" ? (
+              <Icon name={icon} className="text-primary" />
+            ) : (
+              <span className="text-primary">{icon}</span>
+            )}
             <span className="font-semibold text-on-surface">{label}</span>
             <Icon
               name="chevron_right"

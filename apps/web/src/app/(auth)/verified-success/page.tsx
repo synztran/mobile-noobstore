@@ -1,62 +1,107 @@
-import { BadgeCheck, ChevronRight } from "lucide-react";
+"use client";
+
+import Icon from "@/components/ui/Icon";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
-import React from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+
+const REDIRECT_SECONDS = 5;
 
 export default function IdentityVerified() {
+  const router = useRouter();
+  const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS);
+  const redirectedRef = useRef(false);
+
+  useEffect(() => {
+    const id = setInterval(
+      () => setSecondsLeft((s) => Math.max(0, s - 1)),
+      1000
+    );
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (secondsLeft === 0 && !redirectedRef.current) {
+      redirectedRef.current = true;
+      router.push("/");
+    }
+  }, [secondsLeft, router]);
+
+  const progress = (secondsLeft / REDIRECT_SECONDS) * 100;
+
   return (
-    <div className="font-body-md flex min-h-[max(884px,100dvh)] flex-col bg-background text-on-background antialiased selection:bg-secondary-container selection:text-on-secondary-container">
-      {/* Main Content Canvas */}
-      <main className="px-margin-mobile pb-xl relative flex flex-1 flex-col items-center justify-center overflow-hidden pt-[80px]">
-        {/* Subtle Ambient Background Element */}
-        <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-40">
-          <div className="h-[300px] w-[300px] rounded-full bg-secondary-container blur-[80px]"></div>
+    <div className="flex flex-1 flex-col items-center justify-center px-8 pb-12 pt-10">
+      {/* Logo */}
+      <div className="mb-8 flex flex-col items-center">
+        <div className="relative mb-2 flex h-16 w-24 items-center gap-2">
+          <Image
+            src="/logo/noob-store.png"
+            alt="NoobStore Logo"
+            objectFit="contain"
+            fill
+            sizes="96px"
+            className="rounded-xl"
+          />
         </div>
+      </div>
 
-        {/* Success Container */}
-        <div className="mt-xl relative z-10 flex w-full max-w-md flex-col items-center space-y-2">
-          {/* Floating Hero Card */}
-          <div className="animate-fade-up flex w-full transform flex-col items-center space-y-4 rounded-xl p-[32px] text-center transition-transform">
-            {/* Success Icon */}
-            <div className="mb-lg relative mb-2">
-              <div className="absolute inset-0 scale-150 rounded-full bg-secondary-container opacity-50 blur-md"></div>
-              <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full border-4 border-surface-container-lowest bg-secondary-container">
-                <span className="material-symbols-outlined text-[48px] text-secondary">
-                  <BadgeCheck className="text-green-600" size={48} />
-                </span>
-              </div>
-            </div>
-
-            {/* Typography */}
-            <span className="font-headline-lg-mobile text-headline-lg-mobile mb-sm text-2xl text-primary">
-              Xác thực thành công
-            </span>
-            <p className="font-body-lg text-body-lg mb-xl mx-auto text-on-surface-variant">
-              Cảm ơn bạn đã xác nhận email. Tài khoản của bạn hiện đã được bảo
-              mật hoàn toàn và bạn có quyền truy cập đầy đủ vào tất cả các tính
-              năng.
-            </p>
-
-            {/* Call to Action */}
-            <Link
-              href="/login"
-              className="font-label-md text-label-md primary-gradient group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full px-4 py-3 text-on-secondary shadow-sm shadow-secondary-container/50 transition-colors duration-300 hover:bg-on-secondary-container active:scale-[0.98]"
-            >
-              <span>Quay lại trang đăng nhập</span>
-              <span className="material-symbols-outlined text-[18px] transition-transform duration-300 group-hover:translate-x-1">
-                <ChevronRight className="text-on-secondary" />
-              </span>
-            </Link>
-
-            {/* Secondary Context */}
-            <div className="mt-md font-label-sm text-label-sm flex items-center gap-2 text-on-tertiary-container">
-              <span className="material-symbols-outlined text-[16px]">
-                lock
-              </span>
-              <span>End-to-end encrypted session</span>
-            </div>
+      {/* Success Container */}
+      <div className="flex w-full max-w-md flex-col items-center space-y-4 text-center">
+        {/* Success mark */}
+        <div className="relative mb-2">
+          <div
+            className="absolute inset-0 scale-150 rounded-full bg-secondary-container opacity-60 blur-md"
+            aria-hidden="true"
+          />
+          <div className="relative z-10 flex h-24 w-24 animate-fade-in items-center justify-center rounded-full border-4 border-surface-container-lowest bg-secondary-container">
+            <Icon
+              name="check_circle"
+              className="text-5xl text-on-secondary-container"
+            />
           </div>
         </div>
-      </main>
+
+        {/* Typography */}
+        <h1 className="text-2xl font-black tracking-tight text-on-surface">
+          Xác thực thành công
+        </h1>
+        <p className="text-base leading-relaxed text-on-surface-variant">
+          Cảm ơn bạn đã xác nhận email. Tài khoản của bạn hiện đã được bảo mật
+          hoàn toàn và bạn có quyền truy cập đầy đủ vào tất cả các tính năng.
+        </p>
+
+        {/* Countdown */}
+        <div className="w-full max-w-xs space-y-2 pt-2" role="status">
+          <p className="text-sm font-medium text-on-surface-variant">
+            Tự động chuyển hướng về trang chủ trong{" "}
+            <span className="font-black text-primary" aria-hidden="true">
+              {secondsLeft}s
+            </span>
+          </p>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Call to Action */}
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="primary-gradient btn mt-2 h-auto w-full max-w-xs rounded-2xl border-0 py-4 text-base font-bold normal-case text-white shadow-ambient-sm transition-transform active:scale-[0.98]"
+        >
+          Về trang chủ ngay
+        </button>
+
+        {/* Trust */}
+        <div className="flex items-center gap-1.5 pt-2 text-xs font-medium text-on-surface-variant">
+          <Icon name="lock" className="text-sm" />
+          <span>Phiên được mã hóa đầu cuối</span>
+        </div>
+      </div>
     </div>
   );
 }

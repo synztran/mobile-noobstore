@@ -5,7 +5,8 @@ import { getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 const ERROR_MAP: Record<string, string> = {
   "User already registered": "Email này đã được đăng ký!",
   "Invalid email": "Định dạng email không hợp lệ!",
-  "Password should be at least 6 characters": "Mật khẩu phải có ít nhất 6 ký tự!",
+  "Password should be at least 6 characters":
+    "Mật khẩu phải có ít nhất 6 ký tự!",
   "Too many requests": "Quá nhiều lần thử. Vui lòng đợi một chút.",
   "Signups not allowed": "Đăng ký tạm thời bị khóa. Vui lòng liên hệ hỗ trợ.",
 };
@@ -22,7 +23,9 @@ export async function POST(req: NextRequest) {
         { error: "Quá nhiều lần đăng ký. Vui lòng thử lại sau." },
         {
           status: 429,
-          headers: { "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)) },
+          headers: {
+            "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
+          },
         }
       );
     }
@@ -52,6 +55,7 @@ export async function POST(req: NextRequest) {
     options: {
       data: { full_name: fullName },
       ...(captchaToken ? { captchaToken } : {}),
+      emailRedirectTo: new URL("/verified-success", req.url).toString(),
     },
   });
 
