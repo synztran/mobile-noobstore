@@ -27,6 +27,12 @@ const nextConfig = {
   },
 
   images: {
+    // Serve images straight from Supabase Storage (WebP originals) instead of
+    // Vercel's optimizer. Vercel's image optimization has a monthly request
+    // quota; when exhausted it returns HTTP 402 for any cache-miss width
+    // (`x-vercel-error: OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED`), which
+    // broke product gallery images that hadn't been cached yet.
+    unoptimized: true,
     // Cache optimized images on Vercel's image CDN for 24 h
     minimumCacheTTL: 86400,
     formats: ["image/avif", "image/webp"],
