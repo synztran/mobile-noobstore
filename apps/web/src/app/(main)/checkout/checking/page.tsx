@@ -9,7 +9,7 @@ import { usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueri
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
@@ -188,6 +188,7 @@ export default function CheckingPage() {
                 alt="Payment QR Code"
                 objectFit="contain"
                 fill
+                sizes="(max-width: 768px) 90vw, 360px"
                 unoptimized
               />
             </div>

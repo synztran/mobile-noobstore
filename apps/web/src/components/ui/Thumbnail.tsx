@@ -1,5 +1,5 @@
 import Icon from "@/components/ui/Icon";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import React from "react";
 
 export type ThumbnailProps = {

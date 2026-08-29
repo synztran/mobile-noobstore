@@ -12,7 +12,7 @@ import {
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
 import { formatVND } from "@/lib/currency";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { QRPaymentSection } from "./QRPaymentSection";

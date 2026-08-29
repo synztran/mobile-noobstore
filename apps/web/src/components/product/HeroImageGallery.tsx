@@ -2,7 +2,7 @@
 
 import { ProductThumbnailStrip } from "@/components/product/ProductThumbnailStrip";
 import Icon from "@/components/ui/Icon";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SaleCountdown } from "@/components/product/SaleCountdown";
 

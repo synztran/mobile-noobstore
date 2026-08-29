@@ -3,7 +3,7 @@
 import type { ShopProduct } from "@/app/api/products/route";
 import { formatVND } from "@/lib/currency";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useHomeSaleProducts } from "@/lib/react-query/home/api/useHomeQueries";
 import { SaleCountdown } from "@/components/product/SaleCountdown";

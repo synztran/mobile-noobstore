@@ -3,7 +3,7 @@
 import { formatVND } from "@/lib/currency";
 import type { PaymentInformation } from "@/lib/payment-information";
 import { buildQRBank } from "@/lib/qr-bank";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useState } from "react";
 
 interface Props {

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {

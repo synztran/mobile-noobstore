@@ -5,7 +5,7 @@ import { CaptchaWidget, isCaptchaEnabled, type CaptchaWidgetHandle } from "@/com
 import { RefreshCcwDot } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
@@ -75,10 +75,11 @@ export default function ForgotPasswordPage() {
 				<div className="relative mb-2 flex h-32 w-48 items-center gap-2">
 					<Image
 						src="/logo/noob-store.png"
-						alt="NoobStore Logo"
-						objectFit="contain"
-						fill
-						className="rounded-xl"
+alt="NoobStore Logo"
+					objectFit="contain"
+					fill
+					sizes="192px"
+					className="rounded-xl"
 					/>
 				</div>
 			</div>

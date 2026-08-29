@@ -1,5 +1,5 @@
 import { TOKEN_ICON } from "@/lib/images";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 
 interface TokenBadgeProps {
   tokenCount: number | null;

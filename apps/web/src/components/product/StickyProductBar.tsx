@@ -3,7 +3,7 @@
 import { AddToCartButton } from "@/components/product/AddToCartButton";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useEffect, useState } from "react";
 
 interface Props {

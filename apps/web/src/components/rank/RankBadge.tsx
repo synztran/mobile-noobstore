@@ -1,7 +1,7 @@
 "use client";
 
 import type { CustomerRank } from "@/types/rank";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 
 interface Props {
   rank: CustomerRank;

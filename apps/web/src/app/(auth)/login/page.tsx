@@ -5,7 +5,7 @@ import { CaptchaWidget, isCaptchaEnabled, type CaptchaWidgetHandle } from "@/com
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { safeRedirect } from "@/lib/auth/redirect";
 import { toast } from "@/lib/toast";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useRef, useState } from "react";
@@ -64,6 +64,7 @@ function LoginForm() {
             alt="NoobStore Logo"
             objectFit="contain"
             fill
+            sizes="192px"
             className="rounded-xl"
           />
         </div>

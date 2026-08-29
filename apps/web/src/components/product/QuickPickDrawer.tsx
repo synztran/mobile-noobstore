@@ -9,7 +9,7 @@ import { formatVND } from "@/lib/currency";
 import type { CategoryItem } from "@/lib/products-server";
 import { useQuickPickDrawer } from "@/components/product/useQuickPickDrawer";
 import clsx from "clsx";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo } from "react";

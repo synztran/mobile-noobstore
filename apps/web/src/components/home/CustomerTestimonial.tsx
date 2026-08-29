@@ -3,7 +3,7 @@
 import type { Creator } from "@/app/api/home/creators/route";
 import { useHomeCreators } from "@/lib/react-query/home/api/useHomeQueries";
 import { Sparkles } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 
 const COLOR_CLASSES: Record<string, string> = {
   "bg-primary-container": "from-primary/20 to-primary/5",

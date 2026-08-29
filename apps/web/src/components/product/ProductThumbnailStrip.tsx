@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useState } from "react";
 
 interface Props {

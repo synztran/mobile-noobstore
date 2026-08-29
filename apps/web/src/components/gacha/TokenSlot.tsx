@@ -2,7 +2,7 @@
 
 import { TOKEN_ICON } from "@/lib/images";
 import { AnimatePresence, motion } from "motion/react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { memo } from "react";
 
 interface TokenSlotProps {

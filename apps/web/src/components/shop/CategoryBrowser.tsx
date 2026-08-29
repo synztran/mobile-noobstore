@@ -2,7 +2,7 @@
 
 import { QuickPickDrawer } from "@/components/product/QuickPickDrawer";
 import type { CategoryItem } from "@/lib/products-server";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useState } from "react";
 
 interface CategoryBrowserProps {

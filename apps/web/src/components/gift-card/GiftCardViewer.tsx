@@ -9,7 +9,7 @@ import {
   useTransform,
 } from "motion/react";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { LOGO_NOOB_STORE } from "@/lib/images";
 import Icon from "@/components/ui/Icon";
 import { toast } from "@/lib/toast";

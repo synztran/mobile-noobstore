@@ -3,7 +3,7 @@
 import type { HeroCampaign } from "@/app/api/home/hero/route";
 import { useHomeHero } from "@/lib/react-query/home/api/useHomeQueries";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 

@@ -8,7 +8,7 @@ import {
 import { MISSION_TYPE_LABEL } from "@/constants/gacha";
 import type { GachaMission } from "@/lib/react-query/router/gacha";
 import { CheckCircle2 } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useCallback, useEffect, useState } from "react";
 
 interface GachaMissionsDrawerProps {

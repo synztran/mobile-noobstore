@@ -1,5 +1,5 @@
 import type { CommunityMedia } from "@/lib/community-server";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 
 interface Props {
   media: CommunityMedia;

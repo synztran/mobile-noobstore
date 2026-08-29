@@ -45,9 +45,8 @@ export function ProductInfoTabs({
 }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("Mô tả");
   const [descExpanded, setDescExpanded] = useState(false);
-  const { data: shippingData, isLoading: estimatesLoading } = useShippingEstimate(
-    activeTab === "Vận chuyển"
-  );
+  const { data: shippingData, isLoading: estimatesLoading } =
+    useShippingEstimate(activeTab === "Vận chuyển");
   const estimates = shippingData?.estimates ?? [];
 
   return (
@@ -95,7 +94,7 @@ export function ProductInfoTabs({
             {activeTab === "Mô tả" && (
               <div>
                 <div
-                  className={`relative overflow-hidden transition-all duration-350 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  className={`duration-350 relative overflow-hidden transition-all ease-[cubic-bezier(0.32,0.72,0,1)] ${
                     descExpanded ? "max-h-[9999px]" : "max-h-[90px]"
                   }`}
                 >
@@ -220,8 +219,9 @@ export function ProductInfoTabs({
                       Đổi trả trong 3 ngày
                     </p>
                     <p className="mt-0.5">
-                      Sản phẩm lỗi hoặc chưa sử dụng được đổi trả trong vòng 3
-                      ngày kể từ khi nhận. Phí vận chuyển người mua chi trả
+                      Sản phẩm lỗi hoặc sản phẩm còn đủ seal và tag được đổi trả
+                      trong vòng 3 ngày kể từ khi nhận. Phí vận chuyển người mua
+                      chi trả
                     </p>
                   </div>
                 </div>

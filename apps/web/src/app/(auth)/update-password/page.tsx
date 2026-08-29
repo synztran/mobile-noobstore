@@ -3,7 +3,7 @@
 import Icon from "@/components/ui/Icon";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -80,6 +80,7 @@ export default function UpdatePasswordPage() {
 						alt="NoobStore Logo"
 						objectFit="contain"
 						fill
+						sizes="192px"
 						className="rounded-xl"
 					/>
 				</div>

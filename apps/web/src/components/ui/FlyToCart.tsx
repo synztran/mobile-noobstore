@@ -1,7 +1,7 @@
 "use client";
 
 import { useFlyToCartStore } from "@/store/useFlyToCart";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useCallback, useEffect, useRef } from "react";
 
 function easeOutCubic(t: number): number {

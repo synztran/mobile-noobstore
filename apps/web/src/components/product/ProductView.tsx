@@ -7,6 +7,8 @@ import type {
 import type { ProductDetail } from "@/app/api/products/[slug]/route";
 import { TopNav } from "@/components/layout/TopNav";
 import { AddToCartButton } from "@/components/product/AddToCartButton";
+import { ProductBadges } from "@/components/product/ProductBadges";
+import { useProductBadges } from "@/components/product/useProductBadges";
 import { StockAlertButton } from "@/components/product/StockAlertButton";
 import { HeroImageGallery } from "@/components/product/HeroImageGallery";
 import { ProductConfigurator } from "@/components/product/ProductConfigurator";
@@ -16,7 +18,7 @@ import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { trackViewItem, toGAProduct } from "@/lib/analytics";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -135,50 +137,12 @@ export function ProductView({
       ? product.min_price + componentAdjustment
       : (selectedVariant?.effective_price ?? minVariantPrice);
 
-  const badges = useMemo(() => {
-    const list: { label: string; className: string }[] = [];
-    if (isOutOfStock) {
-      list.push({
-        label: "Hết hàng",
-        className: "bg-surface-container-high text-on-surface-variant",
-      });
-    }
-
-    if (product.is_used) {
-      list.push({
-        label: "Đã qua sử dụng",
-        className: "bg-yellow-600 text-white",
-      });
-    }
-    if (product.is_pre_order) {
-      list.push({ label: "Đặt trước", className: "bg-violet-500 text-white" });
-    }
-    if (hasDiscount) {
-      list.push({
-        label: `-${discountPercent}%`,
-        className: "bg-red-500 text-white",
-      });
-    }
-    if (list.length === 0) {
-      list.push({
-        label:
-          variants.length > 0
-            ? `${variants.length} tùy chọn`
-            : "Sẵn sàng để giao",
-        className: "bg-primary text-white",
-      });
-    }
-    return list;
-  }, [
+  const badges = useProductBadges({
+    product,
+    variants,
+    selectedVariant,
     isOutOfStock,
-    isLowStock,
-    effectiveStockQuantity,
-    product.is_used,
-    product.is_pre_order,
-    hasDiscount,
-    discountPercent,
-    variants.length,
-  ]);
+  });
 
   const specItems = useMemo(() => {
     if (!product.attributes) return [];
@@ -237,29 +201,7 @@ export function ProductView({
         {/* ── Product Info ── */}
         <section className="!mt-0 px-4">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            {badges.map((badge) => (
-              <span
-                key={badge.label}
-                className={clsx(
-                  "rounded px-2 py-1 text-[10px] font-black uppercase tracking-widest",
-                  badge.className
-                )}
-              >
-                {badge.label}
-              </span>
-            ))}
-            {purchaseCount > 0 && (
-              <span className="flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-3 w-3"
-                  fill="currentColor"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                </svg>
-                Đã bán {purchaseCount}
-              </span>
-            )}
+            <ProductBadges badges={badges} purchaseCount={purchaseCount} />
           </div>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">

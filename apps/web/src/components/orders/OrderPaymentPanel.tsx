@@ -5,7 +5,7 @@ import type { PaymentInformation } from "@/lib/payment-information";
 import { normalizeShippingMethodId, DELIVERY_SERVICE_ID } from "@/lib/shipping-method";
 import { usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
 import { Check, Copy, CreditCard } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useCallback, useMemo, useState } from "react";
 
 interface Props {

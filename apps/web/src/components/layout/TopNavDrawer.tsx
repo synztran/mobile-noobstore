@@ -8,13 +8,20 @@ import clsx from "clsx";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 
 interface TopNavDrawerProps {
   open: boolean;
   onClose: () => void;
 }
 
-const NAV_ITEMS = [
+type NavItem = {
+  icon: string | ReactNode;
+  label: string;
+  href: string;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { icon: "home", label: "Trang chủ", href: "/" },
   { icon: "shopping_bag", label: "Cửa hàng", href: "/shop" },
   // { icon: "forum", label: "Cộng đồng", href: "/community" },
@@ -157,13 +164,17 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
                           : "text-on-surface"
                       )}
                     >
-                      <Icon
-                        name={icon}
-                        className={clsx(
-                          "text-[18px]",
-                          isActive ? "text-primary" : "text-on-surface-variant"
-                        )}
-                      />
+                      {typeof icon === "string" && (
+                        <Icon
+                          name={icon}
+                          className={clsx(
+                            "text-[18px]",
+                            isActive
+                              ? "text-primary"
+                              : "text-on-surface-variant"
+                          )}
+                        />
+                      )}
                       {label}
                     </Link>
                   </motion.li>

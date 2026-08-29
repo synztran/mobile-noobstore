@@ -3,7 +3,7 @@
 import { formatVND } from "@/lib/currency";
 import type { CartItem } from "@/lib/data";
 import { NOT_FOUND_IMAGE } from "@/lib/images";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { memo, useMemo } from "react";
 
 interface OrderItemsListProps {

@@ -4,7 +4,7 @@ import type { BookingService } from "@/app/api/services/booking-config/route";
 import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
 import { Plus } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useMemo } from "react";
 import { ServiceEntryCard } from "./ServiceEntryCard";
 import type { ServiceEntryDraft, ServiceSectionCardProps } from "./types";

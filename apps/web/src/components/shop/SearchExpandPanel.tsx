@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { CategoryItem } from "@/lib/products-server";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 

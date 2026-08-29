@@ -23,7 +23,7 @@ import {
   PackageCheck,
   Truck,
 } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
@@ -432,6 +432,7 @@ function OrderDetailContent({
                   alt={detail.carriers.name}
                   className="shrink-0 rounded-full bg-surface-container-high"
                   fill
+                  sizes="56px"
                   objectFit="cover"
                 />
               </div>

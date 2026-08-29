@@ -2,7 +2,7 @@
 
 import Icon from "@/components/ui/Icon";
 import type { CategoryItem } from "@/lib/products-server";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useState } from "react";
 import { QuickPickDrawer } from "./QuickPickDrawer";
 

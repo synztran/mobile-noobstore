@@ -3,7 +3,7 @@ import {
   getFlashSaleProducts,
   type FlashSaleProduct,
 } from "@/lib/flash-sale-server";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { SaleCountdown } from "@/components/product/SaleCountdown";
 

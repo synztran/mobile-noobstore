@@ -1,5 +1,5 @@
 import { CalendarDays } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { formatVND } from "@/lib/currency";
 import { getSaleProducts } from "@/lib/sale-products-server";

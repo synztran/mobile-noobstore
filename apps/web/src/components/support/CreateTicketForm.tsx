@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 
 interface SectionState {
   id: string;

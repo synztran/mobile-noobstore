@@ -3,7 +3,7 @@
 import type { CommunityPhoto } from "@/app/api/home/community-gallery/route";
 import { useHomeCommunityGallery } from "@/lib/react-query/home/api/useHomeQueries";
 import { Heart } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useEffect, useRef, useState } from "react";
 
 const PAGE_SIZE = 5;

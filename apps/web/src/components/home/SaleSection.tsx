@@ -2,7 +2,7 @@
 
 import { useHomeSaleProducts } from "@/lib/react-query/home/api/useHomeQueries";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useState } from "react";
 import { ICON_SALE } from "@/lib/images";

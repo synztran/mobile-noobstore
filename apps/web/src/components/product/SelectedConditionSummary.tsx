@@ -4,7 +4,7 @@
 
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ShopVariant } from "@/app/api/products/route";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 
 // ─── Condition helper ─────────────────────────────────────────────────────────
 

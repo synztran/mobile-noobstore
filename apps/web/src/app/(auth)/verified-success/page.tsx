@@ -2,7 +2,6 @@
 
 import Icon from "@/components/ui/Icon";
 import Image from "@/components/ui/AdaptiveImage";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -33,7 +32,7 @@ export default function IdentityVerified() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-8 pb-12 pt-10">
       {/* Logo */}
-      <div className="mb-8 flex flex-col items-center">
+      {/* <div className="mb-8 flex flex-col items-center">
         <div className="relative mb-2 flex h-16 w-24 items-center gap-2">
           <Image
             src="/logo/noob-store.png"
@@ -44,7 +43,7 @@ export default function IdentityVerified() {
             className="rounded-xl"
           />
         </div>
-      </div>
+      </div> */}
 
       {/* Success Container */}
       <div className="flex w-full max-w-md flex-col items-center space-y-4 text-center">

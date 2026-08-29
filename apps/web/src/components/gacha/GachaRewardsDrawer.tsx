@@ -3,7 +3,7 @@
 import { TYPE_BADGE } from "@/constants/gacha";
 import type { GachaRewardMeta } from "@/types/gacha";
 
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { memo, useEffect } from "react";
 
 interface GachaRewardsDrawerProps {

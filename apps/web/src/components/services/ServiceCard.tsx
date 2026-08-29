@@ -3,7 +3,7 @@
 import type { Service } from "@/app/api/services/route";
 import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 
 const SERVICE_TYPE_LABELS: Record<string, string> = {

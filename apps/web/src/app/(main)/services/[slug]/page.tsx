@@ -6,7 +6,7 @@ import { ServiceConfigurator } from "@/components/services/ServiceConfigurator";
 import { formatVND } from "@/lib/currency";
 import { useServiceDetail } from "@/lib/react-query/service/api/useServiceQueries";
 import { AlertTriangle, RefreshCcw } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useParams } from "next/navigation";
 
 const SERVICE_TYPE_LABELS: Record<string, string> = {

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ShopVariant } from "@/app/api/products/route";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { memo, useMemo } from "react";
 
 const MAX_VISIBLE = 5;

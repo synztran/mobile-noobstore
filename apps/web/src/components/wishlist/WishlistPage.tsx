@@ -4,7 +4,7 @@ import type { WishlistItemResponse } from "@/app/api/wishlist/route";
 import Icon from "@/components/ui/Icon";
 import { useWishlist } from "@/hooks/useWishlist";
 import { formatVND } from "@/lib/currency";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 
 interface WishlistPageProps {

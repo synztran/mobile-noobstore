@@ -9,7 +9,7 @@ import { useFlyToCartStore } from "@/store/useFlyToCart";
 import { useAddCartItem } from "@/lib/react-query/cart/api/useCartMutations";
 import { trackAddToCart, toGAProduct } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";

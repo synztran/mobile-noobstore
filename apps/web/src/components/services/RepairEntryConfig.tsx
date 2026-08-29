@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { ImagePlus, Loader2, X } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useRef, useState } from "react";
 import type { ServiceEntryDraft } from "./types";
 

@@ -27,14 +27,18 @@ const nextConfig = {
   },
 
   images: {
-    // Serve images straight from Supabase Storage (WebP originals) instead of
-    // Vercel's optimizer. Vercel's image optimization has a monthly request
-    // quota; when exhausted it returns HTTP 402 for any cache-miss width
-    // (`x-vercel-error: OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED`), which
-    // broke product gallery images that hadn't been cached yet.
-    unoptimized: true,
-    // Cache optimized images on Vercel's image CDN for 24 h
-    minimumCacheTTL: 86400,
+    // Aligned to real layout widths (mobile-first Tailwind containers: max-w-md
+    // → max-w-4xl, rare 7xl=1280px). Trimmed from Next's default 16 candidate
+    // widths so the Vercel optimizer writes far fewer variants (each unique
+    // (url, w, q) is a cache write = billed transformation). 1920 ≈ desktop
+    // 7xl × 1.5 retina; 2048/3840 dropped (most expensive variants).
+    deviceSizes: [640, 750, 828, 1080, 1536, 1920],
+    imageSizes: [32, 64, 96, 128, 256, 320, 384],
+
+    // Write-once, read-many: 30d instead of 24h. Object URLs are immutable
+    // (admin uploads stamp cache-control: immutable), so variants stay useful
+    // long-term and the write → read ratio collapses.
+    minimumCacheTTL: 2592000,
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "*.supabase.co" },

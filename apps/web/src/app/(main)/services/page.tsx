@@ -6,7 +6,7 @@ import { ServiceBookingFlow } from "@/components/services/ServiceBookingFlow";
 import { ServicesTour } from "@/components/services/ServicesTour";
 import { SERVICE_PAGE_HERO_IMAGE } from "@/lib/images";
 import { ShieldCheck } from "lucide-react";
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useCallback, useRef } from "react";
 
 const ServicesPage = () => {

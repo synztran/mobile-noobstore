@@ -3,7 +3,7 @@
 import { useGachaHistory } from "@/lib/react-query/gacha/api/useGachaQueries";
 import { REWARD_TYPE_LABEL } from "@/constants/gacha";
 
-import Image from "next/image";
+import Image from "@/components/ui/AdaptiveImage";
 import { useEffect, useRef } from "react";
 
 interface GachaHistoryDrawerProps {
