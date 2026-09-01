@@ -208,12 +208,6 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     [drawer]
   );
 
-  const handleConfigDotClick = (i: number) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setConfigImgIndex(i);
-  };
-
   // ── Render helpers ────────────────────────────────────────────────────
   const renderProductList = () => (
     <div className="space-y-3">
@@ -303,26 +297,6 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
                 <Images size={16} />
               </span>
             </button>
-            {configGallery.length > 1 && (
-              <div className="absolute inset-x-0 bottom-1 z-20 flex justify-center">
-                <div className="flex items-center gap-1 rounded-full bg-black/35 px-1.5 py-0.5">
-                  {configGallery.map((src, i) => (
-                    <button
-                      key={src}
-                      type="button"
-                      aria-label={`Xem ảnh ${i + 1}/${configGallery.length}`}
-                      aria-current={i === configImgIndex}
-                      onClick={handleConfigDotClick(i)}
-                      className={`h-1 rounded-full transition-all duration-200 ${
-                        i === configImgIndex
-                          ? "w-3.5 bg-white"
-                          : "w-1 bg-white/55"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-sm font-bold leading-tight text-on-surface">

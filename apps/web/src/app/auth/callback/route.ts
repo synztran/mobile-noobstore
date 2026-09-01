@@ -25,6 +25,8 @@ export async function GET(request: Request) {
 
 		// Email/password sign-ups are already reported by the register form;
 		// only report brand-new Google sign-ups here (no double reporting).
+		// Awaited (not fire-and-forget): on serverless hosts a promise returned
+		// after the response would be terminated before the Telegram call lands.
 		if (user && isGoogleProvider && isNew) {
 			const meta = user.user_metadata ?? {};
 			const fullName =
@@ -32,14 +34,16 @@ export async function GET(request: Request) {
 				(user.email?.split("@")[0] ?? "Google user");
 			const email = user.email ?? "";
 
-			void notifyNewUserRegistered({
-				fullName,
-				email,
-				registeredAt: user.created_at ?? undefined,
-				provider: "google",
-			}).catch(() => {
+			try {
+				await notifyNewUserRegistered({
+					fullName,
+					email,
+					registeredAt: user.created_at ?? undefined,
+					provider: "google",
+				});
+			} catch {
 				// Notification failure must never break auth redirect
-			});
+			}
 		}
 	}
 

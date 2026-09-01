@@ -12,6 +12,7 @@ import { useProductBadges } from "@/components/product/useProductBadges";
 import { StockAlertButton } from "@/components/product/StockAlertButton";
 import { HeroImageGallery } from "@/components/product/HeroImageGallery";
 import { ProductConfigurator } from "@/components/product/ProductConfigurator";
+import { SelectedConditionSummary } from "@/components/product/SelectedConditionSummary";
 import WishlistButton from "@/components/wishlist/WishlistButton";
 import { useProductViewData } from "@/hooks/useProductViewData";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
@@ -20,7 +21,7 @@ import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
 import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
@@ -54,6 +55,10 @@ export function ProductView({
 }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  // The image the condition-summary thumbnail asked to open first. When set,
+  // the viewer starts at index 0 of viewerImages; otherwise the hero gallery's
+  // activeIndex drives it.
+  const [viewerStart, setViewerStart] = useState<string | null>(null);
 
   const mediaImages = useMemo(() => {
     const all = [product.thumbnail, ...(product.images ?? [])].filter(
@@ -61,6 +66,24 @@ export function ProductView({
     );
     return Array.from(new Set(all));
   }, [product.thumbnail, product.images]);
+
+  const viewerImages = useMemo(
+    () =>
+      Array.from(
+        new Set([viewerStart, ...mediaImages].filter(Boolean))
+      ) as string[],
+    [viewerStart, mediaImages]
+  );
+
+  const openViewerAt = useCallback((image: string) => {
+    setViewerStart(image);
+    setImageViewerOpen(true);
+  }, []);
+
+  const openViewerAtHero = useCallback(() => {
+    setViewerStart(null);
+    setImageViewerOpen(true);
+  }, []);
 
   const {
     variants,
@@ -195,14 +218,14 @@ export function ProductView({
           hasDiscount={hasDiscount}
           discountPercent={discountPercent}
           saleEndsAt={product.sale_ends_at}
-          onImageClick={() => setImageViewerOpen(true)}
+          onImageClick={openViewerAtHero}
         />
 
         {/* ── Product Info ── */}
         <section className="!mt-0 px-4">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
+          {/* <div className="mb-2 flex flex-wrap items-center gap-2">
             <ProductBadges badges={badges} purchaseCount={purchaseCount} />
-          </div>
+          </div> */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-primary">
@@ -263,16 +286,24 @@ export function ProductView({
                   ))}
                 </div>
               ) : (
-                <ProductConfigurator
-                  groups={groups}
-                  variants={variants}
-                  selections={selections}
-                  loadingConfigurator={loadingConfigurator}
-                  basePrice={product.base_price}
-                  onSelect={select}
-                  disabledVariantIds={disabledVariantIds}
-                  showTitle={false}
-                />
+                <>
+                  <ProductConfigurator
+                    groups={groups}
+                    variants={variants}
+                    selections={selections}
+                    loadingConfigurator={loadingConfigurator}
+                    basePrice={product.base_price}
+                    onSelect={select}
+                    disabledVariantIds={disabledVariantIds}
+                    showTitle={false}
+                  />
+                  <SelectedConditionSummary
+                    groups={groups}
+                    selections={selections}
+                    productVariants={variants}
+                    onShowImage={openViewerAt}
+                  />
+                </>
               )}
             </div>
           </section>
@@ -422,8 +453,8 @@ export function ProductView({
       {/* ── Image Viewer ── */}
       <Suspense fallback={null}>
         <ImageViewer
-          images={mediaImages}
-          initialIndex={activeImageIndex}
+          images={viewerImages}
+          initialIndex={viewerStart ? 0 : activeImageIndex}
           isOpen={imageViewerOpen}
           onClose={() => setImageViewerOpen(false)}
         />

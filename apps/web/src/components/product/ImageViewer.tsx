@@ -94,6 +94,15 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
     [images.length, scale]
   );
 
+  const goTo = useCallback(
+    (i: number) => {
+      setScale(1);
+      lastScale.current = 1;
+      setIndex(i);
+    },
+    []
+  );
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -178,6 +187,28 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
               </motion.div>
             </AnimatePresence>
           </motion.div>
+
+          {images.length > 1 && (
+            <div
+              className="absolute inset-x-0 bottom-8 z-10 flex justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+                {images.map((img, i) => (
+                  <button
+                    key={`dot-${img}`}
+                    type="button"
+                    aria-label={`Xem ảnh ${i + 1}/${images.length}`}
+                    aria-current={i === index}
+                    onClick={() => goTo(i)}
+                    className={`h-1.5 rounded-full transition-all duration-200 ${
+                      i === index ? "w-4 bg-white" : "w-2 bg-white/55"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

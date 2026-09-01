@@ -86,6 +86,10 @@ export function SelectedConditionSummary({
 
   const visibleRows = rows.filter((r) => r.text && r.label);
 
+  // Only render the section once something selected carries a "Tình trạng"
+  // value — no empty-state placeholder.
+  if (visibleRows.length === 0) return null;
+
   return (
     <section className="rounded-2xl border border-surface-container-high bg-surface-container-low p-3.5">
       <div className="mb-3 flex items-center gap-1.5">
@@ -93,63 +97,55 @@ export function SelectedConditionSummary({
         <h3 className="text-xs font-black uppercase leading-none tracking-wider text-on-surface">
           Tình trạng linh kiện
         </h3>
-        {visibleRows.length > 0 && (
-          <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-black text-primary">
-            {visibleRows.length}
-          </span>
-        )}
+        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-black text-primary">
+          {visibleRows.length}
+        </span>
       </div>
-      {visibleRows.length > 0 ? (
-        <ul className="space-y-2">
-          {visibleRows.map((r) => {
-            const thumb = r.thumbnail;
-            return (
-              <li
-                key={`${r.group}:${r.label}`}
-                className="flex items-center gap-2.5"
-              >
-                {thumb ? (
-                  <button
-                    type="button"
-                    aria-label={`Xem ảnh lớn: ${r.label}`}
-                    onClick={() => onShowImage?.(thumb)}
-                    className="group relative box-border h-12 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-surface-container-high bg-surface-container-high transition-transform active:scale-95"
-                  >
-                    <Image
-                      src={thumb}
-                      alt={r.label}
-                      width={64}
-                      height={48}
-                      className="h-full w-full object-cover"
+      <ul className="space-y-2">
+        {visibleRows.map((r) => {
+          const thumb = r.thumbnail;
+          return (
+            <li
+              key={`${r.group}:${r.label}`}
+              className="flex items-center gap-2.5"
+            >
+              {thumb ? (
+                <button
+                  type="button"
+                  aria-label={`Xem ảnh lớn: ${r.label}`}
+                  onClick={() => onShowImage?.(thumb)}
+                  className="group relative box-border h-12 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-surface-container-high bg-surface-container-high transition-transform active:scale-95"
+                >
+                  <Image
+                    src={thumb}
+                    alt={r.label}
+                    width={64}
+                    height={48}
+                    className="h-full w-full object-cover"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <Icon
+                      name="visibility"
+                      className="text-base text-white"
                     />
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                      <Icon
-                        name="visibility"
-                        className="text-base text-white"
-                      />
-                    </span>
-                  </button>
-                ) : null}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-black leading-tight text-on-surface">
-                    {r.group && (countByLabel.get(r.label) ?? 0) > 1
-                      ? `${r.group} · `
-                      : ""}
-                    {r.label}
-                  </p>
-                  <p className="text-[10px] font-semibold text-on-surface-variant">
-                    {r.text}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <p className="text-xs font-semibold text-on-surface-variant">
-          Chưa chọn linh kiện nào.
-        </p>
-      )}
+                  </span>
+                </button>
+              ) : null}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-black leading-tight text-on-surface">
+                  {r.group && (countByLabel.get(r.label) ?? 0) > 1
+                    ? `${r.group} · `
+                    : ""}
+                  {r.label}
+                </p>
+                <p className="text-[10px] font-semibold text-on-surface-variant">
+                  {r.text}
+                </p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
