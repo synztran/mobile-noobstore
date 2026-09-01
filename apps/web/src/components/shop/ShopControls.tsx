@@ -7,6 +7,7 @@ import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
 import type { CategoryItem } from "@/lib/products-server";
 import { SORT_OPTIONS } from "@/constants/shop";
+import { ShopTour } from "./ShopTour";
 import { SortSheet } from "./SortSheet";
 import { useShopControls } from "@/hooks/useShopControls";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
@@ -110,7 +111,10 @@ export function ShopControls({
     <>
       {/* Search bar — typing filters the grid; focus reveals recent + category shortcuts */}
       <div ref={searchWrapRef} className="relative mb-4">
-        <div className="flex items-center gap-2 rounded-md border border-outline-variant bg-white px-3 py-3.5">
+        <div
+          data-tour="search"
+          className="flex items-center gap-2 rounded-md border border-outline-variant bg-white px-3 py-3.5"
+        >
           <Icon name="search" className="text-outline" />
           <input
             type="text"
@@ -149,7 +153,7 @@ export function ShopControls({
 
       {/* Header row */}
       <div className="mb-4 flex items-center justify-between">
-        <div>
+        <div data-tour="results">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
             Bộ sưu tập
           </p>
@@ -162,7 +166,9 @@ export function ShopControls({
           )}
         </div>
         <div className="flex gap-2">
+          {/* <ShopTour /> */}
           <button
+            data-tour="filter"
             onClick={() => setShowFilter(true)}
             className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-colors ${
               filterApplied
@@ -174,6 +180,7 @@ export function ShopControls({
             Lọc
           </button>
           <button
+            data-tour="sort"
             onClick={() => setShowSort(true)}
             className="flex items-center gap-2 rounded-full bg-surface-container px-4 py-2.5 text-xs font-bold text-on-surface transition-colors"
           >

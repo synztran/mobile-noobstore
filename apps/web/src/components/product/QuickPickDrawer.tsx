@@ -12,7 +12,7 @@ import clsx from "clsx";
 import Image from "@/components/ui/AdaptiveImage";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "motion/react";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeliveryAvailabilitySection } from "./DeliveryAvailabilitySection";
 import { SelectedConditionSummary } from "./SelectedConditionSummary";
 import { Images } from "lucide-react";
@@ -124,16 +124,95 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     propProduct,
   });
 
-  // Gallery for the full-screen viewer: active image first, then the rest of
-  // the product's media, deduped.
+  // Gallery for the full-screen viewer: image requested by the condition
+  // summary first (when tapped), else the active image, then the rest of the
+  // product's media, deduped.
+  const [viewerStart, setViewerStart] = useState<string | null>(null);
   const viewerImages = useMemo(() => {
     const all = [
+      viewerStart,
       drawer.activeThumbnail,
       drawer.activeProduct?.thumbnail,
       ...(drawer.activeProduct?.images ?? []),
     ];
     return Array.from(new Set(all.filter(Boolean))) as string[];
-  }, [drawer.activeThumbnail, drawer.activeProduct]);
+  }, [viewerStart, drawer.activeThumbnail, drawer.activeProduct]);
+
+  const openViewerAt = useCallback(
+    (image: string) => {
+      setViewerStart(image);
+      drawer.openViewer();
+    },
+    [drawer]
+  );
+
+  const closeViewer = useCallback(() => {
+    setViewerStart(null);
+    drawer.closeViewer();
+  }, [drawer]);
+
+  // Configurator main image: a fixed product gallery that never follows
+  // variant taps. Dots + swipe browse the media; a tap opens the viewer.
+  const configGallery = useMemo(() => {
+    const all = [
+      drawer.activeProduct?.thumbnail,
+      ...(drawer.activeProduct?.images ?? []),
+    ].filter(Boolean) as string[];
+    return Array.from(new Set(all));
+  }, [drawer.activeProduct]);
+
+  const [configImgIndex, setConfigImgIndex] = useState(0);
+  const configSwipeStartX = useRef<number | null>(null);
+  const configSwipedRef = useRef(false);
+
+  useEffect(() => {
+    setConfigImgIndex(0);
+  }, [drawer.activeProduct?.id]);
+
+  const handleConfigTouchStart = useCallback((e: React.TouchEvent) => {
+    configSwipeStartX.current = e.touches[0].clientX;
+    configSwipedRef.current = false;
+  }, []);
+
+  const handleConfigTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (configSwipeStartX.current === null || configGallery.length <= 1)
+        return;
+      const delta = e.changedTouches[0].clientX - configSwipeStartX.current;
+      configSwipeStartX.current = null;
+      if (Math.abs(delta) > 40) {
+        if (e.cancelable) e.preventDefault();
+        configSwipedRef.current = true;
+        setConfigImgIndex(
+          (prev) =>
+            (prev + (delta < 0 ? 1 : -1) + configGallery.length) %
+            configGallery.length
+        );
+      }
+    },
+    [configGallery.length]
+  );
+
+  // A swipe fires a trailing click; suppress it so the gesture cycles images
+  // instead of opening the viewer.
+  const handleConfigThumbClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (configSwipedRef.current) {
+        configSwipedRef.current = false;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      drawer.openViewer();
+    },
+    [drawer]
+  );
+
+  const handleConfigDotClick = (i: number) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setConfigImgIndex(i);
+  };
 
   // ── Render helpers ────────────────────────────────────────────────────
   const renderProductList = () => (
@@ -206,31 +285,45 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     <div className="flex min-h-0 flex-col gap-2">
       {drawer.activeProduct && (
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="Xem ảnh lớn"
-            onClick={drawer.openViewer}
-            className="group/thumb relative flex-shrink-0 transition-transform active:scale-95"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={drawer.activeThumbnail ?? "placeholder"}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18 }}
-              >
-                <Thumbnail
-                  src={drawer.activeThumbnail}
-                  alt={drawer.activeProduct.name}
-                  className="h-20 w-24 rounded-xl"
-                />
-              </motion.div>
-            </AnimatePresence>
-            <span className="absolute bottom-1 right-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-surface/80 text-on-surface-variant backdrop-blur-sm group-active/thumb:bg-surface">
-              <Images size={16} />
-            </span>
-          </button>
+          <div className="relative flex-shrink-0">
+            <button
+              type="button"
+              aria-label="Xem ảnh lớn"
+              onClick={handleConfigThumbClick}
+              onTouchStart={handleConfigTouchStart}
+              onTouchEnd={handleConfigTouchEnd}
+              className="group/thumb relative block transition-transform active:scale-95"
+            >
+              <Thumbnail
+                src={configGallery[configImgIndex]}
+                alt={drawer.activeProduct.name}
+                className="h-20 w-24 rounded-xl"
+              />
+              <span className="absolute bottom-1 right-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-surface/80 text-on-surface-variant backdrop-blur-sm group-active/thumb:bg-surface">
+                <Images size={16} />
+              </span>
+            </button>
+            {configGallery.length > 1 && (
+              <div className="absolute inset-x-0 bottom-1 z-20 flex justify-center">
+                <div className="flex items-center gap-1 rounded-full bg-black/35 px-1.5 py-0.5">
+                  {configGallery.map((src, i) => (
+                    <button
+                      key={src}
+                      type="button"
+                      aria-label={`Xem ảnh ${i + 1}/${configGallery.length}`}
+                      aria-current={i === configImgIndex}
+                      onClick={handleConfigDotClick(i)}
+                      className={`h-1 rounded-full transition-all duration-200 ${
+                        i === configImgIndex
+                          ? "w-3.5 bg-white"
+                          : "w-1 bg-white/55"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-sm font-bold leading-tight text-on-surface">
               {drawer.activeProduct.name}
@@ -290,6 +383,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
           groups={drawer.groups}
           selections={drawer.selections}
           productVariants={drawer.activeProduct?.variants ?? []}
+          onShowImage={openViewerAt}
         />
         <ProductConfigurator
           groups={drawer.groups}
@@ -419,7 +513,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
         images={viewerImages}
         initialIndex={0}
         isOpen={drawer.imageViewerOpen}
-        onClose={drawer.closeViewer}
+        onClose={closeViewer}
       />
     </>
   );

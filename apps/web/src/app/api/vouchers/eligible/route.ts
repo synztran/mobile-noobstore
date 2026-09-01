@@ -1,4 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  resolveCategorySlugByProductId,
+  resolveVariantOwners,
+} from "@/lib/voucher-scope";
 import { sameShippingMethod } from "@/lib/shipping-method";
 import type { VoucherRow } from "@/types/voucher";
 import { NextResponse } from "next/server";
@@ -37,33 +41,27 @@ export async function GET(req: Request) {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+    const variantIds = (url.searchParams.get("variant_ids") ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const shippingMethodId = url.searchParams.get("shipping_method_id") ?? "";
 
-    // Resolve product → category slug for the cart items
-    const categorySlugByProductId = new Map<string, string>();
-    if (productIds.length > 0) {
-      const { data: categoryRows } = await supabase
-        .from("categories")
-        .select("id, slug");
+    // Kit component variants belong to a different product than the cart
+    // line's product_id — include those owning products in the scope pool.
+    const variantOwners = await resolveVariantOwners(supabase, variantIds);
+    const scopeProductIds = [
+      ...new Set([...productIds, ...variantOwners.values()]),
+    ];
 
-      const slugById = new Map(
-        (categoryRows ?? []).map((c) => [c.id, c.slug])
-      );
-
-      const { data: productRows } = await supabase
-        .from("products")
-        .select("id, category_id")
-        .in("id", productIds);
-
-      for (const p of productRows ?? []) {
-        if (p.category_id && slugById.has(p.category_id)) {
-          categorySlugByProductId.set(p.id, slugById.get(p.category_id)!);
-        }
-      }
-    }
+    // Resolve product → category slug for the scope pool
+    const categorySlugByProductId = await resolveCategorySlugByProductId(
+      supabase,
+      scopeProductIds
+    );
 
     // Structural items (no pricing here; manual apply recomputes amounts)
-    const items: ResolvedItem[] = productIds.map((id) => ({
+    const items: ResolvedItem[] = scopeProductIds.map((id) => ({
       product_id: id,
       quantity: 1,
       unit_price: 0,
@@ -142,7 +140,10 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       vouchers: eligible,
-      categorySlugByProductId: Object.fromEntries(categorySlugByProductId),
+      categorySlugByProductId: Object.fromEntries(
+        [...categorySlugByProductId].filter(([, slug]) => slug != null)
+      ),
+      ownedProductIds: scopeProductIds,
     });
   } catch (err) {
     console.error("[GET /api/vouchers/eligible] Unexpected error:", err);

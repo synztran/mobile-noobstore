@@ -53,7 +53,7 @@ function EmptyProductState({ search }: { search?: string }) {
 
 function ProductGrid({ products }: { products: ShopProduct[] }) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div data-tour="grid" className="grid grid-cols-2 gap-4">
       <AnimatePresence mode="popLayout">
         {products.map((product, index) => (
           <motion.div

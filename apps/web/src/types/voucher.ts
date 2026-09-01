@@ -113,6 +113,12 @@ export interface VoucherApplyItem {
 	quantity: number;
 	unit_price: number;
 	category_slug?: string | null;
+	/**
+	 * Variants chosen on this line (own variant + kit component variants).
+	 * The component variants may belong to a different product than
+	 * product_id — scope matching must resolve those owning products.
+	 */
+	variant_ids?: string[];
 }
 
 export interface ApplyVoucherRequest {

@@ -1,6 +1,10 @@
 import { VOUCHER_ERROR_MESSAGES } from "@/constants/errorMessages";
 import { sameShippingMethod } from "@/lib/shipping-method";
 import { createClient } from "@/lib/supabase/server";
+import {
+  resolveCategorySlugByProductId,
+  resolveVariantOwners,
+} from "@/lib/voucher-scope";
 import type {
   AppliedVoucherEntry,
   ApplyVoucherRequest,
@@ -52,60 +56,38 @@ function matchesShippingMethod(
 }
 
 /**
- * Resolve any missing category_slug values for cart items server-side
- * (authoritative — never trust the client for scope matching).
- */
-async function resolveCategorySlugs(
-  elevatedItems: VoucherApplyItem[]
-): Promise<VoucherApplyItem[]> {
-  const needsSlug = elevatedItems.filter((i) => !i.category_slug);
-  if (needsSlug.length === 0) return elevatedItems;
-
-  const supabase = await createClient();
-  const productIds = [...new Set(needsSlug.map((i) => i.product_id))];
-
-  const { data: categoryRows } = await supabase
-    .from("categories")
-    .select("id, slug");
-
-  const slugById = new Map(
-    (categoryRows ?? []).map((c) => [c.id, c.slug])
-  );
-
-  const { data: productRows } = await supabase
-    .from("products")
-    .select("id, category_id")
-    .in("id", productIds);
-
-  const slugByProductId = new Map<string, string | undefined>();
-  for (const p of productRows ?? []) {
-    if (p.category_id) slugByProductId.set(p.id, slugById.get(p.category_id));
-  }
-
-  return elevatedItems.map((i) => ({
-    ...i,
-    category_slug: i.category_slug ?? slugByProductId.get(i.product_id) ?? null,
-  }));
-}
-
-/**
  * Compute the matched-subtotal base for a scoped voucher.
  * For order_total/shipping_fee, base = order subtotal.
  * For product/category, base = subtotal of matching line items only.
+ * Kit lines may contain component variants owned by a different product
+ * (resolved via ownerByVariant) — those owning products also count toward
+ * the scope match, and the whole matching line subtotal is used as the base.
  */
 function computeScopeBase(
   voucher: VoucherRow,
   items: VoucherApplyItem[],
-  orderSubtotal: number
+  orderSubtotal: number,
+  ownerByVariant: Map<string, string>,
+  categorySlugByProductId: Map<string, string | null>
 ): { base: number; matches: boolean } {
   const excluded = new Set(voucher.excluded_product_ids ?? []);
+
+  const variantOwnersOf = (item: VoucherApplyItem): string[] =>
+    (item.variant_ids ?? [])
+      .map((vid) => ownerByVariant.get(vid))
+      .filter((id): id is string => Boolean(id));
 
   if (voucher.scope_type === "product") {
     const targetIds = voucher.applies_to_product_ids ?? [];
     if (targetIds.length === 0) return { base: 0, matches: false };
-    const matching = items.filter(
-      (i) => targetIds.includes(i.product_id) && !excluded.has(i.product_id)
-    );
+    const targetSet = new Set(targetIds);
+    const matching = items.filter((i) => {
+      if (excluded.has(i.product_id)) return false;
+      if (targetSet.has(i.product_id)) return true;
+      return variantOwnersOf(i).some(
+        (owner) => targetSet.has(owner) && !excluded.has(owner)
+      );
+    });
     if (matching.length === 0) return { base: 0, matches: false };
     const base = matching.reduce(
       (sum, i) => sum + i.unit_price * i.quantity,
@@ -117,11 +99,17 @@ function computeScopeBase(
   if (voucher.scope_type === "category") {
     const targetSlugs = new Set(voucher.applies_to_category_slugs ?? []);
     if (targetSlugs.size === 0) return { base: 0, matches: false };
-    const matching = items.filter(
-      (i) =>
-        targetSlugs.has(i.category_slug ?? "") &&
-        !excluded.has(i.product_id)
-    );
+    const matching = items.filter((i) => {
+      if (excluded.has(i.product_id)) return false;
+      const ownSlug =
+        i.category_slug ?? categorySlugByProductId.get(i.product_id);
+      if (ownSlug && targetSlugs.has(ownSlug)) return true;
+      return variantOwnersOf(i).some((owner) => {
+        if (excluded.has(owner)) return false;
+        const slug = categorySlugByProductId.get(owner);
+        return slug != null && targetSlugs.has(slug);
+      });
+    });
     if (matching.length === 0) return { base: 0, matches: false };
     const base = matching.reduce(
       (sum, i) => sum + i.unit_price * i.quantity,
@@ -161,8 +149,25 @@ export async function POST(req: Request) {
     const items: VoucherApplyItem[] =
       Array.isArray(body.items) ? body.items : [];
 
-    // Resolve category slugs server-side for scope matching
-    const resolvedItems = await resolveCategorySlugs(items);
+    // Resolve kit component variant owners + category slugs server-side for
+    // scope matching (authoritative — never trust the client).
+    const itemVariantIds = items.flatMap((i) => i.variant_ids ?? []);
+    const ownerByVariant = await resolveVariantOwners(supabase, itemVariantIds);
+    const scopeProductIds = [
+      ...new Set([
+        ...items.map((i) => i.product_id),
+        ...ownerByVariant.values(),
+      ]),
+    ];
+    const categorySlugByProductId = await resolveCategorySlugByProductId(
+      supabase,
+      scopeProductIds
+    );
+    const resolvedItems: VoucherApplyItem[] = items.map((i) => ({
+      ...i,
+      category_slug:
+        i.category_slug ?? categorySlugByProductId.get(i.product_id) ?? null,
+    }));
 
     if (!voucherIds || voucherIds.length === 0) {
       return NextResponse.json(
@@ -276,7 +281,9 @@ export async function POST(req: Request) {
       const { base: scopeBase, matches } = computeScopeBase(
         v,
         resolvedItems,
-        subtotal
+        subtotal,
+        ownerByVariant,
+        categorySlugByProductId
       );
       if (!matches) {
         return NextResponse.json(
@@ -358,7 +365,13 @@ export async function POST(req: Request) {
       const isScoped =
         v.scope_type === "product" || v.scope_type === "category";
       const discountBase = isScoped
-        ? computeScopeBase(v, resolvedItems, subtotal).base
+        ? computeScopeBase(
+            v,
+            resolvedItems,
+            subtotal,
+            ownerByVariant,
+            categorySlugByProductId
+          ).base
         : subtotal;
 
       if (v.reward_type === "amount_off") {

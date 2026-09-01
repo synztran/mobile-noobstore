@@ -1,10 +1,9 @@
 "use client";
 
-"use client";
-
 import type { ConfiguratorGroup } from "@/app/api/products/[slug]/configurator/route";
 import type { ShopVariant } from "@/app/api/products/route";
 import Image from "@/components/ui/AdaptiveImage";
+import Icon from "@/components/ui/Icon";
 
 // ─── Condition helper ─────────────────────────────────────────────────────────
 
@@ -22,6 +21,8 @@ interface SelectedConditionSummaryProps {
   selections: Record<string, string[]>;
   /** Product variants (simple path). Only used when there are no component groups. */
   productVariants: ShopVariant[];
+  /** Opens the full-screen viewer for the tapped image. */
+  onShowImage?: (image: string) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -31,12 +32,14 @@ interface SelectedConditionSummaryProps {
  * selection is represented visually, not only by name) plus its "Tình trạng"
  * attribute when present. Simple products contribute the selected
  * `__variant__`; kit products contribute each selected component variant.
- * Renders nothing when nothing is selected.
+ * Thumbnails open the full-screen image viewer. Renders nothing when nothing
+ * is selected.
  */
 export function SelectedConditionSummary({
   groups,
   selections,
   productVariants,
+  onShowImage,
 }: SelectedConditionSummaryProps) {
   const hasComponents = groups.length > 0;
 
@@ -81,50 +84,72 @@ export function SelectedConditionSummary({
     countByLabel.set(r.label, (countByLabel.get(r.label) ?? 0) + 1);
   }
 
+  const visibleRows = rows.filter((r) => r.text && r.label);
+
   return (
-    <div className="rounded-xl bg-[#f8f8f8] p-3">
-      <p className="mb-1.5 text-sm font-black uppercase tracking-wider text-primary">
-        Tình trạng
-      </p>
-      {rows.length > 0 ? (
-        <ul className="space-y-1.5">
-          {rows
-            ?.filter((r) => r.text)
-            .map((r) => (
+    <section className="rounded-2xl border border-surface-container-high bg-surface-container-low p-3.5">
+      <div className="mb-3 flex items-center gap-1.5">
+        <Icon name="check_circle" className="text-sm text-primary" />
+        <h3 className="text-xs font-black uppercase leading-none tracking-wider text-on-surface">
+          Tình trạng linh kiện
+        </h3>
+        {visibleRows.length > 0 && (
+          <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-black text-primary">
+            {visibleRows.length}
+          </span>
+        )}
+      </div>
+      {visibleRows.length > 0 ? (
+        <ul className="space-y-2">
+          {visibleRows.map((r) => {
+            const thumb = r.thumbnail;
+            return (
               <li
                 key={`${r.group}:${r.label}`}
-                className="flex items-center gap-1.5"
+                className="flex items-center gap-2.5"
               >
-                {r.thumbnail ? (
-                  <Image
-                    src={r.thumbnail}
-                    alt={r.label}
-                    width={32}
-                    height={24}
-                    className="h-6 w-8 flex-shrink-0 rounded object-cover"
-                  />
+                {thumb ? (
+                  <button
+                    type="button"
+                    aria-label={`Xem ảnh lớn: ${r.label}`}
+                    onClick={() => onShowImage?.(thumb)}
+                    className="group relative box-border h-12 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-surface-container-high bg-surface-container-high transition-transform active:scale-95"
+                  >
+                    <Image
+                      src={thumb}
+                      alt={r.label}
+                      width={64}
+                      height={48}
+                      className="h-full w-full object-cover"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <Icon
+                        name="visibility"
+                        className="text-base text-white"
+                      />
+                    </span>
+                  </button>
                 ) : null}
-                <span className="flex-shrink-0 rounded bg-surface-container-high px-2 py-1 text-xs font-bold text-on-surface">
-                  {(countByLabel.get(r.label) ?? 0) > 1 && r.group
-                    ? `${r.group} · `
-                    : ""}
-                  {r.label}
-                </span>
-                {r.text && (
-                  <span className="text-sm font-semibold text-on-surface-variant">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-black leading-tight text-on-surface">
+                    {r.group && (countByLabel.get(r.label) ?? 0) > 1
+                      ? `${r.group} · `
+                      : ""}
+                    {r.label}
+                  </p>
+                  <p className="text-[10px] font-semibold text-on-surface-variant">
                     {r.text}
-                  </span>
-                )}
+                  </p>
+                </div>
               </li>
-            ))}
+            );
+          })}
         </ul>
       ) : (
-        <div className="relative clear-both flex min-h-6 items-center">
-          <p className="text-xs font-semibold text-on-surface-variant">
-            Chưa có cấu hình nào được thiết lập tình trạng
-          </p>
-        </div>
+        <p className="text-xs font-semibold text-on-surface-variant">
+          Chưa chọn linh kiện nào.
+        </p>
       )}
-    </div>
+    </section>
   );
 }

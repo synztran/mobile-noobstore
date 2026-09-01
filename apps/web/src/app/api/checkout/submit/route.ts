@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
+import { resolveVariantOwners } from "@/lib/voucher-scope";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import { randomBase36 } from "@/lib/random";
 import type { AppliedVoucherSummary } from "@/types/voucher";
@@ -300,7 +301,12 @@ export async function POST(req: NextRequest) {
         .in("id", appliedVoucherIdsUnique);
 
       if (!voucherErr && voucherRows) {
-        // Resolve category slugs for the submitted items
+        // Resolve kit component variant owners + category slugs for the
+        // submitted items (authoritative scope pool).
+        const ownerByVariant = await resolveVariantOwners(supabase, allVariantIds);
+        const scopeProductIds = [
+          ...new Set([...productIds, ...ownerByVariant.values()]),
+        ];
         const { data: categoryRows } = await supabase
           .from("categories")
           .select("id, slug");
@@ -310,7 +316,7 @@ export async function POST(req: NextRequest) {
         const { data: productRows } = await supabase
           .from("products")
           .select("id, category_id")
-          .in("id", productIds);
+          .in("id", scopeProductIds);
         const slugByProductId = new Map<string, string | undefined>();
         for (const p of productRows ?? []) {
           if (p.category_id) {
@@ -325,7 +331,41 @@ export async function POST(req: NextRequest) {
             rpcItems.find((r) => r.product_id === i.product_id)?.unit_price ?? 0
           ),
           category_slug: slugByProductId.get(i.product_id) ?? null,
+          variant_ids: [
+            ...(i.variant_id ? [i.variant_id] : []),
+            ...(i.components ?? []).map((c) => c.variant_id),
+          ],
         }));
+
+        // Add synthetic scope items for kit component owners so product/category
+        // scoped vouchers can match them (base = owning product's line subtotal).
+        const ownerLines = new Map<string, { unit_price: number; quantity: number }>();
+        for (const item of body.items) {
+          for (const vid of [item.variant_id, ...(item.components ?? []).map((c) => c.variant_id)]) {
+            const owner = vid ? ownerByVariant.get(vid) : undefined;
+            if (!owner) continue;
+            const lineSubtotal = Number(
+              rpcItems.find((r) => r.product_id === item.product_id)?.unit_price ?? 0
+            );
+            const qty = item.quantity;
+            const existing = ownerLines.get(owner);
+            if (existing) {
+              existing.unit_price = Math.max(existing.unit_price, lineSubtotal);
+              existing.quantity = Math.max(existing.quantity, qty);
+            } else {
+              ownerLines.set(owner, { unit_price: lineSubtotal, quantity: qty });
+            }
+          }
+        }
+        for (const [owner, line] of ownerLines) {
+          itemsForScope.push({
+            product_id: owner,
+            quantity: line.quantity,
+            unit_price: line.unit_price,
+            category_slug: slugByProductId.get(owner) ?? null,
+            variant_ids: [],
+          });
+        }
 
         const now = new Date();
         const validIds = new Set<string>();

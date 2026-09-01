@@ -87,13 +87,13 @@ export const OrderItemsList = memo(function OrderItemsList({
                 </div>
 
                 {/* Product details */}
-                <div className="flex min-h-full w-full flex-col items-stretch space-y-2">
+                <div className="flex min-h-full w-full flex-col items-stretch space-y-1">
                   <span className="line-clamp-3 text-sm font-bold text-on-surface">
                     {item.product.name}
                   </span>
                   {/* Components breakdown */}
                   {item.components && item.components.length > 0 ? (
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1">
                       {item.components.map((component) => (
                         <p
                           key={`${item.id}-${component.variant_id}`}

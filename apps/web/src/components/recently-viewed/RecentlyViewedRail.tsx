@@ -46,11 +46,13 @@ export function RecentlyViewedRail() {
   if (displayed.length === 0) return null;
 
   return (
-    <ProductRail
-      title="Đã xem gần đây"
-      icon={<Icon name="history" className="text-primary" />}
-      products={displayed}
-      cardWidth="w-[140px]"
-    />
+    <div data-tour="recent">
+      <ProductRail
+        title="Đã xem gần đây"
+        icon={<Icon name="history" className="text-primary" />}
+        products={displayed}
+        cardWidth="w-[140px]"
+      />
+    </div>
   );
 }

@@ -46,7 +46,15 @@ export function useVouchers({
     () => [...new Set(items.map((i) => i.product_id))],
     [items]
   );
-  const eligibleQuery = useEligibleVouchers(productIds, shippingMethodId);
+  const variantIds = useMemo(
+    () => [...new Set(items.flatMap((i) => i.variant_ids ?? []))],
+    [items]
+  );
+  const eligibleQuery = useEligibleVouchers(
+    productIds,
+    variantIds,
+    shippingMethodId
+  );
   const applyVouchersMutation = useApplyVouchers();
   // Sync store-level max vouchers config from the fees query.
   useEffect(() => {
@@ -60,6 +68,8 @@ export function useVouchers({
   const eligibleVouchers = eligibleQuery.data?.vouchers ?? [];
   const categorySlugByProductId =
     eligibleQuery.data?.categorySlugByProductId ?? {};
+  // Server-resolved scope pool (includes kit component variant owners).
+  const ownedProductIds = eligibleQuery.data?.ownedProductIds ?? productIds;
   const loadingVouchers = voucherListQuery.isLoading;
   const error = voucherListQuery.error
     ? voucherListQuery.error.message
@@ -135,17 +145,19 @@ export function useVouchers({
           return true;
         }
 
-        // Product scope: require at least one matching (non-excluded) cart item
+        // Product scope: require at least one matching (non-excluded) item
+        // in the scope pool (which also covers kit component variant owners)
         if (scope_type === "product") {
           const targets = new Set(rule.applies_to_product_ids ?? []);
           const excluded = new Set(rule.excluded_product_ids ?? []);
-          const matches = items.some(
-            (i) => targets.has(i.product_id) && !excluded.has(i.product_id)
+          const matches = ownedProductIds.some(
+            (pid) => targets.has(pid) && !excluded.has(pid)
           );
           if (!matches) return true;
         }
 
-        // Category scope: require at least one matching (non-excluded) cart item
+        // Category scope: require at least one matching (non-excluded) item
+        // in the scope pool (also covers kit component variant owners)
         if (scope_type === "category") {
           // Wait for the eligible query to resolve product → category slugs
           // before judging category scope, to avoid pruning during hydration.
@@ -154,9 +166,9 @@ export function useVouchers({
           }
           const targets = new Set(rule.applies_to_category_slugs ?? []);
           const excluded = new Set(rule.excluded_product_ids ?? []);
-          const matches = items.some((i) => {
-            if (excluded.has(i.product_id)) return false;
-            const slug = i.category_slug ?? categorySlugByProductId[i.product_id];
+          const matches = ownedProductIds.some((pid) => {
+            if (excluded.has(pid)) return false;
+            const slug = categorySlugByProductId[pid];
             return targets.has(slug ?? "");
           });
           if (!matches) return true;
@@ -170,7 +182,7 @@ export function useVouchers({
       useDiscountStore.getState().pruneAppliedVouchers(invalidIds);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shippingMethodId, appliedVouchers, subtotal, items, categorySlugByProductId]);
+  }, [shippingMethodId, appliedVouchers, subtotal, items, categorySlugByProductId, ownedProductIds]);
 
   // Include auto-applied scoped/customer vouchers so they show in the drawer.
   const autoAppliedRows = eligibleVouchers.filter((v) =>

@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 type EligibleResponse = {
   vouchers?: VoucherRow[];
   categorySlugByProductId?: Record<string, string>;
+  ownedProductIds?: string[];
 };
 
 type FeesResponse = {
@@ -34,29 +35,33 @@ export function useVoucherList(initialVouchers: VoucherRow[] = []) {
 
 export function useEligibleVouchers(
   productIds: string[],
-  shippingMethodId?: string
+  variantIds: string[],
+  shippingMethodId?: string,
 ) {
-  const key = productIds.join(",");
+  const key = [...productIds, ...variantIds].join(",");
   return useQuery<{
     vouchers: VoucherRow[];
     categorySlugByProductId: Record<string, string>;
+    ownedProductIds: string[];
   }>({
     ...appQueryKeys.voucher.eligible(`${key}|${shippingMethodId ?? ""}`),
     ...queryPresets.temporary,
     enabled: productIds.length > 0,
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.set("product_ids", key);
+      params.set("product_ids", productIds.join(","));
+      if (variantIds.length > 0) params.set("variant_ids", variantIds.join(","));
       if (shippingMethodId) params.set("shipping_method_id", shippingMethodId);
       const res = await fetch(
         `/api/vouchers/eligible?${params.toString()}`,
-        { credentials: "include" }
+        { credentials: "include" },
       );
       if (!res.ok) throw new Error("Failed to fetch eligible vouchers");
       const data = (await res.json()) as EligibleResponse;
       return {
         vouchers: data.vouchers ?? [],
         categorySlugByProductId: data.categorySlugByProductId ?? {},
+        ownedProductIds: data.ownedProductIds ?? productIds,
       };
     },
   });

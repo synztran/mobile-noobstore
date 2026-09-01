@@ -75,6 +75,10 @@ export default function SummaryPage() {
         product_id: i.product.id,
         quantity: i.quantity,
         unit_price: basePrice + componentsTotal,
+        variant_ids: [
+          ...(i.variant?.id ? [i.variant.id] : []),
+          ...(i.components ?? []).map((c) => c.variant_id),
+        ],
       };
     });
   }, [rawItems, mounted]);

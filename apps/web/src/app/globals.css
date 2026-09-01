@@ -122,6 +122,56 @@
     margin: 0 0 15px;
     color: #56423c;
   }
+
+  /* Guide tour popover (driver.js) — match NoobStore MD3 surface tokens */
+  .driver-popover.noobstore-guide {
+    font-family: inherit;
+    border-radius: 1rem;
+    box-shadow: 0 8px 30px rgba(27, 28, 26, 0.16);
+    width: min(320px, calc(100vw - 2rem));
+  }
+  .driver-popover.noobstore-guide .driver-popover-title {
+    font-size: 1.0625rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: #1b1c1a;
+  }
+  .driver-popover.noobstore-guide .driver-popover-description {
+    color: #5f5f5a;
+  }
+  .driver-popover.noobstore-guide .driver-popover-progress-text {
+    color: #9a9a92;
+  }
+  .driver-popover.noobstore-guide .driver-popover-close-btn {
+    color: #b0aca2;
+  }
+  .driver-popover.noobstore-guide .driver-popover-close-btn:hover,
+  .driver-popover.noobstore-guide .driver-popover-close-btn:focus {
+    color: #1b1c1a;
+  }
+  .driver-popover.noobstore-guide .driver-popover-footer-btn {
+    border-radius: 9999px;
+    padding: 4px 12px;
+    font-weight: 700;
+    border-color: #e4e2de;
+  }
+  .driver-popover.noobstore-guide .driver-popover-footer-btn:hover,
+  .driver-popover.noobstore-guide .driver-popover-footer-btn:focus {
+    background-color: #f0eeea;
+  }
+  .driver-popover.noobstore-guide .driver-popover-next-btn {
+    background: linear-gradient(135deg, #9b3f1c, #bb5732);
+    border-color: transparent;
+    color: #ffffff;
+  }
+  .driver-popover.noobstore-guide .driver-popover-next-btn:hover,
+  .driver-popover.noobstore-guide .driver-popover-next-btn:focus {
+    background-color: transparent;
+    filter: brightness(1.06);
+  }
+  .driver-popover.noobstore-guide .driver-popover-prev-btn {
+    background-color: #ffffff;
+  }
 }
 
 @layer utilities {
