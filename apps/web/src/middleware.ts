@@ -77,19 +77,18 @@ function isPublicCachedRead(method: string, pathname: string): boolean {
 }
 
 /**
- * Fire-and-forget rate limit alert to Telegram (max 1 per 5 min).
+ * Rate limit alert to Telegram (max 100 per minute, whole-system).
+ * Awaited so the notification isn't dropped when the response completes.
  */
-function fireRateLimitAlert(ip: string, path: string, isAuthenticated: boolean): void {
-  getAlertLimiter()
-    .limit("ratelimit-alert")
-    .then(({ success }) => {
-      if (success) {
-        notifyRateLimitHit(ip, path, isAuthenticated);
-      }
-    })
-    .catch(() => {
-      // alert failure is non-critical, silently ignore
-    });
+async function fireRateLimitAlert(ip: string, path: string, isAuthenticated: boolean): Promise<void> {
+  try {
+    const { success } = await getAlertLimiter().limit("ratelimit-alert");
+    if (success) {
+      await notifyRateLimitHit(ip, path, isAuthenticated);
+    }
+  } catch {
+    // alert failure is non-critical, silently ignore
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -118,7 +117,7 @@ export async function middleware(request: NextRequest) {
           getRateLimitKey(request)
         );
         if (!success) {
-          fireRateLimitAlert(getRateLimitKey(request), pathname, false);
+          await fireRateLimitAlert(getRateLimitKey(request), pathname, false);
           return NextResponse.json(
             { error: "Quá nhiều lần thử. Vui lòng chờ vài giây." },
             {
@@ -151,7 +150,7 @@ export async function middleware(request: NextRequest) {
           getRateLimitKey(request),
         );
         if (!success) {
-          fireRateLimitAlert(getRateLimitKey(request), pathname, isLoggedIn);
+          await fireRateLimitAlert(getRateLimitKey(request), pathname, isLoggedIn);
           return NextResponse.json(
             { error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
             {

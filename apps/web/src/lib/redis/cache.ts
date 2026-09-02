@@ -125,6 +125,58 @@ export async function invalidateCache(...keys: string[]): Promise<void> {
 }
 
 /**
+ * Delete every key matching a glob pattern (SCAN + DEL).
+ * Fails silently — invalidation failure only causes stale data, not errors.
+ *
+ * Shared by both the web and admin apps so the invalidation key-set is kept
+ * in one place (they read/write the same Upstash Redis).
+ */
+export async function invalidateCacheByPattern(
+	pattern: string,
+): Promise<void> {
+	try {
+		const keys = await redis().keys(pattern);
+		if (keys.length > 0) {
+			await redis().del(...keys);
+		}
+	} catch {
+		// non-fatal
+	}
+}
+
+/**
+ * Invalidate every product-facing cache entry affected by a stock or product
+ * change. Call after order placement/confirmation, cancellation/refund
+ * (stock restore), and manual inventory edits so the shop/product pages never
+ * serve stale stock beyond a cache TTL.
+ *
+ * Keys mirror the readers in `products-server.ts` and the product API routes.
+ * Note `CACHE_VERSION` is "v2" — do not reintroduce the old `v1:` prefixes.
+ */
+export async function invalidateProductCaches(): Promise<void> {
+	await Promise.all([
+		invalidateCache(
+			"brands",
+			"categories",
+			"v2:product-seo-data",
+		),
+		invalidateCacheByPattern("products:*"),
+		invalidateCacheByPattern("v2:product:slug:*"),
+		invalidateCacheByPattern("v2:product-detail:*"),
+		invalidateCacheByPattern("v2:related-products:*"),
+		invalidateCacheByPattern("v2:fbt:*"),
+		invalidateCacheByPattern("v2:purchase-count:*"),
+		invalidateCacheByPattern("v2:noteworthy:*"),
+		invalidateCacheByPattern("v2:sale-products:*"),
+		invalidateCacheByPattern("v2:newest-products:*"),
+		invalidateCacheByPattern("v2:search:suggestions:*"),
+		invalidateCacheByPattern("v2:component-rules:*"),
+		invalidateCacheByPattern("quick-pick:*"),
+		invalidateCacheByPattern("v2:quick-pick:*"),
+	]);
+}
+
+/**
  * In-flight read-through fetches, keyed by cache key. Lets N concurrent
  * requests that miss the same key share one upstream Supabase query instead
  * of stampeding it (each concurrent request used to run its own cascade).

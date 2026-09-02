@@ -6,6 +6,7 @@ import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import { randomBase36 } from "@/lib/random";
 import type { AppliedVoucherSummary } from "@/types/voucher";
 import { getCheckoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import { invalidateProductCaches } from "@/lib/redis/cache";
 import {
   DELIVERY_SERVICE_ID,
   normalizeShippingMethodId,
@@ -536,6 +537,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    // `submit_order` decremented stock in the DB — invalidate the product
+    // cache so /shop and product pages don't serve stale stock for up to the
+    // 600s TTL. Non-fatal: a cache-invalidation failure must not fail checkout.
+    try {
+      await invalidateProductCaches();
+    } catch (cacheErr) {
+      console.error("[submit] failed to invalidate product cache:", cacheErr);
+    }
+
     const result = data as {
       order_id: string;
       order_number: string;
@@ -760,19 +770,21 @@ export async function POST(req: NextRequest) {
     const customerName =
       user?.user_metadata?.full_name ?? user?.email ?? "Khách";
     const itemCount = body.items.reduce((sum, i) => sum + i.quantity, 0);
-    void notifyNewOrder(
-      result.order_number,
-      customerName,
-      recalculatedTotal,
-      undefined,
-      itemCount,
-      body.vouchers
-    ).catch((notifyError) => {
+    try {
+      await notifyNewOrder(
+        result.order_number,
+        customerName,
+        recalculatedTotal,
+        undefined,
+        itemCount,
+        body.vouchers
+      );
+    } catch (notifyError) {
       console.error(
         "[submit] failed to send order Telegram notification:",
         notifyError
       );
-    });
+    }
 
     // ── Mark old cart as converted (keeps data for admin analytics) ──────
     if (body.cart_id) {
@@ -790,47 +802,45 @@ export async function POST(req: NextRequest) {
         .insert({ id: newCartId, user_id: user.id, status: "active" });
     }
 
-    // ── Gacha mission progress (fire-and-forget) ─────────────────────────
+    // ── Gacha mission progress ───────────────────────────────────────────
     if (user) {
-      void (async () => {
-        try {
-          const { triggerMissionServer } = await import("@/lib/gacha/missions");
+      try {
+        const { triggerMissionServer } = await import("@/lib/gacha/missions");
 
-          const { data: activeEvent } = await supabase
-            .from("gacha_events")
-            .select("id")
-            .eq("is_active", true)
-            .lte("start_at", new Date().toISOString())
-            .gte("end_at", new Date().toISOString())
-            .order("id", { ascending: true })
-            .limit(1)
-            .maybeSingle();
+        const { data: activeEvent } = await supabase
+          .from("gacha_events")
+          .select("id")
+          .eq("is_active", true)
+          .lte("start_at", new Date().toISOString())
+          .gte("end_at", new Date().toISOString())
+          .order("id", { ascending: true })
+          .limit(1)
+          .maybeSingle();
 
-          if (activeEvent) {
-            await Promise.all([
-              triggerMissionServer(
-                supabase,
-                user.id,
-                activeEvent.id,
-                "spend_amount",
-                { amount: recalculatedTotal, order_status: "pending" }
-              ),
-              triggerMissionServer(
-                supabase,
-                user.id,
-                activeEvent.id,
-                "order_count",
-                { order_status: "pending" }
-              ),
-            ]);
-          }
-        } catch (missionErr) {
-          console.error(
-            "[submit] failed to process gacha missions:",
-            missionErr
-          );
+        if (activeEvent) {
+          await Promise.all([
+            triggerMissionServer(
+              supabase,
+              user.id,
+              activeEvent.id,
+              "spend_amount",
+              { amount: recalculatedTotal, order_status: "pending" }
+            ),
+            triggerMissionServer(
+              supabase,
+              user.id,
+              activeEvent.id,
+              "order_count",
+              { order_status: "pending" }
+            ),
+          ]);
         }
-      })();
+      } catch (missionErr) {
+        console.error(
+          "[submit] failed to process gacha missions:",
+          missionErr
+        );
+      }
     }
 
     return NextResponse.json({

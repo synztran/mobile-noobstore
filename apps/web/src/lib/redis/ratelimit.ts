@@ -31,7 +31,7 @@ const LIMITER_CONFIGS = {
     prefix: "ratelimit:api",
   },
   alert: {
-    limiter: Ratelimit.fixedWindow(1, "5 m"),
+    limiter: Ratelimit.fixedWindow(100, "1 m"),
     prefix: "ratelimit:alert",
   },
 } as const;

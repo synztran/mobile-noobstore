@@ -1,5 +1,7 @@
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { createClient } from "@/lib/supabase/server";
+import { invalidateProductCaches } from "@/lib/redis/cache";
+import { notifyCustomerCancelledOrder } from "@/lib/telegram/telegram.service";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +35,7 @@ export async function POST(
 
     const { data: order, error: fetchError } = await supabase
       .from("orders")
-      .select("id, status, order_number")
+      .select("id, status, order_number, total_price")
       .eq("id", id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -85,6 +87,28 @@ export async function POST(
         { error: "Không thể hủy đơn hàng. Vui lòng thử lại." },
         { status: 500 }
       );
+    }
+
+    // Reverted stock restore above — invalidate product caches so /shop and
+    // product pages show the returned stock immediately.
+    try {
+      await invalidateProductCaches();
+    } catch (cacheErr) {
+      console.error("[cancel order] cache invalidation failed:", cacheErr);
+    }
+
+    // Notify store owner via Telegram (awaited so it isn't dropped on serverless)
+    const customerName =
+      user.user_metadata?.full_name ?? user.email ?? "Khách";
+    try {
+      await notifyCustomerCancelledOrder(
+        order.order_number,
+        customerName,
+        Number(order.total_price ?? 0),
+        reason
+      );
+    } catch (notifyErr) {
+      console.error("[cancel order] Telegram notification failed:", notifyErr);
     }
 
     return NextResponse.json({ ok: true });

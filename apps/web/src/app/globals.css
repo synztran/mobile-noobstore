@@ -231,10 +231,13 @@
 }
 
 @media (pointer: coarse) {
-  .shipping-form input:not([type="radio"]):not([type="checkbox"]),
-  .shipping-form select,
-  .shipping-form textarea {
-    font-size: 16px;
+  /* Prevent iOS Safari from auto-zooming when a text field is focused:
+     any text-entry control with an effective font-size < 16px triggers zoom.
+     Pin all of them to 16px on touch devices. Desktop is untouched. */
+  input:not([type="radio"]):not([type="checkbox"]),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 

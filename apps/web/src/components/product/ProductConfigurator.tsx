@@ -63,13 +63,13 @@ function configuratorButtonClass(
   if (o.isDisabled && !o.soldOut && !o.ruleDisabled) {
     return clsx(
       base,
-      "cursor-not-allowed border-dashed border-outline-variant/80 opacity-55"
+      "cursor-not-allowed border-dashed border-outline-variant/80 opacity-50"
     );
   }
   if (o.isDisabled) {
     return clsx(
       base,
-      "cursor-not-allowed border-transparent bg-surface-container opacity-40"
+      "cursor-not-allowed border-transparent bg-surface-container opacity-50"
     );
   }
   if (o.selected) {

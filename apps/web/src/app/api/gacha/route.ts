@@ -331,32 +331,31 @@ export async function POST(req: NextRequest) {
     // Non-fatal: reward was already drawn and token deducted — do not refund.
   }
 
-  // ── Earn NSP points when reward type is 'point' (fire-and-forget) ──────────
+  // ── Earn NSP points when reward type is 'point' ───────────────────────────
   if (drawn.reward_type === "point") {
     const pointValue = Number(drawn.value ?? 0);
     if (pointValue > 0) {
-      void earnPointsFromGachaReward(
-        admin,
-        user.id,
-        drawn.id,
-        pointValue
-      )
-        .then(() => invalidateCache(CACHE_KEYS.pointsBalance(user.id)))
-        .catch((err) =>
-          console.error("[gacha POST] failed to earn points:", err)
+      try {
+        await earnPointsFromGachaReward(
+          admin,
+          user.id,
+          drawn.id,
+          pointValue
         );
+        await invalidateCache(CACHE_KEYS.pointsBalance(user.id));
+      } catch (err) {
+        console.error("[gacha POST] failed to earn points:", err);
+      }
     }
   }
 
-  // ── Trigger play_count gacha mission (fire-and-forget) ─────────────────────
-  void (async () => {
-    try {
-      const { triggerMissionServer } = await import("@/lib/gacha/missions");
-      await triggerMissionServer(supabase, user.id, eventId, "play_count");
-    } catch (err) {
-      console.error("[gacha POST] play_count mission trigger failed:", err);
-    }
-  })();
+  // ── Trigger play_count gacha mission ─────────────────────────────────────
+  try {
+    const { triggerMissionServer } = await import("@/lib/gacha/missions");
+    await triggerMissionServer(supabase, user.id, eventId, "play_count");
+  } catch (err) {
+    console.error("[gacha POST] play_count mission trigger failed:", err);
+  }
 
   return NextResponse.json({ reward: drawn });
 }

@@ -28,7 +28,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { NOT_FOUND_IMAGE } from "@/lib/images";
-import { notifyCustomerCancelledOrder } from "@/lib/telegram/telegram.service";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
 const STATUS_CONFIG: Record<
@@ -181,12 +180,6 @@ function OrderDetailContent({
         reason: cancelReason,
       });
       toast.success("Đã hủy đơn hàng thành công");
-      notifyCustomerCancelledOrder(
-        detail.id,
-        user?.email || "Không xác định",
-        detail.total_price,
-        cancelReason
-      );
       setShowCancelModal(false);
     } catch (err) {
       toast.error(
