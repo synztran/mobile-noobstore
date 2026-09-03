@@ -12,7 +12,10 @@ import {
 import { buildTrackingUrl } from "@/lib/tracking";
 import { toast } from "@/lib/toast";
 import { useOrderDetail } from "@/lib/react-query/order/api/useOrderQueries";
-import { useCancelOrder } from "@/lib/react-query/order/api/useOrderMutations";
+import {
+  useCancelOrder,
+  useReturnOrder,
+} from "@/lib/react-query/order/api/useOrderMutations";
 import { CopyToClipboardButton } from "@/components/ui/CopyToClipboardButton";
 import {
   AlertCircle,
@@ -20,7 +23,9 @@ import {
   CircleX,
   ExternalLink,
   HourglassIcon,
+  MapPin,
   PackageCheck,
+  RotateCcw,
   Truck,
 } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
@@ -76,6 +81,12 @@ const STATUS_CONFIG: Record<
     color: "text-emerald-600",
     bg: "bg-emerald-50",
   },
+  returning: {
+    label: "Đang hoàn hàng",
+    Icon: RotateCcw,
+    color: "text-amber-600",
+    bg: "bg-amber-100",
+  },
   cancelled: {
     label: "Đã hủy",
     Icon: CircleX,
@@ -96,7 +107,27 @@ interface Props {
 }
 
 const CANCELLABLE_STATUSES = ["pending"];
-const NON_TERMINAL_STATUSES = ["delivered"];
+const NON_TERMINAL_STATUSES = ["delivered", "returning"];
+
+const RETURN_REASON_OPTIONS = [
+  "Sản phẩm bị lỗi / hỏng",
+  "Sản phẩm không đúng như mô tả",
+  "Giao sai / thiếu sản phẩm",
+  "Không còn nhu cầu sử dụng",
+  "Khác",
+];
+
+const RETURN_ADDRESS_TEXT =
+  "Noobstore HCM — Số 123, Đường Nguyễn Văn Cừ, Phường 4, Quận 5, TP. Hồ Chí Minh";
+
+const RETURN_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+
+function isWithinReturnWindow(deliveredAt: string | null): boolean {
+  if (!deliveredAt) return false;
+  const t = new Date(deliveredAt).getTime();
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t < RETURN_WINDOW_MS;
+}
 
 function PaymentCountdown({ createdAt }: { createdAt: string }) {
   const calcRemaining = useCallback(() => {
@@ -149,13 +180,21 @@ function OrderDetailContent({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const { user } = useAuth();
   const cancelMutation = useCancelOrder();
+  const returnMutation = useReturnOrder();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnReason, setReturnReason] = useState(
+    RETURN_REASON_OPTIONS[0] ?? "Khác"
+  );
+  const [returnCustomReason, setReturnCustomReason] = useState("");
+  const [addressCopied, setAddressCopied] = useState(false);
 
   const isSupportAvailable = NON_TERMINAL_STATUSES.includes(detail.status);
   const isCancellable = CANCELLABLE_STATUSES.includes(detail.status);
+  const canRequestReturn =
+    detail.status === "delivered" && isWithinReturnWindow(detail.delivered_at);
   const cfg = STATUS_CONFIG[detail.status] ?? STATUS_CONFIG.pending;
   const voucherDiscount = detail.voucher_discount_amount ?? 0;
   const shippingDiscount = detail.shipping_discount_amount ?? 0;
@@ -188,6 +227,26 @@ function OrderDetailContent({
     }
   };
 
+  const handleReturnOrder = async () => {
+    const finalReason =
+      returnReason === "Khác"
+        ? returnCustomReason.trim() || "Khác"
+        : returnReason;
+    try {
+      await returnMutation.mutateAsync({
+        orderId: detail.id,
+        reason: finalReason,
+      });
+      toast.success("Đã gửi yêu cầu hoàn hàng");
+      setShowReturnModal(false);
+      setReturnCustomReason("");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Không thể gửi yêu cầu hoàn hàng"
+      );
+    }
+  };
+
   return (
     <>
       {/* Status */}
@@ -212,6 +271,66 @@ function OrderDetailContent({
 
       {/* Status timeline */}
       <OrderTrackingTimeline order={detail} />
+
+      {/* Return request reason (returning) */}
+      {detail.status === "returning" && detail.returning_reason && (
+        <div className="space-y-1 rounded-2xl bg-surface-container px-4 py-3">
+          <p className="text-sm font-black uppercase tracking-widest text-on-surface-variant">
+            Lý do hoàn hàng
+          </p>
+          <p className="text-xs leading-relaxed text-on-surface">
+            {detail.returning_reason}
+          </p>
+        </div>
+      )}
+
+      {/* Returning notice */}
+      {detail.status === "returning" && (
+        <div className="flex items-start gap-2 rounded-2xl border border-amber-300/40 bg-amber-50 px-4 py-3">
+          <p className="text-xs leading-relaxed text-amber-800">
+            <span className="text-sm font-bold">Lưu ý khi hoàn hàng</span>
+            <br />
+            Bạn cần hoàn trả đơn hàng này về cho shop và đợi xác minh đơn hàng
+            trước khi nhận lại tiền hoàn. Vui lòng liên hệ shop nếu có thắc mắc.
+          </p>
+        </div>
+      )}
+
+      {/* Return address (returning) */}
+      {detail.status === "returning" && (
+        <div className="space-y-2">
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
+            Địa chỉ hoàn hàng
+          </p>
+          <div className="space-y-1 rounded-2xl bg-surface-container p-4">
+            <p className="flex items-center gap-2 text-sm font-bold text-on-surface">
+              <MapPin size={16} className="text-primary" />
+              Noobstore HCM
+            </p>
+            <p className="pl-6 text-sm leading-relaxed text-on-surface-variant">
+              Số 123, Đường Nguyễn Văn Cừ, Phường 4, Quận 5, TP. Hồ Chí Minh
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(RETURN_ADDRESS_TEXT);
+                setAddressCopied(true);
+                setTimeout(() => setAddressCopied(false), 2000);
+              }}
+              className="ml-6 flex w-max items-center gap-1 text-xs font-bold text-primary underline underline-offset-1 transition-opacity active:opacity-70"
+            >
+              {addressCopied ? "Đã sao chép ✓" : "Sao chép địa chỉ"}
+            </button>
+            <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2">
+              <p className="text-xs leading-relaxed text-amber-800">
+                Vui lòng ghi số đơn hàng{" "}
+                <span className="font-bold">{detail.order_number}</span> vào bên
+                ngoài gói hàng để shop xác minh nhanh hơn.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cancelled details */}
       {detail.status === "cancelled" && (
@@ -493,7 +612,9 @@ function OrderDetailContent({
       )}
 
       {/* Price summary */}
-      {["confirmed", "delivering", "delivered"].includes(detail.status) && (
+      {["confirmed", "delivering", "delivered", "returning"].includes(
+        detail.status
+      ) && (
         <div className="space-y-2 rounded-2xl bg-surface-container px-4 py-3">
           <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
             Tổng cộng
@@ -569,7 +690,9 @@ function OrderDetailContent({
 
       {/* Invoice download */}
       {detail.invoice_url &&
-        ["confirmed", "delivering", "delivered"].includes(detail.status) && (
+        ["confirmed", "delivering", "delivered", "returning"].includes(
+          detail.status
+        ) && (
           <a
             href={detail.invoice_url}
             target="_blank"
@@ -580,6 +703,17 @@ function OrderDetailContent({
             Tải hóa đơn
           </a>
         )}
+
+      {/* Return request button */}
+      {canRequestReturn && (
+        <button
+          onClick={() => setShowReturnModal(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/50 bg-amber-50 py-3 text-sm font-black uppercase tracking-wider text-amber-700 transition-all active:scale-[0.98]"
+        >
+          <RotateCcw size={16} />
+          Hoàn hàng / Trả tiền
+        </button>
+      )}
 
       {/* Cancel button */}
       {isCancellable && (
@@ -647,6 +781,86 @@ function OrderDetailContent({
         </div>
         <form method="dialog" className="modal-backdrop">
           <button onClick={() => setShowCancelModal(false)}>close</button>
+        </form>
+      </dialog>
+
+      {/* Return request modal */}
+      <dialog
+        className={`modal !mt-0 ${showReturnModal ? "modal-open" : ""}`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setShowReturnModal(false);
+        }}
+      >
+        <div className="modal-box rounded-2xl">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+              <RotateCcw size={24} className="text-amber-600" />
+            </div>
+            <p className="text-lg font-black text-on-surface">
+              Hoàn hàng / Trả tiền
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              Bạn có chắc chắn muốn yêu cầu hoàn hàng cho đơn{" "}
+              <span className="font-bold text-on-surface">
+                {detail.order_number}
+              </span>
+              ? Gói hàng cần được cửa hàng xác minh trước khi tiền được hoàn về.
+            </p>
+          </div>
+          <div className="mt-4 space-y-3">
+            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+              Lý do hoàn hàng (bắt buộc)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {RETURN_REASON_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setReturnReason(opt)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                    returnReason === opt
+                      ? "border-amber-400 bg-amber-100 text-amber-700"
+                      : "border-outline-variant/40 bg-surface-container text-on-surface-variant"
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+            {returnReason === "Khác" && (
+              <textarea
+                value={returnCustomReason}
+                onChange={(e) => setReturnCustomReason(e.target.value)}
+                placeholder="Mô tả lý do hoàn hàng..."
+                rows={3}
+                className="w-full rounded-2xl bg-surface-container px-4 py-3 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary"
+              />
+            )}
+          </div>
+          <div className="modal-action">
+            <button
+              onClick={() => setShowReturnModal(false)}
+              className="btn rounded-full border-0 bg-surface-container px-6 text-sm font-bold normal-case text-on-surface"
+            >
+              Huỷ
+            </button>
+            <button
+              onClick={handleReturnOrder}
+              disabled={
+                returnMutation.isPending ||
+                (returnReason === "Khác" && !returnCustomReason.trim())
+              }
+              className="btn rounded-full border-0 bg-amber-500 px-6 text-sm font-bold normal-case text-white transition-all active:scale-[0.98] disabled:opacity-60"
+            >
+              {returnMutation.isPending ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                "Xác nhận hoàn hàng"
+              )}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setShowReturnModal(false)}>close</button>
         </form>
       </dialog>
     </>

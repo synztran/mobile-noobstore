@@ -191,6 +191,38 @@ export async function notifyCustomerCancelledOrder(
 }
 
 /**
+ * Notify store owner when a customer requests a return/refund on a delivered order.
+ */
+export async function notifyCustomerRequestReturn(
+	orderNumber: string,
+	customerName: string,
+	totalPrice: number,
+	reason?: string,
+): Promise<void> {
+	const time = new Date().toLocaleString("vi-VN", {
+		timeZone: "Asia/Ho_Chi_Minh",
+	});
+
+	const text = [
+		`↩️ <b>Yêu cầu hoàn hàng mới</b>`,
+		``,
+		`📦 <b>Mã đơn:</b> ${escapeHtml(orderNumber)}`,
+		`👤 <b>Khách hàng:</b> ${escapeHtml(customerName)}`,
+		`💰 <b>Tổng tiền:</b> ${totalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}`,
+		`🕐 <b>Thời gian:</b> ${time}`,
+		reason?.trim()
+			? `📝 <b>Lý do:</b> ${escapeHtml(reason.trim())}`
+			: undefined,
+		``,
+		`⚠️ Gói hàng cần được cửa hàng xác minh trước khi hoàn tiền cho khách.`,
+	]
+		.filter(Boolean)
+		.join("\n");
+
+	await sendMessage(text);
+}
+
+/**
  * Notify store owner and customer about a pending unpaid order (reminder).
  */
 export async function notifyPaymentReminder(

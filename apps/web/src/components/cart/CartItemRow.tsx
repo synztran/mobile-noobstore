@@ -37,7 +37,7 @@ function CartItemRow({
 
   return (
     <div
-      className={`relative flex items-start gap-2 rounded-xl bg-surface-container-low p-2 transition-opacity duration-300 ${
+      className={`relative flex gap-2 rounded-xl bg-surface-container-low p-2 transition-opacity duration-300 ${
         isRemoving ? "pointer-events-none opacity-50" : ""
       }`}
     >
@@ -53,7 +53,7 @@ function CartItemRow({
           <Trash className="text-white" size={14} />
         )}
       </button>
-      <div className="relative h-20 w-24 flex-shrink-0 bg-surface-container">
+      <div className="relative h-24 w-24 flex-shrink-0 bg-surface-container">
         {item.product.thumbnail ? (
           <Image
             src={item.product.thumbnail}
@@ -76,38 +76,39 @@ function CartItemRow({
           </span>
         )}
       </div>
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="mr-6 line-clamp-3 text-sm font-semibold tracking-wide text-on-surface">
+      <div className="flex min-w-0 flex-1 flex-col space-y-2">
+        <div className="mr-6 line-clamp-3 text-sm font-black tracking-wide text-on-surface">
           {item.product.name}
-        </p>
+        </div>
         {item.variant && (
           <p className="mt-0.5 text-xs font-semibold tracking-wide text-on-surface-variant">
             {item.variant.variant_name}
           </p>
         )}
-        <div className="flex gap-2">
-          {item.product.tags?.map((tag) => (
-            <span
-              key={tag.id}
-              className={`flex max-w-max items-center justify-center rounded-lg border border-outline-variant/30 px-2 py-1 text-[10px] font-bold leading-tight tracking-wide text-on-surface shadow-sm backdrop-blur ${tag.textColor ?? "text-on-surface"} ${tag.bgColor ?? "bg-surface-container-lowest"}`}
-            >
-              {tag.label}
-            </span>
-          ))}
-        </div>
-        {item.components && item.components.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {item.components.map((c) => (
+        {item.product.tags ? (
+          <div className="flex gap-2">
+            {item.product.tags?.map((tag) => (
               <span
-                key={c.variant_id}
-                className="inline-flex items-center gap-1 rounded-sm bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant"
+                key={tag.id}
+                className={`flex max-w-max items-center justify-center rounded-lg border border-outline-variant/30 px-2 py-1 text-[10px] font-bold leading-tight tracking-wide text-on-surface shadow-sm backdrop-blur ${tag.textColor ?? "text-on-surface"} ${tag.bgColor ?? "bg-surface-container-lowest"}`}
               >
-                {c.component_group}:{" "}
-                <span className="font-black">{c.variant_name}</span>
+                {tag.label}
               </span>
             ))}
           </div>
-        )}
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          {item.components &&
+            item.components.map((c) => (
+              <span
+                key={c.variant_id}
+                className="inline-flex items-center rounded-sm bg-gray-200 px-1.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant"
+              >
+                {c.component_group}:&nbsp;
+                <span className="font-black">{c.variant_name}</span>
+              </span>
+            ))}
+        </div>
         {item.gifts?.map((g) => (
           <div
             key={g.gift_name}
@@ -125,7 +126,7 @@ function CartItemRow({
             </div>
           </div>
         ))}
-        <div className="mt-4 flex items-center justify-between">
+        <div className="!mt-auto flex items-center justify-between">
           <div className="flex items-center gap-2 rounded-lg bg-gray-200 px-2 py-1">
             <button
               onClick={onMinus}

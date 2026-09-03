@@ -82,6 +82,12 @@ const STATUS_CONFIG: Record<
     color: "text-emerald-600",
     bg: "bg-emerald-50",
   },
+  returning: {
+    label: "Đang hoàn hàng",
+    Icon: RotateCcw,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+  },
   cancelled: {
     label: "Đã hủy",
     Icon: CircleX,
@@ -102,6 +108,7 @@ const STATUS_TABS: OrderStatusTabOption[] = [
   { value: "confirmed", label: "Đã xác nhận" },
   { value: "delivering", label: "Đang giao" },
   { value: "delivered", label: "Đã giao" },
+  { value: "returning", label: "Đang hoàn hàng" },
   { value: "cancelled", label: "Đã hủy" },
   { value: "refunded", label: "Đã hoàn tiền" },
 ];

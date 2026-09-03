@@ -106,7 +106,24 @@ export function CartDrawer() {
       if (item.quantity === 1) {
         handleRemoveClick(item);
       } else if (item.id) {
-        updateMutation.mutate({ itemId: item.id, quantity: item.quantity - 1 });
+        updateMutation.mutate(
+          {
+            itemId: item.id,
+            quantity: item.quantity - 1,
+          },
+          {
+            onSuccess: () => {
+              if (
+                item.product.stock_quantity != null &&
+                item.quantity - 1 < item.product.stock_quantity
+              ) {
+                toast.success(
+                  `Còn ${item.product.stock_quantity} sản phẩm trong kho`
+                );
+              }
+            },
+          }
+        );
       } else {
         updateQty(item.product.id, item.variant?.id ?? null, -1);
       }
@@ -116,14 +133,31 @@ export function CartDrawer() {
 
   const handlePlus = useCallback(
     (item: CartItem) => {
-      if (item.quantity >= item.product.stock_quantity) {
+      // Guard only when we actually know product-level stock. The inventory of
+      // kits (and variant-back stock) lives elsewhere, so let the server decide
+      // and surface its rejection via the mutation's onError.
+      if (
+        !item.components?.length &&
+        item.product.stock_quantity != null &&
+        item.quantity >= item.product.stock_quantity
+      ) {
         toast.warning(
           `Chỉ còn ${item.product.stock_quantity} sản phẩm trong kho`
         );
         return;
       }
       if (item.id) {
-        updateMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 });
+        updateMutation.mutate(
+          { itemId: item.id, quantity: item.quantity + 1 },
+          {
+            onError: (err) =>
+              toast.error(
+                err instanceof Error
+                  ? err.message
+                  : "Không thể cập nhật số lượng"
+              ),
+          }
+        );
       } else {
         updateQty(item.product.id, item.variant?.id ?? null, 1);
       }

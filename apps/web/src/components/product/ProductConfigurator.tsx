@@ -63,13 +63,13 @@ function configuratorButtonClass(
   if (o.isDisabled && !o.soldOut && !o.ruleDisabled) {
     return clsx(
       base,
-      "cursor-not-allowed border-dashed border-outline-variant/80 opacity-50"
+      "cursor-not-allowed border-dashed border-outline-variant/80 "
     );
   }
   if (o.isDisabled) {
     return clsx(
       base,
-      "cursor-not-allowed border-transparent bg-surface-container opacity-50"
+      "cursor-not-allowed border-transparent bg-surface-container "
     );
   }
   if (o.selected) {
@@ -212,6 +212,7 @@ export function ProductConfigurator({
                         <p
                           className={clsx(
                             "text-right text-xs font-black",
+                            soldOut || ruleDisabled || overCap ? "sr-only" : "",
                             v.price_adjustment !== 0 ? "" : "sr-only",
                             v.price_adjustment > 0
                               ? `${selected ? "text-green-400" : "text-green-700"}`
@@ -224,13 +225,6 @@ export function ProductConfigurator({
                           {formatShortVND(v.price_adjustment)})
                         </p>
                       </div>
-                      {v.sale_price_percent ? (
-                        <div className="absolute -top-2 right-0.5">
-                          <div className="rounded bg-red-600 px-2 text-[9px] text-white">
-                            Giảm {v.sale_price_percent}%
-                          </div>
-                        </div>
-                      ) : null}
                       <div className="absolute -top-2 left-1">
                         <VariantStatusBadge
                           soldOut={soldOut}
@@ -238,6 +232,13 @@ export function ProductConfigurator({
                           isPreOrder={v.is_pre_order}
                         />
                       </div>
+                      {v.sale_price_percent && !soldOut ? (
+                        <div className="absolute -top-1.5 right-0.5">
+                          <div className="rounded bg-red-600 px-1 text-[8px] text-white">
+                            Giảm {v.sale_price_percent}%
+                          </div>
+                        </div>
+                      ) : null}
                     </button>
                   );
                 })}

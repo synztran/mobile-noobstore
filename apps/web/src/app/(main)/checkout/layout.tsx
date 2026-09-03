@@ -41,7 +41,7 @@ export default function CheckoutLayout({
     {
       href: orderId ? `/checkout/checking/${orderId}` : "/checkout/checking",
       icon: "rate_review",
-      label: "Xác nhận",
+      label: "Hoàn tất",
       step: 3,
     },
   ];

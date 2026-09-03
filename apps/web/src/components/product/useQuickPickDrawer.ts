@@ -288,9 +288,11 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
 
           const usedQty = cartItems.reduce(
             (sum, cartItem) =>
-              sum +
-              (cartItem.components ?? []).filter((c) => c.variant_id === v.id)
-                .length,
+              (cartItem.components ?? []).some(
+                (c) => c.variant_id === v.id
+              )
+                ? sum + cartItem.quantity
+                : sum,
             0
           );
 

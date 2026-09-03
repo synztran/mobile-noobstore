@@ -32,7 +32,14 @@ export interface OrderItemDetail {
 export interface OrderDetail {
   id: string;
   order_number: string;
-  status: "pending" | "confirmed" | "delivering" | "delivered" | "cancelled";
+  status:
+    | "pending"
+    | "confirmed"
+    | "delivering"
+    | "delivered"
+    | "returning"
+    | "cancelled"
+    | "refunded";
   total_price: number;
   shipping_fee: number;
   payment_type: "full" | "deposit_cod";
@@ -52,6 +59,8 @@ export interface OrderDetail {
   delivering_at: string | null;
   delivered_at: string | null;
   refunded_at: string | null;
+  returning_at: string | null;
+  returning_reason: string | null;
   expected_delivery_at: string | null;
   shipping_method_id: string | null;
   pickup_at: string | null;
@@ -81,7 +90,7 @@ export interface OrderDetail {
 interface RawOrderRow {
   id: string;
   order_number: string;
-  status: "pending" | "confirmed" | "delivering" | "delivered" | "cancelled";
+  status: string;
   total_price: number;
   shipping_fee: number | null;
   payment_type: string;
@@ -101,6 +110,8 @@ interface RawOrderRow {
   delivering_at: string | null;
   delivered_at: string | null;
   refunded_at: string | null;
+  returning_at: string | null;
+  returning_reason: string | null;
   expected_delivery_at: string | null;
   shipping_method_id: string | null;
   pickup_at: string | null;
@@ -136,7 +147,7 @@ export async function GET(
     const { data: order, error: orderError } = (await supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, paid_at, delivering_at, delivered_at, refunded_at, expected_delivery_at, shipping_method_id, pickup_at, delivery_address, invoice_url, tracking_carrier_id, tracking_number, carriers(id, name, logo, tracking_url_template)"
+        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, paid_at, delivering_at, delivered_at, refunded_at, returning_at, returning_reason, expected_delivery_at, shipping_method_id, pickup_at, delivery_address, invoice_url, tracking_carrier_id, tracking_number, carriers(id, name, logo, tracking_url_template)"
       )
       .eq("id", id)
       .eq("user_id", user.id)
@@ -290,7 +301,7 @@ export async function GET(
     return NextResponse.json({
       id: order.id,
       order_number: order.order_number,
-      status: order.status,
+      status: order.status as OrderDetail["status"],
       total_price: Number(order.total_price),
       shipping_fee: Number(order.shipping_fee ?? 0),
       payment_type: order.payment_type as "full" | "deposit_cod",
@@ -310,6 +321,8 @@ export async function GET(
       delivering_at: order.delivering_at ?? null,
       delivered_at: order.delivered_at ?? null,
       refunded_at: order.refunded_at ?? null,
+      returning_at: order.returning_at ?? null,
+      returning_reason: order.returning_reason ?? null,
       expected_delivery_at: order.expected_delivery_at ?? null,
       shipping_method_id: order.shipping_method_id ?? null,
       pickup_at: order.pickup_at ?? null,

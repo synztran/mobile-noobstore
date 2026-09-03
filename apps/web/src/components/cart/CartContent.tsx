@@ -32,7 +32,7 @@ function CartContent({
     return (
       <div
         data-allow-scroll
-        className="h-[60dvh] min-h-0 space-y-2 overflow-y-auto overscroll-contain touch-pan-y px-4 py-2"
+        className="h-[60dvh] min-h-0 touch-pan-y space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
       >
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="skeleton h-24 w-full rounded-xl" />
@@ -45,7 +45,7 @@ function CartContent({
     return (
       <div
         data-allow-scroll
-        className="h-full min-h-0 space-y-2 overflow-y-auto overscroll-contain touch-pan-y px-4 py-2"
+        className="h-full min-h-0 touch-pan-y space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
       >
         <div className="flex h-full flex-col items-center justify-center px-6 py-8">
           <Icon
@@ -96,7 +96,7 @@ function CartContent({
   return (
     <div
       data-allow-scroll
-      className="h-[60dvh] min-h-0 space-y-2 overflow-y-auto overscroll-contain touch-pan-y px-4 py-2"
+      className="relative h-[60dvh] min-h-0 touch-pan-y space-y-2 overflow-y-auto overscroll-contain px-4 py-2"
     >
       {visibleItems.map((item) => {
         const itemKey = item.components?.length
@@ -114,7 +114,7 @@ function CartContent({
         );
       })}
 
-      <div className="flex items-center gap-2 rounded-2xl bg-secondary/10 p-2">
+      <div className="absolute bottom-2 left-1/2 flex w-[90%] -translate-x-1/2 items-center justify-center gap-2 rounded-2xl bg-secondary/10 p-2">
         <Icon name="eco" className="text-sm text-secondary" />
         <p className="text-[10px] font-bold uppercase tracking-wider text-secondary">
           Đơn hàng được đóng gói thân thiện với môi trường.

@@ -42,7 +42,9 @@ const ALLOWED_STATUS_FILTERS = new Set([
   "shipped",
   "delivering",
   "delivered",
+  "returning",
   "cancelled",
+  "refunded",
 ]);
 
 export async function GET(req: NextRequest) {
@@ -147,6 +149,8 @@ export async function GET(req: NextRequest) {
         if (pt.source_ref) pointsMap[pt.source_ref] = pt.delta;
       }
     }
+
+    console.log("data", data);
 
     const orders: OrderSummary[] = (data ?? []).map((row) => ({
       id: row.id,

@@ -50,7 +50,7 @@ export function useProductViewData(
   const [selections, setSelections] = useState<Record<string, string[]>>({});
   const [isLoadingAddToCart, setIsLoadingAddToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const { addItem, openCart } = useCartStore();
+  const { addItem, openCart, items } = useCartStore();
   const addCartItem = useAddCartItem();
   const router = useRouter();
   const { user } = useAuth();
@@ -153,9 +153,13 @@ export function useProductViewData(
     product.variants.length > 0 && !selectedVariant;
 
   // For kit products, stock is the minimum across all selected component variants.
-  // Falls back to product.stock_quantity for simple products or when nothing is selected yet.
+  // For simple variant products, use the selected variant's stock (inventory may
+  // live on the variant rather than the product row). Falls back to
+  // product.stock_quantity when nothing is resolved yet.
   const effectiveStockQuantity = useMemo(() => {
-    if (initialGroups.length === 0) return product.stock_quantity;
+    if (initialGroups.length === 0) {
+      return selectedVariant?.stock_quantity ?? product.stock_quantity;
+    }
     const selectedVariants = initialGroups
       .flatMap((g) => selections[g.component_group] ?? [])
       .map((id) =>
@@ -166,7 +170,7 @@ export function useProductViewData(
       .filter((v): v is NonNullable<typeof v> => v !== undefined);
     if (selectedVariants.length === 0) return product.stock_quantity;
     return Math.min(...selectedVariants.map((v) => v.stock_quantity));
-  }, [initialGroups, selections, product.stock_quantity]);
+  }, [initialGroups, selections, product.stock_quantity, selectedVariant]);
 
   const isOutOfStock = effectiveStockQuantity === 0;
   const isLowStock = effectiveStockQuantity > 0 && effectiveStockQuantity <= 5;
@@ -219,6 +223,40 @@ export function useProductViewData(
     if (isOutOfStock) {
       toast.error("Out of stock");
       return;
+    }
+
+    const addQty = qty ?? 1;
+
+    // Client-side pre-check against the cart before hitting the server, so the
+    // stock/max limit is surfaced immediately. The server remains the
+    // authoritative gate; this only improves UX.
+    if (initialGroups.length > 0) {
+      for (const group of initialGroups) {
+        for (const selectedId of selections[group.component_group] ?? []) {
+          const v = group.variants.find((gv) => gv.id === selectedId);
+          if (!v) continue;
+          const used = items.reduce(
+            (sum, i) =>
+              (i.components ?? []).some((c) => c.variant_id === v.id)
+                ? sum + i.quantity
+                : sum,
+            0,
+          );
+          if (used + addQty > v.stock_quantity) {
+            toast.error(`Chỉ còn ${v.stock_quantity} sản phẩm ${v.variant_name} trong kho`);
+            return;
+          }
+        }
+      }
+    } else if (selectedVariant) {
+      const used = items.reduce(
+        (sum, i) => (i.variant?.id === selectedVariant.id ? sum + i.quantity : sum),
+        0,
+      );
+      if (selectedVariant.stock_quantity != null && used + addQty > selectedVariant.stock_quantity) {
+        toast.error(`Chỉ còn ${selectedVariant.stock_quantity} sản phẩm này trong kho`);
+        return;
+      }
     }
 
     setIsLoadingAddToCart(true);
@@ -281,7 +319,7 @@ export function useProductViewData(
         product: cartProduct,
         variant: initialGroups.length > 0 ? null : selectedVariant,
         components,
-        quantity: qty ?? 1,
+        quantity: addQty,
       })
     );
     toast.success("Added to cart!");

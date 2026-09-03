@@ -190,6 +190,54 @@ function normalStepTimestamp(key: string, order: OrderDetail): string | null {
   return null;
 }
 
+const TERMINATION_SPEC: Record<
+  string,
+  {
+    label: string;
+    description: string;
+    timestamp: (o: OrderDetail) => string | null;
+  }
+> = {
+  refunded: {
+    label: "Đã hoàn tiền",
+    description: "Đơn hàng đã bị hủy và hoàn tiền cho bạn",
+    timestamp: (o) => o.refunded_at,
+  },
+  returning: {
+    label: "Đang hoàn hàng",
+    description: "Vui lòng gửi sản phẩm về shop và đợi xác nhận hoàn tiền",
+    timestamp: (o) => o.returning_at,
+  },
+  cancelled: {
+    label: "Đã hủy",
+    description: "Đơn hàng đã bị hủy",
+    timestamp: (o) => o.cancelled_at,
+  },
+};
+
+function buildTerminationStep(order: OrderDetail, status: string): StepModel {
+  const spec = TERMINATION_SPEC[status] ?? TERMINATION_SPEC.cancelled;
+  return {
+    key: status,
+    label: spec.label,
+    description: spec.description,
+    state: "error",
+    icon: CircleX,
+    timestamp: spec.timestamp(order),
+  };
+}
+
+function getPillText(step: StepModel): string {
+  if (step.state === "error") {
+    if (step.key === "refunded") return "ĐÃ HOÀN";
+    if (step.key === "returning") return "ĐANG XÁC MINH";
+    return "ĐÃ HỦY";
+  }
+  if (step.state === "done") return "Thành công";
+  if (step.state === "active") return "ĐANG XỬ LÝ";
+  return "SẮP TỚI";
+}
+
 function TimelineRow({
   step,
   tone,
@@ -201,16 +249,7 @@ function TimelineRow({
   isLast: boolean;
   lineDone: boolean;
 }) {
-  const pillText =
-    step.state === "error"
-      ? step.key === "refunded"
-        ? "ĐÃ HOÀN"
-        : "ĐÃ HỦY"
-      : step.state === "done"
-        ? "Thành công"
-        : step.state === "active"
-          ? "ĐANG XỬ LÝ"
-          : "SẮP TỚI";
+  const pillText = getPillText(step);
 
   return (
     <li className="relative flex gap-2 last:pb-0">
@@ -315,14 +354,15 @@ export default function OrderTrackingTimeline({
     }));
   } else {
     const status = order.status as string;
-    const terminated = status === "cancelled" || status === "refunded";
+    const terminated =
+      status === "cancelled" || status === "refunded" || status === "returning";
     let lastDoneIdx = 0;
 
     if (!terminated) {
       lastDoneIdx = STATUS_INDEX[status] ?? 0;
       steps = NORMAL_STEPS.slice(0, lastDoneIdx + 1).map((step, i) => ({
         ...step,
-        state: i < lastDoneIdx ? "done" : "active",
+        state: i <= lastDoneIdx ? "done" : "active",
         timestamp: normalStepTimestamp(step.key, order),
         meta:
           step.key === "delivering" &&
@@ -342,17 +382,7 @@ export default function OrderTrackingTimeline({
         timestamp: normalStepTimestamp(step.key, order),
       }));
 
-      const isRefunded = status === "refunded";
-      steps.push({
-        key: status,
-        label: isRefunded ? "Đã hoàn tiền" : "Đã hủy",
-        description: isRefunded
-          ? "Đơn hàng đã bị hủy và hoàn tiền cho bạn"
-          : "Đơn hàng đã bị hủy",
-        state: "error",
-        icon: CircleX,
-        timestamp: isRefunded ? order.refunded_at : order.cancelled_at,
-      });
+      steps.push(buildTerminationStep(order, status));
     }
   }
 
@@ -360,7 +390,8 @@ export default function OrderTrackingTimeline({
   const isFinished =
     orderStatus === "delivered" ||
     orderStatus === "cancelled" ||
-    orderStatus === "refunded";
+    orderStatus === "refunded" ||
+    orderStatus === "returning";
 
   return (
     <div className="space-y-4 rounded-2xl bg-surface-container-lowest p-4 shadow-ambient-sm">
