@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Bell, X } from "lucide-react";
 import { useEffect, useState } from "react";

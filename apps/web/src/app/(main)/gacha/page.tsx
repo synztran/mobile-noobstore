@@ -1,4 +1,4 @@
-import { GachaMachine } from "@/components/gacha/GachaMachine";
+import { GachaMachine } from "@/modules/gacha/ui/GachaMachine";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 import Link from "next/link";

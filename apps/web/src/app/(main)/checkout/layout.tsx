@@ -2,7 +2,8 @@
 
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
-import { useCartStore, useCheckoutStore, useDiscountStore } from "@/store";
+import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCheckoutStore, useDiscountStore } from "@/store";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";

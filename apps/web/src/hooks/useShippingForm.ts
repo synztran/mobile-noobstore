@@ -6,9 +6,10 @@ import {
   dayEndMinutes,
   dayStartMinutes,
 } from "@/lib/store-hours";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
-import { useCartStore, useCheckoutStore } from "@/store";
+import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCheckoutStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 

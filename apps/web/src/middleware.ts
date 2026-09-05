@@ -1,4 +1,4 @@
-import { safeRedirect } from "@/lib/auth/redirect";
+import { safeRedirect } from "@/modules/user/redirect";
 import { type NextRequest, NextResponse } from "next/server";
 import { getAlertLimiter, getApiLimiter, getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import { notifyRateLimitHit } from "@/lib/telegram/telegram.service";

@@ -1,4 +1,4 @@
-import { getNoteworthyProducts } from "@/lib/products-server";
+import { getNoteworthyProducts } from "@/modules/products/server/ssr";
 import {
 	CACHE_KEYS,
 	publicCacheHeaders,

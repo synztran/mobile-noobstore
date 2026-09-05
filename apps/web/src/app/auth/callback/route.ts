@@ -1,5 +1,5 @@
 import { notifyNewUserRegistered } from "@/lib/telegram/telegram.service";
-import { safeRedirect } from "@/lib/auth/redirect";
+import { safeRedirect } from "@/modules/user/redirect";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 

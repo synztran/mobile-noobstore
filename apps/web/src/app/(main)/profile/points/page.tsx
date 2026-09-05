@@ -1,7 +1,7 @@
 "use client";
 
 import Icon from "@/components/ui/Icon";
-import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
+import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import {
   usePointsBalance,
   usePointsHistory,

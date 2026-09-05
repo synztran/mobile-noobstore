@@ -5,8 +5,8 @@ import {
   CaptchaWidget,
   type CaptchaWidgetHandle,
 } from "@/components/ui/CaptchaWidget";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { useRegisterForm } from "@/hooks/useRegisterForm";
+import { useAuth } from "@/modules/user/client/AuthProvider";
+import { useRegisterForm } from "@/modules/user/client/useRegisterForm";
 import { toast } from "@/lib/toast";
 import { motion } from "motion/react";
 import Link from "next/link";

@@ -2,7 +2,7 @@
 
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
-import { useCartStore } from "@/store";
+import { useCartStore } from "@/modules/cart/client/useCartStore";
 import clsx from "clsx";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
@@ -16,7 +16,7 @@ const TopNavDrawer = dynamic(
   { ssr: false }
 );
 const WishlistSidebar = dynamic(() =>
-  import("@/components/wishlist/WishlistSidebar").then((m) => ({
+  import("@/modules/user/ui/wishlist/WishlistSidebar").then((m) => ({
     default: m.WishlistSidebar,
   }))
 );

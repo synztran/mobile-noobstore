@@ -2,7 +2,7 @@
 
 import { useCommunityConfig } from "@/lib/react-query/community/api/useCommunityQueries";
 import { useCreatePost } from "@/lib/react-query/community/api/useCommunityMutations";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { AlertCircle, CheckCircle2, Loader2, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

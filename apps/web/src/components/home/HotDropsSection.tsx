@@ -1,5 +1,5 @@
-import { ProductCard } from "@/components/product/ProductCard";
-import { getNewestProducts } from "@/lib/products-server";
+import { ProductCard } from "@/modules/products/ui/product/ProductCard";
+import { getNewestProducts } from "@/modules/products/server/ssr";
 import Link from "next/link";
 
 export async function HotDropsSection() {

@@ -2,7 +2,7 @@
 
 import Icon from "@/components/ui/Icon";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
 import clsx from "clsx";
 import { AnimatePresence, motion } from "motion/react";

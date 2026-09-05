@@ -1,7 +1,7 @@
 "use client";
 
-import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { usePointsBalance } from "@/lib/react-query/points/api/usePointsQueries";
 import { useGiftCardCheck, useGiftCardRedeem } from "@/lib/react-query/gift-cards/api/useGiftCardQueries";
 import {

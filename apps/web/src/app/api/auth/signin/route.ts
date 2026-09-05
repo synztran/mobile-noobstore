@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { signInWithPassword } from "@/modules/user/server/auth";
 import { getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
-
-const ERROR_MAP: Record<string, string> = {
-  "Invalid login credentials": "Tài khoản hoặc mật khẩu không chính xác!",
-  "Email not confirmed": "Email chưa được xác thực. Vui lòng kiểm tra hộp thư.",
-  "User not found": "Tài khoản không tồn tại!",
-  "Invalid email or password": "Tài khoản hoặc mật khẩu không chính xác!",
-  "Too many requests": "Quá nhiều lần thử. Vui lòng đợi một chút.",
-};
 
 export const dynamic = "force-dynamic";
 
@@ -45,15 +38,14 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
+  const result = await signInWithPassword(supabase, {
     email,
     password,
-    ...(captchaToken ? { options: { captchaToken } } : {}),
+    captchaToken,
   });
 
-  if (error) {
-    const viMessage = ERROR_MAP[error.message] ?? error.message;
-    return NextResponse.json({ error: viMessage }, { status: 400 });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });

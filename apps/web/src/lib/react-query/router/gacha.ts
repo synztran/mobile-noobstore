@@ -7,7 +7,7 @@ import type {
   HistoryEntry,
   GachaHistoryPage,
   GachaMission,
-} from "@/types/gacha";
+} from "@/modules/gacha/types";
 
 export const gachaQueryKeys = createQueryKeys("gacha", {
   event: (eventId: number) => [eventId],

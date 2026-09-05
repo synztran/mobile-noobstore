@@ -805,7 +805,7 @@ export async function POST(req: NextRequest) {
     // ── Gacha mission progress ───────────────────────────────────────────
     if (user) {
       try {
-        const { triggerMissionServer } = await import("@/lib/gacha/missions");
+        const { triggerMissionServer } = await import("@/modules/gacha/server/missions");
 
         const { data: activeEvent } = await supabase
           .from("gacha_events")

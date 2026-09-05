@@ -1,6 +1,6 @@
-import type { ShopProduct } from "@/app/api/products/route";
+import type { ShopProduct } from "@/modules/products/types";
 import { formatVND } from "@/lib/currency";
-import { getNewestProducts } from "@/lib/products-server";
+import { getNewestProducts } from "@/modules/products/server/ssr";
 import Link from "next/link";
 
 function ProductItem({

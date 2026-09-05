@@ -5,7 +5,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { formatVND } from "@/lib/currency";
 
-import type { ProductSuggestion } from "@/types/search";
+import type { ProductSuggestion } from "@/modules/products/types";
 export type { ProductSuggestion };
 
 interface Props {

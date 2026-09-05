@@ -8,7 +8,7 @@ import { CreatePostFloating } from "@/components/community/CreatePostFloating";
 // import { DocumentUploadFloating } from "@/components/community/DocumentUploadFloating";
 
 const CartDrawer = dynamic(
-	() => import("@/components/cart/CartDrawer").then((m) => ({ default: m.CartDrawer })),
+	() => import("@/modules/cart/ui/CartDrawer").then((m) => ({ default: m.CartDrawer })),
 	{ ssr: false },
 );
 const PushNotificationPrompt = dynamic(

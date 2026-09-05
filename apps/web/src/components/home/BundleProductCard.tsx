@@ -1,13 +1,13 @@
 "use client";
 
-import type { ShopProduct } from "@/app/api/products/route";
+import type { ShopProduct } from "@/modules/products/types";
 import { formatVND } from "@/lib/currency";
 import { ArrowRight } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
-import DiscountBadge from "../product/DiscountBadge";
-import ProductComponentTags from "../product/ProductComponentTags";
-import { ProductTags } from "../product/ProductTags";
+import DiscountBadge from "@/modules/products/ui/product/DiscountBadge";
+import ProductComponentTags from "@/modules/products/ui/product/ProductComponentTags";
+import { ProductTags } from "@/modules/products/ui/product/ProductTags";
 
 interface Props {
   product: ShopProduct;
@@ -50,7 +50,7 @@ export function BundleProductCard({
             </span>
           </div>
         )}
-        <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1">
+        {/* <div className="pointer-events-none absolute left-2 top-2 z-10 flex flex-col gap-1">
           <ProductTags
             soldOut={isSoldOut}
             preOrder={isPreOrder}
@@ -58,7 +58,7 @@ export function BundleProductCard({
             isNew={isNew}
             bestseller={isBestseller}
           />
-        </div>
+        </div> */}
         {isSoldOut && (
           <div className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-surface/70">
             <p className="text-[10px] font-black uppercase tracking-[0.15em] text-on-surface-variant">

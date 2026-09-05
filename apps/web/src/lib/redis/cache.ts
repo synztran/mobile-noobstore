@@ -150,7 +150,7 @@ export async function invalidateCacheByPattern(
  * (stock restore), and manual inventory edits so the shop/product pages never
  * serve stale stock beyond a cache TTL.
  *
- * Keys mirror the readers in `products-server.ts` and the product API routes.
+ * Keys mirror the readers in `modules/products/server` and the product API routes.
  * Note `CACHE_VERSION` is "v2" — do not reintroduce the old `v1:` prefixes.
  */
 export async function invalidateProductCaches(): Promise<void> {

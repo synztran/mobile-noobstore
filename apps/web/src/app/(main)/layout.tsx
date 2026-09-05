@@ -1,4 +1,4 @@
-import { CartHydrator } from "@/components/ui/CartHydrator";
+import { CartHydrator } from "@/modules/cart/ui/CartHydrator";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { MainContent } from "@/components/layout/MainContent";
 import { TopNavGate } from "@/components/layout/TopNavGate";

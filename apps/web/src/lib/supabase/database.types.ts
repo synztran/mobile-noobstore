@@ -1332,6 +1332,7 @@ export type Database = {
           pre_order_config: Json | null
           price_adjustment: number | null
           product_variant_id: string
+          quantity: number
           thumbnail: string | null
           variant_name: string
         }
@@ -1345,6 +1346,7 @@ export type Database = {
           pre_order_config?: Json | null
           price_adjustment?: number | null
           product_variant_id: string
+          quantity?: number
           thumbnail?: string | null
           variant_name: string
         }
@@ -1358,6 +1360,7 @@ export type Database = {
           pre_order_config?: Json | null
           price_adjustment?: number | null
           product_variant_id?: string
+          quantity?: number
           thumbnail?: string | null
           variant_name?: string
         }

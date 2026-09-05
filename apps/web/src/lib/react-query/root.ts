@@ -1,16 +1,18 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
-import { cartQueryKeys } from "./router/cart";
+import { cartQueryKeys } from "@/modules/cart/client/query-keys";
 import { communityQueryKeys } from "./router/community";
 import { configQueryKeys } from "./router/config";
-import { gachaQueryKeys } from "./router/gacha";
+import { gachaQueryKeys } from "@/modules/gacha/client/query-keys";
 import { homeQueryKeys } from "./router/home";
 import { notificationQueryKeys } from "./router/notification";
 import { orderQueryKeys } from "./router/order";
 import { pointsQueryKeys } from "./router/points";
 import { reviewQueryKeys } from "./router/review";
-import { shopQueryKeys } from "./router/shop";
-import { userQueryKeys } from "./router/user";
-import { productQueryKeys } from "./router/product";
+import { userQueryKeys } from "@/modules/user/client/query-keys";
+import {
+	productQueryKeys,
+	shopQueryKeys,
+} from "@/modules/products/client/query-keys";
 import { serviceQueryKeys } from "./router/service";
 import { supportQueryKeys } from "./router/support";
 import { voucherQueryKeys } from "./router/voucher";

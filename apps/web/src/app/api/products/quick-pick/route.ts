@@ -1,4 +1,4 @@
-import { getQuickPickData } from "@/lib/products-server";
+import { getQuickPickData } from "@/modules/products/server/ssr";
 import { CACHE_KEYS, publicCacheHeaders, readThroughCache } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 

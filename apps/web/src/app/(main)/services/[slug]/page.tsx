@@ -1,6 +1,6 @@
 "use client";
 
-import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
+import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { TopNav } from "@/components/layout/TopNav";
 import { ServiceConfigurator } from "@/components/services/ServiceConfigurator";
 import { formatVND } from "@/lib/currency";

@@ -1,4 +1,4 @@
-import { MaxLimitExceededError, removeCartItem, StockExceededError, updateCartItemQuantity } from "@/lib/cart-service";
+import { MaxLimitExceededError, removeCartItem, StockExceededError, updateCartItemQuantity } from "@/modules/cart/server/service";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 

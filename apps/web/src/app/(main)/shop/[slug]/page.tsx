@@ -1,17 +1,17 @@
 import { TopNav } from "@/components/layout/TopNav";
-import { ProductView } from "@/components/product/ProductView";
+import { ProductView } from "@/modules/products/ui/product/ProductView";
 import {
   getProductBySlug,
   getProductDetail,
   getProductPurchaseCount,
-} from "@/lib/products-server";
+} from "@/modules/products/server/ssr";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { BoughtTogetherSection } from "@/components/product/BoughtTogetherSection";
-import { RelatedProductsSection } from "@/components/product/RelatedProductsSection";
+import { BoughtTogetherSection } from "@/modules/products/ui/product/BoughtTogetherSection";
+import { RelatedProductsSection } from "@/modules/products/ui/product/RelatedProductsSection";
 import { ScrollToTopOnNav } from "./ScrollToTopOnNav";
 
 // ISR — cache the rendered product page (incl. og tags) on the Vercel edge so

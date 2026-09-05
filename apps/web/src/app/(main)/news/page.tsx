@@ -2,7 +2,7 @@ import { CalendarDays } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { formatVND } from "@/lib/currency";
-import { getSaleProducts } from "@/lib/sale-products-server";
+import { getSaleProducts } from "@/modules/products/server/sale";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 

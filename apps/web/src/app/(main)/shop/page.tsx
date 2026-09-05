@@ -1,12 +1,12 @@
-import { ShopPageClient } from "@/components/shop/ShopPageClient";
-import { ShopSeo } from "@/components/shop/ShopSeo";
+import { ShopPageClient } from "@/modules/products/ui/shop/ShopPageClient";
+import { ShopSeo } from "@/modules/products/ui/shop/ShopSeo";
 import {
   getBrands,
   getCategories,
   getProductSeoData,
   getProducts,
-} from "@/lib/products-server";
-import type { ProductsResponse } from "@/app/api/products/route";
+} from "@/modules/products/server/ssr";
+import type { ProductsResponse } from "@/modules/products/types";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 

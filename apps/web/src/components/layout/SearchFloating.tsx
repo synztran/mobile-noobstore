@@ -1,7 +1,7 @@
 "use client";
 
 import SearchSuggestions from "@/components/ui/SearchSuggestions";
-import { useSearchFloating } from "@/hooks/useSearchFloating";
+import { useSearchFloating } from "@/modules/products/client/useSearchFloating";
 import { AnimatePresence, motion } from "motion/react";
 import { Search, X } from "lucide-react";
 

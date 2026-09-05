@@ -2,8 +2,8 @@
 
 import Icon from "@/components/ui/Icon";
 import { CaptchaWidget, isCaptchaEnabled, type CaptchaWidgetHandle } from "@/components/ui/CaptchaWidget";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { safeRedirect } from "@/lib/auth/redirect";
+import { useAuth } from "@/modules/user/client/AuthProvider";
+import { safeRedirect } from "@/modules/user/redirect";
 import { toast } from "@/lib/toast";
 import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";

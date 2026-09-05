@@ -11,14 +11,14 @@ import {
 	getFrequentlyBoughtTogether,
 	getQuickPickData,
 	getProducts,
-} from "@/lib/products-server";
+} from "@/modules/products/server/ssr";
 import {
 	CACHE_KEYS,
 	buildProductListCacheKey,
 	readThroughCache,
 } from "@/lib/redis/cache";
 import { getRewards } from "@/lib/rewards-server";
-import { getSaleProducts } from "@/lib/sale-products-server";
+import { getSaleProducts } from "@/modules/products/server/sale";
 import {
 	getBookingConfigData,
 	getServiceBySlug,

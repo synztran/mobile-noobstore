@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { useCommunityConfig } from "@/lib/react-query/community/api/useCommunityQueries";
 import { useCreateDocument } from "@/lib/react-query/community/api/useCommunityMutations";
 import { AlertCircle, FileCode2, Loader2, Upload, X } from "lucide-react";

@@ -33,7 +33,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { NOT_FOUND_IMAGE } from "@/lib/images";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 
 const STATUS_CONFIG: Record<
   string,
@@ -756,20 +756,20 @@ function OrderDetailContent({
               onChange={(e) => setCancelReason(e.target.value)}
               placeholder="Nhập lý do hủy (nếu có)..."
               rows={3}
-              className="w-full rounded-2xl bg-surface-container px-4 py-3 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary"
+              className="w-full rounded-lg bg-surface-container px-4 py-3 text-sm text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary"
             />
           </div>
-          <div className="modal-action">
+          <div className="modal-action flex">
             <button
               onClick={() => setShowCancelModal(false)}
-              className="btn rounded-full border-0 bg-surface-container px-6 text-sm font-bold normal-case text-on-surface"
+              className="btn btn-sm flex-1 rounded-lg border-0 bg-surface-container px-4 text-sm font-bold normal-case text-on-surface"
             >
               Huỷ
             </button>
             <button
               onClick={handleCancelOrder}
               disabled={cancelMutation.isPending}
-              className="btn rounded-full border-0 bg-error px-6 text-sm font-bold normal-case text-white transition-all active:scale-[0.98] disabled:opacity-60"
+              className="btn btn-sm flex-1 rounded-lg border-0 bg-error px-4 text-sm font-bold normal-case text-white transition-all active:scale-[0.98] disabled:opacity-60"
             >
               {cancelMutation.isPending ? (
                 <span className="loading loading-spinner loading-sm" />

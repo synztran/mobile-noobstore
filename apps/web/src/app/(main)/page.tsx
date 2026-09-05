@@ -12,7 +12,7 @@ import { HomeSaleSection } from "@/components/home/SaleSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { LazyNearViewport } from "@/components/ui/LazyNearViewport";
 import { getHeroCampaigns } from "@/lib/hero-server";
-import { getSoonestFlashSale } from "@/lib/flash-sale-server";
+import { getSoonestFlashSale } from "@/modules/products/server/flash-sale";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 

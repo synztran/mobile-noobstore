@@ -3,19 +3,12 @@ import {
 	MaxLimitExceededError,
 	StockExceededError,
 	upsertCartItem,
-	type UpsertCartInput,
-} from "@/lib/cart-service";
+} from "@/modules/cart/server/service";
 import { createClient } from "@/lib/supabase/server";
+import type { AddCartItemRequest, AddCartItemResponse } from "@/modules/cart/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-
-export interface AddCartItemRequest extends UpsertCartInput {}
-
-export interface AddCartItemResponse {
-	cart_id: string;
-	item_id: string;
-}
 
 export async function POST(req: NextRequest) {
 	try {

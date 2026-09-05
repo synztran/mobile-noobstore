@@ -1,13 +1,13 @@
 "use client";
 
-import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
+import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { PointsBalanceCard } from "@/components/rewards/PointsBalanceCard";
 import { ClaimsHistory } from "@/components/rewards/ClaimsHistory";
 import { RewardsGrid } from "@/components/rewards/RewardsGrid";
 import { ConfirmRedemptionModal } from "@/components/rewards/ConfirmRedemptionModal";
 import { SuccessModal } from "@/components/rewards/SuccessModal";
 import { usePointsBalance } from "@/lib/react-query/points/api/usePointsQueries";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { useClaims, useRedeemReward } from "@/lib/react-query/rewards/api/useRewardsMutations";
 import type { RewardItem, RedeemResponse } from "@/types/reward";
 import { ArrowLeft, ArrowRight, Sparkles, Ticket } from "lucide-react";

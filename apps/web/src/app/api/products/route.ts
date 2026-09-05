@@ -3,7 +3,8 @@ import {
   getProductsByIds,
   type ProductSortOption,
   type ProductType,
-} from "@/lib/product-query-service";
+} from "@/modules/products/server/queries";
+import type { ProductsResponse, ShopProduct } from "@/modules/products/types";
 import {
 	buildProductListCacheKey,
 	publicCacheHeaders,
@@ -16,70 +17,6 @@ export const dynamic = "force-dynamic";
 // ─── Cache & Performance Settings ───────────────────────────────────────────
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
-
-// ─── Public Types ────────────────────────────────────────────────────────────
-
-export type SortOption = "newest" | "price_asc" | "price_desc";
-
-export interface ShopVariant {
-  id: string;
-  variant_name: string;
-  price_adjustment: number;
-  effective_price: number;
-  thumbnail: string | null;
-  stock_quantity: number;
-  is_pre_order: boolean;
-  pre_order_config: PreOrderConfig | null;
-  attributes: Record<string, string> | null;
-}
-
-export interface ITag {
-  id: number;
-  label: string;
-  value: string;
-  icon?: string;
-  textColor?: string;
-  bgColor?: string;
-}
-
-/** Config stored in the `pre_order_config` JSONB column. */
-export interface PreOrderConfig {
-  /** Human-readable shipping estimate, e.g. "2–3 tuần" */
-  estimate: string;
-  /** ISO date string for expected stock arrival, e.g. "2026-07-01" */
-  available_date?: string | null;
-  /** Optional note shown to the customer */
-  notes?: string | null;
-}
-
-export interface ShopProduct {
-  id: string;
-  slug: string;
-  name: string;
-  brand: string | null;
-  category: string;
-  description: string;
-  base_price: number;
-  stock_quantity: number;
-  thumbnail: string | null;
-  images: string[] | null;
-  product_type: "standard" | "kit" | "component" | "gift";
-  variants: ShopVariant[];
-  min_price: number;
-  is_used: boolean;
-  is_pre_order: boolean;
-  tags: ITag[];
-  discount_price?: number;
-  discount_percentage?: number;
-  sale_ends_at?: string | null;
-  sold_count: number;
-  gifts?: Array<{ gift_name: string; gift_slug: string; gift_thumbnail: string | null; quantity: number }>;
-}
-
-export interface ProductsResponse {
-  products: ShopProduct[];
-  total: number;
-}
 
 // ─── Internal row types ───────────────────────────────────────────────────────
 

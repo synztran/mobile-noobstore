@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { usePathname } from "next/navigation";
 import { Upload } from "lucide-react";
 import { DocumentUploadDrawer } from "@/components/community/DocumentUploadDrawer";

@@ -1,4 +1,4 @@
-import { getSaleProducts } from "@/lib/sale-products-server";
+import { getSaleProducts } from "@/modules/products/server/sale";
 import {
 	CACHE_KEYS,
 	publicCacheHeaders,

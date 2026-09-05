@@ -1,14 +1,14 @@
 "use client";
 
-import type { AddressFormValues } from "@/components/profile/AddressEditorDrawer";
-import AddressEditorDrawer from "@/components/profile/AddressEditorDrawer";
+import type { AddressFormValues } from "@/modules/user/ui/AddressEditorDrawer";
+import AddressEditorDrawer from "@/modules/user/ui/AddressEditorDrawer";
 import Icon from "@/components/ui/Icon";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
-import type { ProfileAddress } from "@/lib/data";
-import { useProfileAddresses, useUpdateProfileAddresses } from "@/lib/react-query/user/api/useUserQueries";
+import { useAuth } from "@/modules/user/client/AuthProvider";
+import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
+import type { ProfileAddress } from "@/modules/user/types";
+import { useProfileAddresses, useUpdateProfileAddresses } from "@/modules/user/client/queries";
 import { toast } from "@/lib/toast";
 import clsx from "clsx";
 import { AlertTriangle, Trash } from "lucide-react";

@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { signUpUser } from "@/modules/user/server/auth";
 import { getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
-
-const ERROR_MAP: Record<string, string> = {
-  "User already registered": "Email này đã được đăng ký!",
-  "Invalid email": "Định dạng email không hợp lệ!",
-  "Password should be at least 6 characters":
-    "Mật khẩu phải có ít nhất 6 ký tự!",
-  "Too many requests": "Quá nhiều lần thử. Vui lòng đợi một chút.",
-  "Signups not allowed": "Đăng ký tạm thời bị khóa. Vui lòng liên hệ hỗ trợ.",
-};
 
 export const dynamic = "force-dynamic";
 
@@ -49,19 +41,16 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const result = await signUpUser(supabase, {
     email,
     password,
-    options: {
-      data: { full_name: fullName },
-      ...(captchaToken ? { captchaToken } : {}),
-      emailRedirectTo: new URL("/verified-success", req.url).toString(),
-    },
+    fullName,
+    captchaToken,
+    emailRedirectTo: new URL("/verified-success", req.url).toString(),
   });
 
-  if (error) {
-    const viMessage = ERROR_MAP[error.message] ?? error.message;
-    return NextResponse.json({ error: viMessage }, { status: 400 });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
   return NextResponse.json({ ok: true });

@@ -3,7 +3,7 @@ import type { Creator } from "@/app/api/home/creators/route";
 import type { HeroCampaign } from "@/app/api/home/hero/route";
 import type { Testimonial } from "@/app/api/home/testimonials/route";
 import type { TrustProp } from "@/app/api/home/trust-props/route";
-import type { ShopProduct } from "@/app/api/products/route";
+import type { ShopProduct } from "@/modules/products/types";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useMutation, useQuery } from "@tanstack/react-query";
 

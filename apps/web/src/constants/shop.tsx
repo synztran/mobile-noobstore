@@ -1,6 +1,6 @@
 import { CalendarArrowUp, ArrowDown01, ArrowDown10 } from "lucide-react";
 import type { ReactElement } from "react";
-import type { SortOption } from "@/app/api/products/route";
+import type { SortOption } from "@/modules/products/types";
 
 export const SORT_OPTIONS: {
 	value: SortOption;

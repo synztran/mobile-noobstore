@@ -25,6 +25,7 @@ interface StepModel {
   icon: LucideIcon;
   timestamp?: string | null;
   meta?: string | null;
+  loading?: boolean;
 }
 
 const PRE_ORDER_STEPS = [
@@ -66,12 +67,25 @@ const PRE_ORDER_STEPS = [
   },
 ] as const;
 
+const WAITING_PAYMENT_STEP = {
+  key: "waiting_payment",
+  label: "Chờ thanh toán",
+  description: "Đơn hàng đã được tiếp nhận, đang chờ thanh toán",
+  icon: Receipt,
+} as const;
+
 const NORMAL_STEPS = [
   {
     key: "placed",
     label: "Đặt hàng",
     description: "Đơn hàng của bạn đã được tiếp nhận",
     icon: Receipt,
+  },
+  {
+    key: WAITING_PAYMENT_STEP.key,
+    label: WAITING_PAYMENT_STEP.label,
+    description: WAITING_PAYMENT_STEP.description,
+    icon: WAITING_PAYMENT_STEP.icon,
   },
   {
     key: "confirmed",
@@ -94,10 +108,10 @@ const NORMAL_STEPS = [
 ] as const;
 
 const STATUS_INDEX: Record<string, number> = {
-  pending: 0,
-  confirmed: 1,
-  delivering: 2,
-  delivered: 3,
+  pending: 1,
+  confirmed: 2,
+  delivering: 3,
+  delivered: 4,
 };
 
 interface PreOrderTrackingLike {
@@ -169,7 +183,7 @@ const LABEL_CLASSES: Record<Tone, Record<StepState, string>> = {
 
 const PILL_CLASSES: Record<Tone, Record<StepState, string>> = {
   brand: {
-    done: "bg-emerald-50 text-emerald-600",
+    done: "bg-emerald-100/80 text-emerald-600",
     active: "bg-primary-fixed text-primary",
     pending: "bg-surface-container text-on-surface-variant",
     error: "bg-error/10 text-error",
@@ -234,7 +248,10 @@ function getPillText(step: StepModel): string {
     return "ĐÃ HỦY";
   }
   if (step.state === "done") return "Thành công";
-  if (step.state === "active") return "ĐANG XỬ LÝ";
+  if (step.state === "active") {
+    if (step.key === "waiting_payment") return "Đợi thanh toán";
+    return "ĐANG XỬ LÝ";
+  }
   return "SẮP TỚI";
 }
 
@@ -263,6 +280,8 @@ function TimelineRow({
             <Check className="h-3.5 w-3.5" strokeWidth={3} />
           ) : step.state === "pending" ? (
             <span className="h-2 w-2 rounded-full bg-outline-variant" />
+          ) : step.loading ? (
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
           ) : (
             <step.icon className="h-3.5 w-3.5" strokeWidth={2.5} />
           )}
@@ -296,7 +315,7 @@ function TimelineRow({
         </div>
         <div className="flex flex-shrink-0 flex-col items-end">
           <span
-            className={`rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${PILL_CLASSES[tone][step.state]}`}
+            className={`rounded-sm px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${PILL_CLASSES[tone][step.state]}`}
           >
             {pillText}
           </span>
@@ -362,8 +381,9 @@ export default function OrderTrackingTimeline({
       lastDoneIdx = STATUS_INDEX[status] ?? 0;
       steps = NORMAL_STEPS.slice(0, lastDoneIdx + 1).map((step, i) => ({
         ...step,
-        state: i <= lastDoneIdx ? "done" : "active",
+        state: i < lastDoneIdx ? "done" : "active",
         timestamp: normalStepTimestamp(step.key, order),
+        loading: step.key === "waiting_payment" && status === "pending",
         meta:
           step.key === "delivering" &&
           i === lastDoneIdx &&
@@ -372,9 +392,9 @@ export default function OrderTrackingTimeline({
             : null,
       }));
     } else {
-      if (order.delivered_at) lastDoneIdx = 3;
-      else if (order.delivering_at) lastDoneIdx = 2;
-      else if (order.paid_at || order.deposit_paid_at) lastDoneIdx = 1;
+      if (order.delivered_at) lastDoneIdx = 4;
+      else if (order.delivering_at) lastDoneIdx = 3;
+      else if (order.paid_at || order.deposit_paid_at) lastDoneIdx = 2;
 
       steps = NORMAL_STEPS.slice(0, lastDoneIdx + 1).map((step, i) => ({
         ...step,

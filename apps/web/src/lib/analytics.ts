@@ -1,4 +1,4 @@
-import type { CartItem } from "@/lib/data";
+import type { CartItem } from "@/modules/cart/types";
 
 const GA_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 

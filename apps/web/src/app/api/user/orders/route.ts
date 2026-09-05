@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(count), order_services(count), created_at",
+        "id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(quantity), order_services(count), created_at",
         {
           count: "exact",
         }
@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
         voucher_code: string | null;
         voucher_discount_amount: number | string | null;
         shipping_discount_amount: number | string | null;
-        order_items: Array<{ count: number }>;
+        order_items: Array<{ quantity: number }>;
         order_services: Array<{ count: number }>;
         created_at: string;
       }> | null;
@@ -150,14 +150,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    console.log("data", data);
-
     const orders: OrderSummary[] = (data ?? []).map((row) => ({
       id: row.id,
       order_number: row.order_number,
       status: row.status,
       total_price: Number(row.total_price),
-      item_count: row.order_items?.[0]?.count ?? 0,
+      item_count: row.order_items?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ?? 0,
       service_line_count: row.order_services?.[0]?.count ?? 0,
       created_at: row.created_at,
       voucher_code: row.voucher_code ?? null,

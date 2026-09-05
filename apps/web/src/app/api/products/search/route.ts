@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   fetchKitSupplements,
   type VariantRow,
-} from "@/lib/product-query-service";
+} from "@/modules/products/server/queries";
 
 export const dynamic = "force-dynamic";
 

@@ -8,7 +8,7 @@ import type {
 	BookingConfigResponse,
 	BookingService,
 } from "@/app/api/services/booking-config/route";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
 import {
 	useBookingConfig,

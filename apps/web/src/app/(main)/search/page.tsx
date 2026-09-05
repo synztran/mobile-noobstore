@@ -1,6 +1,6 @@
-import type { SortOption } from "@/app/api/products/route";
-import { SearchPageClient } from "@/components/search/SearchPageClient";
-import { getProducts } from "@/lib/products-server";
+import type { SortOption } from "@/modules/products/types";
+import { SearchPageClient } from "@/modules/products/ui/search/SearchPageClient";
+import { getProducts } from "@/modules/products/server/ssr";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 

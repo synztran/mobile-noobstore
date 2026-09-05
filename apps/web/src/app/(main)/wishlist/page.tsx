@@ -1,4 +1,4 @@
-import WishlistPage from "@/components/wishlist/WishlistPage";
+import WishlistPage from "@/modules/user/ui/wishlist/WishlistPage";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 

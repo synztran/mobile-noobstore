@@ -1,16 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import type { GiftProductInfo } from "@/modules/products/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-
-export type GiftProductInfo = {
-  id: string;
-  gift_product_id: string;
-  quantity: number;
-  gift_name: string;
-  gift_slug: string;
-  gift_thumbnail: string | null;
-};
 
 export async function GET(
   _req: NextRequest,

@@ -1,12 +1,12 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
-import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
+import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { DELIVERY_OPTIONS } from "@/constants";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm, type DeliverySpeed } from "@/hooks/useShippingForm";
 import { cartItemsToGA, trackBeginCheckout } from "@/lib/analytics";
-import { useCartStore } from "@/store";
+import { useCartStore } from "@/modules/cart/client/useCartStore";
 import AddressFields from "./AddressFields";
 import ContactInfoFields from "./ContactInfoFields";
 import DeliveryMethodSection from "./DeliveryMethodSection";

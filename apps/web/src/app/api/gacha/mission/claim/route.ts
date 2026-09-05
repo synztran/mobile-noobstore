@@ -1,3 +1,4 @@
+import { claimMissionReward } from "@/modules/gacha/server/missions";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -27,37 +28,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { data, error } = await supabase.rpc("claim_mission_reward", {
-    p_user_id: user.id,
-    p_event_id: eventId,
-    p_mission_id: missionId,
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  const result = data as {
-    error?: string;
-    success?: boolean;
-    token_reward?: number;
-  };
-
-  if (result?.error) {
-    const statusMap: Record<string, number> = {
-      mission_not_found: 404,
-      mission_not_completed: 409,
-      already_claimed: 409,
-      mission_config_not_found: 404,
-    };
-    return NextResponse.json(
-      { error: result.error },
-      { status: statusMap[result.error] ?? 400 }
-    );
+  const result = await claimMissionReward(
+    supabase,
+    user.id,
+    eventId,
+    missionId
+  );
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
   return NextResponse.json({
     success: true,
-    token_reward: result?.token_reward ?? 0,
+    token_reward: result.token_reward,
   });
 }

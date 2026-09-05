@@ -1,3 +1,4 @@
+import { triggerMissionProgress } from "@/modules/gacha/server/missions";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -42,27 +43,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { data, error } = await (
-    supabase.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>
-    ) => Promise<{ data: unknown; error: { message: string } | null }>
-  )("process_mission_progress", {
-    p_user_id: user.id,
-    p_event_id: event_id,
-    p_mission_type: mission_type,
-    p_context: context,
-  });
-
-  if (error) {
-    console.error("[mission/progress] rpc error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const result = await triggerMissionProgress(
+    supabase,
+    user.id,
+    event_id,
+    mission_type,
+    context
+  );
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  const completed = (Array.isArray(data) ? data : []) as Array<{
-    mission_id: number;
-    newly_completed: boolean;
-  }>;
-
-  return NextResponse.json({ completed });
+  return NextResponse.json({ completed: result.completed });
 }

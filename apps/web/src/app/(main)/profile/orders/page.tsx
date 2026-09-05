@@ -7,8 +7,8 @@ import OrderStatusTabs, {
 } from "@/components/orders/OrderStatusTabs";
 import { ServiceOrderDetailDrawer } from "@/components/orders/ServiceOrderDetailDrawer";
 import { SupportFAB } from "@/components/support/SupportFAB";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { withAuthRedirect } from "@/components/auth/withAuthRedirect";
+import { useAuth } from "@/modules/user/client/AuthProvider";
+import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { formatVND } from "@/lib/currency";
 import {
   useOrderByNumber,

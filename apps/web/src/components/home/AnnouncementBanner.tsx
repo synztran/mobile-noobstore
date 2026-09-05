@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { SaleCountdown } from "@/components/product/SaleCountdown";
+import { SaleCountdown } from "@/modules/products/ui/product/SaleCountdown";
 
 const MESSAGES = [
   { text: "Ưu đãi đặc biệt cho đơn hàng đầu tiên", href: "/shop" },

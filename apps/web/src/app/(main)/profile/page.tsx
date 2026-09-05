@@ -1,6 +1,6 @@
 "use client";
 
-import { updateProfileName } from "@/app/actions/profile";
+import { updateProfileName } from "@/modules/user/server/actions";
 import { RankBadge } from "@/components/rank/RankBadge";
 import { RankBenefitModal } from "@/components/rank/RankBenefitModal";
 import {
@@ -8,7 +8,7 @@ import {
   RankProgressCardSkeleton,
 } from "@/components/rank/RankProgressCard";
 import Icon from "@/components/ui/Icon";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
 import { Newspaper } from "lucide-react";

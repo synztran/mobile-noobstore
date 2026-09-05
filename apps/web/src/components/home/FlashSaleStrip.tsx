@@ -2,10 +2,10 @@ import { formatVND } from "@/lib/currency";
 import {
   getFlashSaleProducts,
   type FlashSaleProduct,
-} from "@/lib/flash-sale-server";
+} from "@/modules/products/server/flash-sale";
 import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
-import { SaleCountdown } from "@/components/product/SaleCountdown";
+import { SaleCountdown } from "@/modules/products/ui/product/SaleCountdown";
 
 function FlashSaleCard({ product }: { product: FlashSaleProduct }) {
   const discountPercent =
