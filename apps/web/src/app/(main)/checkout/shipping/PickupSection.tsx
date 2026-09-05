@@ -5,7 +5,7 @@ import { WsSelect } from "react-wheel-scroller/select";
 import "react-wheel-scroller/styles.css";
 import clsx from "clsx";
 import { Calendar, Clock, Store } from "lucide-react";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 
 interface Props {
   hasPreOrder: boolean;
@@ -22,6 +22,11 @@ interface Props {
 }
 
 const PICKUP_HORIZON_DAYS = 7;
+
+// Sentinel first slot so the time wheel never auto-selects a real time.
+// It renders as a "choose a time" prompt and maps to an empty value so it is
+// rejected by the onSet guard (state stays empty until a real slot is picked).
+const TIME_PLACEHOLDER = { text: "Chọn giờ", value: "" };
 
 const VIETNAMESE_MONTHS = [
   "Tháng 1",
@@ -73,6 +78,17 @@ function PickupSection({
   const maxDate = new Date(minDate);
   maxDate.setDate(maxDate.getDate() + PICKUP_HORIZON_DAYS);
   const dateInvalid = isPickupFieldInvalid("pickupDate");
+
+  const timeData = useMemo(
+    () =>
+      pickupTime
+        ? pickupSlots.map((s) => ({ text: s, value: s }))
+        : [
+            TIME_PLACEHOLDER,
+            ...pickupSlots.map((s) => ({ text: s, value: s })),
+          ],
+    [pickupSlots, pickupTime]
+  );
 
   return (
     <div className="space-y-3 rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
@@ -161,7 +177,9 @@ function PickupSection({
             </label>
             <div className="relative">
               <WsSelect
-                data={pickupSlots}
+                data={timeData}
+                dataText="text"
+                dataValue="value"
                 value={pickupTime}
                 display="bottom"
                 touchUi

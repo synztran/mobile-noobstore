@@ -87,8 +87,10 @@ export async function POST(
       );
     }
 
+    // Return request via admin client — orders UPDATE removed from user RLS
+    const admin = getAdminClient();
     const { error: updateError } = await (
-      supabase.from("orders") as unknown as {
+      admin.from("orders") as unknown as {
         update: (value: Record<string, unknown>) => { eq: (col: string, val: string) => Promise<{ error: { message: string } | null }> };
       }
     )

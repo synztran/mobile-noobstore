@@ -14,7 +14,7 @@ import { useCheckoutStore } from "@/store";
 import { formatVND } from "@/lib/currency";
 import Image from "@/components/ui/AdaptiveImage";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { QRPaymentSection } from "./QRPaymentSection";
 import { NOT_FOUND_IMAGE } from "@/lib/images";
 
@@ -66,6 +66,16 @@ export default function CheckingPageContent() {
   const paymentMethodsQuery = usePaymentInformation(mounted);
 
   const orderStatus = orderStatusQuery.data?.status ?? null;
+  const orderNotFound = orderStatusQuery.data?.notFound ?? false;
+
+  // Ownership guard: order belongs to a different account — redirect to login
+  const notFoundRedirected = useRef(false);
+  useEffect(() => {
+    if (!mounted || !orderNotFound || notFoundRedirected.current) return;
+    notFoundRedirected.current = true;
+    toast.error("Đơn hàng không thuộc tài khoản này. Vui lòng đăng nhập đúng tài khoản.");
+    router.replace("/login");
+  }, [mounted, orderNotFound, router]);
   const orderVoucherDiscount =
     orderStatusQuery.data?.voucher_discount_amount ?? 0;
   const orderShippingDiscount =
@@ -136,6 +146,11 @@ export default function CheckingPageContent() {
         <div className="h-14 rounded-full bg-surface-container" />
       </div>
     );
+  }
+
+  // Ownership guard: prevent rendering bank/QR info while redirecting
+  if (orderNotFound) {
+    return null;
   }
 
   const buildQRBank = (message: string, paymentPrice: number) => {

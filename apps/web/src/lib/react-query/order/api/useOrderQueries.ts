@@ -39,6 +39,7 @@ export function useOrderStatus(
 					status: "",
 					voucher_discount_amount: 0,
 					shipping_discount_amount: 0,
+					notFound: res.status === 404,
 				};
 			}
 			const data = await res.json();

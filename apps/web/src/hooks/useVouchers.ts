@@ -81,6 +81,7 @@ export function useVouchers({
   );
 
   // Auto-apply eligible scoped + customer vouchers when cart items exist.
+  // Sorted by discount amount (highest first) so the best voucher is picked.
   useEffect(() => {
     if (items.length === 0 || eligibleVouchers.length === 0) return;
 
@@ -88,9 +89,25 @@ export function useVouchers({
     const already = new Set(
       appliedVouchers.map((v) => v.voucherInfo.voucher_id)
     );
-    const toApply = eligibleVouchers
-      .map((v) => v.id)
-      .filter((id) => !already.has(id));
+    const candidates = eligibleVouchers
+      .filter((v) => !already.has(v.id));
+
+    // Sort by estimated discount descending — highest discount first
+    const sorted = [...candidates].sort((a, b) => {
+      const aAmt = a.reward_type === 'amount_off'
+        ? Number(a.amount_off ?? 0)
+        : a.reward_type === 'percent_off'
+          ? Number(a.percent_off ?? 0)
+          : 0;
+      const bAmt = b.reward_type === 'amount_off'
+        ? Number(b.amount_off ?? 0)
+        : b.reward_type === 'percent_off'
+          ? Number(b.percent_off ?? 0)
+          : 0;
+      return bAmt - aAmt;
+    });
+
+    const toApply = sorted.map((v) => v.id);
 
     const remainingSlots = Math.max(
       0,

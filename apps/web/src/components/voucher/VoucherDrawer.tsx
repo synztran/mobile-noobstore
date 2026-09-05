@@ -89,7 +89,7 @@ export function VoucherDrawer({
             Đóng
           </button>
         </div>
-        <div className="flex-1 space-y-4 overflow-y-auto touch-pan-y px-4 pb-4">
+        <div className="flex-1 touch-pan-y space-y-4 overflow-y-auto px-4">
           <div className="menu flex h-full w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-base-200 p-0">
             {/* Search Header */}
             <div className="border-b border-outline-variant/30 px-4 pb-3 pt-4">
@@ -107,7 +107,7 @@ export function VoucherDrawer({
             </div>
 
             {/* Voucher List */}
-            <div className="flex-1 space-y-3 overflow-y-auto touch-pan-y px-4 py-3">
+            <div className="flex-1 touch-pan-y space-y-3 overflow-y-auto px-4 py-3">
               {/* Valid Vouchers Section */}
               {validVouchers.length > 0 && (
                 <>

@@ -1,5 +1,6 @@
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { invalidateProductCaches } from "@/lib/redis/cache";
 import { notifyCustomerCancelledOrder } from "@/lib/telegram/telegram.service";
 import { NextRequest, NextResponse } from "next/server";
@@ -72,7 +73,9 @@ export async function POST(
       );
     }
 
-    const { error: updateError } = await supabase
+    // Cancel via admin client — orders UPDATE removed from user RLS
+    const admin = getAdminClient();
+    const { error: updateError } = await admin
       .from("orders")
       .update({
         status: "cancelled",

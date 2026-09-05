@@ -29,8 +29,9 @@ export async function drawGacha(
   eventId: number
 ): Promise<GachaDrawResult> {
   // Refund helper — restores the token when a post-decrement step fails.
+  // Refund uses admin client — user_event_tokens UPDATE is admin-only
   const refund = async () => {
-    await supabase
+    await admin
       .from("user_event_tokens")
       .update({ token_count: currentTokens })
       .eq("user_id", userId)
@@ -82,8 +83,8 @@ export async function drawGacha(
     return { ok: false, error: "Not enough tokens", status: 400 };
   }
 
-  // ── Round-trip 2: atomic token decrement ───────────────────────────────────
-  const { data: updated, error: updateError } = await supabase
+  // ── Round-trip 2: atomic token decrement (admin client — bypasses RLS) ────
+  const { data: updated, error: updateError } = await admin
     .from("user_event_tokens")
     .update({ token_count: currentTokens - 1 })
     .eq("user_id", userId)

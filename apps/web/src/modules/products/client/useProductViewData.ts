@@ -85,7 +85,8 @@ export function useProductViewData(
       if (isSelected) {
         return { ...prev, [group]: current.filter((id) => id !== variantId) };
       }
-      const cap = groupDef?.max_quantity ?? groupDef?.variants.length ?? Infinity;
+      const cap =
+        groupDef?.max_quantity ?? groupDef?.variants.length ?? Infinity;
       if (cap > 0 && current.length >= cap) return prev;
       return { ...prev, [group]: [...current, variantId] };
     });
@@ -164,9 +165,7 @@ export function useProductViewData(
     const selectedVariants = initialGroups
       .flatMap((g) => selections[g.component_group] ?? [])
       .map((id) =>
-        initialGroups
-          .flatMap((g) => g.variants)
-          .find((v) => v.id === id)
+        initialGroups.flatMap((g) => g.variants).find((v) => v.id === id)
       )
       .filter((v): v is NonNullable<typeof v> => v !== undefined);
     if (selectedVariants.length === 0) return product.stock_quantity;
@@ -214,7 +213,7 @@ export function useProductViewData(
       return;
     }
     if (product.variants.length > 0 && !selectedVariant) {
-      toast.error("Please select a variant");
+      toast.error("Vui lòng chọn cấu hình");
       return;
     }
     if (missingConfiguration) {
@@ -222,7 +221,7 @@ export function useProductViewData(
       return;
     }
     if (isOutOfStock) {
-      toast.error("Out of stock");
+      toast.error("Sản phẩm hiện đang hết hàng");
       return;
     }
 
@@ -241,21 +240,29 @@ export function useProductViewData(
               (i.components ?? []).some((c) => c.variant_id === v.id)
                 ? sum + i.quantity
                 : sum,
-            0,
+            0
           );
           if (used + addQty > v.stock_quantity) {
-            toast.error(`Chỉ còn ${v.stock_quantity} sản phẩm ${v.variant_name} trong kho`);
+            toast.error(
+              `Chỉ còn ${v.stock_quantity} sản phẩm ${v.variant_name} trong kho`
+            );
             return;
           }
         }
       }
     } else if (selectedVariant) {
       const used = items.reduce(
-        (sum, i) => (i.variant?.id === selectedVariant.id ? sum + i.quantity : sum),
-        0,
+        (sum, i) =>
+          i.variant?.id === selectedVariant.id ? sum + i.quantity : sum,
+        0
       );
-      if (selectedVariant.stock_quantity != null && used + addQty > selectedVariant.stock_quantity) {
-        toast.error(`Chỉ còn ${selectedVariant.stock_quantity} sản phẩm này trong kho`);
+      if (
+        selectedVariant.stock_quantity != null &&
+        used + addQty > selectedVariant.stock_quantity
+      ) {
+        toast.error(
+          `Chỉ còn ${selectedVariant.stock_quantity} sản phẩm này trong kho`
+        );
         return;
       }
     }
@@ -293,7 +300,9 @@ export function useProductViewData(
         });
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng");
+      toast.error(
+        err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng"
+      );
       setIsLoadingAddToCart(false);
       return;
     }
@@ -323,7 +332,7 @@ export function useProductViewData(
         quantity: addQty,
       })
     );
-    toast.success("Added to cart!");
+    toast.success(`Thêm sản phẩm ${product.name} thành công !`);
     openCart();
     setIsLoadingAddToCart(false);
   };

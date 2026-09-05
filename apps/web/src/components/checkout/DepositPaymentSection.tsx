@@ -109,12 +109,12 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
       </div>
       {paymentType === "deposit_cod" && (
         <div className="space-y-3 border-t border-outline-variant/20 px-4 pb-4 pt-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-on-surface-variant">
-              Tỉ lệ đặt cọc:{" "}
+          {/* <div className="flex items-center justify-between">
+            <span className="text-sm text-on-surface-variant">
+              Thông tin đặt cọc
               <strong className="text-on-surface">{depositPercentage}%</strong>
             </span>
-          </div>
+          </div> */}
           <input
             type="range"
             min={minPercentage}
@@ -130,7 +130,7 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
           <div className="space-y-1.5 rounded-2xl bg-surface-container px-3 py-2.5">
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">
-                Đặt cọc ({draftPct}%)
+                Đặt cọc <strong>({draftPct}%)</strong>
               </span>
               <span className="font-bold text-primary">
                 {formatVND(liveDeposit)}

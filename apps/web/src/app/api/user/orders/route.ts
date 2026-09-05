@@ -55,6 +55,8 @@ export async function GET(req: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
+    console.log("user", user);
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -155,7 +157,9 @@ export async function GET(req: NextRequest) {
       order_number: row.order_number,
       status: row.status,
       total_price: Number(row.total_price),
-      item_count: row.order_items?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ?? 0,
+      item_count:
+        row.order_items?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
+        0,
       service_line_count: row.order_services?.[0]?.count ?? 0,
       created_at: row.created_at,
       voucher_code: row.voucher_code ?? null,

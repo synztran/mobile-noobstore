@@ -140,13 +140,13 @@ export const VoucherComponent = memo(function VoucherComponent({
 
       {loadingVouchers ? <VoucherSkeleton /> : null}
 
-      {!loadingVouchers && !error && displayVouchers.length === 0 ? (
+      {!loadingVouchers && !error && displayVouchers.length === 0 && appliedVouchers.length === 0 ? (
         <div className="rounded-xl bg-surface-container px-4 py-3 text-center text-sm text-on-surface-variant">
           Hiện chưa có voucher khả dụng.
         </div>
       ) : null}
 
-      {!loadingVouchers && displayVouchers.length > 0 ? (
+      {!loadingVouchers ? (
         <>
           <VoucherDrawer
             drawerOpen={drawerOpen}

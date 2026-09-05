@@ -5,12 +5,11 @@ import ShippingFeeLabel from "@/components/ui/ShippingFeeLabel";
 import Icon from "@/components/ui/Icon";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
-import { usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
+import { useOrderStatus, usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
-import { useQuery } from "@tanstack/react-query";
 import Image from "@/components/ui/AdaptiveImage";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 type BankInfoRow = {
@@ -43,29 +42,25 @@ export default function CheckingPage() {
     }
   }, [mounted, orderNumber, router]);
 
-  const orderStatusQuery = useQuery({
-    queryKey: ["order-status", orderNumber],
-    enabled: mounted && !!orderNumber,
-    queryFn: async () => {
-      const res = await fetch(`/api/orders/${orderNumber}`, {
-        method: "GET",
-      });
-      if (!res.ok) return "";
-      const data = await res.json();
-      return (data.status as string) ?? "pending";
-    },
-    // Stop polling once the order reaches a terminal status
-    refetchInterval: (query) => {
-      const status = query.state.data;
-      const terminal = ["confirmed", "cancelled", "failed", "completed"];
-      if (status && terminal.includes(status)) return false;
-      return 5000;
-    },
-  });
+  const orderStatusQuery = useOrderStatus(
+    orderNumber,
+    mounted && !!orderNumber,
+    5000
+  );
 
   const paymentMethodsQuery = usePaymentInformation(mounted);
 
-  const orderStatus = orderStatusQuery.data ?? null;
+  const orderStatus = orderStatusQuery.data?.status ?? null;
+  const orderNotFound = orderStatusQuery.data?.notFound ?? false;
+
+  // Ownership guard: order belongs to a different account — redirect to login
+  const notFoundRedirected = useRef(false);
+  useEffect(() => {
+    if (!mounted || !orderNotFound || notFoundRedirected.current) return;
+    notFoundRedirected.current = true;
+    toast.error("Đơn hàng không thuộc tài khoản này. Vui lòng đăng nhập đúng tài khoản.");
+    router.replace("/login");
+  }, [mounted, orderNotFound, router]);
   const paymentMethods = paymentMethodsQuery.data ?? [];
 
   // Calculate subtotal from ordered items
@@ -126,6 +121,11 @@ export default function CheckingPage() {
         <div className="h-14 rounded-full bg-surface-container" />
       </div>
     );
+  }
+
+  // Ownership guard: prevent rendering bank/QR info while redirecting
+  if (orderNotFound) {
+    return null;
   }
 
   const buildQRBank = (message: string, paymentPrice: number) => {

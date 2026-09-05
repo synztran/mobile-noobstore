@@ -302,17 +302,17 @@ export function CartDrawer() {
               ? "Bạn có chắc chắn muốn xóa tất cả sản phẩm khỏi giỏ hàng?"
               : "Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?"}
           </p>
-          <div className="modal-action flex gap-3">
+          <div className="modal-action flex gap-2">
             <button
               onClick={cancelRemove}
-              className="btn min-w-32 rounded-full bg-surface-container font-bold normal-case text-on-surface hover:bg-surface-container-high"
+              className="btn flex-1 rounded-lg bg-surface-container py-4 font-bold normal-case text-on-surface hover:bg-surface-container-high"
             >
               Hủy
             </button>
             <button
               onClick={confirmRemove}
               disabled={clearCartMutation.isPending || removeMutation.isPending}
-              className="btn min-w-32 rounded-full border-0 bg-error font-bold normal-case text-white hover:bg-error/90 disabled:opacity-60"
+              className="btn flex-1 rounded-lg border-0 bg-error py-4 font-bold normal-case text-white hover:bg-error/90 disabled:opacity-60"
             >
               {clearCartMutation.isPending || removeMutation.isPending ? (
                 <span className="loading loading-spinner loading-sm" />

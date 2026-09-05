@@ -37,7 +37,7 @@ function CartItemRow({
 
   return (
     <div
-      className={`relative flex gap-2 rounded-xl bg-surface-container-low p-2 transition-opacity duration-300 ${
+      className={`relative flex gap-2 rounded-xl bg-surface-container-low p-2 shadow-md transition-opacity duration-300 ${
         isRemoving ? "pointer-events-none opacity-50" : ""
       }`}
     >
@@ -45,7 +45,7 @@ function CartItemRow({
         onClick={onRemove}
         disabled={isRemoving}
         aria-label={`Xóa ${item.product.name} khỏi giỏ hàng`}
-        className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-400 transition-transform active:scale-90 disabled:opacity-50"
+        className="absolute right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-400 transition-transform active:scale-90 disabled:opacity-50"
       >
         {isRemoving ? (
           <span className="loading loading-spinner loading-xs text-white" />
@@ -97,17 +97,23 @@ function CartItemRow({
             ))}
           </div>
         ) : null}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1">
           {item.components &&
-            item.components.map((c) => (
-              <span
-                key={c.variant_id}
-                className="inline-flex items-center rounded-sm bg-gray-200 px-1.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant"
-              >
-                {c.component_group}:&nbsp;
-                <span className="font-black">{c.variant_name}</span>
-              </span>
-            ))}
+            item.components
+              .sort(
+                (a, b) =>
+                  (a.component_group + a.variant_name).length -
+                  (b.component_group + b.variant_name).length
+              )
+              .map((c) => (
+                <span
+                  key={c.variant_id}
+                  className="inline-flex items-center rounded-sm bg-gray-200 px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-on-surface-variant"
+                >
+                  {c.component_group}:&nbsp;
+                  <span className="font-black">{c.variant_name}</span>
+                </span>
+              ))}
         </div>
         {item.gifts?.map((g) => (
           <div
@@ -126,8 +132,8 @@ function CartItemRow({
             </div>
           </div>
         ))}
-        <div className="!mt-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 rounded-lg bg-gray-200 px-2 py-1">
+        <div className="!mt-auto flex items-center justify-between pt-2">
+          <div className="flex items-center gap-2 rounded-lg border border-surface-container-highest bg-gray-200 px-2 py-1">
             <button
               onClick={onMinus}
               disabled={isRemoving}

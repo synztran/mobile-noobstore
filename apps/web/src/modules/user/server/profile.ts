@@ -83,7 +83,11 @@ async function ensureSyncedUser(supabase: Supabase, authUser: User) {
     return { appUserId: String(byEmail.id), error: null };
   }
 
-  const { data: inserted, error: insertError } = await supabase
+  // INSERT via admin client — users INSERT removed from user RLS to prevent
+  // self-escalation on row creation (user could set role='admin').
+  const { getAdminClient } = await import("@/lib/supabase/admin");
+  const admin = getAdminClient();
+  const { data: inserted, error: insertError } = await admin
     .from("users")
     .insert({
       id: authUser.id,
@@ -360,7 +364,11 @@ export async function updateProfileFields(
     return { status: 400, error: "No valid fields to update" };
   }
 
-  const { data: profile, error } = await supabase
+  // UPDATE via admin client — users UPDATE removed from user RLS to prevent
+  // self-admin-escalation and points minting.
+  const { getAdminClient } = await import("@/lib/supabase/admin");
+  const admin = getAdminClient();
+  const { data: profile, error } = await admin
     .from("users")
     .update(updates)
     .eq("id", appUserId)

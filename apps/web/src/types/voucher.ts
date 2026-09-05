@@ -50,6 +50,7 @@ export interface VoucherRow {
 	status: VoucherStatus;
 	reward_type: VoucherRewardType;
 	scope_type: VoucherScopeType;
+	auto_apply: boolean;
 	amount_off: number | null;
 	percent_off: number | null;
 	max_discount_amount: number | null;

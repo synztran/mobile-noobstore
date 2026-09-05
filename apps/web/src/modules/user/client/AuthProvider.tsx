@@ -156,6 +156,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
       if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
 
+      // Clear react-query cache on auth transitions to prevent cross-account
+      // data leaks (rank, orders, profile, etc. from a previous user session)
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        queryClient.clear();
+      }
+
       setSession(newSession);
       setUser(newSession?.user ?? null);
 
@@ -245,6 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    queryClient.clear();
     await supabase.auth.signOut();
     clearUserCookie();
     setSession(null);

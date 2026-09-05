@@ -89,9 +89,49 @@ export async function GET(req: Request) {
     }
 
     const allVouchers = (raw ?? []) as unknown as VoucherRow[];
+    // Filter auto_apply after fetch (auto_apply not in DB types until migration applied)
+    const autoApplyVouchers = allVouchers.filter((v: any) => v.auto_apply === true);
+
+    // ── Pre-filter: skip vouchers that hit total usage limit ──────────
+    const maybeEligible = autoApplyVouchers.filter((v) => {
+      if (v.usage_limit_total !== null && v.usage_limit_total > 0 && v.used_count >= v.usage_limit_total) {
+        return false; // voucher exhausted globally
+      }
+      return true;
+    });
+
+    // ── Batch-fetch per-user usage for vouchers with per-user limits ──
+    const perUserLimitVoucherIds = maybeEligible
+      .filter((v) => v.usage_limit_per_user !== null && v.usage_limit_per_user > 0)
+      .map((v) => v.id);
+
+    const userUsageMap = new Map<string, number>();
+    if (perUserLimitVoucherIds.length > 0) {
+      const { data: usageRows } = await supabase
+        .from("orders")
+        .select("voucher_id")
+        .eq("user_id", user.id)
+        .not("voucher_id", "is", null)
+        .in("voucher_id", perUserLimitVoucherIds);
+
+      for (const row of usageRows ?? []) {
+        if (!row.voucher_id) continue;
+        userUsageMap.set(
+          row.voucher_id,
+          (userUsageMap.get(row.voucher_id) ?? 0) + 1
+        );
+      }
+    }
+
     const eligible: VoucherRow[] = [];
 
-    for (const v of allVouchers) {
+    for (const v of maybeEligible) {
+      // Check per-user usage limit
+      const perUserLimit = v.usage_limit_per_user;
+      if (perUserLimit !== null && perUserLimit > 0) {
+        const userUsage = userUsageMap.get(v.id) ?? 0;
+        if (userUsage >= perUserLimit) continue;
+      }
       // Only scoped + customer vouchers auto-apply
       const isScoped =
         v.scope_type === "product" || v.scope_type === "category";
@@ -137,6 +177,23 @@ export async function GET(req: Request) {
 
       eligible.push(v);
     }
+
+    // Sort by discount amount (highest first) so auto-apply picks best voucher
+    eligible.sort((a, b) => {
+      const aDiscount =
+        a.reward_type === 'amount_off'
+          ? Number(a.amount_off ?? 0)
+          : a.reward_type === 'percent_off'
+            ? Number(a.percent_off ?? 0)  // percent as rough sort key
+            : 0;
+      const bDiscount =
+        b.reward_type === 'amount_off'
+          ? Number(b.amount_off ?? 0)
+          : b.reward_type === 'percent_off'
+            ? Number(b.percent_off ?? 0)
+            : 0;
+      return bDiscount - aDiscount;
+    });
 
     return NextResponse.json({
       vouchers: eligible,

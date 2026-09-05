@@ -496,11 +496,21 @@ export function useShippingForm() {
     // Slots follow the schedule of the selected pickup day: weekdays end at
     // 19:00, weekends at 17:00. Falls back to today's window when no date is
     // picked yet.
-    const day = pickupDate ? new Date(`${pickupDate}T00:00:00`).getDay() : new Date().getDay();
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const isToday =
+      pickupDate ===
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const day = pickupDate
+      ? new Date(`${pickupDate}T00:00:00`).getDay()
+      : now.getDay();
     const startMin = dayStartMinutes(day);
     const endMin = dayEndMinutes(day);
     const slots: string[] = [];
     for (let m = startMin; m <= endMin; m += PICKUP_SLOT_MINUTES) {
+      // For today, hide slots that already started/are past (set after close is
+      // already handled by rolling minPickupDate to tomorrow).
+      if (isToday && m <= nowMinutes) continue;
       const h = Math.floor(m / 60);
       const min = m % 60;
       slots.push(

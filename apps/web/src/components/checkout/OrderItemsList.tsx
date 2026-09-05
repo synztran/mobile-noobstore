@@ -71,13 +71,13 @@ export const OrderItemsList = memo(function OrderItemsList({
               {/* Product info */}
               <div className={`flex h-full gap-2 ${isOos ? "opacity-50" : ""}`}>
                 {/* Product thumbnail */}
-                <div className="relative h-20 min-w-24">
+                <div className="relative h-24 min-w-24">
                   <Image
                     src={item.product.thumbnail || NOT_FOUND_IMAGE}
                     alt={item.product.name}
                     fill
                     sizes="96px"
-                    className="rounded-xl object-cover"
+                    className="rounded-lg object-cover"
                   />
                   {isPreorder ? (
                     <span className="absolute -top-2 left-4 max-w-max rounded-sm bg-violet-500 px-2 py-0.5 text-[8px] font-black uppercase text-white">

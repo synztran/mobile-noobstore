@@ -493,18 +493,44 @@ export async function POST(req: NextRequest) {
       safeShippingCost
     );
 
-    // ── Rank-based discount ────────────────────────────────────────────
-    const requestedRankDiscount = toNumber(
-      body.rank_discount?.discount_amount,
-      0
-    );
-    const safeRankDiscount = Math.min(
-      Math.max(0, requestedRankDiscount),
-      subtotal - safeVoucherDiscount
-    );
-    const safeRankShipping = body.rank_discount?.free_shipping
-      ? Math.min(safeShippingCost - safeShippingDiscount, safeShippingCost)
-      : 0;
+    // ── Rank-based discount (server-authoritative) ────────────────────
+    // Never trust body.rank_discount — recompute from the user's actual
+    // rank to prevent discount fraud.
+    let safeRankDiscount = 0;
+    let safeRankShipping = 0;
+    const { data: userRankRow } = await admin
+      .from("users")
+      .select("rank_id")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (userRankRow?.rank_id) {
+      const { data: rank } = await admin
+        .from("customer_ranks")
+        .select("benefits")
+        .eq("id", userRankRow.rank_id)
+        .maybeSingle();
+      if (rank) {
+        const b = (
+          typeof rank.benefits === "string"
+            ? JSON.parse(rank.benefits)
+            : rank.benefits
+        ) as Record<string, unknown>;
+        const flags = (b.flags ?? {}) as Record<string, unknown>;
+        if (flags.discount_percent_enabled) {
+          const pct = toNumber(b.discount_percent, 0);
+          safeRankDiscount = Math.min(
+            Math.round((subtotal * pct) / 100),
+            subtotal - safeVoucherDiscount
+          );
+        }
+        if (flags.free_shipping_enabled && b.free_shipping) {
+          safeRankShipping = Math.min(
+            safeShippingCost - safeShippingDiscount,
+            safeShippingCost
+          );
+        }
+      }
+    }
 
     const recalculatedTotal = Math.max(
       0,
@@ -572,27 +598,18 @@ export async function POST(req: NextRequest) {
           allGiftItems.length > 0 ? toJson(allGiftItems) : null,
       };
 
-      const { error: updateOrderError } = await supabase
+      // Orders UPDATE via admin client — user RLS UPDATE removed
+      const { error: adminUpdateOrderError } = await admin
         .from("orders")
         .update(orderVoucherUpdate)
         .eq("id", result.order_id);
 
-      let voucherPersisted = !updateOrderError;
-      if (updateOrderError) {
-        const { error: adminUpdateOrderError } = await admin
-          .from("orders")
-          .update(orderVoucherUpdate)
-          .eq("id", result.order_id);
-
-        if (adminUpdateOrderError) {
-          voucherPersisted = false;
-          console.error(
-            "[submit] failed to persist voucher fields (user+admin):",
-            { updateOrderError, adminUpdateOrderError }
-          );
-        } else {
-          voucherPersisted = true;
-        }
+      const voucherPersisted = !adminUpdateOrderError;
+      if (adminUpdateOrderError) {
+        console.error(
+          "[submit] failed to persist voucher fields:",
+          adminUpdateOrderError
+        );
       }
 
       // Increment usage count for EACH applied voucher
@@ -656,7 +673,8 @@ export async function POST(req: NextRequest) {
         ).toISOString();
       }
 
-      await supabase
+      // Delivery address via admin client — user RLS UPDATE removed
+      await admin
         .from("orders")
         .update({
           delivery_address: body.delivery_address
@@ -692,23 +710,17 @@ export async function POST(req: NextRequest) {
         deposit_amount: depositAmt,
         remaining_amount: remainingAmt,
       } as Record<string, unknown>;
-      const { error: depositUpdateError } = await supabase
+      // Deposit fields via admin client — user RLS UPDATE removed
+      const { error: depositUpdateError } = await admin
         .from("orders")
         .update(depositUpdatePayload as never)
         .eq("id", result.order_id);
 
       if (depositUpdateError) {
-        const { error: adminDepositError } = await admin
-          .from("orders")
-          .update(depositUpdatePayload as never)
-          .eq("id", result.order_id);
-
-        if (adminDepositError) {
-          console.error(
-            "[submit] failed to persist deposit fields:",
-            adminDepositError
-          );
-        }
+        console.error(
+          "[submit] failed to persist deposit fields:",
+          depositUpdateError
+        );
       }
     }
 
@@ -739,7 +751,8 @@ export async function POST(req: NextRequest) {
         unit_price: 0,
       }));
 
-      const { error: giftInsertError } = await supabase
+      // Gift items via admin client — user RLS UPDATE removed from order_items
+      const { error: giftInsertError } = await admin
         .from("order_items")
         .insert(giftOrderItems);
 

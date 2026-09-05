@@ -133,6 +133,8 @@ export default function ProfilePage() {
     .toUpperCase()
     .slice(0, 2);
 
+  console.log("rankData", rankData);
+
   return (
     <div className="px-4 pb-16 pt-4">
       {/* Avatar & name */}
