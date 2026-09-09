@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Script from "next/script";
+import { isTrackingEnabled } from "@/lib/analytics/config";
 
 const CONSENT_KEY = "noobstore_cookie_consent";
 
@@ -25,7 +26,7 @@ export function GoogleAnalytics() {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  if (!gaId || !consented) return null;
+  if (!gaId || !consented || !isTrackingEnabled()) return null;
 
   return (
     <>

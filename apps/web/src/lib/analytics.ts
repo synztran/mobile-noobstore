@@ -1,4 +1,5 @@
 import type { CartItem } from "@/modules/cart/types";
+import { isTrackingEnabled } from "@/lib/analytics/config";
 
 const GA_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 
@@ -58,6 +59,7 @@ export function getSessionId(): number {
 function sendEvent(name: string, params?: Record<string, unknown>) {
   if (!GA_ID) return;
   if (typeof window === "undefined") return;
+  if (!isTrackingEnabled()) return;
 
   const body = JSON.stringify({
     client_id: getClientId(),

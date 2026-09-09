@@ -1,0 +1,471 @@
+"use client";
+
+import { LOGO_NOOB_STORE } from "@/lib/images";
+import {
+  useQueryClient,
+  type Query,
+  type QueryCache,
+} from "@tanstack/react-query";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+interface HomeSplashStatus {
+  at: number;
+  msg: string;
+}
+
+interface HomeSplashScreenProps {
+  /** Floor time on screen, in ms. The splash never hides before this, even
+      when everything is already cached. Default 3500. */
+  minDuration?: number;
+  /** Progress-step messages, keyed by percent threshold. Defaults to the
+      mockup's boot sequence. */
+  statuses?: HomeSplashStatus[];
+  /** Only play once per browsing session (sessionStorage-gated). Default true. */
+  showOncePerSession?: boolean;
+  children: React.ReactNode;
+}
+
+const DEFAULT_STATUSES: HomeSplashStatus[] = [
+  { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+  { at: 25, msg: "Đồng bộ danh mục bàn phím & Switch..." },
+  { at: 55, msg: "Nạp dữ liệu GMK Keycaps & Custom Boards..." },
+  { at: 80, msg: "Khởi tạo hệ thống Gacha & Ưu đãi..." },
+  { at: 100, msg: "Sẵn sàng trải nghiệm!" },
+];
+
+const SESSION_KEY = "noobstore.splash.seen";
+
+// Boot progress comes from the home screen's real data fetches: cart, hero,
+// nổi bật and sale products (React Query). Each query group carries a weight
+// (Σ = 100); once a group is settled we credit its weight. A group is
+// "settled" when its queries resolved (success/error) or never needed to
+// fetch — e.g. hero data is server-rendered, so `useHomeHero` is disabled and
+// we auto-credit it.
+const BOOT_GROUPS: {
+  weight: number;
+  matches: (key: readonly unknown[]) => boolean;
+}[] = [
+  { weight: 15, matches: (key) => key[0] === "home" && key[1] === "hero" },
+  { weight: 25, matches: (key) => key[0] === "cart" && key[1] === "all" },
+  {
+    weight: 30,
+    matches: (key) => key[0] === "home" && key[1] === "noteworthy",
+  },
+  {
+    weight: 30,
+    matches: (key) => key[0] === "home" && key[1] === "saleProducts",
+  },
+];
+
+const START_PCT = 12;
+
+function groupSettled(queries: Query[]): boolean {
+  if (queries.length === 0) return true; // nothing registered → nothing to wait for
+  return queries.every((q) => {
+    const { status, fetchStatus, fetchFailureCount } = q.state;
+    if (status === "success" || status === "error") return true;
+    // Disabled query (e.g. hero already server-rendered, never fetched,
+    // never failed) → auto-credit. A retry backoff has failures, so it keeps
+    // the group unsettled until it resolves or the fail-safe trips.
+    return (
+      status === "pending" && fetchStatus === "idle" && fetchFailureCount === 0
+    );
+  });
+}
+
+function creditFor(cache: QueryCache): number {
+  const queries = cache.findAll();
+  let credits = 0;
+  for (const group of BOOT_GROUPS) {
+    if (groupSettled(queries.filter((q) => group.matches(q.queryKey)))) {
+      credits += group.weight;
+    }
+  }
+  return credits;
+}
+
+const FLOOR_MAX = 78; // under-ceiling while real fetches run — never completes alone
+const FLOOR_RAMP_MS = 2400; // floor travels start → FLOOR_MAX over this span
+const FAILSAFE_MARGIN_MS = 6000; // fail-safe = minDuration + margin — can never preempt the data wait
+
+/**
+ * Full-screen NoobStore boot splash for the root page.
+ * Ported from `mockup-ui/loading-screen/code.html` (keycap boot screen).
+ *
+ * The bar is driven by the home screen's REAL data fetches (cart, hero,
+ * noteworthy + sale products via React Query). Each settled query group
+ * credits its weight; a soft time floor keeps the bar moving underneath but
+ * can never complete it. Only when all groups settle AND the `minDuration`
+ * has passed does it reach 100% and fade out. Renders `children` normally
+ * underneath; keyframes are injected via a scoped <style> so the component
+ * is fully self-contained.
+ */
+export function HomeSplashScreen({
+  minDuration = 3500,
+  statuses = DEFAULT_STATUSES,
+  showOncePerSession = true,
+  children,
+}: HomeSplashScreenProps) {
+  const queryClient = useQueryClient();
+  const [skip, setSkip] = useState(false);
+  const [active, setActive] = useState(false); // overlay mounted + tracking
+  const [realTarget, setRealTarget] = useState<number>(START_PCT);
+  const [percent, setPercent] = useState<number>(START_PCT);
+  const [fading, setFading] = useState(false);
+  const [gone, setGone] = useState(false);
+
+  const startedAtRef = useRef<number | null>(null);
+  const floorStartRef = useRef<number | null>(null);
+  const doneRef = useRef(false);
+
+  const bumpReal = useCallback((value: number) => {
+    setRealTarget((prev) => (value > prev ? value : prev));
+  }, []);
+
+  // 1) Decided in an effect (never during render) so SSR-safe and immune to
+  //    private-mode sessionStorage throwing during hydration. Reduced motion
+  //    → skip the splash entirely.
+  useEffect(() => {
+    let mounted = true;
+    const shouldSkip =
+      (showOncePerSession && sessionSeen(SESSION_KEY)) ||
+      (typeof window !== "undefined" &&
+        !!window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (!mounted) return;
+    setSkip(shouldSkip);
+    if (!shouldSkip) {
+      startedAtRef.current = Date.now();
+      floorStartRef.current = performance.now();
+      setActive(true);
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [showOncePerSession]);
+
+  // 2) Track the home screen's real data fetches (cart, hero, noteworthy,
+  //    sale) via the React Query cache. On every cache event we re-credit the
+  //    settled groups; the initial snapshot picks up queries that already
+  //    resolved (cached or disabled) before we subscribed.
+  useEffect(() => {
+    if (!active) return;
+    const cache = queryClient.getQueryCache();
+    const creditSettled = () => bumpReal(creditFor(cache));
+    creditSettled();
+    return cache.subscribe(creditSettled);
+  }, [active, queryClient, bumpReal]);
+
+  // 3) Finish at 100% only when every boot fetch settled AND the floor elapsed.
+  useEffect(() => {
+    if (doneRef.current || !active || gone) return;
+    if (realTarget < 100) return;
+    const elapsed = Date.now() - (startedAtRef.current ?? Date.now());
+    if (elapsed < minDuration) return;
+    doneRef.current = true;
+    bumpReal(100);
+  }, [realTarget, minDuration, active, gone, bumpReal]);
+
+  // Fail-safe: never trap the user behind the overlay on a stalled page.
+  // Must be a true backstop — longer than the minDuration floor and the
+  // typical fetch span, so it can never preempt the real data wait.
+  useEffect(() => {
+    if (!active) return;
+    const t = setTimeout(() => {
+      if (doneRef.current || gone) return;
+      doneRef.current = true;
+      bumpReal(100);
+    }, minDuration + FAILSAFE_MARGIN_MS);
+    return () => clearTimeout(t);
+  }, [active, gone, minDuration, bumpReal]);
+
+  // 4) Visibility lifecycle: fade → unmount → stamp the session flag.
+  useEffect(() => {
+    if (realTarget < 100) return;
+    const t1 = setTimeout(() => setFading(true), 140);
+    const t2 = setTimeout(() => {
+      setGone(true);
+      if (showOncePerSession) {
+        try {
+          sessionStorage.setItem(SESSION_KEY, "1");
+        } catch {
+          /* sessionStorage unavailable — splash simply replays */
+        }
+      }
+    }, 760);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [realTarget, showOncePerSession]);
+
+  // 5) Drive the displayed % — blend the guaranteed-advancing floor with the
+  //    real target, evaluated per frame, so the bar can never get stuck.
+  useEffect(() => {
+    if (!active || gone) return;
+    let raf: number;
+    const tick = (now: number) => {
+      const floorStart = floorStartRef.current ?? now;
+      const floor = Math.min(
+        FLOOR_MAX,
+        START_PCT +
+          ((now - floorStart) / FLOOR_RAMP_MS) * (FLOOR_MAX - START_PCT)
+      );
+      const combined = Math.max(floor, realTarget);
+      setPercent(combined >= 100 ? 100 : combined);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [active, gone, realTarget]);
+
+  const status = useMemo(() => {
+    const list = statuses.length ? statuses : DEFAULT_STATUSES;
+    let msg = list[0]?.msg ?? "";
+    for (const s of list) if (percent >= s.at) msg = s.msg;
+    return msg;
+  }, [percent, statuses]);
+
+  const ready = percent >= 100;
+  const showOverlay = !skip && !gone;
+
+  return (
+    <>
+      {children}
+
+      {showOverlay && (
+        <div
+          aria-hidden={fading}
+          className={`fixed inset-0 z-[120] flex select-none flex-col justify-between overflow-hidden bg-surface text-on-surface transition-opacity duration-500 ${
+            fading ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          {/* Ambient light orbs */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-orange-200/35 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-10 right-0 h-64 w-64 rounded-full bg-amber-100/40 blur-3xl" />
+
+          {/* Warm grid background */}
+          <div className="splash-grid-warm pointer-events-none absolute inset-0" />
+
+          {/* ── Top status bar ── */}
+          <header className="relative z-10 px-5 pb-2 pt-4">
+            <div className="flex items-center justify-between border-b border-on-surface/5 pb-3">
+              <div className="flex items-center">
+                <span className="inline-block h-2 w-2 animate-ping rounded-full bg-primary" />
+                <span className="-ml-3.5 inline-block h-2 w-2 rounded-full bg-primary" />
+                <span className="font-mono-tech ml-2 text-[10.5px] font-bold uppercase tracking-widest text-on-surface/80">
+                  noobstore.xyz <span className="text-primary/70">//</span> ver
+                  2.5
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full border border-on-surface/10 bg-white/90 px-2.5 py-1 shadow-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="font-mono-tech text-[9.5px] font-bold uppercase tracking-wide text-on-surface">
+                  SYS READY
+                </span>
+              </div>
+            </div>
+          </header>
+
+          {/* ── Central hero branding ── */}
+          <main className="relative z-10 mx-auto my-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center px-6 text-center">
+            {/* 3D keycap switch emblem */}
+            <div className="relative mb-7 flex items-center justify-center">
+              <div className="splash-pulse-ring pointer-events-none absolute h-36 w-36 scale-110 rounded-3xl border border-primary/15" />
+              <div className="pointer-events-none absolute h-44 w-44 animate-[splash-spin-rev_25s_linear_infinite] rounded-full border border-dashed border-primary/10" />
+              <div className="splash-keycap relative flex h-28 w-28 flex-col items-center justify-center rounded-2xl p-2">
+                <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#323130] to-[#1a1a19] shadow-inner">
+                  <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-on-surface/90">
+                    <img
+                      src={LOGO_NOOB_STORE}
+                      alt="NoobStore"
+                      className="h-full w-full object-contain drop-shadow-[0_2px_8px_rgba(255,100,100,0.4)]"
+                    />
+                  </div>
+                  <span className="font-mono-tech absolute left-1.5 top-1 rounded bg-black/30 px-1 text-[7px] font-medium tracking-tighter text-zinc-400">
+                    ESC
+                  </span>
+                  <span className="font-mono-tech absolute bottom-1 right-1.5 text-[7px] font-medium text-zinc-400">
+                    NB-01
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Brand typography */}
+            <div className="mb-6 space-y-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                <span>Custom Keyboards</span>
+                <span className="text-primary/40">•</span>
+                <span>Art Toys</span>
+              </div>
+              <h1 className="flex items-center justify-center gap-1 text-3xl font-extrabold tracking-tight text-on-surface">
+                NoobStore
+              </h1>
+              <p className="px-4 text-xs font-medium leading-relaxed text-on-surface/50">
+                Bàn phím cơ Custom, GMK Keycaps &amp; Phụ kiện tuyển chọn hàng
+                đầu
+              </p>
+            </div>
+
+            {/* Progress engine */}
+            <div className="w-full space-y-2.5">
+              <div className="relative h-2.5 w-full overflow-hidden rounded-full border border-on-surface/10 bg-surface-container-low p-0.5 shadow-inner">
+                <div
+                  className={`splash-progress-fill relative h-full rounded-full transition-[width] duration-300 ease-out ${
+                    ready ? "splash-progress-ready" : ""
+                  }`}
+                  style={{ width: `${percent}%` }}
+                >
+                  {!ready && (
+                    <div className="splash-shimmer pointer-events-none absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+                  )}
+                </div>
+              </div>
+
+              <div className="font-mono-tech flex items-center justify-between px-0.5 text-[11px]">
+                <span className="max-w-[210px] truncate text-left font-medium text-on-surface/70">
+                  {status}
+                </span>
+                <span
+                  className={`font-bold tracking-tight ${
+                    ready ? "text-emerald-600" : "text-primary"
+                  }`}
+                >
+                  {Math.round(percent)}%
+                </span>
+              </div>
+
+              <div className="font-mono-tech flex items-center justify-center gap-2 border-t border-on-surface/5 pt-2 text-[9px] text-on-surface/40">
+                <span>SWITCH: LUBED</span>
+                <span>/</span>
+                <span>ASSETS: LOADING</span>
+                <span>/</span>
+                <span className="font-semibold text-emerald-700">FPS: 60</span>
+              </div>
+            </div>
+          </main>
+
+          {/* ── Footer tip ── */}
+          <footer className="relative z-10 mx-auto w-full max-w-sm px-5 pb-5">
+            <div className="mb-3 flex items-start space-x-3 rounded-2xl border border-primary/15 bg-white/95 p-3.5 shadow-[0_0_0_1px_rgba(255,255,255,0.8)_inset,0_18px_36px_-10px_rgba(155,63,28,0.18)]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-orange-50 text-primary">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H4.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h17.25"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <div className="flex-1 text-left">
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-primary">
+                    Mẹo NoobStore
+                  </span>
+                  <span className="rounded bg-surface-container-low px-1.5 py-0.5 text-[9px] text-on-surface/50">
+                    Gacha
+                  </span>
+                </div>
+                <p className="mt-0.5 text-[11px] font-medium leading-tight text-on-surface/75">
+                  Đổi điểm tích lũy để nhận lượt quay Gacha và quà tặng giới hạn
+                  tại mục{" "}
+                  <Link
+                    href="/gacha"
+                    className="font-semibold text-on-surface underline decoration-primary/40 underline-offset-2"
+                  >
+                    Đổi Thưởng
+                  </Link>
+                  !
+                </p>
+              </div>
+            </div>
+            <p className="font-mono-tech text-center text-[9.5px] tracking-tight text-on-surface/40">
+              © NOOBSTORE GAMING &amp; COLLECTIBLES • VIETNAM
+            </p>
+          </footer>
+
+          <style>{`
+            /* Warm grid background */
+            .splash-grid-warm {
+              background-size: 24px 24px;
+              background-image:
+                linear-gradient(to right, rgba(27, 28, 26, 0.035) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(27, 28, 26, 0.035) 1px, transparent 1px);
+            }
+            .font-mono-tech {
+              font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+            }
+            /* Tactile keycap plate */
+            .splash-keycap {
+              background: radial-gradient(130% 120% at 50% 10%, #ffffff 0%, #faede7 55%, #eedcd4 100%);
+              border: 1px solid rgba(155, 63, 28, 0.18);
+              box-shadow: 0 25px 50px -12px rgba(155, 63, 28, 0.35),
+                0 6px 0 0 #7b2e11,
+                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+              animation: splash-keypress 2.4s ease-in-out infinite;
+            }
+            @keyframes splash-keypress {
+              0%, 45%, 58%, 100% {
+                transform: translateY(0);
+                box-shadow: 0 25px 50px -12px rgba(155, 63, 28, 0.35),
+                  0 6px 0 0 #7b2e11,
+                  0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+              }
+              50% {
+                transform: translateY(5px);
+                box-shadow: 0 12px 24px -6px rgba(155, 63, 28, 0.25),
+                  0 1px 0 0 #7b2e11,
+                  0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+              }
+            }
+            /* Soft pulse ring around the emblem */
+            @keyframes splash-pulse {
+              0%, 100% { opacity: 0.9; transform: scale(1); }
+              50% { opacity: 0.55; transform: scale(1.06); }
+            }
+            .splash-pulse-ring {
+              animation: splash-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            @keyframes splash-spin-rev {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(-360deg); }
+            }
+            /* Progress fill — terracotta gradient, green when done */
+            .splash-progress-fill {
+              background: linear-gradient(135deg, #9b3f1c 0%, #bb5732 100%);
+              box-shadow: 0 0 12px rgba(155, 63, 28, 0.25);
+            }
+            .splash-progress-ready {
+              background: linear-gradient(135deg, #4a7c3a 0%, #5c9a47 100%);
+              box-shadow: 0 0 12px rgba(74, 124, 58, 0.35);
+            }
+            /* Shimmer light sweep */
+            @keyframes splash-shimmer {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(200%); }
+            }
+            .splash-shimmer {
+              animation: splash-shimmer 2s infinite linear;
+            }
+          `}</style>
+        </div>
+      )}
+    </>
+  );
+}
+
+function sessionSeen(key: string): boolean {
+  try {
+    return typeof window !== "undefined" && sessionStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+}

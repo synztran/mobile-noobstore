@@ -11,6 +11,7 @@ import { NoteworthySection } from "@/components/home/NoteworthySection";
 import { HomeSaleSection } from "@/components/home/SaleSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { LazyNearViewport } from "@/components/ui/LazyNearViewport";
+import { HomeSplashScreen } from "@/components/home/HomeSplashScreen";
 import { getHeroCampaigns } from "@/lib/hero-server";
 import { getSoonestFlashSale } from "@/modules/products/server/flash-sale";
 import type { Metadata } from "next";
@@ -33,38 +34,40 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="relative clear-both space-y-8">
-      <Suspense fallback={<AnnouncementBanner />}>
-        <AnnouncementBannerInitial />
-      </Suspense>
-      <Suspense fallback={<HeroFallback />}>
-        <HeroSectionInitial />
-      </Suspense>
-      <NoteworthySection />
-      <Suspense fallback={null}>
-        <FlashSaleStripInitial />
-      </Suspense>
-      <HomeSaleSection />
-      <LazyNearViewport>
-        <OurStrongPoints />
-      </LazyNearViewport>
-      <LazyNearViewport>
-        <CommunityPromo />
-      </LazyNearViewport>
-      <LazyNearViewport>
-        <CommunityGallery />
-      </LazyNearViewport>
-      <LazyNearViewport>
-        <CustomerTestimonial />
-      </LazyNearViewport>
-      <LazyNearViewport>
-        <HomeTestimonials />
-      </LazyNearViewport>
-      <LazyNearViewport>
-        <NewsletterCTA />
-      </LazyNearViewport>
-      <HomeFooter />
-    </div>
+    <HomeSplashScreen>
+      <div className="relative clear-both space-y-8">
+        <Suspense fallback={<AnnouncementBanner />}>
+          <AnnouncementBannerInitial />
+        </Suspense>
+        <Suspense fallback={<HeroFallback />}>
+          <HeroSectionInitial />
+        </Suspense>
+        <NoteworthySection />
+        <Suspense fallback={null}>
+          <FlashSaleStripInitial />
+        </Suspense>
+        <HomeSaleSection />
+        <LazyNearViewport>
+          <OurStrongPoints />
+        </LazyNearViewport>
+        <LazyNearViewport>
+          <CommunityPromo />
+        </LazyNearViewport>
+        <LazyNearViewport>
+          <CommunityGallery />
+        </LazyNearViewport>
+        <LazyNearViewport>
+          <CustomerTestimonial />
+        </LazyNearViewport>
+        <LazyNearViewport>
+          <HomeTestimonials />
+        </LazyNearViewport>
+        <LazyNearViewport>
+          <NewsletterCTA />
+        </LazyNearViewport>
+        <HomeFooter />
+      </div>
+    </HomeSplashScreen>
   );
 }
 
