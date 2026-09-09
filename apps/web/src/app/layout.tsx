@@ -5,6 +5,7 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import { FlyToCart } from "@/modules/cart/ui/FlyToCart";
 import { CookieConsent } from "@/components/ui/CookieConsent";
 import { GoogleAnalytics } from "@/components/ui/GoogleAnalytics";
+import { BetterStackRUM } from "@/components/ui/BetterStackRUM";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
 import { AuthProvider } from "@/modules/user/client/AuthProvider";
 import type { Metadata, Viewport } from "next";
@@ -90,6 +91,7 @@ export default function RootLayout({
           content="black-translucent"
         />
         <GoogleAnalytics />
+        <BetterStackRUM />
         <noscript>
           <div style={{ padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
             <h2>Vui lòng bật JavaScript</h2>

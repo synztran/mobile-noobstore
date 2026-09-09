@@ -54,6 +54,13 @@ import {
   Truck,
   User,
   X,
+  Puzzle,
+  Coins,
+  MessageCircle,
+  Gem,
+  Sparkles,
+  Crown,
+  Trophy,
 } from "lucide-react";
 import { memo } from "react";
 
@@ -117,6 +124,13 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?:
   QrCode,
   Share,
   Square,
+  Puzzle,
+  Coins,
+  MessageCircle,
+  Gem,
+  Sparkles,
+  Crown,
+  Trophy,
 };
 
 const MANUAL_MAP: Record<string, string> = {
@@ -172,6 +186,14 @@ const MANUAL_MAP: Record<string, string> = {
   qr_code_2: "QrCode",
   share: "Share",
   stars: "Star",
+  puzzle: "Puzzle",
+  coins: "Coins",
+  gift_card: "Gift",
+  message: "MessageCircle",
+  gem: "Gem",
+  sparkles: "Sparkles",
+  workspace_premium: "Crown",
+  emoji_events: "Trophy",
 };
 
 function toPascalCase(name: string) {
