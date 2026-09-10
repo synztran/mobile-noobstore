@@ -3,7 +3,7 @@ import { ServiceWorkerRegister } from "@/components/ui/ServiceWorkerRegister";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { FlyToCart } from "@/modules/cart/ui/FlyToCart";
-import { CookieConsent } from "@/components/ui/CookieConsent";
+import { CookieConsentLazy } from "@/components/ui/CookieConsentLazy";
 import { GoogleAnalytics } from "@/components/ui/GoogleAnalytics";
 import { BetterStackRUM } from "@/components/ui/BetterStackRUM";
 import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
@@ -19,7 +19,7 @@ const MobileViewportGuard = dynamic(
 );
 
 const manrope = localFont({
-  src: "../../public/fonts/manrope/Manrope-VariableFont_wght.ttf",
+  src: "../../public/fonts/manrope/Manrope-VariableFont_wght.woff2",
   variable: "--font-sans",
   display: "swap",
   weight: "200 800",
@@ -113,7 +113,7 @@ export default function RootLayout({
             {children}
             <MobileViewportGuard />
             <ToastProvider />
-            <CookieConsent />
+            <CookieConsentLazy />
             <StoreHydrator />
             <ServiceWorkerRegister />
           </AuthProvider>

@@ -1,5 +1,6 @@
 import { ShopPageClient } from "@/modules/products/ui/shop/ShopPageClient";
 import { ShopSeo } from "@/modules/products/ui/shop/ShopSeo";
+import { ProductCardSkeleton } from "@/modules/products/ui/product/ProductCard";
 import {
   getBrands,
   getCategories,
@@ -86,19 +87,37 @@ async function ShopContent({
   );
 }
 
+function ShopControlsSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="mb-4 flex items-center gap-2 rounded-md border border-outline-variant bg-white px-3 py-3.5">
+        <div className="h-4 w-2/3 rounded-full bg-surface-container" />
+      </div>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+            Bộ sưu tập
+          </p>
+          <div className="h-7 w-28 rounded-md bg-surface-container" />
+        </div>
+        <div className="flex gap-2">
+          <div className="h-9 w-20 rounded-full bg-surface-container" />
+          <div className="h-9 w-24 rounded-full bg-surface-container" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ShopFallback() {
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {Array.from({ length: 8 }, (_, i) => (
-        <div key={i} className="animate-pulse">
-          <div className="mb-3 aspect-[4/5] rounded-xl bg-surface-container" />
-          <div className="space-y-1.5">
-            <div className="h-2 w-1/3 rounded-full bg-surface-container" />
-            <div className="h-3 w-4/5 rounded-full bg-surface-container" />
-            <div className="h-3 w-2/5 rounded-full bg-surface-container" />
-          </div>
-        </div>
-      ))}
+    <div>
+      <ShopControlsSkeleton />
+      <div className="grid grid-cols-2 gap-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
+      </div>
     </div>
   );
 }

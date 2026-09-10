@@ -16,7 +16,7 @@ interface HomeSplashStatus {
 
 interface HomeSplashScreenProps {
   /** Floor time on screen, in ms. The splash never hides before this, even
-      when everything is already cached. Default 3500. */
+    when everything is already cached. Default 2000. */
   minDuration?: number;
   /** Progress-step messages, keyed by percent threshold. Defaults to the
       mockup's boot sequence. */
@@ -86,7 +86,7 @@ function creditFor(cache: QueryCache): number {
 }
 
 const FLOOR_MAX = 78; // under-ceiling while real fetches run — never completes alone
-const FLOOR_RAMP_MS = 2400; // floor travels start → FLOOR_MAX over this span
+const FLOOR_RAMP_MS = 1200; // floor travels start → FLOOR_MAX over this span
 const FAILSAFE_MARGIN_MS = 6000; // fail-safe = minDuration + margin — can never preempt the data wait
 
 /**
@@ -102,7 +102,7 @@ const FAILSAFE_MARGIN_MS = 6000; // fail-safe = minDuration + margin — can nev
  * is fully self-contained.
  */
 export function HomeSplashScreen({
-  minDuration = 3500,
+  minDuration = 2000,
   statuses = DEFAULT_STATUSES,
   showOncePerSession = true,
   children,
@@ -213,7 +213,10 @@ export function HomeSplashScreen({
           ((now - floorStart) / FLOOR_RAMP_MS) * (FLOOR_MAX - START_PCT)
       );
       const combined = Math.max(floor, realTarget);
-      setPercent(combined >= 100 ? 100 : combined);
+      const rounded = Math.round(combined);
+      // Only commit state when the displayed integer changes — committing
+      // every frame re-rendered the whole overlay at 60fps (real TBT cost).
+      setPercent((prev) => (prev === rounded ? prev : rounded));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);

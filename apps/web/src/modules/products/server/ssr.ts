@@ -7,6 +7,7 @@
 
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import type {
   ComponentVariantRule,
@@ -499,7 +500,7 @@ export const getNoteworthyProducts = cache(async function getNoteworthyProducts(
  * Returns up to `limit` products, excluding the product itself.
  * Cached with React.cache() + Redis (300s TTL).
  */
-export const getRelatedProducts = cache(async function getRelatedProducts(
+const getRelatedProductsUncached = cache(async function getRelatedProductsUncached(
   brand: string | null,
   excludeSlug: string,
   limit = 8
@@ -534,6 +535,14 @@ export const getRelatedProducts = cache(async function getRelatedProducts(
     return [];
   }
 });
+
+/** ISR-safe wrapper (see getProductDetail note). */
+export const getRelatedProducts = unstable_cache(
+  (brand: string | null, excludeSlug: string, limit = 8) =>
+    getRelatedProductsUncached(brand, excludeSlug, limit),
+  ["related-products"],
+  { revalidate: 300, tags: ["products"] }
+);
 
 /**
  * Unified QuickPick data loader.
@@ -992,8 +1001,8 @@ export const getNewestProducts = cache(async function getNewestProducts(
  * Queries order_items grouped by co-occurrence in the same order.
  * Cached with React.cache() + Redis (300s TTL).
  */
-export const getFrequentlyBoughtTogether = cache(
-  async function getFrequentlyBoughtTogether(
+const getFrequentlyBoughtTogetherUncached = cache(
+  async function getFrequentlyBoughtTogetherUncached(
     productId: string,
     limit = 6
   ): Promise<ShopProduct[]> {
@@ -1074,12 +1083,22 @@ export const getFrequentlyBoughtTogether = cache(
   }
 );
 
+/** ISR-safe wrapper (see getProductDetail note). */
+export const getFrequentlyBoughtTogether = unstable_cache(
+  (productId: string, limit = 6) =>
+    getFrequentlyBoughtTogetherUncached(productId, limit),
+  ["frequently-bought-together"],
+  { revalidate: 300, tags: ["products"] }
+);
+
 /**
  * Get the number of times a product has been purchased (delivered orders).
  * Cached with React.cache() + Redis (300s TTL).
  */
-export const getProductPurchaseCount = cache(
-  async function getProductPurchaseCount(productId: string): Promise<number> {
+const getProductPurchaseCountUncached = cache(
+  async function getProductPurchaseCountUncached(
+    productId: string
+  ): Promise<number> {
     try {
       const cached = await getCache<number>(
         `${CACHE_VERSION}:purchase-count:${productId}`
@@ -1109,6 +1128,13 @@ export const getProductPurchaseCount = cache(
       return 0;
     }
   }
+);
+
+/** ISR-safe wrapper (see getProductDetail note). */
+export const getProductPurchaseCount = unstable_cache(
+  (productId: string) => getProductPurchaseCountUncached(productId),
+  ["purchase-count"],
+  { revalidate: 300, tags: ["products"] }
 );
 
 /**
@@ -1166,7 +1192,7 @@ export const getComponentRules = cache(async function getComponentRules(
  *
  * Returns { product, componentGroups } ready for ProductView.
  */
-export const getProductDetail = cache(async function getProductDetail(
+const getProductDetailUncached = cache(async function getProductDetailUncached(
   slug: string
 ): Promise<{
   product: ProductDetail;
@@ -1229,11 +1255,23 @@ export const getProductDetail = cache(async function getProductDetail(
 });
 
 /**
+ * Product-detail bundle for the ISR product page. Next's Data Cache keeps the
+ * result (whose inner loaders read Redis) out of Next's uncached-fetch
+ * tracking, so ISR background revalidation can no longer trip
+ * "Page changed from static to dynamic at runtime" (no-store Upstash fetch).
+ */
+export const getProductDetail = unstable_cache(
+  (slug: string) => getProductDetailUncached(slug),
+  ["product-detail"],
+  { revalidate: 300, tags: ["products"] }
+);
+
+/**
  * Fetch a single product by slug for the product detail page.
  * Wrapped with React.cache() to deduplicate in-flight requests within
  * the same render pass (e.g. generateMetadata + page body).
  */
-export const getProductBySlug = cache(async function getProductBySlug(
+const getProductBySlugUncached = cache(async function getProductBySlugUncached(
   slug: string
 ): Promise<ProductDetail | null> {
   try {
@@ -1433,3 +1471,14 @@ export const getProductBySlug = cache(async function getProductBySlug(
     return null;
   }
 });
+
+/**
+ * ISR-safe wrapper (same rationale as getProductDetail): the inner Redis
+ * get/set is hidden behind Next's Data Cache so the product page's
+ * generateMetadata and body render stay statically cacheable.
+ */
+export const getProductBySlug = unstable_cache(
+  (slug: string) => getProductBySlugUncached(slug),
+  ["product-by-slug"],
+  { revalidate: 300, tags: ["products"] }
+);

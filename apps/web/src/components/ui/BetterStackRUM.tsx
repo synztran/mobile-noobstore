@@ -8,6 +8,11 @@ const RUM_TOKEN = "6apxZqfkWTEP9SvzBcig6TEB";
  * Better Stack Real User Monitoring (RUM).
  * Tracks page loads, web vitals, JS errors, and slow/breaking requests
  * from real browser sessions. Token is public by design (like a GA id).
+ *
+ * Loads with `lazyOnload` — the RUM bundle is ~360KB and burned ~1.6s of
+ * main-thread CPU during page load when `afterInteractive` (worst offender
+ * in the Lighthouse bootup-time table). Idle-time loading keeps telemetry
+ * intact without taxing LCP/TBT.
  */
 export function BetterStackRUM() {
   const enabled = process.env.NEXT_PUBLIC_BETTERSTACK_RUM === "true";
@@ -15,7 +20,7 @@ export function BetterStackRUM() {
   if (!enabled) return null;
 
   return (
-    <Script id="betterstack-rum" strategy="afterInteractive">
+    <Script id="betterstack-rum" strategy="lazyOnload">
       {`
         (function(b,e,t,r){
           b[t]=b[t]||function(...args){(b[t].q=b[t].q||[]).push(args)};
