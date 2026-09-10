@@ -31,8 +31,18 @@ function EmptyProductState({ search }: { search?: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
-        <svg className="h-8 w-8 text-outline-variant" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        <svg
+          className="h-8 w-8 text-outline-variant"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+          />
         </svg>
       </div>
       <p className="text-sm font-semibold text-on-surface-variant">
@@ -64,10 +74,7 @@ function ProductGrid({ products }: { products: ShopProduct[] }) {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
           >
-            <ProductCard
-              product={product}
-              imagePriority={index < 2}
-            />
+            <ProductCard product={product} imagePriority={index < 2} />
           </motion.div>
         ))}
       </AnimatePresence>
@@ -84,6 +91,7 @@ function InfiniteScrollSentinel({
   isFetchingNextPage: boolean;
   sentinelRef: (node: HTMLDivElement | null) => void;
 }) {
+  if (!hasNextPage) return null;
   return (
     <div ref={sentinelRef} className="flex justify-center py-6">
       {isFetchingNextPage ? (

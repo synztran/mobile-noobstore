@@ -263,7 +263,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
                 {p.name}
               </p>
               <p className="mt-1 text-xs font-bold text-primary">
-                {formatVND(p.min_price)}
+                {formatVND(p.from_price ?? p.min_price)}
               </p>
             </div>
             <Icon
@@ -303,21 +303,23 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
               {drawer.activeProduct.name}
             </p>
             <p className="mt-0.5 font-bold text-primary">
-              {drawer.activeProduct.min_price ? (
+              {drawer.activeProduct.from_price ? (
                 <>
                   <span className="text-xs font-black text-slate-600">
                     Giá từ
                   </span>
                   &nbsp;
                   {formatVND(
-                    drawer.activeProduct.min_price ||
+                    drawer.activeProduct.from_price ||
+                      drawer.activeProduct.min_price ||
                       drawer.activeProduct.base_price
                   )}
                 </>
               ) : (
                 <>
                   {formatVND(
-                    drawer.activeProduct.min_price ||
+                    drawer.activeProduct.from_price ||
+                      drawer.activeProduct.min_price ||
                       drawer.activeProduct.base_price
                   )}
                 </>

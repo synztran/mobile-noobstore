@@ -46,6 +46,8 @@ export interface ProductListItem {
   product_type: ProductType;
   variants: ProductVariant[];
   min_price: number;
+  /** base_price + cheapest variant of every REQUIRED component (kits). */
+  from_price: number;
   is_used: boolean;
   is_pre_order: boolean;
   tags: ProductTag[];
@@ -105,6 +107,10 @@ type ComponentChildRow = {
 
 export type KitSupplement = {
   childVariantsByProductId: Map<string, VariantRow[]>;
+  /** Per kit: sum of the cheapest variant price of every required component
+   *  (`product_components.is_required = true`). Optional components excluded.
+   *  Missing key = not a kit / no required component links. */
+  requiredMinPriceByProductId: Map<string, number>;
   kitStockById: Map<string, number>;
 };
 
@@ -209,13 +215,35 @@ export async function fetchKitSupplements(
   kitIds: string[]
 ): Promise<KitSupplement> {
   const childVariantsByProductId = new Map<string, VariantRow[]>();
+  const requiredMinPriceByProductId = new Map<string, number>();
   const kitStockById = new Map<string, number>();
 
-  if (kitIds.length === 0) return { childVariantsByProductId, kitStockById };
+  if (kitIds.length === 0)
+    return {
+      childVariantsByProductId,
+      requiredMinPriceByProductId,
+      kitStockById,
+    };
 
   const supabase = getPublicClient();
 
-  // 1. Fetch child component products (linked via parent_product_id) + their variants
+  // 1. Component links — decide which children are required for pricing/stock
+  const { data: links } = await supabase
+    .from("product_components")
+    .select("parent_product_id, component_product_id, is_required")
+    .in("parent_product_id", kitIds);
+
+  const requiredChildIdsByParent = new Map<string, Set<string>>();
+  for (const link of links ?? []) {
+    if (!link.is_required || !link.component_product_id || !link.parent_product_id)
+      continue;
+    const list =
+      requiredChildIdsByParent.get(link.parent_product_id) ?? new Set();
+    list.add(link.component_product_id);
+    requiredChildIdsByParent.set(link.parent_product_id, list);
+  }
+
+  // 2. Fetch child component products (linked via parent_product_id) + their variants
   const { data: children } = await supabase
     .from("products")
     .select(`id, parent_product_id, product_variants(${VARIANT_COLUMNS})`)
@@ -223,28 +251,37 @@ export async function fetchKitSupplements(
     .eq("product_type", "component")
     .in("parent_product_id", kitIds);
 
+  const childrenById = new Map<string, ComponentChildRow>();
   if (children) {
     for (const row of children as unknown as ComponentChildRow[]) {
-      if (row.product_variants && row.parent_product_id) {
-        const existing =
-          childVariantsByProductId.get(row.parent_product_id) ?? [];
-        existing.push(...row.product_variants);
-        childVariantsByProductId.set(row.parent_product_id, existing);
-      }
+      if (!row.parent_product_id) continue;
+      const existing =
+        childVariantsByProductId.get(row.parent_product_id) ?? [];
+      if (row.product_variants) existing.push(...row.product_variants);
+      childVariantsByProductId.set(row.parent_product_id, existing);
+      childrenById.set(row.id, row);
     }
   }
 
-  // 2. Fetch required component links for stock computation
-  const { data: links } = await supabase
-    .from("product_components")
-    .select("parent_product_id, component_product_id, is_required")
-    .in("parent_product_id", kitIds)
-    .eq("is_required", true);
+  // 3. "Giá chỉ từ" for kits = sum of each required component's cheapest variant
+  for (const [parentId, requiredChildIds] of requiredChildIdsByParent) {
+    let sum = 0;
+    for (const childId of requiredChildIds) {
+      const childRow = childrenById.get(childId);
+      const prices = (childRow?.product_variants ?? [])
+        .map((v) => Number(v.price_adjustment ?? 0))
+        .filter((p) => p > 0);
+      if (prices.length > 0) sum += Math.min(...prices);
+    }
+    requiredMinPriceByProductId.set(parentId, sum);
+  }
 
-  if (links && links.length > 0) {
+  // 4. Required component links for kit stock computation
+  const requiredLinks = (links ?? []).filter((l) => l.is_required);
+  if (requiredLinks.length > 0) {
     const componentIds = Array.from(
       new Set(
-        links
+        requiredLinks
           .map((l) => l.component_product_id)
           .filter((id): id is string => !!id)
       )
@@ -268,7 +305,7 @@ export async function fetchKitSupplements(
     }
 
     const childrenByParent = new Map<string, string[]>();
-    for (const link of links) {
+    for (const link of requiredLinks) {
       if (!link.component_product_id || !link.parent_product_id) continue;
       const list = childrenByParent.get(link.parent_product_id) ?? [];
       list.push(link.component_product_id);
@@ -281,7 +318,11 @@ export async function fetchKitSupplements(
     }
   }
 
-  return { childVariantsByProductId, kitStockById };
+  return {
+    childVariantsByProductId,
+    requiredMinPriceByProductId,
+    kitStockById,
+  };
 }
 
 export async function fetchGiftSupplement(
@@ -343,7 +384,16 @@ function shapeRow(
     variants.push(parseVariant(cv, basePrice));
   }
 
-  // 3. Pricing
+  // 3. Pricing — `min_price` is the cheapest single variant across everything;
+  //    `from_price` is what a kit starts from = base + cheapest variant of each
+  //    REQUIRED component (optional components excluded).
+  const requiredMinPrice =
+    kitSupplements.requiredMinPriceByProductId.get(row.id);
+  const computedKitFromPrice =
+    row.product_type === "kit" && requiredMinPrice !== undefined
+      ? basePrice + requiredMinPrice
+      : undefined;
+
   const computedMinPrice =
     variants.length > 0
       ? Math.min(...variants?.filter(v => v.effective_price > 0)?.map((v) => v.effective_price))
@@ -351,6 +401,13 @@ function shapeRow(
 
   const minPrice =
     computedMinPrice === 0 && basePrice > 0 ? basePrice : computedMinPrice;
+
+  const fromPrice =
+    computedKitFromPrice !== undefined && computedKitFromPrice > 0
+      ? computedKitFromPrice
+      : minPrice > 0
+        ? minPrice
+        : basePrice;
 
   if (computedMinPrice === 0 && basePrice > 0) {
     console.warn(
@@ -408,6 +465,7 @@ function shapeRow(
     product_type: productType,
     variants: slimVariants,
     min_price: minPrice,
+    from_price: fromPrice,
     is_used: row.is_used ?? false,
     is_pre_order,
     tags: [],

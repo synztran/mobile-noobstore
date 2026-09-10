@@ -10,7 +10,7 @@ export function ProductRail({
   icon,
   trailing,
   products,
-  cardWidth = "w-[140px]",
+  cardWidth = "w-[180px]",
   classNames,
 }: {
   title: string;
@@ -28,9 +28,9 @@ export function ProductRail({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className={`pb-8 ${classNames ?? ""}`}
+      className={`py-8 ${classNames ?? ""}`}
     >
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2 text-lg font-black uppercase tracking-tight">
           {icon}
           {title}

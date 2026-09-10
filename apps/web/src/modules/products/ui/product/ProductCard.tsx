@@ -2,6 +2,7 @@
 
 import type { ShopProduct } from "@/modules/products/types";
 import Icon from "@/components/ui/Icon";
+import { ShoppingCart } from "lucide-react";
 import WishlistButton from "@/modules/user/ui/wishlist/WishlistButton";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
@@ -155,7 +156,7 @@ export const ProductCard = memo(function ProductCard({
           {/* ── Image box ─────────────────────────────────────────────── */}
           <div
             ref={imageRef}
-            className="relative mb-1 aspect-[1/1] overflow-hidden rounded-xl bg-surface-container"
+            className="relative mb-2 aspect-[1/1] overflow-hidden rounded-xl bg-surface-container"
             style={{
               boxShadow: "0 20px 40px -15px rgba(155,63,28,0.08)",
             }}
@@ -214,14 +215,16 @@ export const ProductCard = memo(function ProductCard({
           <ProductCardDetails product={product} isBundle={isBundle} />
         </Link>
 
-        <div className="mt-auto flex flex-col gap-0.5 overflow-hidden">
+        <div className={`mt-auto flex flex-col gap-0.5 overflow-hidden`}>
           <ProductCardPricing product={product} />
-          <ProductSwatches
-            variants={product.variants}
-            activeVariantId={activeVariantId}
-            onSelect={setActiveVariantId}
-            productThumbnail={product.thumbnail}
-          />
+          {!isBundle ? (
+            <ProductSwatches
+              variants={product.variants}
+              activeVariantId={activeVariantId}
+              onSelect={setActiveVariantId}
+              productThumbnail={product.thumbnail}
+            />
+          ) : null}
           <StockIndicator stockQuantity={product.stock_quantity} />
           <div className="mt-auto flex items-center gap-1">
             <WishlistButton
@@ -241,9 +244,9 @@ export const ProductCard = memo(function ProductCard({
               {submitting ? (
                 <span className="loading loading-spinner loading-xs" />
               ) : (
-                <Icon name="add_shopping_cart" className="text-[16px]" />
+                <ShoppingCart size={16} />
               )}
-              {submitting ? "Đang thêm" : "Mua ngay"}
+              {!isBundle && (submitting ? "Đang thêm" : "Mua ngay")}
             </button>
           </div>
         </div>

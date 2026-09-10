@@ -111,6 +111,12 @@ export interface ShopProduct {
   product_type: "standard" | "kit" | "component" | "gift";
   variants: ShopVariant[];
   min_price: number;
+  /**
+   * Price a kit "starts from" = base_price + cheapest variant of every REQUIRED
+   * component (optional components excluded). Falls back to min_price for
+   * non-kit products. Used for the "giá chỉ từ" display on product cards.
+   */
+  from_price?: number;
   is_used: boolean;
   is_pre_order: boolean;
   tags: ITag[];

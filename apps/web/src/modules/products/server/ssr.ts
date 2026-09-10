@@ -157,6 +157,7 @@ async function prepareSupplements(
       ? fetchKitSupplements(kitIds)
       : Promise.resolve({
           childVariantsByProductId: new Map<string, VariantRow[]>(),
+          requiredMinPriceByProductId: new Map<string, number>(),
           kitStockById: new Map<string, number>(),
         } as KitSupplement),
     fetchGiftSupplement(productIds),
@@ -206,6 +207,15 @@ function shapeRow(
     }
   }
 
+  // `from_price` = price the kit starts from (base + cheapest variant of each
+  // REQUIRED component, optional components excluded).
+  const requiredMinPrice =
+    kitSupplements.requiredMinPriceByProductId.get(p.id);
+  const computedKitFromPrice =
+    p.product_type === "kit" && requiredMinPrice !== undefined
+      ? Number(p.base_price) + requiredMinPrice
+      : undefined;
+
   const computedMinPrice =
     variants.length > 0
       ? Math.min(
@@ -214,6 +224,13 @@ function shapeRow(
             .map((v) => v.effective_price)
         )
       : Number(p.base_price);
+
+  const fromPrice =
+    computedKitFromPrice !== undefined && computedKitFromPrice > 0
+      ? computedKitFromPrice
+      : computedMinPrice > 0
+        ? computedMinPrice
+        : Number(p.base_price);
 
   const minPrice =
     computedMinPrice === Infinity ||
@@ -291,6 +308,7 @@ function shapeRow(
     product_type: productType,
     variants,
     min_price: minPrice,
+    from_price: fromPrice,
     is_used: p.is_used ?? false,
     tags,
     is_pre_order,
@@ -1311,6 +1329,7 @@ export const getProductBySlug = cache(async function getProductBySlug(
     if (compData?.data) {
       const emptySupplements: KitSupplement = {
         childVariantsByProductId: new Map(),
+        requiredMinPriceByProductId: new Map(),
         kitStockById: new Map(),
       };
       componentProducts = (compData.data as unknown as RawListRow[]).map(

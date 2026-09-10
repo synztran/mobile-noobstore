@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState } from "react";
 import type { ConfiguratorGroup, ShopVariant } from "@/modules/products/types";
 import Image from "@/components/ui/AdaptiveImage";
 import Icon from "@/components/ui/Icon";
@@ -85,6 +86,37 @@ export function SelectedConditionSummary({
 
   const visibleRows = rows.filter((r) => r.text && r.label);
 
+  // Separators must hide at the end of every wrapped line; CSS has no
+  // "last item in a flex-wrap line" selector, so detect it via offsetTop.
+  const rowsSignature = visibleRows
+    .map((r) => `${r.group}:${r.label}`)
+    .join("|");
+  const listRef = useRef<HTMLUListElement>(null);
+  const [lineEnds, setLineEnds] = useState<ReadonlySet<number> | null>(null);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+
+    const compute = () => {
+      const items = Array.from(list.children) as HTMLLIElement[];
+      if (items.length === 0) return;
+      const ends = new Set<number>();
+      ends.add(items.length - 1);
+      for (let i = 1; i < items.length; i++) {
+        if (items[i].offsetTop !== items[i - 1].offsetTop) {
+          ends.add(i - 1);
+        }
+      }
+      setLineEnds(ends);
+    };
+
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(list);
+    return () => ro.disconnect();
+  }, [rowsSignature]);
+
   // Only render the section once something selected carries a "Tình trạng"
   // value — no empty-state placeholder.
   if (visibleRows.length === 0) return null;
@@ -94,56 +126,62 @@ export function SelectedConditionSummary({
       <div className="mb-3 flex items-center gap-1.5">
         <Icon name="check_circle" className="text-sm text-primary" />
         <h3 className="text-xs font-black uppercase leading-none tracking-wider text-on-surface">
-          Tình trạng linh kiện
+          Tình trạng
         </h3>
         <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[10px] font-black text-primary">
           {visibleRows.length}
         </span>
       </div>
-      <ul className="space-y-2">
-        {visibleRows.map((r) => {
-          const thumb = r.thumbnail;
-          return (
-            <li
-              key={`${r.group}:${r.label}`}
-              className="flex items-center gap-2.5"
-            >
-              {thumb ? (
-                <button
-                  type="button"
-                  aria-label={`Xem ảnh lớn: ${r.label}`}
-                  onClick={() => onShowImage?.(thumb)}
-                  className="group relative box-border h-12 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-surface-container-high bg-surface-container-high transition-transform active:scale-95"
-                >
-                  <Image
-                    src={thumb}
-                    alt={r.label}
-                    width={64}
-                    height={48}
-                    className="h-full w-full object-cover"
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                    <Icon
-                      name="visibility"
-                      className="text-base text-white"
+      <ul ref={listRef} className="flex flex-wrap gap-2">
+        {visibleRows
+          .sort((a, b) => (a?.text?.length || 0) - (b?.text?.length || 0))
+          .map((r, i) => {
+            const thumb = r.thumbnail;
+            const atLineEnd = lineEnds
+              ? lineEnds.has(i)
+              : i === visibleRows.length - 1;
+            return (
+              <li
+                key={`${r.group}:${r.label}`}
+                className="flex max-w-max items-center gap-2"
+              >
+                {thumb ? (
+                  <button
+                    type="button"
+                    aria-label={`Xem ảnh lớn: ${r.label}`}
+                    onClick={() => onShowImage?.(thumb)}
+                    className="group relative box-border h-12 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-surface-container-high bg-surface-container-high transition-transform active:scale-95"
+                  >
+                    <Image
+                      src={thumb}
+                      alt={r.label}
+                      width={64}
+                      height={48}
+                      className="h-full w-full object-cover"
                     />
-                  </span>
-                </button>
-              ) : null}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-black leading-tight text-on-surface">
-                  {r.group && (countByLabel.get(r.label) ?? 0) > 1
-                    ? `${r.group} · `
-                    : ""}
-                  {r.label}
-                </p>
-                <p className="text-[10px] font-semibold text-on-surface-variant">
-                  {r.text}
-                </p>
-              </div>
-            </li>
-          );
-        })}
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <Icon
+                        name="visibility"
+                        className="text-base text-white"
+                      />
+                    </span>
+                  </button>
+                ) : null}
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className="truncate text-sm font-semibold leading-tight tracking-wide text-on-surface">
+                    {r.group && (countByLabel.get(r.label) ?? 0) > 1
+                      ? `${r.group} · `
+                      : ""}
+                    {r.label}
+                  </p>
+                  <p className="text-xs text-on-surface-variant">{r.text}</p>
+                </div>
+                {!atLineEnd ? (
+                  <span className="h-1/2 w-[1px] bg-slate-300" />
+                ) : null}
+              </li>
+            );
+          })}
       </ul>
     </section>
   );
