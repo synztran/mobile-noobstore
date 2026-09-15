@@ -333,13 +333,18 @@ export function SplashScreen({
   //    cache event we re-credit the settled groups and count the queries
   //    still in-flight; the initial snapshot picks up anything that already
   //    resolved before we subscribed.
+  //    Only queries belonging to the boot groups gate completion — chrome
+  //    queries (notifications, profile, …) can take seconds and would
+  //    otherwise pin the bar at the 78% floor long after boot data landed.
   useEffect(() => {
     if (!active) return;
     const cache = queryClient.getQueryCache();
     const creditSettled = () => {
       const queries = cache.findAll();
       const inFlight = queries.filter(
-        (q) => q.state.fetchStatus === "fetching"
+        (q) =>
+          q.state.fetchStatus === "fetching" &&
+          bootGroups.some((g) => g.matches(q.queryKey))
       ).length;
       setFetchingCount(inFlight);
       bumpReal(creditFor(cache, bootGroups));
@@ -352,8 +357,8 @@ export function SplashScreen({
     return cache.subscribe(scheduleCredit);
   }, [active, queryClient, bumpReal, bootGroups]);
 
-  // 3) Finish at 100% only when the boot groups settle, NO query is still
-  //    fetching, AND the floor elapsed. A short settle window keeps the
+  // 3) Finish at 100% only when the boot groups settle, no boot query is
+  //    still fetching, AND the floor elapsed. A short settle window keeps the
   //    splash from hiding the instant a brand-new query hasn't started yet —
   //    any new fetch within that window postpones completion again.
   useEffect(() => {

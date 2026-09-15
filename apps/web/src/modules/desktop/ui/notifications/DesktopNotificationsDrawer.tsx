@@ -74,7 +74,7 @@ export function DesktopNotificationsDrawer({
         aria-modal="true"
         aria-label="Thông báo"
         className={`fixed right-0 top-16 z-[40] flex max-h-[min(70dvh,36rem)] w-full max-w-lg flex-col overflow-hidden rounded-b-2xl border-b border-l border-on-surface/10 bg-surface shadow-2xl transition-transform duration-300 ease-out ${
-          open ? "translate-y-0" : "-translate-y-[120%]"
+          open ? "translate-y-0" : "-translate-y-[calc(100%+4rem)]"
         }`}
       >
         {/* Header */}
