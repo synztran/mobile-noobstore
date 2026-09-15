@@ -47,7 +47,7 @@ const ImageViewer = dynamic(
 import { PreOrderBanner } from "@/modules/products/ui/product/PreOrderBanner";
 import { ProductInfoTabs } from "@/modules/products/ui/product/ProductInfoTabs";
 import { ShareButton } from "@/modules/products/ui/product/ShareButton";
-import { getKeysetPreviewData } from "@/modules/keyset-preview/constants/mock-colorways";
+// import { getKeysetPreviewData } from "@/modules/keyset-preview/constants/mock-colorways";
 
 export function ProductView({
   product,
@@ -205,10 +205,10 @@ export function ProductView({
   // Mock-data trial: only products whose slug has a mock colorway show the
   // keyset preview section. The real-data phase swaps the resolver behind
   // this call — the UI wiring stays.
-  const keysetPreviewData = useMemo(
-    () => getKeysetPreviewData(product.slug),
-    [product.slug]
-  );
+  // const keysetPreviewData = useMemo(
+  //   () => getKeysetPreviewData(product.slug),
+  //   [product.slug]
+  // );
 
   useEffect(() => {
     setActiveImageIndex(0);
