@@ -37,13 +37,13 @@ const ImageViewer = dynamic(
 // Keyset preview (mock-data trial): canvas renderer, loaded on demand so it
 // stays out of the detail page's initial JS. Only rendered for products with
 // a colorway bound to their slug.
-const KeysetPreviewSection = dynamic(
-  () =>
-    import("@/modules/keyset-preview/ui/KeysetPreviewSection").then((m) => ({
-      default: m.KeysetPreviewSection,
-    })),
-  { ssr: false }
-);
+// const KeysetPreviewSection = dynamic(
+//   () =>
+//     import("@/modules/keyset-preview/ui/KeysetPreviewSection").then((m) => ({
+//       default: m.KeysetPreviewSection,
+//     })),
+//   { ssr: false }
+// );
 import { PreOrderBanner } from "@/modules/products/ui/product/PreOrderBanner";
 import { ProductInfoTabs } from "@/modules/products/ui/product/ProductInfoTabs";
 import { ShareButton } from "@/modules/products/ui/product/ShareButton";
@@ -329,11 +329,11 @@ export function ProductView({
         )}
 
         {/* ── Keyset preview (slug-gated, mock-data trial) ── */}
-        {keysetPreviewData && (
+        {/* {keysetPreviewData && (
           <section className="px-4">
             <KeysetPreviewSection colorway={keysetPreviewData} />
           </section>
-        )}
+        )} */}
 
         {/* ── Low stock urgency banner ── */}
         {isLowStock && effectiveStockQuantity > 0 && (
