@@ -97,6 +97,7 @@ describe("resolveDeviceRouting", () => {
       hostname: "www.noobstore.xyz",
       userAgent: PHONE_UA,
       overrideCookie: undefined,
+      mobileSubdomainEnabled: true,
     });
     expect(r.action).toEqual({
       kind: "redirect",
@@ -110,6 +111,7 @@ describe("resolveDeviceRouting", () => {
       hostname: "m.noobstore.xyz",
       userAgent: DESKTOP_UA,
       overrideCookie: undefined,
+      mobileSubdomainEnabled: true,
     });
     expect(r.action).toEqual({
       kind: "redirect",
@@ -132,6 +134,7 @@ describe("resolveDeviceRouting", () => {
       hostname: "noobstore.xyz",
       userAgent: DESKTOP_UA,
       overrideCookie: undefined,
+      mobileSubdomainEnabled: true,
     });
     expect(r.action).toEqual({
       kind: "redirect",
@@ -146,6 +149,7 @@ describe("resolveDeviceRouting", () => {
       hostname: "m.noobstore.xyz",
       userAgent: PHONE_UA,
       overrideCookie: "desktop",
+      mobileSubdomainEnabled: true,
     });
     expect(r.action).toEqual({
       kind: "redirect",
@@ -170,6 +174,7 @@ describe("resolveDeviceRouting", () => {
       hostname: "www.noobstore.xyz",
       userAgent: DESKTOP_UA,
       overrideCookie: "mobile",
+      mobileSubdomainEnabled: true,
     });
     expect(r.action).toEqual({
       kind: "redirect",
@@ -184,6 +189,7 @@ describe("resolveDeviceRouting", () => {
       hostname: "www.noobstore.xyz",
       userAgent: PHONE_UA,
       overrideCookie: "free-text-garbage",
+      mobileSubdomainEnabled: true,
     });
     expect(r.action.kind).toBe("redirect");
     expect(r.overrideApplied).toBe(false);
@@ -207,6 +213,46 @@ describe("resolveDeviceRouting", () => {
       overrideCookie: undefined,
     });
     expect(r.action).toEqual({ kind: "serve", deviceClass: "desktop" });
+  });
+});
+
+// ─── disabled routing (m. subdomain not live yet) ───────────────────────────
+
+describe("resolveDeviceRouting — mobileSubdomainEnabled=false", () => {
+  const PHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Mobile/15E148 Safari/604.1";
+  const DESKTOP_UA =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36";
+
+  it("never redirects a phone on a managed host", () => {
+    for (const host of ["www.noobstore.xyz", "noobstore.xyz", "m.noobstore.xyz"]) {
+      const r = resolveDeviceRouting({
+        hostname: host,
+        userAgent: PHONE_UA,
+        overrideCookie: undefined,
+      });
+      expect(r.action).toEqual({ kind: "serve", deviceClass: "mobile" });
+    }
+  });
+
+  it("never redirects a desktop browser on a managed host", () => {
+    for (const host of ["www.noobstore.xyz", "noobstore.xyz", "m.noobstore.xyz"]) {
+      const r = resolveDeviceRouting({
+        hostname: host,
+        userAgent: DESKTOP_UA,
+        overrideCookie: undefined,
+      });
+      expect(r.action).toEqual({ kind: "serve", deviceClass: "desktop" });
+    }
+  });
+
+  it("still honors the override cookie for classification but never redirects", () => {
+    const r = resolveDeviceRouting({
+      hostname: "www.noobstore.xyz",
+      userAgent: PHONE_UA,
+      overrideCookie: "desktop",
+    });
+    expect(r.action).toEqual({ kind: "serve", deviceClass: "desktop" });
+    expect(r.overrideApplied).toBe(true);
   });
 });
 

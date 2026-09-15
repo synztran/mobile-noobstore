@@ -108,15 +108,22 @@ export function resolveDeviceRouting(input: {
   hostname: string;
   userAgent: string | null | undefined;
   overrideCookie: string | undefined;
+  /**
+   * Whether the `m.` subdomain split is live. Defaults to off until the DNS
+   * record exists — keeps everyone on the current host (no redirects) while
+   * still classifying devices and forwarding `x-device-class`.
+   */
+  mobileSubdomainEnabled?: boolean;
 }): DeviceResolution {
-  const { hostname, userAgent, overrideCookie } = input;
+  const { hostname, userAgent, overrideCookie, mobileSubdomainEnabled = false } =
+    input;
   const host = hostname.toLowerCase();
 
   const override = normalizeOverride(overrideCookie);
   const deviceClass: DeviceClass = override ?? classifyDevice(userAgent);
   const overrideApplied = override !== null;
 
-  if (isManagedHost(host) && host !== targetHostFor(deviceClass)) {
+  if (mobileSubdomainEnabled && isManagedHost(host) && host !== targetHostFor(deviceClass)) {
     return {
       action: {
         kind: "redirect",

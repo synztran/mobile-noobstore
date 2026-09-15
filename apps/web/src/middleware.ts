@@ -111,6 +111,10 @@ export async function middleware(request: NextRequest) {
       hostname,
       userAgent: request.headers.get("user-agent"),
       overrideCookie: request.cookies.get(DEVICE_OVERRIDE_COOKIE)?.value,
+      // Off until m.noobstore.xyz DNS is live — everyone keeps serving on the
+      // current host, only the x-device-class header routing between shells
+      // stays active.
+      mobileSubdomainEnabled: process.env.MOBILE_SUBDOMAIN_ENABLED === "true",
     });
     const deviceClass = resolution.action.deviceClass;
 
