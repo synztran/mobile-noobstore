@@ -2,7 +2,7 @@
 
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
 import ShippingFeeLabel from "@/components/ui/ShippingFeeLabel";
-import Icon from "@/components/ui/Icon";
+import { CircleAlert, Copy } from "lucide-react";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
 import { useOrderStatus, usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
@@ -262,7 +262,7 @@ export default function CheckingPage() {
                   onClick={() => copyToClipboard(value, label)}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container transition-transform hover:bg-surface-container-high active:scale-90"
                 >
-                  <Icon name="content_copy" className="text-xl text-primary" />
+                  <Copy className="h-5 w-5 text-primary" />
                 </button>
               )}
             </div>
@@ -273,7 +273,7 @@ export default function CheckingPage() {
       {/* Notice */}
       <div className="mb-8 flex gap-2 rounded-2xl border border-primary-fixed/30 bg-primary-fixed/20 p-4">
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary-container text-white">
-          <Icon name="info" className="icon-filled text-sm text-white" />
+          <CircleAlert className="h-3.5 w-3.5 text-white" />
         </div>
         <p className="text-sm leading-relaxed text-on-primary-fixed-variant">
           <span className="font-bold">Lưu ý:</span> Vui lòng kiểm tra <br />

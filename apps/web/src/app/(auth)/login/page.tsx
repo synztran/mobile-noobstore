@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { CaptchaWidget, isCaptchaEnabled, type CaptchaWidgetHandle } from "@/components/ui/CaptchaWidget";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { safeRedirect } from "@/modules/user/redirect";
@@ -82,7 +82,7 @@ function LoginForm() {
       <form onSubmit={handleSignIn} className="w-full space-y-4">
         {/* Email */}
         <div className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest px-5 py-4">
-          <Icon name="mail" className="text-xl text-outline" />
+          <Mail className="h-5 w-5 text-outline" />
           <input
             type="email"
             placeholder="Địa chỉ Email"
@@ -96,7 +96,7 @@ function LoginForm() {
 
         {/* Password */}
         <div className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest px-5 py-4">
-          <Icon name="lock" className="text-xl text-outline" />
+          <Lock className="h-5 w-5 text-outline" />
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Mật khẩu"
@@ -112,10 +112,11 @@ function LoginForm() {
             onClick={() => setShowPassword(!showPassword)}
             className="text-outline transition-colors hover:text-on-surface"
           >
-            <Icon
-              name={showPassword ? "visibility" : "visibility_off"}
-              className="text-xl"
-            />
+            {showPassword ? (
+              <Eye className="h-5 w-5" />
+            ) : (
+              <EyeOff className="h-5 w-5" />
+            )}
           </button>
         </div>
 

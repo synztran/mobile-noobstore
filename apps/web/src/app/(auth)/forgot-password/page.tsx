@@ -1,8 +1,7 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
 import { CaptchaWidget, isCaptchaEnabled, type CaptchaWidgetHandle } from "@/components/ui/CaptchaWidget";
-import { RefreshCcwDot } from "lucide-react";
+import { Mail, RefreshCcwDot } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import Image from "@/components/ui/AdaptiveImage";
@@ -93,7 +92,7 @@ alt="NoobStore Logo"
 
 			<form onSubmit={handleSubmit} className="w-full space-y-4">
 				<div className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest px-5 py-4">
-					<Icon name="mail" className="text-xl text-outline" />
+					<Mail className="h-5 w-5 text-outline" />
 					<input
 						type="email"
 						placeholder="Địa chỉ Email"

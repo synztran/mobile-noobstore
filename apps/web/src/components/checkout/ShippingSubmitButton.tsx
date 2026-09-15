@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { ArrowRight } from "lucide-react";
 import clsx from "clsx";
 
 interface Props {
@@ -36,7 +36,7 @@ export function ShippingSubmitButton({
       ) : (
         <>
           Tiếp tục thanh toán
-          <Icon name="arrow_forward" className="text-lg" />
+          <ArrowRight className="h-5 w-5" />
         </>
       )}
     </button>

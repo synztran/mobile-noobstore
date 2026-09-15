@@ -2,7 +2,7 @@
 
 import type { AddressFormValues } from "@/modules/user/ui/AddressEditorDrawer";
 import AddressEditorDrawer from "@/modules/user/ui/AddressEditorDrawer";
-import Icon from "@/components/ui/Icon";
+import { ArrowLeft, Plus, SquarePen } from "lucide-react";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { useAuth } from "@/modules/user/client/AuthProvider";
@@ -334,7 +334,7 @@ function ProfileAddressesPage() {
                   onClick={() => openEditDrawer(address.id)}
                   className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container transition-transform active:scale-90"
                 >
-                  <Icon name="edit" className="text-sm text-on-surface" />
+                  <SquarePen className="h-3.5 w-3.5 text-on-surface" />
                 </button>
                 <button
                   type="button"
@@ -364,7 +364,7 @@ function ProfileAddressesPage() {
           href="/profile"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
         >
-          <Icon name="arrow_back" className="text-on-surface" />
+          <ArrowLeft className="h-4 w-4 text-on-surface" />
         </Link>
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-black tracking-tight text-on-surface">
@@ -379,7 +379,7 @@ function ProfileAddressesPage() {
           onClick={openCreateDrawer}
           className="primary-gradient flex h-9 w-9 items-center justify-center rounded-xl text-white transition-transform active:scale-90"
         >
-          <Icon name="add" className="text-white" />
+          <Plus className="h-4 w-4 text-white" />
         </button>
       </div>
 

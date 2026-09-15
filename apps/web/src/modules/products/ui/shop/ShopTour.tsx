@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { CircleHelp } from "lucide-react";
 import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -125,7 +125,7 @@ export function ShopTour() {
       aria-label={active ? "Đóng hướng dẫn" : "Hướng dẫn sử dụng"}
       className="flex items-center gap-1 rounded-full bg-surface-container px-3 py-2.5 text-xs font-bold text-on-surface transition-colors active:opacity-70"
     >
-      <Icon name="help" className="text-base" />
+      <CircleHelp className="h-4 w-4" />
       Hướng dẫn
     </button>
   );

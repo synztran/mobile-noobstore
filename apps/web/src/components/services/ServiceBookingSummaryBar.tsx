@@ -2,6 +2,7 @@
 
 import { formatVND } from "@/lib/currency";
 import { ChevronDown } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
 export interface BookingSummaryItem {
@@ -48,7 +49,7 @@ export function ServiceBookingSummaryBar({
   const doneDate =
     hasPickup && totalHandlingDays > 0
       ? new Date(
-          pickupDate!.getTime() + totalHandlingDays * 24 * 60 * 60 * 1000
+          pickupDate!.getTime() + totalHandlingDays * 24 * 60 * 60 * 1000,
         )
       : null;
 
@@ -59,8 +60,11 @@ export function ServiceBookingSummaryBar({
   };
 
   return (
-    <div
+    <motion.div
       id="tour-summary-bar"
+      initial={{ y: 80 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 260, damping: 28 }}
       className="fixed bottom-0 left-0 right-0 z-[60] space-y-2 border-t border-outline-variant/60 bg-surface/80 px-4 py-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl"
     >
       {isEmpty ? (
@@ -78,101 +82,94 @@ export function ServiceBookingSummaryBar({
             <p className="min-w-0 truncate text-sm text-on-surface-variant">
               <span className="font-bold text-on-surface">{selectedCount}</span>{" "}
               mục · {totalHandlingDays} ngày
-              {/* {doneDate ? (
-                <>
-                  {" · Xong ~"}
-                  <span className="font-bold text-on-surface">
-                    {formatDate(doneDate)}
-                  </span>
-                </>
-              ) : null} */}
             </p>
             <span className="flex shrink-0 items-center gap-2">
               <span className="text-base font-black text-primary">
                 {formatVND(totalPrice)}
               </span>
-              <span className="inline-flex items-center rounded-md bg-surface-container-high p-1 font-bold tracking-wider text-on-surface-variant transition-colors">
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform duration-300 ${
-                    expanded ? "-rotate-180" : ""
-                  }`}
-                />
-              </span>
+              <motion.span
+                animate={{ rotate: expanded ? 180 : 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                className="inline-flex items-center rounded-md bg-surface-container-high p-1 font-bold tracking-wider text-on-surface-variant"
+              >
+                <ChevronDown size={16} />
+              </motion.span>
             </span>
           </button>
 
           {/* Expandable breakdown */}
-          <div
-            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
-              expanded
-                ? "grid-rows-[1fr] opacity-100"
-                : "grid-rows-[0fr] opacity-0"
-            }`}
-          >
-            <div className="space-y-2 overflow-hidden">
-              <div className="flex max-h-40 flex-col gap-2 overflow-y-auto rounded-md border border-outline-variant/50 bg-surface-container-low p-2.5">
-                {summaryItems.length === 0 ? (
-                  <p className="text-xs text-on-surface-variant">
-                    Chưa có mục được chọn.
-                  </p>
-                ) : (
-                  summaryItems.map((item) => (
-                    <button
-                      key={item.serviceId}
-                      type="button"
-                      onClick={() => scrollToSection(item.sectionKey)}
-                      className="flex w-full items-start justify-between gap-2 rounded-xl text-left transition-colors hover:bg-surface-container active:bg-surface-container-high"
-                    >
-                      <div className="flex flex-col">
-                        <span className="min-w-0 truncate text-xs font-bold text-on-surface">
-                          {item.serviceName}
-                          {/* <span className="ml-1 font-normal text-on-surface-variant">
-                          x{item.count}
-                        </span> */}
-                        </span>
+          <AnimatePresence initial={false}>
+            {expanded ? (
+              <motion.div
+                key="breakdown"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-2 pt-1">
+                  <div className="flex max-h-40 flex-col gap-2 overflow-y-auto rounded-md border border-outline-variant/50 bg-surface-container-low p-2.5">
+                    {summaryItems.length === 0 ? (
+                      <p className="text-xs text-on-surface-variant">
+                        Chưa có mục được chọn.
+                      </p>
+                    ) : (
+                      summaryItems.map((item) => (
+                        <button
+                          key={item.serviceId}
+                          type="button"
+                          onClick={() => scrollToSection(item.sectionKey)}
+                          className="flex w-full items-start justify-between gap-2 rounded-xl text-left transition-colors hover:bg-surface-container active:bg-surface-container-high"
+                        >
+                          <div className="flex flex-col">
+                            <span className="min-w-0 truncate text-xs font-bold text-on-surface">
+                              {item.serviceName}
+                            </span>
+                            <span className="text-[10px] font-normal text-on-surface-variant">
+                              {item.handlingDays} ngày
+                            </span>
+                          </div>
+                          <span className="shrink-0 text-sm font-black text-primary">
+                            {formatVND(item.price)}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
 
-                        <span className="text-[10px] font-normal text-on-surface-variant">
-                          {item.handlingDays} ngày
-                        </span>
-                      </div>
-                      <span className="shrink-0 text-sm font-black text-primary">
-                        {formatVND(item.price)}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-
-              {hasPickup ? (
-                <div className="mb-2 text-center text-sm text-on-surface-variant">
-                  Lấy hàng&nbsp;
-                  <span className="font-bold text-on-surface">
-                    {formatDate(pickupDate!)}
-                  </span>
-                  {doneDate ? (
-                    <>
-                      {" → hoàn tất dự kiến "}
+                  {hasPickup ? (
+                    <div className="mb-2 text-center text-sm text-on-surface-variant">
+                      Lấy hàng&nbsp;
                       <span className="font-bold text-on-surface">
-                        {formatDate(doneDate)}
+                        {formatDate(pickupDate!)}
                       </span>
-                    </>
+                      {doneDate ? (
+                        <>
+                          {" → hoàn tất dự kiến "}
+                          <span className="font-bold text-on-surface">
+                            {formatDate(doneDate)}
+                          </span>
+                        </>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
-              ) : null}
-            </div>
-          </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </>
       )}
 
-      <button
+      <motion.button
         type="button"
         onClick={onSubmit}
         disabled={disabled || isSubmitting || isEmpty}
+        whileTap={isEmpty ? undefined : { scale: 0.98 }}
         className={
           isEmpty
-            ? "w-full rounded-full border border-outline-variant/30 bg-surface-container px-4 py-3.5 text-xs font-black uppercase tracking-widest text-on-surface-variant"
-            : "w-full rounded-full bg-primary-gradient py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-primary/20 transition-opacity active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+            ? "btn btn-block rounded-full border border-outline-variant/30 bg-surface-container text-[11px] font-black uppercase tracking-widest text-on-surface-variant"
+            : "btn btn-primary btn-block rounded-full bg-gradient-to-r from-primary to-secondary text-[11px] font-black uppercase tracking-widest text-primary-content shadow-lg shadow-primary/20"
         }
       >
         {isSubmitting ? (
@@ -182,7 +179,7 @@ export function ServiceBookingSummaryBar({
         ) : (
           "Đặt lịch dịch vụ"
         )}
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }

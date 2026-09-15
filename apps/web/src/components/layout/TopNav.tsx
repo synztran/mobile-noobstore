@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { ArrowLeft, CircleHelp, Heart, Menu, ShoppingCart } from "lucide-react";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import clsx from "clsx";
@@ -94,7 +94,7 @@ export function TopNav({
             {navigating ? (
               <span className="loading loading-spinner loading-xs" />
             ) : (
-              <Icon name="arrow_back" className="text-[22px]" />
+              <ArrowLeft className="h-[22px] w-[22px]" />
             )}
           </button>
         ) : (
@@ -109,7 +109,7 @@ export function TopNav({
               key={menuBounce}
               className="inline-flex animate-[icon-bounce_0.35s_ease-out]"
             >
-              <Icon name="menu" className="text-[22px]" />
+              <Menu className="h-[22px] w-[22px]" />
             </span>
           </button>
         )}
@@ -126,7 +126,7 @@ export function TopNav({
             onClick={() => setWishlistOpen(true)}
             className="text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95"
           >
-            <Icon name="favorite" />
+            <Heart className="h-5 w-5" />
           </button>
         )}
         {showHelp ? (
@@ -136,7 +136,7 @@ export function TopNav({
             className="relative text-on-surface transition-opacity duration-200 hover:opacity-70 active:scale-95"
           >
             <span className="absolute -inset-1 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] rounded-full bg-primary/20" />
-            <Icon name="help" className="relative text-[22px]" />
+            <CircleHelp className="relative h-[22px] w-[22px]" />
           </button>
         ) : (
           <button
@@ -155,7 +155,7 @@ export function TopNav({
                 key={cartBounce}
                 className="inline-flex animate-[icon-bounce_0.35s_ease-out] "
               >
-                <Icon name="shopping_cart" className="text-[26px]" />
+                <ShoppingCart className="h-[26px] w-[26px]" />
                 {count > 0 && (
                   <span
                     aria-hidden="true"

@@ -40,7 +40,9 @@ modules/cart/
     useFlyToCart.ts     useFlyToCartStore — tiny animation state (was store/useFlyToCart.ts)
     useCartStore.test.ts
   ui/               components
-    CartDrawer.tsx      the drawer (dynamic-imported in MainLayoutDynamic)
+    CartDrawer.tsx      mobile bottom-sheet drawer (dynamic-imported in (main)/layout.tsx)
+    DesktopCartDrawer.tsx  desktop right-side drawer (built in modules/desktop, shares useCartDrawerState)
+    useCartDrawerState.ts  shared drawer state/logic (quantity, remove/clear confirm, checkout)
     CartContent.tsx     drawer body: list + empty-state
     CartItemRow.tsx     one line (+ its component pills)
     FlyToCart.tsx       flying-image overlay (rendered once in app/layout.tsx)
@@ -112,7 +114,7 @@ Mutations instead: hook → `fetch /api/cart/items…` → route validates auth
 | `StockExceededError` (`available`) / `MaxLimitExceededError` (`max`) | `service.ts` | Thrown by the service, mapped to `409` by the routes |
 | `assertQuantityAvailable(snapshot, targetQty)` | `availability.ts` | **Pure** rule engine (see domain facts) |
 | `loadAvailabilitySnapshot(supabase, params)` | `availability.ts` | Adapter: product row + variant stock + committed usage by *other* lines → `AvailabilitySnapshot` |
-| `sendStaleCartReminder(supabase, cartId, userId)` | `reminders.ts` | Fire-and-forget push after GET when cart is 12h+ stale (1/day cap) |
+| `sendStaleCartReminder(supabase, cartId, userId)` | `reminders.ts` | Fire-and-forget push after GET when cart is 12h+ stale (1/day cap); skips empty carts (count < 1) |
 
 ### Client (`client/`)
 

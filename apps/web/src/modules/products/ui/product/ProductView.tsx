@@ -34,9 +34,20 @@ const ImageViewer = dynamic(
     })),
   { ssr: false }
 );
+// Keyset preview (mock-data trial): canvas renderer, loaded on demand so it
+// stays out of the detail page's initial JS. Only rendered for products with
+// a colorway bound to their slug.
+const KeysetPreviewSection = dynamic(
+  () =>
+    import("@/modules/keyset-preview/ui/KeysetPreviewSection").then((m) => ({
+      default: m.KeysetPreviewSection,
+    })),
+  { ssr: false }
+);
 import { PreOrderBanner } from "@/modules/products/ui/product/PreOrderBanner";
 import { ProductInfoTabs } from "@/modules/products/ui/product/ProductInfoTabs";
 import { ShareButton } from "@/modules/products/ui/product/ShareButton";
+import { getKeysetPreviewData } from "@/modules/keyset-preview/constants/mock-colorways";
 
 export function ProductView({
   product,
@@ -191,6 +202,14 @@ export function ProductView({
     variants.length > 0 ||
     groups.length > 0;
 
+  // Mock-data trial: only products whose slug has a mock colorway show the
+  // keyset preview section. The real-data phase swaps the resolver behind
+  // this call — the UI wiring stays.
+  const keysetPreviewData = useMemo(
+    () => getKeysetPreviewData(product.slug),
+    [product.slug]
+  );
+
   useEffect(() => {
     setActiveImageIndex(0);
   }, [product.slug]);
@@ -208,7 +227,7 @@ export function ProductView({
         ]}
       /> */}
 
-      <main className="my-auto space-y-4 pb-12">
+      <main className="my-auto space-y-4 pb-12 md:pb-24">
         {/* ── Hero Image Gallery ── */}
         <HeroImageGallery
           images={mediaImages}
@@ -222,7 +241,7 @@ export function ProductView({
         />
 
         {/* ── Product Info ── */}
-        <section className="!mt-0 px-4">
+        <section className="!mt-0 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
           {/* <div className="mb-2 flex flex-wrap items-center gap-2">
             <ProductBadges badges={badges} purchaseCount={purchaseCount} />
           </div> */}
@@ -271,7 +290,7 @@ export function ProductView({
 
         {/* ── Configurator (variants + component groups) ── */}
         {hasConfigurator && (
-          <section className="space-y-2 px-4">
+          <section className="space-y-2 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
             <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
               Lựa chọn cấu hình
             </div>
@@ -309,13 +328,20 @@ export function ProductView({
           </section>
         )}
 
+        {/* ── Keyset preview (slug-gated, mock-data trial) ── */}
+        {keysetPreviewData && (
+          <section className="px-4">
+            <KeysetPreviewSection colorway={keysetPreviewData} />
+          </section>
+        )}
+
         {/* ── Low stock urgency banner ── */}
         {isLowStock && effectiveStockQuantity > 0 && (
           <motion.section
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
-            className="px-4"
+            className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm"
           >
             <div className="flex items-center gap-3 rounded-2xl border border-red-400/40 bg-red-50 px-4 py-3">
               <motion.div
@@ -381,13 +407,13 @@ export function ProductView({
 
         {/* ── Pre-order Info Banner ── */}
         {selectedPreOrderConfig && (
-          <section className="px-4">
+          <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
             <PreOrderBanner config={selectedPreOrderConfig} />
           </section>
         )}
 
         {/* ── Tabbed Info (Description / Specs / Shipping) ── */}
-        <div className="mb-12 mt-12">
+        <div className="mb-12 mt-12 md:mb-6 md:mt-0 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
           <ProductInfoTabs
             product={product}
             editorialContent={editorialContent}
@@ -404,7 +430,7 @@ export function ProductView({
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="space-y-2 px-4"
+          className="space-y-2 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm"
         >
           <div className="flex items-center gap-2">
             <span className="text-sm">🎁</span>

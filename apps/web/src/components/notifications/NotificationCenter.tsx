@@ -11,6 +11,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import NotificationList from "./NotificationList";
 
 export function NotificationCenter() {
   const router = useRouter();
@@ -113,47 +114,11 @@ export function NotificationCenter() {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((n) => (
-            <div
-              key={n}
-              className="animate-pulse space-y-2 rounded-2xl bg-surface-container p-4"
-            >
-              <div className="h-4 w-2/3 rounded-full bg-surface-container-high" />
-              <div className="h-3 w-full rounded-full bg-surface-container-high" />
-            </div>
-          ))}
-        </div>
-      ) : !items || items.length === 0 ? (
-        <div className="rounded-2xl bg-surface-container-lowest p-8 text-center text-sm text-on-surface-variant">
-          Chưa có thông báo nào.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {items.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              onClick={() => handleMarkOneRead(item.id)}
-              disabled={markOneRead.isPending}
-              className={`w-full rounded-2xl p-4 text-left transition-colors ${
-                item.read_at
-                  ? "bg-surface-container"
-                  : "border border-primary/25 bg-surface-container-lowest"
-              }`}
-            >
-              <p className="text-sm font-black text-on-surface">{item.title}</p>
-              <p className="mt-1 text-xs text-on-surface-variant">
-                {item.body}
-              </p>
-              <p className="mt-2 text-[10px] uppercase tracking-wider text-on-surface-variant">
-                {new Date(item.created_at).toLocaleString("vi-VN")}
-              </p>
-            </button>
-          ))}
-        </div>
-      )}
+      <NotificationList
+        items={items}
+        isLoading={isLoading}
+        onMarkRead={handleMarkOneRead}
+      />
     </div>
   );
 }

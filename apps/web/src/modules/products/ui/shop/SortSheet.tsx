@@ -1,7 +1,7 @@
 "use client";
 
 import type { SortOption } from "@/modules/products/types";
-import Icon from "@/components/ui/Icon";
+import { CircleCheck } from "lucide-react";
 import { SORT_OPTIONS } from "@/constants/shop";
 
 interface SortSheetProps {
@@ -61,12 +61,9 @@ export function SortSheet({
 							<span className="font-bold text-sm">
 								{opt.label}
 							</span>
-							{current === opt.value && (
-								<Icon
-									name="check_circle"
-									className="text-primary ml-auto text-xl"
-								/>
-							)}
+						{current === opt.value && (
+							<CircleCheck className="ml-auto h-5 w-5 text-primary" />
+						)}
 						</button>
 					))}
 				</div>

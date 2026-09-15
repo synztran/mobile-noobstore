@@ -20,11 +20,11 @@ function InstagramIcon({ className }: { className?: string }) {
 
 export function HomeFooter() {
   return (
-    <footer className="!mt-0 bg-surface-container p-4">
-      <div className="flex flex-col items-center gap-4 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-        <div className="flex w-full justify-between gap-2 text-[11px]">
+    <footer className="!mt-0 bg-surface-container p-4 lg:p-6">
+      <div className="flex flex-col items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+        <div className="flex w-full justify-between gap-2 text-xs lg:w-auto lg:gap-4">
           {/* <Link href="/news">Tin tức</Link> */}
-          <Link href="/policy">Chính sách bảo mật</Link>
+          <Link href="/policy">Chính sách</Link>
           <Link href="/terms">Điều khoản</Link>
           <Link href="/delivery-terms">Vận chuyển</Link>
         </div>
@@ -34,7 +34,7 @@ export function HomeFooter() {
             href="https://facebook.com/noobstore"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary lg:h-8 lg:w-8"
           >
             <FacebookIcon className="h-5 w-5" />
           </a>
@@ -42,19 +42,19 @@ export function HomeFooter() {
             href="https://instagram.com/noobstore"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary lg:h-8 lg:w-8"
           >
             <InstagramIcon className="h-5 w-5" />
           </a>
           <a
             href={`mailto:${MAIL_DOMAIN}`}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary lg:h-8 lg:w-8"
           >
             <Mail size={20} />
           </a>
         </div>
 
-        <p className="opacity-50">© 2026 NoobStore</p>
+        <p className="opacity-50 lg:text-right">© 2026 NoobStore</p>
       </div>
     </footer>
   );

@@ -110,7 +110,7 @@ export const OrderItemsList = memo(function OrderItemsList({
 
                   {/* Total price for item */}
                   <div
-                    className={`${!item.components?.length ? "!mt-auto" : ""} !mt-auto flex items-center justify-between`}
+                    className={`${!item.components?.length ? "!mt-auto" : ""} flex items-center justify-between`}
                   >
                     <span className="text-xs text-on-surface-variant">
                       Số lượng:{" "}

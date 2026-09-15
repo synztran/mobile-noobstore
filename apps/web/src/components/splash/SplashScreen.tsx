@@ -6,27 +6,42 @@ import {
   type Query,
   type QueryCache,
 } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-interface HomeSplashStatus {
+export interface SplashStatus {
   at: number;
   msg: string;
 }
 
-interface HomeSplashScreenProps {
+export interface BootGroup {
+  weight: number;
+  matches: (key: readonly unknown[]) => boolean;
+}
+
+interface SplashScreenProps {
   /** Floor time on screen, in ms. The splash never hides before this, even
     when everything is already cached. Default 2000. */
   minDuration?: number;
   /** Progress-step messages, keyed by percent threshold. Defaults to the
       mockup's boot sequence. */
-  statuses?: HomeSplashStatus[];
+  statuses?: SplashStatus[];
   /** Only play once per browsing session (sessionStorage-gated). Default true. */
   showOncePerSession?: boolean;
-  children: React.ReactNode;
+  /** Query groups that drive the real progress. Each carries a weight
+      (Σ = 100); defaults to the home boot groups. */
+  bootGroups?: BootGroup[];
+  /** sessionStorage key used by the once-per-session gate. */
+  sessionKey?: string;
+  /** Always play on mount, bypassing the once-per-session gate. Does not
+      read or stamp the session flag. */
+  forceShow?: boolean;
+  children?: React.ReactNode;
 }
 
-const DEFAULT_STATUSES: HomeSplashStatus[] = [
+const DEFAULT_STATUSES: SplashStatus[] = [
   { at: 0, msg: "Kết nối máy chủ NoobStore..." },
   { at: 25, msg: "Đồng bộ danh mục bàn phím & Switch..." },
   { at: 55, msg: "Nạp dữ liệu GMK Keycaps & Custom Boards..." },
@@ -34,18 +49,150 @@ const DEFAULT_STATUSES: HomeSplashStatus[] = [
   { at: 100, msg: "Sẵn sàng trải nghiệm!" },
 ];
 
-const SESSION_KEY = "noobstore.splash.seen";
+interface RouteStatusEntry {
+  match: (pathname: string) => boolean;
+  statuses: SplashStatus[];
+}
 
-// Boot progress comes from the home screen's real data fetches: cart, hero,
-// nổi bật and sale products (React Query). Each query group carries a weight
-// (Σ = 100); once a group is settled we credit its weight. A group is
-// "settled" when its queries resolved (success/error) or never needed to
-// fetch — e.g. hero data is server-rendered, so `useHomeHero` is disabled and
-// we auto-credit it.
-const BOOT_GROUPS: {
-  weight: number;
-  matches: (key: readonly unknown[]) => boolean;
-}[] = [
+// Status copy is picked per route so each page's boot message matches its own
+// content. Matchers key off path segments (not exact strings) so detail pages
+// like /community/[id] or /checkout/summary resolve to the right group.
+// Ordered most-specific-first; the first match wins. DEFAULT_STATUSES is the
+// home catch-all.
+const segments = (pathname: string): string[] =>
+  pathname.split("/").filter(Boolean);
+
+const ROUTE_STATUSES: RouteStatusEntry[] = [
+  {
+    match: (p) => segments(p)[0] === "shop" && segments(p).length >= 2,
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 20, msg: "Nạp thông số bàn phím cơ..." },
+      { at: 45, msg: "Tải hình ảnh & Video Unbox..." },
+      { at: 70, msg: "Đồng bộ Switch, Keycap & Variant..." },
+      { at: 100, msg: "Sẵn sàng khám phá sản phẩm!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "shop",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 20, msg: "Tải danh sách bàn phím cơ..." },
+      { at: 45, msg: "Đồng bộ phụ kiện & phím switch..." },
+      { at: 75, msg: "Cập nhật tồn kho & giá tốt..." },
+      { at: 100, msg: "Sẵn sàng mua sắm!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "gacha-mega" || segments(p)[0] === "gacha",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 20, msg: "Nạp sự kiện Gacha Mega..." },
+      { at: 45, msg: "Tải Reward Pool & tỷ lệ trúng..." },
+      { at: 70, msg: "Đồng bộ nhiệm vụ & lượt quay..." },
+      { at: 100, msg: "Sẵn sàng thử vận may!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "rewards",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 25, msg: "Đồng bộ điểm tích lũy..." },
+      { at: 55, msg: "Nạp danh sách quà tặng & reward..." },
+      { at: 80, msg: "Cập nhật lượt đổi thưởng..." },
+      { at: 100, msg: "Sẵn sàng đổi quà!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "wishlist",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 35, msg: "Đồng bộ danh sách yêu thích..." },
+      { at: 70, msg: "Kiểm tra giá & tồn kho sản phẩm..." },
+      { at: 100, msg: "Sẵn sàng trải nghiệm!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "community",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 25, msg: "Nạp bài viết cộng đồng..." },
+      { at: 55, msg: "Tải ảnh build & gallery..." },
+      { at: 80, msg: "Đồng bộ bình luận & thả tim..." },
+      { at: 100, msg: "Sẵn sàng kết nối!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "services",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 30, msg: "Nạp danh sách dịch vụ custom..." },
+      { at: 60, msg: "Tải chi tiết gói & mức giá..." },
+      { at: 100, msg: "Sẵn sàng đặt dịch vụ!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "blogs" || segments(p)[0] === "news",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 30, msg: "Nạp bài viết & tin tức..." },
+      { at: 65, msg: "Tải ảnh bìa & nội dung..." },
+      { at: 100, msg: "Sẵn sàng đọc!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "checkout",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 25, msg: "Nạp giỏ hàng & phí vận chuyển..." },
+      { at: 55, msg: "Kiểm tra voucher & khuyến mãi..." },
+      { at: 80, msg: "Xác nhận thông tin đơn hàng..." },
+      { at: 100, msg: "Sẵn sàng thanh toán!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "profile",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 25, msg: "Đồng bộ thông tin tài khoản..." },
+      { at: 55, msg: "Nạp đơn hàng & điểm tích lũy..." },
+      { at: 80, msg: "Cập nhật thông báo & cảnh báo..." },
+      { at: 100, msg: "Sẵn sàng quản lý!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "search",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 35, msg: "Tìm kiếm sản phẩm phù hợp..." },
+      { at: 70, msg: "Sắp xếp kết quả tìm kiếm..." },
+      { at: 100, msg: "Sẵn sàng khám phá!" },
+    ],
+  },
+  {
+    match: (p) => segments(p)[0] === "keyset-preview",
+    statuses: [
+      { at: 0, msg: "Kết nối máy chủ NoobStore..." },
+      { at: 40, msg: "Xử lý ảnh Keyset Preview..." },
+      { at: 75, msg: "Tải màu sắc & layout keycap..." },
+      { at: 100, msg: "Sẵn sàng xem preview!" },
+    ],
+  },
+];
+
+function pickStatusesForPath(pathname: string): SplashStatus[] {
+  for (const entry of ROUTE_STATUSES) {
+    if (entry.match(pathname)) return entry.statuses;
+  }
+  return DEFAULT_STATUSES;
+}
+
+// Boot progress comes from the page's real data fetches (React Query). Each
+// query group carries a weight (Σ = 100); once a group is settled we credit
+// its weight. A group is "settled" when its queries resolved (success/error)
+// or never needed to fetch — e.g. hero data is server-rendered, so the query
+// is disabled and we auto-credit it.
+const DEFAULT_BOOT_GROUPS: BootGroup[] = [
   { weight: 15, matches: (key) => key[0] === "home" && key[1] === "hero" },
   { weight: 25, matches: (key) => key[0] === "cart" && key[1] === "all" },
   {
@@ -65,7 +212,7 @@ function groupSettled(queries: Query[]): boolean {
   return queries.every((q) => {
     const { status, fetchStatus, fetchFailureCount } = q.state;
     if (status === "success" || status === "error") return true;
-    // Disabled query (e.g. hero already server-rendered, never fetched,
+    // Disabled query (e.g. data already server-rendered, never fetched,
     // never failed) → auto-credit. A retry backoff has failures, so it keeps
     // the group unsettled until it resolves or the fail-safe trips.
     return (
@@ -74,10 +221,10 @@ function groupSettled(queries: Query[]): boolean {
   });
 }
 
-function creditFor(cache: QueryCache): number {
+function creditFor(cache: QueryCache, groups: BootGroup[]): number {
   const queries = cache.findAll();
   let credits = 0;
-  for (const group of BOOT_GROUPS) {
+  for (const group of groups) {
     if (groupSettled(queries.filter((q) => group.matches(q.queryKey)))) {
       credits += group.weight;
     }
@@ -88,36 +235,43 @@ function creditFor(cache: QueryCache): number {
 const FLOOR_MAX = 78; // under-ceiling while real fetches run — never completes alone
 const FLOOR_RAMP_MS = 1200; // floor travels start → FLOOR_MAX over this span
 const FAILSAFE_MARGIN_MS = 6000; // fail-safe = minDuration + margin — can never preempt the data wait
+const SETTLE_MS = 300; // sustained-idle window before hiding once data looks done
 
 /**
  * Full-screen NoobStore boot splash for the root page.
  * Ported from `mockup-ui/loading-screen/code.html` (keycap boot screen).
  *
- * The bar is driven by the home screen's REAL data fetches (cart, hero,
- * noteworthy + sale products via React Query). Each settled query group
- * credits its weight; a soft time floor keeps the bar moving underneath but
- * can never complete it. Only when all groups settle AND the `minDuration`
- * has passed does it reach 100% and fade out. Renders `children` normally
- * underneath; keyframes are injected via a scoped <style> so the component
- * is fully self-contained.
+ * The bar is driven by the page's REAL data fetches via React Query. Each
+ * settled query group (see `bootGroups`) credits its weight; a soft time
+ * floor keeps the bar moving underneath but can never complete it. Only when
+ * all groups settle AND the `minDuration` has passed does it reach 100% and
+ * fade out. Renders `children` normally underneath; keyframes are injected
+ * via a scoped <style> so the component is fully self-contained.
  */
-export function HomeSplashScreen({
+export function SplashScreen({
   minDuration = 2000,
   statuses = DEFAULT_STATUSES,
   showOncePerSession = true,
+  bootGroups = DEFAULT_BOOT_GROUPS,
+  sessionKey = "noobstore.splash.seen",
+  forceShow = false,
   children,
-}: HomeSplashScreenProps) {
+}: SplashScreenProps) {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
   const [skip, setSkip] = useState(false);
   const [active, setActive] = useState(false); // overlay mounted + tracking
   const [realTarget, setRealTarget] = useState<number>(START_PCT);
   const [percent, setPercent] = useState<number>(START_PCT);
   const [fading, setFading] = useState(false);
   const [gone, setGone] = useState(false);
+  const [done, setDone] = useState(false);
+  const [fetchingCount, setFetchingCount] = useState(0);
 
   const startedAtRef = useRef<number | null>(null);
   const floorStartRef = useRef<number | null>(null);
   const doneRef = useRef(false);
+  const prevPathnameRef = useRef<string | null>(null);
 
   const bumpReal = useCallback((value: number) => {
     setRealTarget((prev) => (value > prev ? value : prev));
@@ -125,11 +279,15 @@ export function HomeSplashScreen({
 
   // 1) Decided in an effect (never during render) so SSR-safe and immune to
   //    private-mode sessionStorage throwing during hydration. Reduced motion
-  //    → skip the splash entirely.
+  //    → skip the splash entirely, even with forceShow. The Mega Gacha arcade
+  //    (/gacha-mega) also opts out: it renders its own loading screen
+  //    (MegaGachaLoadingScreen), so the store splash would double up — most
+  //    visibly when its close button navigates back and the splash replays.
   useEffect(() => {
     let mounted = true;
     const shouldSkip =
-      (showOncePerSession && sessionSeen(SESSION_KEY)) ||
+      pathname.startsWith("/gacha-mega") ||
+      (showOncePerSession && !forceShow && sessionSeen(sessionKey)) ||
       (typeof window !== "undefined" &&
         !!window.matchMedia &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -143,29 +301,74 @@ export function HomeSplashScreen({
     return () => {
       mounted = false;
     };
-  }, [showOncePerSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // 2) Track the home screen's real data fetches (cart, hero, noteworthy,
-  //    sale) via the React Query cache. On every cache event we re-credit the
-  //    settled groups; the initial snapshot picks up queries that already
-  //    resolved (cached or disabled) before we subscribed.
+  // 1b) Replay on every route change: this instance persists in a layout (no
+  //     remount per navigation), so a fresh boot starts each time the page
+  //     below swaps and its data begins loading. Navigating INTO the arcade
+  //     cancels instead — its own loading screen takes over.
+  useEffect(() => {
+    const first = prevPathnameRef.current === null;
+    prevPathnameRef.current = pathname;
+    if (first) return;
+    if (pathname.startsWith("/gacha-mega")) {
+      setSkip(true);
+      setActive(false);
+      return;
+    }
+    startedAtRef.current = Date.now();
+    floorStartRef.current = performance.now();
+    doneRef.current = false;
+    setDone(false);
+    setSkip(false);
+    setActive(true);
+    setRealTarget(START_PCT);
+    setPercent(START_PCT);
+    setFading(false);
+    setGone(false);
+  }, [pathname]);
+
+  // 2) Track the page's real data fetches via the React Query cache. On every
+  //    cache event we re-credit the settled groups and count the queries
+  //    still in-flight; the initial snapshot picks up anything that already
+  //    resolved before we subscribed.
   useEffect(() => {
     if (!active) return;
     const cache = queryClient.getQueryCache();
-    const creditSettled = () => bumpReal(creditFor(cache));
+    const creditSettled = () => {
+      const queries = cache.findAll();
+      const inFlight = queries.filter(
+        (q) => q.state.fetchStatus === "fetching"
+      ).length;
+      setFetchingCount(inFlight);
+      bumpReal(creditFor(cache, bootGroups));
+    };
+    // Queued, not synchronous: react-query fires cache subscribers while other
+    // components are reading queries during render, and setState there throws
+    // "Cannot update a component while rendering a different component".
+    const scheduleCredit = () => queueMicrotask(creditSettled);
     creditSettled();
-    return cache.subscribe(creditSettled);
-  }, [active, queryClient, bumpReal]);
+    return cache.subscribe(scheduleCredit);
+  }, [active, queryClient, bumpReal, bootGroups]);
 
-  // 3) Finish at 100% only when every boot fetch settled AND the floor elapsed.
+  // 3) Finish at 100% only when the boot groups settle, NO query is still
+  //    fetching, AND the floor elapsed. A short settle window keeps the
+  //    splash from hiding the instant a brand-new query hasn't started yet —
+  //    any new fetch within that window postpones completion again.
   useEffect(() => {
     if (doneRef.current || !active || gone) return;
-    if (realTarget < 100) return;
+    if (realTarget < 100 || fetchingCount !== 0) return;
     const elapsed = Date.now() - (startedAtRef.current ?? Date.now());
     if (elapsed < minDuration) return;
-    doneRef.current = true;
-    bumpReal(100);
-  }, [realTarget, minDuration, active, gone, bumpReal]);
+    const t = setTimeout(() => {
+      if (doneRef.current || gone) return;
+      doneRef.current = true;
+      setDone(true);
+      bumpReal(100);
+    }, SETTLE_MS);
+    return () => clearTimeout(t);
+  }, [realTarget, fetchingCount, minDuration, active, gone, bumpReal]);
 
   // Fail-safe: never trap the user behind the overlay on a stalled page.
   // Must be a true backstop — longer than the minDuration floor and the
@@ -175,6 +378,7 @@ export function HomeSplashScreen({
     const t = setTimeout(() => {
       if (doneRef.current || gone) return;
       doneRef.current = true;
+      setDone(true);
       bumpReal(100);
     }, minDuration + FAILSAFE_MARGIN_MS);
     return () => clearTimeout(t);
@@ -182,13 +386,13 @@ export function HomeSplashScreen({
 
   // 4) Visibility lifecycle: fade → unmount → stamp the session flag.
   useEffect(() => {
-    if (realTarget < 100) return;
+    if (realTarget < 100 || !done) return;
     const t1 = setTimeout(() => setFading(true), 140);
     const t2 = setTimeout(() => {
       setGone(true);
-      if (showOncePerSession) {
+      if (showOncePerSession && !forceShow) {
         try {
-          sessionStorage.setItem(SESSION_KEY, "1");
+          sessionStorage.setItem(sessionKey, "1");
         } catch {
           /* sessionStorage unavailable — splash simply replays */
         }
@@ -198,10 +402,13 @@ export function HomeSplashScreen({
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [realTarget, showOncePerSession]);
+  }, [realTarget, done, showOncePerSession, sessionKey, forceShow]);
 
   // 5) Drive the displayed % — blend the guaranteed-advancing floor with the
-  //    real target, evaluated per frame, so the bar can never get stuck.
+  //    real target, evaluated per frame, so the bar can never get stuck. A
+  //    real target of 100 is not committed visually until the completion
+  //    conditions (minDuration + groups settled) pass, so pages with no real
+  //    boot queries ride the floor instead of showing a frozen full bar.
   useEffect(() => {
     if (!active || gone) return;
     let raf: number;
@@ -212,7 +419,8 @@ export function HomeSplashScreen({
         START_PCT +
           ((now - floorStart) / FLOOR_RAMP_MS) * (FLOOR_MAX - START_PCT)
       );
-      const combined = Math.max(floor, realTarget);
+      const holdAtFloor = realTarget >= 100 && !doneRef.current;
+      const combined = holdAtFloor ? floor : Math.max(floor, realTarget);
       const rounded = Math.round(combined);
       // Only commit state when the displayed integer changes — committing
       // every frame re-rendered the whole overlay at 60fps (real TBT cost).
@@ -223,12 +431,19 @@ export function HomeSplashScreen({
     return () => cancelAnimationFrame(raf);
   }, [active, gone, realTarget]);
 
+  // Status copy is route-aware: an explicit `statuses` prop always wins, else
+  // we pick the message set matched by the current pathname, else the home
+  // default. Re-picks automatically on every navigation (pathname change).
+  const effectiveStatuses = useMemo(() => {
+    if (statuses.length) return statuses;
+    return pickStatusesForPath(pathname);
+  }, [statuses, pathname]);
+
   const status = useMemo(() => {
-    const list = statuses.length ? statuses : DEFAULT_STATUSES;
-    let msg = list[0]?.msg ?? "";
-    for (const s of list) if (percent >= s.at) msg = s.msg;
+    let msg = effectiveStatuses[0]?.msg ?? "";
+    for (const s of effectiveStatuses) if (percent >= s.at) msg = s.msg;
     return msg;
-  }, [percent, statuses]);
+  }, [percent, effectiveStatuses]);
 
   const ready = percent >= 100;
   const showOverlay = !skip && !gone;
@@ -254,18 +469,20 @@ export function HomeSplashScreen({
           {/* ── Top status bar ── */}
           <header className="relative z-10 px-5 pb-2 pt-4">
             <div className="flex items-center justify-between border-b border-on-surface/5 pb-3">
-              <div className="flex items-center">
-                <span className="inline-block h-2 w-2 animate-ping rounded-full bg-primary" />
-                <span className="-ml-3.5 inline-block h-2 w-2 rounded-full bg-primary" />
-                <span className="font-mono-tech ml-2 text-[10.5px] font-bold uppercase tracking-widest text-on-surface/80">
+              <div className="flex items-center gap-2">
+                <div className="relative h-2 w-2">
+                  <span className="absolute h-2 w-2 animate-ping rounded-full bg-primary" />
+                  <span className="block h-2 w-2 rounded-full bg-primary" />
+                </div>
+                <span className="font-mono-tech text-xs font-bold uppercase tracking-widest text-on-surface/80">
                   noobstore.xyz <span className="text-primary/70">//</span> ver
                   2.5
                 </span>
               </div>
               <div className="flex items-center gap-1.5 rounded-full border border-on-surface/10 bg-white/90 px-2.5 py-1 shadow-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span className="font-mono-tech text-[9.5px] font-bold uppercase tracking-wide text-on-surface">
-                  SYS READY
+                <span className="font-mono-tech text-xs font-bold uppercase tracking-wide text-on-surface">
+                  Sys ready
                 </span>
               </div>
             </div>
@@ -280,18 +497,19 @@ export function HomeSplashScreen({
               <div className="splash-keycap relative flex h-28 w-28 flex-col items-center justify-center rounded-2xl p-2">
                 <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#323130] to-[#1a1a19] shadow-inner">
                   <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-on-surface/90">
-                    <img
+                    <Image
                       src={LOGO_NOOB_STORE}
                       alt="NoobStore"
-                      className="h-full w-full object-contain drop-shadow-[0_2px_8px_rgba(255,100,100,0.4)]"
+                      fill
+                      className="h-full w-full object-cover drop-shadow-[0_2px_8px_rgba(255,100,100,0.4)]"
                     />
                   </div>
-                  <span className="font-mono-tech absolute left-1.5 top-1 rounded bg-black/30 px-1 text-[7px] font-medium tracking-tighter text-zinc-400">
+                  {/* <span className="font-mono-tech absolute left-1.5 top-1 rounded bg-black/30 px-1 text-[7px] font-medium tracking-tighter text-zinc-400">
                     ESC
                   </span>
                   <span className="font-mono-tech absolute bottom-1 right-1.5 text-[7px] font-medium text-zinc-400">
                     NB-01
-                  </span>
+                  </span> */}
                 </div>
               </div>
             </div>
@@ -327,8 +545,8 @@ export function HomeSplashScreen({
                 </div>
               </div>
 
-              <div className="font-mono-tech flex items-center justify-between px-0.5 text-[11px]">
-                <span className="max-w-[210px] truncate text-left font-medium text-on-surface/70">
+              <div className="font-mono-tech flex items-center justify-between gap-4 px-0.5 text-xs">
+                <span className="max-w-[3/4] truncate text-left font-medium text-on-surface/70">
                   {status}
                 </span>
                 <span
@@ -340,7 +558,7 @@ export function HomeSplashScreen({
                 </span>
               </div>
 
-              <div className="font-mono-tech flex items-center justify-center gap-2 border-t border-on-surface/5 pt-2 text-[9px] text-on-surface/40">
+              <div className="font-mono-tech flex items-center justify-center gap-2 border-t border-on-surface/5 pt-2 text-[10px] text-on-surface/40">
                 <span>SWITCH: LUBED</span>
                 <span>/</span>
                 <span>ASSETS: LOADING</span>
@@ -351,7 +569,7 @@ export function HomeSplashScreen({
           </main>
 
           {/* ── Footer tip ── */}
-          <footer className="relative z-10 mx-auto w-full max-w-sm px-5 pb-5">
+          <footer className="relative z-10 mx-auto w-full max-w-md px-5 pb-5">
             <div className="mb-3 flex items-start space-x-3 rounded-2xl border border-primary/15 bg-white/95 p-3.5 shadow-[0_0_0_1px_rgba(255,255,255,0.8)_inset,0_18px_36px_-10px_rgba(155,63,28,0.18)]">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-orange-50 text-primary">
                 <svg
@@ -390,8 +608,8 @@ export function HomeSplashScreen({
                 </p>
               </div>
             </div>
-            <p className="font-mono-tech text-center text-[9.5px] tracking-tight text-on-surface/40">
-              © NOOBSTORE GAMING &amp; COLLECTIBLES • VIETNAM
+            <p className="font-mono-tech text-center text-sm tracking-tight text-on-surface/40">
+              © NOOBSTORE &amp; COLLECTIBLES • VIETNAM
             </p>
           </footer>
 

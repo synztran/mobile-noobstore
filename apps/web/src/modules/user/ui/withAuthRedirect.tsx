@@ -32,11 +32,7 @@ export function withAuthRedirect<P extends object>(
       }
     }, [loading, user, router, redirectTo]);
 
-    if (loading || !user) {
-      return null;
-    }
-
-    return <WrappedComponent {...props} />;
+    return loading || !user ? null : <WrappedComponent {...props} />;
   }
 
   const wrappedName =

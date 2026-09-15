@@ -6,7 +6,7 @@ import {
   DistrictSearchInput,
   WardSearchInput,
 } from "@/components/ui/CityDistrictSelect";
-import Icon from "@/components/ui/Icon";
+import { House } from "lucide-react";
 import AutoResizeTextarea from "@/components/ui/AutoResizeTextarea";
 import clsx from "clsx";
 import { CheckCircle2, NotebookPen } from "lucide-react";
@@ -145,10 +145,9 @@ function AddressFields({
               : "border-transparent focus-within:border-primary"
           )}
         >
-          <Icon
-            name="home"
+          <House
             className={clsx(
-              "flex-shrink-0 text-xl transition-colors",
+              "h-5 w-5 flex-shrink-0 transition-colors",
               streetInvalid ? "text-error" : "text-outline-variant"
             )}
           />

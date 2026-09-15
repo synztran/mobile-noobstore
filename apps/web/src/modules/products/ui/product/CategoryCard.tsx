@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { ArrowRight, LayoutGrid } from "lucide-react";
 import type { CategoryItem } from "@/modules/products/server/ssr";
 import Image from "@/components/ui/AdaptiveImage";
 import { useState } from "react";
@@ -54,10 +54,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
 						/>
 					) : (
 						<div className="absolute inset-0 flex items-center justify-center">
-							<Icon
-								name="category"
-								className="text-5xl text-outline-variant"
-							/>
+						<LayoutGrid className="h-12 w-12 text-outline-variant" />
 						</div>
 					)}
 
@@ -66,7 +63,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
 						onClick={handleBrowse}
 						aria-label={`Xem sản phẩm ${category.name}`}
 						className="absolute bottom-3 right-3 z-20 w-9 h-9 rounded-full bg-on-surface text-surface flex items-center justify-center translate-y-1 group-hover:translate-y-0 transition-all duration-200 shadow-lg active:scale-90">
-						<Icon name="arrow_forward" className="text-[18px]" />
+						<ArrowRight className="h-4 w-4" />
 					</button>
 				</div>
 

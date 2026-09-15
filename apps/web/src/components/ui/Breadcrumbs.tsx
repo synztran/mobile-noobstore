@@ -1,5 +1,5 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import Icon from "@/components/ui/Icon";
 
 interface BreadcrumbItem {
   label: string;
@@ -15,7 +15,7 @@ export function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
           return (
             <li key={index} className="flex items-center gap-1">
               {index > 0 && (
-                <Icon name="chevron_right" className="text-[14px] opacity-40" />
+                <ChevronRight className="h-3.5 w-3.5 opacity-40" />
               )}
               {isLast || !item.href ? (
                 <span className="font-medium text-on-surface" aria-current={isLast ? "page" : undefined}>

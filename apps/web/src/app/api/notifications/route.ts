@@ -65,7 +65,14 @@ export async function GET(req: NextRequest) {
 			return NextResponse.json({ error: error.message }, { status: 500 });
 		}
 
-		return NextResponse.json({ notifications: data ?? [] });
+		// Exclude stale-cart reminders created when the cart held 0 items
+		// (guarded at creation now, this cleans up legacy rows).
+		const visible = (data ?? []).filter(
+			(n) =>
+				!(n.type === "cart_reminder" && /^Bạn có 0 sản phẩm/.test(n.body)),
+		);
+
+		return NextResponse.json({ notifications: visible });
 	} catch (err) {
 		console.error("[notifications] unexpected error:", err);
 		return NextResponse.json(

@@ -44,6 +44,7 @@ export function BottomNav() {
     "/checkout",
     "/services",
     "/gacha",
+    "/gacha-mega",
     "/profile/support",
     "/community",
     "/documents",

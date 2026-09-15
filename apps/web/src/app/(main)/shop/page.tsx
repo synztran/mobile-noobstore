@@ -55,11 +55,11 @@ async function ShopContent({
   // filtered queries must hydrate from the client to match the URL state.
   const hasFilters = Boolean(
     sp.search?.trim() ||
-      sp.category?.trim() ||
-      sp.brand?.trim() ||
-      sp.priceMin?.trim() ||
-      sp.priceMax?.trim() ||
-      (sp.sort && sp.sort !== "newest")
+    sp.category?.trim() ||
+    sp.brand?.trim() ||
+    sp.priceMin?.trim() ||
+    sp.priceMax?.trim() ||
+    (sp.sort && sp.sort !== "newest")
   );
 
   const [categories, brands, seoProducts, initialQuery] = await Promise.all([
@@ -113,7 +113,7 @@ function ShopFallback() {
   return (
     <div>
       <ShopControlsSkeleton />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }, (_, i) => (
           <ProductCardSkeleton key={i} />
         ))}

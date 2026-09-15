@@ -52,7 +52,7 @@ export function HomeTestimonials() {
   const { data: testimonials = [], isLoading } = useHomeTestimonials();
 
   return (
-    <section className="overflow-hidden px-6">
+    <section className="overflow-hidden px-6 lg:px-0">
       <style>{`
         @keyframes testimonial-scroll {
           0% { transform: translateX(0); }
@@ -73,10 +73,12 @@ export function HomeTestimonials() {
         </div>
       ) : testimonials.length === 0 ? null : (
         <div className="relative group">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-24 bg-gradient-to-r from-surface to-transparent lg:block" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-24 bg-gradient-to-l from-surface to-transparent lg:block" />
           <div
-            className="flex w-max gap-4"
+            className="flex w-max gap-3"
             style={{
-              animation: "testimonial-scroll 40s linear infinite",
+              animation: "testimonial-scroll 20s linear infinite",
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.animationPlayState = "paused";
@@ -88,7 +90,7 @@ export function HomeTestimonials() {
             {[...testimonials, ...testimonials].map((t, i) => (
               <div
                 key={i}
-                className="flex w-[300px] flex-shrink-0 flex-col rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-5"
+                className="flex w-[280px] lg:w-[320px] flex-shrink-0 flex-col rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-4"
               >
                 <div className="flex items-center gap-2">
                   <GoogleIcon className="h-4 w-4" />

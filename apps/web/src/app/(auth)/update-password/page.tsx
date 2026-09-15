@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/lib/toast";
 import Image from "@/components/ui/AdaptiveImage";
@@ -95,7 +95,7 @@ export default function UpdatePasswordPage() {
 
 			<form onSubmit={handleSubmit} className="w-full space-y-4">
 				<div className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest px-5 py-4">
-					<Icon name="lock" className="text-xl text-outline" />
+					<Lock className="h-5 w-5 text-outline" />
 					<input
 						type={showPassword ? "text" : "password"}
 						placeholder="Mật khẩu mới"
@@ -108,7 +108,7 @@ export default function UpdatePasswordPage() {
 				</div>
 
 				<div className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest px-5 py-4">
-					<Icon name="lock" className="text-xl text-outline" />
+					<Lock className="h-5 w-5 text-outline" />
 					<input
 						type={showPassword ? "text" : "password"}
 						placeholder="Xác nhận mật khẩu mới"
@@ -124,10 +124,11 @@ export default function UpdatePasswordPage() {
 						onClick={() => setShowPassword(!showPassword)}
 						className="text-outline transition-colors hover:text-on-surface"
 					>
-						<Icon
-							name={showPassword ? "visibility" : "visibility_off"}
-							className="text-xl"
-						/>
+						{showPassword ? (
+							<Eye className="h-5 w-5" />
+						) : (
+							<EyeOff className="h-5 w-5" />
+						)}
 					</button>
 				</div>
 

@@ -1,6 +1,5 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
 import { DELIVERY_OPTIONS, mappingDisplayPrice } from "@/constants";
 import { formatVND } from "@/lib/currency";
 import { Check } from "lucide-react";
@@ -131,21 +130,13 @@ function DeliveryMethodSection({
                       : "bg-surface-container-highest"
                   )}
                 >
-                  {typeof opt.icon === "string" ? (
-                    <Icon
-                      name={opt.icon}
-                      className={clsx(
-                        delivery === opt.id
-                          ? "text-white"
-                          : "text-on-surface-variant",
-                        "text-lg"
-                      )}
-                    />
-                  ) : (
-                    <opt.icon
-                      className={`text-xl ${delivery === opt.id ? "text-white" : "text-on-surface-variant"}`}
-                    />
-                  )}
+                  <opt.icon
+                    className={`h-5 w-5 ${
+                      delivery === opt.id
+                        ? "text-white"
+                        : "text-on-surface-variant"
+                    }`}
+                  />
                 </div>
                 <div className="min-w-0 flex-1 text-left">
                   <span className="text-sm font-black text-on-surface">

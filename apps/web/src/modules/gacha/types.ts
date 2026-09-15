@@ -5,6 +5,12 @@
 export interface GachaEvent {
   id: number;
   name: string;
+  description?: string | null;
+  start_at?: string | null;
+  end_at?: string | null;
+  free_tokens_per_grant?: number | null;
+  free_token_interval_days?: number | null;
+  is_active?: boolean | null;
 }
 
 export interface GachaRewardMeta {
@@ -69,6 +75,7 @@ export interface Winner {
   displayName: string;
   rewardName: string;
   isGolden: boolean;
+  rewardType: string;
 }
 
 export interface GachaRewardData {

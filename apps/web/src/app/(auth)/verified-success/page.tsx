@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { CheckCircle2, Lock } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -54,10 +54,7 @@ export default function IdentityVerified() {
             aria-hidden="true"
           />
           <div className="relative z-10 flex h-24 w-24 animate-fade-in items-center justify-center rounded-full border-4 border-surface-container-lowest bg-secondary-container">
-            <Icon
-              name="check_circle"
-              className="text-5xl text-on-secondary-container"
-            />
+            <CheckCircle2 className="h-12 w-12 text-on-secondary-container" />
           </div>
         </div>
 
@@ -97,7 +94,7 @@ export default function IdentityVerified() {
 
         {/* Trust */}
         <div className="flex items-center gap-1.5 pt-2 text-xs font-medium text-on-surface-variant">
-          <Icon name="lock" className="text-sm" />
+          <Lock className="h-3.5 w-3.5" />
           <span>Phiên được mã hóa đầu cuối</span>
         </div>
       </div>

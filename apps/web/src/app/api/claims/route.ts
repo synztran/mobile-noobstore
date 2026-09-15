@@ -18,7 +18,7 @@ export async function GET() {
 
     const { data: rows, error } = await sb
       .from("reward_claims")
-      .select("*, reward_items!inner(name, description, reward_type, metadata)")
+      .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -26,9 +26,18 @@ export async function GET() {
       return NextResponse.json({ error: "Failed to fetch claims" }, { status: 500 });
     }
 
+    const itemIds = [...new Set((rows ?? []).map((r: Record<string, unknown>) => r.reward_item_id as string))];
+    let itemsMap: Record<string, Record<string, unknown>> = {};
+    if (itemIds.length > 0) {
+      const { data: items } = await sb
+        .from("reward_items")
+        .select("id, name, description, reward_type, metadata")
+        .in("id", itemIds);
+      for (const it of items ?? []) itemsMap[it.id] = it;
+    }
+
     const claims: RewardClaim[] = (rows ?? []).map((r: Record<string, unknown>) => {
-      const item = r.reward_items as Record<string, unknown>;
-      const meta = (item.metadata as Record<string, unknown>) ?? {};
+      const item = itemsMap[r.reward_item_id as string] ?? null;
 
       let benefit = "";
       if (r.reward_type === "voucher") {
@@ -43,7 +52,7 @@ export async function GET() {
       return {
         id: r.id as string,
         rewardItemId: r.reward_item_id as string,
-        rewardName: item.name as string,
+        rewardName: (item?.name as string) ?? "",
         rewardType: r.reward_type as "voucher" | "product" | "point",
         pointsSpent: r.points_spent as number,
         voucherCode: (r.metadata as Record<string, unknown> | null)?.voucher_code as string | null ?? null,

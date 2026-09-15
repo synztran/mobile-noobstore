@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { Heart, ImageOff, X } from "lucide-react";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { useWishlist } from "@/modules/user/client/useWishlist";
 import { formatVND } from "@/lib/currency";
@@ -78,10 +78,7 @@ export function WishlistSidebar({ drawerOpen, onClose }: WishlistSidebarProps) {
 						{!loading && items.length === 0 ? (
 							<div className="h-full min-h-[260px] flex flex-col items-center justify-center text-center px-5">
 								<div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center mb-3">
-									<Icon
-										name="favorite_border"
-										className="text-[24px] text-outline-variant"
-									/>
+									<Heart className="h-6 w-6 text-outline-variant" />
 								</div>
 								<p className="font-bold text-on-surface">
 									Chưa có sản phẩm yêu thích
@@ -115,11 +112,7 @@ export function WishlistSidebar({ drawerOpen, onClose }: WishlistSidebarProps) {
 														sizes="64px"
 													/>
 												) : (
-													<div className="w-full h-full flex items-center justify-center">
-														<Icon
-															name="image_not_supported"
-															className="text-[18px] text-outline-variant"
-														/>
+													<div className="w-full h-full flex items-center justify-center">																	<ImageOff className="h-4 w-4 text-outline-variant" />
 													</div>
 												)}
 											</div>
@@ -159,11 +152,7 @@ export function WishlistSidebar({ drawerOpen, onClose }: WishlistSidebarProps) {
 															)
 														}
 														disabled={busy}
-														className="h-8 px-3 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 disabled:opacity-60">
-														<Icon
-															name="close"
-															className="text-[14px]"
-														/>
+														className="h-8 px-3 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 disabled:opacity-60">																			<X className="h-3.5 w-3.5" />
 														Xóa
 													</button>
 												</div>

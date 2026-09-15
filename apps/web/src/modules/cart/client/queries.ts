@@ -42,7 +42,12 @@ function transformToCartItem(item: CartApiItem): CartItem {
 			pre_order_config: c.variant!.pre_order_config ?? null,
 		}));
 
-	const hasAnyPreOrder = product.is_pre_order ?? variant?.is_pre_order ?? components.some((c) => c.is_pre_order) ?? false;
+	// NOTE: `||`, not `??` — the flags are real booleans (false when not
+	// pre-order), so `??` short-circuits and never consults the components.
+	const hasAnyPreOrder =
+		product.is_pre_order ||
+		(variant?.is_pre_order ?? false) ||
+		components.some((c) => c.is_pre_order);
 	const preOrderConfig = product.pre_order_config ?? variant?.pre_order_config ?? components.find((c) => c.pre_order_config)?.pre_order_config ?? null;
 
 	return {

@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
@@ -52,15 +52,17 @@ export default function CheckoutLayout({
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* TopAppBar */}
-      <nav className="fixed top-0 z-50 w-full">
+    <div className="min-h-screen bg-background md:min-h-0 md:bg-transparent">
+      {/* TopAppBar — fixed on mobile (owns the screen); static inside the
+          desktop shell's content column so it can't overlap the shell's
+          topbar or spill over the sidebar */}
+      <nav className="fixed top-0 z-50 w-full md:static md:z-auto">
         <div className="glass-nav top-nav-pad flex items-center justify-between px-4">
           <Link
             href="/"
             className="transition-opacity duration-200 hover:opacity-70 active:scale-95"
           >
-            <Icon name="arrow_back" className="text-2xl text-primary" />
+            <ArrowLeft className="h-6 w-6 text-primary" />
           </Link>
           <h1 className="font-sans text-lg font-bold uppercase tracking-tight text-on-surface">
             Thanh toán
@@ -69,7 +71,7 @@ export default function CheckoutLayout({
             href="/shop"
             className="transition-opacity duration-200 hover:opacity-70 active:scale-95"
           >
-            <Icon name="shopping_bag" className="text-2xl text-primary" />
+            <ShoppingBag className="h-6 w-6 text-primary" />
           </Link>
         </div>
 
@@ -123,7 +125,7 @@ export default function CheckoutLayout({
         </div>
       </nav>
 
-      <main className="pb-18 mx-auto mt-[calc(env(safe-area-inset-top,0px)+9rem)] w-full px-4">
+      <main className="pb-18 mx-auto mt-[calc(env(safe-area-inset-top,0px)+9rem)] w-full px-4 md:mt-4 md:px-0">
         {children}
       </main>
     </div>

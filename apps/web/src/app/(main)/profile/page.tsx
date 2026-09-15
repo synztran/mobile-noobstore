@@ -7,7 +7,17 @@ import {
   RankProgressCard,
   RankProgressCardSkeleton,
 } from "@/components/rank/RankProgressCard";
-import Icon from "@/components/ui/Icon";
+import {
+  Bell,
+  ChevronRight,
+  CircleHelp,
+  Heart,
+  LogOut,
+  MapPin,
+  Package,
+  ShoppingBag,
+  Star,
+} from "lucide-react";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
 import { toast } from "@/lib/toast";
@@ -17,30 +27,30 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 type NavItem = {
-  icon: string | ReactNode;
+  icon: ReactNode;
   label: string;
   href: string;
 };
 
 const NAV_ITEMS: NavItem[] = [
   {
-    icon: "shopping_bag",
+    icon: <ShoppingBag size={20} />,
     label: "Đơn hàng của tôi",
     href: "/profile/orders",
   },
   {
-    icon: "favorite",
+    icon: <Heart size={20} />,
     label: "Sản phẩm yêu thích",
     href: "/wishlist",
   },
   {
-    icon: "location_on",
+    icon: <MapPin size={20} />,
     label: "Địa chỉ giao hàng",
     href: "/profile/addresses",
   },
   // { icon: "payment", label: "Phương thức thanh toán" },
   {
-    icon: "notifications",
+    icon: <Bell size={20} />,
     label: "Thông báo",
     href: "/profile/notifications",
   },
@@ -50,7 +60,7 @@ const NAV_ITEMS: NavItem[] = [
   //   href: "/rewards",
   // },
   {
-    icon: "inventory_2",
+    icon: <Package size={20} />,
     label: "Hàng sắp về",
     href: "/profile/stock-alerts",
   },
@@ -60,7 +70,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/news",
   },
   {
-    icon: "help",
+    icon: <CircleHelp size={20} />,
     label: "Trợ giúp & Hỗ trợ",
     href: "/profile/support",
   },
@@ -226,7 +236,7 @@ export default function ProfilePage() {
         >
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-              <Icon name="stars" className="text-lg text-white" />
+              <Star className="h-5 w-5 fill-current text-white" />
             </div>
             <div>
               <p className="text-xs font-bold text-white/90">Điểm NoobStore</p>
@@ -239,7 +249,7 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-          <Icon name="chevron_right" className="text-lg text-white/70" />
+          <ChevronRight className="h-5 w-5 text-white/70" />
         </Link>
       )}
 
@@ -264,16 +274,9 @@ export default function ProfilePage() {
             href={href}
             className="flex w-full items-center gap-4 rounded-2xl bg-surface-container-lowest px-5 py-4 shadow-ambient-sm transition-colors hover:bg-surface-container-low"
           >
-            {typeof icon === "string" ? (
-              <Icon name={icon} className="text-primary" />
-            ) : (
-              <span className="text-primary">{icon}</span>
-            )}
+            <span className="text-primary">{icon}</span>
             <span className="font-semibold text-on-surface">{label}</span>
-            <Icon
-              name="chevron_right"
-              className="ml-auto text-outline-variant"
-            />
+            <ChevronRight className="ml-auto h-4 w-4 text-outline-variant" />
           </Link>
         ))}
       </div>
@@ -295,7 +298,7 @@ export default function ProfilePage() {
             onClick={handleSignOut}
             className="btn h-auto w-full rounded-2xl border-0 bg-surface-container py-4 font-bold normal-case text-error"
           >
-            <Icon name="logout" className="mr-2" />
+            <LogOut className="mr-2 h-4 w-4" />
             Đăng xuất
           </button>
         ) : (

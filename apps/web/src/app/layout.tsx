@@ -6,7 +6,6 @@ import { FlyToCart } from "@/modules/cart/ui/FlyToCart";
 import { CookieConsentLazy } from "@/components/ui/CookieConsentLazy";
 import { GoogleAnalytics } from "@/components/ui/GoogleAnalytics";
 import { BetterStackRUM } from "@/components/ui/BetterStackRUM";
-import { NavigationOverlay } from "@/components/layout/NavigationOverlay";
 import { AuthProvider } from "@/modules/user/client/AuthProvider";
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
@@ -108,7 +107,6 @@ export default function RootLayout({
         </a>
         <ReactQueryProvider>
           <AuthProvider>
-            <NavigationOverlay />
             <FlyToCart />
             {children}
             <MobileViewportGuard />

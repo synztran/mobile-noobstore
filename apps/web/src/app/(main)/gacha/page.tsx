@@ -89,8 +89,14 @@ export default async function GachaPage() {
     );
   }
 
+  // `relative` gives the machine's viewport-edge tabs (TokenBadge on the left,
+  // MachineActions on the right) a positioned ancestor: on desktop/tablet the
+  // DesktopShell column sits right of the fixed sidebar, so the tabs anchor to
+  // the content edge instead of the viewport edge — otherwise the token badge
+  // lands underneath the sidebar and is hidden by it. On mobile the wrapper
+  // still spans the full viewport, so the tabs stay flush with the screen edges.
   return (
-    <div className="max-h-screen px-4">
+    <div className="relative max-h-screen px-4">
       <GachaMachine eventId={event.id} />
     </div>
   );

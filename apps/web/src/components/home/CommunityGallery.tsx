@@ -8,10 +8,7 @@ import { useEffect, useRef, useState } from "react";
 
 const PAGE_SIZE = 5;
 
-type ImageMeta = Record<
-  string,
-  { id: string; ratio: number; loaded: boolean }
->;
+type ImageMeta = Record<string, { id: string; ratio: number; loaded: boolean }>;
 
 function useIntersectionVisible(ref: React.RefObject<Element | null>) {
   const [visible, setVisible] = useState(false);
@@ -25,7 +22,7 @@ function useIntersectionVisible(ref: React.RefObject<Element | null>) {
           obs.disconnect();
         }
       },
-      { threshold: 0.15 },
+      { threshold: 0.15 }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -43,22 +40,20 @@ export function CommunityGallery() {
   const photos = data?.photos ?? [];
   const hasMore = data?.hasMore ?? false;
 
-  const handleLoadingComplete =
-    (id: string) =>
-    (img: HTMLImageElement) => {
-      const ratio =
-        img.naturalWidth && img.naturalHeight
-          ? img.naturalWidth / img.naturalHeight
-          : 1;
-      setImageMeta((prev) => ({
-        ...prev,
-        [id]: { id, ratio, loaded: true },
-      }));
-    };
+  const handleLoadingComplete = (id: string) => (img: HTMLImageElement) => {
+    const ratio =
+      img.naturalWidth && img.naturalHeight
+        ? img.naturalWidth / img.naturalHeight
+        : 1;
+    setImageMeta((prev) => ({
+      ...prev,
+      [id]: { id, ratio, loaded: true },
+    }));
+  };
 
   if (isLoading) {
     return (
-      <section ref={sectionRef} className="px-6">
+      <section ref={sectionRef}>
         <div className="mb-8 h-8 animate-pulse rounded-lg bg-surface-container" />
         <div className="grid grid-cols-2 gap-2">
           <div className="aspect-square animate-pulse rounded-lg bg-surface-container" />
@@ -72,7 +67,7 @@ export function CommunityGallery() {
   if (photos.length === 0) return null;
 
   return (
-    <section ref={sectionRef} className="px-6">
+    <section ref={sectionRef} className="px-4 lg:px-0">
       <div
         className={`mb-8 transition-all duration-700 ${
           visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
@@ -92,7 +87,7 @@ export function CommunityGallery() {
         </p>
       </div>
 
-      <div className="columns-2 gap-2 space-y-2">
+      <div className="columns-2 gap-2 space-y-2 md:columns-3 lg:columns-4">
         {photos.map((photo) => {
           const meta = imageMeta[photo.id];
           const isLoaded = meta?.loaded ?? false;
@@ -110,9 +105,7 @@ export function CommunityGallery() {
                   height={0}
                   sizes="(max-width: 640px) 50vw, 33vw"
                   className={`h-auto w-full transition-all duration-700 ${
-                    isLoaded
-                      ? "scale-100 blur-0"
-                      : "scale-105 blur-xl"
+                    isLoaded ? "scale-100 blur-0" : "scale-105 blur-xl"
                   } group-hover:scale-105`}
                   onLoadingComplete={handleLoadingComplete(photo.id)}
                 />
@@ -149,7 +142,9 @@ export function CommunityGallery() {
           disabled={isFetching}
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 py-3 text-xs font-black uppercase tracking-widest text-primary transition-all hover:bg-primary/5 hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isFetching && <span className="loading loading-spinner loading-xs" />}
+          {isFetching && (
+            <span className="loading loading-spinner loading-xs" />
+          )}
           {isFetching ? "Đang tải..." : "Xem thêm"}
         </button>
       )}

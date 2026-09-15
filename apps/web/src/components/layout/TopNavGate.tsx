@@ -13,6 +13,7 @@ const SELF_RENDERED_PREFIXES = [
   "/delivery-terms",
   "/middleman",
   "/checkout",
+  "/gacha-mega", // arcade renders its own full-screen header (back + token HUD)
 ];
 
 export function TopNavGate() {

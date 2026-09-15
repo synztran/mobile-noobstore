@@ -185,6 +185,13 @@
     scrollbar-width: none;
   }
 
+  /* Set by useDragScroll while a mouse drag is active: keep the grabbing
+     cursor visible over cards/links whose own cursor styles would win. */
+  .drag-scrolling,
+  .drag-scrolling * {
+    cursor: grabbing !important;
+  }
+
   .primary-gradient {
     background: linear-gradient(135deg, #9b3f1c 0%, #bb5732 100%);
   }
@@ -400,6 +407,15 @@
   font-weight: 900;
   color: #1b1c1a;
 }
+
+/* NOTE: A previous "tablet auto-collapse" block lived here —
+   `@media (768–1024px) { aside { width: 64px !important } … }` plus matching
+   !important pins on main[style*="margin-left"] and header[style*="left"].
+   It fought the React-managed shell (DesktopSidebar's w-16/w-60 classes and
+   DesktopShell's inline margin/left), so the sidebar was stuck collapsed and
+   the collapse toggle appeared dead on tablets (iPad landscape is exactly
+   1024px and matched the range). Sidebar width belongs to DesktopSidebar /
+   DesktopShell state only — do not reintroduce CSS width overrides here. */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

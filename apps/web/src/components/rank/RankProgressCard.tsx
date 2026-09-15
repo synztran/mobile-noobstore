@@ -2,7 +2,7 @@
 
 import type { CustomerRank, RankProgress } from "@/types/rank";
 import { formatVND } from "@/lib/currency";
-import Icon from "@/components/ui/Icon";
+import { ChevronRight, Info } from "lucide-react";
 import { RankBadge } from "./RankBadge";
 
 interface Props {
@@ -172,9 +172,9 @@ export function RankProgressCard({
         onClick={onBadgeClick}
         className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-surface-container-lowest py-2.5 text-xs font-bold text-primary transition-transform active:scale-[0.98]"
       >
-        <Icon name="info" className="text-sm" />
+        <Info className="h-3.5 w-3.5" />
         Xem quyền lợi bậc {currentRank.name}
-        <Icon name="chevron_right" className="text-sm" />
+        <ChevronRight className="h-3.5 w-3.5" />
       </button>
     </div>
   );

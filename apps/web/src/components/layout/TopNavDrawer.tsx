@@ -1,6 +1,14 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import {
+  Bell,
+  Heart,
+  House,
+  LogOut,
+  Package,
+  ShoppingBag,
+  User,
+} from "lucide-react";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
@@ -16,20 +24,20 @@ interface TopNavDrawerProps {
 }
 
 type NavItem = {
-  icon: string | ReactNode;
+  icon: ReactNode;
   label: string;
   href: string;
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { icon: "home", label: "Trang chủ", href: "/" },
-  { icon: "shopping_bag", label: "Cửa hàng", href: "/shop" },
+  { icon: <House size={18} />, label: "Trang chủ", href: "/" },
+  { icon: <ShoppingBag size={18} />, label: "Cửa hàng", href: "/shop" },
   // { icon: "forum", label: "Cộng đồng", href: "/community" },
   // { icon: "paper", label: "Tài liệu", href: "/documents" },
-  { icon: "person", label: "Tài khoản người dùng", href: "/profile" },
-  { icon: "favorite", label: "Sản phẩm yêu thích", href: "/wishlist" },
-  { icon: "inventory_2", label: "Đơn hàng", href: "/profile/orders" },
-  { icon: "notifications", label: "Thông báo", href: "/profile/notifications" },
+  { icon: <User size={18} />, label: "Tài khoản người dùng", href: "/profile" },
+  { icon: <Heart size={18} />, label: "Sản phẩm yêu thích", href: "/wishlist" },
+  { icon: <Package size={18} />, label: "Đơn hàng", href: "/profile/orders" },
+  { icon: <Bell size={18} />, label: "Thông báo", href: "/profile/notifications" },
 ];
 
 const containerVariants = {
@@ -164,17 +172,16 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
                           : "text-on-surface"
                       )}
                     >
-                      {typeof icon === "string" && (
-                        <Icon
-                          name={icon}
-                          className={clsx(
-                            "text-[18px]",
-                            isActive
-                              ? "text-primary"
-                              : "text-on-surface-variant"
-                          )}
-                        />
-                      )}
+                      <span
+                        className={clsx(
+                          "flex h-[18px] w-[18px] items-center justify-center",
+                          isActive
+                            ? "text-primary"
+                            : "text-on-surface-variant"
+                        )}
+                      >
+                        {icon}
+                      </span>
                       {label}
                     </Link>
                   </motion.li>
@@ -190,7 +197,7 @@ export default function TopNavDrawer({ open, onClose }: TopNavDrawerProps) {
                 onClick={handleSignOut}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-on-surface-variant transition-colors hover:text-error"
               >
-                <Icon name="logout" className="text-[18px]" />
+                <LogOut className="h-[18px] w-[18px]" />
                 Đăng xuất
               </button>
             </div>

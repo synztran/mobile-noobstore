@@ -39,8 +39,8 @@ export function CustomerTestimonial() {
   }
 
   return (
-    <section className="px-6">
-      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-surface-container-low to-surface-container p-4">
+    <section className="px-4 lg:px-0">
+      <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-surface-container-low to-surface-container p-4 lg:p-8">
         {/* Animated background */}
         <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-primary/5 blur-3xl transition-colors group-hover:bg-primary/10" />
         <div className="pointer-events-none absolute -bottom-20 -left-20 h-52 w-52 rounded-full bg-secondary/5 blur-3xl transition-colors group-hover:bg-secondary/10" />
@@ -57,7 +57,7 @@ export function CustomerTestimonial() {
             Đã và đang xây dựng nên NoobStore
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
             {creators.map((creator) => (
               <a
                 key={creator.id}

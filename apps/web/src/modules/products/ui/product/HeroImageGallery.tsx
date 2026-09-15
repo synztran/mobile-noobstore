@@ -1,7 +1,6 @@
 "use client";
 
 import { ProductThumbnailStrip } from "@/modules/products/ui/product/ProductThumbnailStrip";
-import Icon from "@/components/ui/Icon";
 import Image from "@/components/ui/AdaptiveImage";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SaleCountdown } from "@/modules/products/ui/product/SaleCountdown";
@@ -57,7 +56,7 @@ export function HeroImageGallery({
 
   return (
     <section
-      className="relative space-y-3 p-4"
+      className="relative space-y-3 p-4 md:rounded-2xl md:bg-surface md:shadow-ambient-sm"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

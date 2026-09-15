@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { Hourglass, ShoppingBag, Timer } from "lucide-react";
 import clsx from "clsx";
 
 interface AddToCartButtonProps {
@@ -36,11 +36,7 @@ export function AddToCartButton({
     return "Thêm vào giỏ hàng";
   };
 
-  const getIcon = () => {
-    if (isLoading) return "hourglass_top";
-    if (isPreOrder) return "schedule";
-    return "shopping_bag";
-  };
+  const IconComponent = isLoading ? Hourglass : isPreOrder ? Timer : ShoppingBag;
 
   return (
     <button
@@ -56,10 +52,10 @@ export function AddToCartButton({
     >
       {isLoading ? (
         <div className="animate-spin">
-          <Icon name="hourglass_top" className="text-xl" />
+          <IconComponent className="h-5 w-5" />
         </div>
       ) : (
-        <Icon name={getIcon()} className="text-xl" />
+        <IconComponent className="h-5 w-5" />
       )}
       {getButtonLabel()}
     </button>

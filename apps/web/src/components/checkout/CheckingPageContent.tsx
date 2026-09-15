@@ -1,7 +1,7 @@
 "use client";
 
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
-import Icon from "@/components/ui/Icon";
+import { Copy } from "lucide-react";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { cartItemsToGA, trackPurchase } from "@/lib/analytics";
 import type { PaymentInformation } from "@/lib/payment-information";
@@ -262,7 +262,7 @@ export default function CheckingPageContent() {
                   onClick={() => copyToClipboard(value, label)}
                   className="flex h-4 w-4 items-center justify-center rounded-full bg-surface-container transition-transform hover:bg-surface-container-high active:scale-90"
                 >
-                  <Icon name="content_copy" className="text-xl text-primary" />
+                  <Copy className="h-5 w-5 text-primary" />
                 </button>
               )}
             </div>

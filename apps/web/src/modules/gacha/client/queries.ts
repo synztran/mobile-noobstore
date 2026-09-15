@@ -5,6 +5,7 @@ import type {
   GachaEventResponse,
   GachaHistoryPage,
   GachaMission,
+  Winner,
 } from "@/modules/gacha/types";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 
@@ -83,7 +84,7 @@ export function useClaimMission() {
 }
 
 export function useRecentWinners(eventId: number) {
-  return useQuery<{ winners: Array<{ displayName: string; rewardName: string; isGolden: boolean }> }>({
+  return useQuery<{ winners: Winner[] }>({
     ...appQueryKeys.gacha.recentWinners(eventId),
     staleTime: 30_000,
     refetchInterval: 30_000,

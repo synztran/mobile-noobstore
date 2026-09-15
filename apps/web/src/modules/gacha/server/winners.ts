@@ -28,7 +28,9 @@ export async function getRecentWinners(
   // Step 1: fetch history + reward (no join to auth.users — not a public FK)
   const { data: historyRows, error } = await supabase
     .from("gacha_history")
-    .select("user_id, played_at, reward:gacha_rewards(name, is_golden)")
+    .select(
+      "user_id, played_at, reward:gacha_rewards(name, is_golden, reward_type)"
+    )
     .eq("event_id", eventId)
     .neq("reward_id", 5)
     .order("played_at", { ascending: false })
@@ -63,6 +65,7 @@ export async function getRecentWinners(
       displayName: `${firstName} ${lastInitial}`.trim(),
       rewardName: reward?.name ?? "a prize",
       isGolden: reward?.is_golden ?? false,
+      rewardType: reward?.reward_type ?? "",
       playedAt: row.played_at,
     };
   });

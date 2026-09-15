@@ -1,12 +1,13 @@
 "use client";
 
 import type { BookingService } from "@/app/api/services/booking-config/route";
-import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
 import { Plus } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
 import { useMemo } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { ServiceEntryCard } from "./ServiceEntryCard";
+import { getSectionIcon } from "./sectionIcons";
 import type { ServiceEntryDraft, ServiceSectionCardProps } from "./types";
 import {
   buildPricingMaps,
@@ -39,39 +40,43 @@ export function ServiceSectionCard({
   onSelectOptionValue,
   onChangeLineNote,
   onUpdateEntry,
+  isQuickMode,
 }: ServiceSectionCardProps) {
+  const SectionIcon = getSectionIcon(section.key);
+
   return (
     <section
       id={section.key}
-      className="scroll-mt-24 rounded-2xl bg-surface-container"
+      className="card scroll-mt-24 overflow-hidden bg-surface-container shadow-sm"
     >
       {section.heroImageUrl ? (
-        <div className="relative h-52 w-full">
+        <figure className="relative h-44 w-full">
           <Image
             src={section.heroImageUrl}
             alt={`${section.title} hero`}
             fill
             sizes="100vw"
-            className="rounded-t-2xl object-cover"
+            className="object-cover"
           />
-        </div>
+        </figure>
       ) : null}
-      <div className="space-y-2 p-4">
+      <div className="card-body space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="w-full min-w-0">
             <div className="flex w-full items-center justify-between gap-4">
-              <span className="font-black uppercase tracking-wide text-on-surface">
+              <span className="flex items-center gap-2 font-black uppercase tracking-wide text-on-surface">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                  <SectionIcon className="h-4 w-4" />
+                </span>
                 {section.title}
               </span>
-              <span className="shrink-0 text-xs tracking-wider text-on-surface-variant">
-                <strong className="text-primary">
-                  {section.services.length}
-                </strong>{" "}
-                dịch vụ khả dụng
+              <span className="badge badge-ghost badge-sm shrink-0 border-outline-variant/30 text-[10px] font-bold text-on-surface-variant">
+                <strong className="text-primary">{section.services.length}</strong>
+                dịch vụ
               </span>
             </div>
             {section.hint ? (
-              <p className="mt-0.5 text-sm text-on-surface-variant">
+              <p className="mt-1 text-sm text-on-surface-variant">
                 {section.hint}
               </p>
             ) : null}
@@ -91,6 +96,7 @@ export function ServiceSectionCard({
               onUpdateEntry={onUpdateEntry}
               onSelectOptionValue={onSelectOptionValue}
               onChangeLineNote={onChangeLineNote}
+              isQuickMode={isQuickMode}
             />
           ))}
         </div>
@@ -111,6 +117,7 @@ function ServiceCard({
   onUpdateEntry,
   onSelectOptionValue,
   onChangeLineNote,
+  isQuickMode,
 }: {
   service: BookingService;
   entries: ServiceEntryDraft[];
@@ -121,6 +128,7 @@ function ServiceCard({
   onUpdateEntry: ServiceSectionCardProps["onUpdateEntry"];
   onSelectOptionValue: ServiceSectionCardProps["onSelectOptionValue"];
   onChangeLineNote: ServiceSectionCardProps["onChangeLineNote"];
+  isQuickMode?: boolean;
 }) {
   const subtotal = useMemo(
     () =>
@@ -135,17 +143,15 @@ function ServiceCard({
               : 1)
         );
       }, 0),
-    [entries, service]
+    [entries, service],
   );
 
   const hasError = entryErrors != null && Object.keys(entryErrors).length > 0;
 
-  const cardContent = (
+  return (
     <div
-      className={`space-y-2 rounded-[14px] p-3 ${
-        hasError
-          ? "border border-error/20 bg-error/5"
-          : "border border-outline-variant/20 bg-surface-container-lowest"
+      className={`card space-y-2 bg-surface-container-lowest p-3 ${
+        hasError ? "border border-error/20 bg-error/5" : ""
       }`}
     >
       <div className="flex flex-col">
@@ -175,26 +181,35 @@ function ServiceCard({
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-black text-primary">
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-black text-on-primary">
-              {entries.length}
-            </span>
+          <span className="badge badge-primary badge-sm gap-1.5 font-black">
+            {entries.length}
             mục đã chọn
-          </div>
-          {entries.map((entry, idx) => (
-            <ServiceEntryCard
-              key={entry.entryId}
-              section={section}
-              service={service}
-              entry={entry}
-              index={idx}
-              error={entryErrors?.[entry.entryId]}
-              onRemoveEntry={onRemoveEntry}
-              onUpdateEntry={onUpdateEntry}
-              onSelectOptionValue={onSelectOptionValue}
-              onChangeLineNote={onChangeLineNote}
-            />
-          ))}
+          </span>
+          <AnimatePresence initial={false}>
+            {entries.map((entry, idx) => (
+              <motion.div
+                key={entry.entryId}
+                layout
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 320, damping: 26 }}
+              >
+                <ServiceEntryCard
+                  section={section}
+                  service={service}
+                  entry={entry}
+                  index={idx}
+                  error={entryErrors?.[entry.entryId]}
+                  onRemoveEntry={onRemoveEntry}
+                  onUpdateEntry={onUpdateEntry}
+                  onSelectOptionValue={onSelectOptionValue}
+                  onChangeLineNote={onChangeLineNote}
+                  isQuickMode={isQuickMode}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
           <div className="flex items-center justify-between border-t border-outline-variant/20 pt-2 text-sm">
             <span className="font-black tracking-widest text-on-surface-variant">
               Tổng tiền
@@ -212,19 +227,13 @@ function ServiceCard({
         disabled={
           service.max_entries !== null && entries.length >= service.max_entries
         }
-        className="inline-flex w-full items-center justify-center gap-1 rounded-full border border-outline-variant/30 bg-surface-container px-4 py-2 text-[10px] font-black uppercase tracking-widest text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-40"
+        className="btn btn-outline btn-sm btn-block rounded-full text-[10px] font-black uppercase tracking-widest"
       >
-        <Icon name="add" className="text-xs" />
+        <Plus className="h-3.5 w-3.5" />
         {service.max_entries !== null && entries.length >= service.max_entries
           ? "Đã đạt giới hạn"
           : "Thêm mới dịch vụ"}
       </button>
     </div>
   );
-
-  if (hasError) {
-    return <div className="rounded-2xl p-[2px]">{cardContent}</div>;
-  }
-
-  return cardContent;
 }

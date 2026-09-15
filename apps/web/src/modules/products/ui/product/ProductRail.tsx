@@ -28,7 +28,7 @@ export function ProductRail({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className={`py-8 ${classNames ?? ""}`}
+      className={`py-8 ${classNames ?? ""} md:rounded-2xl md:bg-surface md:px-4 md:shadow-ambient-sm`}
     >
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2 text-lg font-black uppercase tracking-tight">

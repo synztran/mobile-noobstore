@@ -11,7 +11,16 @@ import {
 import Link from "next/link";
 import Image from "@/components/ui/AdaptiveImage";
 import { LOGO_NOOB_STORE } from "@/lib/images";
-import Icon from "@/components/ui/Icon";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  CircleAlert,
+  Clock3,
+  Copy,
+  FlipHorizontal2,
+  Gift,
+  Lock,
+} from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
   useCallback,
@@ -154,7 +163,7 @@ export default function GiftCardViewer(props: GiftCardViewerProps) {
           onClick={() => window.history.back()}
           className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 transition-colors hover:bg-white/10"
         >
-          <Icon name="arrow_back" className="text-sm" />
+          <ArrowLeft className="h-3.5 w-3.5" />
           Quay lại
         </button>
         <div className="flex items-center gap-2">
@@ -165,10 +174,11 @@ export default function GiftCardViewer(props: GiftCardViewerProps) {
         <span
           className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ${statusClass}`}
         >
-          <Icon
-            name={usable ? "check_circle" : "error_outline"}
-            className="text-sm"
-          />
+          {usable ? (
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          ) : (
+            <CircleAlert className="h-3.5 w-3.5" />
+          )}
           {statusText}
         </span>
       </div>
@@ -225,7 +235,7 @@ export default function GiftCardViewer(props: GiftCardViewerProps) {
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-1.5">
-                  <Icon name="redeem" className="text-xl text-white/90" />
+                  <Gift className="h-5 w-5 text-white/90" />
                   <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">
                     Gift Card
                   </span>
@@ -233,12 +243,12 @@ export default function GiftCardViewer(props: GiftCardViewerProps) {
                 <div className="flex items-center gap-2">
                   {restricted && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-black/25 px-2 py-1 text-[10px] font-bold text-white/90">
-                      <Icon name="lock" className="text-xs" />
+                      <Lock className="h-3 w-3" />
                       Riêng tư
                     </span>
                   )}
                   <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-white/70">
-                    <Icon name="flip_horizontal_2" className="text-sm" />
+                    <FlipHorizontal2 className="h-3.5 w-3.5" />
                     Lật để xem mã
                   </span>
                 </div>
@@ -290,7 +300,7 @@ export default function GiftCardViewer(props: GiftCardViewerProps) {
               </code>
               {expiresAt && (
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                  <Icon name="schedule" className="text-sm" />
+                  <Clock3 className="h-3.5 w-3.5" />
                   Hết hạn:{" "}
                   <span className="text-slate-200">
                     {new Date(expiresAt).toLocaleDateString("vi-VN")}
@@ -311,7 +321,7 @@ export default function GiftCardViewer(props: GiftCardViewerProps) {
                 }}
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-black text-slate-950 transition-transform active:scale-95"
               >
-                <Icon name="content_copy" className="text-base" />
+                <Copy className="h-4 w-4" />
                 Sao chép
               </button>
               <button
@@ -333,12 +343,12 @@ export default function GiftCardViewer(props: GiftCardViewerProps) {
       <div className="w-full max-w-md space-y-3">
         {!restricted ? (
           <p className="flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-slate-400">
-            <Icon name="lock" className="text-sm" />
+            <Lock className="h-3.5 w-3.5" />
             Thẻ chưa được cấp phát, không thể sử dụng
           </p>
         ) : (
           <p className="flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-slate-400">
-            <Icon name="lock" className="text-sm" />
+            <Lock className="h-3.5 w-3.5" />
             Thẻ này chỉ dành cho khách hàng được chỉ định
           </p>
         )}
@@ -347,7 +357,7 @@ export default function GiftCardViewer(props: GiftCardViewerProps) {
             href="/rewards/gift-card"
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-3.5 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-amber-900/40 transition-transform active:scale-[0.98]"
           >
-            <Icon name="redeem" className="text-lg" />
+            <Gift className="h-4 w-4" />
             Nạp thẻ quà tặng
           </Link>
         ) : (

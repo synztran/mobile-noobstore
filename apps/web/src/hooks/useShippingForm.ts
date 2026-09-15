@@ -140,6 +140,7 @@ export function useShippingForm() {
     clearShippingDraft,
   } = useCheckoutStore();
   const { total, cartId, items: cartItems } = useCartStore();
+  console.log(cartItems);
   const hasPreOrder = useMemo(
     () =>
       cartItems.some(

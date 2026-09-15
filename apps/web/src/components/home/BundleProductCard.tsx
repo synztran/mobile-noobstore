@@ -32,7 +32,7 @@ export function BundleProductCard({
   return (
     <Link
       href={`/shop/${product.slug}`}
-      className="group w-[180px] flex-shrink-0 transition-transform active:scale-95"
+      className="group w-[180px] lg:w-[220px] flex-shrink-0 transition-transform active:scale-95"
     >
       <div className="relative mb-2 aspect-[4/3] overflow-hidden rounded-2xl bg-surface-container-high">
         {product.thumbnail ? (
@@ -86,9 +86,23 @@ export function BundleProductCard({
             {formatVND(product.base_price)}
           </span>
         </div>
+      ) : product.base_price || product.min_price ? (
+        <div className="space-x-1 text-right">
+          {/* "Giá chỉ từ" — variant-sourced price: base price is unset and the
+              shown amount is only the lowest variant (min_price), so qualify
+              it. Mirrors ProductCardPricing's logic. */}
+          {!product.base_price && product.min_price ? (
+            <span className="break-all text-xs font-bold text-on-surface-variant">
+              giá chỉ từ
+            </span>
+          ) : null}
+          <span className="whitespace-nowrap text-base font-extrabold text-primary">
+            {formatVND(product.base_price || product.min_price)}
+          </span>
+        </div>
       ) : (
-        <div className="text-right text-base font-extrabold text-primary">
-          {formatVND(product.base_price || product.min_price)}
+        <div className="text-right text-xs font-extrabold text-on-surface-variant">
+          giá đang cập nhật
         </div>
       )}
     </Link>
@@ -97,7 +111,7 @@ export function BundleProductCard({
 
 export function BundleProductCardSkeleton() {
   return (
-    <div className="w-[180px] flex-shrink-0 animate-pulse space-y-3">
+    <div className="w-[180px] lg:w-[220px] flex-shrink-0 animate-pulse space-y-3">
       <div className="aspect-[4/3] rounded-2xl bg-surface-container" />
       <div className="h-4 w-3/4 rounded bg-surface-container" />
       <div className="h-3 w-1/2 rounded bg-surface-container" />

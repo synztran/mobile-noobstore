@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { CheckCircle2, Lock, Mail, User, XCircle } from "lucide-react";
 import {
   CaptchaWidget,
   type CaptchaWidgetHandle,
@@ -69,7 +69,7 @@ export default function RegisterPage() {
           <div
             className={`flex items-center gap-3 rounded-2xl border bg-surface-container-lowest px-5 py-4 ${touched.fullName && errors.fullName ? "border-error" : "border-outline-variant"}`}
           >
-            <Icon name="person" className="text-xl text-outline" />
+            <User className="h-5 w-5 text-outline" />
             <input
               type="text"
               name="fullName"
@@ -94,7 +94,7 @@ export default function RegisterPage() {
           <div
             className={`flex items-center gap-3 rounded-2xl border bg-surface-container-lowest px-5 py-4 ${touched.email && errors.email ? "border-error" : "border-outline-variant"}`}
           >
-            <Icon name="mail" className="text-xl text-outline" />
+            <Mail className="h-5 w-5 text-outline" />
             <input
               type="email"
               name="email"
@@ -119,7 +119,7 @@ export default function RegisterPage() {
           <div
             className={`flex items-center gap-3 rounded-2xl border bg-surface-container-lowest px-5 py-4 ${touched.password && errors.password ? "border-error" : "border-outline-variant"}`}
           >
-            <Icon name="lock" className="text-xl text-outline" />
+            <Lock className="h-5 w-5 text-outline" />
             <input
               type="password"
               name="password"
@@ -137,10 +137,11 @@ export default function RegisterPage() {
             <div
               className={`ml-1 mt-1.5 flex items-center gap-1.5 text-xs font-medium transition-colors ${values.password.length >= 8 ? "text-success" : "text-error"}`}
             >
-              <Icon
-                name={values.password.length >= 8 ? "check_circle" : "cancel"}
-                className="text-sm"
-              />
+              {values.password.length >= 8 ? (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              ) : (
+                <XCircle className="h-3.5 w-3.5" />
+              )}
               <span>Ít nhất 8 ký tự</span>
             </div>
           )}
@@ -149,7 +150,7 @@ export default function RegisterPage() {
         {/* Confirm Password */}
         <div>
           <div className="flex items-center gap-3 rounded-2xl border border-outline-variant bg-surface-container-lowest px-5 py-4">
-            <Icon name="lock" className="shrink-0 text-xl text-outline" />
+            <Lock className="h-5 w-5 shrink-0 text-outline" />
             <div className="relative flex-1">
               {/* Per-character background behind password dots */}
               {values.confirmPassword ? (
@@ -185,10 +186,7 @@ export default function RegisterPage() {
             </div>
             {values.confirmPassword.length > 0 &&
             values.password === values.confirmPassword ? (
-              <Icon
-                name="check_circle"
-                className="shrink-0 text-xl text-success"
-              />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
             ) : null}
           </div>
           {touched.confirmPassword && errors.confirmPassword && (

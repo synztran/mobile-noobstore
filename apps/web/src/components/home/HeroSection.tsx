@@ -9,7 +9,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const SLIDE_DURATION = 5000;
 
-export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] }) {
+export function HeroSection({
+  initialSlides,
+}: {
+  initialSlides?: HeroCampaign[];
+}) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -17,7 +21,9 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
   const { data: fetchedSlides = [], isLoading } = useHomeHero({
     enabled: !initialSlides || initialSlides.length === 0,
   });
-  const slides = (initialSlides?.length ? initialSlides : fetchedSlides) as HeroCampaign[];
+  const slides = (
+    initialSlides?.length ? initialSlides : fetchedSlides
+  ) as HeroCampaign[];
 
   const goTo = useCallback(
     (idx: number) => {
@@ -98,9 +104,7 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
         <div
           key={s.id}
           className={`absolute inset-0 transition-opacity duration-700 ${
-            i === current
-              ? "opacity-100"
-              : "pointer-events-none opacity-0"
+            i === current ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
         >
           <Image
@@ -118,10 +122,10 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
       ))}
 
       {/* Content */}
-      <div className="absolute inset-0 z-10 flex flex-col justify-end p-4">
+      <div className="absolute inset-0 z-10 flex flex-col justify-end p-4 lg:flex-row lg:items-end lg:justify-between lg:p-8">
         <div
           key={current}
-          className="flex animate-[fadeSlideUp_0.5s_ease_forwards] flex-col gap-4"
+          className="flex animate-[fadeSlideUp_0.5s_ease_forwards] flex-col gap-4 lg:max-w-lg"
         >
           <div className="flex items-center gap-2">
             <div className="h-5 w-1 rounded-full bg-primary" />
@@ -129,15 +133,15 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
               {slide.subtitle}
             </p>
           </div>
-          <p className="text-5xl font-black uppercase leading-tight tracking-tighter text-on-surface">
+          <p className="text-5xl font-black uppercase leading-tight tracking-tighter text-on-surface lg:text-6xl">
             {slide.title}
           </p>
-          <p className="max-w-xs text-sm leading-relaxed text-on-surface-variant">
+          <p className="max-w-xs text-sm leading-relaxed text-on-surface-variant lg:text-base">
             {slide.description}
           </p>
           <Link
             href={slide.cta_link}
-            className="mt-2 flex w-full items-center justify-between rounded-xl bg-primary px-6 py-4 text-xs font-black tracking-widest text-on-primary shadow-lg transition-transform active:scale-95"
+            className="mt-2 flex w-full items-center justify-between rounded-xl bg-primary px-6 py-4 text-xs font-black tracking-widest text-on-primary shadow-lg transition-transform active:scale-95 lg:w-auto lg:px-8"
           >
             <span>{slide.cta_text}</span>
             <ArrowRight size={16} />
@@ -146,7 +150,7 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
 
         {/* Dot indicators */}
         {slides.length > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2">
+          <div className="mt-6 flex items-center justify-center gap-2 lg:mt-0 lg:flex-col lg:gap-3">
             {slides.map((_, i) => (
               <button
                 key={i}
@@ -154,7 +158,7 @@ export function HeroSection({ initialSlides }: { initialSlides?: HeroCampaign[] 
                 onClick={() => goTo(i)}
                 className={`rounded-full transition-all duration-300 ${
                   i === current
-                    ? "h-1.5 w-6 bg-primary"
+                    ? "h-1.5 w-6 bg-primary lg:h-6 lg:w-1.5"
                     : "h-1.5 w-1.5 bg-on-surface/30"
                 }`}
               />

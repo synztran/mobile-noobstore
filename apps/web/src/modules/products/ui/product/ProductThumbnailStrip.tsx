@@ -2,7 +2,6 @@
 
 import clsx from "clsx";
 import Image from "@/components/ui/AdaptiveImage";
-import Icon from "@/components/ui/Icon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 

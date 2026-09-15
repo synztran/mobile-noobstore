@@ -1,7 +1,7 @@
 "use client";
 
 import type { WishlistItemResponse } from "@/modules/user/types";
-import Icon from "@/components/ui/Icon";
+import { Heart, ImageOff, X } from "lucide-react";
 import { useWishlist } from "@/modules/user/client/useWishlist";
 import { formatVND } from "@/lib/currency";
 import Image from "@/components/ui/AdaptiveImage";
@@ -40,10 +40,7 @@ export function WishlistPage({ initialItems = [] }: WishlistPageProps) {
 		return (
 			<div className="px-6 pt-8 pb-24 flex flex-col items-center justify-center text-center">
 				<div className="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center mb-4">
-					<Icon
-						name="favorite_border"
-						className="text-[32px] text-outline-variant"
-					/>
+					<Heart className="h-8 w-8 text-outline-variant" />
 				</div>
 				<h1 className="text-xl font-black text-on-surface">
 					Danh sách yêu thích
@@ -89,11 +86,7 @@ export function WishlistPage({ initialItems = [] }: WishlistPageProps) {
 										sizes="80px"
 									/>
 								) : (
-									<div className="w-full h-full flex items-center justify-center">
-										<Icon
-											name="image_not_supported"
-											className="text-[20px] text-outline-variant"
-										/>
+									<div className="w-full h-full flex items-center justify-center">											<ImageOff className="h-5 w-5 text-outline-variant" />
 									</div>
 								)}
 							</div>
@@ -129,11 +122,7 @@ export function WishlistPage({ initialItems = [] }: WishlistPageProps) {
 											)
 										}
 										disabled={busy}
-										className="h-8 px-3 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 disabled:opacity-60">
-										<Icon
-											name="close"
-											className="text-[14px]"
-										/>
+										className="h-8 px-3 rounded-lg bg-surface-container text-on-surface-variant text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1 disabled:opacity-60">																<X className="h-3.5 w-3.5" />
 										Xóa
 									</button>
 								</div>

@@ -19,7 +19,7 @@ import { useSearchParams } from "next/navigation";
 
 function ProductGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 8 }, (_, i) => (
         <ProductCardSkeleton key={i} />
       ))}
@@ -63,7 +63,10 @@ function EmptyProductState({ search }: { search?: string }) {
 
 function ProductGrid({ products }: { products: ShopProduct[] }) {
   return (
-    <div data-tour="grid" className="grid grid-cols-2 gap-4">
+    <div
+      data-tour="grid"
+      className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4"
+    >
       <AnimatePresence mode="popLayout">
         {products.map((product, index) => (
           <motion.div

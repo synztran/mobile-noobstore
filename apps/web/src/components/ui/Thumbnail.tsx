@@ -1,4 +1,4 @@
-import Icon from "@/components/ui/Icon";
+import { Package } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
 import React from "react";
 
@@ -27,7 +27,7 @@ export const Thumbnail = React.memo(function Thumbnail({
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
-          <Icon name="inventory_2" className="text-2xl text-outline-variant" />
+          <Package className="h-6 w-6 text-outline-variant" />
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@
 import type { FilterState } from "@/modules/products/ui/product/FilterOverlay";
 import { FilterOverlay } from "@/modules/products/ui/product/FilterOverlay";
 import { SearchExpandPanel } from "@/modules/products/ui/shop/SearchExpandPanel";
-import Icon from "@/components/ui/Icon";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { formatVND } from "@/lib/currency";
 import type { CategoryItem } from "@/modules/products/server/ssr";
 import { SORT_OPTIONS } from "@/constants/shop";
@@ -115,7 +115,7 @@ export function ShopControls({
           data-tour="search"
           className="flex items-center gap-2 rounded-md border border-outline-variant bg-white px-3 py-3.5"
         >
-          <Icon name="search" className="text-outline" />
+          <Search className="h-4 w-4 text-outline" />
           <input
             type="text"
             placeholder="Tìm kiếm sản phẩm..."
@@ -135,7 +135,7 @@ export function ShopControls({
               onClick={() => setSearch("")}
               className="flex items-center justify-center text-outline transition-colors hover:text-on-surface"
             >
-              <Icon name="close" className="text-base" />
+              <X className="h-4 w-4" />
             </button>
           ) : null}
         </div>
@@ -176,7 +176,7 @@ export function ShopControls({
                 : "bg-surface-container text-on-surface"
             }`}
           >
-            <Icon name="tune" className="text-base" />
+            <SlidersHorizontal className="h-4 w-4" />
             Lọc
           </button>
           <button

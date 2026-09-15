@@ -22,7 +22,7 @@ function FlashSaleCard({ product }: { product: FlashSaleProduct }) {
   return (
     <Link
         href={`/shop/${product.slug}`}
-        className="group w-[180px] flex-shrink-0 transition-transform active:scale-95"
+        className="group w-[180px] lg:w-[220px] flex-shrink-0 transition-transform active:scale-95"
       >
       <div className="relative mb-2.5 aspect-square overflow-hidden rounded-2xl bg-surface-container-high">
         {product.thumbnail ? (
@@ -82,7 +82,7 @@ function FlashSaleCard({ product }: { product: FlashSaleProduct }) {
 
 function FlashSaleTimerHeader({ endsAt }: { endsAt: string }) {
   return (
-    <div className="mb-6 flex items-center justify-between px-6">
+    <div className="mb-6 flex items-center justify-between px-6 lg:px-0">
       <div className="flex items-center gap-3">
         <h2 className="text-2xl font-bold uppercase tracking-tight">
           Flash Sale
@@ -108,7 +108,7 @@ export async function FlashSaleStrip() {
   return (
     <section className="bg-surface py-12">
       <FlashSaleTimerHeader endsAt={products[0].sale_ends_at} />
-      <div className="hide-scrollbar flex gap-4 overflow-x-auto px-6 pb-2">
+      <div className="hide-scrollbar flex gap-4 overflow-x-auto px-6 pb-2 lg:px-0">
         {products.map((product) => (
           <FlashSaleCard key={product.id} product={product} />
         ))}

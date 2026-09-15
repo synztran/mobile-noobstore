@@ -4,7 +4,11 @@ import { useHomeNoteworthy } from "@/lib/react-query/home/api/useHomeQueries";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { BundleProductCard, BundleProductCardSkeleton } from "./BundleProductCard";
+import { useDragScroll } from "@/hooks/useDragScroll";
+import {
+  BundleProductCard,
+  BundleProductCardSkeleton,
+} from "./BundleProductCard";
 const CATEGORIES = [
   { label: "MỚI NHẤT", slug: "" },
   { label: "BÀN PHÍM", slug: "keyboards" },
@@ -26,9 +30,10 @@ export function NoteworthySection() {
   const activeCategoryLabel =
     CATEGORIES.find((cat) => cat.slug === activeCategory)?.label ??
     "BỘ LỌC HIỆN TẠI";
+  const railRef = useDragScroll<HTMLDivElement>();
 
   return (
-    <section className="bg-surface">
+    <section className="bg-surface lg:rounded-3xl lg:p-8">
       <style>
         {`
           @keyframes float-subtle {
@@ -47,7 +52,7 @@ export function NoteworthySection() {
       </style>
 
       {/* Header */}
-      <div className="mb-2 flex items-baseline justify-between px-6">
+      <div className="mb-2 flex items-baseline justify-between px-6 lg:px-0">
         {isFirstLoad ? (
           <div className="h-7 w-44 animate-pulse rounded-lg bg-surface-container" />
         ) : (
@@ -85,7 +90,7 @@ export function NoteworthySection() {
         ) : (
           <Link
             href={shopHref}
-            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary transition-all hover:gap-2"
+            className="flex shrink-0 items-center gap-1 whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-primary transition-all hover:gap-2"
           >
             Xem tất cả
             <ArrowRight size={10} />
@@ -94,7 +99,7 @@ export function NoteworthySection() {
       </div>
 
       {/* Category Pills */}
-      <div className="hide-scrollbar mb-4 flex gap-2 overflow-x-auto px-6 pb-1">
+      <div className="hide-scrollbar mb-4 flex gap-2 overflow-x-auto px-6 pb-1 lg:px-0">
         {isFirstLoad
           ? [1, 2, 3, 4, 5].map((i) => (
               <div
@@ -118,17 +123,27 @@ export function NoteworthySection() {
       </div>
 
       {/* Product Carousel */}
-      <div className="hide-scrollbar flex gap-4 overflow-x-auto px-6 pb-2">
+      <div
+        ref={railRef}
+        className="hide-scrollbar flex cursor-grab gap-4 overflow-x-auto px-6 pb-2 active:cursor-grabbing lg:px-0"
+      >
         {isLoading
-          ? Array.from({ length: 3 }, (_, i) => <BundleProductCardSkeleton key={i} />)
+          ? Array.from({ length: 3 }, (_, i) => (
+              <BundleProductCardSkeleton key={i} />
+            ))
           : products.map((product, i) => (
               <div
                 key={product.id}
-                className="min-w-[180px] animate-[fadeSlideUp_0.5s_ease-out_forwards]"
+                className="min-w-[180px] animate-[fadeSlideUp_0.5s_ease-out_forwards] lg:min-w-[220px]"
                 style={{ animationDelay: `${i * 60}ms`, opacity: 0 }}
               >
-                <BundleProductCard product={product} showNewBadge showSoldOutOverlay showComponentTags />
-              </div>        
+                <BundleProductCard
+                  product={product}
+                  showNewBadge
+                  showSoldOutOverlay
+                  showComponentTags
+                />
+              </div>
             ))}
         {!isLoading && products.length === 0 && (
           <div className="w-full rounded-2xl border border-outline-variant bg-surface-container-low px-5 py-6 text-center">
@@ -150,7 +165,7 @@ export function NoteworthySection() {
         {!isLoading && products.length > 0 && (
           <Link
             href={shopHref}
-            className="group flex w-[120px] flex-shrink-0 flex-col items-center justify-center gap-3 rounded-2xl bg-surface-container-low transition-colors hover:bg-surface-container"
+            className="group flex w-[120px] flex-shrink-0 flex-col items-center justify-center gap-3 rounded-2xl bg-surface-container-low transition-colors hover:bg-surface-container lg:w-[160px]"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
               <ArrowRight size={18} className="text-primary" />

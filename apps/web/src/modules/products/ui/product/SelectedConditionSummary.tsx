@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { ConfiguratorGroup, ShopVariant } from "@/modules/products/types";
 import Image from "@/components/ui/AdaptiveImage";
-import Icon from "@/components/ui/Icon";
+import { CheckCircle2, Eye } from "lucide-react";
 
 // ─── Condition helper ─────────────────────────────────────────────────────────
 
@@ -124,7 +124,7 @@ export function SelectedConditionSummary({
   return (
     <section className="rounded-2xl border border-surface-container-high bg-surface-container-low p-3.5">
       <div className="mb-3 flex items-center gap-1.5">
-        <Icon name="check_circle" className="text-sm text-primary" />
+        <CheckCircle2 className="h-4 w-4 text-primary" />
         <h3 className="text-xs font-black uppercase leading-none tracking-wider text-on-surface">
           Tình trạng
         </h3>
@@ -160,10 +160,7 @@ export function SelectedConditionSummary({
                       className="h-full w-full object-cover"
                     />
                     <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                      <Icon
-                        name="visibility"
-                        className="text-base text-white"
-                      />
+                      <Eye className="h-4 w-4 text-white" />
                     </span>
                   </button>
                 ) : null}

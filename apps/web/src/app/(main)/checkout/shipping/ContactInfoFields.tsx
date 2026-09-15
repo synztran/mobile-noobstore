@@ -1,15 +1,14 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
 import clsx from "clsx";
-import { CheckCircle2, MapPinHouse, Phone } from "lucide-react";
+import { CheckCircle2, MapPinHouse, Phone, User } from "lucide-react";
 import { memo } from "react";
 
 type Field = {
   name: "fullName" | "apartment" | "phoneNumber";
   label: string;
   placeholder: string;
-  icon: string | React.ReactNode;
+  icon: React.ReactNode;
   type: string;
   required: boolean;
   colSpan: number;
@@ -20,7 +19,7 @@ const FIELDS: Field[] = [
     name: "fullName",
     label: "Họ và tên",
     placeholder: "Nguyễn Văn A",
-    icon: "person",
+    icon: <User size={20} />,
     type: "text",
     required: true,
     colSpan: 2,
@@ -100,24 +99,14 @@ function ContactInfoFields({
                   : "border-transparent focus-within:border-primary"
               )}
             >
-              {typeof field.icon === "string" ? (
-                <Icon
-                  name={String(field.icon)}
-                  className={clsx(
-                    "flex-shrink-0 text-xl transition-colors",
-                    invalid ? "text-error" : "text-primary"
-                  )}
-                />
-              ) : (
-                <div
-                  className={clsx(
-                    "flex-shrink-0 text-xl transition-colors",
-                    invalid ? "text-error" : "text-primary"
-                  )}
-                >
-                  {field.icon}
-                </div>
-              )}
+              <div
+                className={clsx(
+                  "flex-shrink-0 text-xl transition-colors",
+                  invalid ? "text-error" : "text-primary"
+                )}
+              >
+                {field.icon}
+              </div>
               <input
                 name={field.name}
                 value={values[field.name]}

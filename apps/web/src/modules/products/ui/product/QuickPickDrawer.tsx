@@ -4,7 +4,6 @@ import type { ShopProduct } from "@/modules/products/types";
 import { PreOrderBanner } from "@/modules/products/ui/product/PreOrderBanner";
 import { ProductConfigurator } from "@/modules/products/ui/product/ProductConfigurator";
 import { Thumbnail } from "@/components/ui/Thumbnail";
-import Icon from "@/components/ui/Icon";
 import { formatVND } from "@/lib/currency";
 import type { CategoryItem } from "@/modules/products/server/ssr";
 import { useQuickPickDrawer } from "@/modules/products/ui/product/useQuickPickDrawer";
@@ -15,7 +14,14 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeliveryAvailabilitySection } from "./DeliveryAvailabilitySection";
 import { SelectedConditionSummary } from "./SelectedConditionSummary";
-import { Images } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Clock,
+  Images,
+  Package,
+  ShoppingCart,
+} from "lucide-react";
 
 // Lazy: the full-screen viewer is only needed after a tap, keep it out of the
 // drawer's initial bundle.
@@ -64,14 +70,14 @@ function AddToCartButton({
     if (isPreOrder) {
       return (
         <>
-          <Icon name="schedule" className="text-xl" />
+          <Clock className="h-5 w-5" />
           ĐẶT TRƯỚC
         </>
       );
     }
     return (
       <>
-        <Icon name="add_shopping_cart" className="text-xl" />
+        <ShoppingCart className="h-5 w-5" />
         THÊM VÀO GIỎ
       </>
     );
@@ -248,10 +254,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Icon
-                    name="inventory_2"
-                    className="text-2xl text-outline-variant"
-                  />
+                  <Package className="h-6 w-6 text-outline-variant" />
                 </div>
               )}
             </div>
@@ -266,10 +269,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
                 {formatVND(p.from_price ?? p.min_price)}
               </p>
             </div>
-            <Icon
-              name="chevron_right"
-              className="flex-shrink-0 text-xl text-outline-variant"
-            />
+            <ChevronRight className="h-5 w-5 flex-shrink-0 text-outline-variant" />
           </button>
         ))}
     </div>
@@ -425,10 +425,7 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
                     onClick={drawer.backToList}
                     className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
                   >
-                    <Icon
-                      name="arrow_back"
-                      className="text-lg text-on-surface"
-                    />
+                    <ArrowLeft className="h-5 w-5 text-on-surface" />
                   </button>
                 )}
 

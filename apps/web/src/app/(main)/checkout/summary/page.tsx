@@ -17,14 +17,12 @@ import { useValidateStock, useSubmitOrder } from "@/lib/react-query/checkout/api
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
-import { useNavigationStore } from "@/store/navigation";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function SummaryPage() {
   const router = useRouter();
   const mounted = useIsMounted();
-  const { startNavigation } = useNavigationStore();
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [oosProductIds, setOosProductIds] = useState<Set<string>>(new Set());
@@ -276,7 +274,6 @@ export default function SummaryPage() {
       setPaymentType("full");
       setDepositPercentage(50);
       clearCart();
-      startNavigation();
       router.push(`/checkout/checking/${result.order_id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Lỗi kết nối, vui lòng thử lại");

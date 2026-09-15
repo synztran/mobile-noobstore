@@ -50,10 +50,10 @@ export function ProductInfoTabs({
   const estimates = shippingData?.estimates ?? [];
 
   return (
-    <section className="px-4">
+    <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
       {/* Sticky tab bar */}
       <LayoutGroup>
-        <div className="sticky top-[72px] z-10 border-b border-outline-variant/20 bg-surface">
+        <div className="sticky top-[72px] z-10 border-b border-outline-variant/20 bg-surface md:static">
           <div className="flex justify-between gap-0">
             {TABS.map((tab) => (
               <button

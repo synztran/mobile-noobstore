@@ -2,7 +2,7 @@
 
 import type { ShopProduct } from "@/modules/products/types";
 import { ProductRail } from "@/modules/products/ui/product/ProductRail";
-import { Icon } from "@/components/ui/Icon";
+import { History } from "lucide-react";
 import { useRecentlyViewed } from "@/modules/products/client/useRecentlyViewed";
 import { MAX_DISPLAYED } from "@/lib/recently-viewed";
 import { useRecentlyViewedProducts } from "@/modules/products/client/queries";
@@ -49,7 +49,7 @@ export function RecentlyViewedRail() {
     <div data-tour="recent">
       <ProductRail
         title="Đã xem gần đây"
-        icon={<Icon name="history" className="text-primary" />}
+        icon={<History className="h-5 w-5 text-primary" />}
         products={displayed}
         cardWidth="w-[140px]"
       />

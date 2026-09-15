@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MobileWarningProps {
@@ -34,7 +34,7 @@ const MobileWarning = ({
 						type: "spring",
 						bounce: 0.3,
 					}}>
-					<Icon name="smartphone" className="text-white text-4xl" />
+					<Smartphone className="h-10 w-10 text-white" />
 				</motion.div>
 
 				{/* Title */}

@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { ArrowLeft, History, MoreHorizontal } from "lucide-react";
 import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import {
   usePointsBalance,
@@ -93,7 +93,7 @@ function PointsPage() {
             href="/profile"
             className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
           >
-            <Icon name="arrow_back" className="text-lg text-on-surface" />
+            <ArrowLeft className="h-[18px] w-[18px] text-on-surface" />
           </Link>
           <div>
             <h1 className="text-xl font-black tracking-tight text-on-surface">
@@ -118,7 +118,7 @@ function PointsPage() {
           href="/profile"
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
         >
-          <Icon name="arrow_back" className="text-lg text-on-surface" />
+          <ArrowLeft className="h-[18px] w-[18px] text-on-surface" />
         </Link>
         <div>
           <h1 className="text-xl font-black tracking-tight text-on-surface">
@@ -147,7 +147,7 @@ function PointsPage() {
       {transactions.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-4 py-20">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
-            <Icon name="history" className="text-2xl text-outline-variant" />
+            <History className="h-6 w-6 text-outline-variant" />
           </div>
           <p className="text-center text-sm font-semibold text-on-surface-variant">
             Bạn chưa có giao dịch điểm nào
@@ -200,7 +200,7 @@ function PointsPage() {
 
           {hasNextPage && !isFetchingNextPage ? (
             <div className="flex items-center justify-center py-2 text-xs text-on-surface-variant">
-              <Icon name="more_horiz" className="mr-2 text-sm" />
+              <MoreHorizontal className="mr-2 h-3.5 w-3.5" />
               Đang tải thêm lịch sử...
             </div>
           ) : null}

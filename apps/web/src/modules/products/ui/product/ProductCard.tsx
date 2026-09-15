@@ -1,8 +1,7 @@
 "use client";
 
 import type { ShopProduct } from "@/modules/products/types";
-import Icon from "@/components/ui/Icon";
-import { ShoppingCart } from "lucide-react";
+import { Package, ShoppingCart } from "lucide-react";
 import WishlistButton from "@/modules/user/ui/wishlist/WishlistButton";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
@@ -173,18 +172,15 @@ export const ProductCard = memo(function ProductCard({
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   onLoad={() => setImageLoading(false)}
                 />
-                {hasSwatches && imageLoading && (
+                {/* {hasSwatches && imageLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-surface-container/80">
                     <span className="loading loading-spinner loading-sm text-primary" />
                   </div>
-                )}
+                )} */}
               </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <Icon
-                  name="inventory_2"
-                  className="text-5xl text-outline-variant"
-                />
+                <Package className="h-12 w-12 text-outline-variant" />
               </div>
             )}
 

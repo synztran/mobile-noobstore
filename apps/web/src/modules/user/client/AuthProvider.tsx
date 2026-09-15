@@ -16,9 +16,16 @@ import {
 
 type AppUser = Tables<"users">;
 
+/**
+ * `.noobstore.xyz` in production so sessions survive the www ↔ m. device
+ * redirect (see modules/desktop); host-scoped when unset (localhost dev).
+ */
+const COOKIE_DOMAIN = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined;
+
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key"
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key",
+  { cookieOptions: { domain: COOKIE_DOMAIN } }
 );
 
 function clearUserCookie() {

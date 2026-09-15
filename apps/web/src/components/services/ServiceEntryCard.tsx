@@ -6,6 +6,8 @@ import type {
 } from "@/app/api/services/booking-config/route";
 import { formatVND } from "@/lib/currency";
 import clsx from "clsx";
+import { Trash2 } from "lucide-react";
+import { motion } from "motion/react";
 import { computeEntryPreviewPrice } from "./bookingHelpers";
 import { CleaningEntryConfig } from "./CleaningEntryConfig";
 import { KeycapStemEntryConfig } from "./KeycapStemEntryConfig";
@@ -14,7 +16,6 @@ import { RepairEntryConfig } from "./RepairEntryConfig";
 import { StabilizerEntryConfig } from "./StabilizerEntryConfig";
 import { SwitchLubeEntryConfig } from "./SwitchLubeEntryConfig";
 import type { ServiceEntryDraft, ServiceSectionCardProps } from "./types";
-import { Trash } from "lucide-react";
 
 // ─── ServiceEntryHeader ───────────────────────────────────────────────────────
 
@@ -33,9 +34,10 @@ function ServiceEntryHeader({
       <button
         type="button"
         onClick={onRemove}
-        className="flex h-full items-center justify-center rounded-md bg-error/10 p-1 font-bold text-error transition-colors hover:bg-error/20"
+        aria-label="Xoá dịch vụ này"
+        className="btn btn-ghost btn-xs rounded-md text-error hover:bg-error/10 hover:text-error"
       >
-        <Trash size={16} />
+        <Trash2 className="h-4 w-4" />
       </button>
     </div>
   );
@@ -47,12 +49,15 @@ function ServiceEntryOptions({
   service,
   entry,
   onSelectOptionValue,
+  isQuickMode,
 }: {
   service: BookingService;
   entry: ServiceEntryDraft;
   onSelectOptionValue: ServiceSectionCardProps["onSelectOptionValue"];
+  isQuickMode?: boolean;
 }) {
   const options = service.options.filter((opt) => {
+    // Filter out service-specific hidden options
     if (service.id === "svc-switch-lube" && opt.label === "Loại grease")
       return false;
     if (
@@ -60,6 +65,10 @@ function ServiceEntryOptions({
       (opt.label === "Stabilizer Brand" || opt.label === "Lube Type")
     )
       return false;
+
+    // In quick mode, only show required options
+    if (isQuickMode && !opt.is_required) return false;
+
     return true;
   });
 
@@ -80,23 +89,24 @@ function ServiceEntryOptions({
               {option.values.map((value) => {
                 const selected = selectedValueId === value.id;
                 return (
-                  <button
+                  <motion.button
                     key={value.id}
                     type="button"
+                    whileTap={{ scale: 0.94 }}
                     onClick={() =>
                       onSelectOptionValue(
                         service,
                         entry.entryId,
                         option.id,
                         value.id,
-                        option.is_required
+                        option.is_required,
                       )
                     }
                     className={clsx(
-                      "rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold transition-colors",
+                      "btn btn-xs h-auto rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold",
                       selected
-                        ? "border-primary bg-primary text-on-primary"
-                        : "border-outline-variant/30 bg-surface-container text-on-surface"
+                        ? "border-primary bg-primary text-primary-content"
+                        : "border-outline-variant/30 bg-surface-container text-on-surface",
                     )}
                   >
                     {value.label}
@@ -106,7 +116,7 @@ function ServiceEntryOptions({
                         {formatVND(value.price_adjustment)}
                       </span>
                     ) : null}
-                  </button>
+                  </motion.button>
                 );
               })}
             </div>
@@ -129,6 +139,7 @@ interface ServiceEntryCardProps {
   onUpdateEntry: ServiceSectionCardProps["onUpdateEntry"];
   onSelectOptionValue: ServiceSectionCardProps["onSelectOptionValue"];
   onChangeLineNote: ServiceSectionCardProps["onChangeLineNote"];
+  isQuickMode?: boolean;
 }
 
 export function ServiceEntryCard({
@@ -141,6 +152,7 @@ export function ServiceEntryCard({
   onUpdateEntry,
   onSelectOptionValue,
   onChangeLineNote,
+  isQuickMode,
 }: ServiceEntryCardProps) {
   const previewPrice = computeEntryPreviewPrice(entry, service);
 
@@ -232,6 +244,7 @@ export function ServiceEntryCard({
         service={service}
         entry={entry}
         onSelectOptionValue={onSelectOptionValue}
+        isQuickMode={isQuickMode}
       />
 
       {error ? <p className="text-xs font-bold text-error">{error}</p> : null}
@@ -243,15 +256,18 @@ export function ServiceEntryCard({
         </p>
       ) : null}
 
-      <textarea
-        value={entry.lineNote}
-        onChange={(e) =>
-          onChangeLineNote(service.id, entry.entryId, e.target.value)
-        }
-        placeholder="Ghi chú riêng cho mục này (tuỳ chọn)"
-        rows={2}
-        className="w-full resize-none rounded-xl border border-outline-variant/20 bg-surface-container px-3 py-2.5 text-xs text-on-surface outline-none placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary/30"
-      />
+      {/* Hide notes textarea in quick mode */}
+      {!isQuickMode && (
+        <textarea
+          value={entry.lineNote}
+          onChange={(e) =>
+            onChangeLineNote(service.id, entry.entryId, e.target.value)
+          }
+          placeholder="Ghi chú riêng cho mục này (tuỳ chọn)"
+          rows={2}
+          className="textarea textarea-bordered w-full resize-none rounded-xl bg-surface-container text-xs text-on-surface"
+        />
+      )}
     </div>
   );
 }

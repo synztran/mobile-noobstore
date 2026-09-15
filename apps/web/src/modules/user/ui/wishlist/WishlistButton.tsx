@@ -1,6 +1,6 @@
 "use client";
 
-import Icon from "@/components/ui/Icon";
+import { Heart } from "lucide-react";
 import { useWishlist, type ProductMeta } from "@/modules/user/client/useWishlist";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import clsx from "clsx";
@@ -73,10 +73,10 @@ export const WishlistButton = memo(function WishlistButton({
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 400, damping: 15 }}
         >
-          <Icon
-            name={wished ? "favorite" : "favorite_border"}
-            className={`text-xl ${wished ? "text-green-600" : "fill-none"}`}
-            fill={wished ? "currentColor" : "transparent"}
+          <Heart
+            className={`h-5 w-5 ${
+              wished ? "fill-current text-green-600" : "text-on-surface-variant"
+            }`}
           />
         </motion.div>
       )}

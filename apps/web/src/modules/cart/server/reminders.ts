@@ -41,13 +41,17 @@ export async function sendStaleCartReminder(
 
 		if (existingNotif?.length) return;
 
-		const { data: itemCount } = await supabase
+		const { count } = await supabase
 			.from("cart_items")
 			.select("id", { count: "exact", head: true })
 			.eq("cart_id", cartId);
 
+		// Skip empty carts — a "you have items in your cart" reminder for
+		// 0 products is noise (`count` null = query failure, also skip).
+		if (!count || count < 1) return;
+
 		const title = "Bạn còn hàng trong giỏ!";
-		const body = `Bạn có ${itemCount ?? 0} sản phẩm trong giỏ hàng. Hoàn tất đơn hàng ngay!`;
+		const body = `Bạn có ${count} sản phẩm trong giỏ hàng. Hoàn tất đơn hàng ngay!`;
 
 		const { data: inserted } = await supabase
 			.from("user_notifications")
