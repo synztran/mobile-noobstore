@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Search, ShoppingCart, Bell, Menu } from "lucide-react";
+import { Search, ShoppingCart, Bell, Menu, ArrowLeft } from "lucide-react";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { useNotifications } from "@/lib/react-query/notification/api/useNotificationQueries";
@@ -58,16 +58,31 @@ export function DesktopTopBar({ sidebarWidth }: DesktopTopBarProps) {
   const searchHiddenPaths = ["/checkout", "/gacha", "/gacha-mega", "/shop"];
   const hideSearch = searchHiddenPaths.some((p) => pathname.startsWith(p));
 
+  // Info/legal pages get a back button to the left of the search input.
+  const INFO_PAGE_PATHS = ["/policy", "/terms", "/delivery-terms"];
+  const showBack = INFO_PAGE_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  )
+
   return (
     <header
       className="fixed right-0 top-0 z-30 flex h-16 items-center gap-4 border-b border-on-surface/10 bg-surface px-6"
       style={{ left: sidebarWidth }}
     >
-      {/* Left balance spacer — the search centers on the header, the action
-          buttons are pinned flush to the right edge. */}
-      {/* <div className="flex-1" /> */}
+      {/* Left — back button (or blank balance spacer) */}
+      <div className="flex flex-1 items-center justify-start">
+        {showBack && (
+          <button
+            onClick={() => router.push("/")}
+            aria-label="Quay lại"
+            className="rounded-lg p-2.5 text-on-surface-variant transition-colors hover:bg-on-surface/5"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+      </div>
 
-      {/* Center: Search */}
+      {/* Center: Search — one equal flex slot on each side keeps it centered */}
       {!hideSearch && (
         <form
           onSubmit={handleSearch}

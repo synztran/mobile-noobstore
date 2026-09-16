@@ -1,4 +1,5 @@
 import { TopNav } from "@/components/layout/TopNav";
+import { LegalPageShell } from "@/components/legal/LegalPageShell";
 import { MAIL_DOMAIN } from "@/constants";
 import type { Metadata } from "next";
 
@@ -10,7 +11,7 @@ export default function PolicyPage() {
   return (
     <>
       <TopNav showBack backHref="/" />
-      <main className="space-y-10 px-6 py-6">
+      <LegalPageShell active="policy">
         <section id="policy">
           <p className="mb-6 text-2xl font-black tracking-tight">
             Chính sách bảo mật
@@ -79,7 +80,7 @@ export default function PolicyPage() {
             </div>
           </div>
         </section>
-      </main>
+      </LegalPageShell>
     </>
   );
 }

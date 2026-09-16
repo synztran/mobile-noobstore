@@ -76,7 +76,7 @@ export function TopNav({
   return (
     <header
       className={clsx(
-        "top-nav-pad fixed top-0 z-[51] w-full bg-surface",
+        "top-nav-pad fixed top-0 z-[51] w-full bg-surface md:hidden",
         className
       )}
     >

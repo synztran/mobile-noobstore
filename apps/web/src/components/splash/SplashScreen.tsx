@@ -7,6 +7,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { classifyRouteTransition } from "./route-transition";
+
 interface SplashScreenProps {
   /** Floor time on screen, in ms. The splash never hides before this, even
       when everything is already cached. Default 1200. */
@@ -97,19 +99,25 @@ export function SplashScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 1b) Replay on every route change: this instance persists in a layout (no
-  //     remount per navigation), so a fresh boot starts each time the page
-  //     below swaps and its data begins loading. Navigating INTO the arcade
-  //     cancels instead — its own loading screen takes over.
+  // 1b) Replay on **isolated** route changes only: this instance persists in a
+  //     layout (no remount per navigation), so a fresh boot starts each time
+  //     the whole page below swaps and its data begins loading. Navigating
+  //     INTO the arcade cancels instead — its own loading screen takes over.
+  //     Nested navigations (`/shop` -> `/shop/{slug}`, `/profile` ->
+  //     `/profile/orders`) keep the parent page mounted and swap only the
+  //     child, so they are served by `PageTransitionLoader` instead — no boot
+  //     replay, and no boot-query gate to wait on.
   useEffect(() => {
-    const first = prevPathnameRef.current === null;
+    const prev = prevPathnameRef.current;
     prevPathnameRef.current = pathname;
-    if (first) return;
+    // First mount is a cold load, already handled by effect 1 — not a swap.
+    if (prev === null) return;
     if (pathname.startsWith("/gacha-mega")) {
       setSkip(true);
       setActive(false);
       return;
     }
+    if (classifyRouteTransition(prev, pathname) !== "isolated") return;
     startedAtRef.current = Date.now();
     doneRef.current = false;
     setDone(false);

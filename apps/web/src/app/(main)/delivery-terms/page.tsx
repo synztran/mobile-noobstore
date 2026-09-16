@@ -1,4 +1,5 @@
 import { TopNav } from "@/components/layout/TopNav";
+import { LegalPageShell } from "@/components/legal/LegalPageShell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export default function DeliveryTermsPage() {
   return (
     <>
       <TopNav showBack backHref="/" />
-      <main className="px-6 py-6">
+      <LegalPageShell active="delivery-terms">
         <section id="delivery-terms">
           <p className="mb-6 text-2xl font-black tracking-tight">
             Chính sách giao hàng
@@ -174,7 +175,7 @@ export default function DeliveryTermsPage() {
             </div>
           </div>
         </section>
-      </main>
+      </LegalPageShell>
     </>
   );
 }

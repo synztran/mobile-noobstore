@@ -6,6 +6,7 @@ import { MainContent } from "@/components/layout/MainContent";
 import { TopNavGate } from "@/components/layout/TopNavGate";
 import { MainLayoutDynamic } from "@/components/layout/MainLayoutDynamic";
 import { SplashScreen } from "@/components/splash/SplashScreen";
+import { PageTransitionLoader } from "@/components/splash/PageTransitionLoader";
 import { DesktopShell } from "@/modules/desktop/ui/shell/DesktopShell";
 import { DesktopCartDrawerMount } from "@/modules/desktop/ui/cart/DesktopCartDrawerMount";
 import type { DeviceClass } from "@/modules/desktop/types";
@@ -23,15 +24,24 @@ export default async function MainLayout({
     <>
       <CartHydrator />
 
+      {/* Two loaders by transition type: SplashScreen replays only on
+          isolated navigations (whole page swaps), while PageTransitionLoader
+          wraps the view content and covers nested ones (only the child swaps)
+          with a blur plus a click shield over the chrome. Both skip
+          /gacha-mega, which renders its own loading screen. */}
       {isDesktop ? (
         <SplashScreen forceShow>
-          <DesktopShell>{children}</DesktopShell>
+          <DesktopShell>
+            <PageTransitionLoader>{children}</PageTransitionLoader>
+          </DesktopShell>
         </SplashScreen>
       ) : (
         <>
           <TopNavGate />
           <SplashScreen forceShow>
-            <MainContent>{children}</MainContent>
+            <MainContent>
+              <PageTransitionLoader>{children}</PageTransitionLoader>
+            </MainContent>
           </SplashScreen>
           <BottomNav />
         </>

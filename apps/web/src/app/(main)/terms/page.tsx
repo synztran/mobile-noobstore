@@ -1,4 +1,5 @@
 import { TopNav } from "@/components/layout/TopNav";
+import { LegalPageShell } from "@/components/legal/LegalPageShell";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,7 +10,7 @@ export default function TermsPage() {
   return (
     <>
       <TopNav showBack backHref="/" />
-      <main className="px-6 py-6">
+      <LegalPageShell active="terms">
         <section id="terms">
           <p className="mb-6 text-2xl font-black tracking-tight">
             Điều khoản & Điều kiện
@@ -68,7 +69,7 @@ export default function TermsPage() {
             </div>
           </div>
         </section>
-      </main>
+      </LegalPageShell>
     </>
   );
 }
