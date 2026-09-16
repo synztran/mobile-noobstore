@@ -115,7 +115,7 @@ function CartContent({
         );
       })}
 
-      <div className="absolute bottom-2 left-1/2 flex w-[90%] -translate-x-1/2 items-center justify-center gap-2 rounded-2xl bg-secondary/10 p-2">
+      <div className="relative mx-auto !mt-4 flex w-[90%] items-center justify-center gap-2 rounded-2xl bg-secondary/10 p-2">
         <Leaf className="h-3.5 w-3.5 text-secondary md:h-4 md:w-4" />
         <p className="text-[10px] font-bold uppercase tracking-wider text-secondary md:text-xs">
           Đơn hàng được đóng gói thân thiện với môi trường.
