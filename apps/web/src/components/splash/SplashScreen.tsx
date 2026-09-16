@@ -160,18 +160,29 @@ export function SplashScreen({
     return cache.subscribe(schedule);
   }, [active, queryClient]);
 
-  // 3) Finish at 100% only when the core data settled, the floor elapsed, and
-  //    the idle state held for a settle window (so a brand-new query that
-  //    hasn't started yet postpones completion).
+  // 3) Finish at 100% only when the core data settled and the floor elapsed.
+  //    Self-rescheduling: when data lands before minDuration (the common
+  //    fast-load case) the effect must re-check at the earliest completion
+  //    moment instead of silently bailing — otherwise the splash only hides
+  //    via the fail-safe. A `bootSettled` dip mid-window clears the timer, so
+  //    a brand-new query that hasn't started yet still postpones completion.
   useEffect(() => {
-    if (doneRef.current || !active || gone || !bootSettled) return;
-    const elapsed = Date.now() - (startedAtRef.current ?? Date.now());
-    if (elapsed < minDuration) return;
-    const t = setTimeout(() => {
-      if (doneRef.current || gone) return;
+    if (doneRef.current || !active || gone) return;
+    let completed = false;
+    const finish = () => {
+      if (completed || doneRef.current || gone) return;
+      if (!bootSettled) return;
+      const elapsed = Date.now() - (startedAtRef.current ?? Date.now());
+      if (elapsed < minDuration + SETTLE_MS) return;
+      completed = true;
       doneRef.current = true;
       setDone(true);
-    }, SETTLE_MS);
+    };
+    const remaining = Math.max(
+      0,
+      minDuration + SETTLE_MS - (Date.now() - (startedAtRef.current ?? Date.now()))
+    );
+    const t = setTimeout(finish, remaining);
     return () => clearTimeout(t);
   }, [bootSettled, minDuration, active, gone]);
 
