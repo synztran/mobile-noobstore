@@ -694,7 +694,7 @@ export async function POST(req: NextRequest) {
     // ── Persist deposit/cod payment fields ─────────────────────────────
     if (
       body.payment_type === "deposit_cod" &&
-      shippingMethodId !== DELIVERY_SERVICE_ID
+      (hasPreOrder || shippingMethodId !== DELIVERY_SERVICE_ID)
     ) {
       const pct = Math.min(
         80,

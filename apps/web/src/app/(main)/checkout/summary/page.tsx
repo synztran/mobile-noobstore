@@ -94,10 +94,10 @@ export default function SummaryPage() {
   }, [subtotal, paymentType, setPaymentType]);
 
   useEffect(() => {
-    if (isDeliveryService && paymentType === "deposit_cod") {
+    if (isDeliveryService && !hasPreOrder && paymentType === "deposit_cod") {
       setPaymentType("full");
     }
-  }, [isDeliveryService, paymentType, setPaymentType]);
+  }, [isDeliveryService, hasPreOrder, paymentType, setPaymentType]);
 
   useEffect(() => {
     const minPct = hasPreOrder ? 20 : 10;
@@ -331,7 +331,7 @@ export default function SummaryPage() {
         subtotal={subtotal}
         orderTotal={orderTotal}
         disabledReason={
-          isDeliveryService
+          isDeliveryService && !hasPreOrder
             ? "Đặt cọc không hỗ trợ đơn hàng giao qua đơn vị vận chuyển."
             : undefined
         }
