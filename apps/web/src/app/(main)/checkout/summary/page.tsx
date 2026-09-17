@@ -13,7 +13,10 @@ import VoucherComponent from "@/components/voucher/VoucherComponent";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { cartItemToGA, trackRemoveFromCart } from "@/lib/analytics";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
-import { useValidateStock, useSubmitOrder } from "@/lib/react-query/checkout/api/useCheckoutMutations";
+import {
+  useValidateStock,
+  useSubmitOrder,
+} from "@/lib/react-query/checkout/api/useCheckoutMutations";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
@@ -82,7 +85,7 @@ export default function SummaryPage() {
     });
   }, [rawItems, mounted]);
 
-  const MIN_ORDER_SUBTOTAL = 1_000_000;
+  const MIN_ORDER_SUBTOTAL = 800_000;
 
   useEffect(() => {
     if (subtotal < MIN_ORDER_SUBTOTAL && paymentType === "deposit_cod") {
@@ -276,7 +279,9 @@ export default function SummaryPage() {
       clearCart();
       router.push(`/checkout/checking/${result.order_id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Lỗi kết nối, vui lòng thử lại");
+      toast.error(
+        err instanceof Error ? err.message : "Lỗi kết nối, vui lòng thử lại"
+      );
       setSubmitting(false);
     }
   };

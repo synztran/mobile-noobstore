@@ -15,7 +15,7 @@ interface Props {
   disabledReason?: string;
 }
 
-const MIN_ORDER_SUBTOTAL = 1_000_000;
+const MIN_ORDER_SUBTOTAL = 800_000;
 
 export const DepositPaymentSection = memo(function DepositPaymentSection({
   paymentType,
