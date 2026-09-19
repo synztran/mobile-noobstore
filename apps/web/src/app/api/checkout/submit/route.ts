@@ -698,7 +698,7 @@ export async function POST(req: NextRequest) {
     ) {
       const pct = Math.min(
         80,
-        Math.max(10, Math.round(body.deposit_percentage ?? 50))
+        Math.max(hasPreOrder ? 20 : 1, Math.round(body.deposit_percentage ?? 50))
       );
       const depositBase = subtotal;
       const depositAmt = Math.round((depositBase * pct) / 100);
@@ -832,15 +832,17 @@ export async function POST(req: NextRequest) {
 
         if (activeEvent) {
           await Promise.all([
+            // process_mission_progress is service-role only (migration 131).
             triggerMissionServer(
-              supabase,
+              admin,
               user.id,
               activeEvent.id,
               "spend_amount",
               { amount: recalculatedTotal, order_status: "pending" }
             ),
+            // process_mission_progress is service-role only (migration 131).
             triggerMissionServer(
-              supabase,
+              admin,
               user.id,
               activeEvent.id,
               "order_count",

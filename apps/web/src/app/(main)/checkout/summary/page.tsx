@@ -100,7 +100,7 @@ export default function SummaryPage() {
   }, [isDeliveryService, hasPreOrder, paymentType, setPaymentType]);
 
   useEffect(() => {
-    const minPct = hasPreOrder ? 20 : 10;
+    const minPct = hasPreOrder ? 20 : 1;
     if (depositPercentage < minPct) {
       setDepositPercentage(minPct);
     }

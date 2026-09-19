@@ -27,7 +27,7 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
   orderTotal,
   disabledReason,
 }: Props) {
-  const minPercentage = hasPreOrder ? 20 : 10;
+  const minPercentage = hasPreOrder ? 20 : 1;
   const isDisabled = subtotal < MIN_ORDER_SUBTOTAL || Boolean(disabledReason);
 
   // Local draft while dragging so the store (and the whole summary page) only
@@ -40,6 +40,12 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
 
   const liveDeposit = Math.round((subtotal * draftPct) / 100);
   const liveCod = Math.max(0, orderTotal - liveDeposit);
+
+  const snapDepositPct = (raw: number) => {
+    if (raw <= 1) return 1;
+    const snapped = Math.round(raw / 5) * 5;
+    return Math.min(80, Math.max(minPercentage, snapped));
+  };
 
   const commitPercentage = () => setDepositPercentage(draftPct);
 
@@ -119,9 +125,9 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
             type="range"
             min={minPercentage}
             max={80}
-            step={5}
+            step={1}
             value={draftPct}
-            onChange={(e) => setDraftPct(Number(e.target.value))}
+            onChange={(e) => setDraftPct(snapDepositPct(Number(e.target.value)))}
             onPointerUp={commitPercentage}
             onKeyUp={commitPercentage}
             onBlur={commitPercentage}
