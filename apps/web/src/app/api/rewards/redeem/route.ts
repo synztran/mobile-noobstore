@@ -93,8 +93,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Spend points
+    // spend_points / earn_points are service-role only (migration 131): both
+    // are SECURITY DEFINER and take p_user_id as a parameter, so they must not
+    // run as the caller.
     const result = await spendPoints(
-      supabase,
+      admin,
       user.id,
       pointsCost,
       "voucher_exchange",
@@ -162,7 +165,7 @@ export async function POST(req: NextRequest) {
 
       // Credit points back to user (exchange bonus)
       const earnResult = await earnPointsFixed(
-        supabase,
+        admin,
         user.id,
         "voucher_exchange",
         pointAmount,

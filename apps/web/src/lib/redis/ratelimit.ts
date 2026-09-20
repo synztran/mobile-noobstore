@@ -1,12 +1,41 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { getRedis } from "./client";
 
+/**
+ * Best-effort client IP for rate-limit keys.
+ *
+ * Header preference matters, and it is not arbitrary:
+ *
+ * - `x-vercel-forwarded-for` is set by Vercel and is NOT overridable by a
+ *   proxy placed in front of the deployment, so it is the most trustworthy
+ *   source when present.
+ * - `x-forwarded-for` is also written by Vercel (which overwrites any
+ *   client-supplied value, specifically to prevent IP spoofing), but Vercel
+ *   documents that it CAN be overwritten by an additional proxy sitting in
+ *   front of Vercel. Kept as a fallback for non-Vercel/local environments.
+ * - `x-real-ip` mirrors `x-forwarded-for`.
+ *
+ * See https://vercel.com/docs/headers/request-headers
+ *
+ * Each value is split on "," and reduced to its first non-empty entry, and an
+ * empty header must never win: falling through to "" would put every such
+ * request in one shared bucket, so one caller could exhaust the limit for
+ * everyone.
+ */
 function getIp(request: Request): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "127.0.0.1"
-  );
+  const candidates = [
+    request.headers.get("x-vercel-forwarded-for"),
+    request.headers.get("x-forwarded-for"),
+    request.headers.get("x-real-ip"),
+  ];
+
+  for (const header of candidates) {
+    if (!header) continue;
+    const first = header.split(",")[0]?.trim();
+    if (first) return first;
+  }
+
+  return "127.0.0.1";
 }
 
 export function getRateLimitKey(request: Request, userId?: string): string {

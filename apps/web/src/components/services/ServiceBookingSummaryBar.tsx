@@ -126,7 +126,7 @@ export function ServiceBookingSummaryBar({
                             <span className="min-w-0 truncate text-xs font-bold text-on-surface">
                               {item.serviceName}
                             </span>
-                            <span className="text-[10px] font-normal text-on-surface-variant">
+                            <span className="text-xs font-normal text-on-surface-variant">
                               {item.handlingDays} ngày
                             </span>
                           </div>
@@ -168,8 +168,8 @@ export function ServiceBookingSummaryBar({
         whileTap={isEmpty ? undefined : { scale: 0.98 }}
         className={
           isEmpty
-            ? "btn btn-block rounded-full border border-outline-variant/30 bg-surface-container text-[11px] font-black uppercase tracking-widest text-on-surface-variant"
-            : "btn btn-primary btn-block rounded-full bg-gradient-to-r from-primary to-secondary text-[11px] font-black uppercase tracking-widest text-primary-content shadow-lg shadow-primary/20"
+            ? "btn btn-block rounded-full border border-outline-variant/30 bg-surface-container text-xs font-bold tracking-[0.08em] text-on-surface-variant uppercase"
+            : "btn btn-primary btn-block rounded-full text-xs font-bold tracking-[0.08em] uppercase"
         }
       >
         {isSubmitting ? (

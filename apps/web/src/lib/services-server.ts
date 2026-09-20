@@ -1,3 +1,10 @@
+// Server-only boundary: this module reads Supabase and is imported by API
+// routes and by the services page (a server component). AGENTS.md requires
+// server-logic files to carry this guard; every current importer is a value
+// import from server code, and client components only ever import its types
+// (`import type`), which are erased at compile time.
+import "server-only";
+
 import {
 	SERVICE_PAGE_CLEANING_SECTION_IMAGE,
 	SERVICE_PAGE_KEYCAP_SECTION_IMAGE,

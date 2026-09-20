@@ -26,6 +26,19 @@ export interface ValidateStockResponse {
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+
+    // The only caller is /checkout/summary, which is auth-gated, so align the
+    // API with the page: an anonymous caller should not be able to probe exact
+    // stock levels by iterating product ids.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { items }: { items: ValidateStockRequestItem[] } = await req.json();
 
     if (!items?.length) {
@@ -35,7 +48,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const supabase = await createClient();
     const oos_items: OosItem[] = [];
 
     // Collect all variant IDs we need to check:

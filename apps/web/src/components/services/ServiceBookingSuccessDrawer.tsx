@@ -69,14 +69,14 @@ export function ServiceBookingSuccessDrawer({
               <button
                 type="button"
                 onClick={onBookMore}
-                className="btn btn-primary btn-block rounded-full bg-gradient-to-r from-primary to-secondary text-[11px] font-black uppercase tracking-widest text-primary-content shadow-lg shadow-primary/20"
+                className="btn btn-primary btn-block rounded-full text-xs font-bold tracking-[0.08em] uppercase"
               >
                 Đặt thêm dịch vụ
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="btn btn-block rounded-full border border-outline-variant/30 bg-surface-container text-[11px] font-black uppercase tracking-widest text-on-surface"
+                className="btn btn-block rounded-full border border-outline-variant/30 bg-surface-container text-xs font-bold tracking-[0.08em] text-on-surface uppercase"
               >
                 Đóng
               </button>

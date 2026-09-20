@@ -36,7 +36,7 @@ export function StabilizerEntryConfig({
 		<div className="space-y-3">
 			{/* Stabilizer type: clip-in / screw-in */}
 			<div className="space-y-1.5">
-				<p className="text-[11px] font-bold text-on-surface-variant">
+				<p className="text-xs font-bold text-on-surface-variant">
 					Loại stabilizer <span className="text-error">*</span>
 				</p>
 				<div className="flex gap-2">
@@ -55,8 +55,8 @@ export function StabilizerEntryConfig({
 									? "border-primary bg-primary text-on-primary"
 									: "border-outline-variant/30 bg-surface-container text-on-surface",
 							)}>
-							<p className="text-[11px] font-black">{label}</p>
-							<p className="text-[10px] opacity-75 mt-0.5">
+							<p className="text-xs font-black">{label}</p>
+							<p className="text-xs opacity-75 mt-0.5">
 								{detail}
 							</p>
 						</button>
@@ -66,7 +66,7 @@ export function StabilizerEntryConfig({
 
 			{/* Bundle / Individual mode */}
 			<div className="space-y-2">
-				<p className="text-[11px] font-bold text-on-surface-variant">
+				<p className="text-xs font-bold text-on-surface-variant">
 					Bộ stabilizer <span className="text-error">*</span>
 				</p>
 				<div className="flex gap-2">
@@ -80,7 +80,7 @@ export function StabilizerEntryConfig({
 								})
 							}
 							className={clsx(
-								"rounded-xl px-3 py-1.5 text-[11px] font-semibold border",
+								"rounded-full px-3 py-1.5 text-xs font-semibold border",
 								mode === m
 									? "border-primary bg-primary text-on-primary"
 									: "border-outline-variant/30 bg-surface-container text-on-surface",
@@ -107,10 +107,10 @@ export function StabilizerEntryConfig({
 										? "border-primary bg-primary text-on-primary"
 										: "border-outline-variant/30 bg-surface-container text-on-surface",
 								)}>
-								<p className="text-[11px] font-black">
+								<p className="text-xs font-black">
 									{STABILIZER_BUNDLES[bKey].label}
 								</p>
-								<p className="text-[10px] opacity-75 mt-0.5">
+								<p className="text-xs opacity-75 mt-0.5">
 									{STABILIZER_BUNDLES[bKey].detail}
 								</p>
 							</button>
@@ -122,7 +122,7 @@ export function StabilizerEntryConfig({
 							<div
 								key={size}
 								className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container px-2.5 py-1.5">
-								<span className="text-[11px] font-bold text-on-surface w-10">
+								<span className="text-xs font-bold text-on-surface w-10">
 									{size}
 								</span>
 								<div className="flex items-center gap-1 ml-auto">
@@ -148,7 +148,7 @@ export function StabilizerEntryConfig({
 										className="flex h-6 w-6 items-center justify-center rounded-full text-on-surface transition-colors hover:bg-surface-container-high">
 										<Minus size={10} />
 									</button>
-									<span className="text-[11px] font-black w-5 text-center">
+									<span className="text-xs font-black w-5 text-center">
 										{quantities[size] ?? 0}
 									</span>
 									<button
@@ -181,7 +181,7 @@ export function StabilizerEntryConfig({
 			{/* Lube type */}
 			{lubeOption ? (
 				<div className="space-y-1.5">
-					<p className="text-[11px] font-bold text-on-surface-variant">
+					<p className="text-xs font-bold text-on-surface-variant">
 						Loại lube <span className="text-error">*</span>
 					</p>
 					<GreaseSearchSelect

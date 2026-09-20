@@ -26,7 +26,7 @@ export function BookingAppointmentSection({
     >
       <div className="flex items-center gap-2">
         <Calendar className="h-4 w-4 text-primary" />
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+        <p className="text-xs font-black uppercase tracking-[0.08em] text-primary">
           Lịch hẹn và ghi chú
         </p>
       </div>
@@ -34,7 +34,7 @@ export function BookingAppointmentSection({
       <div className="border-b border-outline-variant/40" />
 
       <label className="form-control w-full">
-        <span className="pb-1 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+        <span className="pb-1 text-xs font-black uppercase tracking-widest text-on-surface-variant">
           Thời gian lấy hàng
         </span>
         <input
@@ -43,13 +43,13 @@ export function BookingAppointmentSection({
           onChange={(e) => setPickupAt(e.target.value)}
           className="input input-bordered w-full rounded-2xl border-outline-variant/40 bg-surface text-sm"
         />
-        <span className="pt-1 text-[10px] leading-relaxed text-on-surface-variant">
+        <span className="pt-1 text-xs leading-relaxed text-on-surface-variant">
           Thời gian nhân viên ghé để lấy sản phẩm từ khách hàng
         </span>
       </label>
 
       <label className="form-control w-full">
-        <span className="pb-1 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+        <span className="pb-1 text-xs font-black uppercase tracking-widest text-on-surface-variant">
           Ghi chú nhận hàng
         </span>
         <textarea

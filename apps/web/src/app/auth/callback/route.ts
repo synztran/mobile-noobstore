@@ -4,8 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 // A newly created auth user (e.g. first Google OAuth sign-in) must land in the
-// callback within seconds of its created_at — far below this window.
-const NEW_USER_WINDOW_MS = 120_000;
+// callback within seconds of its created_at. Kept generous (10 min) to absorb
+// cold starts / CDN hops / clock drift while staying far below "existing
+// account returning later" — so returning Google users are never re-reported.
+const NEW_USER_WINDOW_MS = 600_000;
 
 export async function GET(request: Request) {
 	const requestUrl = new URL(request.url);
@@ -16,12 +18,25 @@ export async function GET(request: Request) {
 		const { data } = await supabase.auth.exchangeCodeForSession(code);
 
 		const user = data?.user;
-		const isGoogleProvider = user?.app_metadata?.provider === "google";
+		const providerMeta = user?.app_metadata ?? {};
+		const providers = providerMeta.providers ?? [];
+		const isGoogleProvider =
+			providerMeta.provider === "google" || providers.includes("google");
 		const createdMs = user?.created_at
 			? Date.parse(user.created_at)
 			: NaN;
 		const isNew = !Number.isNaN(createdMs) &&
 			Date.now() - createdMs < NEW_USER_WINDOW_MS;
+
+		if (user && !(isGoogleProvider && isNew)) {
+			console.warn("[auth-callback] skip telegram notify", {
+				isGoogleProvider,
+				isNew,
+				elapsedMs: Number.isNaN(createdMs) ? NaN : Date.now() - createdMs,
+				provider: providerMeta.provider,
+				createdAt: user.created_at ?? null,
+			});
+		}
 
 		// Email/password sign-ups are already reported by the register form;
 		// only report brand-new Google sign-ups here (no double reporting).
@@ -41,8 +56,12 @@ export async function GET(request: Request) {
 					registeredAt: user.created_at ?? undefined,
 					provider: "google",
 				});
-			} catch {
+			} catch (notifyErr) {
 				// Notification failure must never break auth redirect
+				console.error(
+					"[auth-callback] telegram notify failed:",
+					notifyErr,
+				);
 			}
 		}
 	}

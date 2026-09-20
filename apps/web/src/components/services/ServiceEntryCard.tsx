@@ -28,14 +28,14 @@ function ServiceEntryHeader({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <p className="text-xs font-black uppercase tracking-wider text-on-surface">
+      <p className="text-xs font-bold tracking-[0.08em] text-on-surface uppercase">
         Dịch vụ {index + 1}
       </p>
       <button
         type="button"
         onClick={onRemove}
         aria-label="Xoá dịch vụ này"
-        className="btn btn-ghost btn-xs rounded-md text-error hover:bg-error/10 hover:text-error"
+        className="btn btn-ghost btn-xs rounded-full text-error hover:bg-error/10 hover:text-error"
       >
         <Trash2 className="h-4 w-4" />
       </button>
@@ -81,7 +81,7 @@ function ServiceEntryOptions({
           entry.selectedByOptionId[String(option.id)] ?? null;
         return (
           <div key={option.id} className="space-y-1.5">
-            <p className="text-[11px] font-bold text-on-surface-variant">
+            <p className="text-xs font-semibold text-on-surface-variant">
               {option.label}
               {option.is_required ? " *" : ""}
             </p>
@@ -103,7 +103,7 @@ function ServiceEntryOptions({
                       )
                     }
                     className={clsx(
-                      "btn btn-xs h-auto rounded-xl border px-2.5 py-1.5 text-[11px] font-semibold",
+                      "btn btn-xs h-auto rounded-full border px-2.5 py-1.5 text-xs font-semibold",
                       selected
                         ? "border-primary bg-primary text-primary-content"
                         : "border-outline-variant/30 bg-surface-container text-on-surface",
@@ -157,7 +157,9 @@ export function ServiceEntryCard({
   const previewPrice = computeEntryPreviewPrice(entry, service);
 
   return (
-    <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-2">
+    // No container of its own: the parent well and its hairline separators
+    // already group these, and a third nested card is the layout this page had.
+    <div className="space-y-2">
       <ServiceEntryHeader
         index={index}
         onRemove={() => onRemoveEntry(service.id, entry.entryId)}
@@ -182,7 +184,7 @@ export function ServiceEntryCard({
 
       {section.key === "lubricant" ? (
         <div className="space-y-1.5">
-          <p className="text-[11px] font-bold text-on-surface-variant">
+          <p className="text-xs font-semibold text-on-surface-variant">
             Số lượng switch <span className="text-error">*</span>
           </p>
           <QuantityStepper
@@ -225,7 +227,7 @@ export function ServiceEntryCard({
 
       {section.key === "switch" && service.id !== "svc-switch-lube" ? (
         <div className="space-y-1.5">
-          <p className="text-[11px] font-bold text-on-surface-variant">
+          <p className="text-xs font-semibold text-on-surface-variant">
             Số lượng switch <span className="text-error">*</span>
           </p>
           <QuantityStepper
@@ -250,7 +252,7 @@ export function ServiceEntryCard({
       {error ? <p className="text-xs font-bold text-error">{error}</p> : null}
 
       {previewPrice !== null && previewPrice > 0 ? (
-        <p className="text-[11px] text-on-surface-variant">
+        <p className="text-xs text-on-surface-variant">
           Tạm tính:{" "}
           <strong className="text-on-surface">{formatVND(previewPrice)}</strong>
         </p>
@@ -265,7 +267,7 @@ export function ServiceEntryCard({
           }
           placeholder="Ghi chú riêng cho mục này (tuỳ chọn)"
           rows={2}
-          className="textarea textarea-bordered w-full resize-none rounded-xl bg-surface-container text-xs text-on-surface"
+          className="textarea textarea-bordered w-full resize-none rounded-xl bg-surface-container-lowest text-sm text-on-surface"
         />
       )}
     </div>

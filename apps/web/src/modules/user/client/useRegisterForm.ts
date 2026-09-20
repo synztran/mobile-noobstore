@@ -80,18 +80,11 @@ export function useRegisterForm(captchaToken?: string, resetCaptcha?: () => void
 
       toast.success("Vui lòng kiểm tra email để xác nhận.");
 
-      // Fire-and-forget — do not block the redirect on notification delivery
-      fetch("/api/notifications/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: values.fullName,
-          email: values.email,
-        }),
-      }).catch(() => {
-        // Notification failure must never break the registration flow
-      });
-
+      // The new-signup Telegram notification is sent by /api/auth/signup, where
+      // Supabase has already confirmed the account is genuinely new. It is
+      // deliberately NOT fired from here: at this point the visitor has no
+      // session yet, so a client-side call could only reach an unauthenticated
+      // endpoint that anyone could forge.
       router.push("/login");
     },
   });

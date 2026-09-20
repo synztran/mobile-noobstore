@@ -213,7 +213,8 @@ export async function drawGacha(
 
   // ── Trigger play_count gacha mission ─────────────────────────────────────
   try {
-    await triggerMissionServer(supabase, userId, eventId, "play_count");
+    // process_mission_progress is service-role only (migration 131).
+    await triggerMissionServer(admin, userId, eventId, "play_count");
   } catch (err) {
     console.error("[gacha POST] play_count mission trigger failed:", err);
   }

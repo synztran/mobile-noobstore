@@ -1,3 +1,4 @@
+import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { CACHE_KEYS, invalidateCache } from "@/lib/redis/cache";
 import { spendPoints } from "@/lib/points/service";
@@ -76,6 +77,9 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
     const sb = supabase as any;
+    // spend_points is service-role only (migration 131): it is SECURITY DEFINER
+    // and takes p_user_id as a parameter, so it must not run as the caller.
+    const admin = getAdminClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -123,7 +127,7 @@ export async function POST(req: NextRequest) {
 
     // Spend points
     const result = await spendPoints(
-      supabase,
+      admin,
       user.id,
       pointsCost,
       "voucher_exchange",

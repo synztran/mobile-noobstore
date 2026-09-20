@@ -4,53 +4,9 @@ import {
   resolveDeviceRouting,
 } from "@/modules/desktop/device";
 import { type NextRequest, NextResponse } from "next/server";
-import { getAlertLimiter, getApiLimiter, getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import { getAlertLimiter, getApiLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import { notifyRateLimitHit } from "@/lib/telegram/telegram.service";
-
-/**
- * Lightweight session check — reads the Supabase auth cookie directly without
- * importing the full @supabase/supabase-js SDK. This keeps middleware on the
- * Edge runtime tiny (< 2 kB vs 87 kB with the SDK).
- *
- * Security note: this only checks cookie presence/expiry for routing decisions.
- * Actual JWT verification still happens in every API route and server component
- * via supabase.auth.getUser() from the server client.
- */
-function hasValidSession(request: NextRequest): boolean {
-  try {
-    const cookies = request.cookies.getAll();
-
-    // @supabase/ssr stores session in sb-*-auth-token (or chunked as .0, .1 …)
-    const sessionCookie = cookies.find(
-      ({ name }) =>
-        name.startsWith("sb-") &&
-        (name.endsWith("-auth-token") || name.endsWith("-auth-token.0"))
-    );
-
-    if (!sessionCookie?.value) return false;
-
-    let raw = sessionCookie.value;
-
-    // Base64url-decode if the value looks base64url-encoded (no manual Buffer
-    // calls — Edge runtime may not support Buffer.from with base64url encoding)
-    if (/^[A-Za-z0-9_-]+$/.test(raw) && raw.includes(".")) {
-      try {
-        const decoded = atob(raw.replace(/-/g, "+").replace(/_/g, "/"));
-        if (decoded.startsWith("{")) raw = decoded;
-      } catch {
-        // not base64 — use raw value
-      }
-    }
-
-    const session = JSON.parse(raw) as { expires_at?: number };
-    if (typeof session.expires_at !== "number") return true;
-    return session.expires_at > Math.floor(Date.now() / 1000);
-  } catch {
-    // Cookie exists but can't be parsed (e.g. chunked, unusual encoding).
-    // Let it through — server-side auth.getUser() does the real JWT validation.
-    return true;
-  }
-}
+import { hasUsableSessionCookie } from "@/lib/auth/session-cookie";
 
 /**
  * Public read endpoints whose responses are cached (Redis + CDN). Rate
@@ -150,36 +106,19 @@ export async function middleware(request: NextRequest) {
       });
     }
 
-    const pathNames = ['/signin', '/signup']
-    const isLoggedIn = hasValidSession(request);
+    // Routing-only hint (see lib/auth/session-cookie.ts): every API route and
+    // server component still verifies the JWT via supabase.auth.getUser().
+    const isLoggedIn = hasUsableSessionCookie(request.cookies.getAll());
 
-    // Rate limit auth endpoints (login, register) — 10 req/min per IP
-    if (pathNames.includes(pathname)) {
-      try {
-        const { success, reset } = await getAuthLimiter().limit(
-          getRateLimitKey(request)
-        );
-        if (!success) {
-          await fireRateLimitAlert(getRateLimitKey(request), pathname, false);
-          return NextResponse.json(
-            { error: "Quá nhiều lần thử. Vui lòng chờ vài giây." },
-            {
-              status: 429,
-              headers: {
-                "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
-              },
-            }
-          );
-        }
-      } catch (rateLimitError) {
-        console.warn(
-          "[middleware] auth rate limiter unavailable:",
-          rateLimitError
-        );
-      }
-    }
+    // NOTE: there is no auth rate limiting here. Credential endpoints are
+    // rate-limited where they actually live — /api/auth/signin and
+    // /api/auth/signup call getAuthLimiter() themselves (30 req/min per IP, see
+    // lib/redis/ratelimit.ts), and those routes are additionally covered by the
+    // generic /api/* limiter below. An earlier branch here matched
+    // '/signin' and '/signup', which are not routes in this app (the pages are
+    // /login and /register), so it never fired.
 
-    // Rate limit all /api/* routes — 100 req/min per IP
+    // Rate limit all /api/* routes — 60 req/min per IP (see lib/redis/ratelimit.ts)
     if (
       pathname.startsWith("/api/") &&
       !isPublicCachedRead(request.method, pathname) &&

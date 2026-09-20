@@ -42,7 +42,7 @@ export function SwitchLubeEntryConfig({
 	return (
 		<div className="space-y-3">
 			<div className="space-y-1.5">
-				<p className="text-[11px] font-bold text-on-surface-variant">
+				<p className="text-xs font-bold text-on-surface-variant">
 					Số lượng switch <span className="text-error">*</span>
 				</p>
 				<QuantityStepper
@@ -58,7 +58,7 @@ export function SwitchLubeEntryConfig({
 			</div>
 
 			<div className="space-y-1.5">
-				<p className="text-[11px] font-bold text-on-surface-variant">
+				<p className="text-xs font-bold text-on-surface-variant">
 					Loại switch <span className="text-error">*</span>
 				</p>
 				<div className="flex gap-2 flex-wrap">
@@ -73,13 +73,13 @@ export function SwitchLubeEntryConfig({
 									})
 								}
 								className={clsx(
-									"rounded-xl px-3 py-1.5 text-[11px] font-semibold border",
+									"rounded-full px-3 py-1.5 text-xs font-semibold border",
 									entry.switchType === type
 										? "border-primary bg-primary text-on-primary"
 										: "border-outline-variant/30 bg-surface-container text-on-surface",
 								)}>
 								{label}
-								<span className="ml-1 opacity-75 text-[10px]">
+								<span className="ml-1 opacity-75 text-xs">
 									{formatVND(pricePerUnit)}/switch
 								</span>
 							</button>
@@ -89,7 +89,7 @@ export function SwitchLubeEntryConfig({
 			</div>
 
 			<div className="space-y-1.5">
-				<p className="text-[11px] font-bold text-on-surface-variant">
+				<p className="text-xs font-bold text-on-surface-variant">
 					Tình trạng switch <span className="text-error">*</span>
 				</p>
 				<div className="flex flex-wrap gap-1.5">
@@ -104,14 +104,14 @@ export function SwitchLubeEntryConfig({
 									})
 								}
 								className={clsx(
-									"rounded-xl px-2.5 py-1.5 text-[11px] font-semibold border text-left",
+									"rounded-full px-2.5 py-1.5 text-xs font-semibold border text-left",
 									entry.switchStatus === status
 										? "border-primary bg-primary text-on-primary"
 										: "border-outline-variant/30 bg-surface-container text-on-surface",
 								)}>
 								{label}
 								{adjustment !== 0 ? (
-									<span className="ml-1 opacity-75 text-[10px]">
+									<span className="ml-1 opacity-75 text-xs">
 										{adjustment > 0 ? "+" : ""}
 										{formatVND(adjustment)}
 									</span>
@@ -124,7 +124,7 @@ export function SwitchLubeEntryConfig({
 
 			{greaseOption ? (
 				<div className="space-y-1.5">
-					<p className="text-[11px] font-bold text-on-surface-variant">
+					<p className="text-xs font-bold text-on-surface-variant">
 						Loại grease <span className="text-error">*</span>
 					</p>
 					<GreaseSearchSelect
@@ -146,7 +146,7 @@ export function SwitchLubeEntryConfig({
 			) : null}
 
 			{entry.switchCount && entry.switchType && entry.switchStatus ? (
-				<p className="text-[11px] text-on-surface-variant">
+				<p className="text-xs text-on-surface-variant">
 					Tạm tính: <strong>{formatVND(totalPreviewPrice)}</strong>
 				</p>
 			) : null}

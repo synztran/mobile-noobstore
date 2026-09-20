@@ -45,11 +45,11 @@ function OptionGroup({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1">
-        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+        <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
           {option.label}
         </p>
         {option.is_required && (
-          <span className="text-[10px] font-bold text-error">*</span>
+          <span className="text-xs font-bold text-error">*</span>
         )}
       </div>
       <div className="flex flex-wrap gap-2">
@@ -125,7 +125,7 @@ function ConfirmationScreen({
       <button
         type="button"
         onClick={onBack}
-        className="btn btn-primary rounded-full bg-gradient-to-r from-primary to-secondary px-6 text-[11px] font-black uppercase tracking-widest text-primary-content shadow-lg shadow-primary/20"
+        className="btn btn-primary rounded-full px-6 text-xs font-bold tracking-[0.08em] uppercase"
       >
         Xem thêm dịch vụ
       </button>
@@ -220,7 +220,7 @@ export function ServiceConfigurator({ service }: { service: Service }) {
       )}
 
       <div className="space-y-2">
-        <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+        <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
           Số lượng
         </p>
         <div className="flex items-center gap-3">
@@ -253,7 +253,7 @@ export function ServiceConfigurator({ service }: { service: Service }) {
       </div>
 
       <label className="form-control space-y-2">
-        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+        <span className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
           Ghi chú (tuỳ chọn)
         </span>
         <textarea
@@ -266,7 +266,7 @@ export function ServiceConfigurator({ service }: { service: Service }) {
       </label>
 
       <label className="form-control space-y-2">
-        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+        <span className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
           Thời gian nhận dịch vụ
         </span>
         <input
@@ -285,7 +285,7 @@ export function ServiceConfigurator({ service }: { service: Service }) {
 
       <div className="fixed bottom-0 left-0 right-0 z-[60] border-t border-outline-variant/20 bg-surface/80 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+          <span className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
             Tổng dự kiến
           </span>
           <motion.span
@@ -302,7 +302,7 @@ export function ServiceConfigurator({ service }: { service: Service }) {
           onClick={handleSubmit}
           disabled={mutation.isPending}
           whileTap={{ scale: 0.98 }}
-          className="btn btn-primary btn-block rounded-full bg-gradient-to-r from-primary to-secondary text-[11px] font-black uppercase tracking-widest text-primary-content shadow-lg shadow-primary/20"
+          className="btn btn-primary btn-block rounded-full text-xs font-bold tracking-[0.08em] uppercase"
         >
           {mutation.isPending ? (
             <span className="loading loading-spinner loading-sm" />

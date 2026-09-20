@@ -1,4 +1,4 @@
-import { createHmac } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 import {
   bsTrigger,
   bsResolve,
@@ -11,31 +11,71 @@ export const dynamic = "force-dynamic";
 const DEPLOY_SOURCE = "noobstore-vercel-deploy";
 
 /**
+ * Constant-time string comparison. Both operands are hashed first so the
+ * comparison is length-independent — `timingSafeEqual` throws on buffers of
+ * different lengths, which would otherwise leak the expected length.
+ */
+function safeEqual(a: string, b: string): boolean {
+  const hashedA = createHash("sha256").update(a).digest();
+  const hashedB = createHash("sha256").update(b).digest();
+  return timingSafeEqual(hashedA, hashedB);
+}
+
+/**
  * Receives Vercel Outgoing Webhooks and creates a Better Stack incident on
  * deploy failure. Resolves on successful production deploys.
  *
  * Setup: Vercel Dashboard → Project Settings → Outgoing Webhooks
  *   → Add webhook → URL: https://<your-domain>/api/webhooks/vercel
+ *   → copy the signing secret into VERCEL_WEBHOOK_SECRET.
+ *
+ * Auth is fail-closed, mirroring lib/auth/requireCronSecret: this endpoint can
+ * open AND resolve incidents, so an unauthenticated caller could either spam
+ * the on-call channel or, worse, silently resolve a real deploy-failure
+ * incident. Without the secret configured we refuse every request rather than
+ * accept them all.
  */
 export async function POST(req: NextRequest) {
   const secret = process.env.VERCEL_WEBHOOK_SECRET;
-  if (secret) {
-    const signature = req.headers.get("x-vercel-signature");
-    if (!signature) {
-      return NextResponse.json({ error: "Missing signature" }, { status: 401 });
-    }
 
-    const rawBody = await req.text();
-    const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-
-    if (signature !== expected) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-    }
-
-    return handleWebhook(JSON.parse(rawBody) as VercelWebhookPayload);
+  if (!secret) {
+    console.error(
+      "[vercel webhook] VERCEL_WEBHOOK_SECRET is not configured — failing closed.",
+    );
+    return NextResponse.json(
+      { error: "Server misconfigured" },
+      { status: 503 },
+    );
   }
 
-  return handleWebhook((await req.json()) as VercelWebhookPayload);
+  const signature = req.headers.get("x-vercel-signature");
+  if (!signature) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 401 });
+  }
+
+  const rawBody = await req.text();
+
+  // Vercel documents x-vercel-signature as an HMAC-SHA1 of the raw body
+  // (https://vercel.com/docs/headers/request-headers). SHA-256 is accepted as
+  // well so a hand-rolled webhook configured with the stronger digest still
+  // verifies. Both are keyed HMACs over the same secret, so accepting either
+  // does not weaken the check — a caller still has to know the secret.
+  const candidates = ["sha1", "sha256"].map((algorithm) =>
+    createHmac(algorithm, secret).update(rawBody).digest("hex"),
+  );
+
+  if (!candidates.some((expected) => safeEqual(signature, expected))) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  let payload: VercelWebhookPayload;
+  try {
+    payload = JSON.parse(rawBody) as VercelWebhookPayload;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  return handleWebhook(payload);
 }
 
 interface VercelWebhookPayload {

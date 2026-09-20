@@ -1,3 +1,4 @@
+import { getAdminClient } from "@/lib/supabase/admin";
 import { triggerMissionProgress } from "@/modules/gacha/server/missions";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,6 +15,10 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
+  // process_mission_progress is service-role only (migration 131): it is
+  // SECURITY DEFINER and takes p_user_id as a parameter, so the identity must
+  // come from this route's verified session, never from the RPC argument.
+  const admin = getAdminClient();
 
   const {
     data: { user },
@@ -44,7 +49,7 @@ export async function POST(req: NextRequest) {
   }
 
   const result = await triggerMissionProgress(
-    supabase,
+    admin,
     user.id,
     event_id,
     mission_type,

@@ -69,7 +69,7 @@ export function KeycapStemEntryConfig({
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-bold text-on-surface-variant">
+      <p className="text-xs font-bold text-on-surface-variant">
         Keycap cần sửa <span className="text-error">*</span>
       </p>
 
@@ -93,7 +93,7 @@ export function KeycapStemEntryConfig({
                       disabled={takenByOther}
                       onClick={() => updateGroup(idx, { unit: u })}
                       className={clsx(
-                        "rounded-lg border px-2 py-1 text-left text-[11px] font-black transition-colors",
+                        "rounded-full border px-2.5 py-1 text-left text-xs font-bold transition-colors",
                         takenByOther
                           ? "cursor-not-allowed border-outline-variant/20 bg-surface-container-low text-on-surface/30"
                           : group.unit === u
@@ -105,7 +105,7 @@ export function KeycapStemEntryConfig({
                         {u}
                         <span
                           className={clsx(
-                            "text-[10px] font-normal",
+                            "text-xs font-normal",
                             takenByOther
                               ? "opacity-30"
                               : group.unit === u
@@ -150,7 +150,7 @@ export function KeycapStemEntryConfig({
         <button
           type="button"
           onClick={addGroup}
-          className="flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline"
+          className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
         >
           <Plus size={12} />
           Thêm nhóm keycap
@@ -158,7 +158,7 @@ export function KeycapStemEntryConfig({
       ) : null}
 
       {groups.length > 0 ? (
-        <p className="text-[11px] text-on-surface-variant">
+        <p className="text-xs text-on-surface-variant">
           Tổng:{" "}
           <strong className="text-on-surface">
             {groups.reduce((acc, g) => acc + g.quantity, 0)} keycap

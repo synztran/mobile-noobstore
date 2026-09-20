@@ -106,7 +106,7 @@ function ServiceDetailContent() {
 				</div>
 
 				<div className="px-4 pt-6 pb-4 space-y-1.5">
-					<span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+					<span className="text-xs font-black uppercase tracking-[0.2em] text-primary">
 						{typeLabel}
 					</span>
 					<p className="text-2xl font-black uppercase text-on-surface leading-tight">

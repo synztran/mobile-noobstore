@@ -71,7 +71,8 @@ modules/desktop/
 
 | Var | Purpose | Default |
 |---|---|---|
-| `SUPABASE_COOKIE_DOMAIN` | Cookie domain for cross-subdomain auth | unset (host-scoped) |
+| `NEXT_PUBLIC_COOKIE_DOMAIN` | Cookie domain for cross-subdomain auth | unset (host-scoped) |
+| `MOBILE_SUBDOMAIN_ENABLED` | Live `m.` subdomain routing (307 to `m.`/`www.`); keep `false` until DNS exists | `false` |
 
 ## Testing
 

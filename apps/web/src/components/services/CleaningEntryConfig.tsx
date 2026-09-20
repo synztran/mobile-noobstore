@@ -41,7 +41,7 @@ export function CleaningEntryConfig({
 	return (
 		<div className="space-y-3">
 			<div className="space-y-1.5">
-				<p className="text-[11px] font-bold text-on-surface-variant">
+				<p className="text-xs font-bold text-on-surface-variant">
 					Sản phẩm cần vệ sinh <span className="text-error">*</span>
 				</p>
 				<div className="flex gap-2 flex-wrap">
@@ -60,7 +60,7 @@ export function CleaningEntryConfig({
 								})
 							}
 							className={clsx(
-								"rounded-xl px-3 py-1.5 text-[11px] font-semibold border",
+								"rounded-full px-3 py-1.5 text-xs font-semibold border",
 								productType === type
 									? "border-primary bg-primary text-on-primary"
 									: "border-outline-variant/30 bg-surface-container text-on-surface",
@@ -73,7 +73,7 @@ export function CleaningEntryConfig({
 
 			{productType === "keyboard" ? (
 				<div className="space-y-1.5">
-					<p className="text-[11px] font-bold text-on-surface-variant">
+					<p className="text-xs font-bold text-on-surface-variant">
 						Layout <span className="text-error">*</span>
 					</p>
 					<div className="flex flex-wrap gap-1.5">
@@ -87,13 +87,13 @@ export function CleaningEntryConfig({
 									})
 								}
 								className={clsx(
-									"rounded-xl px-2.5 py-1.5 text-[11px] font-semibold border text-left",
+									"rounded-full px-2.5 py-1.5 text-xs font-semibold border text-left",
 									entry.cleaningLayout === layout
 										? "border-primary bg-primary text-on-primary"
 										: "border-outline-variant/30 bg-surface-container text-on-surface",
 								)}>
 								{layout}
-								<span className="ml-1 opacity-75 text-[10px]">
+								<span className="ml-1 opacity-75 text-xs">
 									{formatVND(
 										CLEANING_KEYBOARD_PRICES[layout]!,
 									)}
@@ -106,7 +106,7 @@ export function CleaningEntryConfig({
 
 			{productType === "keycap" ? (
 				<div className="space-y-1.5">
-					<p className="text-[11px] font-bold text-on-surface-variant">
+					<p className="text-xs font-bold text-on-surface-variant">
 						Số lượng keycap <span className="text-error">*</span>
 					</p>
 					<QuantityStepper
@@ -119,7 +119,7 @@ export function CleaningEntryConfig({
 						unit="keycap"
 					/>
 					{(entry.cleaningKeycapQty ?? 0) > 0 ? (
-						<p className="text-[11px] text-on-surface-variant">
+						<p className="text-xs text-on-surface-variant">
 							{entry.cleaningKeycapQty! < 50
 								? `Dưới 50 keycap → ${formatVND(50_000)}`
 								: entry.cleaningKeycapQty! <= 150
@@ -133,7 +133,7 @@ export function CleaningEntryConfig({
 			{productType === "switch" ? (
 				<div className="space-y-3">
 					<div className="space-y-1.5">
-						<p className="text-[11px] font-bold text-on-surface-variant">
+						<p className="text-xs font-bold text-on-surface-variant">
 							Bundle vệ sinh <span className="text-error">*</span>
 						</p>
 						<div className="flex flex-wrap gap-1.5">
@@ -151,13 +151,13 @@ export function CleaningEntryConfig({
 										)
 									}
 									className={clsx(
-										"rounded-xl px-2.5 py-1.5 text-[11px] font-semibold border",
+										"rounded-full px-2.5 py-1.5 text-xs font-semibold border",
 										entry.cleaningSwitchBundle === b.count
 											? "border-primary bg-primary text-on-primary"
 											: "border-outline-variant/30 bg-surface-container text-on-surface",
 									)}>
 									{b.count} switch
-									<span className="ml-1 opacity-75 text-[10px]">
+									<span className="ml-1 opacity-75 text-xs">
 										{formatVND(b.price)}
 									</span>
 								</button>
@@ -166,7 +166,7 @@ export function CleaningEntryConfig({
 					</div>
 
 					<div className="space-y-1.5">
-						<p className="text-[11px] font-bold text-on-surface-variant">
+						<p className="text-xs font-bold text-on-surface-variant">
 							Tình trạng switch{" "}
 							<span className="text-error">*</span>
 						</p>
@@ -185,7 +185,7 @@ export function CleaningEntryConfig({
 										)
 									}
 									className={clsx(
-										"rounded-xl px-2.5 py-1.5 text-[11px] font-semibold border",
+										"rounded-full px-2.5 py-1.5 text-xs font-semibold border",
 										entry.cleaningSwitchStatus === status
 											? "border-primary bg-primary text-on-primary"
 											: "border-outline-variant/30 bg-surface-container text-on-surface",

@@ -75,7 +75,7 @@ export function RepairEntryConfig({
 	return (
 		<div className="space-y-3">
 			<div className="space-y-1.5">
-				<p className="text-[11px] font-bold text-on-surface-variant">
+				<p className="text-xs font-bold text-on-surface-variant">
 					Mô tả lỗi bàn phím <span className="text-error">*</span>
 				</p>
 				<textarea
@@ -92,7 +92,7 @@ export function RepairEntryConfig({
 			</div>
 
 			<div className="space-y-1.5">
-				<p className="text-[11px] font-bold text-on-surface-variant">
+				<p className="text-xs font-bold text-on-surface-variant">
 					Ảnh/video mô tả{" "}
 					<span className="font-medium opacity-75">(tối đa 5 tệp)</span>
 				</p>
@@ -151,7 +151,7 @@ export function RepairEntryConfig({
 				</div>
 
 				{uploadError ? (
-					<p className="text-[11px] font-semibold text-error">{uploadError}</p>
+					<p className="text-xs font-semibold text-error">{uploadError}</p>
 				) : null}
 			</div>
 		</div>

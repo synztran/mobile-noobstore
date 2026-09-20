@@ -11,11 +11,8 @@ import { getSectionIcon } from "./sectionIcons";
 import {
   AlertTriangle,
   CalendarClock,
-  MessageCircle,
   PackageCheck,
   Plus,
-  RotateCcw,
-  ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -32,46 +29,6 @@ const STEPS = [
   { icon: PackageCheck, title: "Tiếp nhận", caption: "Xác nhận đơn" },
 ];
 
-const FAQS = [
-  {
-    q: "Mình cần chuẩn bị gì khi lấy hàng?",
-    a: "Chỉ cần vệ sinh nhẹ bàn phím trước khi gửi. Chúng tôi sẽ ghé theo giờ hẹn đã chọn, kiểm tra cùng bạn rồi mang đi xử lý.",
-  },
-  {
-    q: "Giá hiển thị đã bao gồm gì?",
-    a: "Giá từng mục là giá dịch vụ cơ bản. Các tuỳ chọn nâng cao (thay switch, loại grease…) sẽ được cộng thêm vào khi bạn chọn, và luôn hiển thị trước khi đặt lịch.",
-  },
-  {
-    q: "Thời gian xử lý tính như thế nào?",
-    a: "Mỗi mục có số ngày xử lý riêng. Nếu đặt nhiều mục trong một đơn, tổng thời gian sẽ là tổng số ngày của tất cả mục.",
-  },
-  {
-    q: "Sau khi đặt lịch thì sao?",
-    a: "Bạn sẽ nhận mã đơn ngay lập tức. Noobstore sẽ liên hệ để xác nhận chi tiết, lịch hẹn và tiến hành xử lý đơn của bạn.",
-  },
-];
-
-const SERVICE_TIMELINE = [
-  { title: "Tiếp nhận", desc: "Kiểm tra bàn phím cùng bạn tại giờ hẹn" },
-  { title: "Xử lý & báo giá", desc: "Xử lý theo đơn, báo giá phần phát sinh (nếu có)" },
-  { title: "Hoàn tất & trả máy", desc: "Test chạy, đóng gói và trao trả đúng hẹn" },
-];
-
-const GUARANTEES = [
-  { icon: ShieldCheck, label: "Bảo hành dịch vụ" },
-  { icon: CalendarClock, label: "Đúng hẹn" },
-  { icon: RotateCcw, label: "Hỗ trợ sau dịch vụ" },
-];
-
-// ─── Motion presets (shared) ─────────────────────────────────────────────────
-
-const sectionReveal = {
-  initial: { opacity: 0, y: 16 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-40px" },
-  transition: { duration: 0.35, ease: "easeOut" as const },
-};
-
 // ─── DaisyUI Steps Strip (dynamic highlight) ─────────────────────────────────
 
 function StepsStrip({ currentStep }: { currentStep: number }) {
@@ -80,47 +37,43 @@ function StepsStrip({ currentStep }: { currentStep: number }) {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="rounded-2xl bg-surface-container p-3"
+      className="rounded-2xl bg-surface-container p-4"
     >
-      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+      <p className="mb-4 text-xs font-bold tracking-[0.08em] text-primary uppercase">
         Cách đặt lịch
       </p>
+      {/*
+        DaisyUI's own step markers, which number themselves. The previous
+        version drew a second icon badge inside every step on top of the
+        built-in numbered circle, so each step showed two markers and the
+        active one overlapped both. The sequence number is the one that
+        carries information here, so the icon moved inline with the label
+        instead of being a second badge.
+      */}
       <ul className="steps steps-horizontal w-full">
         {STEPS.map((step, idx) => {
           const isActive = idx === currentStep;
           const isCompleted = idx < currentStep;
           const StepIcon = step.icon;
           return (
-            <motion.li
+            <li
               key={step.title}
               className={`step ${isCompleted || isActive ? "step-primary" : ""}`}
-              animate={{ scale: isActive ? 1.06 : 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 22 }}
             >
-              <span className="flex flex-col items-center gap-1 text-center">
+              <span className="flex flex-col items-center gap-0.5 pt-1 text-center">
                 <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-content shadow-md shadow-primary/30"
-                      : isCompleted
-                        ? "bg-primary/20 text-primary"
-                        : "bg-surface-container-high text-on-surface-variant"
-                  }`}
-                >
-                  <StepIcon className="h-4 w-4" />
-                </span>
-                <span
-                  className={`text-[10px] font-black uppercase tracking-wider leading-tight ${
+                  className={`flex items-center gap-1 text-xs font-bold tracking-[0.08em] uppercase ${
                     isActive ? "text-primary" : "text-on-surface"
                   }`}
                 >
-                  {step.title}
+                  <StepIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="leading-tight">{step.title}</span>
                 </span>
-                <span className="hidden text-[9px] leading-tight text-on-surface-variant sm:block">
+                <span className="hidden text-xs leading-tight text-on-surface-variant sm:block">
                   {step.caption}
                 </span>
               </span>
-            </motion.li>
+            </li>
           );
         })}
       </ul>
@@ -143,7 +96,7 @@ function QuickModeToggle({
         <span className="block text-xs font-black text-on-surface">
           Chế độ đơn giản
         </span>
-        <span className="block text-[10px] text-on-surface-variant">
+        <span className="block text-xs text-on-surface-variant">
           Ẩn các tuỳ chọn nâng cao, tập trung vào dịch vụ chính
         </span>
       </span>
@@ -174,7 +127,7 @@ function SectionQuickNav({
 
   return (
     <div className="-mx-4 flex items-center gap-3 px-4">
-      <span className="shrink-0 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+      <span className="shrink-0 text-xs font-black uppercase tracking-widest text-on-surface-variant">
         Chọn nhanh
       </span>
       <div className="hide-scrollbar flex min-w-0 flex-1 gap-2 overflow-x-auto px-0.5 py-1">
@@ -191,7 +144,7 @@ function SectionQuickNav({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.04 * idx, type: "spring", stiffness: 260, damping: 20 }}
               whileTap={{ scale: 0.94 }}
-              className="btn btn-sm h-8 shrink-0 gap-1.5 rounded-full border-outline-variant/30 bg-surface-container text-[11px] font-bold text-on-surface"
+              className="btn btn-sm h-8 shrink-0 gap-1.5 rounded-full border-outline-variant/30 bg-surface-container text-xs font-bold text-on-surface"
             >
               <IconComponent className="h-3.5 w-3.5 text-on-surface-variant" />
               {label}
@@ -205,123 +158,6 @@ function SectionQuickNav({
         })}
       </div>
     </div>
-  );
-}
-
-// ─── FAQ Accordion (DaisyUI collapse) ────────────────────────────────────────
-
-function FaqAccordion() {
-  return (
-    <motion.div {...sectionReveal} className="rounded-2xl bg-surface-container p-4">
-      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-        Câu hỏi thường gặp
-      </p>
-      <div className="space-y-1.5">
-        {FAQS.map((faq, idx) => (
-          <details
-            key={faq.q}
-            className="collapse collapse-arrow rounded-xl bg-surface-container-low"
-            open={idx === 0}
-          >
-            <summary className="collapse-title min-h-0 py-3 text-xs font-bold text-on-surface">
-              {faq.q}
-            </summary>
-            <div className="collapse-content text-xs leading-relaxed text-on-surface-variant">
-              <p>{faq.a}</p>
-            </div>
-          </details>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Trust / Timeline Section ────────────────────────────────────────────────
-
-function TrustSection() {
-  return (
-    <motion.div {...sectionReveal} className="rounded-2xl bg-surface-container p-4">
-      <p className="mb-4 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-        Quy trình & cam kết
-      </p>
-
-      <ul className="timeline timeline-vertical timeline-compact">
-        {SERVICE_TIMELINE.map((step, idx) => (
-          <motion.li
-            key={step.title}
-            initial={{ opacity: 0, x: -10 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.08 * idx, duration: 0.3 }}
-          >
-            {idx > 0 ? <hr /> : null}
-            <div className="timeline-middle text-primary">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-4 w-4"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="timeline-end timeline-box my-1 border-outline-variant/20 bg-surface-container-lowest">
-              <p className="text-xs font-bold text-on-surface">{step.title}</p>
-              <p className="text-[10px] leading-tight text-on-surface-variant">
-                {step.desc}
-              </p>
-            </div>
-          </motion.li>
-        ))}
-      </ul>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {GUARANTEES.map(({ icon: GuaranteeIcon, label }) => (
-          <span
-            key={label}
-            className="badge badge-outline gap-1 border-primary/25 py-2.5 text-[10px] font-bold text-primary"
-          >
-            <GuaranteeIcon className="h-3 w-3" />
-            {label}
-          </span>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Contact Card ────────────────────────────────────────────────────────────
-
-function ContactCard() {
-  return (
-    <motion.div
-      {...sectionReveal}
-      className="rounded-2xl bg-gradient-to-br from-surface-container-lowest to-surface-container-low p-4 shadow-ambient-sm"
-    >
-      <div className="mb-3 flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-gradient text-white shadow-sm shadow-primary/20">
-          <MessageCircle className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-sm font-black text-on-surface">Cần tư vấn?</p>
-          <p className="text-xs text-on-surface-variant">
-            Đội ngũ Noobstore sẵn sàng hỗ trợ bạn
-          </p>
-        </div>
-      </div>
-      <a
-        href={process.env.NEXT_PUBLIC_FACEBOOK_URL}
-        target="_blank"
-        rel="noreferrer"
-        className="btn btn-primary btn-block btn-sm rounded-full text-[11px] font-black uppercase tracking-widest"
-      >
-        Chat Zalo / Facebook
-      </a>
-    </motion.div>
   );
 }
 
@@ -444,7 +280,7 @@ export function ServiceBookingFlow() {
         <button
           type="button"
           onClick={() => bookingConfigQuery.refetch()}
-          className="btn btn-sm rounded-full border-error/30 bg-error/5 text-[11px] font-black uppercase tracking-widest text-error"
+          className="btn btn-sm rounded-full border-error/30 bg-error/5 text-xs font-bold tracking-[0.08em] uppercase text-error"
         >
           Thử lại
         </button>
@@ -503,12 +339,6 @@ export function ServiceBookingFlow() {
           setPickupNote={setPickupNote}
         />
       </div>
-
-      <FaqAccordion />
-
-      <TrustSection />
-
-      <ContactCard />
 
       {globalError ? (
         <p className="text-xs font-bold text-error">{globalError}</p>

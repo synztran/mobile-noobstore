@@ -43,7 +43,7 @@ export function GreaseSearchSelect({
 					className="flex-1 text-sm bg-transparent outline-none"
 				/>
 				{selected && selected.price_adjustment > 0 ? (
-					<span className="text-[11px] text-on-surface-variant whitespace-nowrap">
+					<span className="text-xs text-on-surface-variant whitespace-nowrap">
 						+{formatVND(selected.price_adjustment)}/switch
 					</span>
 				) : null}
@@ -59,7 +59,7 @@ export function GreaseSearchSelect({
 								handleSelect();
 							}}
 							className={clsx(
-								"w-full px-3 py-2 text-left text-[11px] flex items-center justify-between",
+								"w-full px-3 py-2 text-left text-xs flex items-center justify-between",
 								selectedValueId === v.id
 									? "bg-primary/10 text-primary font-semibold"
 									: "hover:bg-surface-container",
