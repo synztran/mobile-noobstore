@@ -6,7 +6,7 @@ import {
 import { type NextRequest, NextResponse } from "next/server";
 import { getAlertLimiter, getApiLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import { notifyRateLimitHit } from "@/lib/telegram/telegram.service";
-import { hasUsableSessionCookie } from "@/lib/auth/session-cookie";
+import { hasLiveSessionCookie, hasUsableSessionCookie } from "@/lib/auth/session-cookie";
 
 /**
  * Public read endpoints whose responses are cached (Redis + CDN). Rate
@@ -34,6 +34,33 @@ function isPublicCachedRead(method: string, pathname: string): boolean {
 	return PUBLIC_CACHED_READ_PREFIXES.some((prefix) =>
 		pathname.startsWith(prefix),
 	);
+}
+
+/**
+ * Cap the time the rate limiter may take. The limiter is advisory (its whole
+ * purpose is to shed load, not gate correctness), so a slow or stalled Upstash
+ * must never be able to hold a request hostage — notably the `/api/cart` GET
+ * that every page load depends on to draw the cart icon. On timeout the
+ * request proceeds unlocked rather than dying or hanging.
+ */
+function withRateLimitTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+	const timeout = new Promise<never>((_, reject) =>
+		setTimeout(
+			() => reject(new Error(`rate limiter timed out after ${ms}ms`)),
+			ms,
+		),
+	);
+	return Promise.race([promise, timeout]);
+}
+
+/**
+ * Requests that gate page-first-paint and must never wait on Upstash: the
+ * cart is the first thing the cart icon (and the splash loader) renders.
+ * It is a per-visitor read with no abuse value worth a rate-limit round-trip.
+ */
+function isUiCriticalRead(method: string, pathname: string): boolean {
+	if (method !== "GET") return false;
+	return pathname.startsWith("/api/cart");
 }
 
 /**
@@ -109,6 +136,11 @@ export async function middleware(request: NextRequest) {
     // Routing-only hint (see lib/auth/session-cookie.ts): every API route and
     // server component still verifies the JWT via supabase.auth.getUser().
     const isLoggedIn = hasUsableSessionCookie(request.cookies.getAll());
+    // Strict variant for the auth-page bounce only: a stale cookie (expired
+    // access token, refresh token gone) must not bounce /login or /register
+    // to `next`/home or into a /login ↔ next loop. Auth pages fail open —
+    // serving the form is always recoverable.
+    const hasLiveSession = hasLiveSessionCookie(request.cookies.getAll());
 
     // NOTE: there is no auth rate limiting here. Credential endpoints are
     // rate-limited where they actually live — /api/auth/signin and
@@ -122,14 +154,16 @@ export async function middleware(request: NextRequest) {
     if (
       pathname.startsWith("/api/") &&
       !isPublicCachedRead(request.method, pathname) &&
+      !isUiCriticalRead(request.method, pathname) &&
       !pathname.startsWith("/api/health") &&
       !pathname.startsWith("/api/analytics/") &&
       !pathname.startsWith("/api/cron/") &&
       !pathname.startsWith("/api/jobs/")
     ) {
       try {
-        const { success, reset } = await getApiLimiter().limit(
-          getRateLimitKey(request),
+        const { success, reset } = await withRateLimitTimeout(
+          getApiLimiter().limit(getRateLimitKey(request)),
+          2000,
         );
         if (!success) {
           await fireRateLimitAlert(getRateLimitKey(request), pathname, isLoggedIn);
@@ -158,7 +192,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Redirect authenticated users away from auth pages
-    if ((pathname === "/login" || pathname === "/register") && isLoggedIn) {
+    if ((pathname === "/login" || pathname === "/register") && hasLiveSession) {
       const nextParam = safeRedirect(
         request.nextUrl.searchParams.get("next"),
         request.url
