@@ -54,7 +54,7 @@ export function useProductViewData(
   const { addItem, openCart, items } = useCartStore();
   const addCartItem = useAddCartItem();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // Auto-select when there is only one variant
   useEffect(() => {
@@ -207,9 +207,11 @@ export function useProductViewData(
   }, [initialRules, initialGroups, selections]);
 
   const handleAddToCart = async (qty?: number) => {
+    if (authLoading) return;
     if (!user) {
       toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
-      router.push("/login");
+      const currentPath = window.location.pathname + window.location.search;
+      router.push(`/login?next=${encodeURIComponent(currentPath)}`);
       return;
     }
     if (product.variants.length > 0 && !selectedVariant) {

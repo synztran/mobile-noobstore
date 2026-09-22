@@ -84,5 +84,15 @@ export function useCartQuery() {
 		useCartStore.getState().setCartFetching(query.isFetching);
 	}, [query.isFetching]);
 
+	// Defense-in-depth: no matter what the fetch state thinks, the icon must
+	// not stay in its loading spinner once the query has settled (success or
+	// error). `cartFetching` drives the spinner in TopNav/DesktopTopBar, and a
+	// stuck value makes the icon spin forever even though the request finished.
+	useEffect(() => {
+		if (query.status === "success" || query.status === "error") {
+			useCartStore.getState().setCartFetching(false);
+		}
+	}, [query.status]);
+
 	return query;
 }

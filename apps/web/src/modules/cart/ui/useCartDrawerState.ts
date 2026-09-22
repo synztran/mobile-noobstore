@@ -169,7 +169,8 @@ export function useCartDrawerState() {
     if (authLoading) return;
     if (user == null) {
       toast.warning("Cần đăng nhập để thanh toán!");
-      router.push("/login");
+      const currentPath = window.location.pathname + window.location.search;
+      router.push(`/login?next=${encodeURIComponent(currentPath)}`);
       return;
     }
     closeCart();

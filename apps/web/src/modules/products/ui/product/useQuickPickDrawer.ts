@@ -37,7 +37,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
   // ── External hooks ───────────────────────────────────────────────────────
   const { addItem, openCart, items: cartItems } = useCartStore();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const addCartItem = useAddCartItem();
 
   const requestKey = isCategoryMode
@@ -257,9 +257,11 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
   };
 
   const handleAdd = async () => {
+    if (authLoading) return;
     if (!user) {
       toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
-      router.push("/login");
+      const currentPath = window.location.pathname + window.location.search;
+      router.push(`/login?next=${encodeURIComponent(currentPath)}`);
       return;
     }
     if (isInvalidPrice) {

@@ -10,6 +10,7 @@ import { stringToBase64URL } from "@supabase/ssr/dist/main/utils/base64url.js";
 import {
   base64UrlDecode,
   decodeAuthTokenValue,
+  hasLiveSessionCookie,
   hasUsableSessionCookie,
   resolveAuthTokenValue,
   type AuthCookie,
@@ -310,5 +311,82 @@ describe("hasUsableSessionCookie", () => {
     } finally {
       warn.mockRestore();
     }
+  });
+});
+
+describe("hasLiveSessionCookie", () => {
+  const NOW = 1_800_000_000;
+
+  it("is false with no cookies", () => {
+    expect(hasLiveSessionCookie([], NOW)).toBe(false);
+  });
+
+  it("accepts a session with a live access token", () => {
+    expect(
+      hasLiveSessionCookie(
+        [
+          {
+            name: "sb-testref-auth-token",
+            value: encodeSession({ ...liveSession, expires_at: NOW + 3600 }),
+          },
+        ],
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects an expired session even when it still carries a refresh token", () => {
+    // Regression guard: a stale cookie must NOT bounce /login or /register —
+    // previously it was treated as a live session and redirected the visitor
+    // to `next`/home (or looped /login?next=X ↔ X).
+    expect(
+      hasLiveSessionCookie(
+        [
+          {
+            name: "sb-testref-auth-token",
+            value: encodeSession({ ...liveSession, expires_at: NOW - 60 }),
+          },
+        ],
+        NOW,
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a session with no access token", () => {
+    expect(
+      hasLiveSessionCookie(
+        [
+          {
+            name: "sb-testref-auth-token",
+            value: encodeSession({ refresh_token: "refresh-only-token" }),
+          },
+        ],
+        NOW,
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a session with no expiry", () => {
+    // No expires_at means we cannot prove the session is live.
+    expect(
+      hasLiveSessionCookie(
+        [
+          {
+            name: "sb-testref-auth-token",
+            value: encodeSession({ access_token: "a.b.c" }),
+          },
+        ],
+        NOW,
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a corrupt or undecodable cookie", () => {
+    expect(
+      hasLiveSessionCookie(
+        [{ name: "sb-testref-auth-token", value: "base64-@@@corrupt@@@" }],
+        NOW,
+      ),
+    ).toBe(false);
   });
 });

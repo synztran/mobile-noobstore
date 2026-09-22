@@ -138,6 +138,10 @@ export function decodeAuthTokenValue(
   }
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0;
+}
+
 /**
  * Whether the request carries a Supabase session cookie that is usable.
  *
@@ -166,9 +170,6 @@ export function hasUsableSessionCookie(
   const session = decodeAuthTokenValue(raw);
   if (!session) return false;
 
-  const isString = (value: unknown): value is string =>
-    typeof value === "string" && value.length > 0;
-
   const refreshToken = session.refresh_token;
   const accessToken = session.access_token;
 
@@ -176,14 +177,14 @@ export function hasUsableSessionCookie(
   // this is not a session, whatever else it decodes to. Fail closed, and say so
   // loudly so an upstream format change surfaces in logs rather than as a
   // silent lockout from /checkout.
-  if (!isString(refreshToken) && !isString(accessToken)) {
+  if (!isNonEmptyString(refreshToken) && !isNonEmptyString(accessToken)) {
     console.warn(
       "[session-cookie] unrecognised Supabase auth cookie payload — treating request as signed out",
     );
     return false;
   }
 
-  if (isString(refreshToken)) return true;
+  if (isNonEmptyString(refreshToken)) return true;
 
   // No refresh token, so the access token itself has to still be live. An
   // unparseable/missing expiry is treated as live: refusing here would lock a
@@ -191,4 +192,39 @@ export function hasUsableSessionCookie(
   // forged cookie render a page whose own API calls 401 regardless.
   const expiresAt = session.expires_at;
   return typeof expiresAt !== "number" || expiresAt > nowSeconds;
+}
+
+/**
+ * Whether the request carries a session cookie that is *currently valid* —
+ * a present, unexpired access token.
+ *
+ * Strict counterpart to `hasUsableSessionCookie` for the auth-page bounce in
+ * middleware. A `refresh_token`-bearing cookie that has already expired means
+ * the middleware cannot trust it as a live session; treating it as signed in
+ * bounced `/login` and `/register` requests to `safeRedirect(next)` (usually
+ * the home page) or spun an infinite `/login?next=X` ↔ `X` loop with the
+ * client-side `withAuthRedirect` guard. Auth pages must fail **open** in the
+ * opposite direction: an expired or unmappable cookie renders the login form,
+ * and real sessions are verified on the client/API anyway.
+ *
+ * Requires `expires_at` to be present (a live `expires_in`-only payload
+ * written by a browser client always carries it; on the server the session is
+ * unverified until the refresh returns anyway).
+ */
+export function hasLiveSessionCookie(
+  cookies: readonly AuthCookie[],
+  nowSeconds: number = Math.floor(Date.now() / 1000),
+): boolean {
+  const raw = resolveAuthTokenValue(cookies);
+  if (!raw) return false;
+
+  const session = decodeAuthTokenValue(raw);
+  if (!session) return false;
+
+  if (!isNonEmptyString(session.access_token)) return false;
+
+  // Fail closed: a missing or unparseable expiry means "not provably live",
+  // so the auth page is served rather than bouncing a stale cookie.
+  const expiresAt = session.expires_at;
+  return typeof expiresAt === "number" && expiresAt > nowSeconds;
 }

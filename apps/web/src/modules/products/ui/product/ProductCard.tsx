@@ -70,7 +70,7 @@ export const ProductCard = memo(function ProductCard({
   const addStandardProduct = useCartStore((s) => s.addStandardProduct);
   const flyToCart = useFlyToCartStore((s) => s.flyToCart);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const displayImage = useMemo(() => {
     if (activeVariantId) {
@@ -105,9 +105,11 @@ export const ProductCard = memo(function ProductCard({
   };
 
   const addStandardToCart = async () => {
+    if (authLoading) return;
     if (!user) {
       toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
-      router.push("/login");
+      const currentPath = window.location.pathname + window.location.search;
+      router.push(`/login?next=${encodeURIComponent(currentPath)}`);
       return;
     }
 
