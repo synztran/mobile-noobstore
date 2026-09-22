@@ -8,10 +8,10 @@ const ProductCardPricing = memo(({ product }: { product: ShopProduct }) => {
   if (product.discount_price && product.discount_price > 0) {
     return (
       <div>
-        <div className="text-right text-xs font-bold text-on-surface-variant line-through">
+        <div className="text-right text-xs font-bold text-on-surface-variant line-through lg:text-sm">
           {formatVND(product.base_price)}
         </div>
-        <div className="text-right text-base font-extrabold text-red-600">
+        <div className="text-right text-base font-extrabold text-red-600 lg:text-lg">
           {formatVND(product.discount_price)}
         </div>
       </div>
@@ -20,18 +20,20 @@ const ProductCardPricing = memo(({ product }: { product: ShopProduct }) => {
 
   if (!product.base_price && !fromPrice) {
     return (
-      <div className="text-right text-xs font-extrabold text-slate-500">
+      <div className="text-right text-xs font-extrabold text-slate-500 lg:text-sm">
         giá đang cập nhật
       </div>
     );
   }
 
   return (
-    <div className="space-x-1 text-right text-sm font-extrabold text-primary">
+    <div className="space-x-1 text-right text-sm font-extrabold text-primary lg:text-base">
       {product.base_price === 0 && (
-        <span className="break-all text-xs text-slate-500">giá chỉ từ</span>
+        <span className="break-all text-xs text-slate-500 lg:text-sm">
+          giá chỉ từ
+        </span>
       )}
-      <span className="whitespace-nowrap text-base">
+      <span className="whitespace-nowrap text-base lg:text-lg">
         {formatVND(product.base_price || fromPrice)}
       </span>
     </div>

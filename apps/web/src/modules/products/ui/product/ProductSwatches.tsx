@@ -83,7 +83,7 @@ export const ProductSwatches = memo(function ProductSwatches({
         )}
       </div>
       {activeVariant && (
-        <p className="mt-1 truncate text-xs text-on-surface">
+        <p className="mt-1 truncate text-xs text-on-surface lg:text-sm">
           {activeVariant.variant_name}
         </p>
       )}

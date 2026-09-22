@@ -63,7 +63,6 @@ export const ProductCard = memo(function ProductCard({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeVariantId, setActiveVariantId] = useState<string | null>(null);
-  const [imageLoading, setImageLoading] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
   const prevDisplayImageRef = useRef<string | null>(null);
   const addCartItem = useAddCartItem();
@@ -87,7 +86,6 @@ export const ProductCard = memo(function ProductCard({
 
   useEffect(() => {
     if (hasSwatches && prevDisplayImageRef.current !== displayImage) {
-      setImageLoading(true);
       prevDisplayImageRef.current = displayImage;
     }
   }, [displayImage, hasSwatches]);
@@ -147,7 +145,6 @@ export const ProductCard = memo(function ProductCard({
 
     toast.success("Đã thêm vào giỏ hàng!");
     setSubmitting(false);
-    // openCart();
   };
 
   return (
@@ -172,7 +169,6 @@ export const ProductCard = memo(function ProductCard({
                   priority={imagePriority}
                   className="object-cover"
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  onLoad={() => setImageLoading(false)}
                 />
                 {/* {hasSwatches && imageLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-surface-container/80">
@@ -237,7 +233,7 @@ export const ProductCard = memo(function ProductCard({
               onClick={handleQuickAdd}
               aria-label={`Quick add ${product.name}`}
               disabled={product.stock_quantity === 0 || submitting}
-              className="btn-sm flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-[10px] font-black uppercase tracking-[0.14em] text-surface transition-all hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50"
+              className="btn-sm flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-[10px] font-black uppercase tracking-[0.14em] text-surface transition-all lg:btn-md hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50 lg:text-xs"
             >
               {submitting ? (
                 <span className="loading loading-spinner loading-xs" />

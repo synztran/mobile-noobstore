@@ -1,7 +1,10 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { useWishlist, type ProductMeta } from "@/modules/user/client/useWishlist";
+import {
+  useWishlist,
+  type ProductMeta,
+} from "@/modules/user/client/useWishlist";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import clsx from "clsx";
 import { motion } from "framer-motion";
@@ -42,7 +45,10 @@ export const WishlistButton = memo(function WishlistButton({
     void toggleWishlist(productId, product);
   }, [user, router, productId, product, toggleWishlist]);
 
-  const sizeClass = size === "sm" ? "h-8 px-2 text-xs" : "h-12 px-2 text-sm";
+  const sizeClass =
+    size === "sm"
+      ? "h-8 min-w-8 px-2 text-xs lg:text-sm lg:h-12 lg:min-w-12"
+      : "h-12 min-w-12 px-2 text-sm lg:text-base lg:h-14 lg:min-w-14";
 
   return (
     <motion.button

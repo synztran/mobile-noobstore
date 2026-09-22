@@ -241,7 +241,7 @@ export function ProductView({
         />
 
         {/* ── Product Info ── */}
-        <section className="!mt-0 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
+        <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
           {/* <div className="mb-2 flex flex-wrap items-center gap-2">
             <ProductBadges badges={badges} purchaseCount={purchaseCount} />
           </div> */}

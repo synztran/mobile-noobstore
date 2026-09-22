@@ -60,7 +60,7 @@ export function HeroImageGallery({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative h-80 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm">
+      <div className="relative h-80 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm lg:h-[52rem]">
         <button
           type="button"
           aria-label="Xem ảnh sản phẩm"

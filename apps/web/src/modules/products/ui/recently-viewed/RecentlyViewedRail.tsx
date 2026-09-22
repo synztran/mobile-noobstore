@@ -51,7 +51,7 @@ export function RecentlyViewedRail() {
         title="Đã xem gần đây"
         icon={<History className="h-5 w-5 text-primary" />}
         products={displayed}
-        cardWidth="w-[140px]"
+        cardWidth="w-[140px] lg:w-[260px]"
       />
     </div>
   );
