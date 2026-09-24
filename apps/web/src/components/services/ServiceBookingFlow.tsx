@@ -4,6 +4,7 @@ import { ServiceBookingSuccessDrawer } from "./ServiceBookingSuccessDrawer";
 import { ServiceBookingSummaryBar } from "./ServiceBookingSummaryBar";
 import { ServiceSectionCard } from "./ServiceSectionCard";
 import { BookingAppointmentSection } from "./BookingAppointmentSection";
+import { GroupAnchors } from "./GroupAnchors";
 import { useServiceBookingFlow } from "./useServiceBookingFlow";
 import type { BookingSection } from "@/app/api/services/booking-config/route";
 import type { ServiceEntryDraft } from "./types";
@@ -39,7 +40,7 @@ function StepsStrip({ currentStep }: { currentStep: number }) {
       transition={{ duration: 0.3, ease: "easeOut" }}
       className="rounded-2xl bg-surface-container p-4"
     >
-      <p className="mb-4 text-xs font-bold tracking-[0.08em] text-primary uppercase">
+      <p className="mb-4 text-xs font-bold uppercase tracking-[0.08em] text-primary">
         Cách đặt lịch
       </p>
       {/*
@@ -62,7 +63,7 @@ function StepsStrip({ currentStep }: { currentStep: number }) {
             >
               <span className="flex flex-col items-center gap-0.5 pt-1 text-center">
                 <span
-                  className={`flex items-center gap-1 text-xs font-bold tracking-[0.08em] uppercase ${
+                  className={`flex items-center gap-1 text-xs font-bold uppercase tracking-[0.08em] ${
                     isActive ? "text-primary" : "text-on-surface"
                   }`}
                 >
@@ -142,14 +143,19 @@ function SectionQuickNav({
               onClick={() => scrollTo(section.key)}
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.04 * idx, type: "spring", stiffness: 260, damping: 20 }}
+              transition={{
+                delay: 0.04 * idx,
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+              }}
               whileTap={{ scale: 0.94 }}
               className="btn btn-sm h-8 shrink-0 gap-1.5 rounded-full border-outline-variant/30 bg-surface-container text-xs font-bold text-on-surface"
             >
               <IconComponent className="h-3.5 w-3.5 text-on-surface-variant" />
               {label}
               {count > 0 ? (
-                <span className="indicator-item badge badge-primary badge-xs font-black">
+                <span className="badge indicator-item badge-primary badge-xs font-black">
                   {count > 9 ? "9+" : count}
                 </span>
               ) : null}
@@ -183,7 +189,17 @@ function ServiceBookingFlowSkeleton() {
 
 // ─── Main Flow ────────────────────────────────────────────────────────────────
 
-export function ServiceBookingFlow() {
+export function ServiceBookingFlow({
+  sectionKeys = [],
+}: {
+  /**
+   * Group keys, for the anchors below. The flow renders its own group cards
+   * with these ids once the config lands; until then it renders zero-height
+   * markers in their place, so a showcase link never targets a missing
+   * fragment (which sends the browser to the top of the page).
+   */
+  sectionKeys?: string[];
+}) {
   const {
     user,
     authLoading,
@@ -218,7 +234,8 @@ export function ServiceBookingFlow() {
       let total = 0;
       for (const service of section.services) {
         total +=
-          (selections[service.id] as ServiceEntryDraft[] | undefined)?.length ?? 0;
+          (selections[service.id] as ServiceEntryDraft[] | undefined)?.length ??
+          0;
       }
       counts[section.key] = total;
     }
@@ -235,9 +252,9 @@ export function ServiceBookingFlow() {
       if (scrollY < 200) {
         newStep = 0;
       } else if (
-        (document
-          .getElementById("tour-appointment")
-          ?.getBoundingClientRect().top ?? 0) < window.innerHeight * 0.5
+        (document.getElementById("tour-appointment")?.getBoundingClientRect()
+          .top ?? 0) <
+        window.innerHeight * 0.5
       ) {
         newStep = 2;
       } else if (Object.values(sectionCounts).some((c) => c > 0)) {
@@ -255,36 +272,48 @@ export function ServiceBookingFlow() {
     handleScroll();
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [bookingConfigQuery.data?.sections, sectionCounts, bookingMutation.isPending]);
+  }, [
+    bookingConfigQuery.data?.sections,
+    sectionCounts,
+    bookingMutation.isPending,
+  ]);
 
   if (bookingConfigQuery.isPending) {
-    return <ServiceBookingFlowSkeleton />;
+    return (
+      <>
+        <GroupAnchors sectionKeys={sectionKeys} />
+        <ServiceBookingFlowSkeleton />
+      </>
+    );
   }
 
   if (bookingConfigQuery.isError) {
     return (
-      <div
-        role="alert"
-        className="alert alert-error items-start rounded-2xl bg-error/10 text-on-surface"
-      >
-        <AlertTriangle className="h-5 w-5 shrink-0 text-error" />
-        <div className="space-y-0.5">
-          <p className="text-sm font-bold text-error">
-            Không thể tải cấu hình dịch vụ
-          </p>
-          <p className="text-xs leading-relaxed text-on-surface-variant">
-            Đã xảy ra lỗi khi kết nối. Vui lòng thử lại hoặc liên hệ hỗ trợ nếu
-            lỗi tiếp tục.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => bookingConfigQuery.refetch()}
-          className="btn btn-sm rounded-full border-error/30 bg-error/5 text-xs font-bold tracking-[0.08em] uppercase text-error"
+      <>
+        <GroupAnchors sectionKeys={sectionKeys} />
+        <div
+          role="alert"
+          className="alert alert-error items-start rounded-2xl bg-error/10 text-on-surface"
         >
-          Thử lại
-        </button>
-      </div>
+          <AlertTriangle className="h-5 w-5 shrink-0 text-error" />
+          <div className="space-y-0.5">
+            <p className="text-sm font-bold text-error">
+              Không thể tải cấu hình dịch vụ
+            </p>
+            <p className="text-xs leading-relaxed text-on-surface-variant">
+              Đã xảy ra lỗi khi kết nối. Vui lòng thử lại hoặc liên hệ hỗ trợ
+              nếu lỗi tiếp tục.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => bookingConfigQuery.refetch()}
+            className="btn btn-sm rounded-full border-error/30 bg-error/5 text-xs font-bold uppercase tracking-[0.08em] text-error"
+          >
+            Thử lại
+          </button>
+        </div>
+      </>
     );
   }
 

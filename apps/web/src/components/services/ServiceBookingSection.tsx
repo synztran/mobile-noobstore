@@ -3,6 +3,7 @@
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { CalendarCheck, LockKeyhole } from "lucide-react";
 import Link from "next/link";
+import { GroupAnchors } from "./GroupAnchors";
 import { ServiceBookingFlow } from "./ServiceBookingFlow";
 
 /**
@@ -38,7 +39,10 @@ function BookingSkeleton() {
       <div className="h-9 rounded-full bg-surface-container" />
       <div className="flex gap-2">
         {Array.from({ length: 4 }).map((_, idx) => (
-          <div key={idx} className="h-8 w-24 rounded-full bg-surface-container" />
+          <div
+            key={idx}
+            className="h-8 w-24 rounded-full bg-surface-container"
+          />
         ))}
       </div>
       {Array.from({ length: 4 }).map((_, idx) => (
@@ -58,64 +62,79 @@ function BookingSkeleton() {
   );
 }
 
-export function ServiceBookingSection() {
+export function ServiceBookingSection({
+  sectionKeys = [],
+}: {
+  /** Group keys from the server-rendered config — the showcase's link targets. */
+  sectionKeys?: string[];
+}) {
   const { user, loading } = useAuth();
 
-  if (loading) return <BookingSkeleton />;
-
-  if (!user) {
+  if (loading) {
     return (
-      <section
-        id="tour-booking-gate"
-        aria-labelledby="booking-gate-title"
-        className="rounded-2xl bg-surface-container p-5 shadow-ambient-sm"
-      >
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-highest text-on-surface-variant">
-            <LockKeyhole className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <h2
-              id="booking-gate-title"
-              className="text-base font-extrabold text-on-surface"
-            >
-              Đăng nhập để đặt lịch dịch vụ
-            </h2>
-            <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
-              Đặt lịch cần một tài khoản để lưu đơn và cập nhật trạng thái cho
-              bạn.
-            </p>
-          </div>
-        </div>
-
-        <ul className="mt-4 space-y-2.5">
-          {WHAT_YOU_GET.map((line) => (
-            <li key={line} className="flex items-start gap-2.5">
-              <CalendarCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
-              <span className="text-sm leading-relaxed text-on-surface-variant">
-                {line}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-5 space-y-2">
-          <Link
-            href="/login?next=%2Fservices"
-            className="btn btn-primary btn-block rounded-full text-xs font-bold tracking-[0.08em] uppercase"
-          >
-            Đăng nhập
-          </Link>
-          <Link
-            href="/register"
-            className="btn btn-ghost btn-block rounded-full text-xs font-bold tracking-[0.08em] text-on-surface-variant uppercase"
-          >
-            Tạo tài khoản mới
-          </Link>
-        </div>
-      </section>
+      <>
+        <GroupAnchors sectionKeys={sectionKeys} />
+        <BookingSkeleton />
+      </>
     );
   }
 
-  return <ServiceBookingFlow />;
+  if (!user) {
+    return (
+      <>
+        <GroupAnchors sectionKeys={sectionKeys} />
+        <section
+          id="tour-booking-gate"
+          aria-labelledby="booking-gate-title"
+          className="rounded-2xl bg-surface-container p-5 shadow-ambient-sm"
+        >
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-highest text-on-surface-variant">
+              <LockKeyhole className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h2
+                id="booking-gate-title"
+                className="text-base font-extrabold text-on-surface"
+              >
+                Đăng nhập để đặt lịch dịch vụ
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">
+                Đặt lịch cần một tài khoản để lưu đơn và cập nhật trạng thái cho
+                bạn.
+              </p>
+            </div>
+          </div>
+
+          <ul className="mt-4 space-y-2.5">
+            {WHAT_YOU_GET.map((line) => (
+              <li key={line} className="flex items-start gap-2.5">
+                <CalendarCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                <span className="text-sm leading-relaxed text-on-surface-variant">
+                  {line}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-5 space-y-2">
+            <Link
+              href="/login?next=%2Fservices"
+              className="btn btn-primary btn-block rounded-full text-xs font-bold uppercase tracking-[0.08em]"
+            >
+              Đăng nhập
+            </Link>
+            <Link
+              href="/register"
+              className="btn btn-ghost btn-block rounded-full text-xs font-bold uppercase tracking-[0.08em] text-on-surface-variant"
+            >
+              Tạo tài khoản mới
+            </Link>
+          </div>
+        </section>
+      </>
+    );
+  }
+
+  return <ServiceBookingFlow sectionKeys={sectionKeys} />;
 }

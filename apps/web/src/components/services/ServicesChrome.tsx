@@ -2,6 +2,7 @@
 
 import { TopNav } from "@/components/layout/TopNav";
 import { useCallback, useRef, type ReactNode } from "react";
+import { BookingCta } from "./BookingCta";
 import { ServicesTour } from "./ServicesTour";
 
 /**
@@ -32,6 +33,10 @@ export function ServicesChrome({ children }: { children: ReactNode }) {
       />
 
       {children}
+
+      {/* Page-level: keeps one booking action reachable down the long tail of
+          the page (FAQ, process, contact) for visitors without a session. */}
+      <BookingCta />
 
       <ServicesTour onReady={handleTourReady} />
     </>

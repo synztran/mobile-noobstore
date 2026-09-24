@@ -45,7 +45,7 @@ export default async function ServicesPage() {
   const config = await readThroughCache(
     CACHE_KEYS.bookingConfig,
     120,
-    getBookingConfigData,
+    getBookingConfigData
   ).catch((error: unknown) => {
     console.error("[services] booking config unavailable:", error);
     return null;
@@ -92,7 +92,7 @@ export default async function ServicesPage() {
             </p>
             <Link
               href="#dat-lich"
-              className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold tracking-[0.08em] text-primary uppercase"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.08em] text-primary"
             >
               Đặt lịch dịch vụ
               <ArrowRight className="h-3.5 w-3.5" />
@@ -104,9 +104,14 @@ export default async function ServicesPage() {
           {/* What we do, what it costs, how long — in public view. */}
           <ServiceShowcase sections={sections} />
 
-          {/* Stable scroll target for the hero link and every showcase card. */}
+          {/*
+            Stable scroll target for the hero link, plus the booking area the
+            showcase cards deep-link into by group id.
+          */}
           <div id="dat-lich" className="scroll-mt-24">
-            <ServiceBookingSection />
+            <ServiceBookingSection
+              sectionKeys={sections.map((section) => section.key)}
+            />
           </div>
 
           {/* Reassurance: same copy and order the flow used to end with. */}

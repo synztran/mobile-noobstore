@@ -3,29 +3,31 @@
 import type { BookingSection } from "@/app/api/services/booking-config/route";
 import Image from "@/components/ui/AdaptiveImage";
 import { formatVND } from "@/lib/currency";
-import { ArrowRight, Clock } from "lucide-react";
+import { ChevronRight, Clock } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { getSectionIcon } from "./sectionIcons";
 
 /**
- * The public face of the services page.
+ * The public face of the services page — a **jump rail**, not a catalogue.
  *
- * Before this existed, a signed-out visitor (and every crawler) got a hero, a
- * "coming soon" teaser and a loading skeleton — no service was named, no price
- * shown, no duration given, because all of it lived inside the auth-gated
- * configurator. This renders the real thing instead, from the same
- * `getBookingConfigData()` payload the booking flow uses: each group's own
- * photo, title, hint, its lowest real `base_price`, and its shortest handling
- * time.
+ * Every row is real data from the same `getBookingConfigData()` payload the
+ * booking flow uses (its own photo, lowest real `base_price`, shortest handling
+ * time) and every row scrolls straight to that group in the flow, which is why
+ * the id is the group's own `section.key` — the anchor `ServiceSectionCard`
+ * exposes. All six used to point at one generic `#dat-lich`, so tapping any of
+ * them landed in the same place; see `ServiceBookingSection` for what happens
+ * when the flow isn't mounted (the same ids resolve to the login gate).
  *
- * Everything shown here is data or copy that already existed. Nothing about
- * price or turnaround is invented, which is why unbookable or free-only groups
- * simply omit the line they cannot answer.
+ * It used to render six 16:9 photo cards, which was a second copy of the group
+ * list the flow renders below it: 983px of scrolling to show the same six
+ * groups twice, with the first booking control 2127px down the page. The photos
+ * survive as 48px thumbnails, so the rows still read as *this group* rather
+ * than a generic link list, and the whole rail now costs ~380px.
  *
- * Data arrives as a prop from the server component so it is present in the
- * first HTML response — a client component fetching on mount would defeat the
- * point.
+ * Nothing here is invented: a group with no priced service omits the "từ" line
+ * instead of claiming "từ 0 ₫", and one with no recorded turnaround omits the
+ * day count rather than guessing.
  */
 
 /** Lowest real price across a group's services, or null when there is none. */
@@ -44,7 +46,7 @@ function shortestHandling(section: BookingSection): number | null {
   return days.length > 0 ? Math.min(...days) : null;
 }
 
-function ShowcaseCard({
+function RailRow({
   section,
   index,
 }: {
@@ -56,72 +58,60 @@ function ShowcaseCard({
   const days = shortestHandling(section);
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 14 }}
+    <motion.li
+      initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.3, ease: "easeOut", delay: Math.min(index * 0.05, 0.2) }}
-      className="overflow-hidden rounded-2xl bg-surface-container"
+      transition={{
+        duration: 0.3,
+        ease: "easeOut",
+        delay: Math.min(index * 0.04, 0.2),
+      }}
     >
-      {/*
-        Same-page anchor to the booking section, via `next/link` per the
-        repo's linking rule (a bare `<a>` is reserved for `target="_blank"`
-        externals). It lands on the gate for a signed-out visitor and on the
-        group selector once signed in, so it never dead-ends.
-      */}
-      <Link href="#dat-lich" className="block">
-        {/* `lubricant` ships an empty hero URL, so the frame is conditional. */}
+      <Link
+        href={`#${section.key}`}
+        className="flex items-center gap-3 rounded-2xl bg-surface-container p-3 transition-colors hover:bg-surface-container-high"
+      >
+        {/* All six groups ship an image today, but a group without one falls
+            back to its own icon rather than an empty media frame. */}
         {section.heroImageUrl ? (
-          <figure className="relative aspect-[16/9] w-full">
+          <figure className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl">
             <Image
               src={section.heroImageUrl}
-              alt={`${section.title} tại Noobstore`}
+              alt=""
               fill
-              sizes="(max-width: 640px) 100vw, 50vw"
+              sizes="48px"
               className="object-cover"
             />
           </figure>
-        ) : null}
+        ) : (
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-on-secondary-fixed-variant">
+            <SectionIcon className="h-5 w-5" />
+          </span>
+        )}
 
-        <div className="space-y-2 p-4">
-          <div className="flex items-center gap-2.5">
-            {/* Olive carries group identity; terracotta stays for action. */}
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-on-secondary-fixed-variant">
-              <SectionIcon className="h-4 w-4" />
-            </span>
-            <h3 className="min-w-0 text-sm font-extrabold text-on-surface">
-              {section.title}
-            </h3>
-          </div>
-
-          {section.hint ? (
-            <p className="line-clamp-2 text-sm leading-relaxed text-on-surface-variant">
-              {section.hint}
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-extrabold text-on-surface">
+            {section.title}
+          </span>
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs">
             {from !== null ? (
-              <span className="text-sm font-extrabold text-primary">
+              <span className="font-extrabold text-primary">
                 từ {formatVND(from)}
               </span>
             ) : null}
-
             {days !== null ? (
-              <span className="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant">
+              <span className="inline-flex items-center gap-1 font-bold text-on-surface-variant">
                 <Clock className="h-3.5 w-3.5" />
                 {days} ngày
               </span>
             ) : null}
+          </span>
+        </span>
 
-            <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold tracking-[0.08em] text-on-surface-variant uppercase">
-              Đặt lịch
-              <ArrowRight className="h-3.5 w-3.5" />
-            </span>
-          </div>
-        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-on-surface-variant" />
       </Link>
-    </motion.article>
+    </motion.li>
   );
 }
 
@@ -139,16 +129,17 @@ export function ServiceShowcase({ sections }: { sections: BookingSection[] }) {
         >
           Dịch vụ tại Noobstore
         </h2>
+        {/* Names the row's actual behaviour: these jump to the group below. */}
         <span className="shrink-0 text-xs font-bold text-on-surface-variant">
-          {sections.length} nhóm
+          Chạm để chọn nhóm
         </span>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <ul className="grid gap-2 sm:grid-cols-2">
         {sections.map((section, idx) => (
-          <ShowcaseCard key={section.key} section={section} index={idx} />
+          <RailRow key={section.key} section={section} index={idx} />
         ))}
-      </div>
+      </ul>
     </section>
   );
 }

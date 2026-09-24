@@ -42,8 +42,11 @@ const SETTLE_MS = 300; // sustained-idle window before hiding once data lands
 const FAILSAFE_MARGIN_MS = 6000; // failsafe = minDuration + margin — never preempts the data wait
 
 /**
- * Full-screen NoobStore boot splash for the root page.
+ * Full-screen NoobStore boot splash — plays ONLY on the home route.
  * Ported from `mockup-ui/loading-screen/code.html` (keycap boot screen).
+ *
+ * Every other page (and every redirect that doesn't land on home) is owned by
+ * `PageTransitionLoader`'s lightweight "Đang chuyển trang" overlay instead.
  *
  * The splash hides once the page's core `/api` data (cart + home rails) has
  * settled in the React Query cache, at least `minDuration` after mount — the
@@ -62,7 +65,13 @@ export function SplashScreen({
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const [skip, setSkip] = useState(false);
-  const [active, setActive] = useState(false); // overlay mounted + tracking
+  // Only the home route owns the boot splash. Initializing from the route
+  // (SSR-consistent via `usePathname`) means home keeps its splash in the
+  // initial HTML, while non-home cold loads render no splash markup at all —
+  // previously the overlay rendered on every mount because `active` started
+  // false and `showOverlay` ignored it, flashing the full splash over the
+  // light transition loader on non-home pages.
+  const [active, setActive] = useState(() => pathname === "/"); // overlay mounted + tracking
   const [percent, setPercent] = useState<number>(START_PCT);
   const [fading, setFading] = useState(false);
   const [gone, setGone] = useState(false);
@@ -83,6 +92,7 @@ export function SplashScreen({
     let mounted = true;
     const shouldSkip =
       pathname.startsWith("/gacha-mega") ||
+      pathname !== "/" ||
       (showOncePerSession && !forceShow && sessionSeen(sessionKey)) ||
       (typeof window !== "undefined" &&
         !!window.matchMedia &&
@@ -99,13 +109,15 @@ export function SplashScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 1b) Replay on **isolated** route changes only: this instance persists in a
-  //     layout (no remount per navigation), so a fresh boot starts each time
-  //     the whole page below swaps and its data begins loading. Navigating
+  // 1b) Replay on isolated route changes ONLY when they land on home: this
+  //     instance persists in a layout (no remount per navigation), so a fresh
+  //     boot starts each time the page below swaps and its data begins loading.
+  //     Other destinations skip the boot splash — `PageTransitionLoader`
+  //     supplies the light "Đang chuyển trang" overlay for them. Navigating
   //     INTO the arcade cancels instead — its own loading screen takes over.
   //     Nested navigations (`/shop` -> `/shop/{slug}`, `/profile` ->
   //     `/profile/orders`) keep the parent page mounted and swap only the
-  //     child, so they are served by `PageTransitionLoader` instead — no boot
+  //     child, so they are served by `PageTransitionLoader` too — no boot
   //     replay, and no boot-query gate to wait on.
   useEffect(() => {
     const prev = prevPathnameRef.current;
@@ -113,6 +125,15 @@ export function SplashScreen({
     // First mount is a cold load, already handled by effect 1 — not a swap.
     if (prev === null) return;
     if (pathname.startsWith("/gacha-mega")) {
+      setSkip(true);
+      setActive(false);
+      return;
+    }
+    // Only the home route owns the boot splash — leaving home always hands
+    // the transition to `PageTransitionLoader`. Deactivate (not just return):
+    // a bare return strands a mid-cycle splash whose timers were cleared, so
+    // browser back/forward could leave the boot overlay stacked on top.
+    if (pathname !== "/") {
       setSkip(true);
       setActive(false);
       return;
@@ -253,7 +274,10 @@ export function SplashScreen({
   const status = done ? "Sẵn sàng trải nghiệm!" : "Đang tải dữ liệu NoobStore…";
 
   const ready = percent >= 100;
-  const showOverlay = !skip && !gone;
+  // `active` guards the render as well: a deactivated overlay must never stay
+  // in the DOM, otherwise back/forward away from home while a boot was mid-
+  // cycle would leave it stacked over PageTransitionLoader's overlay.
+  const showOverlay = active && !skip && !gone;
 
   return (
     <>

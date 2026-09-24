@@ -5,9 +5,12 @@
  * The rule: a navigation that keeps the **same first path segment** only swaps
  * the child page under an already-rendered parent (`/shop` -> `/shop/{slug}`,
  * `/profile` -> `/profile/orders`, `/shop/a` -> `/shop/b`). Those keep the
- * parent page mounted, so they earn the lightweight blur + spinner overlay.
- * Anything else swaps the whole page (`/` -> `/shop`, `/shop` -> `/cart`) and
- * earns the full boot splash.
+ * parent page mounted and earn the lightweight blur + spinner overlay.
+ * Anything else swaps the whole page (`/` -> `/shop`, `/shop` -> `/cart`).
+ *
+ * Callers decide which surface owns a classification: `SplashScreen` only
+ * shows when the destination is the home route, while `PageTransitionLoader`
+ * covers every other cold load / nested / isolated navigation.
  *
  * Zero React/Next imports so this runs in Vitest and in any client bundle.
  */

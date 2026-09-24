@@ -54,63 +54,76 @@ export function ServiceSectionCard({
   const SectionIcon = getSectionIcon(section.key);
 
   return (
-    <section
-      id={section.key}
-      className="scroll-mt-24 overflow-hidden rounded-2xl bg-surface-container"
-    >
-      {section.heroImageUrl ? (
-        <figure className="relative h-44 w-full">
-          <Image
-            src={section.heroImageUrl}
-            alt={`${section.title} hero`}
-            fill
-            sizes="100vw"
-            className="object-cover"
-          />
-        </figure>
-      ) : null}
-      <div className="space-y-4 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="flex min-w-0 items-center gap-2.5 text-xl font-extrabold tracking-[-0.01em] text-on-surface">
-            {/* Olive marks identity; terracotta is kept for action only. */}
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-on-secondary-fixed-variant">
-              <SectionIcon className="h-4 w-4" />
-            </span>
-            <span className="truncate">{section.title}</span>
-          </h2>
-          <span className="shrink-0 rounded-full bg-surface-container-high px-2.5 py-1 text-xs font-bold text-on-surface-variant">
-            <strong className="text-on-surface">
-              {section.services.length}
-            </strong>{" "}
-            dịch vụ
-          </span>
-        </div>
+    /*
+      The anchor lives on this wrapper, *not* on the card below it.
 
-        {section.hint ? (
-          <p className="text-sm leading-relaxed text-on-surface-variant">
-            {section.hint}
-          </p>
-        ) : null}
+      `overflow-hidden` clips the hero image to the card's rounded corners, but
+      it also makes the card a scroll container — and Chrome ignores an
+      element's own `scroll-margin-top` when that element clips. Measured on the
+      live page: the group section as shipped landed with its top edge at 1px
+      (i.e. the first 64px behind the fixed top nav) and stayed there even with
+      `scroll-margin-top: 300px` forced; the identical markup with
+      `overflow: visible`, or this wrapper with the same class, lands at 96px.
 
-        <div className="divide-y divide-outline-variant/25">
-          {section.services.map((service) => (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              entries={selections[service.id] ?? []}
-              entryErrors={entryErrors?.[service.id]}
-              section={section}
-              onAddEntry={onAddEntry}
-              onRemoveEntry={onRemoveEntry}
-              onUpdateEntry={onUpdateEntry}
-              onSelectOptionValue={onSelectOptionValue}
-              onChangeLineNote={onChangeLineNote}
-              isQuickMode={isQuickMode}
+      So the scroll target has to be a non-clipping element. Both callers — the
+      showcase cards and the flow's own "Chọn nhanh" chips — depend on it.
+    */
+    <div id={section.key} className="scroll-mt-24">
+      <section className="overflow-hidden rounded-2xl bg-surface-container">
+        {section.heroImageUrl ? (
+          <figure className="relative h-44 w-full">
+            <Image
+              src={section.heroImageUrl}
+              alt={`${section.title} hero`}
+              fill
+              sizes="100vw"
+              className="object-cover"
             />
-          ))}
+          </figure>
+        ) : null}
+        <div className="space-y-4 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="flex min-w-0 items-center gap-2.5 text-xl font-extrabold tracking-[-0.01em] text-on-surface">
+              {/* Olive marks identity; terracotta is kept for action only. */}
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-on-secondary-fixed-variant">
+                <SectionIcon className="h-4 w-4" />
+              </span>
+              <span className="truncate">{section.title}</span>
+            </h2>
+            <span className="shrink-0 rounded-full bg-surface-container-high px-2.5 py-1 text-xs font-bold text-on-surface-variant">
+              <strong className="text-on-surface">
+                {section.services.length}
+              </strong>{" "}
+              dịch vụ
+            </span>
+          </div>
+
+          {section.hint ? (
+            <p className="text-sm leading-relaxed text-on-surface-variant">
+              {section.hint}
+            </p>
+          ) : null}
+
+          <div className="divide-y divide-outline-variant/25">
+            {section.services.map((service) => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                entries={selections[service.id] ?? []}
+                entryErrors={entryErrors?.[service.id]}
+                section={section}
+                onAddEntry={onAddEntry}
+                onRemoveEntry={onRemoveEntry}
+                onUpdateEntry={onUpdateEntry}
+                onSelectOptionValue={onSelectOptionValue}
+                onChangeLineNote={onChangeLineNote}
+                isQuickMode={isQuickMode}
+              />
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -152,7 +165,7 @@ function ServiceCard({
               : 1)
         );
       }, 0),
-    [entries, service],
+    [entries, service]
   );
 
   const hasError = entryErrors != null && Object.keys(entryErrors).length > 0;
@@ -228,7 +241,7 @@ function ServiceCard({
           </div>
 
           <div className="flex items-center justify-between border-t border-outline-variant/25 pt-2 text-sm">
-            <span className="font-bold tracking-[0.08em] text-on-surface-variant uppercase">
+            <span className="font-bold uppercase tracking-[0.08em] text-on-surface-variant">
               Tổng tiền
             </span>
             <span className="font-extrabold text-primary">
@@ -238,13 +251,28 @@ function ServiceCard({
         </div>
       )}
 
+      {/*
+        The card's only action, so it is styled as an action and not as another
+        structural box. It used to be `btn-outline` — a 32px hollow pill with a
+        1px resting border, 12px under a *dashed*-border empty state of the same
+        width, so the two read as one block of outlines and the button was the
+        quietest thing in the card. `btn-outline` also existed exactly once in
+        the whole repo — here.
+
+        Now it is the system's soft-terracotta action: a 10% terracotta fill with
+        a terracotta label (the same `bg-primary/10 → /20` idiom the home rows
+        use), no resting border, and a 44px thumb target instead of 32px.
+        Deliberately *tinted*, not solid: this button repeats once per service
+        (~10 on the page), and DESIGN.md keeps terracotta at ≤10% of a screen so
+        the real CTA — the booking summary bar — stays the loudest thing.
+      */}
       <button
         type="button"
         onClick={() => onAddEntry(service)}
         disabled={
           service.max_entries !== null && entries.length >= service.max_entries
         }
-        className="btn btn-outline btn-sm btn-block rounded-full text-xs font-bold tracking-[0.08em] uppercase"
+        className="btn h-11 min-h-11 btn-block rounded-full border-0 bg-primary/10 text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary/20 hover:text-primary disabled:bg-surface-container-high disabled:text-on-surface-variant"
       >
         <Plus className="h-3.5 w-3.5" />
         {service.max_entries !== null && entries.length >= service.max_entries

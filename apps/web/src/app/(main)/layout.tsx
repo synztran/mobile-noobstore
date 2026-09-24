@@ -24,11 +24,11 @@ export default async function MainLayout({
     <>
       <CartHydrator />
 
-      {/* Two loaders by transition type: SplashScreen replays only on
-          isolated navigations (whole page swaps), while PageTransitionLoader
-          wraps the view content and covers nested ones (only the child swaps)
-          with a blur plus a click shield over the chrome. Both skip
-          /gacha-mega, which renders its own loading screen. */}
+      {/* Two loaders by ownership: SplashScreen plays only on the home route,
+          while PageTransitionLoader supplies the light "Đang chuyển trang"
+          overlay for every other page (cold loads, nested and isolated
+          redirects alike). Both skip /gacha-mega, which renders its own
+          loading screen. */}
       {isDesktop ? (
         <SplashScreen forceShow>
           <DesktopShell>
