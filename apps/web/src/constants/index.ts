@@ -1,9 +1,10 @@
+import { ShippingMethod } from "@/lib/shipping-method";
 import { Flame, Motorbike, Store, Truck } from "lucide-react";
 
 export const MAIL_DOMAIN = "noobassembly@gmail.com";
 export const DELIVERY_OPTIONS = [
   {
-    id: "standard" as const,
+    id: ShippingMethod.Standard,
     label: "Tiêu chuẩn",
     sublabel: "12-24 giờ xử lý",
     icon: Motorbike,
@@ -12,7 +13,7 @@ export const DELIVERY_OPTIONS = [
     isHidden: false,
   },
   {
-    id: "express" as const,
+    id: ShippingMethod.Express,
     label: "Hỏa tốc",
     sublabel: "2-4 giờ xử lý",
     icon: Flame,
@@ -21,7 +22,7 @@ export const DELIVERY_OPTIONS = [
     isHidden: false,
   },
   {
-    id: "shipment" as const,
+    id: ShippingMethod.Shipment,
     label: "Đơn vị vận chuyển",
     sublabel: "Giao bởi đơn vị vận chuyển",
     icon: Truck,
@@ -29,7 +30,7 @@ export const DELIVERY_OPTIONS = [
     isHidden: true,
   },
   {
-    id: "pickup" as const,
+    id: ShippingMethod.Pickup,
     label: "Nhận tại cửa hàng",
     sublabel: "Đến cửa hàng nhận đơn",
     icon: Store,

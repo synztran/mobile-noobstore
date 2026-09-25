@@ -13,6 +13,10 @@ import { cartItemToGA, trackAddToCart } from "@/lib/analytics";
 import { useAddCartItem } from "@/modules/cart/client/mutations";
 import { toast } from "@/lib/toast";
 import { useAuth } from "@/modules/user/client/AuthProvider";
+import {
+  LoginRequiredError,
+  redirectToLogin,
+} from "@/modules/user/client/login-redirect";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -54,7 +58,7 @@ export function useProductViewData(
   const { addItem, openCart, items } = useCartStore();
   const addCartItem = useAddCartItem();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
 
   // Auto-select when there is only one variant
   useEffect(() => {
@@ -302,10 +306,19 @@ export function useProductViewData(
         });
       }
     } catch (err) {
+      setIsLoadingAddToCart(false);
+      if (err instanceof LoginRequiredError) {
+        try {
+          await signOut();
+        } catch {
+          // session already dead — still redirect
+        }
+        redirectToLogin(router);
+        return;
+      }
       toast.error(
         err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng"
       );
-      setIsLoadingAddToCart(false);
       return;
     }
 

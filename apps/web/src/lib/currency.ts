@@ -11,7 +11,7 @@ export function formatVND(amount: number): string {
     style: "currency",
     currency: "VND",
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(Math.max(0, amount));
 }
 
 /**

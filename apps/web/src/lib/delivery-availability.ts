@@ -1,4 +1,5 @@
 import { DELIVERY_OPTIONS } from "@/constants";
+import { ShippingMethod } from "@/lib/shipping-method";
 import {
   expressDelivery,
   pickupDelivery,
@@ -34,15 +35,15 @@ export function getDeliveryAvailability(
     : "Sau khi có hàng";
 
   const methods: DeliveryMethodAvailability[] = DELIVERY_OPTIONS.map((opt) => {
-    if (opt.id === "pickup") {
+    if (opt.id === ShippingMethod.Pickup) {
       const p = pickupDelivery(now);
       return { id: opt.id, label: opt.label, available: p.available, eta: p.eta };
     }
-    if (opt.id === "express") {
+    if (opt.id === ShippingMethod.Express) {
       const e = expressDelivery(now, 2);
       return { id: opt.id, label: opt.label, available: e.available, eta: e.eta };
     }
-    if (opt.id === "standard") {
+    if (opt.id === ShippingMethod.Standard) {
       const s = standardDelivery(now);
       return { id: opt.id, label: opt.label, available: s.available, eta: s.eta };
     }

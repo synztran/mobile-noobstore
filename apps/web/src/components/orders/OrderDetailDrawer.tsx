@@ -6,8 +6,8 @@ import OrderTrackingTimeline from "@/components/orders/OrderTrackingTimeline";
 import { VoucherInfo } from "@/components/voucher/VoucherInfo";
 import { formatVND } from "@/lib/currency";
 import {
-  DELIVERY_SERVICE_ID,
-  normalizeShippingMethodId,
+  isCarrierShippingMethod,
+  isPickupShippingMethod,
 } from "@/lib/shipping-method";
 import { buildTrackingUrl } from "@/lib/tracking";
 import { toast } from "@/lib/toast";
@@ -47,6 +47,18 @@ const STATUS_CONFIG: Record<
   },
   confirmed: {
     label: "Đã xác nhận",
+    Icon: CheckCircle2,
+    color: "text-emerald-600",
+    bg: "bg-emerald-100",
+  },
+  first_paid: {
+    label: "Đã thanh toán lần 1 (đặt cọc)",
+    Icon: CheckCircle2,
+    color: "text-sky-600",
+    bg: "bg-sky-100",
+  },
+  second_paid: {
+    label: "Đã thanh toán đủ",
     Icon: CheckCircle2,
     color: "text-emerald-600",
     bg: "bg-emerald-100",
@@ -106,7 +118,12 @@ interface Props {
   onClose: () => void;
 }
 
-const CANCELLABLE_STATUSES = ["pending"];
+const CANCELLABLE_STATUSES = [
+  "pending",
+  "confirmed",
+  "first_paid",
+  "second_paid",
+];
 const NON_TERMINAL_STATUSES = ["delivered", "returning"];
 
 const RETURN_REASON_OPTIONS = [
@@ -200,8 +217,9 @@ function OrderDetailContent({
   const shippingDiscount = detail.shipping_discount_amount ?? 0;
   const totalDiscount = voucherDiscount + shippingDiscount;
   const isDeliveryService =
-    normalizeShippingMethodId(detail.shipping_method_id) ===
-    DELIVERY_SERVICE_ID;
+    isCarrierShippingMethod(detail.shipping_method_id);
+  const isPickup = isPickupShippingMethod(detail.shipping_method_id);
+  const pickupRecipient = isPickup ? (detail.delivery_address ?? null) : null;
   const cancelledAtLabel = detail.cancelled_at
     ? new Date(detail.cancelled_at).toLocaleString("vi-VN", {
         day: "2-digit",
@@ -302,25 +320,28 @@ function OrderDetailContent({
           <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
             Địa chỉ hoàn hàng
           </p>
-          <div className="space-y-1 rounded-2xl bg-surface-container p-4">
-            <p className="flex items-center gap-2 text-sm font-bold text-on-surface">
-              <MapPin size={16} className="text-primary" />
-              Noobstore HCM
-            </p>
-            <p className="pl-6 text-sm leading-relaxed text-on-surface-variant">
-              Số 123, Đường Nguyễn Văn Cừ, Phường 4, Quận 5, TP. Hồ Chí Minh
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(RETURN_ADDRESS_TEXT);
-                setAddressCopied(true);
-                setTimeout(() => setAddressCopied(false), 2000);
-              }}
-              className="ml-6 flex w-max items-center gap-1 text-xs font-bold text-primary underline underline-offset-1 transition-opacity active:opacity-70"
-            >
-              {addressCopied ? "Đã sao chép ✓" : "Sao chép địa chỉ"}
-            </button>
+          <div className="space-y-4 rounded-2xl bg-surface-container p-4">
+            <div>
+              <p className="flex items-center gap-2 text-sm font-bold text-on-surface">
+                <MapPin size={16} className="text-primary" />
+                Noobstore HCM - 083 922 0900
+              </p>
+              <p className="pl-6 text-sm leading-relaxed text-on-surface-variant">
+                70/4b Đường 47 phường Hiệp Bình Chánh TP. Thủ Đức TP. Hồ Chí
+                Minh
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(RETURN_ADDRESS_TEXT);
+                  setAddressCopied(true);
+                  setTimeout(() => setAddressCopied(false), 2000);
+                }}
+                className="ml-6 flex w-max items-center gap-1 text-xs font-bold text-primary underline underline-offset-1 transition-opacity active:opacity-70"
+              >
+                {addressCopied ? "Đã sao chép ✓" : "Sao chép địa chỉ"}
+              </button>
+            </div>
             <div className="mt-2 flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2">
               <p className="text-xs leading-relaxed text-amber-800">
                 Vui lòng ghi số đơn hàng{" "}
@@ -463,6 +484,24 @@ function OrderDetailContent({
         </div>
       )}
 
+      {/* Pickup recipient — pickup orders carry only name + phone (no address) */}
+      {isPickup &&
+        (pickupRecipient?.full_name || pickupRecipient?.phone_number) && (
+          <div className="space-y-1 rounded-2xl bg-surface-container p-4">
+            <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+              Người nhận
+            </p>
+            <p className="text-sm font-bold text-on-surface">
+              {pickupRecipient?.full_name}{" "}
+              {pickupRecipient?.phone_number ? (
+                <span className="font-normal text-on-surface-variant">
+                  · {pickupRecipient.phone_number}
+                </span>
+              ) : null}
+            </p>
+          </div>
+        )}
+
       {/* Pickup information */}
       {detail.pickup_at && (
         <div className="space-y-2">
@@ -487,7 +526,7 @@ function OrderDetailContent({
       )}
 
       {/* Delivery information */}
-      {!detail.pickup_at && detail.delivery_address && (
+      {!isPickup && !detail.pickup_at && detail.delivery_address && (
         <div className="space-y-2">
           <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
             Thông tin giao hàng
@@ -586,21 +625,27 @@ function OrderDetailContent({
           </div>
         )}
 
-      {/* Payment panel */}
-      {detail.status === "pending" && (
-        <OrderPaymentPanel
-          orderNumber={detail.order_number}
-          totalPrice={detail.total_price}
-          shippingFee={detail.shipping_fee}
-          shippingMethodId={detail.shipping_method_id}
-          voucherDiscount={voucherDiscount}
-          shippingDiscount={shippingDiscount}
-          paymentType={detail.payment_type}
-          depositAmount={detail.deposit_amount ?? 0}
-          remainingAmount={detail.remaining_amount ?? 0}
-          depositPercentage={detail.deposit_percentage ?? 0}
-        />
-      )}
+      {/* Payment panel — keep QR/payment info for deposit orders until the
+          order is fully paid; hide once paid or on cancel/refund. */}
+      {!detail.paid_at &&
+        !["cancelled", "refunded"].includes(detail.status) && (
+          <OrderPaymentPanel
+            orderNumber={detail.order_number}
+            totalPrice={detail.total_price}
+            shippingFee={detail.shipping_fee}
+            shippingMethodId={detail.shipping_method_id}
+            voucherDiscount={voucherDiscount}
+            shippingDiscount={shippingDiscount}
+            paymentType={detail.payment_type}
+            depositAmount={detail.deposit_amount ?? 0}
+            remainingAmount={detail.remaining_amount ?? 0}
+            depositPercentage={detail.deposit_percentage ?? 0}
+            depositPaid={
+              detail.payment_type === "deposit_cod" &&
+              detail.deposit_paid_at != null
+            }
+          />
+        )}
 
       {/* Voucher Info */}
       {(detail.voucher_code || totalDiscount > 0) && (
@@ -612,9 +657,14 @@ function OrderDetailContent({
       )}
 
       {/* Price summary */}
-      {["confirmed", "delivering", "delivered", "returning"].includes(
-        detail.status
-      ) && (
+      {[
+        "confirmed",
+        "first_paid",
+        "second_paid",
+        "delivering",
+        "delivered",
+        "returning",
+      ].includes(detail.status) && (
         <div className="space-y-2 rounded-2xl bg-surface-container px-4 py-3">
           <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
             Tổng cộng
@@ -690,9 +740,13 @@ function OrderDetailContent({
 
       {/* Invoice download */}
       {detail.invoice_url &&
-        ["confirmed", "delivering", "delivered", "returning"].includes(
-          detail.status
-        ) && (
+        [
+          "confirmed",
+          "second_paid",
+          "delivering",
+          "delivered",
+          "returning",
+        ].includes(detail.status) && (
           <a
             href={detail.invoice_url}
             target="_blank"
@@ -761,6 +815,7 @@ function OrderDetailContent({
           </div>
           <div className="modal-action flex">
             <button
+              disabled={cancelMutation.isPending}
               onClick={() => setShowCancelModal(false)}
               className="btn btn-sm flex-1 rounded-lg border-0 bg-surface-container px-4 text-sm font-bold normal-case text-on-surface"
             >
@@ -774,7 +829,7 @@ function OrderDetailContent({
               {cancelMutation.isPending ? (
                 <span className="loading loading-spinner loading-sm" />
               ) : (
-                "Xác nhận huỷ đơn"
+                "Hủy đơn"
               )}
             </button>
           </div>
@@ -836,10 +891,11 @@ function OrderDetailContent({
               />
             )}
           </div>
-          <div className="modal-action">
+          <div className="modal-action grid grid-cols-2 gap-2">
             <button
+              disabled={returnMutation.isPending}
               onClick={() => setShowReturnModal(false)}
-              className="btn rounded-full border-0 bg-surface-container px-6 text-sm font-bold normal-case text-on-surface"
+              className="btn rounded-md border-0 bg-surface-container px-6 text-sm font-bold normal-case text-on-surface"
             >
               Huỷ
             </button>
@@ -849,12 +905,12 @@ function OrderDetailContent({
                 returnMutation.isPending ||
                 (returnReason === "Khác" && !returnCustomReason.trim())
               }
-              className="btn rounded-full border-0 bg-amber-500 px-6 text-sm font-bold normal-case text-white transition-all active:scale-[0.98] disabled:opacity-60"
+              className="btn rounded-md border-0 bg-amber-500 px-6 text-sm font-bold normal-case text-white transition-all active:scale-[0.98] disabled:opacity-60"
             >
               {returnMutation.isPending ? (
                 <span className="loading loading-spinner loading-sm" />
               ) : (
-                "Xác nhận hoàn hàng"
+                "Hoàn hàng"
               )}
             </button>
           </div>

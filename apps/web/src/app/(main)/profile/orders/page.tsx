@@ -58,6 +58,18 @@ const STATUS_CONFIG: Record<
     color: "text-emerald-600",
     bg: "bg-emerald-50",
   },
+  first_paid: {
+    label: "Đã đặt cọc",
+    Icon: CheckCircle2,
+    color: "text-sky-600",
+    bg: "bg-sky-50",
+  },
+  second_paid: {
+    label: "Đã thanh toán đủ",
+    Icon: CheckCircle2,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+  },
   preparing: {
     label: "Đang chuẩn bị",
     Icon: PackageCheck,
@@ -105,6 +117,7 @@ const STATUS_CONFIG: Record<
 const STATUS_TABS: OrderStatusTabOption[] = [
   { value: "all", label: "Tất cả" },
   { value: "pending", label: "Chờ xác nhận" },
+  { value: "first_paid", label: "Đã đặt cọc" },
   { value: "confirmed", label: "Đã xác nhận" },
   { value: "delivering", label: "Đang giao" },
   { value: "delivered", label: "Đã giao" },

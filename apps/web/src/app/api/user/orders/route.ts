@@ -38,6 +38,8 @@ const ALLOWED_STATUS_FILTERS = new Set([
   "pending",
   "paid",
   "confirmed",
+  "first_paid",
+  "second_paid",
   "preparing",
   "shipped",
   "delivering",

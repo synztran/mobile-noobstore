@@ -1,4 +1,5 @@
 import type { AddCartItemRequest } from "@/modules/cart/types";
+import { LoginRequiredError } from "@/modules/user/client/login-redirect";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/toast";
@@ -17,6 +18,8 @@ export function useAddCartItem() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+      if (res.status === 401)
+        throw new LoginRequiredError("Vui lòng đăng nhập để thêm vào giỏ hàng");
       if (!res.ok) {
         const err = await res
           .json()
@@ -45,6 +48,8 @@ export function useUpdateCartItem() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity }),
       });
+      if (res.status === 401)
+        throw new LoginRequiredError("Vui lòng đăng nhập để cập nhật giỏ hàng");
       if (!res.ok) {
         const err = await res
           .json()
@@ -67,6 +72,8 @@ export function useRemoveCartItem() {
       const res = await fetch(`/api/cart/items/${itemId}`, {
         method: "DELETE",
       });
+      if (res.status === 401)
+        throw new LoginRequiredError("Vui lòng đăng nhập để chỉnh sửa giỏ hàng");
       if (!res.ok) throw new Error("Failed to remove cart item");
     },
     // Await the refetch so callers that key UI state off `onSettled` only
@@ -91,6 +98,8 @@ export function useClearCart() {
           method: "DELETE",
         }
       );
+      if (res.status === 401)
+        throw new LoginRequiredError("Vui lòng đăng nhập để xóa giỏ hàng");
       if (!res.ok) throw new Error("Failed to clear cart");
     },
     onSuccess: () => invalidateCart(queryClient),

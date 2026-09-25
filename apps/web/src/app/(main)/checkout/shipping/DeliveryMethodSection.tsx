@@ -2,6 +2,7 @@
 
 import { DELIVERY_OPTIONS, mappingDisplayPrice } from "@/constants";
 import { formatVND } from "@/lib/currency";
+import { ShippingMethod } from "@/lib/shipping-method";
 import { Check } from "lucide-react";
 import clsx from "clsx";
 import { memo, useMemo } from "react";
@@ -43,7 +44,7 @@ function DeliveryMethodSection({
 
   const options = useMemo(() => {
     return deliveryOptions.map((opt) => {
-      if (opt.id === "standard") {
+      if (opt.id === ShippingMethod.Standard) {
         return {
           ...opt,
           sublabel: hasPreOrder
@@ -52,7 +53,7 @@ function DeliveryMethodSection({
           price: basicFee,
         };
       }
-      if (opt.id === "express") {
+      if (opt.id === ShippingMethod.Express) {
         return {
           ...opt,
           sublabel: hasPreOrder
@@ -71,14 +72,14 @@ function DeliveryMethodSection({
         <span className="uppercase">Phương thức giao hàng</span>
         {isCalculatingFee ? (
           <span
-            className={`inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant ${delivery === "pickup" ? "sr-only" : ""}`}
+            className={`inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant ${delivery === ShippingMethod.Pickup ? "sr-only" : ""}`}
           >
             <span className="loading loading-spinner loading-sm" />
             Đang tính phí...
           </span>
         ) : distanceKm !== null ? (
           <span
-            className={`ml-2 text-sm font-bold text-on-surface-variant ${delivery === "pickup" ? "sr-only" : ""}`}
+            className={`ml-2 text-sm font-bold text-on-surface-variant ${delivery === ShippingMethod.Pickup ? "sr-only" : ""}`}
           >
             {distanceKm.toFixed(1)} km
           </span>

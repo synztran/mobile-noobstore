@@ -18,6 +18,7 @@ export type {
 	WishlistItem,
 	WishlistItemInput,
 } from "@/modules/user/types";
+import type { DeliverySpeed } from "@/lib/shipping-method";
 
 export interface ShippingDetails {
   fullName: string;
@@ -32,7 +33,7 @@ export interface ShippingDetails {
   postalCode: string;
   phoneNumber: string;
   notes?: string;
-  deliverySpeed: "standard" | "express" | "shipment" | "preorder" | "pickup";
+  deliverySpeed: DeliverySpeed | "preorder";
   /** Matches shipping_methods.id — same value as deliverySpeed for now */
   shippingMethodId: string;
   /** Chosen store pickup slot (ISO) when deliverySpeed === "pickup" */

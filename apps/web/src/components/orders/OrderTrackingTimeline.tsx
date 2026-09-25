@@ -1,6 +1,7 @@
 "use client";
 
 import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
+import { isPickupShippingMethod } from "@/lib/shipping-method";
 import {
   Check,
   CircleX,
@@ -107,10 +108,77 @@ const NORMAL_STEPS = [
   },
 ] as const;
 
+const DEPOSIT_STEPS = [
+  {
+    key: "placed",
+    label: "Đặt hàng",
+    description: "Đơn hàng của bạn đã được tiếp nhận",
+    icon: Receipt,
+  },
+  {
+    key: WAITING_PAYMENT_STEP.key,
+    label: WAITING_PAYMENT_STEP.label,
+    description: "Vui lòng thanh toán tiền đặt cọc (lần 1)",
+    icon: WAITING_PAYMENT_STEP.icon,
+  },
+  {
+    key: "first_paid",
+    label: "Đặt cọc",
+    description: "Đã nhận tiền đặt cọc (thanh toán lần 1)",
+    icon: PackageCheck,
+  },
+  {
+    key: "second_paid",
+    label: "Thanh toán đủ",
+    description: "Đã thanh toán phần còn lại (lần 2)",
+    icon: PackageCheck,
+  },
+  {
+    key: "delivering",
+    label: "Đang vận chuyển",
+    description: "Đơn hàng đang trên đường đến bạn",
+    icon: Truck,
+  },
+  {
+    key: "delivered",
+    label: "Đã giao hàng",
+    description: "Đơn hàng đã giao thành công",
+    icon: Package,
+  },
+] as const;
+
 const STATUS_INDEX: Record<string, number> = {
   pending: 1,
   confirmed: 2,
   delivering: 3,
+  delivered: 4,
+};
+
+const STATUS_INDEX_DEPOSIT: Record<string, number> = {
+  pending: 1,
+  confirmed: 2,
+  first_paid: 2,
+  second_paid: 3,
+  delivering: 4,
+  delivered: 5,
+};
+
+// Pickup orders skip "delivering" — goods are handed over at the store. The
+// delivering status still maps to the delivered index so legacy orders stuck
+// at delivering render fully instead of collapsing.
+const STATUS_INDEX_PICKUP: Record<string, number> = {
+  pending: 1,
+  confirmed: 2,
+  delivering: 3,
+  delivered: 3,
+};
+
+const STATUS_INDEX_PICKUP_DEPOSIT: Record<string, number> = {
+  pending: 1,
+  confirmed: 2,
+  first_paid: 2,
+  second_paid: 3,
+  delivering: 4,
   delivered: 4,
 };
 
@@ -199,6 +267,8 @@ const PILL_CLASSES: Record<Tone, Record<StepState, string>> = {
 function normalStepTimestamp(key: string, order: OrderDetail): string | null {
   if (key === "placed") return order.created_at;
   if (key === "confirmed") return order.paid_at ?? order.deposit_paid_at;
+  if (key === "first_paid") return order.deposit_paid_at;
+  if (key === "second_paid") return order.paid_at;
   if (key === "delivering") return order.delivering_at;
   if (key === "delivered") return order.delivered_at;
   return null;
@@ -250,6 +320,8 @@ function getPillText(step: StepModel): string {
   if (step.state === "done") return "Thành công";
   if (step.state === "active") {
     if (step.key === "waiting_payment") return "Đợi thanh toán";
+    if (step.key === "first_paid") return "ĐÃ ĐẶT CỌC";
+    if (step.key === "second_paid") return "ĐÃ THANH TOÁN";
     return "ĐANG XỬ LÝ";
   }
   return "SẮP TỚI";
@@ -339,20 +411,57 @@ export default function OrderTrackingTimeline({
 }: {
   order: OrderDetail;
 }) {
+  const orderStatus = order.status as string;
+  const isFinished =
+    orderStatus === "delivered" ||
+    orderStatus === "cancelled" ||
+    orderStatus === "refunded" ||
+    orderStatus === "returning";
   const isPreOrder = order.items.some((item) => item.preOrderTracking);
-  const tone: Tone = isPreOrder ? "violet" : "brand";
+  const isPickup = isPickupShippingMethod(order.shipping_method_id);
+
+  function applyPickupStepText<T extends Omit<StepModel, "state">>(step: T): T {
+    if (!isPickup) return step;
+    if (step.key === "second_paid") {
+      return {
+        ...step,
+        label: "Đã thanh toán đầy đủ đơn hàng",
+        description:
+          "Đã thanh toán phần còn lại (lần 2), khách hàng vui lòng đến cửa hàng lấy hàng",
+      };
+    }
+    if (step.key === "delivered") {
+      return {
+        ...step,
+        label: "Đơn hàng hoàn tất",
+        description: "Đơn hàng đã được bàn giao cho khách hàng",
+      };
+    }
+    return step;
+  }
+
+  // Once the parcel is "Sẵn sàng tại shop" (or the order is finished), the
+  // pre-order milestones are no longer useful — switch to the order status
+  // timeline instead.
+  const readyIdx = PRE_ORDER_STEPS.findIndex((s) => s.key === "ready");
+  const collectiveIdx = isPreOrder
+    ? order.items
+        .filter((item) => item.preOrderTracking)
+        .reduce((min, item) => {
+          const idx = getPreOrderIndex(item.preOrderTracking);
+          return idx < 0 ? min : Math.min(min, idx);
+        }, Infinity)
+    : Infinity;
+  const activeIdx =
+    !isPreOrder || collectiveIdx === Infinity ? 0 : collectiveIdx;
+  const showPreOrderTimeline =
+    isPreOrder && !isFinished && activeIdx < readyIdx;
+  const tone: Tone = showPreOrderTimeline ? "violet" : "brand";
 
   let steps: StepModel[];
 
-  if (isPreOrder) {
+  if (showPreOrderTimeline) {
     const preOrderItems = order.items.filter((item) => item.preOrderTracking);
-    let collectiveIdx = Infinity;
-    for (const item of preOrderItems) {
-      const idx = getPreOrderIndex(item.preOrderTracking);
-      if (idx >= 0 && idx < collectiveIdx) collectiveIdx = idx;
-    }
-    const activeIdx = collectiveIdx === Infinity ? 0 : collectiveIdx;
-
     const stepTimes: Record<string, string> = {};
     for (const item of preOrderItems) {
       const t = item.preOrderTracking as
@@ -372,18 +481,31 @@ export default function OrderTrackingTimeline({
       timestamp: stepTimes[step.key] ?? null,
     }));
   } else {
-    const status = order.status as string;
+    const isDepositFlow = order.payment_type === "deposit_cod";
+    const flowSteps = (isDepositFlow ? DEPOSIT_STEPS : NORMAL_STEPS).filter(
+      (s) => !(isPickup && s.key === "delivering")
+    );
+    const orderIndex = isDepositFlow
+      ? isPickup
+        ? STATUS_INDEX_PICKUP_DEPOSIT
+        : STATUS_INDEX_DEPOSIT
+      : isPickup
+        ? STATUS_INDEX_PICKUP
+        : STATUS_INDEX;
     const terminated =
-      status === "cancelled" || status === "refunded" || status === "returning";
+      orderStatus === "cancelled" ||
+      orderStatus === "refunded" ||
+      orderStatus === "returning";
     let lastDoneIdx = 0;
 
     if (!terminated) {
-      lastDoneIdx = STATUS_INDEX[status] ?? 0;
-      steps = NORMAL_STEPS.slice(0, lastDoneIdx + 1).map((step, i) => ({
-        ...step,
-        state: i < lastDoneIdx ? "done" : "active",
+      lastDoneIdx = orderIndex[orderStatus] ?? 0;
+      const allDone = orderStatus === "delivered";
+      steps = flowSteps.slice(0, lastDoneIdx + 1).map((step, i) => ({
+        ...applyPickupStepText(step),
+        state: i < lastDoneIdx || allDone ? "done" : "active",
         timestamp: normalStepTimestamp(step.key, order),
-        loading: step.key === "waiting_payment" && status === "pending",
+        loading: step.key === "waiting_payment" && orderStatus === "pending",
         meta:
           step.key === "delivering" &&
           i === lastDoneIdx &&
@@ -392,42 +514,37 @@ export default function OrderTrackingTimeline({
             : null,
       }));
     } else {
-      if (order.delivered_at) lastDoneIdx = 4;
-      else if (order.delivering_at) lastDoneIdx = 3;
-      else if (order.paid_at || order.deposit_paid_at) lastDoneIdx = 2;
+      if (isDepositFlow) {
+        if (order.delivered_at) lastDoneIdx = isPickup ? 4 : 5;
+        else if (order.delivering_at) lastDoneIdx = 4;
+        else if (order.paid_at) lastDoneIdx = 3;
+        else if (order.deposit_paid_at) lastDoneIdx = 2;
+      } else {
+        if (order.delivered_at) lastDoneIdx = isPickup ? 3 : 4;
+        else if (order.delivering_at) lastDoneIdx = 3;
+        else if (order.paid_at || order.deposit_paid_at) lastDoneIdx = 2;
+      }
 
-      steps = NORMAL_STEPS.slice(0, lastDoneIdx + 1).map((step, i) => ({
-        ...step,
+      steps = flowSteps.slice(0, lastDoneIdx + 1).map((step, i) => ({
+        ...applyPickupStepText(step),
         state: "done",
         timestamp: normalStepTimestamp(step.key, order),
       }));
 
-      steps.push(buildTerminationStep(order, status));
+      steps.push(buildTerminationStep(order, orderStatus));
     }
   }
-
-  const orderStatus = order.status as string;
-  const isFinished =
-    orderStatus === "delivered" ||
-    orderStatus === "cancelled" ||
-    orderStatus === "refunded" ||
-    orderStatus === "returning";
 
   return (
     <div className="space-y-4 rounded-2xl bg-surface-container-lowest p-4 shadow-ambient-sm">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-black uppercase tracking-widest text-on-surface-variant">
-          {isPreOrder ? "Trạng thái đơn hàng Pre-order" : "Trạng thái đơn hàng"}
+          {showPreOrderTimeline
+            ? "Trạng thái đơn hàng Pre-order"
+            : "Trạng thái đơn hàng"}
         </p>
-        {/* {!isFinished && (
-          <span
-            className={`loading loading-spinner loading-sm ${
-              tone === "violet" ? "text-violet-500" : "text-primary"
-            }`}
-          />
-        )} */}
       </div>
-      {isPreOrder && (
+      {showPreOrderTimeline && (
         <p className="mt-0.5 text-xs text-on-surface-variant">
           Các mốc được cập nhật khi hàng về shop
         </p>

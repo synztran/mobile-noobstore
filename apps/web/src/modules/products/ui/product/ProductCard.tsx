@@ -9,6 +9,10 @@ import { useFlyToCartStore } from "@/modules/cart/client/useFlyToCart";
 import { useAddCartItem } from "@/modules/cart/client/mutations";
 import { trackAddToCart, toGAProduct } from "@/lib/analytics";
 import { useAuth } from "@/modules/user/client/AuthProvider";
+import {
+  LoginRequiredError,
+  redirectToLogin,
+} from "@/modules/user/client/login-redirect";
 import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -69,7 +73,7 @@ export const ProductCard = memo(function ProductCard({
   const addStandardProduct = useCartStore((s) => s.addStandardProduct);
   const flyToCart = useFlyToCartStore((s) => s.flyToCart);
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
 
   const displayImage = useMemo(() => {
     if (activeVariantId) {
@@ -125,6 +129,16 @@ export const ProductCard = memo(function ProductCard({
         variant_id: selectedVariant?.id ?? null,
       });
     } catch (err) {
+      if (err instanceof LoginRequiredError) {
+        try {
+          await signOut();
+        } catch {
+          // session already dead — still redirect
+        }
+        redirectToLogin(router);
+        setSubmitting(false);
+        return;
+      }
       toast.error(
         err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng"
       );

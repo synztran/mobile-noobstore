@@ -6,6 +6,11 @@ import {
   dayEndMinutes,
   dayStartMinutes,
 } from "@/lib/store-hours";
+import {
+  PICKUP_SHIPPING_ID,
+  ShippingMethod,
+  type DeliverySpeed,
+} from "@/lib/shipping-method";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
@@ -13,7 +18,7 @@ import { useCheckoutStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export type DeliverySpeed = "standard" | "express" | "shipment" | "pickup";
+export type { DeliverySpeed };
 
 type FormData = {
   fullName: string;
@@ -259,14 +264,14 @@ export function useShippingForm() {
     restoredDeliveryRef.current = true;
     const speed = shipping.deliverySpeed;
     if (
-      speed === "standard" ||
-      speed === "express" ||
-      speed === "shipment" ||
-      speed === "pickup"
+      speed === ShippingMethod.Standard ||
+      speed === ShippingMethod.Express ||
+      speed === ShippingMethod.Shipment ||
+      speed === ShippingMethod.Pickup
     ) {
       setDelivery(speed);
     }
-    if (speed === "pickup" && shipping.pickupAt) {
+    if (speed === ShippingMethod.Pickup && shipping.pickupAt) {
       const d = new Date(shipping.pickupAt);
       if (!Number.isNaN(d.getTime())) {
         const yyyy = d.getFullYear();
@@ -394,11 +399,14 @@ export function useShippingForm() {
         wardCode: city !== prev.city ? "" : prev.wardCode,
       }));
       if (city !== HCM_CITY) {
-        if (delivery === "standard" || delivery === "express") {
-          setDelivery("shipment");
+        if (
+          delivery === ShippingMethod.Standard ||
+          delivery === ShippingMethod.Express
+        ) {
+          setDelivery(ShippingMethod.Shipment);
         }
-      } else if (delivery === "shipment") {
-        setDelivery("standard");
+      } else if (delivery === ShippingMethod.Shipment) {
+        setDelivery(ShippingMethod.Standard);
       }
     },
     [delivery, getCityCode]
@@ -445,14 +453,15 @@ export function useShippingForm() {
     baseBasicFee,
     districtSurchargeRate + operationalSurchargeRate
   );
-  const distanceFee = delivery === "express" ? rawImmediateCost : rawBasicCost;
-  const isPickup = delivery === "pickup";
-  const isDeliveryService = delivery === "shipment";
+  const distanceFee =
+    delivery === ShippingMethod.Express ? rawImmediateCost : rawBasicCost;
+  const isPickup = delivery === ShippingMethod.Pickup;
+  const isDeliveryService = delivery === ShippingMethod.Shipment;
   const baseShippingCost = isPickup
     ? 0
     : isDeliveryService
       ? 0
-      : delivery === "express"
+      : delivery === ShippingMethod.Express
         ? immediateFee
         : basicFee;
   const shippingCost = baseShippingCost;
@@ -575,8 +584,8 @@ export function useShippingForm() {
         setShipping(
           {
             ...form,
-            deliverySpeed: "pickup",
-            shippingMethodId: "pickup",
+            deliverySpeed: ShippingMethod.Pickup,
+            shippingMethodId: PICKUP_SHIPPING_ID,
             pickupAt,
           },
           0
@@ -711,18 +720,24 @@ export function useShippingForm() {
   useEffect(() => {
     if (!form.city) return;
     if (form.city !== HCM_CITY) {
-      if (delivery === "standard" || delivery === "express") {
-        setDelivery("shipment");
+      if (
+        delivery === ShippingMethod.Standard ||
+        delivery === ShippingMethod.Express
+      ) {
+        setDelivery(ShippingMethod.Shipment);
       }
-    } else if (delivery === "shipment") {
-      setDelivery("standard");
+    } else if (delivery === ShippingMethod.Shipment) {
+      setDelivery(ShippingMethod.Standard);
     }
   }, [form.city, delivery]);
 
   // Update distance fee when address changes (debounced)
   useEffect(() => {
     let cancelled = false;
-    if (delivery === "shipment" || delivery === "pickup") {
+    if (
+      delivery === ShippingMethod.Shipment ||
+      delivery === ShippingMethod.Pickup
+    ) {
       setDistanceKm(null);
       setIsCalculatingFee(false);
       return;

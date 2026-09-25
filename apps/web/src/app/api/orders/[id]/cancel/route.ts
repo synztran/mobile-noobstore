@@ -52,12 +52,12 @@ export async function POST(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const cancellable = ["pending", "confirmed"];
+    const cancellable = ["pending", "confirmed", "first_paid", "second_paid"];
     if (!cancellable.includes(order.status)) {
       return NextResponse.json(
         {
           error:
-            "Đơn hàng không thể hủy. Chỉ hủy được đơn hàng ở trạng thái chờ xác nhận hoặc đã xác nhận.",
+            "Đơn hàng không thể hủy. Chỉ hủy được đơn hàng trước khi chuyển sang trạng thái đang giao.",
         },
         { status: 400 }
       );

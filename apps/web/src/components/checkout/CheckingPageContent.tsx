@@ -10,6 +10,7 @@ import {
   usePaymentInformation,
 } from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
+import { ShippingMethod } from "@/lib/shipping-method";
 import { useCheckoutStore } from "@/store";
 import { formatVND } from "@/lib/currency";
 import Image from "@/components/ui/AdaptiveImage";
@@ -38,7 +39,8 @@ export default function CheckingPageContent() {
   const { orderNumber, totalPrice, orderedItems, shippingCost, shipping } =
     useCheckoutStore();
 
-  const isDeliveryService = shipping?.deliverySpeed === "shipment";
+  const isDeliveryService =
+    shipping?.deliverySpeed === ShippingMethod.Shipment;
 
   // Guard: redirect to shop if there is no active order
   useEffect(() => {

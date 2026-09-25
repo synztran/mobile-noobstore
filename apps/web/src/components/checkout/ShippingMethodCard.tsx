@@ -1,6 +1,7 @@
 "use client";
 
 import type { ShippingDetails } from "@/lib/data";
+import { ShippingMethod } from "@/lib/shipping-method";
 import { Store, Truck } from "lucide-react";
 
 function formatPickupSlot(value?: string | null): string {
@@ -30,7 +31,7 @@ export function ShippingMethodCard({
       <div className="flex items-center justify-between gap-4 p-4">
         <div className="flex flex-1 items-start gap-2">
           <div className="primary-gradient flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
-            {shipping?.deliverySpeed === "pickup" ? (
+            {shipping?.deliverySpeed === ShippingMethod.Pickup ? (
               <Store className="text-lg text-white" />
             ) : (
               <Truck className="text-lg text-white" />
@@ -38,27 +39,27 @@ export function ShippingMethodCard({
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-              {shipping?.deliverySpeed === "pickup"
+              {shipping?.deliverySpeed === ShippingMethod.Pickup
                 ? "Hình thức nhận hàng"
                 : "Vận chuyển"}
             </p>
             <p className="text-sm font-bold text-on-surface">
-              {shipping?.deliverySpeed === "pickup"
+              {shipping?.deliverySpeed === ShippingMethod.Pickup
                 ? "Nhận tại cửa hàng"
-                : shipping?.deliverySpeed === "express"
+                : shipping?.deliverySpeed === ShippingMethod.Express
                   ? "Hỏa tốc"
-                  : shipping?.deliverySpeed === "shipment"
+                  : shipping?.deliverySpeed === ShippingMethod.Shipment
                     ? "Đơn vị vận chuyển"
                     : "Tiêu chuẩn"}
             </p>
             <p className="mt-0.5 text-xs text-on-surface-variant">
-              {shipping?.deliverySpeed === "pickup"
+              {shipping?.deliverySpeed === ShippingMethod.Pickup
                 ? shipping?.pickupAt
                   ? `Hẹn giờ: ${formatPickupSlot(shipping.pickupAt)}`
                   : "NoobStore sẽ chủ động liên hệ bạn khi sản phẩm đã về hàng"
-                : shipping?.deliverySpeed === "express"
+                : shipping?.deliverySpeed === ShippingMethod.Express
                   ? "Dự kiến: 2–4 giờ"
-                  : shipping?.deliverySpeed === "shipment"
+                  : shipping?.deliverySpeed === ShippingMethod.Shipment
                     ? "Giao bởi đơn vị vận chuyển"
                     : "Dự kiến: 12–24 giờ"}
             </p>

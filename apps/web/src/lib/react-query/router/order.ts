@@ -9,6 +9,7 @@ export interface OrderStatusResult {
 	deposit_amount?: number;
 	remaining_amount?: number;
 	deposit_paid_at?: string | null;
+	paid_at?: string | null;
 	notFound?: boolean;
 }
 

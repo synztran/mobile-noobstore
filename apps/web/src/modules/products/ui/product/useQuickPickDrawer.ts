@@ -17,6 +17,10 @@ import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useAddCartItem } from "@/modules/cart/client/mutations";
 import { useQuickPick } from "@/modules/products/client/queries";
 import { useAuth } from "@/modules/user/client/AuthProvider";
+import {
+  LoginRequiredError,
+  redirectToLogin,
+} from "@/modules/user/client/login-redirect";
 
 type UseQuickPickDrawerProps = {
   isOpen: boolean;
@@ -37,7 +41,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
   // ── External hooks ───────────────────────────────────────────────────────
   const { addItem, openCart, items: cartItems } = useCartStore();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const addCartItem = useAddCartItem();
 
   const requestKey = isCategoryMode
@@ -356,6 +360,15 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
       await addCartItem.mutateAsync(body);
     } catch (err) {
       setSubmitting(false);
+      if (err instanceof LoginRequiredError) {
+        try {
+          await signOut();
+        } catch {
+          // session already dead — still redirect
+        }
+        redirectToLogin(router);
+        return;
+      }
       toast.error(
         err instanceof Error ? err.message : "Không thể thêm vào giỏ hàng"
       );

@@ -104,6 +104,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: "include", // important if using cookies
       });
 
+      // The server could not verify this session (expired/rotated cookie) even
+      // though the client's cached getSession() still reports a user. Treat it
+      // as signed out app-wide so the sidebar/profile/gacha stop claiming a
+      // logged-in session — the next add-to-cart click then takes the normal
+      // !user → /login redirect path instead of silently 401-ing.
+      if (res.status === 401) {
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        // Drop the stale cookie locally so getSession() won't resurrect the
+        // session on the next mount; the SIGNED_OUT event also clears caches.
+        void supabase.auth.signOut({ scope: "local" });
+        return;
+      }
+
       if (!res.ok) {
         setProfile(null);
         return;

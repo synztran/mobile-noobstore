@@ -5,6 +5,7 @@ import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { DELIVERY_OPTIONS } from "@/constants";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm, type DeliverySpeed } from "@/hooks/useShippingForm";
+import { ShippingMethod } from "@/lib/shipping-method";
 import { cartItemsToGA, trackBeginCheckout } from "@/lib/analytics";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import AddressFields from "./AddressFields";
@@ -135,10 +136,10 @@ const ShippingPage = () => {
   const deliveryOptions = useMemo(() => {
     return DELIVERY_OPTIONS.map((opt) => {
       const fee =
-        opt.id === "express" || opt.id === "standard"
+        opt.id === ShippingMethod.Express || opt.id === ShippingMethod.Standard
           ? mappingFees[opt.id]
           : opt.price;
-      const isPickupOpt = opt.id === "pickup";
+      const isPickupOpt = opt.id === ShippingMethod.Pickup;
       return {
         ...opt,
         price: fee,

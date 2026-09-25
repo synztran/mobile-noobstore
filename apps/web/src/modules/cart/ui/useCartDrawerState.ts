@@ -13,6 +13,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { CartItem } from "@/modules/cart/types";
 import { useAuth } from "@/modules/user/client/AuthProvider";
+import {
+  LoginRequiredError,
+  redirectToLogin,
+} from "@/modules/user/client/login-redirect";
 
 /**
  * Shared state/logic for the cart drawer UI. Both the mobile bottom sheet
@@ -21,7 +25,7 @@ import { useAuth } from "@/modules/user/client/AuthProvider";
  */
 export function useCartDrawerState() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const mounted = useIsMounted();
   const {
     items,
@@ -63,6 +67,24 @@ export function useCartDrawerState() {
     confirmDialogRef.current?.showModal();
   }, []);
 
+  // The server rejected the session (expired/rotated cookie) even though the
+  // client-side cached user claims to be signed in. Drop the stale session and
+  // route to /login?next=… so the user can re-authenticate and return here.
+  const handleAuthError = useCallback(
+    async (err: unknown): Promise<boolean> => {
+      if (!(err instanceof LoginRequiredError)) return false;
+      toast.warning("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+      try {
+        await signOut();
+      } catch {
+        // session already dead — still redirect
+      }
+      redirectToLogin(router);
+      return true;
+    },
+    [router, signOut]
+  );
+
   const confirmRemove = useCallback(() => {
     if (clearAllMode) {
       if (cartId) clearCartMutation.mutate(cartId);
@@ -74,6 +96,7 @@ export function useCartDrawerState() {
         setRemovingItemId(pendingRemoval.id);
         removeMutation.mutate(pendingRemoval.id, {
           onSettled: () => setRemovingItemId(null),
+          onError: (err) => void handleAuthError(err),
         });
       } else {
         removeItem(
@@ -92,6 +115,7 @@ export function useCartDrawerState() {
     removeMutation,
     removeItem,
     visibleItems,
+    handleAuthError,
   ]);
 
   const cancelRemove = useCallback(() => {
@@ -121,13 +145,21 @@ export function useCartDrawerState() {
                 );
               }
             },
+            onError: async (err) => {
+              if (await handleAuthError(err)) return;
+              toast.error(
+                err instanceof Error
+                  ? err.message
+                  : "Không thể cập nhật số lượng"
+              );
+            },
           }
         );
       } else {
         updateQty(item.product.id, item.variant?.id ?? null, -1);
       }
     },
-    [handleRemoveClick, updateMutation, updateQty]
+    [handleRemoveClick, updateMutation, updateQty, handleAuthError]
   );
 
   const handlePlus = useCallback(
@@ -149,19 +181,21 @@ export function useCartDrawerState() {
         updateMutation.mutate(
           { itemId: item.id, quantity: item.quantity + 1 },
           {
-            onError: (err) =>
+            onError: async (err) => {
+              if (await handleAuthError(err)) return;
               toast.error(
                 err instanceof Error
                   ? err.message
                   : "Không thể cập nhật số lượng"
-              ),
+              );
+            },
           }
         );
       } else {
         updateQty(item.product.id, item.variant?.id ?? null, 1);
       }
     },
-    [updateMutation, updateQty]
+    [updateMutation, updateQty, handleAuthError]
   );
 
   const handleCheckout = useCallback(() => {

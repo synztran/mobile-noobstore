@@ -1,4 +1,5 @@
 import type { AddWishlistResponse, WishlistItemResponse } from "@/modules/user/types";
+import { LoginRequiredError } from "@/modules/user/client/login-redirect";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -37,7 +38,7 @@ export function useWishlistAddMutation() {
 				body: JSON.stringify({ productId }),
 			});
 			if (res.status === 401)
-				throw new Error("Bạn cần đăng nhập để lưu yêu thích");
+				throw new LoginRequiredError("Bạn cần đăng nhập để lưu yêu thích");
 			if (!res.ok) {
 				const payload = (await res.json().catch(() => null)) as {
 					error?: string;
@@ -81,7 +82,7 @@ export function useWishlistRemoveMutation() {
 				body: JSON.stringify({ productId }),
 			});
 			if (res.status === 401)
-				throw new Error("Bạn cần đăng nhập để chỉnh sửa yêu thích");
+				throw new LoginRequiredError("Bạn cần đăng nhập để chỉnh sửa yêu thích");
 			if (!res.ok) {
 				const payload = (await res.json().catch(() => null)) as {
 					error?: string;

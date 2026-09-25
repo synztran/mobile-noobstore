@@ -18,6 +18,7 @@ import {
   useSubmitOrder,
 } from "@/lib/react-query/checkout/api/useCheckoutMutations";
 import { toast } from "@/lib/toast";
+import { ShippingMethod } from "@/lib/shipping-method";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
 import { useRouter } from "next/navigation";
@@ -63,7 +64,8 @@ export default function SummaryPage() {
   const hasPreOrder = items.some(
     (i) => i.is_pre_order || i.components?.some((c) => c.is_pre_order)
   );
-  const isDeliveryService = shipping?.deliverySpeed === "shipment";
+  const isDeliveryService =
+    shipping?.deliverySpeed === ShippingMethod.Shipment;
 
   const voucherItems = useMemo(() => {
     if (!mounted) return [];
@@ -214,11 +216,11 @@ export default function SummaryPage() {
         shipping_method_id:
           shipping?.shippingMethodId ?? shipping?.deliverySpeed ?? null,
         pickup_at:
-          shipping?.deliverySpeed === "pickup"
+          shipping?.deliverySpeed === ShippingMethod.Pickup
             ? (shipping?.pickupAt ?? null)
             : undefined,
         delivery_address:
-          shipping && shipping.deliverySpeed !== "pickup"
+          shipping && shipping.deliverySpeed !== ShippingMethod.Pickup
             ? {
                 full_name: shipping.fullName,
                 phone_number: shipping.phoneNumber,
@@ -232,7 +234,12 @@ export default function SummaryPage() {
                 postal_code: shipping.postalCode || null,
                 notes: shipping.notes || null,
               }
-            : null,
+            : shipping
+              ? {
+                  full_name: shipping.fullName,
+                  phone_number: shipping.phoneNumber,
+                }
+              : null,
         rank_discount:
           rankData?.currentRank &&
           (rankDiscountAmount > 0 || rankShippingDiscount > 0)
@@ -313,7 +320,7 @@ export default function SummaryPage() {
         items={voucherItems}
       />
 
-      {shipping && shipping.deliverySpeed !== "pickup" && (
+      {shipping && shipping.deliverySpeed !== ShippingMethod.Pickup && (
         <DeliveryAddressCard
           shipping={shipping}
           isDeliveryService={isDeliveryService}

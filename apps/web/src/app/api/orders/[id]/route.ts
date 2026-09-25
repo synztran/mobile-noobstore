@@ -33,7 +33,7 @@ export async function GET(
 			const { data: byOrderNumber, error: byOrderNumberError } =
 			await (supabase.from("orders") as any)
 				.select(
-					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at",
+					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, paid_at",
 				)
 				.eq("user_id", user.id)
 				.eq("order_number", identifier)
@@ -57,7 +57,7 @@ export async function GET(
 			const { data: byId, error: byIdError } = await (supabase
 				.from("orders") as any)
 				.select(
-					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at",
+					"id, order_number, status, voucher_discount_amount, shipping_discount_amount, cancelled_at, cancelled_note, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, paid_at",
 				)
 				.eq("user_id", user.id)
 				.eq("id", identifier)
@@ -85,6 +85,8 @@ export async function GET(
 		const mappinStatus = {
 			pending: "Đang kiểm tra",
 			confirmed: "Đã xác nhận",
+			first_paid: "Đã đặt cọc (lần 1)",
+			second_paid: "Đã thanh toán đủ",
 			preparing: "Đang chuẩn bị hàng",
 			delivering: "Đang giao hàng",
 			delivered: "Đã giao hàng",
@@ -113,6 +115,7 @@ export async function GET(
 			deposit_amount: (o.deposit_amount as number | undefined) ?? null,
 			remaining_amount: (o.remaining_amount as number | undefined) ?? null,
 			deposit_paid_at: (o.deposit_paid_at as string | null) ?? null,
+			paid_at: (o.paid_at as string | null) ?? null,
 		});
 	} catch (error) {
 		console.error("Error fetching order:", error);

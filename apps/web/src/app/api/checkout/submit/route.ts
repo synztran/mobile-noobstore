@@ -9,6 +9,8 @@ import { getCheckoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import { invalidateProductCaches } from "@/lib/redis/cache";
 import {
   DELIVERY_SERVICE_ID,
+  ShippingMethod,
+  isPickupShippingMethod,
   normalizeShippingMethodId,
   sameShippingMethod,
 } from "@/lib/shipping-method";
@@ -54,9 +56,9 @@ export interface SubmitOrderRequest {
   delivery_address?: {
     full_name: string;
     phone_number: string;
-    street_address: string;
+    street_address?: string;
     apartment?: string | null;
-    city: string;
+    city?: string;
     district?: string;
     ward?: string;
     district_code?: string;
@@ -156,7 +158,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (
-      shippingMethodId === "pickup" &&
+      isPickupShippingMethod(shippingMethodId) &&
       !hasPreOrder &&
       (!body.pickup_at || Number.isNaN(new Date(body.pickup_at).getTime()))
     ) {
@@ -663,11 +665,11 @@ export async function POST(req: NextRequest) {
 
       if (preOrderDates.length > 0) {
         expectedDeliveryAt = new Date(preOrderDates[0]).toISOString();
-      } else if (shippingMethodId === "express") {
+      } else if (shippingMethodId === ShippingMethod.Express) {
         expectedDeliveryAt = new Date(
           now.getTime() + 4 * 60 * 60 * 1000
         ).toISOString();
-      } else if (shippingMethodId === "standard") {
+      } else if (shippingMethodId === ShippingMethod.Standard) {
         expectedDeliveryAt = new Date(
           now.getTime() + 24 * 60 * 60 * 1000
         ).toISOString();
@@ -682,9 +684,9 @@ export async function POST(req: NextRequest) {
             : null,
           shipping_method_id: shippingMethodId,
           expected_delivery_at:
-            shippingMethodId === "pickup" ? null : expectedDeliveryAt,
+            isPickupShippingMethod(shippingMethodId) ? null : expectedDeliveryAt,
           pickup_at:
-            shippingMethodId === "pickup" && body.pickup_at
+            isPickupShippingMethod(shippingMethodId) && body.pickup_at
               ? new Date(body.pickup_at).toISOString()
               : null,
         })

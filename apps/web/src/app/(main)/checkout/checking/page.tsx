@@ -7,6 +7,7 @@ import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
 import { useOrderStatus, usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
+import { ShippingMethod } from "@/lib/shipping-method";
 import { useCheckoutStore } from "@/store";
 import Image from "@/components/ui/AdaptiveImage";
 import { useEffect, useMemo, useRef } from "react";
@@ -32,7 +33,8 @@ export default function CheckingPage() {
   const { orderNumber, totalPrice, orderedItems, shippingCost, shipping } =
     useCheckoutStore();
 
-  const isDeliveryService = shipping?.deliverySpeed === "shipment";
+  const isDeliveryService =
+    shipping?.deliverySpeed === ShippingMethod.Shipment;
 
   // Guard: redirect to shop if there is no active order
   useEffect(() => {

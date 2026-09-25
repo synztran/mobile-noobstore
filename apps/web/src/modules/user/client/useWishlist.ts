@@ -11,6 +11,11 @@ import {
 } from "@/modules/user/client/wishlist";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  LoginRequiredError,
+  redirectToLogin,
+} from "@/modules/user/client/login-redirect";
 
 // Shared query key — all hook instances share a single cache entry.
 // React Query deduplicates concurrent requests with the same key,
@@ -49,8 +54,21 @@ export function useWishlist(
 	options: UseWishlistOptions = {},
 ): UseWishlistResult {
 	const { initialItems } = options;
-	const { user } = useAuth();
+	const { user, signOut } = useAuth();
 	const queryClient = useQueryClient();
+	const router = useRouter();
+
+	const handleAuthError = async (err: unknown): Promise<boolean> => {
+		if (!(err instanceof LoginRequiredError)) return false;
+		toast.warning("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+		try {
+			await signOut();
+		} catch {
+			// session already dead — still redirect
+		}
+		redirectToLogin(router);
+		return true;
+	};
 
 	// Per-productId pending tracking — Set stored in a ref, state counter triggers re-renders
 	const pendingIdsRef = useRef<Set<string>>(new Set());
@@ -96,6 +114,7 @@ export function useWishlist(
 				if (meta) trackWishlist(toGAProduct(meta));
 				toast.success("Đã thêm vào yêu thích");
 			} catch (err) {
+				if (await handleAuthError(err)) return;
 				toast.error(
 					err instanceof Error
 						? err.message
@@ -105,8 +124,7 @@ export function useWishlist(
 				unmarkPending(productId);
 			}
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[addMutation],
+		[addMutation, handleAuthError],
 	);
 
 	const removeFromWishlist = useCallback(
@@ -118,6 +136,7 @@ export function useWishlist(
 				if (meta) trackRemoveWishlist(toGAProduct(meta));
 				toast.success("Đã xóa khỏi yêu thích");
 			} catch (err) {
+				if (await handleAuthError(err)) return;
 				toast.error(
 					err instanceof Error
 						? err.message
@@ -127,8 +146,7 @@ export function useWishlist(
 				unmarkPending(productId);
 			}
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[removeMutation],
+		[removeMutation, handleAuthError],
 	);
 
 	const isInWishlist = useCallback(

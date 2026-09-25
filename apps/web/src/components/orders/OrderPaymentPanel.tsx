@@ -2,7 +2,7 @@
 
 import { formatVND } from "@/lib/currency";
 import type { PaymentInformation } from "@/lib/payment-information";
-import { normalizeShippingMethodId, DELIVERY_SERVICE_ID } from "@/lib/shipping-method";
+import { isCarrierShippingMethod } from "@/lib/shipping-method";
 import { usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
 import { Check, Copy, CreditCard } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
@@ -19,6 +19,9 @@ interface Props {
   depositAmount?: number;
   remainingAmount?: number;
   depositPercentage?: number;
+  /** True once the deposit installment is recorded (deposit_paid_at set) —
+   *  the QR then targets the remaining balance (instalment 2). */
+  depositPaid?: boolean;
 }
 
 function buildQRUrl(
@@ -73,12 +76,12 @@ export function OrderPaymentPanel({
   depositAmount = 0,
   remainingAmount = 0,
   depositPercentage = 0,
+  depositPaid = false,
 }: Props) {
   const subtotal =
     totalPrice - shippingFee + voucherDiscount + shippingDiscount;
 
-  const isDeliveryService =
-    normalizeShippingMethodId(shippingMethodId) === DELIVERY_SERVICE_ID;
+  const isDeliveryService = isCarrierShippingMethod(shippingMethodId);
 
   const { data, isLoading } = usePaymentInformation();
 
@@ -87,9 +90,12 @@ export function OrderPaymentPanel({
     [data]
   );
 
-  const qrAmount = paymentType === "deposit_cod"
-    ? depositAmount
-    : totalPrice;
+  const qrAmount =
+    paymentType === "deposit_cod"
+      ? depositPaid
+        ? remainingAmount
+        : depositAmount
+      : totalPrice;
 
   const qrUrl = useMemo(() => {
     if (!bankMethod) return null;
@@ -189,16 +195,26 @@ export function OrderPaymentPanel({
         {paymentType === "deposit_cod" ? (
           <>
             <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Đặt cọc ({depositPercentage}%)</span>
-              <span className="font-bold text-primary">{formatVND(depositAmount)}</span>
+              <span className="text-on-surface-variant">
+                Đặt cọc ({depositPercentage}%)
+              </span>
+              <span className="font-bold text-secondary">
+                {depositPaid ? "Đã thanh toán" : formatVND(depositAmount)}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-on-surface-variant">Còn lại (COD)</span>
-              <span className="font-bold text-secondary">{formatVND(remainingAmount)}</span>
+              <span className="font-bold text-on-surface">
+                {formatVND(remainingAmount)}
+              </span>
             </div>
             <div className="h-px bg-outline-variant/30" />
             <div className="flex justify-between">
-              <span className="font-black text-on-surface">Cần chuyển khoản</span>
+              <span className="font-black text-on-surface">
+                {depositPaid
+                  ? "Còn cần chuyển khoản (lần 2)"
+                  : "Cần chuyển khoản (đặt cọc)"}
+              </span>
               <span className="text-base font-black text-primary">
                 {formatVND(qrAmount)}
               </span>
