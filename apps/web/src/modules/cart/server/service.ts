@@ -37,19 +37,41 @@ function throwIfUnavailable(result: AvailabilityResult): void {
 }
 
 
+/**
+ * The one, true lookup for "the user's active cart".
+ *
+ * Uses `order().limit(1)` instead of `.maybeSingle()`: PostgREST's
+ * `maybeSingle()` *errors* (">1 result") when a user somehow has more than one
+ * active cart, and callers previously mistook that error for "no cart" — which
+ * made GET return an empty cart and getOrCreateCart mint yet another active
+ * cart each time (see migration 135). The unique partial index
+ * `carts_one_active_per_user` keeps this invariant true, but the lookup must
+ * stay a plain single-row read so a stray duplicate can never wedge it again.
+ * Listed first is the oldest cart (created_at asc) — the one holding the
+ * accumulated items.
+ */
+export async function getActiveCartId(
+  supabase: Supabase,
+  userId: string
+): Promise<string | null> {
+  const { data } = await supabase
+    .from("carts")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("created_at", { ascending: true })
+    .limit(1);
+
+  return data?.[0]?.id ?? null;
+}
+
 export async function getOrCreateCart(
   supabase: Supabase,
   options: { userId: string }
 ): Promise<{ cartId: string; isNew: boolean }> {
-  const { data: existingCart } = await supabase
-    .from("carts")
-    .select("id")
-    .eq("user_id", options.userId)
-    .eq("status", "active")
-    .maybeSingle();
-
-  if (existingCart) {
-    return { cartId: existingCart.id, isNew: false };
+  const existingCartId = await getActiveCartId(supabase, options.userId);
+  if (existingCartId) {
+    return { cartId: existingCartId, isNew: false };
   }
 
   const cartId = crypto.randomUUID();
@@ -58,6 +80,8 @@ export async function getOrCreateCart(
     .insert({ id: cartId, user_id: options.userId, status: "active" });
 
   if (error) {
+    // Two concurrent requests both found no cart and raced the insert; the
+    // partial index turns the loser into 23505 — re-read and reuse the winner.
     if (error.code === "23505") {
       return getOrCreateCart(supabase, options);
     }

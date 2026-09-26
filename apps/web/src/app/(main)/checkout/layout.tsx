@@ -2,7 +2,6 @@
 
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { useIsMounted } from "@/hooks/useIsMounted";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,7 +14,6 @@ export default function CheckoutLayout({
 }) {
   const pathname = usePathname();
   const mounted = useIsMounted();
-  const cartId = useCartStore((s) => s.cartId);
   const orderId = useCheckoutStore((s) => s.orderId);
   const resetDiscount = useDiscountStore((s) => s.resetDiscount);
 

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { isPickupShippingMethod } from "@/lib/shipping-method";
 import { notifyCustomerRequestReturn } from "@/lib/telegram/telegram.service";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -36,7 +37,7 @@ export async function POST(
 
     const { data: order, error: fetchError } = await supabase
       .from("orders")
-      .select("id, status, delivered_at, order_number, total_price")
+      .select("id, status, delivered_at, order_number, total_price, shipping_method_id")
       .eq("id", id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -50,6 +51,17 @@ export async function POST(
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Store-pickup orders are not eligible for refunds/returns.
+    if (isPickupShippingMethod(order.shipping_method_id)) {
+      return NextResponse.json(
+        {
+          error:
+            "Đơn mua tại cửa hàng không hỗ trợ hoàn hàng/trả tiền.",
+        },
+        { status: 400 }
+      );
     }
 
     if (order.status !== "delivered") {

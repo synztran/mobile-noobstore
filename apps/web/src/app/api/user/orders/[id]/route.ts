@@ -9,6 +9,7 @@ export interface OrderItemComponentDetail {
   component_group: string;
   price_adjustment: number;
   thumbnail: string | null;
+  is_pre_order: boolean;
 }
 
 export interface OrderItemDetail {
@@ -35,6 +36,8 @@ export interface OrderDetail {
   status:
     | "pending"
     | "confirmed"
+    | "first_paid"
+    | "second_paid"
     | "delivering"
     | "delivered"
     | "returning"
@@ -64,6 +67,8 @@ export interface OrderDetail {
   expected_delivery_at: string | null;
   shipping_method_id: string | null;
   pickup_at: string | null;
+  pickup_code_expires_at: string | null;
+  pickup_verified_at: string | null;
   tracking_carrier_id: string | null;
   tracking_number: string | null;
   carriers: {
@@ -115,6 +120,8 @@ interface RawOrderRow {
   expected_delivery_at: string | null;
   shipping_method_id: string | null;
   pickup_at: string | null;
+  pickup_code_expires_at: string | null;
+  pickup_verified_at: string | null;
   tracking_carrier_id: string | null;
   tracking_number: string | null;
   carriers: unknown | null;
@@ -147,7 +154,7 @@ export async function GET(
     const { data: order, error: orderError } = (await supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, paid_at, delivering_at, delivered_at, refunded_at, returning_at, returning_reason, expected_delivery_at, shipping_method_id, pickup_at, delivery_address, invoice_url, tracking_carrier_id, tracking_number, carriers(id, name, logo, tracking_url_template)"
+        "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, paid_at, delivering_at, delivered_at, refunded_at, returning_at, returning_reason, expected_delivery_at, shipping_method_id, pickup_at, pickup_code_expires_at, pickup_verified_at, delivery_address, invoice_url, tracking_carrier_id, tracking_number, carriers(id, name, logo, tracking_url_template)"
       )
       .eq("id", id)
       .eq("user_id", user.id)
@@ -163,7 +170,7 @@ export async function GET(
     const { data: rawItems } = (await supabase
       .from("order_items")
       .select(
-        "id, product_id, product_name, unit_price, quantity, thumbnail, pre_order_tracking"
+        "id, product_id, product_name, unit_price, quantity, thumbnail, pre_order_tracking, is_pre_order, pre_order_config"
       )
       .eq("order_id", id)) as unknown as {
       data: Array<Record<string, unknown>> | null;
@@ -180,13 +187,14 @@ export async function GET(
       component_group: string;
       price_adjustment: number | null;
       thumbnail: string | null;
+      is_pre_order: boolean;
     }> = [];
 
     if (orderItemIds.length > 0) {
       const { data } = await supabase
         .from("order_item_components")
         .select(
-          "order_item_id, product_variant_id, variant_name, component_group, price_adjustment, thumbnail"
+          "order_item_id, product_variant_id, variant_name, component_group, price_adjustment, thumbnail, is_pre_order"
         )
         .in("order_item_id", orderItemIds);
       rawComponents = data ?? [];
@@ -255,6 +263,7 @@ export async function GET(
         component_group: comp.component_group,
         price_adjustment: Number(comp.price_adjustment ?? 0),
         thumbnail: comp.thumbnail,
+        is_pre_order: Boolean(comp.is_pre_order),
       });
       acc[comp.order_item_id] = bucket;
       return acc;
@@ -290,7 +299,8 @@ export async function GET(
           ? (giftsByProductId[row.product_id as string] ?? null)
           : null,
         isPreOrder:
-          ((row as Record<string, unknown>).is_pre_order as boolean) ?? false,
+          components.some((c) => c.is_pre_order) ||
+          Boolean((row as Record<string, unknown>).is_pre_order),
         preOrderConfig:
           (row as Record<string, unknown>).pre_order_config ?? null,
         preOrderTracking:
@@ -326,6 +336,8 @@ export async function GET(
       expected_delivery_at: order.expected_delivery_at ?? null,
       shipping_method_id: order.shipping_method_id ?? null,
       pickup_at: order.pickup_at ?? null,
+      pickup_code_expires_at: order.pickup_code_expires_at ?? null,
+      pickup_verified_at: order.pickup_verified_at ?? null,
       tracking_carrier_id: order.tracking_carrier_id ?? null,
       tracking_number: order.tracking_number ?? null,
       carriers:

@@ -157,7 +157,7 @@ export const ProductCard = memo(function ProductCard({
       flyToCart(displayImage, imageRef.current);
     }
 
-    toast.success("Đã thêm vào giỏ hàng!");
+    toast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
     setSubmitting(false);
   };
 

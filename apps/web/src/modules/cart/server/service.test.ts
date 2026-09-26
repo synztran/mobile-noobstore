@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  getOrCreateCart,
   MaxLimitExceededError,
   StockExceededError,
   updateCartItemQuantity,
@@ -25,6 +26,7 @@ interface MockState {
   products: Row[];
   product_variants: Row[];
   cart_items: Row[];
+  carts: Row[];
   insertCalls: Array<{ table: string; rows: Row[] }>;
   updateCalls: Array<{ table: string; id: string; set: Row }>;
 }
@@ -64,6 +66,7 @@ function makeClient(): { client: unknown; state: MockState } {
     products: [],
     product_variants: [],
     cart_items: [],
+    carts: [],
     insertCalls: [],
     updateCalls: [],
   };
@@ -72,6 +75,8 @@ function makeClient(): { client: unknown; state: MockState } {
     from: (table: string) => {
       const eqs: Record<string, unknown> = {};
       let mode: "single" | "maybeSingle" | "list" = "list";
+      let orderSpec: { col: string; ascending: boolean } | null = null;
+      let limitCount: number | null = null;
 
       interface Builder {
         select: () => Builder;
@@ -79,7 +84,8 @@ function makeClient(): { client: unknown; state: MockState } {
         is: (col: string) => Builder;
         in: (col: string, vals: unknown[]) => Builder;
         not: () => Builder;
-        order: () => Builder;
+        order: (col: string, opts?: { ascending?: boolean }) => Builder;
+        limit: (n: number) => Builder;
         single: () => Builder;
         maybeSingle: () => Builder;
         insert(
@@ -109,7 +115,14 @@ function makeClient(): { client: unknown; state: MockState } {
           return builder;
         },
         not: () => builder,
-        order: () => builder,
+        order: (col: string, opts?: { ascending?: boolean }) => {
+          orderSpec = { col, ascending: opts?.ascending !== false };
+          return builder;
+        },
+        limit: (n: number) => {
+          limitCount = n;
+          return builder;
+        },
         single: () => {
           mode = "single";
           return builder;
@@ -168,7 +181,27 @@ function makeClient(): { client: unknown; state: MockState } {
       };
 
       const value = (): { data: Row[] | Row | null; error: unknown } => {
-        const data = matches();
+        let data = matches();
+        if (orderSpec) {
+          const { col, ascending } = orderSpec;
+          // Stable sort: rows without the column keep their relative order,
+          // matching Postgres' NULLs-last/ascending behaviour closely enough.
+          data = [...data].sort((a, b) => {
+            const av = a[col];
+            const bv = b[col];
+            if (av === bv) return 0;
+            if (av == null) return 1;
+            if (bv == null) return -1;
+            return ascending
+              ? av < bv
+                ? -1
+                : 1
+              : av > bv
+                ? -1
+                : 1;
+          });
+        }
+        if (limitCount != null) data = data.slice(0, limitCount);
         if (mode === "single" || mode === "maybeSingle") {
           return { data: data[0] ?? (mode === "maybeSingle" ? null : undefined), error: null };
         }
@@ -342,6 +375,46 @@ describe("updateCartItemQuantity (kit parent)", () => {
       table: "cart_items",
       id: "parent-1",
       set: { quantity: 5 },
+    });
+  });
+});
+
+describe("getOrCreateCart", () => {
+  it("reuses the oldest active cart when duplicates exist and inserts nothing", async () => {
+    // Regression for the recurring "empty cart" bug: the lookup used
+    // `.maybeSingle()`, which errors on >1 row, and the caller read that as
+    // "no cart" — minting yet another active cart on every add.
+    const { client, state } = makeClient();
+    state.carts = [
+      { id: "cart-old", user_id: "user-1", status: "active", created_at: "2026-01-01T00:00:00Z" },
+      { id: "cart-mid", user_id: "user-1", status: "active", created_at: "2026-02-01T00:00:00Z" },
+      { id: "cart-new", user_id: "user-1", status: "active", created_at: "2026-03-01T00:00:00Z" },
+      { id: "cart-old-order", user_id: "user-1", status: "converted", created_at: "2025-12-01T00:00:00Z" },
+      { id: "cart-other", user_id: "user-2", status: "active", created_at: "2026-01-05T00:00:00Z" },
+    ];
+
+    const res = await getOrCreateCart(client as never, { userId: "user-1" });
+
+    expect(res).toEqual({ cartId: "cart-old", isNew: false });
+    expect(state.insertCalls).toHaveLength(0);
+  });
+
+  it("creates a single active cart when the user has none", async () => {
+    const { client, state } = makeClient();
+    state.carts = [
+      { id: "cart-old-order", user_id: "user-1", status: "converted", created_at: "2025-12-01T00:00:00Z" },
+    ];
+
+    const res = await getOrCreateCart(client as never, { userId: "user-1" });
+
+    expect(res.isNew).toBe(true);
+    expect(res.cartId).toBeTruthy();
+    const cartInserts = state.insertCalls.filter((c) => c.table === "carts");
+    expect(cartInserts).toHaveLength(1);
+    expect(cartInserts[0].rows[0]).toMatchObject({
+      id: res.cartId,
+      user_id: "user-1",
+      status: "active",
     });
   });
 });

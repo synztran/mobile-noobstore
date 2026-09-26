@@ -13,7 +13,9 @@ import { buildTrackingUrl } from "@/lib/tracking";
 import { toast } from "@/lib/toast";
 import { useOrderDetail } from "@/lib/react-query/order/api/useOrderQueries";
 import {
+  PickupCodeError,
   useCancelOrder,
+  usePickupCode,
   useReturnOrder,
 } from "@/lib/react-query/order/api/useOrderMutations";
 import { CopyToClipboardButton } from "@/components/ui/CopyToClipboardButton";
@@ -25,7 +27,10 @@ import {
   HourglassIcon,
   MapPin,
   PackageCheck,
+  RefreshCw,
   RotateCcw,
+  ShieldCheck,
+  Timer,
   Truck,
 } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
@@ -207,18 +212,93 @@ function OrderDetailContent({
   );
   const [returnCustomReason, setReturnCustomReason] = useState("");
   const [addressCopied, setAddressCopied] = useState(false);
+  const pickupMutation = usePickupCode();
+  const [activePickupCode, setActivePickupCode] = useState<{
+    code: string;
+    expiresAt: string;
+  } | null>(null);
+  const [pickupCodeSecondsLeft, setPickupCodeSecondsLeft] = useState(0);
+  const [pickupWaitSecondsLeft, setPickupWaitSecondsLeft] = useState(0);
+
+  useEffect(() => {
+    if (!activePickupCode) return;
+    const update = () =>
+      setPickupCodeSecondsLeft(
+        Math.max(
+          0,
+          Math.ceil(
+            (Date.parse(activePickupCode.expiresAt) - Date.now()) / 1000
+          )
+        )
+      );
+    update();
+    const t = setInterval(update, 1000);
+    return () => clearInterval(t);
+  }, [activePickupCode?.expiresAt]);
+
+  useEffect(() => {
+    if (pickupWaitSecondsLeft <= 0) return;
+    const t = setInterval(
+      () => setPickupWaitSecondsLeft((prev) => Math.max(0, prev - 1)),
+      1000
+    );
+    return () => clearInterval(t);
+  }, [pickupWaitSecondsLeft > 0]);
+
+  const formatCountdown = (seconds: number) =>
+    `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(
+      seconds % 60
+    ).padStart(2, "0")}`;
+
+  const handleShowPickupCode = async () => {
+    try {
+      const data = await pickupMutation.mutateAsync({ orderId: detail.id });
+      setPickupWaitSecondsLeft(0);
+      if (data.code) {
+        setActivePickupCode({ code: data.code, expiresAt: data.expiresAt });
+      }
+    } catch (err) {
+      if (
+        err instanceof PickupCodeError &&
+        err.cooldownSecondsLeft &&
+        err.cooldownSecondsLeft > 0
+      ) {
+        setPickupWaitSecondsLeft(err.cooldownSecondsLeft);
+        return;
+      }
+      if (
+        err instanceof PickupCodeError &&
+        err.lockSecondsLeft &&
+        err.lockSecondsLeft > 0
+      ) {
+        setPickupWaitSecondsLeft(err.lockSecondsLeft);
+        toast.error(
+          err instanceof Error ? err.message : "Không thể tạo mã nhận hàng"
+        );
+        return;
+      }
+      toast.error(
+        err instanceof Error ? err.message : "Không thể tạo mã nhận hàng"
+      );
+    }
+  };
 
   const isSupportAvailable = NON_TERMINAL_STATUSES.includes(detail.status);
   const isCancellable = CANCELLABLE_STATUSES.includes(detail.status);
+  const isDeliveryService = isCarrierShippingMethod(detail.shipping_method_id);
+  const isPickup = isPickupShippingMethod(detail.shipping_method_id);
   const canRequestReturn =
-    detail.status === "delivered" && isWithinReturnWindow(detail.delivered_at);
+    detail.status === "delivered" &&
+    isWithinReturnWindow(detail.delivered_at) &&
+    !isPickup;
+  const isPickupReturnBlocked =
+    detail.status === "delivered" &&
+    isWithinReturnWindow(detail.delivered_at) &&
+    isPickup;
   const cfg = STATUS_CONFIG[detail.status] ?? STATUS_CONFIG.pending;
   const voucherDiscount = detail.voucher_discount_amount ?? 0;
   const shippingDiscount = detail.shipping_discount_amount ?? 0;
   const totalDiscount = voucherDiscount + shippingDiscount;
-  const isDeliveryService =
-    isCarrierShippingMethod(detail.shipping_method_id);
-  const isPickup = isPickupShippingMethod(detail.shipping_method_id);
   const pickupRecipient = isPickup ? (detail.delivery_address ?? null) : null;
   const cancelledAtLabel = detail.cancelled_at
     ? new Date(detail.cancelled_at).toLocaleString("vi-VN", {
@@ -416,6 +496,12 @@ function OrderDetailContent({
                   ) : (
                     <PackageCheck size={24} className="text-outline-variant" />
                   )}
+                  {item.isPreOrder ||
+                  item.components.some((c) => c.is_pre_order) ? (
+                    <span className="absolute -top-2 left-1/2 z-10 min-w-14 -translate-x-1/2 whitespace-nowrap rounded-sm bg-violet-500 px-1 py-0.5 text-center text-[8px] font-black uppercase text-white">
+                      Pre-order
+                    </span>
+                  ) : null}
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="line-clamp-3 text-sm font-bold text-on-surface">
@@ -524,6 +610,105 @@ function OrderDetailContent({
           </div>
         </div>
       )}
+
+      {/* Pickup verification — one-time pickup code */}
+      {isPickup && detail.pickup_verified_at && (
+        <div className="space-y-2">
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
+            Xác nhận nhận hàng
+          </p>
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-4">
+            <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-emerald-600" />
+            <div>
+              <p className="text-sm font-bold text-emerald-700">
+                Đã xác nhận nhận hàng tại cửa hàng
+              </p>
+              <p className="text-xs text-emerald-600">
+                {new Date(detail.pickup_verified_at).toLocaleString("vi-VN", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isPickup &&
+        !detail.pickup_verified_at &&
+        (detail.payment_type === "deposit_cod"
+          ? detail.status === "second_paid"
+          : detail.status === "confirmed") && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-on-surface-variant">
+                Mã nhận hàng
+              </p>
+              {activePickupCode && pickupCodeSecondsLeft > 0 && (
+                <span className="flex items-center gap-1 text-xs font-bold tabular-nums text-rose-600">
+                  <Timer className="h-3.5 w-3.5" />
+                  {String(Math.floor(pickupCodeSecondsLeft / 60)).padStart(
+                    2,
+                    "0"
+                  )}
+                  :{String(pickupCodeSecondsLeft % 60).padStart(2, "0")}
+                </span>
+              )}
+            </div>
+            <div className="rounded-2xl bg-surface-container p-4">
+              {activePickupCode && pickupCodeSecondsLeft > 0 ? (
+                <>
+                  <p className="text-center text-sm font-semibold text-on-surface">
+                    Xuất trình mã này cho nhân viên tại cửa hàng
+                  </p>
+                  <p className="my-3 select-all text-center text-4xl font-black tracking-[0.35em] text-on-surface">
+                    {activePickupCode.code}
+                  </p>
+                  <p className="text-center text-[11px] text-on-surface-variant">
+                    Kèm theo CMND/CCCD để đối chiếu khi nhận hàng
+                  </p>
+                  <div className="my-3 divider" />
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-outline btn-sm w-full"
+                    onClick={handleShowPickupCode}
+                    disabled={pickupMutation.isPending || pickupWaitSecondsLeft > 0}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    {pickupMutation.isPending
+                      ? "Đang tạo…"
+                      : pickupWaitSecondsLeft > 0
+                        ? `Tạo mã mới (${formatCountdown(pickupWaitSecondsLeft)})`
+                        : "Tạo mã mới"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="mb-3 text-sm text-on-surface-variant">
+                    Tạo mã để nhân viên xác nhận khi bạn tới nhận hàng. Mã chỉ
+                    dùng một lần và có hiệu lực 5 phút.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm w-full"
+                    onClick={handleShowPickupCode}
+                    disabled={pickupMutation.isPending || pickupWaitSecondsLeft > 0}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    {pickupMutation.isPending
+                      ? "Đang tạo…"
+                      : pickupWaitSecondsLeft > 0
+                        ? `Chờ ${formatCountdown(pickupWaitSecondsLeft)}`
+                        : "Hiển thị mã nhận hàng"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
       {/* Delivery information */}
       {!isPickup && !detail.pickup_at && detail.delivery_address && (
@@ -759,7 +944,7 @@ function OrderDetailContent({
         )}
 
       {/* Return request button */}
-      {canRequestReturn && (
+      {canRequestReturn ? (
         <button
           onClick={() => setShowReturnModal(true)}
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/50 bg-amber-50 py-3 text-sm font-black uppercase tracking-wider text-amber-700 transition-all active:scale-[0.98]"
@@ -767,7 +952,16 @@ function OrderDetailContent({
           <RotateCcw size={16} />
           Hoàn hàng / Trả tiền
         </button>
-      )}
+      ) : isPickupReturnBlocked ? (
+        <button
+          type="button"
+          disabled
+          className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-50/50 py-3 text-sm font-black uppercase tracking-wider text-amber-700/40"
+        >
+          <RotateCcw size={16} />
+          Đơn hàng không hỗ trợ hoàn tiền
+        </button>
+      ) : null}
 
       {/* Cancel button */}
       {isCancellable && (

@@ -1,5 +1,5 @@
 import { sendStaleCartReminder } from "@/modules/cart/server/reminders";
-import { clearCart, getCartItems } from "@/modules/cart/server/service";
+import { clearCart, getActiveCartId, getCartItems } from "@/modules/cart/server/service";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,22 +16,17 @@ export async function GET(req: NextRequest) {
 			return NextResponse.json({ cart_id: null, items: [] });
 		}
 
-		const { data: existingCart } = await supabase
-			.from("carts")
-			.select("id")
-			.eq("user_id", user.id)
-			.eq("status", "active")
-			.maybeSingle();
+		const activeCartId = await getActiveCartId(supabase, user.id);
 
-		if (!existingCart) {
+		if (!activeCartId) {
 			return NextResponse.json({ cart_id: null, items: [] });
 		}
 
-		const items = await getCartItems(supabase, existingCart.id);
+		const items = await getCartItems(supabase, activeCartId);
 
-		void sendStaleCartReminder(supabase, existingCart.id, user.id);
+		void sendStaleCartReminder(supabase, activeCartId, user.id);
 
-		return NextResponse.json({ cart_id: existingCart.id, items });
+		return NextResponse.json({ cart_id: activeCartId, items });
 	} catch (err) {
 		console.error("[cart/GET] error:", err);
 		return NextResponse.json(

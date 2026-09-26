@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_email: string
+          admin_user_id: string
+          created_at: string | null
+          diff_data: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+        }
+        Insert: {
+          action: string
+          admin_email: string
+          admin_user_id: string
+          created_at?: string | null
+          diff_data?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+        }
+        Update: {
+          action?: string
+          admin_email?: string
+          admin_user_id?: string
+          created_at?: string | null
+          diff_data?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_log_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_config: {
         Row: {
           key: string
@@ -814,6 +864,7 @@ export type Database = {
           is_active: boolean
           name: string
           start_at: string
+          theme: string | null
         }
         Insert: {
           created_at?: string
@@ -825,6 +876,7 @@ export type Database = {
           is_active?: boolean
           name: string
           start_at: string
+          theme?: string | null
         }
         Update: {
           created_at?: string
@@ -836,6 +888,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           start_at?: string
+          theme?: string | null
         }
         Relationships: []
       }
@@ -1386,6 +1439,8 @@ export type Database = {
           id: string
           order_id: string | null
           pre_order_tracking: Json | null
+          is_pre_order: boolean
+          pre_order_config: Json | null
           product_id: string | null
           product_name: string
           quantity: number
@@ -1396,6 +1451,8 @@ export type Database = {
           id: string
           order_id?: string | null
           pre_order_tracking?: Json | null
+          is_pre_order?: boolean
+          pre_order_config?: Json | null
           product_id?: string | null
           product_name: string
           quantity: number
@@ -1406,6 +1463,8 @@ export type Database = {
           id?: string
           order_id?: string | null
           pre_order_tracking?: Json | null
+          is_pre_order?: boolean
+          pre_order_config?: Json | null
           product_id?: string | null
           product_name?: string
           quantity?: number
@@ -1539,8 +1598,15 @@ export type Database = {
           payment_reminder_sent_at: string | null
           payment_type: string
           pickup_at: string | null
+          pickup_code_expires_at: string | null
+          pickup_code_hash: string | null
+          pickup_code_locked_until: string | null
+          pickup_code_tries: number
+          pickup_verified_at: string | null
           refunded_at: string | null
           remaining_amount: number | null
+          returning_at: string | null
+          returning_reason: string | null
           shipping_discount_amount: number
           shipping_fee: number | null
           shipping_method_id: string | null
@@ -1574,8 +1640,15 @@ export type Database = {
           payment_reminder_sent_at?: string | null
           payment_type?: string
           pickup_at?: string | null
+          pickup_code_expires_at?: string | null
+          pickup_code_hash?: string | null
+          pickup_code_locked_until?: string | null
+          pickup_code_tries?: number
+          pickup_verified_at?: string | null
           refunded_at?: string | null
           remaining_amount?: number | null
+          returning_at?: string | null
+          returning_reason?: string | null
           shipping_discount_amount?: number
           shipping_fee?: number | null
           shipping_method_id?: string | null
@@ -1609,8 +1682,15 @@ export type Database = {
           payment_reminder_sent_at?: string | null
           payment_type?: string
           pickup_at?: string | null
+          pickup_code_expires_at?: string | null
+          pickup_code_hash?: string | null
+          pickup_code_locked_until?: string | null
+          pickup_code_tries?: number
+          pickup_verified_at?: string | null
           refunded_at?: string | null
           remaining_amount?: number | null
+          returning_at?: string | null
+          returning_reason?: string | null
           shipping_discount_amount?: number
           shipping_fee?: number | null
           shipping_method_id?: string | null
@@ -2897,6 +2977,7 @@ export type Database = {
           applies_to_category_slugs: string[] | null
           applies_to_product_ids: string[] | null
           applies_to_shipping_methods: string[] | null
+          auto_apply: boolean
           code: string
           created_at: string
           created_by: string | null
@@ -2931,6 +3012,7 @@ export type Database = {
           applies_to_category_slugs?: string[] | null
           applies_to_product_ids?: string[] | null
           applies_to_shipping_methods?: string[] | null
+          auto_apply?: boolean
           code: string
           created_at?: string
           created_by?: string | null
@@ -2965,6 +3047,7 @@ export type Database = {
           applies_to_category_slugs?: string[] | null
           applies_to_product_ids?: string[] | null
           applies_to_shipping_methods?: string[] | null
+          auto_apply?: boolean
           code?: string
           created_at?: string
           created_by?: string | null
@@ -3421,6 +3504,15 @@ export type Database = {
           points_credited: number
         }[]
       }
+      reverse_point_transactions: {
+        Args: {
+          p_admin_id: string
+          p_note?: string
+          p_source_ref: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       spend_points: {
@@ -3483,12 +3575,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3512,11 +3604,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3537,11 +3629,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3562,11 +3654,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3579,11 +3671,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

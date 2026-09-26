@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ValidateStockResponse } from "@/app/api/checkout/validate-stock/route";
-import type { SubmitOrderResponse } from "@/app/api/checkout/submit/route";
+import type {
+	SubmitOrderRequest,
+	SubmitOrderResponse,
+} from "@/app/api/checkout/submit/route";
 import { useMutation } from "@tanstack/react-query";
 
 export function useValidateStock() {
@@ -18,7 +21,10 @@ export function useValidateStock() {
 
 export function useSubmitOrder() {
 	return useMutation({
-		mutationFn: async (payload: any) => {
+		// Typed against the route contract so a payload drift (e.g. the
+		// persisted store handing over `cartId: string | null`) is a compile
+		// error here rather than a silent runtime field.
+		mutationFn: async (payload: SubmitOrderRequest) => {
 			const res = await fetch("/api/checkout/submit", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },

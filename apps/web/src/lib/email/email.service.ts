@@ -84,6 +84,64 @@ export async function sendPaymentReminderEmail(
 	}
 }
 
+// ─── Pickup code email ─────────────────────────────────────────────────────
+
+interface PickupCodeEmailParams {
+	to: string;
+	orderNumber: string;
+	fullName: string;
+	code: string;
+	expiresAt: Date;
+}
+
+/**
+ * Sends the one-time pickup code to a customer who chose in-store pickup.
+ * The code is only ever sent per-request (it is never stored in plaintext), so
+ * each call regenerates a fresh code at the caller's discretion. Returns true
+ * if sent successfully, false on failure.
+ */
+export async function sendPickupCodeEmail(
+	params: PickupCodeEmailParams,
+): Promise<boolean> {
+	const { to, orderNumber, fullName, code, expiresAt } = params;
+
+	const minutes = Math.max(
+		1,
+		Math.round((expiresAt.getTime() - Date.now()) / 60000),
+	);
+
+	try {
+		const resend = getResend();
+		const { error } = await resend.emails.send({
+			from: getFromAddress(),
+			to,
+			subject: `[Noob Store] Mã nhận hàng đơn #${orderNumber}`,
+			html: buildPickupCodeHtml({
+				orderNumber,
+				fullName,
+				code,
+				minutes,
+			}),
+		});
+
+		if (error) {
+			console.error(
+				`[email] Failed to send pickup code for order ${orderNumber}:`,
+				error,
+			);
+			return false;
+		}
+
+		return true;
+	} catch (err) {
+		console.error(
+			`[email] Unexpected error sending pickup code for order ${orderNumber}:`,
+			err,
+		);
+		return false;
+	}
+}
+
 // ─── HTML template ─────────────────────────────────────────────────────────
 
 interface TemplateParams {
@@ -157,6 +215,80 @@ function buildPaymentReminderHtml(p: TemplateParams): string {
 
               <p style="margin:0;color:#aaa;font-size:13px;line-height:1.6;">
                 Nếu bạn đã thanh toán rồi, xin hãy bỏ qua email này. Cảm ơn bạn đã mua hàng tại Noob Store!
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f9f9f9;padding:20px 32px;text-align:center;border-top:1px solid #eee;">
+              <p style="margin:0;color:#aaa;font-size:12px;">© 2026 Noob Store. Tất cả quyền được bảo lưu.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+interface PickupCodeTemplateParams {
+	orderNumber: string;
+	fullName: string;
+	code: string;
+	minutes: number;
+}
+
+function buildPickupCodeHtml(p: PickupCodeTemplateParams): string {
+	return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mã nhận hàng</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#1a1a1a;padding:28px 32px;text-align:center;">
+              <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:1px;">NOOB STORE</span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px 32px;">
+              <h2 style="margin:0 0 8px;font-size:20px;color:#1a1a1a;">Xin chào ${p.fullName},</h2>
+              <p style="margin:0 0 24px;color:#666;font-size:15px;line-height:1.6;">
+                Bạn đã chọn nhận hàng tại cửa hàng cho đơn hàng <strong>#${p.orderNumber}</strong>.
+                Vui lòng xuất trình mã dưới đây cho nhân viên tại quầy để nhận hàng.
+              </p>
+
+              <!-- Code box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9;border:2px dashed #1a1a1a;border-radius:12px;padding:24px;margin-bottom:24px;">
+                <tr>
+                  <td align="center" style="font-size:40px;font-weight:800;letter-spacing:10px;color:#1a1a1a;padding-bottom:12px;">${p.code}</td>
+                </tr>
+                <tr>
+                  <td align="center" style="font-size:13px;color:#e55;font-weight:600;">Mã có hiệu lực trong ${p.minutes} phút và chỉ dùng được một lần.</td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;color:#666;font-size:15px;line-height:1.6;">
+                Khi tới nhận hàng, bạn cũng cần xuất trình <strong>CMND/CCCD</strong> để đối chiếu.
+                Mã này dùng một lần, nếu hết hạn hoặc bạn không tới kịp hãy mở lại đơn hàng trong ứng dụng
+                để tạo mã mới.
+              </p>
+
+              <p style="margin:0;color:#aaa;font-size:13px;line-height:1.6;">
+                Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email. Cảm ơn bạn đã mua hàng tại Noob Store!
               </p>
             </td>
           </tr>

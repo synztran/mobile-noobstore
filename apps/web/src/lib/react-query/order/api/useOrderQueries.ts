@@ -92,7 +92,8 @@ export function useOrders({ q, status }: { q: string; status: string }) {
 export function useOrderDetail(id: string | null) {
 	return useQuery<OrderDetail | null>({
 		...appQueryKeys.order.detail(id ?? ""),
-		staleTime: 60_000,
+		staleTime: 0,
+		refetchInterval: 15_000,
 		enabled: !!id,
 		queryFn: async () => {
 			const res = await fetch(`/api/user/orders/${id}`);

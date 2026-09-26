@@ -1,3 +1,4 @@
+import { getActiveCartId } from "@/modules/cart/server/service";
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
@@ -45,7 +46,13 @@ export interface SubmitOrderRequestItem {
 }
 
 export interface SubmitOrderRequest {
-  cart_id: string;
+  /**
+   * Advisory only — the cart to convert is resolved server-side from the
+   * session (see the conversion block below). The client sends whatever its
+   * persisted cart store holds, so this is null or stale on a cold load; the
+   * route only logs a warning when it disagrees with the active cart.
+   */
+  cart_id?: string | null;
   shipping_cost: number;
   payment_type?: "full" | "deposit_cod";
   deposit_percentage?: number;
@@ -61,8 +68,10 @@ export interface SubmitOrderRequest {
     city?: string;
     district?: string;
     ward?: string;
-    district_code?: string;
-    ward_code?: string;
+    // Nullable: the summary page sends `|| null` for codes the customer never
+    // filled in, and the value is persisted as-is.
+    district_code?: string | null;
+    ward_code?: string | null;
     postal_code?: string | null;
     notes?: string | null;
   } | null;
@@ -801,21 +810,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Mark old cart as converted (keeps data for admin analytics) ──────
-    if (body.cart_id) {
+    // ── Mark the cart as converted (keeps data for admin analytics) ───────
+    // Resolved server-side from the session, never from body.cart_id. The
+    // client value comes from the persisted cart store, so it is null or stale
+    // whenever GET /api/cart has not resolved yet — and the old
+    // `if (body.cart_id)` silently skipped the conversion, leaving the cart
+    // active after a placed order (a retry then created a duplicate order).
+    // Scoping by user_id also means a caller can no longer flip someone
+    // else's active cart through the service-role client.
+    const activeCartId = user ? await getActiveCartId(admin, user.id) : null;
+    if (body.cart_id && body.cart_id !== activeCartId) {
+      console.warn(
+        `[submit] client cart_id ${body.cart_id} != active cart ${activeCartId} (order ${result.order_number}) — converted the server-resolved cart`
+      );
+    }
+    if (activeCartId) {
       await admin
         .from("carts")
         .update({ status: "converted" })
-        .eq("id", body.cart_id);
+        .eq("id", activeCartId)
+        .eq("user_id", user!.id);
     }
 
-    // ── Create a fresh active cart for the customer ──────────────────────
-    if (user) {
-      const newCartId = crypto.randomUUID();
-      await admin
-        .from("carts")
-        .insert({ id: newCartId, user_id: user.id, status: "active" });
-    }
+    // NOTE: no fresh cart is pre-created here. The next add-to-cart lazily
+    // creates it via getOrCreateCart, which retries on the
+    // carts_one_active_per_user unique index (migration 135). Pre-inserting
+    // here raced that lookup and was one of two ways users ended up with
+    // several active carts — which made GET /api/cart return an empty cart.
 
     // ── Gacha mission progress ───────────────────────────────────────────
     if (user) {
