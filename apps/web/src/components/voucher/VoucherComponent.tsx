@@ -3,7 +3,7 @@
 import { useVouchers } from "@/hooks/useVouchers";
 import { formatVND } from "@/lib/currency";
 import type { VoucherApplyItem, VoucherRow } from "@/types/voucher";
-import { CheckCircle2, Search, Ticket, X } from "lucide-react";
+import { Search, Ticket, X } from "lucide-react";
 import { memo } from "react";
 import { VoucherDrawer } from "./VoucherDrawer";
 
@@ -103,7 +103,12 @@ export const VoucherComponent = memo(function VoucherComponent({
                   )}
                   {entry.shippingDiscountAmount > 0 && (
                     <p className="text-sm font-bold text-on-surface">
-                      Miễn phí vận chuyển
+                      {shippingCost > 0 &&
+                      entry.shippingDiscountAmount >= shippingCost
+                        ? "Miễn phí vận chuyển"
+                        : `Giảm phí vận chuyển: ${formatVND(
+                            entry.shippingDiscountAmount
+                          )}`}
                     </p>
                   )}
                   {entry.gifts.length > 0 && (
@@ -164,12 +169,22 @@ export const VoucherComponent = memo(function VoucherComponent({
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-primary/15 bg-primary/5 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-primary transition-colors hover:bg-primary/10"
+            disabled={applyingVoucher}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-primary/15 bg-primary/5 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <Search className="h-4 w-4" />
-            {appliedVouchers.length > 0
-              ? `Thay đổi mã giảm giá (${appliedVouchers.length})`
-              : `Xem ${displayVouchers.length} mã giảm giá`}
+            {applyingVoucher ? (
+              <>
+                <span className="loading loading-spinner loading-xs" />
+                Đang áp dụng mã...
+              </>
+            ) : (
+              <>
+                <Search className="h-4 w-4" />
+                {appliedVouchers.length > 0
+                  ? `Thay đổi mã giảm giá (${appliedVouchers.length})`
+                  : `Xem ${displayVouchers.length} mã giảm giá`}
+              </>
+            )}
           </button>
         </>
       ) : null}

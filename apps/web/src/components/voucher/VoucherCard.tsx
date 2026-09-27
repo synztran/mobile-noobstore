@@ -32,37 +32,49 @@ export function VoucherCard({
   subtotal,
   onApply,
 }: VoucherCardProps) {
+  const shippingScoped = voucher.scope_type === "shipping_fee";
+
   const rewardIcon = useMemo(() => {
+    // A shipping-scoped voucher always gets the truck, whatever its reward
+    // type — the icon should say what the discount is on, not how it's coded.
+    if (voucher.reward_type === "free_shipping" || shippingScoped) {
+      return Truck;
+    }
     if (voucher.reward_type === "percent_off") {
       return BadgePercent;
     }
     if (voucher.reward_type === "amount_off") {
       return TicketPercent;
     }
-    if (voucher.reward_type === "free_shipping") {
-      return Truck;
-    }
     if (voucher.reward_type === "gift_item") {
       return Gift;
     }
     return Sparkles;
-  }, [voucher.reward_type]);
+  }, [voucher.reward_type, shippingScoped]);
 
   const rewardLabel = useMemo(() => {
+    if (voucher.reward_type === "free_shipping") {
+      return "Miễn phí vận chuyển";
+    }
+    // amount_off/percent_off scoped to shipping_fee discount the shipping fee,
+    // not the cart — say which, or "Giảm 50%" reads as 50% off the order.
+    if (shippingScoped && voucher.reward_type === "percent_off") {
+      return `Giảm ${voucher.percent_off ?? 0}% phí vận chuyển`;
+    }
+    if (shippingScoped && voucher.reward_type === "amount_off") {
+      return `Giảm ${formatVND(voucher.amount_off ?? 0)} phí vận chuyển`;
+    }
     if (voucher.reward_type === "percent_off") {
       return `Giảm ${voucher.percent_off ?? 0}%`;
     }
     if (voucher.reward_type === "amount_off") {
       return `Giảm ${formatVND(voucher.amount_off ?? 0)}`;
     }
-    if (voucher.reward_type === "free_shipping") {
-      return "Miễn phí vận chuyển";
-    }
     if (voucher.reward_type === "gift_item") {
       return "Tặng quà kèm";
     }
     return "Khuyến mãi";
-  }, [voucher]);
+  }, [voucher, shippingScoped]);
 
   const scopeLabel = useMemo(() => {
     if (voucher.scope_type === "order_total") {

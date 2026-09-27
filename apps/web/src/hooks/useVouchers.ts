@@ -9,6 +9,10 @@ import {
 import { useApplyVouchers } from "@/lib/react-query/voucher/api/useVoucherMutations";
 import { useDiscountStore } from "@/store";
 import { sameShippingMethod } from "@/lib/shipping-method";
+import {
+  computeVoucherDiscount,
+  totalVoucherDiscount,
+} from "@/lib/voucher-discount";
 import type { VoucherApplyItem, VoucherRow } from "@/types/voucher";
 import { useEffect, useMemo, useState } from "react";
 
@@ -80,8 +84,50 @@ export function useVouchers({
     [appliedVouchers]
   );
 
+  // Rough item base for a product/category voucher, used only to RANK
+  // auto-apply candidates. It deliberately skips the kit component
+  // variant-owner resolution the server does in computeScopeBase, so kit lines
+  // can be slightly under-counted here. Ordering only — the real number is
+  // recomputed authoritatively by /api/vouchers/apply.
+  const estimateOrderBase = (v: VoucherRow): number => {
+    const excluded = new Set(v.excluded_product_ids ?? []);
+
+    if (v.scope_type === 'product') {
+      const targets = new Set(v.applies_to_product_ids ?? []);
+      if (targets.size === 0) return 0;
+      return items
+        .filter((i) => targets.has(i.product_id) && !excluded.has(i.product_id))
+        .reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
+    }
+
+    if (v.scope_type === 'category') {
+      const targets = new Set(v.applies_to_category_slugs ?? []);
+      if (targets.size === 0) return 0;
+      return items
+        .filter((i) => {
+          const slug = i.category_slug ?? categorySlugByProductId[i.product_id];
+          return slug != null && targets.has(slug) && !excluded.has(i.product_id);
+        })
+        .reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
+    }
+
+    return subtotal;
+  };
+
+  // Real saving in VND, so a 50%-of-shipping voucher outranks a flat 20,000₫
+  // order voucher when they compete for the same slot. Comparing the raw
+  // amount_off against a raw percent_off (as this did before) ranked any
+  // percentage voucher below any VND amount.
+  const estimatedSaving = (v: VoucherRow): number =>
+    totalVoucherDiscount(
+      computeVoucherDiscount(v, {
+        orderBase: estimateOrderBase(v),
+        shippingCost,
+      })
+    );
+
   // Auto-apply eligible scoped + customer vouchers when cart items exist.
-  // Sorted by discount amount (highest first) so the best voucher is picked.
+  // Sorted by real discount (highest first) so the best voucher is picked.
   useEffect(() => {
     if (items.length === 0 || eligibleVouchers.length === 0) return;
 
@@ -93,19 +139,9 @@ export function useVouchers({
       .filter((v) => !already.has(v.id));
 
     // Sort by estimated discount descending — highest discount first
-    const sorted = [...candidates].sort((a, b) => {
-      const aAmt = a.reward_type === 'amount_off'
-        ? Number(a.amount_off ?? 0)
-        : a.reward_type === 'percent_off'
-          ? Number(a.percent_off ?? 0)
-          : 0;
-      const bAmt = b.reward_type === 'amount_off'
-        ? Number(b.amount_off ?? 0)
-        : b.reward_type === 'percent_off'
-          ? Number(b.percent_off ?? 0)
-          : 0;
-      return bAmt - aAmt;
-    });
+    const sorted = [...candidates].sort(
+      (a, b) => estimatedSaving(b) - estimatedSaving(a)
+    );
 
     const toApply = sorted.map((v) => v.id);
 

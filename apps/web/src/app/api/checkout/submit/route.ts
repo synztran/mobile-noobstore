@@ -3,9 +3,14 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { resolveVariantOwners } from "@/lib/voucher-scope";
+import { computeVoucherDiscount } from "@/lib/voucher-discount";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import { randomBase36 } from "@/lib/random";
-import type { AppliedVoucherSummary } from "@/types/voucher";
+import type {
+  AppliedVoucherSummary,
+  VoucherRewardType,
+  VoucherScopeType,
+} from "@/types/voucher";
 import { getCheckoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import { invalidateProductCaches } from "@/lib/redis/cache";
 import {
@@ -382,6 +387,7 @@ export async function POST(req: NextRequest) {
         const now = new Date();
         const validIds = new Set<string>();
         const cappedDiscount = new Map<string, number>();
+        const cappedShipping = new Map<string, number>();
 
         for (const v of voucherRows) {
           const row = v as unknown as {
@@ -451,22 +457,25 @@ export async function POST(req: NextRequest) {
           }
           if (row.min_order_amount > 0 && base < row.min_order_amount) continue;
 
-          // Recompute discount against the eligible base
-          let capped = 0;
-          if (row.scope_type === "shipping_fee" || row.reward_type === "free_shipping") {
-            capped = 0; // shipping handled separately below
-          } else if (row.reward_type === "amount_off") {
-            capped = Math.min(Number(row.amount_off ?? 0), base);
-          } else if (row.reward_type === "percent_off") {
-            const pct = Number(row.percent_off ?? 0);
-            capped = Math.round((base * pct) / 100);
-            const maxAmt = Number(row.max_discount_amount ?? 0);
-            if (maxAmt > 0) capped = Math.min(capped, maxAmt);
-            capped = Math.min(capped, base);
-          }
+          // Recompute discount against the eligible base. A shipping_fee-scoped
+          // voucher contributes to the shipping bucket, never the order total;
+          // free_shipping always waives the full fee. Both come from the same
+          // shared helper the apply/preview path uses, so the number the
+          // customer saw and the number charged here cannot drift.
+          const recomputed = computeVoucherDiscount(
+            {
+              reward_type: row.reward_type as VoucherRewardType,
+              scope_type: row.scope_type as VoucherScopeType,
+              amount_off: row.amount_off,
+              percent_off: row.percent_off,
+              max_discount_amount: row.max_discount_amount,
+            },
+            { orderBase: base, shippingCost: safeShippingCost }
+          );
 
           validIds.add(row.id);
-          cappedDiscount.set(row.id, capped);
+          cappedDiscount.set(row.id, recomputed.orderDiscount);
+          cappedShipping.set(row.id, recomputed.shippingDiscount);
         }
 
         // Strip ineligible vouchers, cap discounts at recomputed values
@@ -480,6 +489,10 @@ export async function POST(req: NextRequest) {
             voucher_discount_amount: Math.min(
               toNumber(v.voucher_discount_amount, 0),
               cappedDiscount.get(v.voucher_id!) ?? 0
+            ),
+            shipping_discount_amount: Math.min(
+              toNumber(v.shipping_discount_amount, 0),
+              cappedShipping.get(v.voucher_id!) ?? 0
             ),
           }))
         );

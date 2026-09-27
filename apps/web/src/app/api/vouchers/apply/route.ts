@@ -1,6 +1,7 @@
 import { VOUCHER_ERROR_MESSAGES } from "@/constants/errorMessages";
 import { sameShippingMethod } from "@/lib/shipping-method";
 import { createClient } from "@/lib/supabase/server";
+import { computeVoucherDiscount } from "@/lib/voucher-discount";
 import {
   resolveCategorySlugByProductId,
   resolveVariantOwners,
@@ -355,6 +356,13 @@ export async function POST(req: Request) {
     const totalGifts: AppliedVoucherEntry["gifts"] = [];
     const entries: AppliedVoucherEntry[] = [];
     let hasFreeShipping = false;
+    // Shipping fee still available to discount. Each voucher's shipping
+    // discount is taken against this running balance rather than the full fee,
+    // so stacked shipping vouchers can never over-report: the per-entry amounts
+    // always sum to at most the fee, and the running sum is then already
+    // capped so it matches the total below. Mirrors the per-voucher clamp
+    // checkout/submit applies when it persists the order.
+    let remainingShipping = shippingCost;
 
     for (const id of uniqueIds) {
       const v = voucherMap.get(id)!;
@@ -362,9 +370,9 @@ export async function POST(req: Request) {
       let shippingDiscountAmount = 0;
 
       // Discount base: matched-subtotal for product/category vouchers
-      const isScoped =
+      const isItemScoped =
         v.scope_type === "product" || v.scope_type === "category";
-      const discountBase = isScoped
+      const discountBase = isItemScoped
         ? computeScopeBase(
             v,
             resolvedItems,
@@ -374,26 +382,32 @@ export async function POST(req: Request) {
           ).base
         : subtotal;
 
-      if (v.reward_type === "amount_off") {
-        discountAmount = Math.min(
-          toNumber(v.amount_off, 0),
-          discountBase
-        );
-      } else if (v.reward_type === "percent_off") {
-        const percentValue = toNumber(v.percent_off, 0);
-        discountAmount = Math.round((discountBase * percentValue) / 100);
-        const maxAmount = toNumber(v.max_discount_amount, 0);
-        if (maxAmount > 0) {
-          discountAmount = Math.min(discountAmount, maxAmount);
-        }
-        discountAmount = Math.min(discountAmount, discountBase);
-      } else if (v.reward_type === "free_shipping") {
+      if (v.reward_type === "free_shipping") {
         // free_shipping: only the first free_shipping voucher grants shipping discount
         if (!hasFreeShipping) {
           shippingDiscountAmount = shippingCost;
           hasFreeShipping = true;
         }
+      } else {
+        // The shared helper decides which bucket amount_off/percent_off hits:
+        // a shipping_fee-scoped voucher discounts the shipping fee, every
+        // other scope discounts the (possibly matched) item subtotal.
+        const discount = computeVoucherDiscount(v, {
+          orderBase: discountBase,
+          shippingCost,
+        });
+        discountAmount = discount.orderDiscount;
+        shippingDiscountAmount = discount.shippingDiscount;
       }
+
+      // A voucher can never take more shipping than is still left to pay, so
+      // the first voucher to claim the fee wins the remainder and later ones
+      // get nothing rather than a number that would overstate the saving.
+      shippingDiscountAmount = Math.min(
+        shippingDiscountAmount,
+        Math.max(0, remainingShipping)
+      );
+      remainingShipping -= shippingDiscountAmount;
 
       const gifts: AppliedVoucherEntry["gifts"] =
         v.reward_type === "gift_item" && v.gift_product_id
