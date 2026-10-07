@@ -34,6 +34,20 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const supabase = getAdminClient();
+
+  // A kit is unbuyable until component products are attached (the cart gate
+  // finds no component variants and 409s). Never let one go live at insert
+  // time — activation happens later, via PATCH, once components exist.
+  if (body?.product_type === "kit" && body?.is_active) {
+    return NextResponse.json(
+      {
+        error:
+          "A kit must have component products attached before it can be activated. It was created inactive — attach components, then activate it.",
+      },
+      { status: 400 },
+    );
+  }
+
   const { data, error } = await supabase
     .from("products")
     .insert(body)
@@ -41,6 +55,21 @@ export async function POST(req: NextRequest) {
     .single();
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+  try {
+    const { invalidateProductCaches } = await import("@/lib/redis/cache");
+    await invalidateProductCaches();
+  } catch (err) {
+    console.error("[admin/products/POST] cache invalidation failed:", err);
+  }
+  try {
+    if (body?.slug) {
+      const { scrapeFacebookProduct } = await import("@/lib/facebook/scrape");
+      const url = `https://www.noobstore.xyz/shop/${body.slug}`;
+      void scrapeFacebookProduct(url);
+    }
+  } catch (err) {
+    console.error("[admin/products/POST] fb scrape failed:", err);
   }
   return NextResponse.json({ id: data.id }, { status: 201 });
 }

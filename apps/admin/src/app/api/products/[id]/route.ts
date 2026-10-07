@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
+import { invalidateProductCaches } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -43,9 +44,28 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 	// Fetch product type to decide where is_pre_order lives
 	const { data: product } = await supabase
 		.from("products")
-		.select("product_type")
+		.select("product_type, slug")
 		.eq("id", id)
 		.single();
+
+	// Never let a kit go live without component products: the cart gate finds
+	// no component variants to validate against and 409s every add-to-cart.
+	if (body?.is_active === true && product?.product_type === "kit") {
+		const { count } = await supabase
+			.from("product_components")
+			.select("id", { count: "exact", head: true })
+			.eq("parent_product_id", id);
+
+		if ((count ?? 0) === 0) {
+			return NextResponse.json(
+				{
+					error:
+						"Cannot activate: this kit has no component products attached. Add components first, then activate.",
+				},
+				{ status: 400 },
+			);
+		}
+	}
 
 	const productType = product?.product_type ?? "standard";
 	const { is_pre_order, ...productBody } = body;
@@ -70,6 +90,21 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
 	if (error) {
 		return NextResponse.json({ error: error.message }, { status: 400 });
+	}
+
+	// Product/stock/variant fields changed — invalidate storefront caches so
+	// /shop and product pages reflect the new data immediately.
+	await invalidateProductCaches();
+
+	try {
+		const slug = (body as any)?.slug ?? (product as any)?.slug;
+		if (slug) {
+			const { scrapeFacebookProduct } = await import("@/lib/facebook/scrape");
+			const url = `https://www.noobstore.xyz/shop/${slug}`;
+			void scrapeFacebookProduct(url);
+		}
+	} catch (err) {
+		console.error("[admin/products/PATCH] fb scrape failed:", err);
 	}
 
 	return NextResponse.json({ success: true }, { status: 200 });

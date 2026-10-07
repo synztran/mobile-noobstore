@@ -66,7 +66,23 @@ export default function PolicyPage() {
             </div>
 
             <div>
-              <p className="mb-2 font-bold text-on-surface">5. Liên hệ</p>
+              <p className="mb-2 font-bold text-on-surface">
+                5. Xóa dữ liệu người dùng (Data Deletion)
+              </p>
+              <p>
+                Nếu bạn muốn yêu cầu xóa toàn bộ thông tin cá nhân và dữ liệu tài khoản của mình, vui lòng liên hệ với chúng tôi qua email{" "}
+                <a
+                  href={`mailto:${MAIL_DOMAIN}`}
+                  className="font-bold text-primary underline"
+                >
+                  {MAIL_DOMAIN}
+                </a>{" "}
+                với tiêu đề "Yêu cầu xóa dữ liệu". Chúng tôi sẽ xử lý yêu cầu của bạn trong vòng 7 ngày làm việc và xác nhận khi hoàn tất xóa dữ liệu.
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 font-bold text-on-surface">6. Liên hệ</p>
               <p>
                 Nếu bạn có thắc mắc về chính sách bảo mật, vui lòng liên hệ qua
                 email:{" "}
