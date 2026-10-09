@@ -1,5 +1,5 @@
-import { GachaHistoryView } from "@/modules/ga2-gacha/ui/GachaHistoryView";
-import "@/modules/ga2-gacha/ga2-gacha.css";
+// import { GachaHistoryView } from "@/modules/ga2-gacha/ui/GachaHistoryView";
+// import "@/modules/ga2-gacha/ga2-gacha.css";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -87,10 +87,10 @@ export default async function GachaMegaHistoryPage() {
     // (64px top bar + the shell's 2×24px padding), so the grid never forces
     // the window to scroll behind the desktop chrome.
     <div className="ga-history-bg font-plain flex min-h-dvh justify-center md:min-h-[calc(100dvh-7rem)]">
-      <GachaHistoryView
+      {/* <GachaHistoryView
         eventId={event.id}
         tokenCount={tokenRow?.token_count ?? 0}
-      />
+      /> */}
     </div>
   );
 }
