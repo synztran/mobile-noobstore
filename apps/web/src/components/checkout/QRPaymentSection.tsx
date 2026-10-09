@@ -19,7 +19,7 @@ interface Props {
   depositAmount?: number;
   remainingAmount?: number;
   depositPercentage?: number;
-  deliveryService?: boolean;
+  shippingFeePending?: boolean;
 }
 
 export function QRPaymentSection({
@@ -35,7 +35,7 @@ export function QRPaymentSection({
   depositAmount = 0,
   remainingAmount = 0,
   depositPercentage = 0,
-  deliveryService = false,
+  shippingFeePending = false,
 }: Props) {
   const [qrError, setQrError] = useState(false);
   const qrPrice = paymentType === "deposit_cod" ? depositAmount : _totalPrice;
@@ -83,9 +83,9 @@ export function QRPaymentSection({
         <div className="flex items-center justify-between text-sm">
           <span className="text-on-surface-variant">Phí vận chuyển</span>
           <span
-            className={`text-xs font-bold ${shippingCost === 0 && deliveryService ? "text-emerald-600" : "text-on-surface-variant"}`}
+            className={`text-xs font-bold ${shippingCost === 0 && shippingFeePending ? "text-emerald-600" : "text-on-surface-variant"}`}
           >
-            {deliveryService
+            {shippingFeePending
               ? "Cập nhật sau"
               : shippingCost === 0
                 ? "Miễn phí"

@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeliveryAvailabilitySection } from "./DeliveryAvailabilitySection";
 import { SelectedConditionSummary } from "./SelectedConditionSummary";
+import { cardPricingFor } from "./card-pricing";
 import {
   ArrowLeft,
   ChevronRight,
@@ -167,6 +168,17 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
     return Array.from(new Set(all));
   }, [drawer.activeProduct]);
 
+  // Same pricing rule the cards use: a quantity-tiered product (70 / 90 / 110
+  // packs as variants) quotes its cheapest pack, which has to be labelled
+  // rather than read as the price of every pack size.
+  const activePricing = useMemo(
+    () =>
+      drawer.activeProduct
+        ? cardPricingFor(drawer.activeProduct)
+        : { amount: 0, showFrom: false, showDiscount: false, unpriced: true },
+    [drawer.activeProduct]
+  );
+
   const [configImgIndex, setConfigImgIndex] = useState(0);
   const configSwipeStartX = useRef<number | null>(null);
   const configSwipedRef = useRef(false);
@@ -236,42 +248,52 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
       )}
 
       {!drawer.loadingProducts &&
-        drawer.products.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => drawer.selectProduct(p.id)}
-            className="flex w-full items-center gap-3 rounded-2xl bg-surface-container p-3 text-left transition-transform active:scale-[0.98]"
-          >
-            <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-surface-container-high">
-              {p.thumbnail ? (
-                <Image
-                  src={p.thumbnail}
-                  alt={p.name}
-                  fill
-                  className="object-cover"
-                  sizes="64px"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Package className="h-6 w-6 text-outline-variant" />
-                </div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="mb-0.5 text-[10px] font-black uppercase leading-none tracking-wider text-primary">
-                {p.category}
-              </p>
-              <p className="line-clamp-2 text-sm font-black uppercase leading-tight text-on-surface">
-                {p.name}
-              </p>
-              <p className="mt-1 text-xs font-bold text-primary">
-                {formatVND(p.from_price ?? p.min_price)}
-              </p>
-            </div>
-            <ChevronRight className="h-5 w-5 flex-shrink-0 text-outline-variant" />
-          </button>
-        ))}
+        drawer.products.map((p) => {
+          const pricing = cardPricingFor(p);
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => drawer.selectProduct(p.id)}
+              className="flex w-full items-center gap-3 rounded-2xl bg-surface-container p-3 text-left transition-transform active:scale-[0.98]"
+            >
+              <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-surface-container-high">
+                {p.thumbnail ? (
+                  <Image
+                    src={p.thumbnail}
+                    alt={p.name}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Package className="h-6 w-6 text-outline-variant" />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="mb-0.5 text-[10px] font-black uppercase leading-none tracking-wider text-primary">
+                  {p.category}
+                </p>
+                <p className="line-clamp-2 text-sm font-black uppercase leading-tight text-on-surface">
+                  {p.name}
+                </p>
+                <p className="mt-1 text-xs font-bold text-primary">
+                  {/* Quantity-tiered products (e.g. 70 / 90 / 110 packs) advertise
+                      their cheapest pack here, so the figure needs qualifying. */}
+                  {pricing.showFrom && (
+                    <span className="font-medium text-on-surface-variant">
+                      giá chỉ từ&nbsp;
+                    </span>
+                  )}
+                  {formatVND(pricing.amount)}
+                </p>
+              </div>
+              <ChevronRight className="h-5 w-5 flex-shrink-0 text-outline-variant" />
+            </button>
+          );
+        })}
     </div>
   );
 
@@ -303,27 +325,13 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
               {drawer.activeProduct.name}
             </p>
             <p className="mt-0.5 font-bold text-primary">
-              {drawer.activeProduct.from_price ? (
-                <>
-                  <span className="text-xs font-black text-slate-600">
-                    Giá từ
-                  </span>
-                  &nbsp;
-                  {formatVND(
-                    drawer.activeProduct.from_price ||
-                      drawer.activeProduct.min_price ||
-                      drawer.activeProduct.base_price
-                  )}
-                </>
-              ) : (
-                <>
-                  {formatVND(
-                    drawer.activeProduct.from_price ||
-                      drawer.activeProduct.min_price ||
-                      drawer.activeProduct.base_price
-                  )}
-                </>
+              {activePricing.showFrom && (
+                <span className="text-xs font-black text-slate-600">
+                  Giá từ
+                </span>
               )}
+              {activePricing.showFrom && <>&nbsp;</>}
+              {formatVND(activePricing.amount)}
             </p>
           </div>
         </div>
@@ -389,7 +397,6 @@ export function QuickPickDrawer(props: QuickPickDrawerProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            onClick={onClose}
           />
         )}
       </AnimatePresence>

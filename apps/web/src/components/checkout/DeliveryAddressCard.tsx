@@ -4,12 +4,13 @@ import type { ShippingDetails } from "@/lib/data";
 
 interface DeliveryAddressCardProps {
   shipping: ShippingDetails;
-  isDeliveryService: boolean;
+  /** Fulfilled by a third-party courier — show the full ward/district/city. */
+  isCarrierMethod: boolean;
 }
 
 export function DeliveryAddressCard({
   shipping,
-  isDeliveryService,
+  isCarrierMethod,
 }: DeliveryAddressCardProps) {
   return (
     <div className="space-y-1 overflow-hidden rounded-2xl bg-surface-container-low px-4 py-4">
@@ -23,7 +24,7 @@ export function DeliveryAddressCard({
         </span>
       </p>
       <p className="text-sm text-on-surface-variant">
-        {(isDeliveryService
+        {(isCarrierMethod
           ? [
               shipping.apartment,
               shipping.streetAddress,

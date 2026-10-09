@@ -1,24 +1,30 @@
 import { ShopProduct } from "@/modules/products/types";
 import { formatVND } from "@/lib/currency";
 import { memo } from "react";
+import { cardPricingFor } from "./card-pricing";
 
 const ProductCardPricing = memo(({ product }: { product: ShopProduct }) => {
-  const fromPrice = product.from_price ?? product.min_price;
+  const { amount, showFrom, showDiscount, unpriced } = cardPricingFor(product);
 
-  if (product.discount_price && product.discount_price > 0) {
+  if (showDiscount) {
     return (
       <div>
         <div className="text-right text-xs font-bold text-on-surface-variant line-through lg:text-sm">
           {formatVND(product.base_price)}
         </div>
         <div className="text-right text-base font-extrabold text-red-600 lg:text-lg">
-          {formatVND(product.discount_price)}
+          {showFrom && (
+            <span className="mr-1 break-all text-xs text-red-600/80 lg:text-sm">
+              giá chỉ từ
+            </span>
+          )}
+          {formatVND(product.discount_price ?? 0)}
         </div>
       </div>
     );
   }
 
-  if (!product.base_price && !fromPrice) {
+  if (unpriced) {
     return (
       <div className="text-right text-xs font-extrabold text-slate-500 lg:text-sm">
         giá đang cập nhật
@@ -28,13 +34,13 @@ const ProductCardPricing = memo(({ product }: { product: ShopProduct }) => {
 
   return (
     <div className="space-x-1 text-right text-sm font-extrabold text-primary lg:text-base">
-      {product.base_price === 0 && (
+      {showFrom && (
         <span className="break-all text-xs text-slate-500 lg:text-sm">
           giá chỉ từ
         </span>
       )}
       <span className="whitespace-nowrap text-base lg:text-lg">
-        {formatVND(product.base_price || fromPrice)}
+        {formatVND(amount)}
       </span>
     </div>
   );

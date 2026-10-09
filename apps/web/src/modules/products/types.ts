@@ -95,6 +95,8 @@ export interface ShopVariant {
   is_pre_order: boolean;
   pre_order_config: PreOrderConfig | null;
   attributes: Record<string, string> | null;
+  /** Rule-resolved effective price adjustment for current selection context (client-side computed). */
+  effective_price_adjustment?: number;
 }
 
 export interface ShopProduct {
@@ -149,6 +151,8 @@ export interface ShopVariantDetail {
   is_pre_order: boolean;
   pre_order_config: PreOrderConfig | null;
   attributes: Record<string, string> | null;
+  /** Rule-resolved effective price adjustment for current selection context (client-side computed). */
+  effective_price_adjustment?: number;
 }
 
 export interface ComponentProductDetail {
@@ -215,6 +219,8 @@ export interface ConfiguratorVariant {
   /** The component product this variant belongs to (used for rule resolution). */
   component_product_id?: string;
   attributes: Record<string, string> | null;
+  /** Rule-resolved effective price adjustment for current selection context (client-side computed). */
+  effective_price_adjustment?: number;
 }
 
 export interface ConfiguratorGroup {
@@ -235,6 +241,20 @@ export interface ComponentVariantRule {
   target_component_product_id: string;
   /** Variants that ARE allowed when the rule fires. */
   allowed_variant_ids: string[];
+  /**
+   * Per-pairing price override, keyed by the allowed component `variant_id`.
+   * The value is the ADDITIVE contribution of that component variant to the kit
+   * line when combined with `condition_variant_id` — not an absolute price.
+   *
+   * `null`/`undefined` = no override, fall back to that component variant's own
+   * `price_adjustment`. `0` is a REAL override meaning "this component is free
+   * in this pairing", so consumers must test for nullish, never truthiness.
+   *
+   * Two rules may target the same component variant from different kit variants;
+   * each allowed row then carries its own entry here. That is the whole point of
+   * the feature: `70 switches` contributes 150 under Purple and 180 under Trash.
+   */
+  price_overrides?: Record<string, number | null>;
 }
 
 export type ConfiguratorResponse = {

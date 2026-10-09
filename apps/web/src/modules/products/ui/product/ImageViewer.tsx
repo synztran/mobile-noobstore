@@ -113,7 +113,6 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95"
-          onClick={onClose}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}

@@ -1,6 +1,9 @@
 import "server-only";
 
 import { getPublicClient } from "@/lib/supabase/public";
+import { resolveProductPricing } from "./pricing";
+import { resolveEffectiveStock, resolveKitStockById } from "./stock";
+import type { ComponentLink, StockNode } from "./stock";
 
 export type ProductSortOption = "newest" | "price_asc" | "price_desc";
 export type ProductType = "standard" | "kit" | "component" | "gift";
@@ -211,18 +214,104 @@ function getTags(product: {
 
 // ─── Batch supplement fetchers ────────────────────────────────────────────────
 
+/**
+ * Resolve kit stock for a set of kits by walking the component closure.
+ *
+ * `resolveKitStockById` is recursive, so it needs every component product that
+ * could participate — a required child can itself be a kit and resolve through
+ * ITS components. We only deepen when a child actually IS a kit, so the common
+ * single-level case costs exactly one extra query.
+ *
+ * Both stock surfaces call this:
+ *   - `fetchKitSupplements` → /shop and /api/products
+ *   - `ssr.ts` `getProductBySlugUncached` → /shop/[slug]
+ * That shared call is what keeps the two from disagreeing. Before it existed,
+ * /shop summed a child's variant rows while /shop/[slug] ran the child through
+ * `resolveEffectiveStock` with an empty kit map, so a kit child collapsed to
+ * `min(own variants)` — one product showed 3 on the listing and 1 on its page.
+ *
+ * `seedNodes` lets a caller pass rows it already fetched (the detail page has
+ * its component rows in hand for rendering), avoiding a duplicate query.
+ */
+export async function fetchKitStockMap(opts: {
+  seedLinks: ComponentLink[];
+  seedNodes?: Map<string, StockNode>;
+}): Promise<Map<string, number>> {
+  const { seedLinks, seedNodes } = opts;
+  const supabase = getPublicClient();
+
+  const allLinks: ComponentLink[] = [...seedLinks];
+  const allNodes = new Map<string, StockNode>(seedNodes ?? []);
+  const seen = new Set<string>(allNodes.keys());
+
+  let frontier = Array.from(
+    new Set(
+      allLinks
+        .map((l) => l.component_product_id)
+        .filter((id): id is string => typeof id === "string" && !!id),
+    ),
+  );
+
+  // Real kits nest 1-2 deep. This bound only stops pathological data from
+  // becoming an unbounded query loop — `resolveKitStockById`'s cycle guard is
+  // what actually prevents infinite recursion.
+  const MAX_KIT_DEPTH = 4;
+
+  for (let depth = 0; depth < MAX_KIT_DEPTH && frontier.length > 0; depth++) {
+    const fresh = frontier.filter((id) => !seen.has(id));
+    for (const id of fresh) seen.add(id);
+    if (fresh.length === 0) break;
+
+    const { data: componentRows } = await supabase
+      .from("products")
+      .select(`id, product_type, stock_quantity, product_variants(stock_quantity)`)
+      .eq("is_active", true)
+      .in("id", fresh);
+
+    for (const row of (componentRows ?? []) as unknown as Array<{
+      id: string;
+      product_type: string | null;
+      stock_quantity: number | null;
+      product_variants: Array<{ stock_quantity: number | null }> | null;
+    }>) {
+      allNodes.set(row.id, {
+        id: row.id,
+        product_type: row.product_type,
+        stock_quantity: row.stock_quantity,
+        variantStocks: (row.product_variants ?? []).map((v) =>
+          Number(v.stock_quantity ?? 0),
+        ),
+      });
+    }
+
+    // Only descend into children that are kits themselves.
+    frontier = fresh.filter(
+      (id) => (allNodes.get(id)?.product_type ?? "standard") === "kit",
+    );
+
+    if (frontier.length > 0) {
+      const { data: deeper } = await supabase
+        .from("product_components")
+        .select("parent_product_id, component_product_id, is_required")
+        .in("parent_product_id", frontier);
+      allLinks.push(...((deeper ?? []) as unknown as ComponentLink[]));
+    }
+  }
+
+  return resolveKitStockById({ links: allLinks, nodes: allNodes });
+}
+
 export async function fetchKitSupplements(
   kitIds: string[]
 ): Promise<KitSupplement> {
   const childVariantsByProductId = new Map<string, VariantRow[]>();
   const requiredMinPriceByProductId = new Map<string, number>();
-  const kitStockById = new Map<string, number>();
 
   if (kitIds.length === 0)
     return {
       childVariantsByProductId,
       requiredMinPriceByProductId,
-      kitStockById,
+      kitStockById: new Map<string, number>(),
     };
 
   const supabase = getPublicClient();
@@ -235,7 +324,11 @@ export async function fetchKitSupplements(
 
   const requiredChildIdsByParent = new Map<string, Set<string>>();
   for (const link of links ?? []) {
-    if (!link.is_required || !link.component_product_id || !link.parent_product_id)
+    if (
+      !link.is_required ||
+      !link.component_product_id ||
+      !link.parent_product_id
+    )
       continue;
     const list =
       requiredChildIdsByParent.get(link.parent_product_id) ?? new Set();
@@ -276,47 +369,9 @@ export async function fetchKitSupplements(
     requiredMinPriceByProductId.set(parentId, sum);
   }
 
-  // 4. Required component links for kit stock computation
-  const requiredLinks = (links ?? []).filter((l) => l.is_required);
-  if (requiredLinks.length > 0) {
-    const componentIds = Array.from(
-      new Set(
-        requiredLinks
-          .map((l) => l.component_product_id)
-          .filter((id): id is string => !!id)
-      )
-    );
-
-    const { data: componentRows } = await supabase
-      .from("products")
-      .select(`id, product_variants(stock_quantity)`)
-      .eq("is_active", true)
-      .in("id", componentIds);
-
-    const componentStock = new Map<string, number>();
-    if (componentRows) {
-      for (const row of componentRows as unknown as ComponentChildRow[]) {
-        const stock = (row.product_variants ?? []).reduce(
-          (sum, v) => sum + Number(v.stock_quantity ?? 0),
-          0
-        );
-        componentStock.set(row.id, stock);
-      }
-    }
-
-    const childrenByParent = new Map<string, string[]>();
-    for (const link of requiredLinks) {
-      if (!link.component_product_id || !link.parent_product_id) continue;
-      const list = childrenByParent.get(link.parent_product_id) ?? [];
-      list.push(link.component_product_id);
-      childrenByParent.set(link.parent_product_id, list);
-    }
-
-    for (const [parentId, childIds] of childrenByParent) {
-      const stocks = childIds.map((id) => componentStock.get(id) ?? 0);
-      kitStockById.set(parentId, stocks.length > 0 ? Math.min(...stocks) : 0);
-    }
-  }
+  const kitStockById = await fetchKitStockMap({
+    seedLinks: (links ?? []) as unknown as ComponentLink[],
+  });
 
   return {
     childVariantsByProductId,
@@ -386,32 +441,26 @@ function shapeRow(
 
   // 3. Pricing — `min_price` is the cheapest single variant across everything;
   //    `from_price` is what a kit starts from = base + cheapest variant of each
-  //    REQUIRED component (optional components excluded).
-  const requiredMinPrice =
-    kitSupplements.requiredMinPriceByProductId.get(row.id);
-  const computedKitFromPrice =
-    row.product_type === "kit" && requiredMinPrice !== undefined
-      ? basePrice + requiredMinPrice
-      : undefined;
+  //    REQUIRED component (optional components excluded). Quantity tiers
+  //    (e.g. 70 / 90 / 110 packs) are ordinary variants, so they need no
+  //    special casing — the shared helper reads them the same way.
+  const requiredMinPrice = kitSupplements.requiredMinPriceByProductId.get(
+    row.id
+  );
 
-  const computedMinPrice =
-    variants.length > 0
-      ? Math.min(...variants?.filter(v => v.effective_price > 0)?.map((v) => v.effective_price))
-      : basePrice;
+  const pricing = resolveProductPricing({
+    basePrice,
+    variants,
+    kitFromPrice:
+      row.product_type === "kit" && requiredMinPrice !== undefined
+        ? basePrice + requiredMinPrice
+        : undefined,
+  });
+  const { min_price: minPrice, from_price: fromPrice } = pricing;
 
-  const minPrice =
-    computedMinPrice === 0 && basePrice > 0 ? basePrice : computedMinPrice;
-
-  const fromPrice =
-    computedKitFromPrice !== undefined && computedKitFromPrice > 0
-      ? computedKitFromPrice
-      : minPrice > 0
-        ? minPrice
-        : basePrice;
-
-  if (computedMinPrice === 0 && basePrice > 0) {
+  if (pricing.unpriced) {
     console.warn(
-      `[shapeRow] min_price clamped for ${row.id} (${row.name}): basePrice=${basePrice}, variants=${variants.length}`,
+      `[shapeRow] no priced variant for ${row.id} (${row.name}): basePrice=${basePrice}, variants=${variants.length}`,
       variants.map((v) => ({
         name: v.variant_name,
         adj: v.price_adjustment,
@@ -420,32 +469,21 @@ function shapeRow(
     );
   }
 
-  const discountPercentage =
-    minPrice < basePrice
-      ? Math.round(((basePrice - minPrice) / basePrice) * 100)
-      : 0;
-
-  // 4. Stock
+  // 4. Stock — shared with ssr.ts so /api/products and /shop agree.
   const productType = (row.product_type ?? "standard") as ProductType;
-  let effectiveStock = Number(row.stock_quantity ?? 0);
-
-  if (productType === "kit") {
-    const kitStock = kitSupplements.kitStockById.get(row.id);
-    effectiveStock =
-      typeof kitStock === "number"
-        ? kitStock
-        : variants.length > 0
-          ? Math.min(...variants.map((v) => v.stock_quantity))
-          : Number(row.stock_quantity ?? 0);
-  } else if (productType === "component") {
-    effectiveStock = variants.reduce((s, v) => s + v.stock_quantity, 0);
-  }
+  const effectiveStock = resolveEffectiveStock({
+    productType,
+    productId: row.id,
+    productStock: row.stock_quantity,
+    variants,
+    kitStockById: kitSupplements.kitStockById,
+  });
 
   // 5. Build result — is_pre_order logic differs by product type
   const is_pre_order =
     productType === "kit"
       ? variants.some((v) => v.is_pre_order)
-      : row.is_pre_order ?? false;
+      : (row.is_pre_order ?? false);
 
   // 6. Always return all variants — ProductCard swatches need the full list
   //    to render variant options. Kits still get the full list for the drawer.
@@ -457,7 +495,9 @@ function shapeRow(
     name: row.name,
     brand: row.brand ?? null,
     category: row.categories?.name ?? "Unknown",
-    description: slim ? descriptionToExcerpt(row.description ?? "") : (row.description ?? ""),
+    description: slim
+      ? descriptionToExcerpt(row.description ?? "")
+      : (row.description ?? ""),
     base_price: basePrice,
     stock_quantity: effectiveStock,
     thumbnail: row.thumbnail,
@@ -469,8 +509,8 @@ function shapeRow(
     is_used: row.is_used ?? false,
     is_pre_order,
     tags: [],
-    discount_price: minPrice < basePrice ? minPrice : 0,
-    discount_percentage: discountPercentage,
+    discount_price: pricing.discount_price,
+    discount_percentage: pricing.discount_percentage,
     sale_ends_at: row.sale_ends_at ?? null,
     created_at: row.created_at,
     sold_count: Number(row.sold_count ?? 0),
@@ -495,6 +535,45 @@ export interface GetProductListParams {
   excludeUncategorized?: boolean;
   /** Trim list payload: excerpt description, keep one variant for standards. */
   slim?: boolean;
+  /**
+   * Sink sold-out products below every available one, preserving the requested
+   * sort order WITHIN each group. Opt-in: only /shop and /api/products set it.
+   *
+   * Availability is DERIVED (see ./stock.ts), so SQL cannot filter or order by
+   * it — `products.stock_quantity` is NULL for every kit and every
+   * variant-bearing product. With this on we therefore skip SQL pagination,
+   * shape every matching row, partition, then slice in JS.
+   */
+  soldOutLast?: boolean;
+}
+
+/**
+ * Hard ceiling on rows scanned when `soldOutLast` is set — partitioning needs
+ * to see every matching row, so this bounds the extra work. The sellable
+ * catalogue is ~50 products today (158 including components and gifts), so the
+ * common case never approaches it. If it ever does, we log and fall back to
+ * plain SQL pagination rather than silently truncating results.
+ */
+const SOLD_OUT_LAST_SCAN_CAP = 400;
+
+/**
+ * Stable partition: available rows first, sold-out rows after, each keeping its
+ * incoming (SQL-sorted) order. Pure — does not mutate the input.
+ *
+ * Anything at or below zero counts as sold out, including NULL, which is the
+ * raw column value for most of the catalogue; callers pass DERIVED stock, so a
+ * genuine NULL should not reach here.
+ */
+export function partitionSoldOutLast<T extends { stock_quantity: number }>(
+  rows: T[],
+): T[] {
+  const available: T[] = [];
+  const soldOut: T[] = [];
+  for (const row of rows) {
+    if (Number(row.stock_quantity ?? 0) > 0) available.push(row);
+    else soldOut.push(row);
+  }
+  return [...available, ...soldOut];
 }
 
 export async function getProductListByFilters(
@@ -512,6 +591,7 @@ export async function getProductListByFilters(
     // productTypes = ["standard", "kit", "component"],
     excludeUncategorized = false,
     slim = false,
+    soldOutLast = false,
   } = params;
 
   const safeSearch = search.trim().slice(0, 100);
@@ -593,14 +673,34 @@ export async function getProductListByFilters(
     }
     dataQuery = dataQuery.order("id", { ascending: true });
 
+    // `soldOutLast` cannot paginate in SQL: availability is derived in JS (see
+    // ./stock.ts) and the column SQL would sort on is NULL for most of the
+    // catalogue. So fetch the whole result set and slice after partitioning.
+    // Whether that is possible depends on the row count, which the count query
+    // gives us — so run the two in parallel and choose the range afterwards is
+    // not possible; instead we always over-fetch when the flag is on and
+    // re-slice below. Without the flag this is plain SQL pagination.
+    const dataRange = soldOutLast
+      ? dataQuery.range(0, SOLD_OUT_LAST_SCAN_CAP - 1)
+      : dataQuery.range(safeOffset, safeOffset + safeLimit - 1);
+
     // Count and data are independent once categoryId is resolved — run them
     // in parallel to cut one full round-trip off every list request.
     const [{ count, error: countErr }, { data, error }] = await Promise.all([
       countQuery,
-      dataQuery.range(safeOffset, safeOffset + safeLimit - 1),
+      dataRange,
     ]);
     if (countErr || count === null) return { products: [], total: 0 };
     if (error || !data) return { products: [], total: 0 };
+
+    // Only partition when we genuinely hold every matching row; otherwise the
+    // "available first" guarantee would silently break on a truncated set.
+    const canPartition = soldOutLast && count <= SOLD_OUT_LAST_SCAN_CAP;
+    if (soldOutLast && !canPartition) {
+      console.warn(
+        `[getProductListByFilters] soldOutLast NOT applied: ${count} rows exceeds SOLD_OUT_LAST_SCAN_CAP (${SOLD_OUT_LAST_SCAN_CAP}); ordering by availability skipped to avoid truncating results.`,
+      );
+    }
 
     const rows = data as unknown as RawListRow[];
 
@@ -621,10 +721,20 @@ export async function getProductListByFilters(
     products = products.filter((p) => p.product_type !== "component");
 
     // ── Attach gifts ──
-    const result = products.map((p) => ({
+    let result = products.map((p) => ({
       ...p,
       gifts: giftsByProductId.get(p.id) ?? undefined,
     }));
+
+    // ── Sold-out-last ordering (opt-in) ──
+    // Availability is only known now, so this has to happen after shaping.
+    // Slice here because the range() above returned the whole set, not a page.
+    if (canPartition) {
+      result = partitionSoldOutLast(result).slice(
+        safeOffset,
+        safeOffset + safeLimit,
+      );
+    }
 
     return { products: result, total: count };
   } catch {

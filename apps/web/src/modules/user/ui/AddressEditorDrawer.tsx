@@ -111,7 +111,6 @@ const AddressEditorDrawer = ({
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
         )}
-        onClick={onClose}
       />
 
       <div

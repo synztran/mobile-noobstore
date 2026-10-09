@@ -65,7 +65,6 @@ export function VoucherDrawer({
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
         }`}
-        onClick={onClose}
       />
       <div
         className={`duration-250 fixed left-0 right-0 z-[999] flex h-full max-h-[80dvh] flex-col rounded-t-5xl bg-surface transition-all ease-out ${

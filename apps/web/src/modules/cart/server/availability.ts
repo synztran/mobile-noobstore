@@ -15,8 +15,10 @@ type Supabase = SupabaseClient<Database>;
  * without importing any Supabase code.
  *
  * Shapes covered:
- *  - standard base      : products.stock_quantity
- *  - standard variant   : products.stock_quantity + product_variants.stock_quantity
+ *  - standard base      : products.stock_quantity (only when the line has no variant)
+ *  - standard variant   : product_variants.stock_quantity owns the pool —
+ *                         products.stock_quantity is not a gate (a blank /
+ *                         NULL product box must not block a stocked variant)
  *  - kit                : each selected component variant's stock, where one kit
  *                          unit consumes one unit of every selected variant, and
  *                          `committed` carries what OTHER lines already hold
@@ -25,7 +27,8 @@ type Supabase = SupabaseClient<Database>;
 
 export interface ProductAvailability {
   productType: string;
-  stock: number;
+  /** NULL when the product row has no stock of its own (blank box / kit). */
+  stock: number | null;
   max: number | null;
 }
 
@@ -49,7 +52,8 @@ export interface AvailabilitySnapshot {
 export type AvailabilityResult =
   | { ok: true }
   | { ok: false; kind: "stock"; resource: string; available: number }
-  | { ok: false; kind: "max"; max: number };
+  | { ok: false; kind: "max"; max: number }
+  | { ok: false; kind: "not_configured" };
 
 /**
  * Is `targetQty` for the snapshot's line allowed?
@@ -110,18 +114,12 @@ export function assertQuantityAvailable(
 
     // Kit parent whose component rows are missing — nothing to validate
     // against, and kit product rows carry no own stock. Block growth.
-    return { ok: false, kind: "stock", resource: "components", available: 0 };
+    return { ok: false, kind: "not_configured" };
   }
 
-  // Standard products: product-level stock, plus the line's own variant.
-  if (targetQty > product.stock) {
-    return {
-      ok: false,
-      kind: "stock",
-      resource: "product",
-      available: product.stock,
-    };
-  }
+  // Standard products: a selected variant row owns the pool — the product row
+  // only gates lines with no variant (products.stock_quantity may be NULL,
+  // meaning "managed on variants", and must not block them).
   if (line.variantId) {
     const stock = variantStock[line.variantId] ?? 0;
     if (targetQty > stock) {
@@ -132,6 +130,16 @@ export function assertQuantityAvailable(
         available: stock,
       };
     }
+    return { ok: true };
+  }
+  const productStock = product.stock ?? 0;
+  if (targetQty > productStock) {
+    return {
+      ok: false,
+      kind: "stock",
+      resource: "product",
+      available: productStock,
+    };
   }
   return { ok: true };
 }
@@ -168,9 +176,7 @@ export async function loadAvailabilitySnapshot(
       supabase,
       Array.from(
         new Set(
-          [variantId, ...childVariantIds].filter(
-            (v): v is string => Boolean(v)
-          )
+          [variantId, ...childVariantIds].filter((v): v is string => Boolean(v))
         )
       )
     ),
@@ -199,7 +205,7 @@ async function fetchProductAvailability(
     .single();
 
   return {
-    stock: Number(data?.stock_quantity ?? 0),
+    stock: data?.stock_quantity != null ? Number(data.stock_quantity) : null,
     max: data?.max_quantity != null ? Number(data.max_quantity) : null,
     productType: data?.product_type ?? "standard",
   };
@@ -239,7 +245,9 @@ async function computeCommittedUsage(
     .eq("cart_id", cartId)
     .is("parent_cart_item_id", null);
 
-  const parentQtyById = new Map((parents ?? []).map((p) => [p.id, p.quantity ?? 1]));
+  const parentQtyById = new Map(
+    (parents ?? []).map((p) => [p.id, p.quantity ?? 1])
+  );
   const parentIds = (parents ?? [])
     .map((p) => p.id)
     .filter((id) => id !== excludeLineId);

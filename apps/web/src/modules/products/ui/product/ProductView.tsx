@@ -113,6 +113,7 @@ export function ProductView({
     isLoadingAddToCart,
     handleAddToCart,
     disabledVariantIds,
+    resolvedUnitPrice,
     quantity,
     setQuantity,
   } = useProductViewData(product, componentGroups, componentRules);
@@ -152,23 +153,16 @@ export function ProductView({
     [variants, product.min_price]
   );
 
-  const componentAdjustment = useMemo(
-    () =>
-      groups.reduce((sum, group) => {
-        const ids = selections[group.component_group] ?? [];
-        let groupSum = 0;
-        for (const id of ids) {
-          const v = group.variants.find((gv) => gv.id === id);
-          groupSum += v?.price_adjustment ?? 0;
-        }
-        return sum + groupSum;
-      }, 0),
-    [groups, selections]
-  );
-
+  // The live configurator total: base + the selected kit variant + components,
+  // with any per-pairing override applied. Replaces the old
+  // `min_price + componentAdjustment`, which priced every kit off its CHEAPEST
+  // variant regardless of the one selected.
+  //
+  // Non-kit products keep the existing fallback to the cheapest variant, because
+  // their `base_price` is often 0 with the real price carried per variant.
   const displayPrice =
     groups.length > 0
-      ? product.min_price + componentAdjustment
+      ? resolvedUnitPrice
       : (selectedVariant?.effective_price ?? minVariantPrice);
 
   const badges = useProductBadges({

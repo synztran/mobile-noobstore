@@ -89,7 +89,6 @@ export function FilterOverlay({
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
         }`}
-        onClick={onClose}
       />
 
       {/* Panel — slides from top */}

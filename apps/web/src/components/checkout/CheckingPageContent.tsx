@@ -10,7 +10,7 @@ import {
   usePaymentInformation,
 } from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
-import { ShippingMethod } from "@/lib/shipping-method";
+import { isFeePendingShippingMethod } from "@/lib/shipping-method";
 import { useCheckoutStore } from "@/store";
 import { formatVND } from "@/lib/currency";
 import Image from "@/components/ui/AdaptiveImage";
@@ -39,8 +39,9 @@ export default function CheckingPageContent() {
   const { orderNumber, totalPrice, orderedItems, shippingCost, shipping } =
     useCheckoutStore();
 
-  const isDeliveryService =
-    shipping?.deliverySpeed === ShippingMethod.Shipment;
+  const shippingFeePending = isFeePendingShippingMethod(
+    shipping?.shippingMethodId ?? shipping?.deliverySpeed
+  );
 
   // Guard: redirect to shop if there is no active order
   useEffect(() => {
@@ -75,7 +76,9 @@ export default function CheckingPageContent() {
   useEffect(() => {
     if (!mounted || !orderNotFound || notFoundRedirected.current) return;
     notFoundRedirected.current = true;
-    toast.error("Đơn hàng không thuộc tài khoản này. Vui lòng đăng nhập đúng tài khoản.");
+    toast.error(
+      "Đơn hàng không thuộc tài khoản này. Vui lòng đăng nhập đúng tài khoản."
+    );
     router.replace("/login");
   }, [mounted, orderNotFound, router]);
   const orderVoucherDiscount =
@@ -229,7 +232,7 @@ export default function CheckingPageContent() {
           depositAmount={orderDepositAmount}
           remainingAmount={orderRemainingAmount}
           depositPercentage={orderDepositPercentage}
-          deliveryService={isDeliveryService}
+          shippingFeePending={shippingFeePending}
         />
       </section>
 

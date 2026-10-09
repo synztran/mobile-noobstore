@@ -9,6 +9,7 @@ import type {
   ShopVariant,
   ShopVariantDetail,
 } from "@/modules/products/types";
+import { kitPriceOverrides } from "@/modules/products/kit-pricing";
 import { cartItemToGA, trackAddToCart } from "@/lib/analytics";
 import { useAddCartItem } from "@/modules/cart/client/mutations";
 import { toast } from "@/lib/toast";
@@ -39,6 +40,7 @@ export type UseProductViewDataReturn = {
   isLoadingAddToCart: boolean;
   handleAddToCart: (quantity?: number) => Promise<void>;
   disabledVariantIds: Set<string>;
+  resolvedUnitPrice: number;
   quantity: number;
   setQuantity: (q: number) => void;
 };
@@ -209,8 +211,58 @@ export function useProductViewData(
     }
     return disabled;
   }, [initialRules, initialGroups, selections]);
+  // Every component variant currently picked, flattened across groups. Shared by
+  // the price preview, the add-to-cart payload and analytics so they cannot
+  // disagree about what was selected.
+  const selectedComponents = useMemo<SelectedComponent[]>(
+    () =>
+      initialGroups.flatMap((group) =>
+        (selections[group.component_group] ?? []).flatMap((selectedId) => {
+          const v = group.variants.find((gv) => gv.id === selectedId);
+          if (!v) return [];
+          return [
+            {
+              variant_id: v.id,
+              variant_name: v.variant_name,
+              component_group: group.component_group,
+              price_adjustment: v.price_adjustment,
+              thumbnail: v.thumbnail,
+              is_pre_order: v.is_pre_order,
+              pre_order_config: v.pre_order_config,
+            },
+          ];
+        })
+      ),
+    [initialGroups, selections]
 
-  const handleAddToCart = async (qty?: number) => {
+  );
+
+  // Compute enriched groups with effective price adjustments based on current selections
+  const enrichedGroups = useMemo(() => {
+    const selectedComponentIds = selectedComponents.map((c) => c.variant_id);
+    const conditionIds = [
+      ...(selectedVariant ? [selectedVariant.id] : []),
+      ...selectedComponentIds,
+    ];
+    const overrides = kitPriceOverrides(initialRules, conditionIds);
+    return initialGroups.map((g) => ({
+      ...g,
+      variants: g.variants.map((v) => {
+        const ov = Object.prototype.hasOwnProperty.call(overrides, v.id)
+          ? overrides[v.id]
+          : undefined;
+        const effective =
+          typeof ov === "number" && Number.isFinite(ov) ? ov : v.price_adjustment;
+        return {
+          ...v,
+          effective_price_adjustment: effective,
+        };
+      }),
+    }));
+  }, [initialGroups, initialRules, selectedVariant, selectedComponents]);
+
+
+    const handleAddToCart = async (qty?: number) => {
     if (authLoading) return;
     if (!user) {
       toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
@@ -354,7 +406,7 @@ export function useProductViewData(
 
   return {
     variants,
-    groups: initialGroups,
+    groups: enrichedGroups,
     selections,
     select,
     selectedVariant,
@@ -370,6 +422,7 @@ export function useProductViewData(
     isLoadingAddToCart,
     handleAddToCart,
     disabledVariantIds,
+    resolvedUnitPrice: 0,
     quantity,
     setQuantity,
   };

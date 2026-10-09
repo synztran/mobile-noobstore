@@ -164,11 +164,13 @@ export function useCartDrawerState() {
 
   const handlePlus = useCallback(
     (item: CartItem) => {
-      // Guard only when we actually know product-level stock. The inventory of
-      // kits (and variant-back stock) lives elsewhere, so let the server decide
-      // and surface its rejection via the mutation's onError.
+      // Guard only when we actually know the governing stock. The product row
+      // does not gate lines that carry a variant (variant owns the pool), and
+      // kit inventory lives on component variants — in both cases let the
+      // server decide and surface its rejection via onError.
       if (
         !item.components?.length &&
+        !item.variant?.id &&
         item.product.stock_quantity != null &&
         item.quantity >= item.product.stock_quantity
       ) {

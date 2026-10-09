@@ -9,6 +9,7 @@ import {
 } from "@/modules/products/server/ssr";
 import type { ProductsResponse } from "@/modules/products/types";
 import type { Metadata } from "next";
+import { buildOg } from "@/lib/og";
 import { Suspense } from "react";
 
 interface ShopPageProps {
@@ -22,17 +23,15 @@ interface ShopPageProps {
   }>;
 }
 
-export const metadata: Metadata = {
-  title: "Cửa hàng - NoobStore",
+// Note the title carries no " - NoobStore" suffix: the root layout applies a
+// "%s - NoobStore" template, and buildOg feeds og:title from the same field, so
+// a manual suffix rendered as "Cửa hàng - NoobStore - NoobStore".
+export const metadata: Metadata = buildOg({
+  title: "Cửa hàng",
   description:
     "Khám phá bộ sưu tập bàn phím cơ, switch, keycap và phụ kiện tại NoobStore. Chính hãng, chất lượng, giá tốt.",
-  openGraph: {
-    title: "Cửa hàng - NoobStore",
-    description:
-      "Khám phá bộ sưu tập bàn phím cơ, switch, keycap và phụ kiện tại NoobStore.",
-    siteName: "NoobStore",
-  },
-};
+  url: "/shop",
+});
 
 export default function ShopPage(props: ShopPageProps) {
   return (
@@ -68,7 +67,10 @@ async function ShopContent({
     getProductSeoData(),
     hasFilters
       ? Promise.resolve(null)
-      : getProducts({ limit: 12, sort: "newest", slim: true }),
+      // soldOutLast must match /api/products, which serves the infinite-scroll
+      // pages that replace this initial payload — otherwise the SSR paint and
+      // the first fetched page would order sold-out products differently.
+      : getProducts({ limit: 12, sort: "newest", slim: true, soldOutLast: true }),
   ]);
 
   const initialData: ProductsResponse | null = initialQuery

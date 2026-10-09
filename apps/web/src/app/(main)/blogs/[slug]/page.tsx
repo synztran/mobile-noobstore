@@ -3,6 +3,7 @@ import { CalendarDays, User } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { buildOg, toPlainText } from "@/lib/og";
 
 type BlogPost = {
 	id: string;
@@ -37,19 +38,28 @@ export async function generateMetadata({
 	params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
 	const { slug } = await params;
+	const url = `/blogs/${slug}`;
 	const post = await getPost(slug);
 
+	// Always return a full card. A bare `{ title }` drops the whole openGraph
+	// object, leaving no og:url and no image for Facebook.
 	if (!post) {
-		return { title: "Bài viết không tìm thấy - NoobStore" };
+		return buildOg({
+			title: "Bài viết không tìm thấy",
+			description: "Bài viết không tìm thấy trên NoobStore.",
+			url,
+		});
 	}
 
-	return {
+	return buildOg({
 		title: post.meta_title || post.title,
-		description: post.meta_description || post.excerpt || "",
-		openGraph: post.meta_description
-			? { description: post.meta_description }
-			: undefined,
-	};
+		description:
+			post.meta_description || toPlainText(post.excerpt || post.content),
+		url,
+		image: post.thumbnail,
+		imageAlt: post.title,
+		type: "article",
+	});
 }
 
 export default async function BlogDetailPage({

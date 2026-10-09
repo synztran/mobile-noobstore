@@ -15,6 +15,7 @@ export function SuccessModal({ result, open, onClose }: Props) {
 
   return (
     <dialog
+      onCancel={(e) => e.preventDefault()}
       className={`modal modal-bottom sm:modal-middle ${open ? "modal-open" : ""}`}
     >
       <div className="modal-box rounded-2xl bg-surface px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
@@ -80,9 +81,7 @@ export function SuccessModal({ result, open, onClose }: Props) {
           </button>
         </div>
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button onClick={onClose}>close</button>
-      </form>
+      <div className="modal-backdrop" />
     </dialog>
   );
 }

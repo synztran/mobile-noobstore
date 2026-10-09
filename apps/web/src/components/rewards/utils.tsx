@@ -23,6 +23,9 @@ export function getRewardIcon(
   if (rewardType === "product") return <Gift size={20} />;
   const rt = metadata.reward_type as string;
   if (rt === "free_shipping") return <Truck size={20} />;
+  if (rt === "shipping_amount_off" || rt === "shipping_percent_off") {
+    return <Truck size={20} />;
+  }
   if (rt === "percent_off") return <Percent size={20} />;
   return <ShoppingBag size={20} />;
 }
@@ -62,6 +65,21 @@ const voucherBenefitMap: Record<string, BenefitConfig> = {
   },
   free_shipping: {
     benefit: () => "Miễn phí ship",
+    condition: (m) => buildVoucherCondition(m),
+  },
+  shipping_amount_off: {
+    benefit: (m) =>
+      `Giảm ${(m.amount_off as number)?.toLocaleString("vi-VN")}₫ phí vận chuyển`,
+    condition: (m) => buildVoucherCondition(m),
+  },
+  shipping_percent_off: {
+    benefit: (m) => {
+      const maxDisc = m.max_discount_amount as number | null;
+      const base = `Giảm ${m.percent_off ?? 0}% phí vận chuyển`;
+      return maxDisc
+        ? `${base} • tối đa ${maxDisc.toLocaleString("vi-VN")}₫`
+        : base;
+    },
     condition: (m) => buildVoucherCondition(m),
   },
 };

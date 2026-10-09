@@ -8,6 +8,7 @@ import Link from "next/link";
 import DiscountBadge from "@/modules/products/ui/product/DiscountBadge";
 import ProductComponentTags from "@/modules/products/ui/product/ProductComponentTags";
 import { ProductTags } from "@/modules/products/ui/product/ProductTags";
+import { cardPricingFor } from "@/modules/products/ui/product/card-pricing";
 
 interface Props {
   product: ShopProduct;
@@ -25,6 +26,8 @@ export function BundleProductCard({
   const isNew = showNewBadge && product.tags?.some((t) => t.value === "new");
   const isSoldOut = showSoldOutOverlay && product.stock_quantity === 0;
   const hasDiscount = product.discount_price && product.discount_price > 0;
+  const pricing = cardPricingFor(product);
+  const hasPricing = !pricing.unpriced;
   const isPreOrder = product.is_pre_order;
   const isUsed = product.is_used;
   const isBestseller = product.sold_count >= 50;
@@ -32,7 +35,7 @@ export function BundleProductCard({
   return (
     <Link
       href={`/shop/${product.slug}`}
-      className="group w-[180px] lg:w-[220px] flex-shrink-0 transition-transform active:scale-95"
+      className="group w-[180px] flex-shrink-0 transition-transform active:scale-95 lg:w-[220px]"
     >
       <div className="relative mb-2 aspect-[4/3] overflow-hidden rounded-2xl bg-surface-container-high">
         {product.thumbnail ? (
@@ -86,18 +89,15 @@ export function BundleProductCard({
             {formatVND(product.base_price)}
           </span>
         </div>
-      ) : product.base_price || product.min_price ? (
+      ) : hasPricing ? (
         <div className="space-x-1 text-right">
-          {/* "Giá chỉ từ" — variant-sourced price: base price is unset and the
-              shown amount is only the lowest variant (min_price), so qualify
-              it. Mirrors ProductCardPricing's logic. */}
-          {!product.base_price && product.min_price ? (
+          {pricing.showFrom && (
             <span className="break-all text-xs font-bold text-on-surface-variant">
               giá chỉ từ
             </span>
-          ) : null}
+          )}
           <span className="whitespace-nowrap text-base font-extrabold text-primary">
-            {formatVND(product.base_price || product.min_price)}
+            {formatVND(pricing.amount)}
           </span>
         </div>
       ) : (
@@ -111,7 +111,7 @@ export function BundleProductCard({
 
 export function BundleProductCardSkeleton() {
   return (
-    <div className="w-[180px] lg:w-[220px] flex-shrink-0 animate-pulse space-y-3">
+    <div className="w-[180px] flex-shrink-0 animate-pulse space-y-3 lg:w-[220px]">
       <div className="aspect-[4/3] rounded-2xl bg-surface-container" />
       <div className="h-4 w-3/4 rounded bg-surface-container" />
       <div className="h-3 w-1/2 rounded bg-surface-container" />

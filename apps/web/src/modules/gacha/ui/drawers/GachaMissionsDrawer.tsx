@@ -9,7 +9,7 @@ import { MISSION_TYPE_LABEL } from "@/constants/gacha";
 import type { GachaMission } from "@/modules/gacha/types";
 import { CheckCircle2 } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 interface GachaMissionsDrawerProps {
   open: boolean;
@@ -34,20 +34,11 @@ export function GachaMissionsDrawer({
   const missions = data?.missions ?? [];
   const loading = isLoading && open;
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   if (!open) return null;
 
   return (
     <>
-      <div className="fixed inset-0 z-[60] bg-black/50" onClick={onClose} />
+      <div className="fixed inset-0 z-[60] bg-black/50" />
       <aside
         role="dialog"
         aria-modal="true"

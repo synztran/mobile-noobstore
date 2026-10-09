@@ -1,5 +1,11 @@
 import { ShippingMethod } from "@/lib/shipping-method";
-import { Flame, Motorbike, Store, Truck } from "lucide-react";
+import {
+  Flame,
+  Motorbike,
+  PackageCheck,
+  Store,
+  Truck,
+} from "lucide-react";
 
 export const MAIL_DOMAIN = "noobassembly@gmail.com";
 export const DELIVERY_OPTIONS = [
@@ -22,11 +28,21 @@ export const DELIVERY_OPTIONS = [
     isHidden: false,
   },
   {
+    id: ShippingMethod.Carrier4h,
+    label: "Vận chuyển nhanh 4h",
+    sublabel: "Đơn vị vận chuyển · giao trong 4 giờ",
+    icon: Truck,
+    price: null as number | null, // unquoted — set per order from admin /orders
+    tag: "GIAO NHANH",
+    isHidden: false,
+  },
+  {
     id: ShippingMethod.Shipment,
     label: "Đơn vị vận chuyển",
     sublabel: "Giao bởi đơn vị vận chuyển",
-    icon: Truck,
+    icon: PackageCheck,
     price: null as number | null, // resolved dynamically from fees
+    tag: null,
     isHidden: true,
   },
   {

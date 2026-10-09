@@ -8,7 +8,8 @@ import { ArrowRight } from "lucide-react";
 interface OrderSummaryCardProps {
   subtotal: number;
   shippingCost: number;
-  isDeliveryService: boolean;
+  /** Fee not known yet (inter-city courier) — render "Cập nhật sau". */
+  shippingFeePending: boolean;
   totalShippingDiscountAmount: number;
   totalDiscountAmount: number;
   rankDiscountAmount: number;
@@ -23,7 +24,7 @@ interface OrderSummaryCardProps {
 export function OrderSummaryCard({
   subtotal,
   shippingCost,
-  isDeliveryService,
+  shippingFeePending,
   totalShippingDiscountAmount,
   totalDiscountAmount,
   rankDiscountAmount,
@@ -54,7 +55,7 @@ export function OrderSummaryCard({
             <span
               className={`font-black ${shippingCost === 0 ? "text-emerald-600" : "text-on-surface"}`}
             >
-              {isDeliveryService
+              {shippingFeePending
                 ? "Cập nhật sau"
                 : shippingCost === 0
                   ? "Miễn phí"

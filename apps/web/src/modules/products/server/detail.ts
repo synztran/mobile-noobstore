@@ -10,6 +10,7 @@ import type {
   ProductType,
   ShopVariantDetail,
 } from "@/modules/products/types";
+import { resolveProductPricing } from "./pricing";
 
 /**
  * Loads the full product-detail payload for an active product by slug —
@@ -90,10 +91,13 @@ export async function getProductDetailData(
     })
   );
 
-  const minPrice =
-    variants.length > 0
-      ? Math.min(...variants.map((v) => v.effective_price))
-      : Number(p.base_price);
+  // Same helper the shop list uses, so a quantity-tiered product (70 / 90 /
+  // 110 packs as variants) reports the same "from" price on both surfaces.
+  // The kit from-price is resolved further down, once components are loaded.
+  const { min_price: minPrice } = resolveProductPricing({
+    basePrice: Number(p.base_price),
+    variants,
+  });
 
   // ── Fetch component products ──────────────────────────────────────
   const rawComponents: Array<{
@@ -128,8 +132,7 @@ export async function getProductDetailData(
         id: v.id,
         variant_name: v.variant_name,
         price_adjustment: Number(v.price_adjustment),
-        effective_price:
-          Number(cpAny.base_price) + Number(v.price_adjustment),
+        effective_price: Number(cpAny.base_price) + Number(v.price_adjustment),
         thumbnail: v.thumbnail ?? null,
         stock_quantity: Number(v.stock_quantity ?? 0),
         is_pre_order: v.is_pre_order ?? false,
@@ -142,9 +145,7 @@ export async function getProductDetailData(
         slug: cpAny.slug,
         base_price: Number(cpAny.base_price),
         thumbnail: cpAny.thumbnail ?? null,
-        images: Array.isArray(cpAny.images)
-          ? (cpAny.images as string[])
-          : null,
+        images: Array.isArray(cpAny.images) ? (cpAny.images as string[]) : null,
         product_type: (cpAny.product_type as ProductType) ?? "component",
         variants: cpVariants,
       });
@@ -174,17 +175,15 @@ export async function getProductDetailData(
     )
     .eq("product_id", p.id);
   if (giftRows && giftRows.length > 0) {
-    gifts = (giftRows as unknown as Array<Record<string, unknown>>).map(
-      (g) => {
-        const gift = g.gift as Record<string, unknown>;
-        return {
-          gift_name: (gift.name as string) ?? "",
-          gift_slug: (gift.slug as string) ?? "",
-          gift_thumbnail: (gift.thumbnail as string) ?? null,
-          quantity: Number(g.quantity ?? 1),
-        };
-      }
-    );
+    gifts = (giftRows as unknown as Array<Record<string, unknown>>).map((g) => {
+      const gift = g.gift as Record<string, unknown>;
+      return {
+        gift_name: (gift.name as string) ?? "",
+        gift_slug: (gift.slug as string) ?? "",
+        gift_thumbnail: (gift.thumbnail as string) ?? null,
+        quantity: Number(g.quantity ?? 1),
+      };
+    });
   }
 
   const result: ProductDetail = {
@@ -196,7 +195,7 @@ export async function getProductDetailData(
     category: p.categories?.name ?? "",
     category_id: p.category_id,
     base_price: Number(p.base_price),
-    stock_quantity: p.stock_quantity,
+    stock_quantity: Number(p.stock_quantity ?? 0),
     thumbnail: p.thumbnail ?? null,
     images: Array.isArray(p.images) ? (p.images as string[]) : null,
     product_type: (p.product_type ?? "standard") as ProductType,

@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CartItem } from "@/modules/cart/types";
-import type { Product, ProductVariant, SelectedComponent } from "@/modules/products/types";
+import type {
+  Product,
+  ProductVariant,
+  SelectedComponent,
+} from "@/modules/products/types";
 
 vi.mock("gooey-toast", () => ({
   gooeyToast: {
@@ -37,7 +41,9 @@ function makeVariant(overrides: Partial<ProductVariant> = {}): ProductVariant {
   };
 }
 
-function makeComponent(overrides: Partial<SelectedComponent> = {}): SelectedComponent {
+function makeComponent(
+  overrides: Partial<SelectedComponent> = {}
+): SelectedComponent {
   return {
     variant_id: "comp-var-1",
     variant_name: "Blue Case",
@@ -91,13 +97,22 @@ describe("useCartStore", () => {
 
       const items = useCartStore.getState().items;
       expect(items).toHaveLength(2);
-      expect(items.map((i) => i.variant?.id).sort()).toEqual(["var-blue", "var-red"]);
+      expect(items.map((i) => i.variant?.id).sort()).toEqual([
+        "var-blue",
+        "var-red",
+      ]);
     });
 
     it("creates separate entries for different kit component configs", () => {
       const product = makeProduct();
-      const compA = makeComponent({ variant_id: "cv-1", component_group: "Case" });
-      const compB = makeComponent({ variant_id: "cv-2", component_group: "Case" });
+      const compA = makeComponent({
+        variant_id: "cv-1",
+        component_group: "Case",
+      });
+      const compB = makeComponent({
+        variant_id: "cv-2",
+        component_group: "Case",
+      });
 
       useCartStore.getState().addItem(product, null, [compA]);
       useCartStore.getState().addItem(product, null, [compB]);
@@ -130,7 +145,14 @@ describe("useCartStore", () => {
 
     it("stores gifts on the cart item", () => {
       const product = makeProduct();
-      const gifts = [{ gift_name: "Free Cable", gift_slug: "free-cable", gift_thumbnail: null, quantity: 1 }];
+      const gifts = [
+        {
+          gift_name: "Free Cable",
+          gift_slug: "free-cable",
+          gift_thumbnail: null,
+          quantity: 1,
+        },
+      ];
 
       useCartStore.getState().addItem(product, null, undefined, gifts);
 
@@ -278,12 +300,41 @@ describe("useCartStore", () => {
   });
 
   describe("subtotal", () => {
-    it("uses base_price regardless of variant", () => {
+    it("matches total() — includes the variant", () => {
       const product = makeProduct({ base_price: 500_000 });
       const variant = makeVariant({ effective_price: 700_000 });
       useCartStore.getState().addItem(product, variant);
 
-      expect(useCartStore.getState().subtotal()).toBe(500_000);
+      expect(useCartStore.getState().subtotal()).toBe(700_000);
+      expect(useCartStore.getState().subtotal()).toBe(
+        useCartStore.getState().total()
+      );
+    });
+  });
+
+  describe("kit variant identity", () => {
+    it("keeps Purple+70sw and Trash+70sw as separate lines", () => {
+      const product = makeProduct({ base_price: 650_000 });
+      const comp = makeComponent({ price_adjustment: 150_000 });
+      const purple = makeVariant({ id: "purple", effective_price: 650_000 });
+      const trash = makeVariant({ id: "trash", effective_price: 700_000 });
+
+      useCartStore.getState().addItem(product, purple, [comp]);
+      useCartStore.getState().addItem(product, trash, [comp]);
+
+      expect(useCartStore.getState().items).toHaveLength(2);
+    });
+
+    it("merges two identical kit configurations", () => {
+      const product = makeProduct({ base_price: 650_000 });
+      const comp = makeComponent({ price_adjustment: 150_000 });
+      const purple = makeVariant({ id: "purple", effective_price: 650_000 });
+
+      useCartStore.getState().addItem(product, purple, [comp]);
+      useCartStore.getState().addItem(product, purple, [comp]);
+
+      expect(useCartStore.getState().items).toHaveLength(1);
+      expect(useCartStore.getState().items[0].quantity).toBe(2);
     });
   });
 

@@ -3,6 +3,7 @@
 import { DELIVERY_OPTIONS, mappingDisplayPrice } from "@/constants";
 import { formatVND } from "@/lib/currency";
 import { ShippingMethod } from "@/lib/shipping-method";
+import { getCarrierShippingTier } from "@/lib/carrier-shipping";
 import { Check } from "lucide-react";
 import clsx from "clsx";
 import { memo, useMemo } from "react";
@@ -61,6 +62,11 @@ function DeliveryMethodSection({
             : "2-4 giờ xử lý",
           price: immediateFee,
         };
+      }
+      if (getCarrierShippingTier(opt.id)) {
+        return hasPreOrder
+          ? { ...opt, sublabel: `${opt.sublabel} · ${preOrderSuffix}` }
+          : opt;
       }
       return opt;
     });

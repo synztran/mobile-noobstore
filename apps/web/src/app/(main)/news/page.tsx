@@ -5,18 +5,14 @@ import { formatVND } from "@/lib/currency";
 import { getSaleProducts } from "@/modules/products/server/sale";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
+import { buildOg } from "@/lib/og";
 
-export const metadata: Metadata = {
-  title: "Tin tức - NoobStore",
+export const metadata: Metadata = buildOg({
+  title: "Tin tức",
   description:
     "Tất cả tin tức trong một nơi: khuyến mãi, group buy, bàn phím/keycap/artisan mới và bài viết từ NoobStore.",
-  openGraph: {
-    title: "Tin tức - NoobStore",
-    description:
-      "Khuyến mãi, sản phẩm mới từ các hãng và bài viết về bàn phím cơ — tất cả trong một trang.",
-    siteName: "NoobStore",
-  },
-};
+  url: "/news",
+});
 
 type BlogItem = {
   kind: "blog";

@@ -218,7 +218,9 @@ function GiftCardPage() {
       )}
 
       {/* Confirm Modal */}
-      <dialog className={`modal ${showConfirm ? "modal-open" : ""}`}>
+      <dialog
+    onCancel={(e) => e.preventDefault()}
+    className={`modal ${showConfirm ? "modal-open" : ""}`}>
         <div className="modal-box rounded-2xl bg-surface p-6">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-fixed/20 text-primary">
@@ -272,13 +274,12 @@ function GiftCardPage() {
             </button>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setShowConfirm(false)}>close</button>
-        </form>
+        <div className="modal-backdrop" />
       </dialog>
 
       {/* Success Modal */}
       <dialog
+        onCancel={(e) => e.preventDefault()}
         className={`modal modal-bottom sm:modal-middle ${showSuccess ? "modal-open" : ""}`}
       >
         <div className="modal-box rounded-2xl bg-surface p-6">
@@ -329,9 +330,7 @@ function GiftCardPage() {
             </div>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setShowSuccess(false)}>close</button>
-        </form>
+        <div className="modal-backdrop" />
       </dialog>
     </div>
   );

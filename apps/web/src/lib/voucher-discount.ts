@@ -11,14 +11,17 @@ import type { VoucherRewardType, VoucherScopeType } from "@/types/voucher";
  * It lives here as a pure function (no Supabase, no `server-only`) so all
  * three can import it, and so it is unit-testable without a database.
  *
- * Scope semantics:
- *   - `shipping_fee` + `amount_off` / `percent_off` discounts the SHIPPING
- *     COST, not the item subtotal. This is the whole point of the scope.
- *   - `free_shipping` waives the full shipping cost regardless of scope.
- *     Kept scope-agnostic for backwards compatibility with vouchers seeded
- *     before `shipping_fee` was honoured.
- *   - every other scope discounts the order subtotal (or the matched
+ * Reward semantics:
+ *   - `shipping_amount_off` / `shipping_percent_off` discount the SHIPPING
+ *     COST, not the item subtotal. The target is carried by the reward type
+ *     itself; there is no longer a `shipping_fee` scope. `scope_type` on
+ *     these vouchers is always `order_total` and governs min_order_amount /
+ *     targeting only.
+ *   - `free_shipping` waives the full shipping cost, also keyed off the
+ *     reward type. Kept alongside the percent variant at the owner's request.
+ *   - `amount_off` / `percent_off` discount the item subtotal (or the matched
  *     subtotal for `product` / `category`, resolved by the caller).
+ *   - `gift_item` produces no monetary discount.
  */
 
 function num(value: unknown, fallback = 0): number {
@@ -30,11 +33,16 @@ function num(value: unknown, fallback = 0): number {
   return fallback;
 }
 
-export function isShippingScoped(scopeType: VoucherScopeType): boolean {
-  return scopeType === "shipping_fee";
+/** Reward types whose saving comes off the shipping fee rather than the cart. */
+export function isShippingReward(rewardType: VoucherRewardType): boolean {
+  return (
+    rewardType === "shipping_amount_off" ||
+    rewardType === "shipping_percent_off" ||
+    rewardType === "free_shipping"
+  );
 }
 
-/** `free_shipping` waives shipping no matter which scope it carries. */
+/** `free_shipping` waives the fee outright; the percent variants reduce it. */
 export function isShippingOnlyReward(rewardType: VoucherRewardType): boolean {
   return rewardType === "free_shipping";
 }
@@ -55,7 +63,7 @@ export interface VoucherDiscountBases {
 }
 
 export interface VoucherDiscountResult {
-  /** Reduces the item subtotal. Always 0 for shipping-scoped vouchers. */
+  /** Reduces the item subtotal. Always 0 for shipping reward types. */
   orderDiscount: number;
   /** Reduces the shipping fee. Never negative, never exceeds shippingCost. */
   shippingDiscount: number;
@@ -63,7 +71,7 @@ export interface VoucherDiscountResult {
 
 export function computeVoucherDiscount(
   voucher: VoucherDiscountInput,
-  bases: VoucherDiscountBases,
+  bases: VoucherDiscountBases
 ): VoucherDiscountResult {
   const orderBase = Math.max(0, num(bases.orderBase));
   const shippingCost = Math.max(0, num(bases.shippingCost));
@@ -75,13 +83,21 @@ export function computeVoucherDiscount(
     return { orderDiscount: 0, shippingDiscount: shippingCost };
   }
 
-  const targetsShipping = isShippingScoped(voucher.scope_type);
+  // The reward type alone decides which bucket is hit, so a shipping voucher
+  // can never discount the cart even if it is targeted at products.
+  const targetsShipping = isShippingReward(voucher.reward_type);
   const base = targetsShipping ? shippingCost : orderBase;
 
   let value: number;
-  if (voucher.reward_type === "amount_off") {
+  if (
+    voucher.reward_type === "amount_off" ||
+    voucher.reward_type === "shipping_amount_off"
+  ) {
     value = Math.min(num(voucher.amount_off), base);
-  } else if (voucher.reward_type === "percent_off") {
+  } else if (
+    voucher.reward_type === "percent_off" ||
+    voucher.reward_type === "shipping_percent_off"
+  ) {
     value = Math.round((base * num(voucher.percent_off)) / 100);
     const maxAmount = num(voucher.max_discount_amount);
     if (maxAmount > 0) value = Math.min(value, maxAmount);

@@ -8,13 +8,17 @@ import {
 } from "@/lib/react-query/voucher/api/useVoucherQueries";
 import { useApplyVouchers } from "@/lib/react-query/voucher/api/useVoucherMutations";
 import { useDiscountStore } from "@/store";
-import { sameShippingMethod } from "@/lib/shipping-method";
+import {
+  isFeePendingShippingMethod,
+  sameShippingMethod,
+} from "@/lib/shipping-method";
 import {
   computeVoucherDiscount,
+  isShippingReward,
   totalVoucherDiscount,
 } from "@/lib/voucher-discount";
 import type { VoucherApplyItem, VoucherRow } from "@/types/voucher";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type UseVouchersParams = {
   initialVouchers?: VoucherRow[];
@@ -75,9 +79,7 @@ export function useVouchers({
   // Server-resolved scope pool (includes kit component variant owners).
   const ownedProductIds = eligibleQuery.data?.ownedProductIds ?? productIds;
   const loadingVouchers = voucherListQuery.isLoading;
-  const error = voucherListQuery.error
-    ? voucherListQuery.error.message
-    : null;
+  const error = voucherListQuery.error ? voucherListQuery.error.message : null;
 
   const appliedIdsRef = useMemo(
     () => new Set(appliedVouchers.map((v) => v.voucherInfo.voucher_id)),
@@ -92,7 +94,7 @@ export function useVouchers({
   const estimateOrderBase = (v: VoucherRow): number => {
     const excluded = new Set(v.excluded_product_ids ?? []);
 
-    if (v.scope_type === 'product') {
+    if (v.scope_type === "product") {
       const targets = new Set(v.applies_to_product_ids ?? []);
       if (targets.size === 0) return 0;
       return items
@@ -100,13 +102,15 @@ export function useVouchers({
         .reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
     }
 
-    if (v.scope_type === 'category') {
+    if (v.scope_type === "category") {
       const targets = new Set(v.applies_to_category_slugs ?? []);
       if (targets.size === 0) return 0;
       return items
         .filter((i) => {
           const slug = i.category_slug ?? categorySlugByProductId[i.product_id];
-          return slug != null && targets.has(slug) && !excluded.has(i.product_id);
+          return (
+            slug != null && targets.has(slug) && !excluded.has(i.product_id)
+          );
         })
         .reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
     }
@@ -126,41 +130,89 @@ export function useVouchers({
       })
     );
 
+  // Everything an applied voucher's amounts are priced against. When any of it
+  // changes, the applied vouchers must be re-priced rather than left as they
+  // were: a shipping voucher applied while the fee was still unknown — or any
+  // voucher applied before a quantity change — would otherwise stay "applied"
+  // with a stale 0₫ saving, because the store persists the entries (and the
+  // customer sees the code with no discount).
+  const recomputeSignature = useMemo(
+    () =>
+      [
+        subtotal,
+        shippingCost,
+        shippingMethodId ?? "",
+        appliedVouchers
+          .map((v) => v.voucherInfo.voucher_id)
+          .sort()
+          .join(","),
+        items
+          .map(
+            (i) =>
+              `${i.product_id}:${i.quantity}:${(i.variant_ids ?? []).join("+")}`
+          )
+          .join(","),
+      ].join("|"),
+    [subtotal, shippingCost, shippingMethodId, appliedVouchers, items]
+  );
+  // The signature last sent to the API. A re-price that returns the same
+  // amounts leaves the signature unchanged, so this cannot loop.
+  const lastRecomputeRef = useRef<string | null>(null);
+
   // Auto-apply eligible scoped + customer vouchers when cart items exist.
   // Sorted by real discount (highest first) so the best voucher is picked.
+  // Runs again — without adding anything — to re-price what is already applied.
   useEffect(() => {
-    if (items.length === 0 || eligibleVouchers.length === 0) return;
+    if (items.length === 0) return;
+    if (appliedVouchers.length === 0 && eligibleVouchers.length === 0) return;
 
     // Skip vouchers already applied by the user
     const already = new Set(
       appliedVouchers.map((v) => v.voucherInfo.voucher_id)
     );
-    const candidates = eligibleVouchers
-      .filter((v) => !already.has(v.id));
+    const candidates = eligibleVouchers.filter((v) => !already.has(v.id));
 
     // Sort by estimated discount descending — highest discount first
     const sorted = [...candidates].sort(
       (a, b) => estimatedSaving(b) - estimatedSaving(a)
     );
 
-    const toApply = sorted.map((v) => v.id);
-
     const remainingSlots = Math.max(
       0,
       maxVouchersPerOrder - appliedVouchers.length
     );
-    if (toApply.length === 0 || remainingSlots <= 0) return;
+    const toApply = sorted
+      .map((v) => v.id)
+      .slice(0, remainingSlots);
 
-    applyVouchersMutation.mutate({
-      voucherIds: [
-        ...appliedVouchers.map((v) => v.voucherInfo.voucher_id),
-        ...toApply.slice(0, remainingSlots),
-      ],
-      subtotal,
-      shippingCost,
-      shippingMethodId,
-      items,
-    });
+    // Nothing new to add → this run only re-prices what is already applied.
+    const isRecomputeOnly = toApply.length === 0;
+    if (isRecomputeOnly && appliedVouchers.length === 0) return;
+    if (lastRecomputeRef.current === recomputeSignature) return;
+    lastRecomputeRef.current = recomputeSignature;
+
+    applyVouchersMutation.mutate(
+      {
+        voucherIds: [
+          ...appliedVouchers.map((v) => v.voucherInfo.voucher_id),
+          ...toApply,
+        ],
+        subtotal,
+        shippingCost,
+        shippingMethodId,
+        items,
+        // A background re-price is not the customer picking a voucher, so it
+        // must not pop an "applied" toast.
+        silent: isRecomputeOnly,
+      },
+      {
+        // Let a failed re-price be retried on the next cart change instead of
+        // being treated as done for this signature.
+        onError: () => {
+          lastRecomputeRef.current = null;
+        },
+      }
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     items,
@@ -170,6 +222,7 @@ export function useVouchers({
     eligibleVouchers,
     appliedVouchers,
     maxVouchersPerOrder,
+    recomputeSignature,
   ]);
 
   // Prune applied vouchers that are no longer valid for the current checkout
@@ -195,6 +248,17 @@ export function useVouchers({
 
         // Min order amount
         if (rule.min_order_amount > 0 && subtotal < rule.min_order_amount) {
+          return true;
+        }
+
+        // Shipping reward types are worthless on courier tiers, whose fee is
+        // only quoted after checkout (0đ here). Prune so the voucher does not
+        // sit in the list applying a 0đ saving, matching the server's
+        // rejection in /api/vouchers/apply.
+        if (
+          isShippingReward(entry.voucherInfo.reward_type) &&
+          isFeePendingShippingMethod(shippingMethodId)
+        ) {
           return true;
         }
 
@@ -235,7 +299,14 @@ export function useVouchers({
       useDiscountStore.getState().pruneAppliedVouchers(invalidIds);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shippingMethodId, appliedVouchers, subtotal, items, categorySlugByProductId, ownedProductIds]);
+  }, [
+    shippingMethodId,
+    appliedVouchers,
+    subtotal,
+    items,
+    categorySlugByProductId,
+    ownedProductIds,
+  ]);
 
   // Include auto-applied scoped/customer vouchers so they show in the drawer.
   const autoAppliedRows = eligibleVouchers.filter((v) =>

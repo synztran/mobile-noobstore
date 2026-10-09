@@ -88,14 +88,18 @@ function makeClient(): { client: unknown; state: MockState } {
         limit: (n: number) => Builder;
         single: () => Builder;
         maybeSingle: () => Builder;
-        insert(
-          rows: Row[] | Row
-        ): { then: (r: (x: { data: Row[]; error: unknown }) => unknown) => unknown };
+        insert(rows: Row[] | Row): {
+          then: (r: (x: { data: Row[]; error: unknown }) => unknown) => unknown;
+        };
         update(set: Row): {
           eq(
             col: string,
             id: string
-          ): { then: (r: (x: { data: null; error: unknown }) => unknown) => unknown };
+          ): {
+            then: (
+              r: (x: { data: null; error: unknown }) => unknown
+            ) => unknown;
+          };
         };
         then: (r: (x: { data: unknown; error: unknown }) => unknown) => unknown;
       }
@@ -153,7 +157,10 @@ function makeClient(): { client: unknown; state: MockState } {
         }
         if (table === "product_variants") {
           const ids = eqs["id"];
-          if (Array.isArray(ids)) return rows().filter((r) => (ids as string[]).includes(r.id as string));
+          if (Array.isArray(ids))
+            return rows().filter((r) =>
+              (ids as string[]).includes(r.id as string)
+            );
           return equery(rows(), eqs);
         }
         // cart_items
@@ -168,14 +175,18 @@ function makeClient(): { client: unknown; state: MockState } {
             return rows().filter(
               (r) =>
                 r.variant_id != null &&
-                (parentVal as string[]).includes(r.parent_cart_item_id as string)
+                (parentVal as string[]).includes(
+                  r.parent_cart_item_id as string
+                )
             );
           }
           return rows().filter((r) => r.parent_cart_item_id === parentVal);
         }
         if (eqs["cart_id"] !== undefined) {
           // getCartVariantUsage parent lookup.
-          return rows().filter((r) => r.cart_id === eqs["cart_id"] && r.parent_cart_item_id == null);
+          return rows().filter(
+            (r) => r.cart_id === eqs["cart_id"] && r.parent_cart_item_id == null
+          );
         }
         return equery(rows(), eqs);
       };
@@ -192,18 +203,15 @@ function makeClient(): { client: unknown; state: MockState } {
             if (av === bv) return 0;
             if (av == null) return 1;
             if (bv == null) return -1;
-            return ascending
-              ? av < bv
-                ? -1
-                : 1
-              : av > bv
-                ? -1
-                : 1;
+            return ascending ? (av < bv ? -1 : 1) : av > bv ? -1 : 1;
           });
         }
         if (limitCount != null) data = data.slice(0, limitCount);
         if (mode === "single" || mode === "maybeSingle") {
-          return { data: data[0] ?? (mode === "maybeSingle" ? null : undefined), error: null };
+          return {
+            data: data[0] ?? (mode === "maybeSingle" ? null : undefined),
+            error: null,
+          };
         }
         return { data, error: null };
       };
@@ -229,12 +237,30 @@ describe("upsertCartItem (kit)", () => {
     // variant only has stock 3 — exactly the reported bug.
     const { client, state } = makeClient();
     state.products = [
-      { id: "kit", stock_quantity: null, max_quantity: null, product_type: "kit" },
+      {
+        id: "kit",
+        stock_quantity: null,
+        max_quantity: null,
+        product_type: "kit",
+      },
     ];
     state.product_variants = [{ id: "v1", stock_quantity: 3 }];
     state.cart_items = [
-      { id: "parent-1", cart_id: "cart-1", product_id: "kit", parent_cart_item_id: null, quantity: 5 },
-      { id: "child-1", cart_id: "cart-1", product_id: "kit", parent_cart_item_id: "parent-1", variant_id: "v1", quantity: 1 },
+      {
+        id: "parent-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: null,
+        quantity: 5,
+      },
+      {
+        id: "child-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-1",
+        variant_id: "v1",
+        quantity: 1,
+      },
     ];
 
     await expect(
@@ -259,8 +285,21 @@ describe("upsertCartItem (kit)", () => {
     state.product_variants = [{ id: "v1", stock_quantity: 100 }];
     // Existing line already at the cap.
     state.cart_items = [
-      { id: "parent-1", cart_id: "cart-1", product_id: "kit", parent_cart_item_id: null, quantity: 2 },
-      { id: "child-1", cart_id: "cart-1", product_id: "kit", parent_cart_item_id: "parent-1", variant_id: "v1", quantity: 1 },
+      {
+        id: "parent-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: null,
+        quantity: 2,
+      },
+      {
+        id: "child-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-1",
+        variant_id: "v1",
+        quantity: 1,
+      },
     ];
 
     await expect(
@@ -278,7 +317,12 @@ describe("upsertCartItem (kit)", () => {
   it("allows a new kit line within variant stock and inserts parent + child rows", async () => {
     const { client, state } = makeClient();
     state.products = [
-      { id: "kit", stock_quantity: null, max_quantity: null, product_type: "kit" },
+      {
+        id: "kit",
+        stock_quantity: null,
+        max_quantity: null,
+        product_type: "kit",
+      },
     ];
     state.product_variants = [{ id: "v1", stock_quantity: 3 }];
     // No existing cart lines.
@@ -305,15 +349,219 @@ describe("upsertCartItem (kit)", () => {
   });
 });
 
+describe("upsertCartItem (kit variant identity)", () => {
+  const kitState = () => {
+    const { client, state } = makeClient();
+    state.products = [
+      {
+        id: "kit",
+        stock_quantity: null,
+        max_quantity: null,
+        product_type: "kit",
+      },
+    ];
+    state.product_variants = [
+      { id: "purple", stock_quantity: 50 },
+      { id: "trash", stock_quantity: 50 },
+      { id: "sw70", stock_quantity: 50 },
+    ];
+    return { client, state };
+  };
+
+  it("persists the kit variant on the parent row", async () => {
+    const { client, state } = kitState();
+
+    await upsertCartItem(client as never, "cart-1", {
+      product_id: "kit",
+      variant_id: "purple",
+      components: [{ variant_id: "sw70" }],
+      quantity: 1,
+    });
+
+    const parentInsert = state.insertCalls.find(
+      (c) => c.table === "cart_items" && c.rows[0].parent_cart_item_id == null
+    );
+    expect(parentInsert!.rows[0].variant_id).toBe("purple");
+  });
+
+  it("keeps the kit variant as part of a line's identity: a second colourway is a new line", async () => {
+    const { client, state } = kitState();
+    // Cart already holds a Purple kit with the same component selection.
+    state.cart_items = [
+      {
+        id: "parent-purple",
+        cart_id: "cart-1",
+        product_id: "kit",
+        variant_id: "purple",
+        parent_cart_item_id: null,
+        quantity: 1,
+      },
+      {
+        id: "child-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-purple",
+        variant_id: "sw70",
+        quantity: 1,
+      },
+    ];
+
+    // Same components, different kit variant — must NOT merge into the Purple line.
+    const res = await upsertCartItem(client as never, "cart-1", {
+      product_id: "kit",
+      variant_id: "trash",
+      components: [{ variant_id: "sw70" }],
+      quantity: 1,
+    });
+
+    expect(res.parentItemId).not.toBe("parent-purple");
+    // A brand new parent was inserted rather than the existing one bumped.
+    const parentInsert = state.insertCalls.find(
+      (c) => c.table === "cart_items" && c.rows[0].parent_cart_item_id == null
+    );
+    expect(parentInsert).toBeDefined();
+    expect(parentInsert!.rows[0].variant_id).toBe("trash");
+    expect(state.updateCalls).toHaveLength(0);
+  });
+
+  it("still merges when both the kit variant and components match", async () => {
+    const { client, state } = kitState();
+    state.cart_items = [
+      {
+        id: "parent-purple",
+        cart_id: "cart-1",
+        product_id: "kit",
+        variant_id: "purple",
+        parent_cart_item_id: null,
+        quantity: 1,
+      },
+      {
+        id: "child-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-purple",
+        variant_id: "sw70",
+        quantity: 1,
+      },
+    ];
+
+    const res = await upsertCartItem(client as never, "cart-1", {
+      product_id: "kit",
+      variant_id: "purple",
+      components: [{ variant_id: "sw70" }],
+      quantity: 2,
+    });
+
+    expect(res.parentItemId).toBe("parent-purple");
+    expect(state.updateCalls).toHaveLength(1);
+    expect(state.updateCalls[0].id).toBe("parent-purple");
+    expect(state.updateCalls[0].set.quantity).toBe(3);
+    expect(state.insertCalls).toHaveLength(0);
+  });
+
+  it("does not throw when the cart already has several parent lines for the same kit", async () => {
+    const { client, state } = kitState();
+    // Regression: the parent lookup used maybeSingle(), which errors once more
+    // than one parent row matches the same product.
+    state.cart_items = [
+      {
+        id: "parent-purple",
+        cart_id: "cart-1",
+        product_id: "kit",
+        variant_id: "purple",
+        parent_cart_item_id: null,
+        quantity: 1,
+      },
+      {
+        id: "parent-trash",
+        cart_id: "cart-1",
+        product_id: "kit",
+        variant_id: "trash",
+        parent_cart_item_id: null,
+        quantity: 1,
+      },
+      {
+        id: "child-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-purple",
+        variant_id: "sw70",
+        quantity: 1,
+      },
+      {
+        id: "child-2",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-trash",
+        variant_id: "sw70",
+        quantity: 1,
+      },
+    ];
+
+    const res = await upsertCartItem(client as never, "cart-1", {
+      product_id: "kit",
+      variant_id: "trash",
+      components: [{ variant_id: "sw70" }],
+      quantity: 1,
+    });
+
+    expect(res.parentItemId).toBe("parent-trash");
+    expect(state.updateCalls[0].set.quantity).toBe(2);
+  });
+
+  it("treats a legacy null-variant kit line as distinct from a colourway line", async () => {
+    const { client, state } = kitState();
+    state.cart_items = [
+      {
+        id: "parent-legacy",
+        cart_id: "cart-1",
+        product_id: "kit",
+        variant_id: null,
+        parent_cart_item_id: null,
+        quantity: 1,
+      },
+      {
+        id: "child-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-legacy",
+        variant_id: "sw70",
+        quantity: 1,
+      },
+    ];
+
+    const res = await upsertCartItem(client as never, "cart-1", {
+      product_id: "kit",
+      variant_id: "purple",
+      components: [{ variant_id: "sw70" }],
+      quantity: 1,
+    });
+
+    expect(res.parentItemId).not.toBe("parent-legacy");
+  });
+});
+
 describe("upsertCartItem (simple variant)", () => {
   it("throws StockExceededError when the simple product's variant stock is exceeded on an existing line", async () => {
     const { client, state } = makeClient();
     state.products = [
-      { id: "prod", stock_quantity: 100, max_quantity: null, product_type: "standard" },
+      {
+        id: "prod",
+        stock_quantity: 100,
+        max_quantity: null,
+        product_type: "standard",
+      },
     ];
     state.product_variants = [{ id: "v1", stock_quantity: 2 }];
     state.cart_items = [
-      { id: "line-1", cart_id: "cart-1", product_id: "prod", variant_id: "v1", parent_cart_item_id: null, quantity: 2 },
+      {
+        id: "line-1",
+        cart_id: "cart-1",
+        product_id: "prod",
+        variant_id: "v1",
+        parent_cart_item_id: null,
+        quantity: 2,
+      },
     ];
 
     await expect(
@@ -334,13 +582,32 @@ describe("updateCartItemQuantity (kit parent)", () => {
     // products.stock_quantity is NULL for kits — the variant (not the product)
     // gate must reject, reporting the variant's available stock.
     state.products = [
-      { id: "kit", stock_quantity: null, max_quantity: null, product_type: "kit" },
+      {
+        id: "kit",
+        stock_quantity: null,
+        max_quantity: null,
+        product_type: "kit",
+      },
     ];
     state.product_variants = [{ id: "v1", stock_quantity: 2 }];
     // Target qty 5 for the parent, variant stock only 2.
     state.cart_items = [
-      { id: "parent-1", cart_id: "cart-1", product_id: "kit", parent_cart_item_id: null, quantity: 1, variant_id: null },
-      { id: "child-1", cart_id: "cart-1", product_id: "kit", parent_cart_item_id: "parent-1", variant_id: "v1", quantity: 1 },
+      {
+        id: "parent-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: null,
+        quantity: 1,
+        variant_id: null,
+      },
+      {
+        id: "child-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-1",
+        variant_id: "v1",
+        quantity: 1,
+      },
     ];
 
     const err: unknown = await updateCartItemQuantity(
@@ -360,12 +627,31 @@ describe("updateCartItemQuantity (kit parent)", () => {
   it("allows raising a kit parent qty up to the child variant stock even though the product's own stock_quantity is NULL", async () => {
     const { client, state } = makeClient();
     state.products = [
-      { id: "kit", stock_quantity: null, max_quantity: null, product_type: "kit" },
+      {
+        id: "kit",
+        stock_quantity: null,
+        max_quantity: null,
+        product_type: "kit",
+      },
     ];
     state.product_variants = [{ id: "v1", stock_quantity: 5 }];
     state.cart_items = [
-      { id: "parent-1", cart_id: "cart-1", product_id: "kit", parent_cart_item_id: null, quantity: 1, variant_id: null },
-      { id: "child-1", cart_id: "cart-1", product_id: "kit", parent_cart_item_id: "parent-1", variant_id: "v1", quantity: 1 },
+      {
+        id: "parent-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: null,
+        quantity: 1,
+        variant_id: null,
+      },
+      {
+        id: "child-1",
+        cart_id: "cart-1",
+        product_id: "kit",
+        parent_cart_item_id: "parent-1",
+        variant_id: "v1",
+        quantity: 1,
+      },
     ];
 
     await updateCartItemQuantity(client as never, "parent-1", 5);
@@ -386,11 +672,36 @@ describe("getOrCreateCart", () => {
     // "no cart" — minting yet another active cart on every add.
     const { client, state } = makeClient();
     state.carts = [
-      { id: "cart-old", user_id: "user-1", status: "active", created_at: "2026-01-01T00:00:00Z" },
-      { id: "cart-mid", user_id: "user-1", status: "active", created_at: "2026-02-01T00:00:00Z" },
-      { id: "cart-new", user_id: "user-1", status: "active", created_at: "2026-03-01T00:00:00Z" },
-      { id: "cart-old-order", user_id: "user-1", status: "converted", created_at: "2025-12-01T00:00:00Z" },
-      { id: "cart-other", user_id: "user-2", status: "active", created_at: "2026-01-05T00:00:00Z" },
+      {
+        id: "cart-old",
+        user_id: "user-1",
+        status: "active",
+        created_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "cart-mid",
+        user_id: "user-1",
+        status: "active",
+        created_at: "2026-02-01T00:00:00Z",
+      },
+      {
+        id: "cart-new",
+        user_id: "user-1",
+        status: "active",
+        created_at: "2026-03-01T00:00:00Z",
+      },
+      {
+        id: "cart-old-order",
+        user_id: "user-1",
+        status: "converted",
+        created_at: "2025-12-01T00:00:00Z",
+      },
+      {
+        id: "cart-other",
+        user_id: "user-2",
+        status: "active",
+        created_at: "2026-01-05T00:00:00Z",
+      },
     ];
 
     const res = await getOrCreateCart(client as never, { userId: "user-1" });
@@ -402,7 +713,12 @@ describe("getOrCreateCart", () => {
   it("creates a single active cart when the user has none", async () => {
     const { client, state } = makeClient();
     state.carts = [
-      { id: "cart-old-order", user_id: "user-1", status: "converted", created_at: "2025-12-01T00:00:00Z" },
+      {
+        id: "cart-old-order",
+        user_id: "user-1",
+        status: "converted",
+        created_at: "2025-12-01T00:00:00Z",
+      },
     ];
 
     const res = await getOrCreateCart(client as never, { userId: "user-1" });

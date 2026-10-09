@@ -112,7 +112,6 @@ export function ServiceOrderDetailDrawer({ orderId, onClose }: Props) {
 						? "opacity-100 pointer-events-auto"
 						: "opacity-0 pointer-events-none"
 				}`}
-				onClick={onClose}
 			/>
 
 			{/* Drawer */}

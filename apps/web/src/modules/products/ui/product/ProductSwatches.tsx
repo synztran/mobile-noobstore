@@ -37,7 +37,7 @@ export const ProductSwatches = memo(function ProductSwatches({
 
   return (
     <div>
-      <div className="flex items-center gap-1.5 overflow-x-auto">
+      <div className="flex items-center gap-1.5 overflow-x-auto px-0.5 py-2">
         {visible.map((variant) => {
           const color = getColorVariant(variant);
           const isActive = variant.id === activeVariantId;
@@ -83,7 +83,7 @@ export const ProductSwatches = memo(function ProductSwatches({
         )}
       </div>
       {activeVariant && (
-        <p className="mt-1 truncate text-xs text-on-surface lg:text-sm">
+        <p className="truncate text-xs text-on-surface lg:text-sm">
           {activeVariant.variant_name}
         </p>
       )}

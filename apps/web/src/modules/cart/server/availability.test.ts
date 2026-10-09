@@ -12,7 +12,9 @@ import {
  * covered by the orchestration tests in cart-service.test.ts.
  */
 
-function snapshot(overrides: Partial<AvailabilitySnapshot> = {}): AvailabilitySnapshot {
+function snapshot(
+  overrides: Partial<AvailabilitySnapshot> = {}
+): AvailabilitySnapshot {
   return {
     product: { productType: "standard", stock: 10, max: null },
     line: { variantId: null, childVariantIds: [], currentQty: 0 },
@@ -24,12 +26,16 @@ function snapshot(overrides: Partial<AvailabilitySnapshot> = {}): AvailabilitySn
 
 describe("assertQuantityAvailable — standard base", () => {
   it("allows qty within product stock", () => {
-    const s = snapshot({ product: { productType: "standard", stock: 10, max: null } });
+    const s = snapshot({
+      product: { productType: "standard", stock: 10, max: null },
+    });
     expect(assertQuantityAvailable(s, 10)).toEqual({ ok: true });
   });
 
   it("rejects qty over product stock with the product's available", () => {
-    const s = snapshot({ product: { productType: "standard", stock: 3, max: null } });
+    const s = snapshot({
+      product: { productType: "standard", stock: 3, max: null },
+    });
     expect(assertQuantityAvailable(s, 4)).toEqual({
       ok: false,
       kind: "stock",
@@ -39,8 +45,14 @@ describe("assertQuantityAvailable — standard base", () => {
   });
 
   it("enforces max_quantity for standard products", () => {
-    const s = snapshot({ product: { productType: "standard", stock: 10, max: 2 } });
-    expect(assertQuantityAvailable(s, 3)).toEqual({ ok: false, kind: "max", max: 2 });
+    const s = snapshot({
+      product: { productType: "standard", stock: 10, max: 2 },
+    });
+    expect(assertQuantityAvailable(s, 3)).toEqual({
+      ok: false,
+      kind: "max",
+      max: 2,
+    });
   });
 });
 
@@ -65,6 +77,45 @@ describe("assertQuantityAvailable — standard variant", () => {
       kind: "stock",
       resource: "v1",
       available: 2,
+    });
+  });
+
+  it("ignores NULL product stock when the line has a variant (reported bug)", () => {
+    // Admin left the product stock box blank → products.stock_quantity IS NULL.
+    // The variant owns the pool, so a stocked variant must be addable.
+    const s = snapshot({
+      product: { productType: "standard", stock: null, max: null },
+      line: { variantId: "v1", childVariantIds: [], currentQty: 0 },
+      variantStock: { v1: 7 },
+    });
+    expect(assertQuantityAvailable(s, 7)).toEqual({ ok: true });
+  });
+
+  it("rejects over the variant even when product stock is NULL", () => {
+    const s = snapshot({
+      product: { productType: "standard", stock: null, max: null },
+      line: { variantId: "v1", childVariantIds: [], currentQty: 0 },
+      variantStock: { v1: 2 },
+    });
+    expect(assertQuantityAvailable(s, 3)).toEqual({
+      ok: false,
+      kind: "stock",
+      resource: "v1",
+      available: 2,
+    });
+  });
+
+  it("treats NULL product stock as 0 for a variant-less line", () => {
+    const s = snapshot({
+      product: { productType: "standard", stock: null, max: null },
+      line: { variantId: null, childVariantIds: [], currentQty: 0 },
+      variantStock: {},
+    });
+    expect(assertQuantityAvailable(s, 1)).toEqual({
+      ok: false,
+      kind: "stock",
+      resource: "product",
+      available: 0,
     });
   });
 });
@@ -164,9 +215,7 @@ describe("assertQuantityAvailable — kit", () => {
     });
     expect(assertQuantityAvailable(s, 2)).toEqual({
       ok: false,
-      kind: "stock",
-      resource: "components",
-      available: 0,
+      kind: "not_configured",
     });
   });
 });
@@ -187,7 +236,11 @@ describe("assertQuantityAvailable — cross-cutting", () => {
       variantStock: { a: 100 },
       committed: {},
     });
-    expect(assertQuantityAvailable(s, 3)).toEqual({ ok: false, kind: "max", max: 2 });
+    expect(assertQuantityAvailable(s, 3)).toEqual({
+      ok: false,
+      kind: "max",
+      max: 2,
+    });
   });
 
   it("checks max before variant stock (per-order cap wins)", () => {
@@ -197,7 +250,11 @@ describe("assertQuantityAvailable — cross-cutting", () => {
       variantStock: { a: 1 },
       committed: {},
     });
-    expect(assertQuantityAvailable(s, 3)).toEqual({ ok: false, kind: "max", max: 2 });
+    expect(assertQuantityAvailable(s, 3)).toEqual({
+      ok: false,
+      kind: "max",
+      max: 2,
+    });
   });
 });
 
@@ -250,7 +307,9 @@ describe("loadAvailabilitySnapshot — adapter contract", () => {
           maybeSingle: () => builder,
           then: (resolve) => {
             const matched =
-              table === "products" ? (match(table, eqs)[0] ?? null) : match(table, eqs);
+              table === "products"
+                ? (match(table, eqs)[0] ?? null)
+                : match(table, eqs);
             return resolve({ data: matched, error: null });
           },
         };
@@ -261,17 +320,52 @@ describe("loadAvailabilitySnapshot — adapter contract", () => {
 
   it("builds a kit snapshot excluding the line being changed", async () => {
     const client = fakeClient({
-      products: [{ id: "kit", stock_quantity: null, max_quantity: null, product_type: "kit" }],
+      products: [
+        {
+          id: "kit",
+          stock_quantity: null,
+          max_quantity: null,
+          product_type: "kit",
+        },
+      ],
       product_variants: [
         { id: "a", stock_quantity: 5 },
         { id: "b", stock_quantity: 5 },
       ],
       cart_items: [
-        { id: "parent-1", cart_id: "cart-1", parent_cart_item_id: null, quantity: 2 },
-        { id: "child-1", cart_id: "cart-1", parent_cart_item_id: "parent-1", variant_id: "a", quantity: 1 },
-        { id: "child-2", cart_id: "cart-1", parent_cart_item_id: "parent-1", variant_id: "b", quantity: 1 },
-        { id: "parent-2", cart_id: "cart-1", parent_cart_item_id: null, quantity: 1 },
-        { id: "child-3", cart_id: "cart-1", parent_cart_item_id: "parent-2", variant_id: "a", quantity: 1 },
+        {
+          id: "parent-1",
+          cart_id: "cart-1",
+          parent_cart_item_id: null,
+          quantity: 2,
+        },
+        {
+          id: "child-1",
+          cart_id: "cart-1",
+          parent_cart_item_id: "parent-1",
+          variant_id: "a",
+          quantity: 1,
+        },
+        {
+          id: "child-2",
+          cart_id: "cart-1",
+          parent_cart_item_id: "parent-1",
+          variant_id: "b",
+          quantity: 1,
+        },
+        {
+          id: "parent-2",
+          cart_id: "cart-1",
+          parent_cart_item_id: null,
+          quantity: 1,
+        },
+        {
+          id: "child-3",
+          cart_id: "cart-1",
+          parent_cart_item_id: "parent-2",
+          variant_id: "a",
+          quantity: 1,
+        },
       ],
     });
 
@@ -283,11 +377,17 @@ describe("loadAvailabilitySnapshot — adapter contract", () => {
       currentQty: 2,
     });
 
-    expect(s.product).toEqual({ productType: "kit", stock: 0, max: null });
+    // NULL is preserved (kits carry no own stock) — not coerced to 0, since
+    // stock: number | null is the contract that lets variant lines bypass it.
+    expect(s.product).toEqual({ productType: "kit", stock: null, max: null });
     expect(s.variantStock).toEqual({ a: 5, b: 5 });
     // parent-1 (qty 2 × a, b) excluded; only parent-2's single unit of a remains
     expect(s.committed).toEqual({ a: 1 });
-    expect(s.line).toEqual({ variantId: null, childVariantIds: ["a", "b"], currentQty: 2 });
+    expect(s.line).toEqual({
+      variantId: null,
+      childVariantIds: ["a", "b"],
+      currentQty: 2,
+    });
 
     // target 4 + committed a:1 = 5 ≤ 5 OK; target 5 → 6 > 5 reject
     expect(assertQuantityAvailable(s, 4)).toEqual({ ok: true });

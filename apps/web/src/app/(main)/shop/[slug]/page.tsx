@@ -9,6 +9,13 @@ import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import {
+  buildOg,
+  pickProductOgImage,
+  toPlainText,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/og";
 import { Suspense } from "react";
 import { BoughtTogetherSection } from "@/modules/products/ui/product/BoughtTogetherSection";
 import { RelatedProductsSection } from "@/modules/products/ui/product/RelatedProductsSection";
@@ -27,39 +34,39 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const url = `/shop/${slug}`;
+
+  // A brand-new product is not in the Redis/Data Cache yet, so this can miss
+  // right after creation. Returning a bare `{ title }` here used to drop the
+  // whole openGraph object, which made Next fall back to the root layout's —
+  // no og:url, and the site logo as the preview. Facebook cached that and
+  // reported "Thiếu tài sản og:url". Always emit a complete card instead.
   const product = await getProductBySlug(slug);
 
   if (!product) {
-    return { title: "Sản phẩm" };
+    return buildOg({
+      title: "Sản phẩm",
+      description: "Sản phẩm không tìm thấy trên NoobStore.",
+      url,
+    });
   }
 
-  const rawImage =
-    product.thumbnail || product.images?.find(Boolean) || undefined;
-  const ogImage = rawImage?.startsWith("http")
-    ? rawImage
-    : `https://www.noobstore.xyz${rawImage ?? ""}`;
-  const cleanDescription = product.description
-    ? product.description.replace(/<[^>]*>/g, "").slice(0, 160)
-    : `${product.name} - ${product.brand ?? "NoobStore"}`;
+  // Prefer the first gallery image over `thumbnail`: thumbnails are whatever
+  // was uploaded first and are often portrait phone shots, which Messenger
+  // renders badly. No declared dimensions — we cannot read real ones without
+  // fetching the bytes, and a wrong ratio crops worse than none at all. See
+  // pickProductOgImage in lib/og.ts.
+  const ogImage = pickProductOgImage(product.thumbnail, product.images);
 
-  return {
+  return buildOg({
     title: product.name,
-    description: cleanDescription,
-    openGraph: {
-      type: "website",
-      siteName: "NoobStore",
-      title: product.name,
-      description: cleanDescription,
-      url: `https://www.noobstore.xyz/shop/${slug}`,
-      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : [],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: product.name,
-      description: cleanDescription,
-      images: ogImage ? [ogImage] : [],
-    },
-  };
+    description:
+      toPlainText(product.description) ||
+      `${product.name} - ${product.brand ?? SITE_NAME}`,
+    url,
+    image: ogImage,
+    imageAlt: product.name,
+  });
 }
 
 function ProductDetailSkeleton() {
@@ -142,22 +149,17 @@ async function ProductLoader({ slug }: { slug: string }) {
   if (!detail) notFound();
 
   const { product } = detail;
-  const imageUrl =
-    product.thumbnail || product.images?.find(Boolean) || undefined;
-  const productUrl = `https://www.noobstore.xyz/shop/${slug}`;
+  const imageUrl = pickProductOgImage(product.thumbnail, product.images);
+  const productUrl = `${SITE_URL}/shop/${slug}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description
-      ? product.description.replace(/<[^>]*>/g, "").slice(0, 500)
+      ? toPlainText(product.description, 500)
       : product.name,
-    image: imageUrl?.startsWith("http")
-      ? imageUrl
-      : imageUrl
-        ? `https://www.noobstore.xyz${imageUrl}`
-        : undefined,
+    image: imageUrl ?? undefined,
     brand: product.brand
       ? { "@type": "Brand", name: product.brand }
       : undefined,
@@ -172,7 +174,7 @@ async function ProductLoader({ slug }: { slug: string }) {
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
       url: productUrl,
-      seller: { "@type": "Organization", name: "NoobStore" },
+      seller: { "@type": "Organization", name: SITE_NAME },
     },
     aggregateRating:
       purchaseCount > 0
@@ -192,19 +194,19 @@ async function ProductLoader({ slug }: { slug: string }) {
         "@type": "ListItem",
         position: 1,
         name: "Trang chủ",
-        item: "https://www.noobstore.xyz",
+        item: SITE_URL,
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Cửa hàng",
-        item: "https://www.noobstore.xyz/shop",
+        item: `${SITE_URL}/shop`,
       },
       {
         "@type": "ListItem",
         position: 3,
         name: product.category,
-        item: `https://www.noobstore.xyz/shop?category=${encodeURIComponent(product.category)}`,
+        item: `${SITE_URL}/shop?category=${encodeURIComponent(product.category)}`,
       },
       { "@type": "ListItem", position: 4, name: product.name },
     ],

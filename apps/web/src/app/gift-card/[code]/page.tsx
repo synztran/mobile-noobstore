@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import GiftCardViewer from "@/components/gift-card/GiftCardViewer";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { buildOg } from "@/lib/og";
 
 export const dynamic = "force-dynamic";
 
@@ -36,24 +37,27 @@ export async function generateMetadata({
 	params: Promise<{ code: string }>;
 }): Promise<Metadata> {
 	const { code } = await params;
+	const url = `/gift-card/${code}`;
 	const card = await getGiftCard(code);
 
+	// The card code is a redeemable secret — keep it out of the preview text so
+	// a shared link doesn't broadcast it. This page is force-dynamic and
+	// unauthenticated, so og:url/og:title are the only things a scraper sees.
 	if (!card) {
-		return { title: "Thẻ quà tặng không tồn tại - NoobStore" };
+		return buildOg({
+			title: "Thẻ quà tặng không tồn tại",
+			description: "Thẻ quà tặng này không tồn tại hoặc đã hết hạn.",
+			url,
+		});
 	}
 
-	return {
-		title: `Gift Card ${card.code} - NoobStore`,
-		description: `Thẻ quà tặng ${card.code} trị giá ${card.points_value.toLocaleString(
-			"vi-VN",
-		)} điểm.`,
-		openGraph: {
-			title: `Gift Card ${card.code} - NoobStore`,
-			description: `Thẻ quà tặng trị giá ${card.points_value.toLocaleString(
-				"vi-VN",
-			)} điểm.`,
-		},
-	};
+	const points = card.points_value.toLocaleString("vi-VN");
+
+	return buildOg({
+		title: "Thẻ quà tặng NoobStore",
+		description: `Thẻ quà tặng NoobStore trị giá ${points} điểm.`,
+		url,
+	});
 }
 
 export default async function GiftCardDetailPage({

@@ -5,9 +5,12 @@ import ShippingFeeLabel from "@/components/ui/ShippingFeeLabel";
 import { CircleAlert, Copy } from "lucide-react";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
-import { useOrderStatus, usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
+import {
+  useOrderStatus,
+  usePaymentInformation,
+} from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
-import { ShippingMethod } from "@/lib/shipping-method";
+import { isFeePendingShippingMethod } from "@/lib/shipping-method";
 import { useCheckoutStore } from "@/store";
 import Image from "@/components/ui/AdaptiveImage";
 import { useEffect, useMemo, useRef } from "react";
@@ -33,8 +36,9 @@ export default function CheckingPage() {
   const { orderNumber, totalPrice, orderedItems, shippingCost, shipping } =
     useCheckoutStore();
 
-  const isDeliveryService =
-    shipping?.deliverySpeed === ShippingMethod.Shipment;
+  const shippingFeePending = isFeePendingShippingMethod(
+    shipping?.shippingMethodId ?? shipping?.deliverySpeed
+  );
 
   // Guard: redirect to shop if there is no active order
   useEffect(() => {
@@ -60,7 +64,9 @@ export default function CheckingPage() {
   useEffect(() => {
     if (!mounted || !orderNotFound || notFoundRedirected.current) return;
     notFoundRedirected.current = true;
-    toast.error("Đơn hàng không thuộc tài khoản này. Vui lòng đăng nhập đúng tài khoản.");
+    toast.error(
+      "Đơn hàng không thuộc tài khoản này. Vui lòng đăng nhập đúng tài khoản."
+    );
     router.replace("/login");
   }, [mounted, orderNotFound, router]);
   const paymentMethods = paymentMethodsQuery.data ?? [];
@@ -216,7 +222,7 @@ export default function CheckingPage() {
               <span className="text-on-surface-variant">Phí vận chuyển</span>
               <ShippingFeeLabel
                 shippingCost={shippingCost}
-                deliveryService={isDeliveryService}
+                shippingFeePending={shippingFeePending}
               />
             </div>
             <div className="h-px bg-outline-variant/30" />

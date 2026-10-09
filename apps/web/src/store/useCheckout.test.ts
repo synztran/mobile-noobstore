@@ -100,7 +100,9 @@ describe("useCheckoutStore", () => {
       expect(useCheckoutStore.getState().paymentType).toBe("deposit_cod");
     });
 
-    it("stores deposit percentage clamped to 10-80", () => {
+    // The store holds the raw value; the 1/20-80 bounds are applied by
+    // clampDepositPercentage in lib/deposit.ts, which needs the order total.
+    it("stores the deposit percentage as given", () => {
       useCheckoutStore.getState().setDepositPercentage(30);
       expect(useCheckoutStore.getState().depositPercentage).toBe(30);
     });

@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
+import { buildOg } from "@/lib/og";
 
-export const metadata: Metadata = {
-	title: "Blog - NoobStore",
+// No " - NoobStore" suffix: the root layout's title template appends it.
+export const metadata: Metadata = buildOg({
+	title: "Blog",
 	description:
 		"Cập nhật tin tức, hướng dẫn và bài viết mới nhất từ NoobStore.",
-	openGraph: {
-		title: "Blog - NoobStore",
-		description:
-			"Cập nhật tin tức, hướng dẫn và bài viết mới nhất từ NoobStore.",
-		url: "https://www.noobstore.xyz/blogs",
-	},
-};
+	url: "/blogs",
+});
 
 export default function BlogLayout({
 	children,

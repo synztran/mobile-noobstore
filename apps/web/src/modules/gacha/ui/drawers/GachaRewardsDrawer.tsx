@@ -4,7 +4,7 @@ import { TYPE_BADGE } from "@/constants/gacha";
 import type { GachaRewardMeta } from "@/modules/gacha/types";
 
 import Image from "@/components/ui/AdaptiveImage";
-import { memo, useEffect } from "react";
+import { memo } from "react";
 
 interface GachaRewardsDrawerProps {
 	open: boolean;
@@ -90,22 +90,12 @@ export function GachaRewardsDrawer({
 	onClose,
 	rewards,
 }: GachaRewardsDrawerProps) {
-	useEffect(() => {
-		if (!open) return;
-		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
-		};
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [open, onClose]);
-
 	if (!open) return null;
 
 	return (
 		<>
 			<div
 				className="fixed inset-0 bg-black/50 z-[60]"
-				onClick={onClose}
 			/>
 			<aside
 				role="dialog"

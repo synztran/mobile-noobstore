@@ -5,7 +5,7 @@ import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { DELIVERY_OPTIONS } from "@/constants";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm, type DeliverySpeed } from "@/hooks/useShippingForm";
-import { ShippingMethod } from "@/lib/shipping-method";
+import { resolveDeliveryOptions } from "@/lib/delivery-options";
 import { cartItemsToGA, trackBeginCheckout } from "@/lib/analytics";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import AddressFields from "./AddressFields";
@@ -36,7 +36,7 @@ const ShippingPage = () => {
     minPickupDate,
     pickupSlots,
     isPickup,
-    isDeliveryService,
+    isFeePending,
     handleChange,
     handleBlur,
     handleCityChange,
@@ -128,26 +128,19 @@ const ShippingPage = () => {
     [setTouched]
   );
 
-  const mappingFees: Record<"express" | "standard", number> = {
-    express: immediateFee,
-    standard: basicFee,
-  };
-
-  const deliveryOptions = useMemo(() => {
-    return DELIVERY_OPTIONS.map((opt) => {
-      const fee =
-        opt.id === ShippingMethod.Express || opt.id === ShippingMethod.Standard
-          ? mappingFees[opt.id]
-          : opt.price;
-      const isPickupOpt = opt.id === ShippingMethod.Pickup;
-      return {
-        ...opt,
-        price: fee,
-        // shipment option only available for non-HCM cities; pickup always visible
-        isHidden: isPickupOpt ? false : isHCM ? opt.isHidden : !opt.isHidden,
-      };
-    });
-  }, [immediateFee, basicFee, isHCM]);
+  const deliveryOptions = useMemo(
+    () =>
+      resolveDeliveryOptions({
+        options: DELIVERY_OPTIONS,
+        isHCM: !!isHCM,
+        distanceFees: { express: immediateFee, standard: basicFee },
+      }).map(({ option, price, isHidden }) => ({
+        ...option,
+        price,
+        isHidden,
+      })),
+    [immediateFee, basicFee, isHCM]
+  );
 
   if (!ready) {
     return <ShippingPageSkeleton />;
@@ -230,7 +223,7 @@ const ShippingPage = () => {
           orderTotal={orderTotal}
           isCalculatingFee={isCalculatingFee}
           isSubmitting={isSubmitting}
-          deliveryService={isDeliveryService}
+          shippingFeePending={isFeePending}
         />
       </form>
     </div>

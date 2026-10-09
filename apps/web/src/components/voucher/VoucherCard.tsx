@@ -2,6 +2,7 @@
 
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { formatVND } from "@/lib/currency";
+import { isShippingReward } from "@/lib/voucher-discount";
 import type { VoucherRow } from "@/types/voucher";
 import {
   BadgePercent,
@@ -32,12 +33,14 @@ export function VoucherCard({
   subtotal,
   onApply,
 }: VoucherCardProps) {
-  const shippingScoped = voucher.scope_type === "shipping_fee";
+  // Shipping reward types carry scope_type 'order_total'; the reward type
+  // alone says the discount lands on the shipping fee.
+  const shippingScoped = isShippingReward(voucher.reward_type);
 
   const rewardIcon = useMemo(() => {
-    // A shipping-scoped voucher always gets the truck, whatever its reward
-    // type — the icon should say what the discount is on, not how it's coded.
-    if (voucher.reward_type === "free_shipping" || shippingScoped) {
+    // A shipping voucher always gets the truck — the icon should say what the
+    // discount is on, not how it's coded.
+    if (shippingScoped) {
       return Truck;
     }
     if (voucher.reward_type === "percent_off") {
@@ -56,12 +59,12 @@ export function VoucherCard({
     if (voucher.reward_type === "free_shipping") {
       return "Miễn phí vận chuyển";
     }
-    // amount_off/percent_off scoped to shipping_fee discount the shipping fee,
-    // not the cart — say which, or "Giảm 50%" reads as 50% off the order.
-    if (shippingScoped && voucher.reward_type === "percent_off") {
+    // Shipping reward types discount the shipping fee, not the cart — say
+    // which, or "Giảm 50%" reads as 50% off the order.
+    if (voucher.reward_type === "shipping_percent_off") {
       return `Giảm ${voucher.percent_off ?? 0}% phí vận chuyển`;
     }
-    if (shippingScoped && voucher.reward_type === "amount_off") {
+    if (voucher.reward_type === "shipping_amount_off") {
       return `Giảm ${formatVND(voucher.amount_off ?? 0)} phí vận chuyển`;
     }
     if (voucher.reward_type === "percent_off") {
@@ -77,11 +80,11 @@ export function VoucherCard({
   }, [voucher, shippingScoped]);
 
   const scopeLabel = useMemo(() => {
+    if (shippingScoped) {
+      return "Áp dụng cho phí vận chuyển";
+    }
     if (voucher.scope_type === "order_total") {
       return "Áp dụng cho toàn bộ đơn hàng";
-    }
-    if (voucher.scope_type === "shipping_fee") {
-      return "Áp dụng cho phí vận chuyển";
     }
     if (voucher.scope_type === "product") {
       return "Áp dụng cho sản phẩm chỉ định";

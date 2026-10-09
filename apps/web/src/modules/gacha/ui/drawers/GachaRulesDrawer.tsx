@@ -2,30 +2,18 @@
 
 import { RULES } from "@/constants/gacha";
 
-import { useEffect } from "react";
-
 interface GachaRulesDrawerProps {
 	open: boolean;
 	onClose: () => void;
 }
 
 export function GachaRulesDrawer({ open, onClose }: GachaRulesDrawerProps) {
-	useEffect(() => {
-		if (!open) return;
-		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
-		};
-		window.addEventListener("keydown", onKey);
-		return () => window.removeEventListener("keydown", onKey);
-	}, [open, onClose]);
-
 	if (!open) return null;
 
 	return (
 		<>
 			<div
 				className="fixed inset-0 bg-black/50 z-[60]"
-				onClick={onClose}
 			/>
 			<aside
 				role="dialog"

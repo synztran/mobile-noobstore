@@ -67,13 +67,13 @@ export function SearchPageClient({ initialData, query, initialSort }: Props) {
     enabled: !!query,
   });
 
-  const products = useMemo(() => {
-    if (!data?.pages) return [];
-    const all = data.pages.flatMap((p) => p.products as ShopProduct[]);
-    const inStock = all.filter((p) => p.stock_quantity > 0);
-    const soldOut = all.filter((p) => p.stock_quantity === 0);
-    return [...inStock, ...soldOut];
-  }, [data]);
+  // Order comes from the server (see `soldOutLast` in getProductListByFilters):
+  // available first, sold-out after. Re-partitioning here would re-churn the
+  // list every time an infinite-scroll page is appended.
+  const products = useMemo(
+    () => data?.pages.flatMap((p) => p.products as ShopProduct[]) ?? [],
+    [data],
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

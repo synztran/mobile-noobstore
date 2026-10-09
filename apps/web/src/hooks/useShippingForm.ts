@@ -9,8 +9,10 @@ import {
 import {
   PICKUP_SHIPPING_ID,
   ShippingMethod,
+  isFeePendingShippingMethod,
   type DeliverySpeed,
 } from "@/lib/shipping-method";
+import { HCM_CITY_CODE, isHcmCity } from "@/lib/hcm-city";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
@@ -63,7 +65,15 @@ type FeesConfigResponse = {
   updated_at: string | null;
 };
 
-const HCM_CITY = "Thành phố Hồ Chí Minh";
+/**
+ * Delivery methods that only exist inside HCM. Switching to any other province
+ * moves the selection to the inter-city courier option.
+ */
+const HCM_ONLY_DELIVERY_METHODS: readonly DeliverySpeed[] = [
+  ShippingMethod.Standard,
+  ShippingMethod.Express,
+  ShippingMethod.Carrier4h,
+];
 
 const HCM_DISTRICT_SURCHARGE_RATE: Record<string, number> = {
   HCM_Q1: 0.2,
@@ -90,8 +100,12 @@ const HCM_DISTRICT_SURCHARGE_RATE: Record<string, number> = {
   HCM_CG: 0.85,
 };
 
-function getDistrictShippingSurchargeRate(city: string, districtCode: string) {
-  if (city !== HCM_CITY || !districtCode) return 0;
+function getDistrictShippingSurchargeRate(
+  city: string,
+  districtCode: string,
+  cityCode?: string
+) {
+  if (!isHcmCity(city, cityCode) || !districtCode) return 0;
   return HCM_DISTRICT_SURCHARGE_RATE[districtCode] ?? 0;
 }
 
@@ -145,7 +159,6 @@ export function useShippingForm() {
     clearShippingDraft,
   } = useCheckoutStore();
   const { total, cartId, items: cartItems } = useCartStore();
-  console.log(cartItems);
   const hasPreOrder = useMemo(
     () =>
       cartItems.some(
@@ -208,7 +221,14 @@ export function useShippingForm() {
   const presetLonRef = useRef<number | undefined>();
 
   const getCityCode = useCallback((cityName: string) => {
-    return VIETNAM_CITIES.find((c) => c.name === cityName)?.code ?? "";
+    return (
+      VIETNAM_CITIES.find((c) => c.name === cityName)?.code ??
+      // The list lookup is an exact match, so a stored address spelling the
+      // city differently would otherwise resolve to "" and empty the district
+      // dropdown. HCM is the one city worth resolving leniently, since it is
+      // the only one driving intra-city delivery options.
+      (isHcmCity(cityName) ? HCM_CITY_CODE : "")
+    );
   }, []);
 
   const getDistrictCode = useCallback(
@@ -293,7 +313,15 @@ export function useShippingForm() {
 
     fetch("/api/fees", { credentials: "include" })
       .then((res) => {
-        if (!res.ok) return;
+        if (!res.ok) {
+          // Previously silent, which meant a broken fees config surfaced only
+          // as mysteriously wrong delivery prices. Own-rider fees fall back to
+          // the built-in defaults below; say so instead of failing quietly.
+          console.warn(
+            `[useShippingForm] /api/fees returned ${res.status}; using default per-km rates`
+          );
+          return;
+        }
         return res.json() as Promise<Partial<FeesConfigResponse>>;
       })
       .then((data) => {
@@ -305,7 +333,12 @@ export function useShippingForm() {
           setBasicPricePerKm(data.delivery_basic_price);
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        console.warn(
+          "[useShippingForm] failed to load fee config; using default per-km rates:",
+          err
+        );
+      })
       .finally(() => setReady(true));
   }, []);
 
@@ -398,11 +431,8 @@ export function useShippingForm() {
         ward: city !== prev.city ? "" : prev.ward,
         wardCode: city !== prev.city ? "" : prev.wardCode,
       }));
-      if (city !== HCM_CITY) {
-        if (
-          delivery === ShippingMethod.Standard ||
-          delivery === ShippingMethod.Express
-        ) {
+      if (!isHcmCity(city, cityCode)) {
+        if (HCM_ONLY_DELIVERY_METHODS.includes(delivery)) {
           setDelivery(ShippingMethod.Shipment);
         }
       } else if (delivery === ShippingMethod.Shipment) {
@@ -428,10 +458,11 @@ export function useShippingForm() {
   );
 
   const subtotal = mounted ? total() : 0;
-  const isHCM = form.city && form.city === HCM_CITY;
+  const isHCM = isHcmCity(form.city, form.cityCode);
   const districtSurchargeRate = getDistrictShippingSurchargeRate(
     form.city,
-    form.districtCode
+    form.districtCode,
+    form.cityCode
   );
   const operationalSurchargeRate = getOperationalSurchargeRate();
 
@@ -456,10 +487,14 @@ export function useShippingForm() {
   const distanceFee =
     delivery === ShippingMethod.Express ? rawImmediateCost : rawBasicCost;
   const isPickup = delivery === ShippingMethod.Pickup;
-  const isDeliveryService = delivery === ShippingMethod.Shipment;
+  // Every courier tier — inter-city and both in-city speeds — is unquoted at
+  // checkout: the order is created with a zero fee and staff set the real
+  // courier amount from admin /orders. Only the own-rider options carry a
+  // distance-derived price.
+  const isFeePending = isFeePendingShippingMethod(delivery);
   const baseShippingCost = isPickup
     ? 0
-    : isDeliveryService
+    : isFeePending
       ? 0
       : delivery === ShippingMethod.Express
         ? immediateFee
@@ -719,25 +754,20 @@ export function useShippingForm() {
   // city (e.g. city changed back to HCM with delivery_service persisted).
   useEffect(() => {
     if (!form.city) return;
-    if (form.city !== HCM_CITY) {
-      if (
-        delivery === ShippingMethod.Standard ||
-        delivery === ShippingMethod.Express
-      ) {
+    if (!isHcmCity(form.city, form.cityCode)) {
+      if (HCM_ONLY_DELIVERY_METHODS.includes(delivery)) {
         setDelivery(ShippingMethod.Shipment);
       }
     } else if (delivery === ShippingMethod.Shipment) {
       setDelivery(ShippingMethod.Standard);
     }
-  }, [form.city, delivery]);
+  }, [form.city, form.cityCode, delivery]);
 
-  // Update distance fee when address changes (debounced)
+  // Update distance fee when address changes (debounced). Carrier tiers and
+  // pickup are flat-priced, so they skip geocoding (and its map/route render).
   useEffect(() => {
     let cancelled = false;
-    if (
-      delivery === ShippingMethod.Shipment ||
-      delivery === ShippingMethod.Pickup
-    ) {
+    if (delivery === ShippingMethod.Shipment || isPickup) {
       setDistanceKm(null);
       setIsCalculatingFee(false);
       return;
@@ -890,7 +920,7 @@ export function useShippingForm() {
     minPickupDate,
     pickupSlots,
     isPickup,
-    isDeliveryService,
+    isFeePending,
     handleChange,
     handleBlur,
     handleCityChange,

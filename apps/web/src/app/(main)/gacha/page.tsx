@@ -1,6 +1,7 @@
 import { GachaMachine } from "@/modules/gacha/ui/GachaMachine";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
+import { buildOg, toPlainText } from "@/lib/og";
 import Link from "next/link";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,30 +17,21 @@ export async function generateMetadata(): Promise<Metadata> {
     .maybeSingle();
 
   if (!event) {
-    return {
+    return buildOg({
       title: "Gacha",
       description:
         "Tham gia sự kiện quay thưởng để nhận phần thưởng hấp dẫn từ NoobStore.",
-    };
+      url: "/gacha",
+    });
   }
 
-  const description =
-    event.description?.slice(0, 160) ||
-    `Tham gia sự kiện ${event.name} để nhận phần thưởng hấp dẫn từ NoobStore.`;
-
-  return {
+  return buildOg({
     title: event.name,
-    description,
-    openGraph: {
-      title: event.name,
-      description,
-      url: "https://www.noobstore.xyz/gacha",
-    },
-    twitter: {
-      title: event.name,
-      description,
-    },
-  };
+    description:
+      toPlainText(event.description) ||
+      `Tham gia sự kiện ${event.name} để nhận phần thưởng hấp dẫn từ NoobStore.`,
+    url: "/gacha",
+  });
 }
 
 export default async function GachaPage() {

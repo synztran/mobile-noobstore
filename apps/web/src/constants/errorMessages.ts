@@ -10,4 +10,8 @@ export const VOUCHER_ERROR_MESSAGES = {
   MAX_VOUCHERS_PER_ORDER: (max: number) =>
     `Chỉ được áp dụng tối đa ${max} mã giảm giá. Vui lòng gỡ bỏ một mã đã áp dụng rồi thử lại.`,
   OUT_OF_RANGE: "Voucher không còn hiệu lực",
+  // Courier tiers are quoted after checkout, so their shipping fee is 0 until
+  // staff set it. A shipping voucher would resolve to 0đ saving there.
+  SHIPPING_FEE_NOT_QUOTED: (code: string) =>
+    `Voucher "${code}": Phí vận chuyển của phương thức này được báo sau khi đặt hàng, nên voucher giảm phí vận chuyển không áp dụng được.`,
 };

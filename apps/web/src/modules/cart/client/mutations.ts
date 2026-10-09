@@ -24,7 +24,13 @@ export function useAddCartItem() {
         const err = await res
           .json()
           .catch(() => ({ error: "Failed to add cart item" }));
-        throw new Error(err.error ?? "Failed to add cart item");
+        const msg = err.error ?? "Failed to add cart item";
+        if (err.available !== undefined && Number(err.available) >= 0) {
+          throw new Error(
+            `Chỉ còn ${Number(err.available)} sản phẩm này trong kho`
+          );
+        }
+        throw new Error(msg);
       }
       return res.json() as Promise<{ cart_id: string; item_id: string }>;
     },
@@ -54,7 +60,13 @@ export function useUpdateCartItem() {
         const err = await res
           .json()
           .catch(() => ({ error: "Failed to update cart item" }));
-        throw new Error(err.error ?? "Failed to update cart item");
+        const msg = err.error ?? "Failed to update cart item";
+        if (err.available !== undefined && Number(err.available) >= 0) {
+          throw new Error(
+            `Chỉ còn ${Number(err.available)} sản phẩm này trong kho`
+          );
+        }
+        throw new Error(msg);
       }
     },
     onSuccess: () => {
@@ -73,7 +85,9 @@ export function useRemoveCartItem() {
         method: "DELETE",
       });
       if (res.status === 401)
-        throw new LoginRequiredError("Vui lòng đăng nhập để chỉnh sửa giỏ hàng");
+        throw new LoginRequiredError(
+          "Vui lòng đăng nhập để chỉnh sửa giỏ hàng"
+        );
       if (!res.ok) throw new Error("Failed to remove cart item");
     },
     // Await the refetch so callers that key UI state off `onSettled` only

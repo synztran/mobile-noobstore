@@ -3,6 +3,7 @@ import { SearchPageClient } from "@/modules/products/ui/search/SearchPageClient"
 import { getProducts } from "@/modules/products/server/ssr";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { buildOg } from "@/lib/og";
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; sort?: string }>;
@@ -12,16 +13,17 @@ export async function generateMetadata({
   searchParams,
 }: SearchPageProps): Promise<Metadata> {
   const { q } = await searchParams;
-  const title = q
-    ? `Tìm kiếm: "${q}" - NoobStore`
-    : "Tìm kiếm sản phẩm - NoobStore";
-  return {
+  const term = q?.trim();
+  // No " - NoobStore" suffix: the root layout's title template adds it.
+  const title = term ? `Tìm kiếm: "${term}"` : "Tìm kiếm sản phẩm";
+  return buildOg({
     title,
-    description: q
-      ? `Kết quả tìm kiếm cho "${q}" tại NoobStore`
+    description: term
+      ? `Kết quả tìm kiếm cho "${term}" tại NoobStore`
       : "Tìm kiếm sản phẩm bàn phím cơ, switch và phụ kiện tại NoobStore",
-    openGraph: { title, siteName: "NoobStore" },
-  };
+    // Canonical strips the query so every search variant points at one URL.
+    url: "/search",
+  });
 }
 
 const PAGE_SIZE = 24;
@@ -36,6 +38,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         limit: PAGE_SIZE,
         offset: 0,
         slim: true,
+        // /search pages come from the same /api/products endpoint as /shop,
+        // which sinks sold-out items. Match it here or the SSR payload and the
+        // first fetched page would order differently.
+        soldOutLast: true,
       })
     : null;
 

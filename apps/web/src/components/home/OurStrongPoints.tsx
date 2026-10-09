@@ -74,7 +74,7 @@ export function OurStrongPoints() {
         </div>
       ) : (
         <div
-          className={`relative z-10 gap-4 sm:grid sm:grid-cols-2 ${
+          className={`relative z-10 grid gap-4 sm:grid-cols-2 ${
             props.length > 2 ? "lg:grid-cols-4" : "lg:grid-cols-2"
           }`}
         >

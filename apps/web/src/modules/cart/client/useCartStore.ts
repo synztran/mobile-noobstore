@@ -54,6 +54,20 @@ interface CartStore {
   itemCount: () => number;
 }
 
+// One unit-price rule for the whole cart. `components[].price_adjustment` is
+// already override-resolved at add-to-cart time, so no rules are needed here.
+// `total()` and `subtotal()` used to disagree — subtotal() dropped the variant
+// entirely — which made the cart header and the checkout summary show different
+// numbers for the same basket.
+function lineUnitPrice(item: CartItem): number {
+  const base = item.variant?.effective_price ?? item.product.base_price;
+  const components = (item.components ?? []).reduce(
+    (sum, c) => sum + (c.price_adjustment || 0),
+    0
+  );
+  return base + components;
+}
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -72,13 +86,21 @@ export const useCartStore = create<CartStore>()(
           const isKit = (components?.length ?? 0) > 0;
           const existing = state.items.find((i) => {
             if (i.product.id !== product.id) return false;
+            // A kit line's identity is its kit variant PLUS its component set:
+            // Purple+70sw and Trash+70sw are different products at different
+            // prices, so the kit variant must be part of the merge key or the
+            // two would collapse into one line.
             if (isKit) {
-              const a = (i.components ?? [])
-                .map((c) => c.variant_id)
+              const a = [
+                i.variant?.id ?? "",
+                ...(i.components ?? []).map((c) => c.variant_id),
+              ]
                 .sort()
                 .join(",");
-              const b = (components ?? [])
-                .map((c) => c.variant_id)
+              const b = [
+                variant?.id ?? "",
+                ...(components ?? []).map((c) => c.variant_id),
+              ]
                 .sort()
                 .join(",");
               return a === b;
@@ -195,24 +217,16 @@ export const useCartStore = create<CartStore>()(
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
 
+      // One unit-price rule for the whole cart. `components[].price_adjustment` is
+      // already override-resolved at add-to-cart time, so no rules are needed
+      // here. `total()` and `subtotal()` used to disagree — subtotal() dropped
+      // the variant entirely — which made the cart header and the checkout
+      // summary show different numbers for the same basket.
       total: () =>
-        get().items.reduce((sum, i) => {
-          const basePrice = i.variant?.effective_price ?? i.product.base_price;
-          const componentsTotal = (i.components ?? []).reduce(
-            (s, c) => s + c.price_adjustment,
-            0
-          );
-          return sum + (basePrice + componentsTotal) * i.quantity;
-        }, 0),
+        get().items.reduce((sum, i) => sum + lineUnitPrice(i) * i.quantity, 0),
 
       subtotal: () =>
-        get().items.reduce((sum, i) => {
-          const componentsTotal = (i.components ?? []).reduce(
-            (s, c) => s + c.price_adjustment,
-            0
-          );
-          return sum + (i.product.base_price + componentsTotal) * i.quantity;
-        }, 0),
+        get().items.reduce((sum, i) => sum + lineUnitPrice(i) * i.quantity, 0),
 
       itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
     }),

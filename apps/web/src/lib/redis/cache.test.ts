@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  buildProductListCacheKey,
   invalidateCacheByPattern,
   invalidateProductCaches,
 } from "./cache";
@@ -12,6 +13,14 @@ const keys = vi.fn(async (pattern: string) => ["k:" + pattern]);
 
 vi.mock("./client", () => ({
   getRedis: () => ({ del, keys, get: vi.fn(), set: vi.fn() }),
+}));
+
+// invalidateProductCaches() also revalidateTag("products") to purge Next's
+// Data Cache / ISR entries — that needs a static generation store, which only
+// exists inside a real request. Assert the tag call through this mock instead.
+const revalidateTag = vi.fn();
+vi.mock("next/cache", () => ({
+  revalidateTag: (tag: string) => revalidateTag(tag),
 }));
 
 describe("invalidateCacheByPattern", () => {
@@ -37,6 +46,7 @@ describe("invalidateProductCaches", () => {
   beforeEach(() => {
     del.mockClear();
     keys.mockClear();
+    revalidateTag.mockClear();
   });
 
   it("invalidates the exact shared keys", async () => {
@@ -45,8 +55,10 @@ describe("invalidateProductCaches", () => {
     expect(del).toHaveBeenCalledWith(
       "brands",
       "categories",
-      "v2:product-seo-data",
+      "v2:product-seo-data"
     );
+    // …and purges the Next.js tagged cache in the same call.
+    expect(revalidateTag).toHaveBeenCalledWith("products");
   });
 
   it("scans the expected v2-prefixed patterns (no stale v1 prefixes)", async () => {
@@ -69,7 +81,7 @@ describe("invalidateProductCaches", () => {
       "v2:quick-pick:*",
     ]) {
       expect(scanned, `pattern ${expected} should be scanned`).toContain(
-        expected,
+        expected
       );
     }
 
@@ -87,5 +99,53 @@ describe("invalidateProductCaches", () => {
     for (const scanned of keys.mock.calls.map(([p]) => "k:" + p)) {
       expect(delKeys).toContain(scanned);
     }
+  });
+});
+
+// ─── buildProductListCacheKey ────────────────────────────────────────────────
+
+describe("buildProductListCacheKey", () => {
+  const base = {
+    search: "",
+    categorySlug: "",
+    brand: "",
+    priceMin: 0,
+    priceMax: 0,
+    sort: "newest",
+    limit: 12,
+    offset: 0,
+  };
+
+  it("distinguishes soldOutLast from the plain ordering", () => {
+    // Same rows, different ORDER. Without this segment a flag-on /shop entry
+    // would collide with a flag-off /api/products/sale entry for identical
+    // filters and serve the wrong ordering.
+    const off = buildProductListCacheKey({ ...base });
+    const on = buildProductListCacheKey({ ...base, soldOutLast: true });
+    expect(on).not.toBe(off);
+  });
+
+  it("treats an omitted flag as false", () => {
+    expect(buildProductListCacheKey({ ...base })).toBe(
+      buildProductListCacheKey({ ...base, soldOutLast: false }),
+    );
+  });
+
+  it("keeps distinct offsets and limits distinct", () => {
+    expect(buildProductListCacheKey({ ...base, offset: 12 })).not.toBe(
+      buildProductListCacheKey({ ...base, offset: 0 }),
+    );
+    expect(buildProductListCacheKey({ ...base, limit: 24 })).not.toBe(
+      buildProductListCacheKey({ ...base, limit: 12 }),
+    );
+  });
+
+  it("keeps distinct filters distinct", () => {
+    expect(buildProductListCacheKey({ ...base, search: "gmk" })).not.toBe(
+      buildProductListCacheKey({ ...base }),
+    );
+    expect(buildProductListCacheKey({ ...base, slim: true })).not.toBe(
+      buildProductListCacheKey({ ...base }),
+    );
   });
 });

@@ -58,8 +58,7 @@ export async function restoreOrderStock(orderId: string): Promise<void> {
       const compQty = c.quantity ?? 1;
       variantTotals.set(
         c.product_variant_id,
-        (variantTotals.get(c.product_variant_id) ?? 0) +
-          parentQty * compQty
+        (variantTotals.get(c.product_variant_id) ?? 0) + parentQty * compQty
       );
     }
 
@@ -91,9 +90,12 @@ export async function restoreOrderStock(orderId: string): Promise<void> {
   }
 
   // ── 2. Simple products (no components) ───────────────────────────────
+  // Mirror of submit_order Phase 2: a line that debited its variant row must
+  // credit that same row (order_items.variant_id); the product row is only
+  // credited when variant_id is NULL. Kits never debit their product row.
   const { data: items, error: itemsErr } = await supabase
     .from("order_items")
-    .select("product_id, quantity")
+    .select("product_id, quantity, variant_id")
     .eq("order_id", orderId)
     .not("product_id", "is", null);
 
@@ -113,13 +115,49 @@ export async function restoreOrderStock(orderId: string): Promise<void> {
       (kitRows ?? []).map((r) => r.parent_product_id)
     );
 
+    const variantTotals2 = new Map<string, number>();
     const productTotals = new Map<string, number>();
     for (const item of items) {
       if (!item.product_id || kitProductIds.has(item.product_id)) continue;
-      productTotals.set(
-        item.product_id,
-        (productTotals.get(item.product_id) ?? 0) + item.quantity
-      );
+      if (item.variant_id) {
+        variantTotals2.set(
+          item.variant_id,
+          (variantTotals2.get(item.variant_id) ?? 0) + item.quantity
+        );
+      } else {
+        productTotals.set(
+          item.product_id,
+          (productTotals.get(item.product_id) ?? 0) + item.quantity
+        );
+      }
+    }
+
+    if (variantTotals2.size > 0) {
+      const { data: variants, error: varErr } = await supabase
+        .from("product_variants")
+        .select("id, stock_quantity")
+        .in("id", Array.from(variantTotals2.keys()));
+
+      if (varErr) throw new Error(varErr.message);
+
+      for (const v of variants ?? []) {
+        const restore = variantTotals2.get(v.id) ?? 0;
+        const newQty = (v.stock_quantity ?? 0) + restore;
+        updates.push(
+          Promise.resolve(
+            supabase
+              .from("product_variants")
+              .update({ stock_quantity: newQty })
+              .eq("id", v.id)
+              .then(({ error }: { error: { message: string } | null }) => {
+                if (error)
+                  throw new Error(
+                    `Failed to restore variant ${v.id}: ${error.message}`
+                  );
+              })
+          )
+        );
+      }
     }
 
     if (productTotals.size > 0) {

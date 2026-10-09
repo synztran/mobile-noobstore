@@ -10,6 +10,10 @@ import type {
 } from "@/modules/products/types";
 import type { CategoryItem } from "@/modules/products/server/ssr";
 import type { SelectedComponent } from "@/lib/data";
+import {
+  kitPriceOverrides,
+  resolveKitUnitPrice,
+} from "@/modules/products/kit-pricing";
 import { trackAddToCart, toGAProduct } from "@/lib/analytics";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { toast } from "@/lib/toast";
@@ -124,19 +128,103 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
     return disabled;
   }, [productRules, selections, groups]);
 
-  // ── Price ─────────────────────────────────────────────────────────────────
-  const componentAdjustment = groups.reduce((sum, group) => {
-    const ids = selections[group.component_group] ?? [];
-    let groupSum = 0;
-    for (const id of ids) {
-      const v = group.variants.find((gv) => gv.id === id);
-      groupSum += v?.price_adjustment ?? 0;
-    }
-    return sum + groupSum;
-  }, 0);
+// Every component variant currently picked, flattened across groups. Shared by
+  // the price preview and the submit payload so the two can never disagree.
+  const selectedComponents = useMemo<SelectedComponent[]>(
+    () =>
+      groups.flatMap((group) =>
+        (selections[group.component_group] ?? []).flatMap((selectedId) => {
+          const v = group.variants.find((gv) => gv.id === selectedId);
+          if (!v) return [];
+          return [
+            {
+              variant_id: v.id,
+              variant_name: v.variant_name,
+              component_group: group.component_group,
+              price_adjustment: v.price_adjustment,
+              thumbnail: v.thumbnail,
+              is_pre_order: v.is_pre_order ?? false,
+              pre_order_config: v.pre_order_config ?? null,
+            },
+          ];
+        })
+      ),
+    [groups, selections]
+  );
 
+// Compute enriched groups with effective price adjustments based on current selections
+  const enrichedGroups = useMemo(() => {
+    const selectedComponentIds = Object.entries(selections)
+      .filter(([g]) => g !== "__variant__")
+      .flatMap(([, ids]) => ids);
+    const selectedVariantIdEnr = selections["__variant__"]?.[0];
+    const conditionIds = [
+      ...(selectedVariantIdEnr ? [selectedVariantIdEnr] : []),
+      ...selectedComponentIds,
+    ];
+    const overrides = kitPriceOverrides(productRules, conditionIds);
+    return groups.map((g) => ({
+      ...g,
+      variants: g.variants.map((v) => {
+        const ov = Object.prototype.hasOwnProperty.call(overrides, v.id)
+          ? overrides[v.id]
+          : undefined;
+        const effective =
+          typeof ov === "number" && Number.isFinite(ov) ? ov : v.price_adjustment;
+        return {
+          ...v,
+          effective_price_adjustment: effective,
+        };
+      }),
+    }));
+  }, [groups, productRules, selections]);
+
+// The product's own selected variant. Kits resolve this too now — a kit
+  // variant is a real choice (colourway) with its own price that arms the
+  // compatibility rules. It is NOT a stock pool for a kit: availability comes
+  // from the component variants.
+  const selectedSimpleVariant = useMemo(
+    () =>
+      activeProduct?.variants.find(
+        (v) => v.id === selections["__variant__"]?.[0]
+      ) ?? null,
+    [activeProduct, selections]
+  );
+
+  // ── Price ─────────────────────────────────────────────────────────────────
   const hasComponents = groups.length > 0;
-  const totalPrice = (activeProduct?.base_price ?? 0) + componentAdjustment;
+  const kitVariantId = selectedSimpleVariant?.id ?? null;
+  // A rule's condition may be the kit's own variant or one of its component
+  // variants — the live catalogue authors them the second way (e.g. YOK
+  // Switches keys off the "Purple" variant of its Version component), so both
+  // go into the candidate set.
+  const conditionVariantIds = [
+    ...(kitVariantId ? [kitVariantId] : []),
+    ...selectedComponents.map((c) => c.variant_id),
+  ];
+  const pricing = resolveKitUnitPrice({
+    basePrice: activeProduct?.base_price ?? 0,
+    kitVariant: selectedSimpleVariant,
+    components: selectedComponents,
+    overrides: kitPriceOverrides(productRules, conditionVariantIds),
+  });
+  const totalPrice = pricing.unitPrice;
+  const componentAdjustment = pricing.contributions.reduce(
+    (sum, c) => sum + (c.price_adjustment ?? 0),
+    0
+  );
+
+  // The cart snapshot carries each component's RESOLVED contribution, so the
+  // cart header, the cart row and the checkout summary all show the overridden
+  // price without needing the rules. Checkout recomputes from the DB anyway.
+  const resolvedComponents = useMemo<SelectedComponent[]>(
+    () =>
+      selectedComponents.map((component, index) => ({
+        ...component,
+        price_adjustment: pricing.contributions[index]?.price_adjustment ?? 0,
+      })),
+    [selectedComponents, pricing.contributions]
+  );
 
   const missingRequired = groups
     .filter(
@@ -378,7 +466,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
     addItem(
       { ...activeProduct, brand: activeProduct.brand ?? "" },
       selectedSimpleVariant,
-      hasComponents ? components : undefined,
+      hasComponents ? resolvedComponents : undefined,
       activeProduct.gifts
     );
 
@@ -393,7 +481,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
   return {
     products,
     activeProduct,
-    groups,
+    groups: enrichedGroups,
     productRules,
     selections,
     submitting,

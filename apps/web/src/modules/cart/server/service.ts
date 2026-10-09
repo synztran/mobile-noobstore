@@ -7,10 +7,12 @@ import {
 } from "@/modules/cart/server/availability";
 import type { Database } from "@/lib/supabase/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type {
-  CartApiItem,
-  UpsertCartInput,
-} from "@/modules/cart/types";
+import type { CartApiItem, UpsertCartInput } from "@/modules/cart/types";
+import {
+  kitPriceOverrides,
+  toRulesByProductId,
+} from "@/modules/products/kit-pricing";
+import type { RuleRow } from "@/modules/products/kit-pricing";
 
 type Supabase = SupabaseClient<Database>;
 
@@ -30,12 +32,18 @@ export class MaxLimitExceededError extends Error {
   }
 }
 
+export class KitNotConfiguredError extends Error {
+  constructor() {
+    super("Sản phẩm chưa được cấu hình");
+  }
+}
+
 function throwIfUnavailable(result: AvailabilityResult): void {
   if (result.ok) return;
   if (result.kind === "max") throw new MaxLimitExceededError(result.max);
+  if (result.kind === "not_configured") throw new KitNotConfiguredError();
   throw new StockExceededError(result.available);
 }
-
 
 /**
  * The one, true lookup for "the user's active cart".
@@ -122,6 +130,74 @@ async function fetchVariants(supabase: Supabase, variantIds: string[]) {
     map.set(v.id, v);
   }
   return map;
+}
+
+/**
+ * Re-apply per-pairing price overrides to hydrated kit lines.
+ *
+ * A child row only stores a component `variant_id`, so the raw
+ * `product_variants.price_adjustment` it loads with is the generic price, not
+ * the contribution for this specific kit variant. Without this the cart would
+ * show a different total right after a reload than it did at add-to-cart time.
+ * Checkout still recomputes authoritatively; this only keeps the display honest.
+ */
+async function applyKitPriceOverrides(
+  supabase: Supabase,
+  items: CartApiItem[]
+): Promise<void> {
+  const kitProductIds = [
+    ...new Set(
+      items
+        .filter((i) => (i.children?.length ?? 0) > 0 && i.product_id)
+        .map((i) => i.product_id as string)
+    ),
+  ];
+  if (kitProductIds.length === 0) return;
+
+  const { data: ruleRows } = await supabase
+    .from("component_variant_rules")
+    .select(
+      `id, kit_product_id, condition_variant_id, target_component_product_id,
+       component_variant_rule_allowed(variant_id, price_override)`
+    )
+    .in("kit_product_id", kitProductIds);
+
+  if (!ruleRows || ruleRows.length === 0) return;
+
+  const rulesByProduct = toRulesByProductId(
+    (ruleRows ?? []) as unknown as RuleRow[]
+  );
+
+  for (const item of items) {
+    const rules = item.product_id ? rulesByProduct[item.product_id] : undefined;
+    if (!rules || rules.length === 0) continue;
+
+    // A rule's condition may be the kit's own variant OR one of its component
+    // variants (the live catalogue authors them the second way), so build the
+    // candidate set from the line's own variant plus its selected components.
+    const conditionIds = new Set<string>();
+    if (item.variant_id) conditionIds.add(item.variant_id);
+    for (const child of item.children ?? []) {
+      if (child.variant_id) conditionIds.add(child.variant_id);
+    }
+
+    // Merge the contributions of every applicable rule into one lookup.
+    const perComponent = new Map<string, number>();
+    for (const [variantId, override] of Object.entries(
+      kitPriceOverrides(rules, [...conditionIds])
+    )) {
+      perComponent.set(variantId, override);
+    }
+    if (perComponent.size === 0) continue;
+
+    for (const child of item.children ?? []) {
+      const contribution = child.variant_id
+        ? perComponent.get(child.variant_id)
+        : undefined;
+      if (contribution === undefined || !child.variant) continue;
+      child.variant.price_adjustment = contribution;
+    }
+  }
 }
 
 export async function getCartItems(
@@ -265,6 +341,8 @@ export async function getCartItems(
     };
   });
 
+  await applyKitPriceOverrides(supabase, items);
+
   return items;
 }
 
@@ -272,15 +350,23 @@ async function findExistingParentMatch(
   supabase: Supabase,
   cartId: string,
   productId: string,
-  incomingVariantIds: string[]
+  incomingVariantIds: string[],
+  incomingVariantId: string | null
 ): Promise<{ id: string; quantity: number } | null> {
-  const { data: parent } = await supabase
+  const { data: parents } = await supabase
     .from("cart_items")
-    .select("id, quantity")
+    .select("id, quantity, variant_id")
     .eq("cart_id", cartId)
     .eq("product_id", productId)
     .is("parent_cart_item_id", null)
-    .maybeSingle();
+    .limit(10);
+
+  // A cart can legitimately hold several kit lines for the same product (one
+  // per kit variant), so filter in JS instead of maybeSingle(), which throws
+  // when more than one parent row matches.
+  const parent = (parents ?? []).find(
+    (p) => (p.variant_id ?? null) === incomingVariantId
+  );
 
   if (!parent) return null;
 
@@ -316,7 +402,8 @@ export async function upsertCartItem(
       supabase,
       cartId,
       input.product_id,
-      components.map((c) => c.variant_id)
+      components.map((c) => c.variant_id),
+      input.variant_id ?? null
     );
 
     const proposedQty = (existing?.quantity ?? 0) + (input.quantity ?? 1);
@@ -346,7 +433,10 @@ export async function upsertCartItem(
       id: parentId,
       cart_id: cartId,
       product_id: input.product_id,
-      variant_id: null,
+      // Persist the kit variant so distinct kit variants form distinct cart
+      // lines. The kit variant is identity only — availability still comes from
+      // the component child rows below.
+      variant_id: input.variant_id ?? null,
       quantity: input.quantity ?? 1,
       parent_cart_item_id: null,
     });
@@ -456,13 +546,15 @@ export async function updateCartItemQuantity(
   if (item?.product_id && item.cart_id) {
     const childVariantIds = item.parent_cart_item_id
       ? []
-      : ((await supabase
-          .from("cart_items")
-          .select("variant_id")
-          .eq("parent_cart_item_id", itemId)
-          .not("variant_id", "is", null)).data ?? []).flatMap((c) =>
-          c.variant_id ? [c.variant_id] : []
-        );
+      : (
+          (
+            await supabase
+              .from("cart_items")
+              .select("variant_id")
+              .eq("parent_cart_item_id", itemId)
+              .not("variant_id", "is", null)
+          ).data ?? []
+        ).flatMap((c) => (c.variant_id ? [c.variant_id] : []));
 
     const snapshot = await loadAvailabilitySnapshot(supabase, {
       cartId: item.cart_id,

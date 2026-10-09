@@ -21,6 +21,12 @@ export function useApplyVouchers() {
       shippingCost?: number;
       shippingMethodId?: string;
       items?: VoucherApplyItem[];
+      /**
+       * Set for background recomputes of already-applied vouchers (the shopper
+       * changed the cart, so the amounts must be re-priced). Those must not pop
+       * an "applied" toast as if the shopper had just picked the voucher.
+       */
+      silent?: boolean;
     }) => {
       const maxVouchers = useDiscountStore.getState().maxVouchersPerOrder;
       const uniqueIds = [...new Set(voucherIds)];
@@ -58,12 +64,8 @@ export function useApplyVouchers() {
     onMutate: () => {
       useDiscountStore.setState({ applyingVoucher: true, error: null });
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       if (!data) return;
-      trackVoucherApply(
-        data.vouchers.map((v) => v.voucherInfo.voucher_code),
-        data.totalDiscountAmount + data.totalShippingDiscountAmount
-      );
       useDiscountStore.getState().setAppliedVouchers(
         data.vouchers,
         data.totalDiscountAmount,
@@ -71,6 +73,11 @@ export function useApplyVouchers() {
         data.totalGifts,
       );
       queryClient.invalidateQueries({ queryKey: appQueryKeys.voucher.list.queryKey });
+      if (variables.silent) return;
+      trackVoucherApply(
+        data.vouchers.map((v) => v.voucherInfo.voucher_code),
+        data.totalDiscountAmount + data.totalShippingDiscountAmount
+      );
       toast.success("Áp dụng voucher thành công");
     },
     onError: (error) => {

@@ -21,7 +21,9 @@ type ResolvedItem = {
  * Returns active, non-deleted vouchers eligible for auto-apply:
  *  - product/category-scoped vouchers that match the cart
  *  - customer-specific vouchers for the current session user
- * Order_total/shipping_fee vouchers are intentionally NOT auto-applied.
+ * Order_total vouchers (including every shipping reward type) are
+ * intentionally NOT auto-applied — a shipping voucher is worth nothing until
+ * the customer picks a delivery method, so it is applied explicitly instead.
  */
 export async function GET(req: Request) {
   try {
@@ -90,11 +92,17 @@ export async function GET(req: Request) {
 
     const allVouchers = (raw ?? []) as unknown as VoucherRow[];
     // Filter auto_apply after fetch (auto_apply not in DB types until migration applied)
-    const autoApplyVouchers = allVouchers.filter((v: any) => v.auto_apply === true);
+    const autoApplyVouchers = allVouchers.filter(
+      (v: any) => v.auto_apply === true
+    );
 
     // ── Pre-filter: skip vouchers that hit total usage limit ──────────
     const maybeEligible = autoApplyVouchers.filter((v) => {
-      if (v.usage_limit_total !== null && v.usage_limit_total > 0 && v.used_count >= v.usage_limit_total) {
+      if (
+        v.usage_limit_total !== null &&
+        v.usage_limit_total > 0 &&
+        v.used_count >= v.usage_limit_total
+      ) {
         return false; // voucher exhausted globally
       }
       return true;
@@ -102,7 +110,9 @@ export async function GET(req: Request) {
 
     // ── Batch-fetch per-user usage for vouchers with per-user limits ──
     const perUserLimitVoucherIds = maybeEligible
-      .filter((v) => v.usage_limit_per_user !== null && v.usage_limit_per_user > 0)
+      .filter(
+        (v) => v.usage_limit_per_user !== null && v.usage_limit_per_user > 0
+      )
       .map((v) => v.id);
 
     const userUsageMap = new Map<string, number>();
@@ -167,8 +177,7 @@ export async function GET(req: Request) {
         } else if (v.scope_type === "category") {
           const targets = new Set(v.applies_to_category_slugs ?? []);
           matches = items.some(
-            (i) =>
-              targets.has(i.category_slug ?? "") && !excl.has(i.product_id)
+            (i) => targets.has(i.category_slug ?? "") && !excl.has(i.product_id)
           );
         }
 
@@ -181,15 +190,15 @@ export async function GET(req: Request) {
     // Sort by discount amount (highest first) so auto-apply picks best voucher
     eligible.sort((a, b) => {
       const aDiscount =
-        a.reward_type === 'amount_off'
+        a.reward_type === "amount_off"
           ? Number(a.amount_off ?? 0)
-          : a.reward_type === 'percent_off'
-            ? Number(a.percent_off ?? 0)  // percent as rough sort key
+          : a.reward_type === "percent_off"
+            ? Number(a.percent_off ?? 0) // percent as rough sort key
             : 0;
       const bDiscount =
-        b.reward_type === 'amount_off'
+        b.reward_type === "amount_off"
           ? Number(b.amount_off ?? 0)
-          : b.reward_type === 'percent_off'
+          : b.reward_type === "percent_off"
             ? Number(b.percent_off ?? 0)
             : 0;
       return bDiscount - aDiscount;
@@ -204,6 +213,9 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     console.error("[GET /api/vouchers/eligible] Unexpected error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

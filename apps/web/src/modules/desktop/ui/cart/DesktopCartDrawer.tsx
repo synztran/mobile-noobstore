@@ -43,7 +43,6 @@ export function DesktopCartDrawer() {
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
         }`}
-        onClick={closeCart}
       />
 
       {/* Right-side panel */}
@@ -137,6 +136,7 @@ export function DesktopCartDrawer() {
 
       {/* Confirmation Modal */}
       <dialog
+        onCancel={(e) => e.preventDefault()}
         ref={confirmDialogRef}
         className="modal modal-bottom backdrop-blur-sm sm:modal-middle"
       >
@@ -169,9 +169,7 @@ export function DesktopCartDrawer() {
             </button>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={cancelRemove}>close</button>
-        </form>
+        <div className="modal-backdrop" />
       </dialog>
     </>
   );

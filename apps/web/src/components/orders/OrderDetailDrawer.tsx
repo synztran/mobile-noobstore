@@ -7,6 +7,7 @@ import { VoucherInfo } from "@/components/voucher/VoucherInfo";
 import { formatVND } from "@/lib/currency";
 import {
   isCarrierShippingMethod,
+  hasUnquotedShippingFee,
   isPickupShippingMethod,
 } from "@/lib/shipping-method";
 import { buildTrackingUrl } from "@/lib/tracking";
@@ -285,7 +286,15 @@ function OrderDetailContent({
 
   const isSupportAvailable = NON_TERMINAL_STATUSES.includes(detail.status);
   const isCancellable = CANCELLABLE_STATUSES.includes(detail.status);
-  const isDeliveryService = isCarrierShippingMethod(detail.shipping_method_id);
+  // Fulfilled by a third-party courier (full address + tracking link) vs the
+  // courier tiers whose fee is still unquoted ("Cập nhật sau").
+  const isCarrierMethod = isCarrierShippingMethod(detail.shipping_method_id);
+  // Reads the quoted amount once staff enter it, so the copy clears itself
+  // instead of showing "Cập nhật sau" on an order that has been priced.
+  const shippingFeePending = hasUnquotedShippingFee(
+    detail.shipping_method_id,
+    detail.shipping_fee
+  );
   const isPickup = isPickupShippingMethod(detail.shipping_method_id);
   const canRequestReturn =
     detail.status === "delivered" &&
@@ -670,12 +679,14 @@ function OrderDetailContent({
                   <p className="text-center text-[11px] text-on-surface-variant">
                     Kèm theo CMND/CCCD để đối chiếu khi nhận hàng
                   </p>
-                  <div className="my-3 divider" />
+                  <div className="divider my-3" />
                   <button
                     type="button"
-                    className="btn btn-primary btn-outline btn-sm w-full"
+                    className="btn btn-outline btn-primary btn-sm w-full"
                     onClick={handleShowPickupCode}
-                    disabled={pickupMutation.isPending || pickupWaitSecondsLeft > 0}
+                    disabled={
+                      pickupMutation.isPending || pickupWaitSecondsLeft > 0
+                    }
                   >
                     <RefreshCw className="h-4 w-4" />
                     {pickupMutation.isPending
@@ -695,7 +706,9 @@ function OrderDetailContent({
                     type="button"
                     className="btn btn-primary btn-sm w-full"
                     onClick={handleShowPickupCode}
-                    disabled={pickupMutation.isPending || pickupWaitSecondsLeft > 0}
+                    disabled={
+                      pickupMutation.isPending || pickupWaitSecondsLeft > 0
+                    }
                   >
                     <ShieldCheck className="h-4 w-4" />
                     {pickupMutation.isPending
@@ -726,7 +739,7 @@ function OrderDetailContent({
               </p>
             )}
             <p className="text-sm text-on-surface-variant">
-              {(isDeliveryService
+              {(isCarrierMethod
                 ? [
                     detail.delivery_address.apartment,
                     detail.delivery_address.street_address,
@@ -753,7 +766,7 @@ function OrderDetailContent({
       )}
 
       {/* Shipment tracking */}
-      {isDeliveryService &&
+      {isCarrierMethod &&
         detail.tracking_number &&
         detail.carriers &&
         detail.carriers.name && (
@@ -865,7 +878,7 @@ function OrderDetailContent({
           <div className="flex justify-between text-sm">
             <span className="text-on-surface-variant">Vận chuyển</span>
             <span className="font-bold text-on-surface">
-              {isDeliveryService
+              {shippingFeePending
                 ? "Cập nhật sau"
                 : formatVND(detail.shipping_fee)}
             </span>
@@ -976,10 +989,8 @@ function OrderDetailContent({
 
       {/* Cancel confirmation modal */}
       <dialog
+        onCancel={(e) => e.preventDefault()}
         className={`modal !mt-0 ${showCancelModal ? "modal-open" : ""}`}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setShowCancelModal(false);
-        }}
       >
         <div className="modal-box rounded-2xl">
           <div className="flex flex-col items-center gap-2 text-center">
@@ -1028,17 +1039,13 @@ function OrderDetailContent({
             </button>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setShowCancelModal(false)}>close</button>
-        </form>
+        <div className="modal-backdrop" />
       </dialog>
 
       {/* Return request modal */}
       <dialog
+        onCancel={(e) => e.preventDefault()}
         className={`modal !mt-0 ${showReturnModal ? "modal-open" : ""}`}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setShowReturnModal(false);
-        }}
       >
         <div className="modal-box rounded-2xl">
           <div className="flex flex-col items-center gap-2 text-center">
@@ -1109,9 +1116,7 @@ function OrderDetailContent({
             </button>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setShowReturnModal(false)}>close</button>
-        </form>
+        <div className="modal-backdrop" />
       </dialog>
     </>
   );
@@ -1151,7 +1156,6 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
         }`}
-        onClick={onClose}
       />
 
       {/* Drawer */}

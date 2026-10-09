@@ -188,6 +188,7 @@ export function ProductConfigurator({
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {group.variants.map((v) => {
+                  console.log(v);
                   const selected = groupSelection.includes(v.id);
                   const soldOut = v.stock_quantity === 0;
                   const ruleDisabled = disabledVariantIds?.has(v.id) ?? false;
@@ -208,21 +209,29 @@ export function ProductConfigurator({
                         <p className="text-left text-xs font-black">
                           {v.variant_name}
                         </p>
-                        <p
-                          className={clsx(
-                            "text-right text-xs font-black",
-                            soldOut || ruleDisabled || overCap ? "sr-only" : "",
-                            v.price_adjustment !== 0 ? "" : "sr-only",
-                            v.price_adjustment > 0
-                              ? `${selected ? "text-green-400" : "text-green-700"}`
-                              : `${selected ? "text-red-400" : "text-red-700"}`
-                          )}
-                        >
-                          (
-                          {v.price_adjustment &&
-                            (v.price_adjustment > 0 ? "+" : "")}
-                          {formatShortVND(v.price_adjustment)})
-                        </p>
+                        {(() => {
+                          const eff =
+                            v.effective_price_adjustment ??
+                            v.price_adjustment;
+                          const shouldShow =
+                            eff !== undefined && eff !== null && eff !== 0;
+                          return (
+                            <p
+                              className={clsx(
+                                "text-right text-xs font-black",
+                                soldOut || ruleDisabled || overCap ? "sr-only" : "",
+                                shouldShow ? "" : "sr-only",
+                                eff > 0
+                                  ? `${selected ? "text-green-400" : "text-green-700"}`
+                                  : `${selected ? "text-red-400" : "text-red-700"}`
+                              )}
+                            >
+                              (
+                              {shouldShow && (eff > 0 ? "+" : "")}
+                              {formatShortVND(eff)})
+                            </p>
+                          );
+                        })()}
                       </div>
                       <div className="absolute -top-2 left-1">
                         <VariantStatusBadge
@@ -245,49 +254,6 @@ export function ProductConfigurator({
             </div>
           );
         })}
-
-        {/* Simple variant selector (non-composite products) */}
-        {!hasComponents && variants.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-              Chọn tùy chọn
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {variants.map((v) => {
-                const isSelected =
-                  selections["__variant__"]?.includes(v.id) ?? false;
-                const soldOut = v.stock_quantity === 0;
-                return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    disabled={soldOut}
-                    onClick={() => onSelect("__variant__", v.id)}
-                    className={simpleVariantButtonClass(
-                      "rounded-xl px-4 py-3 text-left text-sm font-bold transition-all",
-                      { soldOut, isSelected }
-                    )}
-                  >
-                    <p className="truncate font-black">{v.variant_name}</p>
-                    {soldOut ? (
-                      <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-error">
-                        Hết hàng
-                      </p>
-                    ) : v.is_pre_order ? (
-                      <p className="mt-0.5 text-[10px] font-black uppercase tracking-wide text-violet-400">
-                        Đặt trước
-                      </p>
-                    ) : (
-                      <p className="mt-0.5 text-xs opacity-70">
-                        {formatVND(v.effective_price)}
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

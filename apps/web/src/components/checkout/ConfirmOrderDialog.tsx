@@ -11,7 +11,8 @@ interface ConfirmOrderDialogProps {
   itemCount: number;
   subtotal: number;
   shippingCost: number;
-  isDeliveryService: boolean;
+  /** Fee not known yet (inter-city courier) — render "Cập nhật sau". */
+  shippingFeePending: boolean;
   totalDiscountAmount: number;
   totalShippingDiscountAmount: number;
   rankDiscountAmount: number;
@@ -31,7 +32,7 @@ export function ConfirmOrderDialog({
   itemCount,
   subtotal,
   shippingCost,
-  isDeliveryService,
+  shippingFeePending,
   totalDiscountAmount,
   totalShippingDiscountAmount,
   rankDiscountAmount,
@@ -44,6 +45,7 @@ export function ConfirmOrderDialog({
 }: ConfirmOrderDialogProps) {
   return (
     <dialog
+      onCancel={(e) => e.preventDefault()}
       className={`modal modal-bottom !mt-0 sm:modal-middle ${showConfirm ? "modal-open" : ""}`}
     >
       <div className="modal-box rounded-t-2xl bg-surface px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6">
@@ -75,7 +77,7 @@ export function ConfirmOrderDialog({
             <span
               className={`font-bold ${shippingCost === 0 ? "text-emerald-600" : "text-on-surface"}`}
             >
-              {isDeliveryService
+              {shippingFeePending
                 ? "Cập nhật sau"
                 : shippingCost === 0
                   ? "Miễn phí"
@@ -180,9 +182,7 @@ export function ConfirmOrderDialog({
           </button>
         </div>
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button onClick={onClose}>close</button>
-      </form>
+      <div className="modal-backdrop" />
     </dialog>
   );
 }

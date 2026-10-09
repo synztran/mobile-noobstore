@@ -2,18 +2,14 @@ import { CalendarDays, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
+import { buildOg } from "@/lib/og";
 
-export const metadata: Metadata = {
-  title: "Tin tức mới từ các hãng - NoobStore",
+export const metadata: Metadata = buildOg({
+  title: "Tin tức mới từ các hãng",
   description:
     "Cập nhật những thông tin mới nhất về groupbuy, sản phẩm mới và bản cập nhật từ các hãng bàn phím cơ, switch và phụ kiện.",
-  openGraph: {
-    title: "Tin tức mới từ các hãng - NoobStore",
-    description:
-      "Cập nhật thông tin groupbuy, sản phẩm mới từ các hãng bàn phím cơ.",
-    siteName: "NoobStore",
-  },
-};
+  url: "/new-release",
+});
 
 type MakerRelease = {
 	id: string;

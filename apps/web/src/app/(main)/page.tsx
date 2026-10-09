@@ -14,22 +14,19 @@ import { LazyNearViewport } from "@/components/ui/LazyNearViewport";
 import { getHeroCampaigns } from "@/lib/hero-server";
 import { getSoonestFlashSale } from "@/modules/products/server/flash-sale";
 import type { Metadata } from "next";
+import { buildOg } from "@/lib/og";
 import { Suspense } from "react";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
+// The root layout's title template is "%s - NoobStore", so this title carries
+// no suffix of its own (it would render "… - NoobStore - NoobStore").
+export const metadata: Metadata = buildOg({
   title: "NoobStore - Bàn phím cơ, Switch & Phụ kiện chính hãng",
   description:
-    "NoobStore - Cửa hàng bàn phím cơ, switch, keycap và phụ kiện bàn phím chính hãng. Giao hàng toàn quốc, bảo hành uy tín.",
-  openGraph: {
-    title: "NoobStore - Bàn phím cơ, Switch & Phụ kiện chính hãng",
-    description:
-      "NoobStore - Cửa hàng bàn phím cơ, switch, keycap và phụ kiện bàn phím chính hãng.",
-    siteName: "NoobStore",
-    type: "website",
-  },
-};
+    "NoobStore - Cửa hàng bàn phím cơ, switch, keycap và phụ kiện bàn phím cơ chính hãng. Giao hàng toàn quốc, bảo hành uy tín.",
+  url: "/",
+});
 
 export default function HomePage() {
   return (

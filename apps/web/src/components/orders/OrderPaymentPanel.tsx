@@ -2,7 +2,7 @@
 
 import { formatVND } from "@/lib/currency";
 import type { PaymentInformation } from "@/lib/payment-information";
-import { isCarrierShippingMethod } from "@/lib/shipping-method";
+import { hasUnquotedShippingFee } from "@/lib/shipping-method";
 import { usePaymentInformation } from "@/lib/react-query/order/api/useOrderQueries";
 import { Check, Copy, CreditCard } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
@@ -81,7 +81,12 @@ export function OrderPaymentPanel({
   const subtotal =
     totalPrice - shippingFee + voucherDiscount + shippingDiscount;
 
-  const isDeliveryService = isCarrierShippingMethod(shippingMethodId);
+  // Courier tiers start at 0 and become "Cập nhật sau" until staff quote a
+  // rate; own-rider/pickup orders keep rendering their real number.
+  const shippingFeePending = hasUnquotedShippingFee(
+    shippingMethodId,
+    shippingFee
+  );
 
   const { data, isLoading } = usePaymentInformation();
 
@@ -161,14 +166,14 @@ export function OrderPaymentPanel({
           <span className="text-on-surface-variant">Phí vận chuyển</span>
           <span
             className={
-              isDeliveryService
+              shippingFeePending
                 ? "font-bold text-on-surface-variant"
                 : shippingFee === 0
                   ? "font-bold text-secondary"
                   : "font-bold text-on-surface"
             }
           >
-            {isDeliveryService
+            {shippingFeePending
               ? "Cập nhật sau"
               : shippingFee === 0
                 ? "Miễn phí"

@@ -4,25 +4,26 @@ import clsx from "clsx";
 interface Props {
   shippingCost: number;
   isCalculatingFee?: boolean;
-  deliveryService?: boolean;
+  /** Fee is not known yet (inter-city courier) — render "Cập nhật sau". */
+  shippingFeePending?: boolean;
   showFreeLabel?: boolean;
-  deliveryServiceClassName?: string;
+  shippingFeePendingClassName?: string;
   zeroClassName?: string;
 }
 
 function ShippingFeeLabel({
   shippingCost,
   isCalculatingFee = false,
-  deliveryService = false,
+  shippingFeePending = false,
   showFreeLabel = true,
-  deliveryServiceClassName = "text-xs text-emerald-600",
+  shippingFeePendingClassName = "text-xs text-emerald-600",
   zeroClassName = "text-on-surface-variant",
 }: Props) {
   const isFree = shippingCost === 0;
 
   let colorClass: string;
-  if (deliveryService) {
-    colorClass = deliveryServiceClassName;
+  if (shippingFeePending) {
+    colorClass = shippingFeePendingClassName;
   } else if (isCalculatingFee) {
     colorClass = "text-on-surface-variant";
   } else if (isFree && showFreeLabel) {
@@ -32,7 +33,7 @@ function ShippingFeeLabel({
   }
 
   let content: React.ReactNode;
-  if (deliveryService) {
+  if (shippingFeePending) {
     content = "Cập nhật sau";
   } else if (isCalculatingFee) {
     content = (

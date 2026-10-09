@@ -1,6 +1,12 @@
 "use client";
 
 import { formatVND } from "@/lib/currency";
+import {
+  DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL,
+  DEPOSIT_MAX_PCT,
+  hasLowPctDeposit,
+  minDepositPercentage,
+} from "@/lib/deposit";
 import { memo, useEffect, useState } from "react";
 import { Percent } from "lucide-react";
 
@@ -10,12 +16,11 @@ interface Props {
   depositPercentage: number;
   setDepositPercentage: (pct: number) => void;
   hasPreOrder?: boolean;
+  isPickup?: boolean;
   subtotal: number;
   orderTotal: number;
   disabledReason?: string;
 }
-
-const MIN_ORDER_SUBTOTAL = 800_000;
 
 export const DepositPaymentSection = memo(function DepositPaymentSection({
   paymentType,
@@ -23,12 +28,16 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
   depositPercentage,
   setDepositPercentage,
   hasPreOrder = false,
+  isPickup = false,
   subtotal,
   orderTotal,
   disabledReason,
 }: Props) {
-  const minPercentage = hasPreOrder ? 20 : 1;
-  const isDisabled = subtotal < MIN_ORDER_SUBTOTAL || Boolean(disabledReason);
+  // The 1% tier is only reachable above DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL; every
+  // other regular order floors at 20%, same as pre-order.
+  const minPercentage = minDepositPercentage(hasPreOrder, orderTotal);
+  const lowPctAvailable = hasLowPctDeposit(hasPreOrder, orderTotal);
+  const isDisabled = Boolean(disabledReason) || isPickup;
 
   // Local draft while dragging so the store (and the whole summary page) only
   // re-renders once when the user releases the slider.
@@ -42,9 +51,11 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
   const liveCod = Math.max(0, orderTotal - liveDeposit);
 
   const snapDepositPct = (raw: number) => {
-    if (raw <= 1) return 1;
+    // Floor against the order's actual minimum. Hardcoding 1 here let a
+    // sub-threshold order sit at 1% in the UI even though the server clamps it.
+    if (raw <= minPercentage) return minPercentage;
     const snapped = Math.round(raw / 5) * 5;
-    return Math.min(80, Math.max(minPercentage, snapped));
+    return Math.min(DEPOSIT_MAX_PCT, Math.max(minPercentage, snapped));
   };
 
   const commitPercentage = () => setDepositPercentage(draftPct);
@@ -76,10 +87,7 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
         </div>
         <div className="absolute inset-0 z-10 flex w-full items-center justify-center p-1">
           <p className="my-auto h-full w-full place-content-center rounded-xl bg-amber-500/10 px-1 py-1 text-center text-xs font-bold leading-relaxed text-amber-800">
-            {disabledReason ??
-              `Tính năng đặt cọc không hỗ trợ cho đơn hàng dưới ${formatVND(
-                MIN_ORDER_SUBTOTAL
-              )}.`}
+            {disabledReason ?? "Đặt cọc không áp dụng cho đơn hàng này."}
           </p>
         </div>
       </div>
@@ -124,10 +132,12 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
           <input
             type="range"
             min={minPercentage}
-            max={80}
+            max={DEPOSIT_MAX_PCT}
             step={1}
             value={draftPct}
-            onChange={(e) => setDraftPct(snapDepositPct(Number(e.target.value)))}
+            onChange={(e) =>
+              setDraftPct(snapDepositPct(Number(e.target.value)))
+            }
             onPointerUp={commitPercentage}
             onKeyUp={commitPercentage}
             onBlur={commitPercentage}
@@ -166,11 +176,25 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
               {draftPct}% giá trị sản phẩm ({formatVND(liveDeposit)}). Số tiền
               còn lại ({formatVND(liveCod)}) sẽ được thanh toán khi nhận hàng
               (COD).
-              {hasPreOrder && (
+              {hasPreOrder ? (
                 <>
                   {" "}
                   Đơn hàng có pre-order yêu cầu đặt cọc tối thiểu{" "}
                   <strong>{minPercentage}%</strong>.
+                </>
+              ) : lowPctAvailable ? (
+                <>
+                  {" "}
+                  Đặt cọc <strong>1%</strong> chỉ áp dụng cho đơn hàng từ{" "}
+                  <strong>{formatVND(DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL)}</strong>{" "}
+                  trở lên.
+                </>
+              ) : (
+                <>
+                  {" "}
+                  Đơn hàng dưới{" "}
+                  <strong>{formatVND(DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL)}</strong>{" "}
+                  yêu cầu đặt cọc tối thiểu <strong>{minPercentage}%</strong>.
                 </>
               )}
             </p>

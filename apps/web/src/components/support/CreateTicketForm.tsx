@@ -431,6 +431,7 @@ export function CreateTicketForm({ orderItems, orderId, orderNumber }: Props) {
 
       {/* Success modal */}
       <dialog
+        onCancel={(e) => e.preventDefault()}
         ref={successDialogRef}
         className="modal modal-bottom sm:modal-middle"
       >
@@ -465,9 +466,7 @@ export function CreateTicketForm({ orderItems, orderId, orderNumber }: Props) {
             </Link>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button type="submit">close</button>
-        </form>
+        <div className="modal-backdrop" />
       </dialog>
     </div>
   );

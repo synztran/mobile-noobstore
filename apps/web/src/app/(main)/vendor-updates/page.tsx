@@ -2,18 +2,14 @@ import { CalendarDays, ExternalLink, Tag } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
+import { buildOg } from "@/lib/og";
 
-export const metadata: Metadata = {
-  title: "Cập nhật thị trường - NoobStore",
+export const metadata: Metadata = buildOg({
+  title: "Cập nhật thị trường",
   description:
     "Tin tức Group Buy, New Release và Sale từ các hãng bàn phím cơ, switch và phụ kiện được cập nhật liên tục.",
-  openGraph: {
-    title: "Cập nhật thị trường - NoobStore",
-    description:
-      "Tin tức Group Buy, New Release và Sale từ các hãng bàn phím cơ.",
-    siteName: "NoobStore",
-  },
-};
+  url: "/vendor-updates",
+});
 
 type Vendor = {
   id: string;

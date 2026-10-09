@@ -1,65 +1,72 @@
 import {
-	getOrCreateCart,
-	MaxLimitExceededError,
-	StockExceededError,
-	upsertCartItem,
+  getOrCreateCart,
+  KitNotConfiguredError,
+  MaxLimitExceededError,
+  StockExceededError,
+  upsertCartItem,
 } from "@/modules/cart/server/service";
 import { createClient } from "@/lib/supabase/server";
-import type { AddCartItemRequest, AddCartItemResponse } from "@/modules/cart/types";
+import type {
+  AddCartItemRequest,
+  AddCartItemResponse,
+} from "@/modules/cart/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-	try {
-		const body: AddCartItemRequest = await req.json();
+  try {
+    const body: AddCartItemRequest = await req.json();
 
-		if (!body.product_id) {
-			return NextResponse.json(
-				{ error: "product_id is required" },
-				{ status: 400 },
-			);
-		}
+    if (!body.product_id) {
+      return NextResponse.json(
+        { error: "product_id is required" },
+        { status: 400 }
+      );
+    }
 
-		const supabase = await createClient();
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-		if (!user) {
-			return NextResponse.json(
-				{ error: "Vui lòng đăng nhập để thêm vào giỏ hàng" },
-				{ status: 401 },
-			);
-		}
+    if (!user) {
+      return NextResponse.json(
+        { error: "Vui lòng đăng nhập để thêm vào giỏ hàng" },
+        { status: 401 }
+      );
+    }
 
-		const { cartId } = await getOrCreateCart(supabase, {
-			userId: user.id,
-		});
+    const { cartId } = await getOrCreateCart(supabase, {
+      userId: user.id,
+    });
 
-		const { parentItemId } = await upsertCartItem(supabase, cartId, body);
+    const { parentItemId } = await upsertCartItem(supabase, cartId, body);
 
-		return NextResponse.json<AddCartItemResponse>({
-			cart_id: cartId,
-			item_id: parentItemId,
-		});
-	} catch (err) {
-		if (err instanceof StockExceededError) {
-			return NextResponse.json(
-				{ error: err.message, available: err.available },
-				{ status: 409 },
-			);
-		}
+    return NextResponse.json<AddCartItemResponse>({
+      cart_id: cartId,
+      item_id: parentItemId,
+    });
+  } catch (err) {
+    if (err instanceof StockExceededError) {
+      return NextResponse.json(
+        { error: err.message, available: err.available },
+        { status: 409 }
+      );
+    }
     if (err instanceof MaxLimitExceededError) {
       return NextResponse.json(
-        { error: err.message, max: err.max},
-        { status: 409 },
-      )
+        { error: err.message, max: err.max },
+        { status: 409 }
+      );
     }
-		console.error("[cart/items/POST] error:", err);
-		return NextResponse.json(
-			{ error: "Internal server error" },
-			{ status: 500 },
-		);
-	}
+    if (err instanceof KitNotConfiguredError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
+    console.error("[cart/items/POST] error:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

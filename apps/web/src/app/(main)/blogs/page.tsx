@@ -3,18 +3,14 @@ import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
+import { buildOg } from "@/lib/og";
 
-export const metadata: Metadata = {
-  title: "Blog - NoobStore",
+export const metadata: Metadata = buildOg({
+  title: "Blog",
   description:
     "Tin tức, bài viết và hướng dẫn về bàn phím cơ, switch, keycap từ NoobStore.",
-  openGraph: {
-    title: "Blog - NoobStore",
-    description:
-      "Tin tức, bài viết và hướng dẫn về bàn phím cơ, switch, keycap từ NoobStore.",
-    siteName: "NoobStore",
-  },
-};
+  url: "/blogs",
+});
 
 type BlogPost = {
 	id: string;

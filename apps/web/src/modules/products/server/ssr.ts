@@ -16,8 +16,10 @@ import type {
   ShopProduct,
   ShopVariantDetail,
 } from "@/modules/products/types";
+import { toRulesByProductId } from "@/modules/products/kit-pricing";
 import {
   fetchGiftSupplement,
+  fetchKitStockMap,
   fetchKitSupplements,
   getProductListByFilters,
   type GiftSupplement,
@@ -29,9 +31,13 @@ import {
   getCache,
   setCache,
   CACHE_VERSION,
+  PRODUCT_DETAIL_CACHE_TTL,
+  PRODUCT_LIST_CACHE_TTL,
 } from "@/lib/redis/cache";
 import { optimizeDescriptionHtml } from "@/lib/description-html";
 import { getPublicClient } from "@/lib/supabase/public";
+import { resolveEffectiveStock } from "./stock";
+import type { StockNode } from "./stock";
 
 export type { ProductDetail };
 
@@ -210,8 +216,7 @@ function shapeRow(
 
   // `from_price` = price the kit starts from (base + cheapest variant of each
   // REQUIRED component, optional components excluded).
-  const requiredMinPrice =
-    kitSupplements.requiredMinPriceByProductId.get(p.id);
+  const requiredMinPrice = kitSupplements.requiredMinPriceByProductId.get(p.id);
   const computedKitFromPrice =
     p.product_type === "kit" && requiredMinPrice !== undefined
       ? Number(p.base_price) + requiredMinPrice
@@ -241,23 +246,14 @@ function shapeRow(
 
   const productType = (p.product_type ??
     "standard") as ShopProduct["product_type"];
-  let effectiveStock: number;
-  if (productType === "kit") {
-    const kitStock = kitSupplements.kitStockById.get(p.id);
-    effectiveStock =
-      typeof kitStock === "number"
-        ? kitStock
-        : variants.length > 0
-          ? Math.min(...variants.map((v) => v.stock_quantity))
-          : Number(p.stock_quantity ?? 0);
-  } else if (productType === "component") {
-    effectiveStock = variants.reduce(
-      (sum, variant) => sum + variant.stock_quantity,
-      0
-    );
-  } else {
-    effectiveStock = Number(p.stock_quantity ?? 0);
-  }
+  // Shared with queries.ts so /shop and /api/products always agree.
+  const effectiveStock = resolveEffectiveStock({
+    productType,
+    productId: p.id,
+    productStock: p.stock_quantity,
+    variants,
+    kitStockById: kitSupplements.kitStockById,
+  });
 
   const tags: {
     id: number;
@@ -335,6 +331,13 @@ export interface GetProductsParams {
   productTypes?: Array<"standard" | "kit" | "component">;
   /** Trim list payload (excerpt description, one variant for standards). */
   slim?: boolean;
+  /**
+   * Sink sold-out products below available ones. Availability is derived in
+   * JS, so this switches off SQL pagination and slices after partitioning —
+   * see `getProductListByFilters`. Keep the SSR page and /api/products in
+   * agreement: whichever sets this must set it in both places.
+   */
+  soldOutLast?: boolean;
 }
 
 export interface GetNoteworthyProductsParams {
@@ -376,6 +379,7 @@ export const getProducts = cache(async function getProducts(
     limit,
     offset = 0,
     slim = false,
+    soldOutLast = false,
   } = params;
 
   try {
@@ -389,6 +393,7 @@ export const getProducts = cache(async function getProducts(
       limit,
       offset,
       slim,
+      soldOutLast,
     });
     const cached = await getCache<{ products: ShopProduct[]; total: number }>(
       cacheKey
@@ -406,13 +411,14 @@ export const getProducts = cache(async function getProducts(
       excludeUncategorized: true,
       offset,
       slim,
+      soldOutLast,
     });
 
     const response = {
       products: result.products as ShopProduct[],
       total: result.total,
     };
-    await setCache(cacheKey, response, 600);
+    await setCache(cacheKey, response, PRODUCT_LIST_CACHE_TTL);
     return response;
   } catch (err) {
     console.error("[getProducts] Unexpected error:", err);
@@ -500,41 +506,43 @@ export const getNoteworthyProducts = cache(async function getNoteworthyProducts(
  * Returns up to `limit` products, excluding the product itself.
  * Cached with React.cache() + Redis (300s TTL).
  */
-const getRelatedProductsUncached = cache(async function getRelatedProductsUncached(
-  brand: string | null,
-  excludeSlug: string,
-  limit = 8
-): Promise<ShopProduct[]> {
-  if (!brand) return [];
+const getRelatedProductsUncached = cache(
+  async function getRelatedProductsUncached(
+    brand: string | null,
+    excludeSlug: string,
+    limit = 8
+  ): Promise<ShopProduct[]> {
+    if (!brand) return [];
 
-  try {
-    const cached = await getCache<ShopProduct[]>(
-      `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`
-    );
-    if (cached) return cached;
+    try {
+      const cached = await getCache<ShopProduct[]>(
+        `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`
+      );
+      if (cached) return cached;
 
-    const result = await getProductListByFilters({
-      brand,
-      limit,
-      sort: "newest",
-      productTypes: ["standard", "kit"],
-      excludeUncategorized: true,
-    });
-    const products = (result.products as ShopProduct[]).filter(
-      (p) => p.slug !== excludeSlug
-    );
+      const result = await getProductListByFilters({
+        brand,
+        limit,
+        sort: "newest",
+        productTypes: ["standard", "kit"],
+        excludeUncategorized: true,
+      });
+      const products = (result.products as ShopProduct[]).filter(
+        (p) => p.slug !== excludeSlug
+      );
 
-    await setCache(
-      `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`,
-      products,
-      300
-    );
-    return products;
-  } catch (err) {
-    console.error("[getRelatedProducts] Unexpected error:", err);
-    return [];
+      await setCache(
+        `${CACHE_VERSION}:related-products:${brand}:${excludeSlug}:${limit}`,
+        products,
+        300
+      );
+      return products;
+    } catch (err) {
+      console.error("[getRelatedProducts] Unexpected error:", err);
+      return [];
+    }
   }
-});
+);
 
 /** ISR-safe wrapper (see getProductDetail note). */
 export const getRelatedProducts = unstable_cache(
@@ -602,7 +610,7 @@ export const getQuickPickData = cache(async function getQuickPickData(
         .from("component_variant_rules")
         .select(
           `id, kit_product_id, condition_variant_id, target_component_product_id,
-           component_variant_rule_allowed(variant_id)`
+           component_variant_rule_allowed(variant_id, price_override)`
         )
         .in("kit_product_id", [productId]);
 
@@ -699,25 +707,10 @@ export const getQuickPickData = cache(async function getQuickPickData(
             }
 
             // Build rules from parallel result
-            for (const r of (ruleRes.data ?? []) as Array<{
-              id: string;
-              kit_product_id: string;
-              condition_variant_id: string;
-              target_component_product_id: string;
-              component_variant_rule_allowed: Array<{ variant_id: string }>;
-            }>) {
-              if (!rulesByProductId[r.kit_product_id]) {
-                rulesByProductId[r.kit_product_id] = [];
-              }
-              rulesByProductId[r.kit_product_id].push({
-                id: r.id,
-                condition_variant_id: r.condition_variant_id,
-                target_component_product_id: r.target_component_product_id,
-                allowed_variant_ids: r.component_variant_rule_allowed.map(
-                  (a) => a.variant_id
-                ),
-              });
-            }
+            rulesByProductId = {
+              ...rulesByProductId,
+              ...toRulesByProductId(ruleRes.data ?? []),
+            };
           }
         }
       }
@@ -867,28 +860,14 @@ export const getQuickPickData = cache(async function getQuickPickData(
           .from("component_variant_rules")
           .select(
             `id, kit_product_id, condition_variant_id, target_component_product_id,
-             component_variant_rule_allowed(variant_id)`
+             component_variant_rule_allowed(variant_id, price_override)`
           )
           .in("kit_product_id", kitIds);
 
-        for (const r of (ruleRows ?? []) as Array<{
-          id: string;
-          kit_product_id: string;
-          condition_variant_id: string;
-          target_component_product_id: string;
-          component_variant_rule_allowed: Array<{ variant_id: string }>;
-        }>) {
-          if (!rulesByProductId[r.kit_product_id]) {
-            rulesByProductId[r.kit_product_id] = [];
-          }
-          rulesByProductId[r.kit_product_id].push({
-            id: r.id,
-            condition_variant_id: r.condition_variant_id,
-            target_component_product_id: r.target_component_product_id,
-            allowed_variant_ids: r.component_variant_rule_allowed.map(
-              (a) => a.variant_id
-            ),
-          });
+        for (const [kitId, kitRules] of Object.entries(
+          toRulesByProductId(ruleRows ?? [])
+        )) {
+          rulesByProductId[kitId] = kitRules;
         }
       }
     }
@@ -1153,22 +1132,12 @@ export const getComponentRules = cache(async function getComponentRules(
     const { data: ruleRows } = await getPublicClient()
       .from("component_variant_rules")
       .select(
-        `id, condition_variant_id, target_component_product_id,
-					 component_variant_rule_allowed(variant_id)`
+        `id, kit_product_id, condition_variant_id, target_component_product_id,
+					 component_variant_rule_allowed(variant_id, price_override)`
       )
       .eq("kit_product_id", productId);
 
-    const componentRules: ComponentVariantRule[] = (ruleRows ?? []).map(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (r: any) => ({
-        id: r.id,
-        condition_variant_id: r.condition_variant_id,
-        target_component_product_id: r.target_component_product_id,
-        allowed_variant_ids: (r.component_variant_rule_allowed ?? []).map(
-          (a: { variant_id: string }) => a.variant_id
-        ),
-      })
-    );
+    const componentRules = toRulesByProductId(ruleRows ?? [])[productId] ?? [];
 
     await setCache(
       `${CACHE_VERSION}:component-rules:${productId}`,
@@ -1346,16 +1315,16 @@ const getProductBySlugUncached = cache(async function getProductBySlugUncached(
     // Fire the component-products and gift-products lookups in parallel — both
     // depend only on the already-fetched product row.
     const [compData, giftRows] = await Promise.all([
-		compIds.length > 0
-			? getPublicClient()
-				.from("products")
-				.select(
-					`id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
+      compIds.length > 0
+        ? getPublicClient()
+            .from("products")
+            .select(
+              `id, slug, name, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active,
 			categories(id, name),
 			product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
-				)
-				.eq("is_active", true)
-				.in("id", compIds)
+            )
+            .eq("is_active", true)
+            .in("id", compIds)
         : Promise.resolve({ data: null }),
       getPublicClient()
         .from("gift_products")
@@ -1375,20 +1344,43 @@ const getProductBySlugUncached = cache(async function getProductBySlugUncached(
       );
     }
 
-    // Compute effective stock for kit products from required child component stocks.
-    // Mirrors the logic in getProducts().
-    const requiredComponentIds = new Set(
-      (raw.product_components ?? [])
-        .filter((c) => c.is_required)
-        .map((c) => c.component_product_id)
-    );
-    const requiredChildStocks = componentProducts
-      .filter((cp) => requiredComponentIds.has(cp.id))
-      .map((cp) => cp.stock_quantity);
-    const effectiveStock =
-      raw.product_type === "kit" && requiredChildStocks.length > 0
-        ? Math.min(...requiredChildStocks)
-        : Number(raw.stock_quantity ?? 0);
+    // Kit stock via the SHARED resolver (./stock.ts + fetchKitStockMap), the
+    // same call `fetchKitSupplements` makes for /shop and /api/products. The
+    // previous inline version computed a required child's stock by running it
+    // through `resolveEffectiveStock` with an EMPTY kit map, so a kit child
+    // collapsed to `min(own variants)` while the listing summed them — one
+    // product showed 3 on /shop and 1 on its own page.
+    //
+    // Seed with the component rows we already fetched above, so this costs no
+    // extra query in the common single-level case.
+    const seedNodes = new Map<string, StockNode>();
+    for (const row of (compData?.data ?? []) as unknown as RawListRow[]) {
+      seedNodes.set(row.id, {
+        id: row.id,
+        product_type: row.product_type,
+        stock_quantity: row.stock_quantity,
+        variantStocks: (row.product_variants ?? []).map((v) =>
+          Number(v.stock_quantity ?? 0),
+        ),
+      });
+    }
+
+    const kitStockById = await fetchKitStockMap({
+      seedLinks: (raw.product_components ?? []).map((c) => ({
+        parent_product_id: raw.id,
+        component_product_id: c.component_product_id,
+        is_required: c.is_required,
+      })),
+      seedNodes,
+    });
+
+    const effectiveStock = resolveEffectiveStock({
+      productType: raw.product_type,
+      productId: raw.id,
+      productStock: raw.stock_quantity,
+      variants,
+      kitStockById,
+    });
 
     const components = (raw.product_components ?? []).map((c) => {
       const cp = componentProducts.find((p) => p.id === c.component_product_id);
@@ -1464,7 +1456,14 @@ const getProductBySlugUncached = cache(async function getProductBySlugUncached(
       gifts,
     };
 
-    await setCache(`${CACHE_VERSION}:product:slug:${slug}`, productDetail, 60);
+    // 300s to match the unstable_cache wrapper below (revalidate: 300) so the
+    // Redis and Data Cache layers expire together instead of Redis going
+    // cold at 60s and forcing a DB hit on every ISR revalidation.
+    await setCache(
+      `${CACHE_VERSION}:product:slug:${slug}`,
+      productDetail,
+      PRODUCT_DETAIL_CACHE_TTL,
+    );
     return productDetail;
   } catch (err) {
     console.error("[getProductBySlug] Unexpected error:", err);

@@ -3,7 +3,10 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { resolveVariantOwners } from "@/lib/voucher-scope";
-import { computeVoucherDiscount } from "@/lib/voucher-discount";
+import {
+  computeVoucherDiscount,
+  isShippingReward,
+} from "@/lib/voucher-discount";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import { randomBase36 } from "@/lib/random";
 import type {
@@ -12,17 +15,27 @@ import type {
   VoucherScopeType,
 } from "@/types/voucher";
 import { getCheckoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import { canUseDeposit, clampDepositPercentage } from "@/lib/deposit";
 import { invalidateProductCaches } from "@/lib/redis/cache";
 import {
-  DELIVERY_SERVICE_ID,
   ShippingMethod,
+  isFeePendingShippingMethod,
   isPickupShippingMethod,
   normalizeShippingMethodId,
   sameShippingMethod,
 } from "@/lib/shipping-method";
+import { getCarrierShippingTier } from "@/lib/carrier-shipping";
+import {
+  findDisallowedComponentVariant,
+  kitPriceOverrides,
+  resolveKitUnitPrice,
+  rulesByKitProduct,
+} from "@/modules/products/kit-pricing";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
+import type { RuleRow } from "@/modules/products/kit-pricing";
 
 export interface SubmitOrderRequestItem {
   product_id: string;
@@ -95,6 +108,7 @@ export interface SubmitOrderRequest {
   rank_discount?: {
     discount_amount: number;
     free_shipping: boolean;
+    isShippingReward?: boolean;
     rank_name: string;
   };
 }
@@ -209,6 +223,7 @@ export async function POST(req: NextRequest) {
     const [
       { data: productRows, error: productErr },
       { data: variantRows, error: variantErr },
+      { data: ruleRows },
     ] = await Promise.all([
       supabase
         .from("products")
@@ -218,12 +233,28 @@ export async function POST(req: NextRequest) {
       allVariantIds.length > 0
         ? admin
             .from("product_variants")
-            .select("id, price_adjustment")
+            // product_id is needed to match a component variant back to the rule
+            // that restricts it (target_component_product_id).
+            .select("id, product_id, price_adjustment")
             .in("id", allVariantIds)
         : Promise.resolve({
-            data: [] as { id: string; price_adjustment: number }[],
+            data: [] as {
+              id: string;
+              product_id: string | null;
+              price_adjustment: number;
+            }[],
             error: null,
           }),
+      productIds.length > 0
+        ? admin
+            .from("component_variant_rules")
+            .select(
+              `id, kit_product_id, condition_variant_id,
+							 target_component_product_id,
+							 component_variant_rule_allowed(variant_id, price_override)`
+            )
+            .in("kit_product_id", productIds)
+        : Promise.resolve({ data: [] as unknown[], error: null }),
     ]);
 
     if (productErr || variantErr) {
@@ -239,28 +270,104 @@ export async function POST(req: NextRequest) {
     const variantAdjMap = new Map<string, number>(
       (variantRows ?? []).map((v) => [v.id, Number(v.price_adjustment)])
     );
+    const variantProductMap = new Map<string, string | null>(
+      (variantRows ?? []).map((v) => [
+        v.id,
+        (v.product_id ?? null) as string | null,
+      ])
+    );
 
+    // The compatibility rules, including each allowed pair's price override.
+    const rulesByKit = rulesByKitProduct(
+      (ruleRows ?? []) as unknown as RuleRow[]
+    );
+
+    // ── Compatibility enforcement ───────────────────────────────────────────
+    // Previously the rules were a pure UI affordance: the configurator greyed
+    // out disallowed buttons, but nothing on the server checked them, so a
+    // hand-crafted request could pair a kit variant with any component variant.
+    // Reject before creating the order so an illegal pairing is never priced.
+    for (const item of body.items) {
+      const rules = rulesByKit.get(item.product_id);
+      if (!rules?.length) continue;
+
+      // Every component variant must be a real variant. An unknown id would
+      // otherwise price at 0 (no adjustment found) while still being counted.
+      const unknownComponent = (item.components ?? []).find(
+        (c) => !variantAdjMap.has(c.variant_id)
+      );
+      if (unknownComponent) {
+        return NextResponse.json(
+          {
+            error: "Cấu hình sản phẩm không hợp lệ.",
+            unknown_variant_id: unknownComponent.variant_id,
+          },
+          { status: 400 }
+        );
+      }
+
+      // A rule's condition can be the kit's own variant OR one of its
+      // component variants — every rule in the live catalogue is authored the
+      // second way (e.g. YOK Switches keys off the "Purple" variant of its
+      // Version component). So both go into the candidate set.
+      const conditionVariantIds = [
+        ...(item.variant_id ? [item.variant_id] : []),
+        ...(item.components ?? []).map((c) => c.variant_id),
+      ];
+
+      const offending = findDisallowedComponentVariant(
+        rules,
+        conditionVariantIds,
+        (item.components ?? []).map((c) => ({
+          variant_id: c.variant_id,
+          product_id: variantProductMap.get(c.variant_id) ?? null,
+        }))
+      );
+      if (offending) {
+        return NextResponse.json(
+          {
+            error:
+              "Tùy chọn không tương thích với phiên bản đã chọn. Vui lòng chọn lại cấu hình.",
+            incompatible_variant_id: offending,
+          },
+          { status: 400 }
+        );
+      }
+    }
     const rpcItems = body.items.map((i) => {
       const basePrice = productPriceMap.get(i.product_id);
       if (basePrice === undefined) {
         throw new Error(`Product not found: ${i.product_id}`);
       }
 
-      let unitPrice: number;
-      if (i.variant_id) {
-        unitPrice = basePrice + (variantAdjMap.get(i.variant_id) ?? 0);
-      } else {
-        const compAdj = (i.components ?? []).reduce(
-          (sum, c) => sum + (variantAdjMap.get(c.variant_id) ?? 0),
-          0
-        );
-        unitPrice = basePrice + compAdj;
-      }
+      // One rule for every line: base + the kit's own variant + components, with
+      // a per-pairing override replacing the component's own adjustment. This
+      // used to be an if/else, so a kit carrying a variant dropped its
+      // components from the price entirely.
+      const rules = rulesByKit.get(i.product_id) ?? [];
+      const priced = resolveKitUnitPrice({
+        basePrice,
+        kitVariant: i.variant_id
+          ? { price_adjustment: variantAdjMap.get(i.variant_id) ?? 0 }
+          : null,
+        components: (i.components ?? []).map((c) => ({
+          variant_id: c.variant_id,
+          price_adjustment: variantAdjMap.get(c.variant_id) ?? 0,
+        })),
+        overrides: kitPriceOverrides(rules, [
+          ...(i.variant_id ? [i.variant_id] : []),
+          ...(i.components ?? []).map((c) => c.variant_id),
+        ]),
+      });
+      const contributionByVariant = new Map(
+        priced.contributions.map((c) => [c.variant_id, c.price_adjustment])
+      );
 
       return {
         product_id: i.product_id,
+        variant_id: i.variant_id ?? null,
         product_name: i.product_name,
-        unit_price: unitPrice,
+        unit_price: priced.unitPrice,
         thumbnail: i.thumbnail ?? null,
         quantity: i.quantity,
         components:
@@ -268,7 +375,12 @@ export async function POST(req: NextRequest) {
             variant_id: c.variant_id,
             variant_name: c.variant_name,
             component_group: c.component_group,
-            price_adjustment: variantAdjMap.get(c.variant_id) ?? 0,
+            // Snapshot the RESOLVED contribution (override when one applies), not
+            // the raw adjustment, so the order reflects what was charged.
+            price_adjustment:
+              contributionByVariant.get(c.variant_id) ??
+              variantAdjMap.get(c.variant_id) ??
+              0,
             thumbnail: c.thumbnail,
             quantity: 1,
           })) ?? [],
@@ -276,10 +388,23 @@ export async function POST(req: NextRequest) {
     });
 
     const MAX_SHIPPING_VND = 500_000;
-    const safeShippingCost =
-      shippingMethodId === DELIVERY_SERVICE_ID
-        ? 0
-        : Math.min(Math.max(0, Number(body.shipping_cost) || 0), MAX_SHIPPING_VND);
+    const clampShippingCost = (value: unknown) =>
+      Math.min(Math.max(0, Number(value) || 0), MAX_SHIPPING_VND);
+
+    // Every courier tier — the inter-city option and both in-city carrier speeds
+    // — is fulfilled by a third-party courier whose rate is not known when the
+    // customer checks out. Those orders are created with a zero fee; staff set
+    // the real amount from admin /orders, which moves total_price and
+    // remaining_amount. The distance-priced own-rider options still arrive from
+    // the client (they depend on a geocoded route the server does not
+    // recompute) and are clamped.
+    let safeShippingCost: number;
+    if (isFeePendingShippingMethod(shippingMethodId)) {
+      safeShippingCost = 0;
+    } else {
+      safeShippingCost = clampShippingCost(body.shipping_cost);
+    }
+
     const subtotal = rpcItems.reduce(
       (sum, i) => sum + i.unit_price * i.quantity,
       0
@@ -320,7 +445,10 @@ export async function POST(req: NextRequest) {
       if (!voucherErr && voucherRows) {
         // Resolve kit component variant owners + category slugs for the
         // submitted items (authoritative scope pool).
-        const ownerByVariant = await resolveVariantOwners(supabase, allVariantIds);
+        const ownerByVariant = await resolveVariantOwners(
+          supabase,
+          allVariantIds
+        );
         const scopeProductIds = [
           ...new Set([...productIds, ...ownerByVariant.values()]),
         ];
@@ -356,13 +484,20 @@ export async function POST(req: NextRequest) {
 
         // Add synthetic scope items for kit component owners so product/category
         // scoped vouchers can match them (base = owning product's line subtotal).
-        const ownerLines = new Map<string, { unit_price: number; quantity: number }>();
+        const ownerLines = new Map<
+          string,
+          { unit_price: number; quantity: number }
+        >();
         for (const item of body.items) {
-          for (const vid of [item.variant_id, ...(item.components ?? []).map((c) => c.variant_id)]) {
+          for (const vid of [
+            item.variant_id,
+            ...(item.components ?? []).map((c) => c.variant_id),
+          ]) {
             const owner = vid ? ownerByVariant.get(vid) : undefined;
             if (!owner) continue;
             const lineSubtotal = Number(
-              rpcItems.find((r) => r.product_id === item.product_id)?.unit_price ?? 0
+              rpcItems.find((r) => r.product_id === item.product_id)
+                ?.unit_price ?? 0
             );
             const qty = item.quantity;
             const existing = ownerLines.get(owner);
@@ -370,7 +505,10 @@ export async function POST(req: NextRequest) {
               existing.unit_price = Math.max(existing.unit_price, lineSubtotal);
               existing.quantity = Math.max(existing.quantity, qty);
             } else {
-              ownerLines.set(owner, { unit_price: lineSubtotal, quantity: qty });
+              ownerLines.set(owner, {
+                unit_price: lineSubtotal,
+                quantity: qty,
+              });
             }
           }
         }
@@ -419,7 +557,11 @@ export async function POST(req: NextRequest) {
           ) {
             continue;
           }
-          if (row.usage_limit_total !== null && row.used_count >= row.usage_limit_total) continue;
+          if (
+            row.usage_limit_total !== null &&
+            row.used_count >= row.usage_limit_total
+          )
+            continue;
           if (row.customer_ids && row.customer_ids.length > 0) {
             if (!row.customer_ids.includes(user.id)) continue;
           }
@@ -429,10 +571,23 @@ export async function POST(req: NextRequest) {
           if (allowedMethods.length > 0) {
             if (
               !shippingMethodId ||
-              !allowedMethods.some((m) => sameShippingMethod(m, shippingMethodId))
+              !allowedMethods.some((m) =>
+                sameShippingMethod(m, shippingMethodId)
+              )
             ) {
               continue;
             }
+          }
+
+          // Defense in depth: the apply route already rejects shipping vouchers
+          // on fee-pending courier tiers, so this only matters if a client
+          // hand-crafts the submitted voucher list. Without it such a voucher
+          // would recompute to a 0đ saving and appear to apply for nothing.
+          if (
+            isShippingReward(row.reward_type as VoucherRewardType) &&
+            isFeePendingShippingMethod(shippingMethodId)
+          ) {
+            continue;
           }
 
           // Scope match + subset base
@@ -457,8 +612,8 @@ export async function POST(req: NextRequest) {
           }
           if (row.min_order_amount > 0 && base < row.min_order_amount) continue;
 
-          // Recompute discount against the eligible base. A shipping_fee-scoped
-          // voucher contributes to the shipping bucket, never the order total;
+          // Recompute discount against the eligible base. A shipping reward
+          // type contributes to the shipping bucket, never the order total;
           // free_shipping always waives the full fee. Both come from the same
           // shared helper the apply/preview path uses, so the number the
           // customer saw and the number charged here cannot drift.
@@ -565,6 +720,24 @@ export async function POST(req: NextRequest) {
         safeRankDiscount -
         safeRankShipping
     );
+
+    // Deposit eligibility is checked before the order row exists so a
+    // disallowed deposit never half-creates an order. The rules are shared
+    // with the checkout UI via lib/deposit.ts.
+    if (
+      body.payment_type === "deposit_cod" &&
+      !canUseDeposit({
+        hasPreOrder,
+        orderTotal: recalculatedTotal,
+        isPickup: isPickupShippingMethod(shippingMethodId),
+        isFeePending: isFeePendingShippingMethod(shippingMethodId),
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Đơn hàng này không đủ điều kiện đặt cọc." },
+        { status: 400 }
+      );
+    }
 
     const orderId = crypto.randomUUID();
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${randomBase36(4)}`;
@@ -685,8 +858,15 @@ export async function POST(req: NextRequest) {
         .filter(Boolean)
         .sort();
 
+      // Speed commitment only — the carrier tiers carry an SLA window even
+      // though they carry no price. Used for orders.expected_delivery_at.
+      const carrierTier = getCarrierShippingTier(shippingMethodId);
       if (preOrderDates.length > 0) {
         expectedDeliveryAt = new Date(preOrderDates[0]).toISOString();
+      } else if (carrierTier) {
+        expectedDeliveryAt = new Date(
+          now.getTime() + carrierTier.slaHours * 60 * 60 * 1000
+        ).toISOString();
       } else if (shippingMethodId === ShippingMethod.Express) {
         expectedDeliveryAt = new Date(
           now.getTime() + 4 * 60 * 60 * 1000
@@ -698,31 +878,48 @@ export async function POST(req: NextRequest) {
       }
 
       // Delivery address via admin client — user RLS UPDATE removed
-      await admin
+      const { error: addressError } = await admin
         .from("orders")
         .update({
           delivery_address: body.delivery_address
             ? (body.delivery_address as unknown as Json)
             : null,
           shipping_method_id: shippingMethodId,
-          expected_delivery_at:
-            isPickupShippingMethod(shippingMethodId) ? null : expectedDeliveryAt,
+          expected_delivery_at: isPickupShippingMethod(shippingMethodId)
+            ? null
+            : expectedDeliveryAt,
           pickup_at:
             isPickupShippingMethod(shippingMethodId) && body.pickup_at
               ? new Date(body.pickup_at).toISOString()
               : null,
         })
         .eq("id", result.order_id);
+
+      // A foreign-key rejection here (e.g. a method missing from
+      // shipping_methods) used to be swallowed, silently dropping the delivery
+      // address and pickup slot for the order.
+      if (addressError) {
+        console.error(
+          "[submit] failed to persist delivery details:",
+          addressError
+        );
+        return NextResponse.json(
+          { error: "Failed to save delivery details" },
+          { status: 500 }
+        );
+      }
     }
 
     // ── Persist deposit/cod payment fields ─────────────────────────────
-    if (
-      body.payment_type === "deposit_cod" &&
-      (hasPreOrder || shippingMethodId !== DELIVERY_SERVICE_ID)
-    ) {
-      const pct = Math.min(
-        80,
-        Math.max(hasPreOrder ? 20 : 1, Math.round(body.deposit_percentage ?? 50))
+    // Eligibility was already enforced above (before the order row existed);
+    // here we only clamp the percentage to the per-mode bounds and compute
+    // the amounts. Deposit base stays the subtotal; remaining is the final
+    // total minus the deposit.
+    if (body.payment_type === "deposit_cod") {
+      const pct = clampDepositPercentage(
+        body.deposit_percentage,
+        hasPreOrder,
+        recalculatedTotal,
       );
       const depositBase = subtotal;
       const depositAmt = Math.round((depositBase * pct) / 100);
@@ -854,7 +1051,8 @@ export async function POST(req: NextRequest) {
     // ── Gacha mission progress ───────────────────────────────────────────
     if (user) {
       try {
-        const { triggerMissionServer } = await import("@/modules/gacha/server/missions");
+        const { triggerMissionServer } =
+          await import("@/modules/gacha/server/missions");
 
         const { data: activeEvent } = await supabase
           .from("gacha_events")
@@ -887,10 +1085,7 @@ export async function POST(req: NextRequest) {
           ]);
         }
       } catch (missionErr) {
-        console.error(
-          "[submit] failed to process gacha missions:",
-          missionErr
-        );
+        console.error("[submit] failed to process gacha missions:", missionErr);
       }
     }
 

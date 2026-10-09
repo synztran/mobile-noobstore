@@ -20,10 +20,8 @@ export function ConfirmRedemptionModal({
 
   return (
     <dialog
+      onCancel={(e) => e.preventDefault()}
       className={`modal modal-bottom sm:modal-middle ${reward ? "modal-open" : ""}`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <div className="modal-box rounded-2xl bg-surface px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <div className="mb-4 flex items-center gap-3">
@@ -89,9 +87,7 @@ export function ConfirmRedemptionModal({
           </button>
         </div>
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button onClick={onClose}>close</button>
-      </form>
+      <div className="modal-backdrop" />
     </dialog>
   );
 }

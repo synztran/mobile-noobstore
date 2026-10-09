@@ -26,7 +26,6 @@ export function SortSheet({
 						? "opacity-100 pointer-events-auto"
 						: "opacity-0 pointer-events-none"
 				}`}
-				onClick={onClose}
 			/>
 
 			{/* Sheet — slides from bottom */}

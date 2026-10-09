@@ -45,7 +45,6 @@ export function CreatePostDrawer({
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
         }`}
-        onClick={close}
       />
 
       {/* Bottom sheet */}

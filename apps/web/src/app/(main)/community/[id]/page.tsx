@@ -7,6 +7,7 @@ import { CalendarDays, Eye, User } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { buildOg, toPlainText } from "@/lib/og";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -14,15 +15,26 @@ interface Params {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params;
+  const url = `/community/${id}`;
   const post = await getPostDetail(id);
-  if (!post) return { title: "Bài viết không tìm thấy - NoobStore" };
-  return {
-    title: `${post.title} - NoobStore`,
-    description: post.content.slice(0, 160),
-    openGraph: post.media[0]
-      ? { images: [post.media[0].url], description: post.content.slice(0, 160) }
-      : { description: post.content.slice(0, 160) },
-  };
+
+  // Always a full card — a bare `{ title }` emits no og:url and no image.
+  if (!post) {
+    return buildOg({
+      title: "Bài viết không tìm thấy",
+      description: "Bài viết không tìm thấy trên NoobStore.",
+      url,
+    });
+  }
+
+  return buildOg({
+    title: post.title,
+    description: toPlainText(post.content),
+    url,
+    image: post.media[0]?.url,
+    imageAlt: post.title,
+    type: "article",
+  });
 }
 
 export default async function PostDetailPage({ params }: Params) {

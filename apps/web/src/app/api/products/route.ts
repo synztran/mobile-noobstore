@@ -7,6 +7,7 @@ import {
 import type { ProductsResponse, ShopProduct } from "@/modules/products/types";
 import {
 	buildProductListCacheKey,
+	PRODUCT_LIST_CACHE_TTL,
 	publicCacheHeaders,
 	readThroughCache,
 } from "@/lib/redis/cache";
@@ -96,11 +97,12 @@ export async function GET(req: NextRequest) {
       limit,
       offset,
       slim: true,
+      soldOutLast: true,
     });
 
     const response = await readThroughCache<ProductsResponse>(
       cacheKey,
-      600,
+      PRODUCT_LIST_CACHE_TTL,
       async () => {
         const { products, total } = await getProductListByFilters({
           search,
@@ -116,6 +118,10 @@ export async function GET(req: NextRequest) {
             productTypes.length > 0
               ? productTypes
               : (["standard", "kit", "component"] as ProductType[]),
+          // /shop wants sold-out products sunk below available ones. This is a
+          // /shop-only affordance; the other product feeds (sale rail,
+          // noteworthy, related) keep the plain SQL ordering.
+          soldOutLast: true,
         });
 
         return {

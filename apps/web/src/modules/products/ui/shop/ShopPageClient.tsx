@@ -121,19 +121,22 @@ export function ShopPageClient({
   const { data, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useShopInfiniteQuery(filters, initialData);
 
+  // Dedupe across appended infinite-scroll pages. Order comes from the server
+  // (see `soldOutLast` in getProductListByFilters) — available first, sold-out
+  // after. Re-partitioning here would re-shuffle the list on every page append,
+  // which is the bug this replaced.
   const products = useMemo(() => {
-    const all = data?.pages.flatMap((p) => p.products as ShopProduct[]) ?? [];
     const seen = new Set<string>();
     const unique: ShopProduct[] = [];
-    for (const p of all) {
-      if (!seen.has(p.id)) {
-        seen.add(p.id);
-        unique.push(p);
+    for (const page of data?.pages ?? []) {
+      for (const p of page.products as ShopProduct[]) {
+        if (!seen.has(p.id)) {
+          seen.add(p.id);
+          unique.push(p);
+        }
       }
     }
-    const inStock = unique.filter((p) => p.stock_quantity > 0);
-    const soldOut = unique.filter((p) => p.stock_quantity === 0);
-    return [...inStock, ...soldOut];
+    return unique;
   }, [data]);
 
   const total = data?.pages[0]?.total ?? initialData?.total ?? 0;

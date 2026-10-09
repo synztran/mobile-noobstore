@@ -169,10 +169,8 @@ export function RankBenefitModal({
 
   return (
     <dialog
+      onCancel={(e) => e.preventDefault()}
       className={`modal modal-bottom sm:modal-middle ${open ? "modal-open" : ""}`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <div className="modal-box flex max-h-[80dvh] flex-col rounded-t-2xl bg-surface px-0 pb-0 pt-0">
         {/* Fixed Header */}
@@ -284,9 +282,7 @@ export function RankBenefitModal({
           </button>
         </div>
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button onClick={onClose}>close</button>
-      </form>
+      <div className="modal-backdrop" />
     </dialog>
   );
 }

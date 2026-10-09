@@ -82,4 +82,40 @@ test.describe("Checkout Flow", () => {
       await expect(pickup).toBeAttached({ timeout: 5000 });
     }
   });
+
+  test("should offer the in-city carrier tiers for an HCMC address", async ({
+    page,
+  }) => {
+    // The two courier tiers are HCMC-only and unquoted, so they render off the
+    // city alone — no `fees` config decides whether they are offered.
+    await page.goto("/checkout/shipping");
+    await page.waitForTimeout(3000);
+
+    // The city field is a combobox (text input + portal dropdown), not a select.
+    const cityInput = page
+      .getByPlaceholder("Tìm tỉnh / thành phố...")
+      .first();
+    if (!(await cityInput.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, "checkout address form not reachable in this environment");
+    }
+
+    await cityInput.click();
+    await cityInput.fill("Hồ Chí Minh");
+    await page
+      .getByRole("button", { name: "Thành phố Hồ Chí Minh", exact: true })
+      .first()
+      .click();
+    await page.waitForTimeout(2000);
+
+    await expect(page.getByText("Vận chuyển nhanh 4h").first()).toBeAttached({
+      timeout: 5000,
+    });
+    // The inter-city courier is hidden inside HCMC.
+    await expect(page.getByText("Đơn vị vận chuyển").first()).toBeHidden();
+
+    // Courier rates depend on the parcel, so checkout must not invent a price.
+    await expect(
+      page.getByText("Cập nhật sau").first()
+    ).toBeAttached({ timeout: 5000 });
+  });
 });

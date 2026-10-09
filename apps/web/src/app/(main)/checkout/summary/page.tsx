@@ -18,7 +18,13 @@ import {
   useSubmitOrder,
 } from "@/lib/react-query/checkout/api/useCheckoutMutations";
 import { toast } from "@/lib/toast";
-import { ShippingMethod } from "@/lib/shipping-method";
+import { canUseDeposit, minDepositPercentage } from "@/lib/deposit";
+import {
+  ShippingMethod,
+  isCarrierShippingMethod,
+  isFeePendingShippingMethod,
+  isPickupShippingMethod,
+} from "@/lib/shipping-method";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
 import { useRouter } from "next/navigation";
@@ -64,15 +70,27 @@ export default function SummaryPage() {
   const hasPreOrder = items.some(
     (i) => i.is_pre_order || i.components?.some((c) => c.is_pre_order)
   );
-  const isDeliveryService =
-    shipping?.deliverySpeed === ShippingMethod.Shipment;
+  // Two different questions, deliberately kept apart:
+  // - isCarrierMethod: fulfilled by a third-party courier, so the full
+  //   ward/district/city address is shown to the customer.
+  // - shippingFeePending: the inter-city courier tier only, whose fee is
+  //   quoted as "Cập nhật sau" and blocks deposit.
+  const isCarrierMethod = isCarrierShippingMethod(
+    shipping?.shippingMethodId ?? shipping?.deliverySpeed
+  );
+  const shippingFeePending = isFeePendingShippingMethod(
+    shipping?.shippingMethodId ?? shipping?.deliverySpeed
+  );
 
   const voucherItems = useMemo(() => {
     if (!mounted) return [];
     return rawItems.map((i) => {
+      // Components already carry their override-resolved contribution from
+      // add-to-cart, and `variant.effective_price` folds in a kit's own variant
+      // adjustment, so base + components is the same number the cart shows.
       const basePrice = i.variant?.effective_price ?? i.product.base_price;
       const componentsTotal = (i.components ?? []).reduce(
-        (sum, c) => sum + c.price_adjustment,
+        (sum, c) => sum + (c.price_adjustment || 0),
         0
       );
       return {
@@ -87,26 +105,6 @@ export default function SummaryPage() {
     });
   }, [rawItems, mounted]);
 
-  const MIN_ORDER_SUBTOTAL = 800_000;
-
-  useEffect(() => {
-    if (subtotal < MIN_ORDER_SUBTOTAL && paymentType === "deposit_cod") {
-      setPaymentType("full");
-    }
-  }, [subtotal, paymentType, setPaymentType]);
-
-  useEffect(() => {
-    if (isDeliveryService && !hasPreOrder && paymentType === "deposit_cod") {
-      setPaymentType("full");
-    }
-  }, [isDeliveryService, hasPreOrder, paymentType, setPaymentType]);
-
-  useEffect(() => {
-    const minPct = hasPreOrder ? 20 : 1;
-    if (depositPercentage < minPct) {
-      setDepositPercentage(minPct);
-    }
-  }, [hasPreOrder, depositPercentage, setDepositPercentage]);
   const earliestPreOrderDate = useMemo(() => {
     const dates = items
       .flatMap((i) => {
@@ -140,6 +138,31 @@ export default function SummaryPage() {
     totalShippingDiscountAmount -
     rankDiscountAmount -
     rankShippingDiscount;
+
+  const isPickup = isPickupShippingMethod(
+    shipping?.shippingMethodId ?? shipping?.deliverySpeed
+  );
+  const depositAllowed = canUseDeposit({
+    hasPreOrder,
+    orderTotal,
+    isPickup,
+    isFeePending: shippingFeePending,
+  });
+
+  useEffect(() => {
+    if (!depositAllowed && paymentType === "deposit_cod") {
+      setPaymentType("full");
+    }
+  }, [depositAllowed, paymentType, setPaymentType]);
+
+  // Re-floor the percentage whenever the order total crosses the 1% threshold —
+  // dropping items under 10M must raise a previously-legal 1% to the 20% floor.
+  useEffect(() => {
+    const minPct = minDepositPercentage(hasPreOrder, orderTotal);
+    if (depositPercentage < minPct) {
+      setDepositPercentage(minPct);
+    }
+  }, [hasPreOrder, orderTotal, depositPercentage, setDepositPercentage]);
 
   const depositAmount = Math.round((subtotal * depositPercentage) / 100);
   const codAmount = Math.max(0, orderTotal - depositAmount);
@@ -323,7 +346,7 @@ export default function SummaryPage() {
       {shipping && shipping.deliverySpeed !== ShippingMethod.Pickup && (
         <DeliveryAddressCard
           shipping={shipping}
-          isDeliveryService={isDeliveryService}
+          isCarrierMethod={isCarrierMethod}
         />
       )}
 
@@ -335,19 +358,22 @@ export default function SummaryPage() {
         depositPercentage={depositPercentage}
         setDepositPercentage={setDepositPercentage}
         hasPreOrder={hasPreOrder}
+        isPickup={isPickup}
         subtotal={subtotal}
         orderTotal={orderTotal}
         disabledReason={
-          isDeliveryService && !hasPreOrder
+          shippingFeePending
             ? "Đặt cọc không hỗ trợ đơn hàng giao qua đơn vị vận chuyển."
-            : undefined
+            : isPickup
+              ? "Đặt cọc không áp dụng cho đơn hàng nhận tại cửa hàng."
+              : undefined
         }
       />
 
       <OrderSummaryCard
         subtotal={subtotal}
         shippingCost={shippingCost}
-        isDeliveryService={isDeliveryService}
+        shippingFeePending={shippingFeePending}
         totalShippingDiscountAmount={totalShippingDiscountAmount}
         totalDiscountAmount={totalDiscountAmount}
         rankDiscountAmount={rankDiscountAmount}
@@ -370,7 +396,7 @@ export default function SummaryPage() {
         itemCount={items.length}
         subtotal={subtotal}
         shippingCost={shippingCost}
-        isDeliveryService={isDeliveryService}
+        shippingFeePending={shippingFeePending}
         totalDiscountAmount={totalDiscountAmount}
         totalShippingDiscountAmount={totalShippingDiscountAmount}
         rankDiscountAmount={rankDiscountAmount}

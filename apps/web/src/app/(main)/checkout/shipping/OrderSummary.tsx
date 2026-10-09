@@ -11,7 +11,8 @@ interface Props {
   orderTotal: number;
   isCalculatingFee: boolean;
   isSubmitting: boolean;
-  deliveryService?: boolean;
+  /** Fee not known yet (inter-city courier) — render "Cập nhật sau". */
+  shippingFeePending?: boolean;
 }
 
 function OrderSummary({
@@ -20,7 +21,7 @@ function OrderSummary({
   orderTotal,
   isCalculatingFee,
   isSubmitting,
-  deliveryService = false,
+  shippingFeePending = false,
 }: Props) {
   return (
     <div className="overflow-hidden rounded-3xl bg-surface-container-low">
@@ -39,7 +40,7 @@ function OrderSummary({
           <ShippingFeeLabel
             shippingCost={shippingCost}
             isCalculatingFee={isCalculatingFee}
-            deliveryService={deliveryService}
+            shippingFeePending={shippingFeePending}
           />
         </div>
         <div className="h-px bg-outline-variant/30" />

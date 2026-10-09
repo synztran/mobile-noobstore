@@ -1,7 +1,13 @@
 import { VOUCHER_ERROR_MESSAGES } from "@/constants/errorMessages";
-import { sameShippingMethod } from "@/lib/shipping-method";
+import {
+  isFeePendingShippingMethod,
+  sameShippingMethod,
+} from "@/lib/shipping-method";
 import { createClient } from "@/lib/supabase/server";
-import { computeVoucherDiscount } from "@/lib/voucher-discount";
+import {
+  computeVoucherDiscount,
+  isShippingReward,
+} from "@/lib/voucher-discount";
 import {
   resolveCategorySlugByProductId,
   resolveVariantOwners,
@@ -119,7 +125,9 @@ function computeScopeBase(
     return { base, matches: true };
   }
 
-  // order_total / shipping_fee → whole order
+  // order_total → whole order. Shipping reward types also carry order_total:
+  // scope governs targeting and min_order_amount, while the reward type decides
+  // whether the saving comes off the cart or the shipping fee.
   return { base: orderSubtotal, matches: true };
 }
 
@@ -147,8 +155,9 @@ export async function POST(req: Request) {
     const subtotal = Math.max(0, toNumber(body.subtotal, 0));
     const shippingCost = Math.max(0, toNumber(body.shippingCost, 0));
     const shippingMethodId = body.shippingMethodId ?? null;
-    const items: VoucherApplyItem[] =
-      Array.isArray(body.items) ? body.items : [];
+    const items: VoucherApplyItem[] = Array.isArray(body.items)
+      ? body.items
+      : [];
 
     // Resolve kit component variant owners + category slugs server-side for
     // scope matching (authoritative — never trust the client).
@@ -246,14 +255,18 @@ export async function POST(req: Request) {
 
       if (v.status !== "active") {
         return NextResponse.json(
-          { error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.INVALID_VOUCHER}` },
+          {
+            error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.INVALID_VOUCHER}`,
+          },
           { status: 400 }
         );
       }
 
       if (v.deleted_at) {
         return NextResponse.json(
-          { error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.INVALID_VOUCHER}` },
+          {
+            error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.INVALID_VOUCHER}`,
+          },
           { status: 400 }
         );
       }
@@ -273,6 +286,22 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             error: `Voucher "${v.code}": Không áp dụng cho phương thức vận chuyển đã chọn`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Courier tiers are created with a zero fee because the real rate is
+      // quoted at fulfillment, so a shipping discount would resolve to 0đ and
+      // the customer would watch a voucher "apply" and save nothing. Reject it
+      // up front rather than silently doing nothing.
+      if (
+        isShippingReward(v.reward_type) &&
+        isFeePendingShippingMethod(shippingMethodId)
+      ) {
+        return NextResponse.json(
+          {
+            error: VOUCHER_ERROR_MESSAGES.SHIPPING_FEE_NOT_QUOTED(v.code),
           },
           { status: 400 }
         );
@@ -300,14 +329,18 @@ export async function POST(req: Request) {
         (v.end_at && new Date(v.end_at) < now)
       ) {
         return NextResponse.json(
-          { error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.OUT_OF_RANGE}` },
+          {
+            error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.OUT_OF_RANGE}`,
+          },
           { status: 400 }
         );
       }
 
       if (v.usage_limit_total !== null && v.used_count >= v.usage_limit_total) {
         return NextResponse.json(
-          { error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.VOUCHER_LIMIT_EXCEEDED}` },
+          {
+            error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.VOUCHER_LIMIT_EXCEEDED}`,
+          },
           { status: 400 }
         );
       }
@@ -317,7 +350,9 @@ export async function POST(req: Request) {
         const currentUsage = usageCounts.get(id) ?? 0;
         if (currentUsage >= v.usage_limit_per_user) {
           return NextResponse.json(
-            { error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.ALREADY_USED}` },
+            {
+              error: `Voucher "${v.code}": ${VOUCHER_ERROR_MESSAGES.ALREADY_USED}`,
+            },
             { status: 400 }
           );
         }
@@ -344,7 +379,10 @@ export async function POST(req: Request) {
 
       if (hasNonStackable) {
         return NextResponse.json(
-          { error: "Một số voucher không được sử dụng cùng các mã giảm giá khác" },
+          {
+            error:
+              "Một số voucher không được sử dụng cùng các mã giảm giá khác",
+          },
           { status: 400 }
         );
       }
@@ -389,9 +427,9 @@ export async function POST(req: Request) {
           hasFreeShipping = true;
         }
       } else {
-        // The shared helper decides which bucket amount_off/percent_off hits:
-        // a shipping_fee-scoped voucher discounts the shipping fee, every
-        // other scope discounts the (possibly matched) item subtotal.
+        // The shared helper decides which bucket the reward hits: shipping
+        // reward types discount the shipping fee, amount_off/percent_off
+        // discount the (possibly matched) item subtotal.
         const discount = computeVoucherDiscount(v, {
           orderBase: discountBase,
           shippingCost,
@@ -463,10 +501,7 @@ export async function POST(req: Request) {
     }
 
     // Cap totals
-    totalDiscountAmount = Math.min(
-      Math.max(0, totalDiscountAmount),
-      subtotal
-    );
+    totalDiscountAmount = Math.min(Math.max(0, totalDiscountAmount), subtotal);
     totalShippingDiscountAmount = Math.min(
       Math.max(0, totalShippingDiscountAmount),
       shippingCost

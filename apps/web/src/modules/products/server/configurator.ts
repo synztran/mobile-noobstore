@@ -1,5 +1,7 @@
 import "server-only";
 
+import { toRulesByProductId } from "@/modules/products/kit-pricing";
+
 import { getPublicClient } from "@/lib/supabase/public";
 import type {
   ComponentVariantRule,
@@ -99,22 +101,12 @@ export async function getConfiguratorData(
   const { data: ruleRows } = await supabase
     .from("component_variant_rules")
     .select(
-      `id, condition_variant_id, target_component_product_id,
-       component_variant_rule_allowed(variant_id)`
+      `id, kit_product_id, condition_variant_id, target_component_product_id,
+       component_variant_rule_allowed(variant_id, price_override)`
     )
     .eq("kit_product_id", slug);
 
-  const rules: ComponentVariantRule[] = (ruleRows ?? []).map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any) => ({
-      id: r.id,
-      condition_variant_id: r.condition_variant_id,
-      target_component_product_id: r.target_component_product_id,
-      allowed_variant_ids: (
-        r.component_variant_rule_allowed ?? []
-      ).map((a: { variant_id: string }) => a.variant_id),
-    })
-  );
+  const rules = toRulesByProductId(ruleRows ?? [])[slug] ?? [];
 
   return {
     groups: Array.from(groupMap.values()),
