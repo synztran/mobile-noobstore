@@ -11,8 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
+        id: node
         with:
-          node-version: 20
+          node-version-file: .nvmrc
       # Restore/persist the Turborepo remote-cache local mirror between runs
       - name: Turbo cache
         uses: rharkor/caching-for-turbo@v1.5
@@ -22,8 +23,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-          restore-keys: node-modules-${{ runner.os }}-yarn-
+          key: node-modules-${{ runner.os }}-node-${{ steps.node.outputs.node-version }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: node-modules-${{ runner.os }}-node-${{ steps.node.outputs.node-version }}-yarn-
       - name: Enable corepack (yarn 4)
         run: corepack enable
       - name: Install dependencies
