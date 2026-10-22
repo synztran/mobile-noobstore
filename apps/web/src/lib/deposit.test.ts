@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  isFeePendingShippingMethod,
+  isPickupShippingMethod,
+} from "./shipping-method";
+import {
   DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL,
   DEPOSIT_MIN_PCT,
   DEPOSIT_MIN_PCT_PRE_ORDER,
@@ -40,24 +44,42 @@ describe("canUseDeposit", () => {
     ).toBe(false);
   });
 
-  it("blocks store pickup with and without pre-order", () => {
-    expect(canUseDeposit({ ...base, isPickup: true })).toBe(false);
+  it("allows store pickup with and without pre-order", () => {
+    expect(canUseDeposit({ ...base, isPickup: true })).toBe(true);
     expect(canUseDeposit({ ...base, isPickup: true, hasPreOrder: true })).toBe(
-      false
+      true
     );
+  });
+
+  it.each([
+    ["standard", true],
+    ["express", true],
+    ["pickup", true],
+    ["delivery_service", false],
+    ["shipment", false],
+    ["carrier_4h", false],
+  ])("enforces deposit eligibility for %s", (method, allowed) => {
+    for (const hasPreOrder of [false, true]) {
+      expect(canUseDeposit({
+        ...base,
+        hasPreOrder,
+        isPickup: isPickupShippingMethod(method),
+        isFeePending: isFeePendingShippingMethod(method),
+      })).toBe(allowed);
+    }
   });
 });
 
 describe("minDepositPercentage", () => {
-  it("allows 1% only ABOVE the threshold", () => {
+  it("allows 5% at or above the threshold", () => {
+    expect(minDepositPercentage(false, T)).toBe(5);
     expect(minDepositPercentage(false, T + 1)).toBe(DEPOSIT_MIN_PCT);
     expect(minDepositPercentage(false, 13_500_000)).toBe(DEPOSIT_MIN_PCT);
     expect(minDepositPercentage(false, 50_000_000)).toBe(DEPOSIT_MIN_PCT);
   });
 
-  it("floors at 20% at or below the threshold", () => {
-    // Boundary is strict: exactly the threshold is NOT above it.
-    expect(minDepositPercentage(false, T)).toBe(DEPOSIT_MIN_PCT_PRE_ORDER);
+  it("floors at 30% below the threshold", () => {
+    expect(minDepositPercentage(false, T - 1)).toBe(30);
     expect(minDepositPercentage(false, T - 1)).toBe(DEPOSIT_MIN_PCT_PRE_ORDER);
     expect(minDepositPercentage(false, 1_000_000)).toBe(
       DEPOSIT_MIN_PCT_PRE_ORDER
@@ -65,12 +87,13 @@ describe("minDepositPercentage", () => {
     expect(minDepositPercentage(false, 0)).toBe(DEPOSIT_MIN_PCT_PRE_ORDER);
   });
 
-  it("keeps pre-order at 20% regardless of total", () => {
+  it("keeps pre-order at 30% regardless of total", () => {
+    expect(minDepositPercentage(true, T)).toBe(30);
     expect(minDepositPercentage(true, 1_000_000)).toBe(
       DEPOSIT_MIN_PCT_PRE_ORDER
     );
     expect(minDepositPercentage(true, T)).toBe(DEPOSIT_MIN_PCT_PRE_ORDER);
-    // Even far above the threshold, a pre-order never drops to 1%.
+    // Even far above the threshold, a pre-order never drops to 5%.
     expect(minDepositPercentage(true, 50_000_000)).toBe(
       DEPOSIT_MIN_PCT_PRE_ORDER
     );
@@ -78,9 +101,11 @@ describe("minDepositPercentage", () => {
 });
 
 describe("hasLowPctDeposit", () => {
-  it("is true only for a non-preorder order above the threshold", () => {
+  it("is true only for a non-preorder order at or above the threshold", () => {
     expect(hasLowPctDeposit(false, T + 1)).toBe(true);
-    expect(hasLowPctDeposit(false, T)).toBe(false);
+    expect(hasLowPctDeposit(false, T)).toBe(true);
+    expect(hasLowPctDeposit(false, T - 1)).toBe(false);
+    expect(hasLowPctDeposit(true, T)).toBe(false);
     expect(hasLowPctDeposit(true, T + 1)).toBe(false);
   });
 
@@ -105,12 +130,12 @@ describe("clampDepositPercentage", () => {
     expect(clampDepositPercentage(1, false, 7_000_000)).toBe(
       DEPOSIT_MIN_PCT_PRE_ORDER
     );
-    expect(clampDepositPercentage(1, false, T)).toBe(
-      DEPOSIT_MIN_PCT_PRE_ORDER
-    );
+    expect(clampDepositPercentage(5, false, T - 1)).toBe(30);
   });
 
-  it("keeps 1% when the order qualifies", () => {
+  it("floors old 1% requests to 5% when the order qualifies", () => {
+    expect(clampDepositPercentage(1, false, T)).toBe(5);
+    expect(clampDepositPercentage(5, false, T)).toBe(5);
     expect(clampDepositPercentage(1, false, T + 1)).toBe(DEPOSIT_MIN_PCT);
     expect(clampDepositPercentage(1, false, 13_500_000)).toBe(DEPOSIT_MIN_PCT);
   });
@@ -122,8 +147,8 @@ describe("clampDepositPercentage", () => {
   });
 
   it("clamps to the per-mode bounds", () => {
-    expect(clampDepositPercentage(0, false, 1_000_000)).toBe(20);
-    expect(clampDepositPercentage(0, true, 50_000_000)).toBe(20);
+    expect(clampDepositPercentage(0, false, 1_000_000)).toBe(30);
+    expect(clampDepositPercentage(0, true, 50_000_000)).toBe(30);
     expect(clampDepositPercentage(99, false, 1_000_000)).toBe(
       DEPOSIT_MAX_PCT
     );
@@ -141,7 +166,7 @@ describe("clampDepositPercentage", () => {
   it("never returns a value outside the legal range", () => {
     for (const total of [0, T - 1, T, T + 1, 99_000_000]) {
       for (const pre of [false, true]) {
-        for (const raw of [undefined, null, 0, 1, 20, 79, 80, 100, -5]) {
+        for (const raw of [undefined, null, 0, 1, 5, 20, 30, 79, 80, 100, -5]) {
           const out = clampDepositPercentage(raw, pre, total);
           const min = minDepositPercentage(pre, total);
           expect(out).toBeGreaterThanOrEqual(min);

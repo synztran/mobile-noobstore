@@ -155,8 +155,8 @@ export default function SummaryPage() {
     }
   }, [depositAllowed, paymentType, setPaymentType]);
 
-  // Re-floor the percentage whenever the order total crosses the 1% threshold —
-  // dropping items under 10M must raise a previously-legal 1% to the 20% floor.
+  // Re-floor the percentage whenever the order total crosses the 5% threshold —
+  // dropping items under 10M must raise a previously-legal 5% to the 30% floor.
   useEffect(() => {
     const minPct = minDepositPercentage(hasPreOrder, orderTotal);
     if (depositPercentage < minPct) {
@@ -358,15 +358,12 @@ export default function SummaryPage() {
         depositPercentage={depositPercentage}
         setDepositPercentage={setDepositPercentage}
         hasPreOrder={hasPreOrder}
-        isPickup={isPickup}
         subtotal={subtotal}
         orderTotal={orderTotal}
         disabledReason={
           shippingFeePending
             ? "Đặt cọc không hỗ trợ đơn hàng giao qua đơn vị vận chuyển."
-            : isPickup
-              ? "Đặt cọc không áp dụng cho đơn hàng nhận tại cửa hàng."
-              : undefined
+            : undefined
         }
       />
 

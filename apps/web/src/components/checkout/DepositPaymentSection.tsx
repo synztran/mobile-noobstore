@@ -4,6 +4,7 @@ import { formatVND } from "@/lib/currency";
 import {
   DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL,
   DEPOSIT_MAX_PCT,
+  DEPOSIT_MIN_PCT,
   hasLowPctDeposit,
   minDepositPercentage,
 } from "@/lib/deposit";
@@ -16,28 +17,27 @@ interface Props {
   depositPercentage: number;
   setDepositPercentage: (pct: number) => void;
   hasPreOrder?: boolean;
-  isPickup?: boolean;
   subtotal: number;
   orderTotal: number;
   disabledReason?: string;
 }
 
+// Should check business logical in /lib/deposit.ts 
 export const DepositPaymentSection = memo(function DepositPaymentSection({
   paymentType,
   setPaymentType,
   depositPercentage,
   setDepositPercentage,
   hasPreOrder = false,
-  isPickup = false,
   subtotal,
   orderTotal,
   disabledReason,
 }: Props) {
-  // The 1% tier is only reachable above DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL; every
-  // other regular order floors at 20%, same as pre-order.
+  // The 5% tier starts at DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL; every
+  // other regular order floors at 30%, same as pre-order.
   const minPercentage = minDepositPercentage(hasPreOrder, orderTotal);
   const lowPctAvailable = hasLowPctDeposit(hasPreOrder, orderTotal);
-  const isDisabled = Boolean(disabledReason) || isPickup;
+  const isDisabled = Boolean(disabledReason);
 
   // Local draft while dragging so the store (and the whole summary page) only
   // re-renders once when the user releases the slider.
@@ -51,8 +51,7 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
   const liveCod = Math.max(0, orderTotal - liveDeposit);
 
   const snapDepositPct = (raw: number) => {
-    // Floor against the order's actual minimum. Hardcoding 1 here let a
-    // sub-threshold order sit at 1% in the UI even though the server clamps it.
+    // Keep the slider at the same minimum enforced by the server.
     if (raw <= minPercentage) return minPercentage;
     const snapped = Math.round(raw / 5) * 5;
     return Math.min(DEPOSIT_MAX_PCT, Math.max(minPercentage, snapped));
@@ -185,7 +184,7 @@ export const DepositPaymentSection = memo(function DepositPaymentSection({
               ) : lowPctAvailable ? (
                 <>
                   {" "}
-                  Đặt cọc <strong>1%</strong> chỉ áp dụng cho đơn hàng từ{" "}
+                  Đặt cọc <strong>{DEPOSIT_MIN_PCT}%</strong> chỉ áp dụng cho đơn hàng từ{" "}
                   <strong>{formatVND(DEPOSIT_LOW_PCT_MIN_ORDER_TOTAL)}</strong>{" "}
                   trở lên.
                 </>
