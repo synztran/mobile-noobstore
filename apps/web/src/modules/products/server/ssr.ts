@@ -443,7 +443,10 @@ export const getProductSeoData = cache(async function getProductSeoData(
   limit = 48
 ): Promise<ProductSeoInfo[]> {
   try {
-    const cacheKey = `${CACHE_VERSION}:product-seo-data`;
+    // `limit` is part of the key. It was not, and the two callers disagree: the
+    // warm-cache cron asks for 24 items while /shop asks for 48, so they were
+    // thrashing one slot and the cron silently decided how many the page got.
+    const cacheKey = `${CACHE_VERSION}:product-seo-data:${limit}`;
     const cached = await getCache<ProductSeoInfo[]>(cacheKey);
     if (cached) return cached;
 
