@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "corepack yarn turbo build --filter=@noobstore/web",
+  "buildCommand": "if [ -f scripts/vercel-install.mjs ]; then corepack yarn turbo build --filter=@noobstore/web; else corepack yarn --cwd ../.. turbo build --filter=@noobstore/web; fi",
   "installCommand": "if [ -f scripts/vercel-install.mjs ]; then node scripts/vercel-install.mjs; else node ../../scripts/vercel-install.mjs; fi",
   "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1"
 }
