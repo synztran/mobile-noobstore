@@ -12,8 +12,9 @@ const API_BASE = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 // ─── Core ────────────────────────────────────────────────────────────────────
 
-async function sendMessage(text: string): Promise<void> {
-	if (!BOT_TOKEN || !CHAT_ID) {
+async function sendMessage(text: string, destination?: { chatId: string; threadId: number }): Promise<void> {
+	const chatId = destination?.chatId ?? CHAT_ID;
+	if (!BOT_TOKEN || !chatId) {
 		console.warn(
 			"[Telegram] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set.",
 		);
@@ -24,7 +25,8 @@ async function sendMessage(text: string): Promise<void> {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({
-			chat_id: CHAT_ID,
+			chat_id: chatId,
+			...(destination ? { message_thread_id: destination.threadId } : {}),
 			text,
 			parse_mode: "HTML",
 		}),
@@ -337,11 +339,18 @@ export async function notifyRateLimitHit(
 		``,
 		`🌐 <b>IP:</b> ${escapeHtml(ip)}`,
 		`🔗 <b>Path:</b> ${escapeHtml(path)}`,
-		`🔐 <b>Auth:</b> ${isAuthenticated ? "Có token" : "Không token"}`,
+		`🔐 <b>Cookie phiên:</b> ${isAuthenticated ? "Có (chưa xác minh danh tính)" : "Không"}`,
+		`Thông báo tối đa một lần/IP trong 10 phút; không tự chứng minh có tấn công.`,
 		`🕐 <b>Thời gian:</b> ${time}`,
 	].join("\n");
 
-	await sendMessage(text);
+	const chatId = CHAT_ID;
+	const threadId = Number(process.env.TELEGRAM_RATE_LIMIT_THREAD_ID);
+	if (!chatId || !Number.isSafeInteger(threadId) || threadId <= 0) {
+		console.warn("[Telegram] Rate-limit topic is not configured; warning skipped.");
+		return;
+	}
+	await sendMessage(text, { chatId, threadId });
 }
 
 // ─── Utils ────────────────────────────────────────────────────────────────────

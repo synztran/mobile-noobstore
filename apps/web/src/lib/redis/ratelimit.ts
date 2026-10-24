@@ -63,6 +63,10 @@ const LIMITER_CONFIGS = {
     limiter: Ratelimit.fixedWindow(100, "1 m"),
     prefix: "ratelimit:alert",
   },
+  alertIp: {
+    limiter: Ratelimit.slidingWindow(1, "10 m"),
+    prefix: "ratelimit:alert:ip",
+  },
 } as const;
 
 type LimiterKey = keyof typeof LIMITER_CONFIGS;
@@ -104,6 +108,10 @@ export function getApiLimiter() {
 
 export function getAlertLimiter() {
   return getLimiter("alert");
+}
+
+export function getAlertIpLimiter() {
+  return getLimiter("alertIp");
 }
 
 export async function tryRateLimit(

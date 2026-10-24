@@ -16,9 +16,8 @@ const nextConfig = {
       // Script nonces need a separate Next.js rendering/caching rollout. These
       // directives add protection without pretending unsafe-inline is strict CSP.
       { key: "Content-Security-Policy", value: "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'" },
-      // Discovery only: inline Next.js scripts will report until a nonce rollout.
-      // This policy does not block scripts and is not evidence of an attack.
-      { key: "Content-Security-Policy-Report-Only", value: "script-src 'self'; object-src 'none'; base-uri 'self'; report-uri /api/security/csp-report" },
+      // Script reporting paused until a tested nonce/hash rollout: normal Next.js
+      // inline scripts generated report storms. Enforced policy above remains.
     ] }];
   },
 

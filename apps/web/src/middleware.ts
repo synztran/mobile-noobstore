@@ -4,8 +4,8 @@ import {
   resolveDeviceRouting,
 } from "@/modules/desktop/device";
 import { type NextRequest, NextResponse } from "next/server";
-import { getAlertLimiter, getApiLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
-import { notifyRateLimitHit } from "@/lib/telegram/telegram.service";
+import { getApiLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
+import { fireRateLimitAlert, isCspReportPath } from "@/lib/redis/rate-limit-alert";
 import { hasLiveSessionCookie, hasUsableSessionCookie } from "@/lib/auth/session-cookie";
 
 /**
@@ -61,21 +61,6 @@ function withRateLimitTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 function isUiCriticalRead(method: string, pathname: string): boolean {
 	if (method !== "GET") return false;
 	return pathname.startsWith("/api/cart");
-}
-
-/**
- * Rate limit alert to Telegram (max 100 per minute, whole-system).
- * Awaited so the notification isn't dropped when the response completes.
- */
-async function fireRateLimitAlert(ip: string, path: string, isAuthenticated: boolean): Promise<void> {
-  try {
-    const { success } = await getAlertLimiter().limit("ratelimit-alert");
-    if (success) {
-      await notifyRateLimitHit(ip, path, isAuthenticated);
-    }
-  } catch {
-    // alert failure is non-critical, silently ignore
-  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -153,6 +138,8 @@ export async function middleware(request: NextRequest) {
     // Rate limit all /api/* routes — 60 req/min per IP (see lib/redis/ratelimit.ts)
     if (
       pathname.startsWith("/api/") &&
+      // Browser telemetry has its own bounded limiter; never spend user quota.
+      !isCspReportPath(pathname) &&
       !isPublicCachedRead(request.method, pathname) &&
       !isUiCriticalRead(request.method, pathname) &&
       !pathname.startsWith("/api/health") &&

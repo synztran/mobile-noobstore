@@ -9,6 +9,24 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 describe("new order Telegram details", () => {
+  it("routes only rate-limit warnings to configured forum topic", async () => {
+    vi.stubEnv("TELEGRAM_RATE_LIMIT_THREAD_ID", "1303");
+    const { notifyRateLimitHit, sendPaymentSecurityAlert } = await import("./telegram.service");
+    await notifyRateLimitHit("ip", "/api/wishlist", true);
+    const warning = JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string);
+    expect(warning.chat_id).toBe("private-test-chat");
+    expect(warning.message_thread_id).toBe(1303);
+    await sendPaymentSecurityAlert("bank_config_changed", 1);
+    const payment = JSON.parse(vi.mocked(fetch).mock.calls[1][1]!.body as string);
+    expect(payment.chat_id).toBe("private-test-chat");
+    expect(payment.message_thread_id).toBeUndefined();
+  });
+  it("does not fall back to general chat when warning topic is missing", async () => {
+    vi.stubEnv("TELEGRAM_RATE_LIMIT_THREAD_ID", "");
+    const { notifyRateLimitHit } = await import("./telegram.service");
+    await notifyRateLimitHit("ip", "/api/wishlist", false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it("includes deposit and saved delivery address, escaping untrusted content", async () => {
     const { notifyNewOrder } = await import("./telegram.service");
     await notifyNewOrder("NS123", "Customer", 1000000, undefined, 1, [], {

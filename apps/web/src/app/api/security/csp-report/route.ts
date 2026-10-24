@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
-import { queuePaymentAlert } from "@/modules/payments/server/security-alerts";
 export const dynamic = "force-dynamic";
 
 // Reports are attacker-controlled telemetry, never trusted evidence. Store no
@@ -20,10 +19,9 @@ export async function POST(req: NextRequest) {
       if (size > 16384) { await reader.cancel(); return new NextResponse(null, { status: 413 }); }
       chunks.push(value);
     }
-    const report = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-    const directive = report?.["csp-report"]?.["effective-directive"];
-    const supported = ["script-src-elem", "script-src-attr", "script-src", "object-src", "base-uri"];
-    if (supported.includes(directive)) await queuePaymentAlert("csp_report", directive);
+    JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    // Legacy/cached-page reports are untrusted telemetry. Do not escalate normal
+    // inline-script noise to Telegram or store browser-supplied data.
     return new NextResponse(null, { status: 204 });
   } catch { return new NextResponse(null, { status: 400 }); }
 }
