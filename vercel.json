@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "yarn turbo build --filter=@noobstore/web",
-  "installCommand": "yarn install --immutable",
+  "buildCommand": "corepack yarn turbo build --filter=@noobstore/web",
+  "installCommand": "node scripts/vercel-install.mjs",
   "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1"
 }
