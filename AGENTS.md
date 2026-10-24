@@ -35,6 +35,11 @@ Run these from the workspace root. The only app currently is `apps/web`.
 
 ## Key Conventions
 
+### Package changes — approval required
+
+- Before adding a new package or upgrading an existing package, ask the owner for explicit approval and wait before changing manifests, lockfiles, or installing it.
+- In the approval request, write each affected package name in **bold** and explain the reason, proposed version, and compatibility risks.
+
 ### Supabase Clients — use the right one
 
 | Client | File | When to use |

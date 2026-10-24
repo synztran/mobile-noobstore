@@ -9,7 +9,5 @@ export function safeHtml(html: string): string {
   });
 }
 
-/** JSON-LD is embedded inside a script raw-text element, not an HTML text node. */
-export function safeJsonLd(value: unknown): string {
-  return JSON.stringify(value).replace(/</g, "\\u003c");
-}
+// Preserve existing callers without changing shop page/component files.
+export { safeJsonLd } from "./safe-json-ld";
