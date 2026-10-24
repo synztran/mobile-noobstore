@@ -22,6 +22,7 @@
 		"deploy:log": "bash scripts/add-deployment.sh"
 	},
 	"devDependencies": {
+		"@electric-sql/pglite": "^0.5.11",
 		"@playwright/test": "^1.61.1",
 		"dotenv": "^17.4.2",
 		"prettier": "^3.8.3",

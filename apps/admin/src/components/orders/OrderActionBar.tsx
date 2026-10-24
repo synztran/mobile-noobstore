@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { OrderDetail } from "./OrderDetailModal";
+import { VerifiedPaymentPanel } from "./VerifiedPaymentPanel";
 import { adminQueryKeys } from "@/lib/react-query/root";
 
 const STATUS_FLOW = [
@@ -272,7 +273,7 @@ export default function OrderActionBar({
     order?.paid_at !== null ||
     (order?.payment_type === "deposit_cod" && order?.deposit_paid_at !== null);
   const canRefund = hasPayment && refundStatuses.includes(currentStatus);
-  const canAdvance = nextStatus !== null;
+  const canAdvance = nextStatus !== null && !["confirmed", "first_paid", "second_paid"].includes(nextStatus);
   const canCancel = !isTerminal;
 
   const patchMutation = useMutation({
@@ -321,10 +322,11 @@ export default function OrderActionBar({
     },
   });
 
-  if (isTerminal && !canRefund) return null;
+  if (isTerminal && !canRefund) return <VerifiedPaymentPanel key={order.id} orderId={order.id} total={Number(order.total_price)} onUpdated={onUpdated} />;
 
   return (
     <div className="shrink-0 space-y-4 pt-4">
+      <VerifiedPaymentPanel key={order.id} orderId={order.id} total={Number(order.total_price)} onUpdated={onUpdated} />
       <div className="flex gap-4">
         {/* Step flow indicator — vertical */}
         {flowIdx >= 0 && (

@@ -64,6 +64,10 @@ export async function POST(req: NextRequest) {
 
     const supabase = getAdminClient();
 
+    if (["confirmed", "first_paid", "second_paid"].includes(body.status)) {
+      return NextResponse.json({ error: "Payment verification requires an individual receipt per order. Use the payment panel." }, { status: 409 });
+    }
+
     // Fetch current orders to validate they exist
     const { data: orders } = await supabase
       .from("orders")

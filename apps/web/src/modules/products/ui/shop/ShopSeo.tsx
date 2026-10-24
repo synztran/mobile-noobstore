@@ -36,7 +36,8 @@ export async function ShopSeo({
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(structured) }}
+      dangerouslySetInnerHTML={{ __html: safeJsonLd(structured) }}
     />
   );
 }
+import { safeJsonLd } from "@/lib/safe-html";

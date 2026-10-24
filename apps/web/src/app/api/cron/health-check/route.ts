@@ -1,4 +1,5 @@
 import { requireCronSecret } from "@/lib/auth/requireCronSecret";
+import { drainPaymentSecurityAlerts } from "@/modules/payments/server/drain-alerts";
 import {
   bsTrigger,
   bsResolve,
@@ -18,6 +19,7 @@ const HEALTH_SOURCE = "noobstore-health-check";
 export async function POST(req: NextRequest) {
   const authError = requireCronSecret(req);
   if (authError) return authError;
+  try { await drainPaymentSecurityAlerts(); } catch { console.error("[payment-security] alert drain failed"); }
 
   const baseUrl = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`

@@ -1,4 +1,5 @@
 "use client";
+import { safeHtml } from "@/lib/safe-html";
 
 import {
   SUPPORT_CATEGORY_LABEL,
@@ -227,7 +228,7 @@ export default function TicketDetailPage({
             </p>
             <div
               className="rounded-2xl border border-primary-fixed-dim bg-primary-fixed/30 px-4 py-3 text-sm leading-relaxed text-on-surface"
-              dangerouslySetInnerHTML={{ __html: ticket.admin_notes }}
+              dangerouslySetInnerHTML={{ __html: safeHtml(ticket.admin_notes) }}
             />
           </div>
         )}

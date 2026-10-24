@@ -216,11 +216,11 @@ async function ProductLoader({ slug }: { slug: string }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }}
       />
       <ProductView
         product={detail.product}
@@ -261,3 +261,4 @@ export default async function ProductPage({
     </PullToRefresh>
   );
 }
+import { safeJsonLd } from "@/lib/safe-html";

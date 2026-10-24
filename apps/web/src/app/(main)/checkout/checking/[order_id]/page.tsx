@@ -26,5 +26,5 @@ export default function CheckingWithOrderId({
 		return null;
 	}
 
-	return <CheckingPageContent />;
+	return <CheckingPageContent identifier={order_id} />;
 }

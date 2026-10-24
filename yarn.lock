@@ -468,6 +468,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@electric-sql/pglite@npm:^0.5.11":
+  version: 0.5.11
+  resolution: "@electric-sql/pglite@npm:0.5.11"
+  checksum: 10c0/e865146c503cbe9fac4e6ee53f0f75df683aeaaa68743358bd9e7b12372b183d0a23eb51d4189c59499db8ab320fb1ac4b5baf1addb95a757af79add24aa74e0
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:2.0.0-alpha.3":
   version: 2.0.0-alpha.3
   resolution: "@emnapi/core@npm:2.0.0-alpha.3"
@@ -1076,6 +1083,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@noobstore/admin@workspace:apps/admin"
   dependencies:
+    server-only: "npm:^0.0.1"
     "@hcaptcha/react-hcaptcha": "npm:^2.0.2"
     "@supabase/ssr": "npm:^0.10.0"
     "@supabase/supabase-js": "npm:^2.101.1"
@@ -1113,6 +1121,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@noobstore/web@workspace:apps/web"
   dependencies:
+    isomorphic-dompurify: "npm:^3.19.0"
+    bwip-js: "npm:^4.11.2"
     "@hcaptcha/react-hcaptcha": "npm:^2.0.2"
     "@lukemorales/query-key-factory": "npm:^1.3.4"
     "@supabase/ssr": "npm:^0.10.0"

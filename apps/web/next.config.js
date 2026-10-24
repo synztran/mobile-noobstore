@@ -6,7 +6,21 @@ const nextConfig = {
 
   // Externalize large server-only packages so they're require()'d at runtime
   // instead of bundled into every serverless function — faster cold starts.
-  serverExternalPackages: ["resend", "@upstash/redis"],
+  serverExternalPackages: ["resend", "@upstash/redis", "bwip-js", "isomorphic-dompurify", "jsdom"],
+
+  async headers() {
+    return [{ source: "/:path*", headers: [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "X-Frame-Options", value: "DENY" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      // Script nonces need a separate Next.js rendering/caching rollout. These
+      // directives add protection without pretending unsafe-inline is strict CSP.
+      { key: "Content-Security-Policy", value: "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'" },
+      // Discovery only: inline Next.js scripts will report until a nonce rollout.
+      // This policy does not block scripts and is not evidence of an attack.
+      { key: "Content-Security-Policy-Report-Only", value: "script-src 'self'; object-src 'none'; base-uri 'self'; report-uri /api/security/csp-report" },
+    ] }];
+  },
 
   // /new-release content moved into the aggregated /news hub
   async redirects() {

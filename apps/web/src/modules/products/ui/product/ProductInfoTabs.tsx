@@ -1,4 +1,5 @@
 "use client";
+import { safeHtml } from "@/lib/safe-html";
 
 import type { ProductDetail } from "@/modules/products/types";
 import { useShippingEstimate } from "@/lib/react-query/shipping/api/useShippingQueries";
@@ -100,7 +101,7 @@ export function ProductInfoTabs({
                 >
                   <div
                     className="editor-content text-sm text-on-surface"
-                    dangerouslySetInnerHTML={{ __html: editorialContent }}
+                    dangerouslySetInnerHTML={{ __html: safeHtml(editorialContent) }}
                   />
                   {!descExpanded && (
                     <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-surface to-transparent" />

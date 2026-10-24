@@ -343,6 +343,12 @@ export async function PATCH(
     "cancelled",
     "refunded",
   ];
+  if (body.status && ["confirmed", "first_paid", "second_paid"].includes(body.status)) {
+    return NextResponse.json(
+      { error: "Record verified receipts in the payment panel; payment status cannot be set manually." },
+      { status: 409 }
+    );
+  }
   if (body.status && !VALID_STATUSES.includes(body.status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
@@ -373,9 +379,7 @@ export async function PATCH(
   }
   if (body.status === "delivered") {
     (update as Record<string, unknown>).delivered_at = new Date().toISOString();
-    if (paymentType === "deposit_cod") {
-      update.paid_at = new Date().toISOString(); // COD collected on delivery
-    }
+    // Delivery is not evidence of money collected. Record cash/COD first.
   }
   if (body.status === "cancelled") {
     update.cancelled_at = new Date().toISOString();

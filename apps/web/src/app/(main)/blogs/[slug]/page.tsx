@@ -107,9 +107,10 @@ export default async function BlogDetailPage({
 
 				<div
 					className="content-html text-sm font-medium leading-relaxed text-on-surface-variant"
-					dangerouslySetInnerHTML={{ __html: post.content }}
+					dangerouslySetInnerHTML={{ __html: safeHtml(post.content) }}
 				/>
 			</article>
 		</main>
 	);
 }
+import { safeHtml } from "@/lib/safe-html";

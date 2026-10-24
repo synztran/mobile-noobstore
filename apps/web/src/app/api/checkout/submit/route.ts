@@ -8,6 +8,9 @@ import {
   isShippingReward,
 } from "@/lib/voucher-discount";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
+import { paymentDetailsForOrder } from "@/modules/payments/server/details";
+import { issueEvidence, deliverEvidence } from "@/modules/payments/server/evidence";
+import { after } from "next/server";
 import { randomBase36 } from "@/lib/random";
 import type {
   AppliedVoucherSummary,
@@ -1005,14 +1008,33 @@ export async function POST(req: NextRequest) {
       user?.user_metadata?.full_name ?? user?.email ?? "Khách";
     const itemCount = body.items.reduce((sum, i) => sum + i.quantity, 0);
     try {
+      const { data: savedOrder, error: savedOrderError } = await admin.from("orders").select("*").eq("id", result.order_id).single();
+      if (savedOrderError || !savedOrder) throw new Error("Cannot load saved order for notification");
+      const { data: shippingMethod } = savedOrder.shipping_method_id ? await admin.from("shipping_methods").select("name").eq("id", savedOrder.shipping_method_id).maybeSingle() : { data: null };
       await notifyNewOrder(
         result.order_number,
         customerName,
-        recalculatedTotal,
+        Number(savedOrder.total_price),
         undefined,
         itemCount,
-        body.vouchers
+        body.vouchers,
+        {
+          paymentType: savedOrder.payment_type, depositPercentage: Number(savedOrder.deposit_percentage ?? 0),
+          depositAmount: Number(savedOrder.deposit_amount ?? 0), remainingAmount: Number(savedOrder.remaining_amount ?? 0),
+          shippingMethodId: savedOrder.shipping_method_id,
+          shippingMethodName: isPickupShippingMethod(savedOrder.shipping_method_id) ? "Nhận tại cửa hàng" : shippingMethod?.name ?? savedOrder.shipping_method_id ?? "Chưa xác định",
+          address: savedOrder.delivery_address as Record<string, unknown> | null,
+        }
       );
+      after(async () => {
+        try {
+          const payment = await paymentDetailsForOrder(savedOrder);
+          if (payment.payload && payment.data.bank) {
+            const evidence = await issueEvidence(savedOrder.id, savedOrder.order_number, payment.data.amountDue, payment.data.bank, payment.payload);
+            await deliverEvidence(evidence);
+          }
+        } catch { console.error("[submit] payment evidence could not be issued", savedOrder.id); }
+      });
     } catch (notifyError) {
       console.error(
         "[submit] failed to send order Telegram notification:",

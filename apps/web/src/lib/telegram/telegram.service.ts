@@ -2,6 +2,9 @@
  * Server-only Telegram notification service.
  * NEVER import this in client components.
  */
+import "server-only";
+import { formatVND } from "@/lib/currency";
+import { isPickupShippingMethod } from "@/lib/shipping-method";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -31,6 +34,17 @@ async function sendMessage(text: string): Promise<void> {
 		const body = await res.text();
 		console.error("[Telegram] Failed to send message:", res.status, body);
 	}
+}
+
+export async function sendPaymentSecurityAlert(kind: string, count: number): Promise<void> {
+	if (!BOT_TOKEN || !CHAT_ID) throw new Error("Telegram alerts not configured");
+	const response = await fetch(`${API_BASE}/sendMessage`, {
+		method: "POST", headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ chat_id: CHAT_ID, text: `[Payment security] ${kind}\nEvents: ${count}\nReview private admin/database audit logs. No customer browser report is proof of tampering.` }),
+		signal: AbortSignal.timeout(10000),
+	});
+	const result = await response.json();
+	if (!response.ok || !result.ok) throw new Error("Telegram security alert failed");
 }
 
 // ─── Message Templates ────────────────────────────────────────────────────────
@@ -107,6 +121,11 @@ export async function notifyNewOrder(
 		voucher_discount_amount?: number;
 		shipping_discount_amount?: number;
 	}>,
+	details?: {
+		paymentType: string; depositPercentage: number; depositAmount: number; remainingAmount: number;
+		shippingMethodId: string | null; shippingMethodName: string;
+		address: Record<string, unknown> | null;
+	},
 ): Promise<void> {
 	const time =
 		orderTime ??
@@ -118,6 +137,19 @@ export async function notifyNewOrder(
 		`📦 <b>Mã đơn:</b> ${escapeHtml(orderNumber)}`,
 		`👤 <b>Khách hàng:</b> ${escapeHtml(customerName)}`,
 		`💰 <b>Tổng tiền:</b> ${totalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })}`,
+		...(details ? [
+			`<b>Thanh toán:</b> ${details.paymentType === "deposit_cod" ? "Đặt cọc + COD" : "Toàn bộ"} — chưa xác minh nhận tiền`,
+			...(details.paymentType === "deposit_cod" ? [
+				`<b>Đặt cọc (${details.depositPercentage}%):</b> ${formatVND(details.depositAmount)}`,
+				`<b>Còn lại:</b> ${formatVND(details.remainingAmount)}`,
+			] : []),
+			`<b>Giao nhận:</b> ${escapeHtml(details.shippingMethodName)}`,
+			...(!isPickupShippingMethod(details.shippingMethodId) ? [
+				`<b>Người nhận:</b> ${escapeHtml(String(details.address?.full_name ?? "Chưa có"))}`,
+				`<b>Điện thoại:</b> ${escapeHtml(String(details.address?.phone_number ?? "Chưa có"))}`,
+				`<b>Địa chỉ:</b> ${escapeHtml([details.address?.apartment, details.address?.street_address, details.address?.ward, details.address?.district, details.address?.city].filter(Boolean).join(", ") || "Chưa có")}`,
+			] : []),
+		] : []),
 		`🕐 <b>Thời gian:</b> ${time}`,
 		itemCount !== undefined
 			? `📦 <b>Số lượng sản phẩm:</b> ${itemCount}`
@@ -130,6 +162,19 @@ export async function notifyNewOrder(
 		.join("\n");
 
 	await sendMessage(text);
+}
+
+/** Send original PNG bytes as a document; Telegram photos may be recompressed. */
+export async function sendPaymentEvidenceDocument(png: Uint8Array, caption: string, filename: string): Promise<string> {
+	if (!BOT_TOKEN || !CHAT_ID) throw new Error("Telegram evidence destination is not configured");
+	const form = new FormData();
+	form.set("chat_id", CHAT_ID);
+	form.set("caption", caption.slice(0, 1024));
+	form.set("document", new Blob([new Uint8Array(png)], { type: "image/png" }), filename);
+	const response = await fetch(`${API_BASE}/sendDocument`, { method: "POST", body: form, signal: AbortSignal.timeout(15000) });
+	const result = await response.json();
+	if (!response.ok || !result.ok || !result.result?.message_id) throw new Error("Telegram evidence delivery failed");
+	return String(result.result.message_id);
 }
 
 /**
