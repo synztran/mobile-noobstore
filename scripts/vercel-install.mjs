@@ -1,5 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+// Vercel may start in apps/web. Always install from the workspace root.
+const workspaceRoot = fileURLToPath(new URL("../", import.meta.url));
 
 const { packageManager } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
@@ -13,6 +17,7 @@ if (major !== 24 || minor < 22 || (minor === 22 && patch < 1)) {
 
 function run(args, capture = false) {
   const result = spawnSync("corepack", ["yarn", ...args], {
+    cwd: workspaceRoot,
     stdio: capture ? ["ignore", "pipe", "inherit"] : "inherit",
     encoding: "utf8",
   });
