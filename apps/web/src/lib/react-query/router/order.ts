@@ -1,6 +1,8 @@
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export interface OrderStatusResult {
+	order_number?: string;
+	order_id?: string;
 	status: string;
 	voucher_discount_amount: number;
 	shipping_discount_amount: number;

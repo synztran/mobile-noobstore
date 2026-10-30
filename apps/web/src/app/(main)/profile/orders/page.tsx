@@ -11,7 +11,6 @@ import { useAuth } from "@/modules/user/client/AuthProvider";
 import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { formatVND } from "@/lib/currency";
 import {
-  useOrderByNumber,
   useOrders,
 } from "@/lib/react-query/order/api/useOrderQueries";
 import {
@@ -29,7 +28,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const STATUS_CONFIG: Record<
   string,
@@ -188,31 +187,31 @@ function OrdersPage() {
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const orderNumberParam = searchParams.get("orderNumber");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(orderNumberParam);
   const [selectedServiceOrderId, setSelectedServiceOrderId] = useState<
     string | null
   >(null);
   const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
-
-  const orderNumberParam = searchParams.get("orderNumber");
-  const orderByNumber = useOrderByNumber(orderNumberParam);
 
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useOrders({ q: debouncedQ, status: activeStatus });
 
   // Open order detail from URL param
   useEffect(() => {
-    const found = orderByNumber.data;
-    if (found) setSelectedOrderId(found.id);
-  }, [orderByNumber.data]);
-
-  // Clean the URL param after handling
-  useEffect(() => {
-    if (!orderNumberParam) return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete("orderNumber");
-    window.history.replaceState({}, "", url.toString());
+    if (orderNumberParam) {
+      setSelectedOrderId(orderNumberParam);
+    }
   }, [orderNumberParam]);
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedOrderId(null);
+    if (searchParams.get("orderNumber")) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("orderNumber");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams]);
 
   // Debounce search
   useEffect(() => {
@@ -410,7 +409,7 @@ function OrdersPage() {
 
       <OrderDetailDrawer
         orderId={selectedOrderId}
-        onClose={() => setSelectedOrderId(null)}
+        onClose={handleCloseDetail}
       />
       <ServiceOrderDetailDrawer
         orderId={selectedServiceOrderId}

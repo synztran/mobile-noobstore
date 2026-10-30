@@ -44,6 +44,8 @@ export function useOrderStatus(
 			}
 			const data = await res.json();
 			return {
+				order_number: (data.order_number as string) ?? undefined,
+				order_id: (data.order_id as string) ?? undefined,
 				status: (data.status as string) ?? "pending",
 				voucher_discount_amount:
 					Number(data.voucher_discount_amount ?? 0) || 0,

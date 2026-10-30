@@ -19,7 +19,7 @@ export async function paymentDetails(identifier: string) {
   const session = await createClient();
   const { data: { user } } = await session.auth.getUser();
   if (!user) return { error: "Unauthorized", status: 401 } as const;
-  const columns = "id, order_number, status, total_price, shipping_fee, shipping_method_id, voucher_discount_amount, shipping_discount_amount, payment_type, deposit_amount, deposit_paid_at, paid_at";
+  const columns = "id, order_number, status, total_price, shipping_fee, shipping_method_id, voucher_discount_amount, shipping_discount_amount, payment_type, deposit_amount, deposit_percentage, remaining_amount, deposit_paid_at, paid_at";
   let result = await session.from("orders").select(columns).eq("user_id", user.id).eq("order_number", identifier).maybeSingle();
   if (!result.data && /^[0-9a-f-]{36}$/i.test(identifier)) {
     result = await session.from("orders").select(columns).eq("user_id", user.id).eq("id", identifier).maybeSingle();
@@ -35,11 +35,13 @@ export async function paymentDetailsForOrder(order: {
   shipping_fee: number | null; shipping_method_id: string | null;
   voucher_discount_amount: number; shipping_discount_amount: number;
   payment_type: string; deposit_amount: number | null;
+  deposit_percentage?: number | null;
+  remaining_amount?: number | null;
 }) {
   const admin = getAdminClient();
   const [receipts, bankResult] = await Promise.all([
     (admin.from as any)("order_payment_receipts").select("amount").eq("order_id", order.id),
-    admin.from("payment_information").select("id, platform_name, account_number, account_name").eq("platform_type", "bank").order("created_at").limit(1).maybeSingle(),
+    admin.from("payment_information").select("id, platform_name, account_number, account_name, bank_logo_url").eq("platform_type", "bank").order("created_at").limit(1).maybeSingle(),
   ]);
   if (receipts.error || bankResult.error) throw new Error("Cannot load verified payment details");
   const received = (receipts.data as { amount: number }[]).reduce((sum, receipt) => sum + Number(receipt.amount), 0);
@@ -66,11 +68,19 @@ export async function paymentDetailsForOrder(order: {
     const bin = BANK_BINS[name] ?? (/^970\d{3}$/.test(name) ? name : null);
     if (bin) payload = vietQR(bin, bank.account_number.replace(/\s/g, ""), amountDue, order.order_number);
   }
+  const depositPaid = order.payment_type === "deposit_cod" && received >= deposit && deposit > 0;
+  const subtotal = total - Number(order.shipping_fee ?? 0) + Number(order.voucher_discount_amount ?? 0) + Number(order.shipping_discount_amount ?? 0);
+
   return { data: {
-    orderId: order.id, orderNumber: order.order_number, total, received, amountDue,
+    orderId: order.id, orderNumber: order.order_number, total, subtotal, received, amountDue,
     shippingFee: Number(order.shipping_fee ?? 0), voucherDiscount: Number(order.voucher_discount_amount ?? 0),
     shippingFeePending: hasUnquotedShippingFee(order.shipping_method_id, Number(order.shipping_fee ?? 0)),
     shippingDiscount: Number(order.shipping_discount_amount ?? 0),
+    paymentType: (order.payment_type ?? "full") as "full" | "deposit_cod",
+    depositAmount: deposit,
+    remainingAmount: Number(order.remaining_amount ?? Math.max(0, total - deposit)),
+    depositPercentage: Number(order.deposit_percentage ?? 0),
+    depositPaid,
     balanceDue: Math.max(0, total - received), active, bank,
     qrUrl: payload ? `/api/orders/${encodeURIComponent(order.id)}/payment/qr` : null,
   }, payload } as const;

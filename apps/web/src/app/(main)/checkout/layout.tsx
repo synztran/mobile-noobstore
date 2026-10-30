@@ -14,7 +14,7 @@ export default function CheckoutLayout({
 }) {
   const pathname = usePathname();
   const mounted = useIsMounted();
-  const orderId = useCheckoutStore((s) => s.orderId);
+  const orderNumber = useCheckoutStore((s) => s.orderNumber);
   const resetDiscount = useDiscountStore((s) => s.resetDiscount);
 
   // Clear applied voucher when the customer leaves the checkout flow
@@ -38,7 +38,7 @@ export default function CheckoutLayout({
       step: 2,
     },
     {
-      href: orderId ? `/checkout/checking/${orderId}` : "/checkout/checking",
+      href: orderNumber ? `/checkout/checking/${orderNumber}` : "/checkout/checking",
       icon: "rate_review",
       label: "Hoàn tất",
       step: 3,

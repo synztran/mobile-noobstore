@@ -11,5 +11,12 @@ interface Props {
 }
 
 export function OrderPaymentPanel({ orderNumber }: Props) {
-  return <OrderPaymentInstructions identifier={orderNumber} />;
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
+        Thông tin thanh toán
+      </p>
+      <OrderPaymentInstructions identifier={orderNumber} />
+    </div>
+  );
 }

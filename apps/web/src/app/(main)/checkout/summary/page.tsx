@@ -307,7 +307,7 @@ export default function SummaryPage() {
       setPaymentType("full");
       setDepositPercentage(50);
       clearCart();
-      router.push(`/checkout/checking/${result.order_id}`);
+      router.push(`/checkout/checking/${result.order_number}`);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Lỗi kết nối, vui lòng thử lại"

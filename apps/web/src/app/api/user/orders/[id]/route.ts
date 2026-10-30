@@ -151,14 +151,23 @@ export async function GET(
       );
     }
 
-    const { data: order, error: orderError } = (await supabase
+    const isUuid = /^[0-9a-f-]{36}$/i.test(id);
+    let orderQuery = supabase
       .from("orders")
       .select(
         "id, order_number, status, total_price, shipping_fee, payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at, voucher_code, voucher_discount_amount, shipping_discount_amount, voucher_snapshot, cancelled_at, cancelled_note, created_at, updated_at, paid_at, delivering_at, delivered_at, refunded_at, returning_at, returning_reason, expected_delivery_at, shipping_method_id, pickup_at, pickup_code_expires_at, pickup_verified_at, delivery_address, invoice_url, tracking_carrier_id, tracking_number, carriers(id, name, logo, tracking_url_template)"
       )
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single()) as unknown as {
+      .eq("user_id", user.id);
+
+    if (isUuid) {
+      orderQuery = orderQuery.eq("id", id);
+    } else {
+      orderQuery = orderQuery.eq("order_number", id);
+    }
+
+    const { data: order, error: orderError } = (await orderQuery
+      .limit(1)
+      .maybeSingle()) as unknown as {
       data: RawOrderRow | null;
       error: { message: string } | null;
     };
@@ -172,7 +181,7 @@ export async function GET(
       .select(
         "id, product_id, product_name, unit_price, quantity, thumbnail, pre_order_tracking, is_pre_order, pre_order_config"
       )
-      .eq("order_id", id)) as unknown as {
+      .eq("order_id", order.id)) as unknown as {
       data: Array<Record<string, unknown>> | null;
       error: { message: string } | null;
     };

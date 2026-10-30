@@ -3,13 +3,15 @@
 import { OrderItemsList } from "@/components/checkout/OrderItemsList";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { cartItemsToGA, trackPurchase } from "@/lib/analytics";
+import type { CartItem } from "@/lib/data";
 import {
+  useOrderDetail,
   useOrderStatus,
 } from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
 import { useCheckoutStore } from "@/store";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { OrderPaymentInstructions } from "@/modules/payments/ui/OrderPaymentInstructions";
 
 export default function CheckingPageContent({ identifier }: { identifier?: string } = {}) {
@@ -18,33 +20,83 @@ export default function CheckingPageContent({ identifier }: { identifier?: strin
 
   const { orderNumber: storedOrderNumber, totalPrice, orderedItems } =
     useCheckoutStore();
-  const orderNumber = identifier ?? storedOrderNumber;
+  const lookupKey = identifier ?? storedOrderNumber;
 
   // Guard: redirect to shop if there is no active order
   useEffect(() => {
-    if (mounted && !orderNumber) {
+    if (mounted && !lookupKey) {
       toast.error("Không tìm thấy đơn hàng. Vui lòng thử lại.");
       router.replace("/shop");
     }
-  }, [mounted, orderNumber, router]);
-
-  // Fire GA4 purchase once per order (guarded via sessionStorage)
-  useEffect(() => {
-    if (!mounted || !orderNumber || orderNumber !== storedOrderNumber || orderedItems.length === 0) return;
-    const key = `ga_purchase_${orderNumber}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, "1");
-    trackPurchase(orderNumber, cartItemsToGA(orderedItems), totalPrice);
-  }, [mounted, orderNumber, storedOrderNumber, orderedItems, totalPrice]);
+  }, [mounted, lookupKey, router]);
 
   const orderStatusQuery = useOrderStatus(
-    orderNumber,
-    mounted && !!orderNumber,
+    lookupKey,
+    mounted && !!lookupKey,
     5000
   );
 
+  const { data: orderDetail } = useOrderDetail(mounted && lookupKey ? lookupKey : null);
+
   const orderStatus = orderStatusQuery.data?.status ?? null;
   const orderNotFound = orderStatusQuery.data?.notFound ?? false;
+
+  // Always resolve human-readable order number: prefer server response, then store, never show UUID
+  const orderNumber =
+    orderStatusQuery.data?.order_number ||
+    storedOrderNumber ||
+    (lookupKey && !/^[0-9a-f-]{36}$/i.test(lookupKey) ? lookupKey : "");
+
+  const displayItems = useMemo<CartItem[]>(() => {
+    if (orderedItems.length > 0 && (orderNumber === storedOrderNumber || !storedOrderNumber)) {
+      return orderedItems;
+    }
+    if (orderDetail?.items && orderDetail.items.length > 0) {
+      return orderDetail.items.map((item) => ({
+        id: item.id,
+        product: {
+          id: item.product_id ?? item.id,
+          name: item.product_name,
+          base_price: item.unit_price,
+          thumbnail: item.thumbnail,
+          slug: "",
+          category_id: null,
+          stock_quantity: 0,
+          created_at: "",
+          updated_at: "",
+        } as any,
+        variant: null,
+        quantity: item.quantity,
+        is_pre_order: item.isPreOrder,
+        components: (item.components ?? []).map((c) => ({
+          variant_id: c.variant_id,
+          variant_name: c.variant_name,
+          component_group: c.component_group,
+          price_adjustment: c.price_adjustment,
+          thumbnail: c.thumbnail,
+          is_pre_order: c.is_pre_order,
+        })),
+        gifts: (item.gifts ?? []).map((g) => ({
+          gift_name: g.gift_name,
+          gift_slug: "",
+          gift_thumbnail: g.gift_thumbnail,
+          quantity: g.quantity,
+        })),
+      }));
+    }
+    return orderedItems;
+  }, [orderedItems, orderNumber, storedOrderNumber, orderDetail?.items]);
+
+  // Fire GA4 purchase once per order (guarded via sessionStorage)
+  useEffect(() => {
+    if (!mounted || !orderNumber || orderNumber !== storedOrderNumber || displayItems.length === 0) return;
+    const key = `ga_purchase_${orderNumber}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    trackPurchase(orderNumber, cartItemsToGA(displayItems), totalPrice || orderDetail?.total_price || 0);
+  }, [mounted, orderNumber, storedOrderNumber, displayItems, totalPrice, orderDetail?.total_price]);
+
+  const paymentIdentifier = orderNumber || lookupKey;
 
   // Ownership guard: order belongs to a different account — redirect to login
   const notFoundRedirected = useRef(false);
@@ -107,7 +159,9 @@ export default function CheckingPageContent({ identifier }: { identifier?: strin
 
       {/* QR Scan Section */}
       <section className="mb-8 space-y-4">
-        {orderNumber && <OrderPaymentInstructions identifier={orderNumber} />}
+        {paymentIdentifier && (
+          <OrderPaymentInstructions identifier={paymentIdentifier} />
+        )}
       </section>
 
       {/* Notice */}
@@ -122,7 +176,7 @@ export default function CheckingPageContent({ identifier }: { identifier?: strin
         </p>
       </div>
 
-      {orderNumber === storedOrderNumber && <OrderItemsList items={orderedItems} />}
+      <OrderItemsList items={displayItems} />
 
       {/* ── Actions ─────────────────────────────────────────── */}
       <div className="flex gap-2">
