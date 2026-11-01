@@ -15,6 +15,7 @@ import {
 import {
 	CACHE_KEYS,
 	buildProductListCacheKey,
+	PRODUCT_LIST_CACHE_TTL,
 	readThroughCache,
 } from "@/lib/redis/cache";
 import { getRewards } from "@/lib/rewards-server";
@@ -29,6 +30,13 @@ import { getPublicClient } from "@/lib/supabase/public";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * How many service-detail warms to run at once. High enough to collapse the
+ * sequential round-trips that dominated this job, low enough that a large
+ * booking config cannot fan out unbounded.
+ */
+const SERVICE_WARM_CONCURRENCY = 6;
 
 // ─── POST /api/cron/warm-cache ────────────────────────────────────────────────
 // Pre-populates the Redis cache for the global read endpoints so the first
@@ -113,10 +121,28 @@ export async function POST(req: NextRequest) {
 		// visitor's infinite scroll and the SSR grid both hit cache instead of
 		// the full query cascade (full-variant entries are only needed by the
 		// quick-pick configurator and warm themselves on demand).
+		// Must mirror the /shop and /api/products readers EXACTLY: both pass
+		// soldOutLast: true, and the flag is part of the cache key. Warming
+		// without it produced a "…:nosol" key that nothing ever read, so this
+		// — the most expensive warm in the job — was thrown away on every run
+		// while the real key expired into a cold cascade.
+		// The TTL must equal PRODUCT_LIST_CACHE_TTL for the same reason: a
+		// longer warm TTL than the readers use just delays the next miss.
 		warm(
-			buildProductListCacheKey({ limit: 12, sort: "newest", slim: true }),
-			600,
-			() => getProducts({ limit: 12, sort: "newest", slim: true }),
+			buildProductListCacheKey({
+				limit: 12,
+				sort: "newest",
+				slim: true,
+				soldOutLast: true,
+			}),
+			PRODUCT_LIST_CACHE_TTL,
+			() =>
+				getProducts({
+					limit: 12,
+					sort: "newest",
+					slim: true,
+					soldOutLast: true,
+				}),
 		),
 		// Warm the quick-pick category default the storefront drawer opens to
 		// (keyboards on the home rail). Previously quick-pick was never warmed
@@ -137,9 +163,19 @@ export async function POST(req: NextRequest) {
 				if (svc.slug) slugs.add(svc.slug);
 			}
 		}
-		for (const slug of slugs) {
-			await warm(CACHE_KEYS.serviceDetail(slug), 120, () =>
-				getServiceBySlug(slug),
+		// Parallel in bounded batches rather than one serial await per slug:
+		// the serial version stacked N sequential round-trips into every cron
+		// run (144/day). Bounded so a large booking config cannot open an
+		// unbounded number of connections at once.
+		const slugList = Array.from(slugs);
+		for (let i = 0; i < slugList.length; i += SERVICE_WARM_CONCURRENCY) {
+			const batch = slugList.slice(i, i + SERVICE_WARM_CONCURRENCY);
+			await Promise.allSettled(
+				batch.map((slug) =>
+					warm(CACHE_KEYS.serviceDetail(slug), 120, () =>
+						getServiceBySlug(slug),
+					),
+				),
 			);
 		}
 	} catch {

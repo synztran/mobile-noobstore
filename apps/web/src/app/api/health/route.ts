@@ -32,15 +32,22 @@ export async function GET() {
 		] as const;
 
 		results.tables = {};
-		for (const table of tables) {
-			const { error, count } = await supabase
-				.from(table)
-				.select("*", { count: "exact", head: true });
+		// Parallel, not serial. These are 12 independent existence checks; the
+		// serial `for` version stacked 12 sequential round-trips into every
+		// health probe, which lengthened the function's lifetime and its
+		// provisioned-memory cost for no benefit. Failure of one table still
+		// resolves as its own entry rather than rejecting the batch.
+		await Promise.all(
+			tables.map(async (table) => {
+				const { error, count } = await supabase
+					.from(table)
+					.select("*", { count: "exact", head: true });
 
-			(results.tables as Record<string, unknown>)[table] = error
-				? { ok: false, error: error.message, code: error.code }
-				: { ok: true, rowCount: count };
-		}
+				(results.tables as Record<string, unknown>)[table] = error
+					? { ok: false, error: error.message, code: error.code }
+					: { ok: true, rowCount: count };
+			}),
+		);
 
 		const allTablesOk = Object.values(
 			results.tables as Record<string, { ok: boolean }>,

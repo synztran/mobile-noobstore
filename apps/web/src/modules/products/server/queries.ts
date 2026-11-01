@@ -720,21 +720,23 @@ export async function getProductListByFilters(
     // Strip components from shop display — they're only fetched for kit processing
     products = products.filter((p) => p.product_type !== "component");
 
-    // ── Attach gifts ──
-    let result = products.map((p) => ({
-      ...p,
-      gifts: giftsByProductId.get(p.id) ?? undefined,
-    }));
-
     // ── Sold-out-last ordering (opt-in) ──
     // Availability is only known now, so this has to happen after shaping.
-    // Slice here because the range() above returned the whole set, not a page.
+    // Slice BEFORE attaching gifts: `soldOutLast` fetches the whole matching
+    // set, so attaching gifts first allocated one new object per row only to
+    // throw away all but `limit` of them.
     if (canPartition) {
-      result = partitionSoldOutLast(result).slice(
+      products = partitionSoldOutLast(products).slice(
         safeOffset,
         safeOffset + safeLimit,
       );
     }
+
+    // ── Attach gifts ──
+    const result = products.map((p) => ({
+      ...p,
+      gifts: giftsByProductId.get(p.id) ?? undefined,
+    }));
 
     return { products: result, total: count };
   } catch {

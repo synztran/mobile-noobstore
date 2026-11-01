@@ -9,7 +9,6 @@ import {
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isPickupShippingMethod } from "@/lib/shipping-method";
-import { sendPickupCodeEmail } from "@/lib/email/email.service";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +31,16 @@ export async function POST(
 
     const body = await request.json().catch(() => ({}));
     const emailOnly = body?.email === true;
+
+    // Email delivery is temporarily disabled while NoobStore selects a new
+    // transactional email provider. Keep this endpoint fail-closed: never
+    // return success for email-only mode when no email was sent.
+    if (emailOnly) {
+      return NextResponse.json(
+        { error: "Email delivery is temporarily unavailable. Request the pickup code on screen." },
+        { status: 503 },
+      );
+    }
 
     const supabase = await createClient();
     const {
@@ -97,43 +106,6 @@ export async function POST(
       );
     }
 
-    // Email-resend may reuse the active code when the client can supply it —
-    // hash-only storage means the server cannot re-derive the plaintext, and
-    // rotating here would silently invalidate the code the customer has on
-    // screen. Reuse is only allowed while the code is still valid and correct.
-    if (
-      emailOnly &&
-      order.pickup_code_hash &&
-      !isPickupCodeExpired(order.pickup_code_expires_at)
-    ) {
-      const candidate =
-        typeof body?.code === "string" &&
-        /^\d{6}$/.test(body.code)
-          ? body.code
-          : null;
-      if (candidate && hashPickupCode(candidate) === order.pickup_code_hash) {
-        let emailSent = false;
-        try {
-          emailSent = await sendPickupCodeEmail({
-            to: user.email!,
-            orderNumber: order.order_number,
-            fullName: user.user_metadata?.full_name ?? user.email ?? "Khách",
-            code: candidate,
-            expiresAt: new Date(order.pickup_code_expires_at!),
-          });
-        } catch (emailErr) {
-          console.error("[pickup-code] email send failed:", emailErr);
-        }
-        return NextResponse.json({
-          ok: true,
-          code: null,
-          expiresAt: order.pickup_code_expires_at,
-          emailSent,
-          reused: true,
-        });
-      }
-    }
-
     // Rotation throttle: a code was just created, so the customer probably
     // still has it on screen. Refuse regeneration for a short window to stop
     // hammering (each rotation invalidates the previous code).
@@ -183,28 +155,10 @@ export async function POST(
       );
     }
 
-    let emailSent = false;
-    if (emailOnly) {
-      const fullName =
-        user.user_metadata?.full_name ?? user.email ?? "Khách";
-      try {
-        emailSent = await sendPickupCodeEmail({
-          to: user.email!,
-          orderNumber: order.order_number,
-          fullName,
-          code,
-          expiresAt,
-        });
-      } catch (emailErr) {
-        console.error("[pickup-code] email send failed:", emailErr);
-      }
-    }
-
     return NextResponse.json({
       ok: true,
-      code: emailOnly ? null : code,
+      code,
       expiresAt: expiresAt.toISOString(),
-      emailSent,
     });
   } catch (error) {
     console.error("[pickup-code] error:", error);

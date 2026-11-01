@@ -1,17 +1,29 @@
 /**
+ * One shared Intl.NumberFormat for the whole process.
+ *
+ * Constructing an Intl object is expensive (it builds an ICU formatter), and
+ * formatVND runs once per product row, price and email line — so building one
+ * per call was measurable against Vercel's Active CPU budget.
+ */
+const VND_FORMATTER = new Intl.NumberFormat("vi-VN", {
+  style: "currency",
+  currency: "VND",
+  maximumFractionDigits: 0,
+});
+
+/**
  * Format a number as Vietnamese Dong (VND).
  *
  * Examples:
  *   formatVND(285000)   → "285.000 ₫"
  *   formatVND(1500000)  → "1.500.000 ₫"
  *   formatVND(0)        → "0 ₫"
+ *
+ * Note: negatives clamp to "0 ₫" here. The admin app's copy deliberately does
+ * NOT clamp — do not unify the two without checking the admin price inputs.
  */
 export function formatVND(amount: number): string {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(Math.max(0, amount));
+  return VND_FORMATTER.format(Math.max(0, amount));
 }
 
 /**

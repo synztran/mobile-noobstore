@@ -2,18 +2,9 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { vietQR } from "../vietqr";
+import { bankBinFor, normalizeBankName } from "../bank-bins";
 import { hasUnquotedShippingFee } from "@/lib/shipping-method";
 import { queuePaymentAlert } from "./security-alerts";
-
-// Reviewed bank BINs. Unknown bank configuration fails closed; never guess.
-const BANK_BINS: Record<string, string> = {
-  vcb: "970436", vietcombank: "970436", tcb: "970407", techcombank: "970407",
-  mb: "970422", mbbank: "970422", acb: "970416", bidv: "970418",
-  vtb: "970415", vietinbank: "970415", vpb: "970432", vpbank: "970432",
-  tpb: "970423", tpbank: "970423", stb: "970403", sacombank: "970403",
-  vib: "970441", msb: "970426", ocb: "970448", hdbank: "970437",
-  agribank: "970405", shb: "970443", seabank: "970440", eximbank: "970431",
-};
 
 export async function paymentDetails(identifier: string) {
   const session = await createClient();
@@ -55,7 +46,7 @@ export async function paymentDetailsForOrder(order: {
   if (bank) {
     // Independent deployment trust anchor: a database edit alone cannot redirect
     // customers. Configure only bank identities checked in the store banking app.
-    const identity = `${bank.platform_name.toLowerCase().replace(/[\s_-]/g, "")}:${bank.account_number.replace(/\s/g, "")}`;
+    const identity = `${normalizeBankName(bank.platform_name)}:${bank.account_number.replace(/\s/g, "")}`;
     const allowed = (process.env.PAYMENT_BANK_ALLOWLIST ?? "").split(",").map(value => value.trim());
     if (!allowed.includes(identity)) {
       await queuePaymentAlert("recipient_mismatch", bank.id);
@@ -64,8 +55,7 @@ export async function paymentDetailsForOrder(order: {
   }
   let payload: string | null = null;
   if (bank && amountDue > 0) {
-    const name = bank.platform_name.toLowerCase().replace(/[\s_-]/g, "");
-    const bin = BANK_BINS[name] ?? (/^970\d{3}$/.test(name) ? name : null);
+    const bin = bankBinFor(bank.platform_name);
     if (bin) payload = vietQR(bin, bank.account_number.replace(/\s/g, ""), amountDue, order.order_number);
   }
   const depositPaid = order.payment_type === "deposit_cod" && received >= deposit && deposit > 0;

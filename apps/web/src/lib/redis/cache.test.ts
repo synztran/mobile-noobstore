@@ -3,6 +3,9 @@ import {
   buildProductListCacheKey,
   invalidateCacheByPattern,
   invalidateProductCaches,
+  logRedisDegradation,
+  PRODUCT_DETAIL_CACHE_TTL,
+  PRODUCT_LIST_CACHE_TTL,
 } from "./cache";
 
 // The cache module calls getRedis() lazily inside each helper. Provide a fake
@@ -51,14 +54,29 @@ describe("invalidateProductCaches", () => {
 
   it("invalidates the exact shared keys", async () => {
     await invalidateProductCaches();
-    // Exact keys (DEL): brands, categories, product-seo-data (v2!)
-    expect(del).toHaveBeenCalledWith(
-      "brands",
-      "categories",
-      "v2:product-seo-data"
-    );
+    // Exact keys (DEL): brands, categories.
+    expect(del).toHaveBeenCalledWith("brands", "categories");
     // …and purges the Next.js tagged cache in the same call.
     expect(revalidateTag).toHaveBeenCalledWith("products");
+  });
+
+  it("scans product-seo-data as a PATTERN, not an exact key", async () => {
+    // Regression guard. The key now carries a ":<limit>" suffix because the
+    // cron asks for 24 items and /shop asks for 48. When it was still an exact
+    // DEL on "v2:product-seo-data" the invalidation silently stopped matching
+    // and the SEO data would have stayed stale indefinitely.
+    await invalidateProductCaches();
+
+    const scanned = keys.mock.calls.map(([p]) => p);
+    expect(scanned).toContain("v2:product-seo-data:*");
+    // It must NOT be deleted by literal name any more — that path cannot match.
+    expect(del).not.toHaveBeenCalledWith(
+      "brands",
+      "categories",
+      expect.anything()
+    );
+    const delArgs = del.mock.calls.flat();
+    expect(delArgs).not.toContain("v2:product-seo-data");
   });
 
   it("scans the expected v2-prefixed patterns (no stale v1 prefixes)", async () => {
@@ -66,6 +84,7 @@ describe("invalidateProductCaches", () => {
 
     const scanned = keys.mock.calls.map(([p]) => p);
     for (const expected of [
+      "v2:product-seo-data:*",
       "products:*",
       "v2:product:slug:*",
       "v2:product-detail:*",
@@ -147,5 +166,82 @@ describe("buildProductListCacheKey", () => {
     expect(buildProductListCacheKey({ ...base, slim: true })).not.toBe(
       buildProductListCacheKey({ ...base }),
     );
+  });
+});
+
+// ── Warm-cache / reader key parity ───────────────────────────────────────────
+
+describe("warm-cache cron warms the key the storefront reads", () => {
+  // Regression guard. The cron writes this exact key, and /shop +
+  // /api/products read it. When the `soldOutLast` segment was added to the key
+  // and only the readers were updated, the cron began writing "…:nosol" — the
+  // most expensive warm in the job, discarded on every run, while the key that
+  // was actually read expired into a cold cascade every 300s.
+  const CRON_PARAMS = {
+    limit: 12,
+    sort: "newest",
+    slim: true,
+    soldOutLast: true,
+  } as const;
+
+  it("matches the key the /shop reader builds", () => {
+    // apps/web/src/app/(main)/shop/page.tsx:
+    //   getProducts({ limit: 12, sort: "newest", slim: true, soldOutLast: true })
+    const cronKey = buildProductListCacheKey(CRON_PARAMS);
+    const shopKey = buildProductListCacheKey({
+      limit: 12,
+      sort: "newest",
+      slim: true,
+      soldOutLast: true,
+    });
+    expect(cronKey).toBe(shopKey);
+    expect(cronKey.endsWith(":sol")).toBe(true);
+  });
+
+  it("does NOT warm a key that no reader can ever hit", () => {
+    // The exact regression: omitting the flag yields ":nosol", and every
+    // storefront reader now asks for ":sol".
+    expect(buildProductListCacheKey(CRON_PARAMS)).not.toBe(
+      buildProductListCacheKey({ limit: 12, sort: "newest", slim: true }),
+    );
+  });
+
+  it("uses the same TTL the readers write", () => {
+    // A warm TTL longer than PRODUCT_LIST_CACHE_TTL only delays the next miss.
+    expect(PRODUCT_LIST_CACHE_TTL).toBe(300);
+    expect(PRODUCT_LIST_CACHE_TTL).toBe(PRODUCT_DETAIL_CACHE_TTL);
+  });
+});
+
+// ── Degradation logging ─────────────────────────────────────────────────────
+
+describe("logRedisDegradation", () => {
+  it("reports a key once per window, then goes quiet", () => {
+    // An outage emits one line per request otherwise — the very traffic that
+    // is burning the CPU budget.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    logRedisDegradation("getCache", "unit-test:dedupe", new Error("down"));
+    logRedisDegradation("getCache", "unit-test:dedupe", new Error("down"));
+    logRedisDegradation("getCache", "unit-test:dedupe", new Error("down"));
+
+    const forThisKey = warn.mock.calls.filter((c) =>
+      String(c[0]).includes("unit-test:dedupe"),
+    );
+    expect(forThisKey).toHaveLength(1);
+
+    warn.mockRestore();
+  });
+
+  it("does not swallow a different key's first failure", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    logRedisDegradation("getCache", "unit-test:key-a", new Error("down"));
+    logRedisDegradation("getCache", "unit-test:key-b", new Error("down"));
+
+    const calls = warn.mock.calls.map((c) => String(c[0]));
+    expect(calls.some((m) => m.includes("unit-test:key-a"))).toBe(true);
+    expect(calls.some((m) => m.includes("unit-test:key-b"))).toBe(true);
+
+    warn.mockRestore();
   });
 });

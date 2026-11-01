@@ -111,7 +111,8 @@ export function buildProductListCacheKey(params: {
 export async function getCache<T>(key: string): Promise<T | null> {
   try {
     return await redis().get<T>(key);
-  } catch {
+  } catch (err) {
+    logRedisDegradation("getCache", key, err);
     return null;
   }
 }
@@ -131,9 +132,40 @@ export async function setCache<T>(
     } else {
       await redis().set(key, value);
     }
-  } catch {
-    // non-fatal
+  } catch (err) {
+    logRedisDegradation("setCache", key, err);
   }
+}
+
+/**
+ * Report a Redis failure at most once per key per window.
+ *
+ * A Redis outage does not just slow the site down — it makes EVERY read fall
+ * through to the database simultaneously, which is a large, silent spike in
+ * Active CPU on Vercel. Previously both helpers swallowed the error with an
+ * empty `catch`, so that amplification left no trace in any log. This restores
+ * the signal.
+ *
+ * Rate-limited per key because an outage would otherwise emit one line per
+ * request (the exact traffic pattern that is burning CPU).
+ */
+const DEGRADATION_WINDOW_MS = 60_000;
+const lastReported = new Map<string, number>();
+
+export function logRedisDegradation(
+  op: string,
+  key: string,
+  err: unknown
+): void {
+  const now = Date.now();
+  const last = lastReported.get(key);
+  if (last !== undefined && now - last < DEGRADATION_WINDOW_MS) return;
+  lastReported.set(key, now);
+
+  console.warn(
+    `[cache] ${op}("${key}") failed — serving uncached and falling through to the database until Redis recovers:`,
+    err
+  );
 }
 
 /**
@@ -186,7 +218,12 @@ export async function invalidateCacheByPattern(pattern: string): Promise<void> {
  */
 export async function invalidateProductCaches(): Promise<void> {
   await Promise.all([
-    invalidateCache("brands", "categories", "v2:product-seo-data"),
+    invalidateCache("brands", "categories"),
+    // Was an exact-key DEL on "v2:product-seo-data". The key now carries a
+    // :<limit> suffix (the two callers request different limits), so an exact
+    // DEL would silently stop matching and leave the SEO data stale forever.
+    // Must be a pattern scan, not a literal.
+    invalidateCacheByPattern("v2:product-seo-data:*"),
     invalidateCacheByPattern("products:*"),
     invalidateCacheByPattern("v2:product:slug:*"),
     invalidateCacheByPattern("v2:product-detail:*"),

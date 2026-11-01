@@ -61,15 +61,22 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-export function OrderPaymentInstructions({ identifier }: { identifier: string }) {
+export function OrderPaymentInstructions({
+  identifier,
+}: {
+  identifier: string;
+}) {
   const [imageError, setImageError] = useState(false);
 
   const query = useQuery<Details>({
     queryKey: ["verified-payment-details", identifier],
     queryFn: async () => {
-      const response = await fetch(`/api/orders/${encodeURIComponent(identifier)}/payment`, {
-        cache: "no-store",
-      });
+      const response = await fetch(
+        `/api/orders/${encodeURIComponent(identifier)}/payment`,
+        {
+          cache: "no-store",
+        }
+      );
       if (!response.ok) throw new Error("Không thể tải thông tin thanh toán");
       return response.json();
     },
@@ -79,7 +86,10 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
 
   if (query.isPending) {
     return (
-      <div aria-label="Đang tải thông tin thanh toán" className="space-y-4 animate-pulse">
+      <div
+        aria-label="Đang tải thông tin thanh toán"
+        className="animate-pulse space-y-4"
+      >
         <div className="h-64 w-full rounded-2xl bg-surface-container" />
         <div className="h-40 w-full rounded-2xl bg-surface-container" />
       </div>
@@ -90,8 +100,15 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
   if (query.isError) {
     return (
       <div className="alert alert-warning flex-col items-start" role="alert">
-        <p>Chưa tải được thông tin thanh toán. Vui lòng thử lại trước khi chuyển tiền.</p>
-        <button type="button" className="btn btn-sm" onClick={() => query.refetch()}>
+        <p>
+          Chưa tải được thông tin thanh toán. Vui lòng thử lại trước khi chuyển
+          tiền.
+        </p>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => query.refetch()}
+        >
           Thử lại
         </button>
       </div>
@@ -119,13 +136,19 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
   }
 
   return (
-    <section className="space-y-4" aria-label="Thông tin chuyển khoản đã xác thực">
+    <section
+      className="space-y-4"
+      aria-label="Thông tin chuyển khoản đã xác thực"
+    >
       {/* Deposit callout */}
       {details.paymentType === "deposit_cod" && !details.depositPaid && (
         <div className="rounded-2xl border border-amber-200 bg-amber-100 p-3">
           <p className="text-xs font-bold text-amber-800">Thanh toán đặt cọc</p>
           <p className="text-xs leading-relaxed text-amber-700">
-            Đơn hàng đặt cọc {details.depositPercentage}% ({formatVND(details.depositAmount)}). Vui lòng chuyển khoản đủ số tiền đặt cọc. Số còn lại ({formatVND(details.remainingAmount)}) sẽ thanh toán khi nhận hàng.
+            Đơn hàng đặt cọc {details.depositPercentage}% (
+            {formatVND(details.depositAmount)}). Vui lòng chuyển khoản đủ số
+            tiền đặt cọc. Số còn lại ({formatVND(details.remainingAmount)}) sẽ
+            thanh toán khi nhận hàng.
           </p>
         </div>
       )}
@@ -164,7 +187,9 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
         <div className="relative z-10 mt-3 w-full space-y-2 rounded-2xl bg-surface-container-high p-4">
           <div className="flex justify-between text-sm">
             <span className="text-on-surface-variant">Tạm tính</span>
-            <span className="font-bold text-on-surface">{formatVND(details.subtotal)}</span>
+            <span className="font-bold text-on-surface">
+              {formatVND(details.subtotal)}
+            </span>
           </div>
 
           <div className="flex items-center justify-between text-sm">
@@ -195,7 +220,9 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
 
           {details.shippingDiscount > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Giảm phí vận chuyển</span>
+              <span className="text-on-surface-variant">
+                Giảm phí vận chuyển
+              </span>
               <span className="font-bold text-secondary">
                 -{formatVND(details.shippingDiscount)}
               </span>
@@ -211,7 +238,9 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
                   Đặt cọc ({details.depositPercentage}%)
                 </span>
                 <span className="font-bold text-primary">
-                  {details.depositPaid ? "Đã thanh toán" : formatVND(details.depositAmount)}
+                  {details.depositPaid
+                    ? "Đã thanh toán"
+                    : formatVND(details.depositAmount)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
@@ -236,7 +265,9 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
             <div className="flex justify-between">
               <span className="font-black text-on-surface">Tổng cộng</span>
               <span className="text-lg font-black text-primary">
-                {formatVND(details.amountDue > 0 ? details.amountDue : details.total)}
+                {formatVND(
+                  details.amountDue > 0 ? details.amountDue : details.total
+                )}
               </span>
             </div>
           )}
@@ -277,7 +308,10 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
                 {details.bank.account_number}
               </div>
             </div>
-            <CopyButton value={details.bank.account_number} label="Số tài khoản" />
+            <CopyButton
+              value={details.bank.account_number}
+              label="Số tài khoản"
+            />
           </div>
 
           {/* Account name */}
@@ -290,7 +324,10 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
                 {details.bank.account_name}
               </div>
             </div>
-            <CopyButton value={details.bank.account_name} label="Chủ tài khoản" />
+            <CopyButton
+              value={details.bank.account_name}
+              label="Chủ tài khoản"
+            />
           </div>
 
           {/* Transfer content / reference */}
@@ -303,7 +340,10 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
                 {details.orderNumber}
               </div>
             </div>
-            <CopyButton value={details.orderNumber} label="Nội dung chuyển khoản" />
+            <CopyButton
+              value={details.orderNumber}
+              label="Nội dung chuyển khoản"
+            />
           </div>
         </div>
       )}
@@ -311,13 +351,9 @@ export function OrderPaymentInstructions({ identifier }: { identifier: string })
       {/* Security alert & verification notice */}
       <div className="space-y-1">
         <p className="rounded-xl bg-surface-container-low px-4 py-2 text-center text-xs text-on-surface-variant">
-          Kiểm tra đúng tên người nhận, số tài khoản và số tiền trong app ngân hàng trước khi xác nhận.
+          Kiểm tra đúng tên người nhận, số tài khoản và số tiền trong app ngân
+          hàng trước khi xác nhận.
         </p>
-        {details.received > 0 && (
-          <p className="text-center text-xs text-on-surface-variant">
-            Đã ghi nhận: {formatVND(details.received)} · Còn lại toàn đơn: {formatVND(details.balanceDue)}
-          </p>
-        )}
       </div>
     </section>
   );

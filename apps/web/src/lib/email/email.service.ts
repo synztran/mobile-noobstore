@@ -1,37 +1,15 @@
 /**
- * Email service using Resend.
+ * Legacy transactional email templates and senders.
  *
- * Environment variables required:
- *   RESEND_API_KEY      — from https://resend.com/api-keys
- *   RESEND_FROM_EMAIL   — verified sender address, e.g. "Noob Store <no-reply@yourdomain.com>"
- *
- * Note: During development you can use "onboarding@resend.dev" as the from
- * address to send to your own email without domain verification.
+ * Delivery calls are paused until a replacement provider is selected. Templates
+ * remain available here for that follow-up.
  */
 
 // Relative, not the "@/lib/currency" alias: the admin app re-exports
 // sendShippingUpdateEmail from this module, and "@/..." would resolve against
 // the *consuming* app's tsconfig — binding this to admin's currency helper
 // instead of this one.
-import { formatVND } from "../currency";
-import { Resend } from "resend";
-
-let _resend: Resend | null = null;
-
-function getResend(): Resend {
-  if (!_resend) {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      throw new Error("RESEND_API_KEY environment variable is not set.");
-    }
-    _resend = new Resend(apiKey);
-  }
-  return _resend;
-}
-
-function getFromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL ?? "Noob Store <onboarding@resend.dev>";
-}
+// TODO(email): reintroduce a provider client when transactional email resumes.
 
 // ─── Payment reminder email ────────────────────────────────────────────────
 
@@ -50,40 +28,11 @@ export async function sendPaymentReminderEmail(
   params: PaymentReminderEmailParams
 ): Promise<boolean> {
   const { to, orderNumber, totalPrice, hoursElapsed } = params;
-
-  const hoursRemaining = 24 - hoursElapsed;
-  const formattedTotal = formatVND(totalPrice);
-
-  try {
-    const resend = getResend();
-    const { error } = await resend.emails.send({
-      from: getFromAddress(),
-      to,
-      subject: `[Noob Store] Nhắc nhở thanh toán đơn hàng #${orderNumber}`,
-      html: buildPaymentReminderHtml({
-        orderNumber,
-        formattedTotal,
-        hoursElapsed,
-        hoursRemaining,
-      }),
-    });
-
-    if (error) {
-      console.error(
-        `[email] Failed to send reminder for order ${orderNumber}:`,
-        error
-      );
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error(
-      `[email] Unexpected error sending reminder for order ${orderNumber}:`,
-      err
-    );
-    return false;
-  }
+  void to;
+  void totalPrice;
+  void hoursElapsed;
+  console.warn(`[email] payment reminder not sent for order ${orderNumber}: delivery paused`);
+  return false;
 }
 
 // ─── Pickup code email ─────────────────────────────────────────────────────
@@ -105,43 +54,9 @@ interface PickupCodeEmailParams {
 export async function sendPickupCodeEmail(
   params: PickupCodeEmailParams
 ): Promise<boolean> {
-  const { to, orderNumber, fullName, code, expiresAt } = params;
-
-  const minutes = Math.max(
-    1,
-    Math.round((expiresAt.getTime() - Date.now()) / 60000)
-  );
-
-  try {
-    const resend = getResend();
-    const { error } = await resend.emails.send({
-      from: getFromAddress(),
-      to,
-      subject: `[Noob Store] Mã nhận hàng đơn #${orderNumber}`,
-      html: buildPickupCodeHtml({
-        orderNumber,
-        fullName,
-        code,
-        minutes,
-      }),
-    });
-
-    if (error) {
-      console.error(
-        `[email] Failed to send pickup code for order ${orderNumber}:`,
-        error
-      );
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error(
-      `[email] Unexpected error sending pickup code for order ${orderNumber}:`,
-      err
-    );
-    return false;
-  }
+  void params;
+  console.warn("[email] pickup code email not sent: delivery paused");
+  return false;
 }
 
 // ─── Shipping update email ─────────────────────────────────────────────────
@@ -174,50 +89,9 @@ interface ShippingUpdateEmailParams {
 export async function sendShippingUpdateEmail(
   params: ShippingUpdateEmailParams
 ): Promise<boolean> {
-  const {
-    to,
-    orderNumber,
-    formattedFee,
-    feeWasQuoted,
-    trackingNumber,
-    carrierName,
-    trackingUrl,
-  } = params;
-
-  try {
-    const resend = getResend();
-    const { error } = await resend.emails.send({
-      from: getFromAddress(),
-      to,
-      subject: feeWasQuoted
-        ? `[Noob Store] Phí vận chuyển đơn #${orderNumber}`
-        : `[Noob Store] Vận chuyển đơn #${orderNumber}`,
-      html: buildShippingUpdateHtml({
-        orderNumber,
-        formattedFee,
-        feeWasQuoted,
-        trackingNumber,
-        carrierName,
-        trackingUrl,
-      }),
-    });
-
-    if (error) {
-      console.error(
-        `[email] Failed to send shipping update for order ${orderNumber}:`,
-        error
-      );
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error(
-      `[email] Unexpected error sending shipping update for order ${orderNumber}:`,
-      err
-    );
-    return false;
-  }
+  void params;
+  console.warn("[email] shipping update email not sent: delivery paused");
+  return false;
 }
 
 // ─── Order status email ───────────────────────────────────────────────────
@@ -323,55 +197,9 @@ export function shouldSendOrderStatusEmail(
 export async function sendOrderStatusEmail(
   params: OrderStatusEmailParams
 ): Promise<boolean> {
-  const {
-    to,
-    orderNumber,
-    status,
-    fullName,
-    formattedTotal,
-    formattedShippingFee,
-    formattedAddress,
-    lines,
-    orderUrl,
-  } = params;
-
-  if (!shouldSendOrderStatusEmail(status)) return false;
-
-  try {
-    const resend = getResend();
-    const copy = ORDER_STATUS_COPY[status];
-    const { error } = await resend.emails.send({
-      from: getFromAddress(),
-      to,
-      subject: copy.subject(orderNumber),
-      html: buildOrderStatusHtml({
-        orderNumber,
-        status,
-        fullName,
-        formattedTotal,
-        formattedShippingFee,
-        formattedAddress,
-        lines,
-        orderUrl,
-      }),
-    });
-
-    if (error) {
-      console.error(
-        `[email] Failed to send order status (${status}) for order ${orderNumber}:`,
-        error
-      );
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error(
-      `[email] Unexpected error sending order status (${status}) for order ${orderNumber}:`,
-      err
-    );
-    return false;
-  }
+  void params;
+  console.warn("[email] order status email not sent: delivery paused");
+  return false;
 }
 
 // ─── HTML template ─────────────────────────────────────────────────────────

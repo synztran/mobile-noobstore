@@ -1024,7 +1024,7 @@ function OrderDetailContent({
               onClick={() => setShowCancelModal(false)}
               className="btn btn-sm flex-1 rounded-lg border-0 bg-surface-container px-4 text-sm font-bold normal-case text-on-surface"
             >
-              Huỷ
+              Đóng
             </button>
             <button
               onClick={handleCancelOrder}
@@ -1098,7 +1098,7 @@ function OrderDetailContent({
               onClick={() => setShowReturnModal(false)}
               className="btn rounded-md border-0 bg-surface-container px-6 text-sm font-bold normal-case text-on-surface"
             >
-              Huỷ
+              Đóng
             </button>
             <button
               onClick={handleReturnOrder}

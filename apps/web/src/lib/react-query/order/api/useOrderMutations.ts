@@ -113,8 +113,6 @@ export function usePickupCode() {
         ok: boolean;
         code: string | null;
         expiresAt: string;
-        emailSent: boolean;
-        reused?: boolean;
       };
     },
     onSuccess: (_data, { orderId }) => {
