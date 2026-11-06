@@ -2,7 +2,7 @@
 
 import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
 import clsx from "clsx";
-import { Banknote, Check, LayoutGrid, RotateCcw, Store, X } from "lucide-react";
+import { Banknote, Check, LayoutGrid, RotateCcw, Store } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 export interface FilterState {
@@ -259,9 +259,8 @@ export function FilterOverlay({
         <div className="flex flex-none items-center gap-3 border-t border-outline-variant/15 bg-surface px-6 py-4">
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 rounded-full border border-outline-variant/40 px-5 py-2.5 text-sm font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container active:scale-[0.97]"
+            className="flex items-center justify-center rounded-full border border-outline-variant/40 px-5 py-2.5 text-sm font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container active:scale-[0.97]"
           >
-            <X className="h-4 w-4" />
             Đóng
           </button>
           <button
