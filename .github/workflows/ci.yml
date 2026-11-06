@@ -42,3 +42,11 @@ jobs:
         run: yarn workspace @noobstore/web type-check
       - name: Unit tests web
         run: yarn test:unit
+      - name: Guard RLS + RPC grants (when migration history is present)
+        run: |
+          migration_count=$(find supabase/migrations -maxdepth 1 -name '*.sql' 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$migration_count" -ge 100 ]; then
+            yarn check:rls
+          else
+            echo "::warning::RLS replay skipped: only $migration_count migration files are committed; full schema history is maintained outside this repo."
+          fi

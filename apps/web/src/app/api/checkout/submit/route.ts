@@ -9,7 +9,10 @@ import {
 } from "@/lib/voucher-discount";
 import { notifyNewOrder } from "@/lib/telegram/telegram.service";
 import { paymentDetailsForOrder } from "@/modules/payments/server/details";
-import { issueEvidence, deliverEvidence } from "@/modules/payments/server/evidence";
+import {
+  issueEvidence,
+  deliverEvidence,
+} from "@/modules/payments/server/evidence";
 import { after } from "next/server";
 import { randomBase36 } from "@/lib/random";
 import type {
@@ -421,6 +424,15 @@ export async function POST(req: NextRequest) {
         toNumber(v.voucher_discount_amount, 0) > 0 ||
         toNumber(v.shipping_discount_amount, 0) > 0
     );
+    // Gift identities/quantities are always derived from validated DB voucher
+    // rows below; never trust the client's display snapshot for fulfillment.
+    for (const voucher of appliedVouchers) {
+      voucher.gift_items_snapshot = null;
+    }
+    const giftItemsByVoucherId = new Map<
+      string,
+      Array<{ product_id: string; variant_id: string | null; quantity: number }>
+    >();
 
     const totalRequestedDiscount = appliedVouchers.reduce(
       (sum, v) => sum + toNumber(v.voucher_discount_amount, 0),
@@ -439,6 +451,12 @@ export async function POST(req: NextRequest) {
       .map((v) => v.voucher_id)
       .filter((id): id is string => Boolean(id));
     const appliedVoucherIdsUnique = [...new Set(appliedVoucherIds)];
+    if (appliedVouchers.some((voucher) => !voucher.voucher_id)) {
+      return NextResponse.json(
+        { error: "Voucher could not be verified. Please re-apply it." },
+        { status: 400 }
+      );
+    }
     if (appliedVoucherIdsUnique.length > 0) {
       const { data: voucherRows, error: voucherErr } = await supabase
         .from("vouchers")
@@ -549,8 +567,12 @@ export async function POST(req: NextRequest) {
             end_at: string | null;
             min_order_amount: number;
             usage_limit_total: number | null;
+            usage_limit_per_user: number | null;
             used_count: number;
             stackable: boolean;
+            gift_product_id: string | null;
+            gift_variant_id: string | null;
+            gift_quantity: number | null;
           };
 
           if (row.status !== "active" || row.deleted_at) continue;
@@ -565,6 +587,25 @@ export async function POST(req: NextRequest) {
             row.used_count >= row.usage_limit_total
           )
             continue;
+          if (
+            row.usage_limit_per_user !== null &&
+            row.usage_limit_per_user > 0
+          ) {
+            const { count, error: usageError } = await supabase
+              .from("orders")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", user.id)
+              .eq("voucher_id", row.id);
+            if (usageError) {
+              return NextResponse.json(
+                {
+                  error: "Unable to validate voucher usage. Please try again.",
+                },
+                { status: 503 }
+              );
+            }
+            if ((count ?? 0) >= row.usage_limit_per_user) continue;
+          }
           if (row.customer_ids && row.customer_ids.length > 0) {
             if (!row.customer_ids.includes(user.id)) continue;
           }
@@ -634,6 +675,24 @@ export async function POST(req: NextRequest) {
           validIds.add(row.id);
           cappedDiscount.set(row.id, recomputed.orderDiscount);
           cappedShipping.set(row.id, recomputed.shippingDiscount);
+          const appliedVoucherExists = appliedVouchers.some(
+            (candidate) => candidate.voucher_id === row.id
+          );
+          if (
+            appliedVoucherExists &&
+            row.reward_type === "gift_item" &&
+            row.gift_product_id &&
+            row.gift_quantity &&
+            row.gift_quantity > 0
+          ) {
+            giftItemsByVoucherId.set(row.id, [
+              {
+                product_id: row.gift_product_id,
+                variant_id: row.gift_variant_id,
+                quantity: row.gift_quantity,
+              },
+            ]);
+          }
         }
 
         // Strip ineligible vouchers, cap discounts at recomputed values
@@ -654,6 +713,17 @@ export async function POST(req: NextRequest) {
             ),
           }))
         );
+      } else {
+        // Fail closed: never create an order with unverified voucher benefits.
+        return NextResponse.json(
+          { error: "Unable to validate vouchers. Please try again." },
+          { status: 503 }
+        );
+      }
+      for (const voucher of appliedVouchers) {
+        voucher.gift_items_snapshot = voucher.voucher_id
+          ? (giftItemsByVoucherId.get(voucher.voucher_id) ?? null)
+          : null;
       }
     }
 
@@ -745,19 +815,30 @@ export async function POST(req: NextRequest) {
     const orderId = crypto.randomUUID();
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${randomBase36(4)}`;
 
-    const { data, error } = await (
-      admin.rpc as unknown as (
-        fn: string,
-        args: Record<string, unknown>
-      ) => Promise<{ data: unknown; error: { message: string } | null }>
-    )("submit_order", {
+    const submitOrderRpc = admin.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>
+    ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    const giftItems = appliedVouchers.flatMap((voucher) =>
+      voucher.voucher_id
+        ? (giftItemsByVoucherId.get(voucher.voucher_id) ?? [])
+        : []
+    );
+    const submitOrderArgs = {
       p_order_id: orderId,
       p_user_id: user?.id ?? null,
       p_order_number: orderNumber,
       p_total_price: recalculatedTotal,
       p_shipping_cost: safeShippingCost,
       p_items: rpcItems,
-    });
+    };
+    const { data, error } =
+      giftItems.length > 0
+        ? await submitOrderRpc("submit_order_with_gifts", {
+            ...submitOrderArgs,
+            p_gift_items: giftItems,
+          })
+        : await submitOrderRpc("submit_order", submitOrderArgs);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -781,12 +862,14 @@ export async function POST(req: NextRequest) {
     // ── Persist multi-voucher fields on order ──────────────────────────
     if (appliedVouchers.length > 0) {
       const primaryVoucher = appliedVouchers[0];
+      const allGiftItems = appliedVouchers.flatMap((voucher) =>
+        voucher.voucher_id
+          ? (giftItemsByVoucherId.get(voucher.voucher_id) ?? [])
+          : []
+      );
       const allSnapshots = appliedVouchers
         .map((v) => v.voucher_snapshot)
         .filter(Boolean) as AppliedVoucherSummary[];
-      const allGiftItems = appliedVouchers.flatMap(
-        (v) => v.gift_items_snapshot ?? []
-      );
 
       const orderVoucherUpdate = {
         voucher_id: primaryVoucher?.voucher_id ?? null,
@@ -922,7 +1005,7 @@ export async function POST(req: NextRequest) {
       const pct = clampDepositPercentage(
         body.deposit_percentage,
         hasPreOrder,
-        recalculatedTotal,
+        recalculatedTotal
       );
       const depositBase = subtotal;
       const depositAmt = Math.round((depositBase * pct) / 100);
@@ -949,41 +1032,8 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Persist gift items as order_items ─────────────────────────────────
-    const allGiftItems = appliedVouchers.flatMap(
-      (v) => v.gift_items_snapshot ?? []
-    );
-    if (allGiftItems.length > 0) {
-      const giftProductIds = [
-        ...new Set(allGiftItems.map((g) => g.product_id)),
-      ];
-      const { data: giftProducts } = await admin
-        .from("products")
-        .select("id, name, thumbnail")
-        .in("id", giftProductIds);
-
-      const giftProductMap = new Map(
-        (giftProducts ?? []).map((p) => [p.id, p])
-      );
-
-      const giftOrderItems = allGiftItems.map((gift, idx) => ({
-        id: `${result.order_id}-gift-${idx}`,
-        order_id: result.order_id,
-        product_id: gift.product_id,
-        product_name: giftProductMap.get(gift.product_id)?.name ?? "Quà tặng",
-        thumbnail: giftProductMap.get(gift.product_id)?.thumbnail ?? null,
-        quantity: gift.quantity,
-        unit_price: 0,
-      }));
-
-      // Gift items via admin client — user RLS UPDATE removed from order_items
-      const { error: giftInsertError } = await admin
-        .from("order_items")
-        .insert(giftOrderItems);
-
-      if (giftInsertError) {
-        console.error("[submit] failed to insert gift items:", giftInsertError);
-      }
-    }
+    // Gift order items and stock reservation were committed atomically by
+    // submit_order; do not insert them a second time here.
 
     // ── Optional: attach services ─────────────────────────────────────────
     if (body.service_ids?.length) {
@@ -1008,9 +1058,20 @@ export async function POST(req: NextRequest) {
       user?.user_metadata?.full_name ?? user?.email ?? "Khách";
     const itemCount = body.items.reduce((sum, i) => sum + i.quantity, 0);
     try {
-      const { data: savedOrder, error: savedOrderError } = await admin.from("orders").select("*").eq("id", result.order_id).single();
-      if (savedOrderError || !savedOrder) throw new Error("Cannot load saved order for notification");
-      const { data: shippingMethod } = savedOrder.shipping_method_id ? await admin.from("shipping_methods").select("name").eq("id", savedOrder.shipping_method_id).maybeSingle() : { data: null };
+      const { data: savedOrder, error: savedOrderError } = await admin
+        .from("orders")
+        .select("*")
+        .eq("id", result.order_id)
+        .single();
+      if (savedOrderError || !savedOrder)
+        throw new Error("Cannot load saved order for notification");
+      const { data: shippingMethod } = savedOrder.shipping_method_id
+        ? await admin
+            .from("shipping_methods")
+            .select("name")
+            .eq("id", savedOrder.shipping_method_id)
+            .maybeSingle()
+        : { data: null };
       await notifyNewOrder(
         result.order_number,
         customerName,
@@ -1019,21 +1080,43 @@ export async function POST(req: NextRequest) {
         itemCount,
         body.vouchers,
         {
-          paymentType: savedOrder.payment_type, depositPercentage: Number(savedOrder.deposit_percentage ?? 0),
-          depositAmount: Number(savedOrder.deposit_amount ?? 0), remainingAmount: Number(savedOrder.remaining_amount ?? 0),
+          paymentType: savedOrder.payment_type,
+          depositPercentage: Number(savedOrder.deposit_percentage ?? 0),
+          depositAmount: Number(savedOrder.deposit_amount ?? 0),
+          remainingAmount: Number(savedOrder.remaining_amount ?? 0),
           shippingMethodId: savedOrder.shipping_method_id,
-          shippingMethodName: isPickupShippingMethod(savedOrder.shipping_method_id) ? "Nhận tại cửa hàng" : shippingMethod?.name ?? savedOrder.shipping_method_id ?? "Chưa xác định",
-          address: savedOrder.delivery_address as Record<string, unknown> | null,
+          shippingMethodName: isPickupShippingMethod(
+            savedOrder.shipping_method_id
+          )
+            ? "Nhận tại cửa hàng"
+            : (shippingMethod?.name ??
+              savedOrder.shipping_method_id ??
+              "Chưa xác định"),
+          address: savedOrder.delivery_address as Record<
+            string,
+            unknown
+          > | null,
         }
       );
       after(async () => {
         try {
           const payment = await paymentDetailsForOrder(savedOrder);
           if (payment.payload && payment.data.bank) {
-            const evidence = await issueEvidence(savedOrder.id, savedOrder.order_number, payment.data.amountDue, payment.data.bank, payment.payload);
+            const evidence = await issueEvidence(
+              savedOrder.id,
+              savedOrder.order_number,
+              payment.data.amountDue,
+              payment.data.bank,
+              payment.payload
+            );
             await deliverEvidence(evidence);
           }
-        } catch { console.error("[submit] payment evidence could not be issued", savedOrder.id); }
+        } catch {
+          console.error(
+            "[submit] payment evidence could not be issued",
+            savedOrder.id
+          );
+        }
       });
     } catch (notifyError) {
       console.error(
