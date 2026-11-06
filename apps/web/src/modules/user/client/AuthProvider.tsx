@@ -1,9 +1,10 @@
 "use client";
 
 import type { Tables } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/client";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
-import { createBrowserClient } from "@supabase/ssr";
+import type { AuthChangeEvent } from "@supabase/supabase-js";
 import type { Session, User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,17 +17,7 @@ import {
 
 type AppUser = Tables<"users">;
 
-/**
- * `.noobstore.xyz` in production so sessions survive the www ↔ m. device
- * redirect (see modules/desktop); host-scoped when unset (localhost dev).
- */
-const COOKIE_DOMAIN = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined;
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key",
-  { cookieOptions: { domain: COOKIE_DOMAIN } }
-);
+const supabase = createClient();
 
 function clearUserCookie() {
   if (typeof document === "undefined") return;
@@ -132,76 +123,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const refreshProfile = useCallback(() => fetchProfile(), [fetchProfile]);
+  const handleAuthEvent = useCallback(
+    (event: AuthChangeEvent, newSession: Session | null) => {
+      if (event === "TOKEN_REFRESHED") return;
 
-  // Initial session + auth listener
-  useEffect(() => {
-    let mounted = true;
-
-    // 1. Get initial session
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-
-        if (error) {
-          console.error("getSession error:", error);
-        }
-
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-
-          if (session?.user) {
-            void fetchProfile();
-          } else {
-            setProfile(null);
-          }
-        }
-      } catch (err) {
-        console.error("Auth initialization error:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    // 2. Listen to auth state changes
-    // Skip INITIAL_SESSION (already handled by initializeAuth) and
-    // TOKEN_REFRESHED (fires on every page navigation, profile hasn't changed)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      if (!mounted) return;
-      if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
-
-      // Clear react-query cache on auth transitions to prevent cross-account
-      // data leaks (rank, orders, profile, etc. from a previous user session)
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
         queryClient.clear();
       }
 
       setSession(newSession);
       setUser(newSession?.user ?? null);
+      if (newSession?.user) void fetchProfile();
+      else setProfile(null);
+    },
+    [fetchProfile, queryClient]
+  );
 
-      if (newSession?.user) {
-        fetchProfile();
-        if (event === "SIGNED_IN") {
+  const refreshProfile = useCallback(() => fetchProfile(), [fetchProfile]);
+
+  // Supabase emits INITIAL_SESSION after its one session load. Avoid calling
+  // getSession() in parallel: both paths can try refreshing the same cookie.
+  useEffect(() => {
+    let mounted = true;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (!mounted) return;
+      if (event === "INITIAL_SESSION") {
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        if (newSession?.user) void fetchProfile();
+        else setProfile(null);
+        setLoading(false);
+        return;
+      }
+      handleAuthEvent(event, newSession);
+      if (event === "SIGNED_IN" && newSession?.user) {
+        queueMicrotask(() => {
           void (async () => {
             try {
               const { data: activeEvent } = await supabase
                 .from("gacha_events")
                 .select("id")
-                .eq("is_active", true)
-                .lte("start_at", new Date().toISOString())
-                .gte("end_at", new Date().toISOString())
+                .eq("is_active" as never, true)
+                .lte("start_at" as never, new Date().toISOString())
+                .gte("end_at" as never, new Date().toISOString())
                 .order("id", { ascending: true })
                 .limit(1)
                 .maybeSingle();
-
               if (activeEvent) {
                 await fetch("/api/gacha/mission/progress", {
                   method: "POST",
@@ -216,9 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // Non-critical — ignore errors
             }
           })();
-        }
-      } else {
-        setProfile(null);
+        });
       }
     });
 
@@ -226,10 +193,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile]);
+  }, [fetchProfile, handleAuthEvent]);
 
   // Auth methods
-  const signIn = async (email: string, password: string, captchaToken?: string) => {
+  const signIn = async (
+    email: string,
+    password: string,
+    captchaToken?: string
+  ) => {
     const res = await fetch("/api/auth/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -262,7 +233,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, captchaToken?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    captchaToken?: string
+  ) => {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
