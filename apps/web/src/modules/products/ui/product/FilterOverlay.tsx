@@ -196,7 +196,7 @@ export function FilterOverlay({
                   Thương hiệu
                 </h3>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="hide-scrollbar flex max-h-[130px] flex-wrap gap-2 overflow-y-auto pr-1">
                 <button
                   onClick={() => setSelectedBrand(null)}
                   className={clsx(
