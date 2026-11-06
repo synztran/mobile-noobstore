@@ -5,9 +5,18 @@ on:
     branches: [prd]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  type-check:
+  web:
+    name: Web
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,3 +40,5 @@ jobs:
         run: yarn install --immutable
       - name: Type-check web
         run: yarn workspace @noobstore/web type-check
+      - name: Unit tests web
+        run: yarn test:unit
