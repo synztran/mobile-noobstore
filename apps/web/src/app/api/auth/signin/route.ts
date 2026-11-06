@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { signInWithPassword } from "@/modules/user/server/auth";
-import { clearLegacyAuthCookie } from "@/modules/user/server/legacy-auth-cookie";
+import { clearLegacyAuthCookie } from "@/lib/auth/legacy-auth-cookie";
 import { getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 
 export const dynamic = "force-dynamic";

@@ -5,8 +5,15 @@ import {
 } from "@/modules/desktop/device";
 import { type NextRequest, NextResponse } from "next/server";
 import { getApiLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
-import { fireRateLimitAlert, isCspReportPath } from "@/lib/redis/rate-limit-alert";
-import { hasLiveSessionCookie, hasUsableSessionCookie } from "@/lib/auth/session-cookie";
+import {
+  fireRateLimitAlert,
+  isCspReportPath,
+} from "@/lib/redis/rate-limit-alert";
+import {
+  hasLiveSessionCookie,
+  hasUsableSessionCookie,
+} from "@/lib/auth/session-cookie";
+import { expireDuplicateAuthCookies } from "@/lib/auth/legacy-auth-cookie";
 
 /**
  * Public read endpoints whose responses are cached (Redis + CDN). Rate
@@ -16,24 +23,24 @@ import { hasLiveSessionCookie, hasUsableSessionCookie } from "@/lib/auth/session
  * rate-limited.
  */
 const PUBLIC_CACHED_READ_PREFIXES = [
-	"/api/home/",
-	"/api/products",
-	"/api/services",
-	"/api/shipping-methods",
-	"/api/fees",
-	"/api/payment-information",
-	"/api/community/posts",
-	"/api/reviews/recent",
-	"/api/blog",
-	"/api/gacha/recent-winners",
-	"/api/location/wards",
+  "/api/home/",
+  "/api/products",
+  "/api/services",
+  "/api/shipping-methods",
+  "/api/fees",
+  "/api/payment-information",
+  "/api/community/posts",
+  "/api/reviews/recent",
+  "/api/blog",
+  "/api/gacha/recent-winners",
+  "/api/location/wards",
 ];
 
 function isPublicCachedRead(method: string, pathname: string): boolean {
-	if (method !== "GET") return false;
-	return PUBLIC_CACHED_READ_PREFIXES.some((prefix) =>
-		pathname.startsWith(prefix),
-	);
+  if (method !== "GET") return false;
+  return PUBLIC_CACHED_READ_PREFIXES.some((prefix) =>
+    pathname.startsWith(prefix)
+  );
 }
 
 /**
@@ -44,13 +51,13 @@ function isPublicCachedRead(method: string, pathname: string): boolean {
  * request proceeds unlocked rather than dying or hanging.
  */
 function withRateLimitTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-	const timeout = new Promise<never>((_, reject) =>
-		setTimeout(
-			() => reject(new Error(`rate limiter timed out after ${ms}ms`)),
-			ms,
-		),
-	);
-	return Promise.race([promise, timeout]);
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(
+      () => reject(new Error(`rate limiter timed out after ${ms}ms`)),
+      ms
+    )
+  );
+  return Promise.race([promise, timeout]);
 }
 
 /**
@@ -59,11 +66,20 @@ function withRateLimitTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
  * It is a per-visitor read with no abuse value worth a rate-limit round-trip.
  */
 function isUiCriticalRead(method: string, pathname: string): boolean {
-	if (method !== "GET") return false;
-	return pathname.startsWith("/api/cart");
+  if (method !== "GET") return false;
+  return pathname.startsWith("/api/cart");
 }
 
 export async function middleware(request: NextRequest) {
+  const response = await handleRequest(request);
+  // Duplicate host-only + domain auth cookies are only detectable from the raw
+  // Cookie header, and the extra host-only copy must not outlive the response
+  // that revealed it. No-op unless a duplicate is actually present.
+  expireDuplicateAuthCookies(response, request);
+  return response;
+}
+
+async function handleRequest(request: NextRequest) {
   // Forwarded to server components; the device gate sets x-device-class in
   // the try block below (unmanaged-host/error paths keep the original headers).
   const requestHeaders = new Headers(request.headers);
@@ -150,20 +166,22 @@ export async function middleware(request: NextRequest) {
       try {
         const { success, reset } = await withRateLimitTimeout(
           getApiLimiter().limit(getRateLimitKey(request)),
-          2000,
+          2000
         );
         if (!success) {
-          await fireRateLimitAlert(getRateLimitKey(request), pathname, isLoggedIn);
+          await fireRateLimitAlert(
+            getRateLimitKey(request),
+            pathname,
+            isLoggedIn
+          );
           return NextResponse.json(
             { error: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
             {
               status: 429,
               headers: {
-                "Retry-After": String(
-                  Math.ceil((reset - Date.now()) / 1000),
-                ),
+                "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
               },
-            },
+            }
           );
         }
       } catch (err) {
