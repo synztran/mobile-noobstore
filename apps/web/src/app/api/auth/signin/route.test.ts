@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clearLegacyAuthCookie } from "@/modules/user/server/legacy-auth-cookie";
+import { clearLegacyAuthCookie } from "@/lib/auth/legacy-auth-cookie";
 
 function getSetCookies(response: NextResponse) {
   return response.headers.getSetCookie();
