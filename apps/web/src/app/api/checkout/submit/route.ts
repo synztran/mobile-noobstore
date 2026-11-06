@@ -21,7 +21,6 @@ import type {
   VoucherScopeType,
 } from "@/types/voucher";
 import { getCheckoutLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
-import { getMaxVouchersPerOrder } from "@/lib/vouchers/config";
 import { canUseDeposit, clampDepositPercentage } from "@/lib/deposit";
 import { invalidateProductCaches } from "@/lib/redis/cache";
 import {
@@ -425,17 +424,6 @@ export async function POST(req: NextRequest) {
         toNumber(v.voucher_discount_amount, 0) > 0 ||
         toNumber(v.shipping_discount_amount, 0) > 0
     );
-    const voucherIdsRequested = appliedVouchers
-      .map((voucher) => voucher.voucher_id)
-      .filter((id): id is string => Boolean(id));
-    const uniqueVoucherIdsRequested = [...new Set(voucherIdsRequested)];
-    const maxVouchers = await getMaxVouchersPerOrder();
-    if (uniqueVoucherIdsRequested.length > maxVouchers) {
-      return NextResponse.json(
-        { error: `At most ${maxVouchers} vouchers may be used per order.` },
-        { status: 400 }
-      );
-    }
     // Gift identities/quantities are always derived from validated DB voucher
     // rows below; never trust the client's display snapshot for fulfillment.
     for (const voucher of appliedVouchers) {

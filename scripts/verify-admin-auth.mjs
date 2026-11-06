@@ -36,21 +36,6 @@ const check = (cond, msg) => {
   }
 };
 
-const storefrontAdminRoute = path.join(
-  root,
-  "apps/web/src/app/api/admin/products/route.ts"
-);
-const storefrontAdminSource = readFileSync(storefrontAdminRoute, "utf8");
-check(
-  /auth\.getUser\(\)/.test(storefrontAdminSource) &&
-    /profile\?\.role\s*!==\s*["']admin["']/.test(storefrontAdminSource),
-  "storefront /api/admin/products route must verify session and exact admin role"
-);
-check(
-  /getApiLimiter\(\)\.limit\(/.test(storefrontAdminSource),
-  "storefront /api/admin/products route must have its own rate limit"
-);
-
 // 1. The matcher must NOT exclude /api. It may explicitly include it, or just
 //    leave it out of the negative lookahead. Detect an attempt to exclude it.
 const matcherBlock = middleware.match(/matcher:\s*\[([\s\S]*?)\]/);

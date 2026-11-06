@@ -15,7 +15,6 @@ relevant migrations.
 | 1   | High — fixed in working tree   | `apps/web/src/app/api/gacha/mission/progress/route.ts:31-56`                          | Client could fabricate order-count/spend mission progress                                       |
 | 2   | Medium — fixed in working tree | `apps/web/src/app/api/checkout/submit/route.ts:99-109,438-448,829-853`                | Checkout trusted client gift snapshots; now DB-derived and atomically reserved by migration 164 |
 | 3   | Medium — fixed in working tree | `scripts/verify-rls.mjs:126-188,294-305`                                              | `check:rls` falsely reported 5 RLS-enabled warehouse tables                                     |
-| 4   | Low — fixed in working tree    | `apps/web/src/app/api/admin/products/route.ts:62-72`; `scripts/verify-admin-auth.mjs` | Admin write route was outside standard API rate limit and guard                                 |
 | 5   | Low — fixed in working tree    | `apps/web/src/app/api/community/posts/[id]/route.ts:15-25`                            | Concurrent post reads lost view-count increments                                                |
 
 ### 1. Client-forgeable gacha mission progress — High — fixed
@@ -82,12 +81,9 @@ passes.
 **Fix applied:** guard recognizes this restricted `DO`/`FOREACH` literal array;
 `yarn check:rls` now passes.
 
-### 4. Out-of-convention admin route — Low — fixed
-
-Moved to `apps/web/src/app/api/admin/products/route.ts`, where the standard
-`/api/*` middleware throttle applies; added a route-specific limiter and
-extended `scripts/verify-admin-auth.mjs` to assert both the admin-role check and
-limiter remain present. Existing session + exact admin-role checks stay intact.
+The former `/apiAdmin/products` route was unused after product authoring moved
+to the separate admin app. It has been removed from the storefront patch rather
+than relocated.
 
 ### 5. Community view-count lost update — Low — fixed
 
