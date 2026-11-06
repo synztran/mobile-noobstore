@@ -62,7 +62,7 @@ export const DualRangeSlider = memo(function DualRangeSlider({
 	};
 
 	return (
-		<div className="space-y-2 px-2">
+		<div className="space-y-2 px-4">
 			{/* Price labels */}
 			<div className="flex justify-between items-center">
 				<div className="bg-surface-container rounded-xl px-2.5 py-1 text-center min-w-[88px]">
