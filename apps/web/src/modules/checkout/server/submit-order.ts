@@ -43,6 +43,7 @@ import {
 } from "./submit-order-logic";
 
 export async function submitOrder(req: NextRequest) {
+  let phase = "parse request";
   try {
     const body: SubmitOrderRequest = await req.json();
 
@@ -73,6 +74,7 @@ export async function submitOrder(req: NextRequest) {
     const supabase = await createClient();
     const admin = getAdminClient();
 
+    phase = "authenticate customer";
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -94,6 +96,7 @@ export async function submitOrder(req: NextRequest) {
       ...new Set([...itemVariantIds, ...componentVariantIds]),
     ];
 
+    phase = "load product prices and kit rules";
     const [
       { data: productRows, error: productErr },
       { data: variantRows, error: variantErr },
@@ -161,6 +164,7 @@ export async function submitOrder(req: NextRequest) {
     // out disallowed buttons, but nothing on the server checked them, so a
     // hand-crafted request could pair a kit variant with any component variant.
     // Reject before creating the order so an illegal pairing is never priced.
+    phase = "validate kit compatibility and calculate prices";
     const incompatible = findIncompatibleComponent(
       body.items,
       rulesByKit,
@@ -217,6 +221,7 @@ export async function submitOrder(req: NextRequest) {
     );
 
     // ── Multi-voucher handling ────────────────────────────────────────
+    phase = "validate vouchers and discounts";
     const appliedVouchers = (body.vouchers ?? []).filter(
       (v) =>
         Boolean(v.voucher_id) ||
@@ -388,6 +393,7 @@ export async function submitOrder(req: NextRequest) {
     // rank to prevent discount fraud.
     let safeRankDiscount = 0;
     let safeRankShipping = 0;
+    phase = "calculate rank discount and payment eligibility";
     const { data: userRankRow } = await admin
       .from("users")
       .select("rank_id")
@@ -453,7 +459,8 @@ export async function submitOrder(req: NextRequest) {
     const orderId = crypto.randomUUID();
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${randomBase36(4)}`;
 
-    const submitOrderRpc = admin.rpc as unknown as (
+    phase = "create order and reserve stock (database RPC)";
+    const submitOrderRpc = admin.rpc.bind(admin) as unknown as (
       fn: string,
       args: Record<string, unknown>
     ) => Promise<{ data: unknown; error: { message: string } | null }>;
@@ -485,6 +492,7 @@ export async function submitOrder(req: NextRequest) {
     // `submit_order` decremented stock in the DB — invalidate the product
     // cache so /shop and product pages don't serve stale stock for up to the
     // 600s TTL. Non-fatal: a cache-invalidation failure must not fail checkout.
+    phase = "invalidate product caches";
     try {
       await invalidateProductCaches();
     } catch (cacheErr) {
@@ -498,6 +506,7 @@ export async function submitOrder(req: NextRequest) {
     };
 
     // ── Persist multi-voucher fields on order ──────────────────────────
+    phase = "persist voucher details and usage";
     if (appliedVouchers.length > 0) {
       const primaryVoucher = appliedVouchers[0];
       const allGiftItems = appliedVouchers.flatMap((voucher) =>
@@ -537,17 +546,17 @@ export async function submitOrder(req: NextRequest) {
       if (voucherPersisted) {
         for (const v of appliedVouchers) {
           if (v.voucher_id) {
-            const { error: incrementUsageError } = await (
-              admin.rpc as unknown as (
-                fn: string,
-                args: Record<string, unknown>
-              ) => Promise<{
-                data: unknown;
-                error: { message: string } | null;
-              }>
-            )("increment_voucher_used_count", {
-              p_voucher_id: v.voucher_id,
-            });
+            const rpc = admin.rpc.bind(admin) as unknown as (
+              fn: string,
+              args: Record<string, unknown>
+            ) => Promise<{
+              data: unknown;
+              error: { message: string } | null;
+            }>;
+            const { error: incrementUsageError } = await rpc(
+              "increment_voucher_used_count",
+              { p_voucher_id: v.voucher_id }
+            );
 
             if (incrementUsageError) {
               console.error(
@@ -561,6 +570,7 @@ export async function submitOrder(req: NextRequest) {
     }
 
     // ── Persist delivery address + shipping method ────────────────────────
+    phase = "persist delivery and pickup details";
     if (body.delivery_address || body.shipping_method_id) {
       const now = new Date();
       let expectedDeliveryAt: string | null = null;
@@ -639,6 +649,7 @@ export async function submitOrder(req: NextRequest) {
     // here we only clamp the percentage to the per-mode bounds and compute
     // the amounts. Deposit base stays the subtotal; remaining is the final
     // total minus the deposit.
+    phase = "persist deposit payment details";
     if (body.payment_type === "deposit_cod") {
       const pct = clampDepositPercentage(
         body.deposit_percentage,
@@ -674,6 +685,7 @@ export async function submitOrder(req: NextRequest) {
     // submit_order; do not insert them a second time here.
 
     // ── Optional: attach services ─────────────────────────────────────────
+    phase = "attach optional services";
     if (body.service_ids?.length) {
       const { data: services } = await supabase
         .from("services")
@@ -695,6 +707,7 @@ export async function submitOrder(req: NextRequest) {
     const customerName =
       user?.user_metadata?.full_name ?? user?.email ?? "Khách";
     const itemCount = body.items.reduce((sum, i) => sum + i.quantity, 0);
+    phase = "send order notification and payment evidence";
     try {
       const { data: savedOrder, error: savedOrderError } = await admin
         .from("orders")
@@ -771,6 +784,7 @@ export async function submitOrder(req: NextRequest) {
     // active after a placed order (a retry then created a duplicate order).
     // Scoping by user_id also means a caller can no longer flip someone
     // else's active cart through the service-role client.
+    phase = "convert active cart";
     const activeCartId = user ? await getActiveCartId(admin, user.id) : null;
     if (body.cart_id && body.cart_id !== activeCartId) {
       console.warn(
@@ -792,6 +806,7 @@ export async function submitOrder(req: NextRequest) {
     // several active carts — which made GET /api/cart return an empty cart.
 
     // ── Gacha mission progress ───────────────────────────────────────────
+    phase = "process gacha mission progress";
     if (user) {
       try {
         const { triggerMissionServer } =
@@ -839,7 +854,11 @@ export async function submitOrder(req: NextRequest) {
     } satisfies SubmitOrderResponse);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Internal server error";
-    console.error("[submit] unexpected error:", msg);
+    console.error("[submit] unexpected error:", {
+      phase,
+      message: msg,
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
