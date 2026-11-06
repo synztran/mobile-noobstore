@@ -254,13 +254,13 @@ export function FilterOverlay({
             )}
             style={{ transitionDelay: isOpen ? "150ms" : "0ms" }}
           >
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-2 flex items-center gap-2">
               <Banknote className="h-4 w-4 text-primary" />
               <h3 className="text-sm font-black uppercase tracking-wide text-on-surface">
                 Khoảng giá
               </h3>
             </div>
-            <div className="rounded-2xl bg-surface-container p-4">
+            <div className="rounded-xl bg-surface-container p-3">
               <DualRangeSlider
                 min={selectedPriceMin}
                 max={selectedPriceMax}
