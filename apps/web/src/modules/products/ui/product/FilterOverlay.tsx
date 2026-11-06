@@ -3,7 +3,7 @@
 import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
 import clsx from "clsx";
 import { Banknote, Check, LayoutGrid, RotateCcw, Store } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface FilterState {
   category: string | null;
@@ -48,6 +48,8 @@ export function FilterOverlay({
   const [selectedPriceMax, setSelectedPriceMax] = useState<number>(
     initialState?.priceMax ?? 0
   );
+  const brandListRef = useRef<HTMLDivElement>(null);
+  const [brandListOverflowing, setBrandListOverflowing] = useState(false);
 
   const uniqueBrands = useMemo(() => {
     const seen = new Map<string, string>();
@@ -59,6 +61,14 @@ export function FilterOverlay({
     }
     return Array.from(seen.values());
   }, [brands]);
+
+  // iOS hides scrollbars until the user scrolls, so show a fade only when the
+  // brand chips actually overflow their 130px window.
+  useEffect(() => {
+    const el = brandListRef.current;
+    if (!el) return;
+    setBrandListOverflowing(el.scrollHeight > el.clientHeight + 1);
+  }, [uniqueBrands.length]);
 
   const activeCount = useMemo(() => {
     let n = 0;
@@ -93,8 +103,8 @@ export function FilterOverlay({
 
       {/* Panel — slides from top */}
       <div
-        className={`fixed left-0 right-0 z-[70] flex flex-col overflow-hidden rounded-b-3xl bg-surface pt-[env(safe-area-inset-top,0px)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out ${
-          isOpen ? "bottom-[8vh] top-0" : "bottom-[110%] top-[-110%]"
+        className={`fixed left-0 right-0 top-0 z-[70] flex max-h-[calc(100dvh-8vh)] flex-col overflow-hidden rounded-b-3xl bg-surface pt-[env(safe-area-inset-top,0px)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out ${
+          isOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >
         {/* Drag handle */}
@@ -131,7 +141,7 @@ export function FilterOverlay({
           </button>
         </div>
 
-        <div className="hide-scrollbar flex-1 space-y-5 overflow-y-auto px-6 py-5">
+        <div className="hide-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
           {/* Category */}
           {categories.length > 0 && (
             <section
@@ -196,34 +206,42 @@ export function FilterOverlay({
                   Thương hiệu
                 </h3>
               </div>
-              <div className="hide-scrollbar flex max-h-[130px] flex-wrap gap-2 overflow-y-auto pr-1">
-                <button
-                  onClick={() => setSelectedBrand(null)}
-                  className={clsx(
-                    "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
-                    selectedBrand === null
-                      ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
-                      : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
-                  )}
+              <div className="relative">
+                <div
+                  ref={brandListRef}
+                  className="flex max-h-[130px] flex-wrap gap-2 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]"
                 >
-                  Tất cả
-                </button>
-                {uniqueBrands.map((b) => (
                   <button
-                    key={b}
-                    onClick={() =>
-                      setSelectedBrand(selectedBrand === b ? null : b)
-                    }
+                    onClick={() => setSelectedBrand(null)}
                     className={clsx(
                       "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
-                      selectedBrand === b
+                      selectedBrand === null
                         ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
                         : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
                     )}
                   >
-                    {b}
+                    Tất cả
                   </button>
-                ))}
+                  {uniqueBrands.map((b) => (
+                    <button
+                      key={b}
+                      onClick={() =>
+                        setSelectedBrand(selectedBrand === b ? null : b)
+                      }
+                      className={clsx(
+                        "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
+                        selectedBrand === b
+                          ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
+                          : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
+                      )}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+                {brandListOverflowing && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-surface to-transparent" />
+                )}
               </div>
             </section>
           )}
