@@ -2,5 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "if [ -f scripts/vercel-install.mjs ]; then corepack yarn turbo build --filter=@noobstore/web; else corepack yarn --cwd ../.. turbo build --filter=@noobstore/web; fi",
   "installCommand": "if [ -f scripts/vercel-install.mjs ]; then node scripts/vercel-install.mjs; else node ../../scripts/vercel-install.mjs; fi",
-  "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1"
+  "ignoreCommand": "if [ \"$VERCEL_ENV\" = \"production\" ] && [ -n \"$VERCEL_GIT_PROVIDER\" ]; then echo 'Skipping git-triggered production build: production deploys run through the deploy-production workflow.'; exit 0; fi; npx turbo-ignore --fallback=HEAD^1"
 }

@@ -1,0 +1,99 @@
+name: Deploy production (web)
+
+# Production is manual. A merge to `prd` runs CI and a Vercel preview build but
+# never touches production: `vercel.json` skips git-triggered production builds,
+# and the `production` GitHub environment below holds the required reviewer.
+# A maintainer dispatches this workflow from the `prd` branch; it refuses any
+# other ref and any commit that is not the current `origin/prd` HEAD.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production-web
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify latest prd
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Require the prd branch
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/prd" ]; then
+            echo "::error::Dispatch this workflow from the prd branch (got $GITHUB_REF)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: prd
+          fetch-depth: 0
+      - name: Require the current prd HEAD
+        run: |
+          git fetch --depth=1 origin prd
+          echo "checked out: $(git rev-parse HEAD)"
+          echo "origin/prd:  $(git rev-parse origin/prd)"
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/prd)" ]; then
+            echo "::error::HEAD is not the newest prd commit. Re-run after fetching."
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        id: node
+        with:
+          node-version-file: .nvmrc
+      - name: Turbo cache
+        uses: rharkor/caching-for-turbo@v1.5
+      - name: Dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node-${{ steps.node.outputs.node-version }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: node-modules-${{ runner.os }}-node-${{ steps.node.outputs.node-version }}-yarn-
+      - name: Enable corepack (yarn 4)
+        run: corepack enable
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Type-check web
+        run: yarn workspace @noobstore/web type-check
+      - name: Unit tests web
+        run: yarn test:unit
+
+  deploy:
+    name: Deploy to Vercel
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Required reviewers are configured on this environment, not in this file.
+    environment:
+      name: production
+      url: https://www.noobstore.xyz
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: prd
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      # Builds on Vercel instead of `--prebuilt` so the artifact is produced by
+      # the same builder (and monorepo root settings) as a git deployment.
+      - name: Link the Vercel project
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Deploy to production
+        run: |
+          url=$(vercel deploy --prod --yes --token="$VERCEL_TOKEN" \
+            --meta githubCommitSha="$(git rev-parse HEAD)" \
+            --meta githubCommitRef=prd | tail -n 1)
+          echo "Deployed $url" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
