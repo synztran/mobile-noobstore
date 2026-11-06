@@ -93,12 +93,12 @@ export function FilterOverlay({
 
       {/* Panel — slides from top */}
       <div
-        className={`fixed left-0 right-0 z-[70] flex flex-col overflow-hidden rounded-b-3xl bg-surface shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out ${
+        className={`fixed left-0 right-0 z-[70] flex flex-col overflow-hidden rounded-b-3xl bg-surface pt-[env(safe-area-inset-top,0px)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out ${
           isOpen ? "bottom-[8vh] top-0" : "bottom-[110%] top-[-110%]"
         }`}
       >
         {/* Drag handle */}
-        <div className="flex justify-center pt-2 pb-1">
+        <div className="flex justify-center pb-1 pt-2">
           <div className="h-1 w-10 rounded-full bg-outline-variant/40" />
         </div>
 
@@ -264,7 +264,9 @@ export function FilterOverlay({
             <RotateCcw className="h-4 w-4" />
             Đặt lại
             {activeCount > 0 && (
-              <span className="ml-0.5 text-[10px] opacity-60">({activeCount})</span>
+              <span className="ml-0.5 text-[10px] opacity-60">
+                ({activeCount})
+              </span>
             )}
           </button>
           <button
