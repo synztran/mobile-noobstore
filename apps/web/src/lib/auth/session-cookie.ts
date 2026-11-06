@@ -61,24 +61,60 @@ export function base64UrlDecode(input: string): string | null {
 }
 
 /**
+ * Expiry carried by a raw auth cookie value, or `-Infinity` when it cannot be
+ * decoded. Used only to rank duplicate values, never to authorize.
+ */
+function sessionExpiry(raw: string): number {
+  const expiresAt = decodeAuthTokenValue(raw)?.expires_at;
+  return typeof expiresAt === "number" ? expiresAt : Number.NEGATIVE_INFINITY;
+}
+
+/**
+ * Choose one value when the same auth cookie name appears more than once.
+ *
+ * A host-only `www.noobstore.xyz` cookie and a domain-scoped `.noobstore.xyz`
+ * cookie are both sent under the same name, so a prefix lookup would otherwise
+ * hand back two sessions with no way to tell which is current. The latest
+ * `expires_at` wins; on a tie the later occurrence wins, which matches browser
+ * ordering (cookies of equal path length are sent oldest first).
+ */
+function newestAuthToken(values: readonly string[]): string | null {
+  let newest: string | null = null;
+  let newestExpiry = Number.NEGATIVE_INFINITY;
+
+  for (const value of values) {
+    const expiry = sessionExpiry(value);
+    if (newest === null || expiry >= newestExpiry) {
+      newest = value;
+      newestExpiry = expiry;
+    }
+  }
+
+  return newest;
+}
+
+/**
  * Reassemble the raw session cookie value.
  *
  * Mirrors `combineChunks` in `@supabase/ssr`: the unsuffixed cookie wins when
  * present, otherwise `.0`, `.1`, … are concatenated in index order, stopping at
  * the first missing index — a gap means a partial write, not a longer value.
+ *
+ * Duplicate names (same name, different cookie scope) are resolved to the
+ * newest session instead of whichever copy happened to come first.
  */
 export function resolveAuthTokenValue(
-  cookies: readonly AuthCookie[],
+  cookies: readonly AuthCookie[]
 ): string | null {
-  const whole = cookies.find(
-    ({ name, value }) => AUTH_TOKEN_COOKIE.test(name) && Boolean(value),
-  );
-  if (whole) return whole.value;
+  const whole = cookies
+    .filter(({ name, value }) => AUTH_TOKEN_COOKIE.test(name) && Boolean(value))
+    .map(({ value }) => value);
+  if (whole.length > 0) return newestAuthToken(whole);
 
   // Group by storage-key base. Cookies for two different project refs can
   // coexist after a config change, and splicing their chunks would fabricate a
   // value that was never a session.
-  const groups = new Map<string, Map<number, string>>();
+  const groups = new Map<string, Map<number, string[]>>();
 
   for (const { name, value } of cookies) {
     const match = name.match(AUTH_TOKEN_CHUNK);
@@ -87,30 +123,50 @@ export function resolveAuthTokenValue(
     const base = `sb-${match[1]}-auth-token`;
     let chunks = groups.get(base);
     if (!chunks) {
-      chunks = new Map<number, string>();
+      chunks = new Map<number, string[]>();
       groups.set(base, chunks);
     }
-    chunks.set(Number(match[2]), value);
+
+    const index = Number(match[2]);
+    const values = chunks.get(index);
+    if (values) values.push(value);
+    else chunks.set(index, [value]);
   }
 
-  let fallback: string | null = null;
+  const candidates: string[] = [];
 
   for (const chunks of groups.values()) {
-    let joined = "";
+    let chunkCount = 0;
     // Half-written sessions are normal; stop at the first gap rather than
     // skipping over it.
-    for (let index = 0; chunks.has(index); index += 1) {
-      joined += chunks.get(index);
-    }
-    if (!joined) continue;
+    while (chunks.has(chunkCount)) chunkCount += 1;
+    if (chunkCount === 0) continue;
 
-    if (fallback === null) fallback = joined;
-    // A stale set from a previous ref decodes to nothing; prefer a group that
-    // reassembles into an actual JSON payload.
-    if (decodeAuthTokenValue(joined)) return joined;
+    // A duplicated chunk index means two complete sets were written (host-only
+    // and domain-scoped). Pair occurrences by position so each candidate comes
+    // from one set, never a splice of both.
+    const sets = Math.min(
+      ...Array.from(
+        { length: chunkCount },
+        (_, index) => chunks.get(index)?.length ?? 0
+      )
+    );
+
+    for (let set = 0; set < sets; set += 1) {
+      let joined = "";
+      for (let index = 0; index < chunkCount; index += 1) {
+        joined += (chunks.get(index) as string[])[set];
+      }
+      candidates.push(joined);
+    }
   }
 
-  return fallback;
+  if (candidates.length === 0) return null;
+
+  const decodable = candidates.filter((value) => decodeAuthTokenValue(value));
+  // A stale set from a previous ref decodes to nothing; prefer a candidate
+  // that reassembles into an actual JSON payload.
+  return decodable.length > 0 ? newestAuthToken(decodable) : candidates[0];
 }
 
 /**
@@ -119,7 +175,7 @@ export function resolveAuthTokenValue(
  * hint. Returns `null` for anything that is not a JSON object.
  */
 export function decodeAuthTokenValue(
-  raw: string,
+  raw: string
 ): Record<string, unknown> | null {
   const payload = raw.startsWith(BASE64_PREFIX)
     ? base64UrlDecode(raw.slice(BASE64_PREFIX.length))
@@ -162,7 +218,7 @@ function isNonEmptyString(value: unknown): value is string {
  */
 export function hasUsableSessionCookie(
   cookies: readonly AuthCookie[],
-  nowSeconds: number = Math.floor(Date.now() / 1000),
+  nowSeconds: number = Math.floor(Date.now() / 1000)
 ): boolean {
   const raw = resolveAuthTokenValue(cookies);
   if (!raw) return false;
@@ -179,7 +235,7 @@ export function hasUsableSessionCookie(
   // silent lockout from /checkout.
   if (!isNonEmptyString(refreshToken) && !isNonEmptyString(accessToken)) {
     console.warn(
-      "[session-cookie] unrecognised Supabase auth cookie payload — treating request as signed out",
+      "[session-cookie] unrecognised Supabase auth cookie payload — treating request as signed out"
     );
     return false;
   }
@@ -213,7 +269,7 @@ export function hasUsableSessionCookie(
  */
 export function hasLiveSessionCookie(
   cookies: readonly AuthCookie[],
-  nowSeconds: number = Math.floor(Date.now() / 1000),
+  nowSeconds: number = Math.floor(Date.now() / 1000)
 ): boolean {
   const raw = resolveAuthTokenValue(cookies);
   if (!raw) return false;

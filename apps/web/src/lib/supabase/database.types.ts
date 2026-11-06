@@ -1821,6 +1821,8 @@ export type Database = {
           note: string | null;
           source_ref: string | null;
           source_type: string;
+          checkin_event_id: string | null;
+          checkin_batch_id: string | null;
           user_id: string;
         };
         Insert: {
@@ -1841,6 +1843,8 @@ export type Database = {
           note?: string | null;
           source_ref?: string | null;
           source_type?: string;
+          checkin_event_id?: string | null;
+          checkin_batch_id?: string | null;
           user_id?: string;
         };
         Relationships: [];
@@ -2253,6 +2257,7 @@ export type Database = {
           metadata: Json;
           name: string;
           points_cost: number;
+          points_currency: string;
           reward_type: string;
           stock: number | null;
           updated_at: string;
@@ -2267,6 +2272,7 @@ export type Database = {
           metadata?: Json;
           name: string;
           points_cost: number;
+          points_currency?: string;
           reward_type: string;
           stock?: number | null;
           updated_at?: string;
@@ -2281,6 +2287,7 @@ export type Database = {
           metadata?: Json;
           name?: string;
           points_cost?: number;
+          points_currency?: string;
           reward_type?: string;
           stock?: number | null;
           updated_at?: string;
@@ -2988,6 +2995,9 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           customer_ids: string[] | null;
+          source_type: string;
+          checkin_event_id: string | null;
+          checkin_batch_id: string | null;
           deleted_at: string | null;
           description: string | null;
           end_at: string | null;
@@ -3023,6 +3033,9 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           customer_ids?: string[] | null;
+          source_type?: string;
+          checkin_event_id?: string | null;
+          checkin_batch_id?: string | null;
           deleted_at?: string | null;
           description?: string | null;
           end_at?: string | null;
@@ -3058,6 +3071,9 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           customer_ids?: string[] | null;
+          source_type?: string;
+          checkin_event_id?: string | null;
+          checkin_batch_id?: string | null;
           deleted_at?: string | null;
           description?: string | null;
           end_at?: string | null;
@@ -3452,6 +3468,10 @@ export type Database = {
         }[];
       };
       get_kit_stock: { Args: { kit_id: string }; Returns: number };
+      increment_community_post_view_count: {
+        Args: { p_post_id: string };
+        Returns: undefined;
+      };
       get_pending_payment_orders: {
         Args: never;
         Returns: {
@@ -3534,8 +3554,9 @@ export type Database = {
           transaction_id: number;
         }[];
       };
-      submit_order: {
+      submit_order_with_gifts: {
         Args: {
+          p_gift_items: Json;
           p_items: Json;
           p_order_id: string;
           p_order_number: string;

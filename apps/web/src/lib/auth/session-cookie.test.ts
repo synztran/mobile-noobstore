@@ -79,7 +79,7 @@ describe("resolveAuthTokenValue", () => {
   it("returns null when no auth cookie is present", () => {
     expect(resolveAuthTokenValue([])).toBeNull();
     expect(
-      resolveAuthTokenValue([{ name: "theme", value: "dark" }]),
+      resolveAuthTokenValue([{ name: "theme", value: "dark" }])
     ).toBeNull();
   });
 
@@ -88,8 +88,56 @@ describe("resolveAuthTokenValue", () => {
       resolveAuthTokenValue([
         { name: "sb-testref-auth-token", value: "whole" },
         { name: "sb-testref-auth-token.0", value: "stale" },
-      ]),
+      ])
     ).toBe("whole");
+  });
+
+  it("keeps the newest duplicate whole cookie instead of the first", () => {
+    const stale = encodeSession({
+      access_token: "old",
+      refresh_token: "old-refresh",
+      expires_at: 1_600_000_000,
+    });
+    const fresh = encodeSession({
+      access_token: "new",
+      refresh_token: "new-refresh",
+      expires_at: 1_800_000_000,
+    });
+
+    const resolved = resolveAuthTokenValue([
+      // Host-only copy lands first, domain-scoped cookie second.
+      { name: "sb-testref-auth-token", value: stale },
+      { name: "sb-testref-auth-token", value: fresh },
+    ]);
+
+    expect(decodeAuthTokenValue(resolved as string)?.refresh_token).toBe(
+      "new-refresh"
+    );
+  });
+
+  it("keeps duplicate chunk sets coherent and picks the newest", () => {
+    const stale = chunked(
+      encodeSession({
+        access_token: "old",
+        refresh_token: "old-refresh",
+        expires_at: 1_600_000_000,
+      }),
+      40
+    );
+    const fresh = chunked(
+      encodeSession({
+        access_token: "new",
+        refresh_token: "new-refresh",
+        expires_at: 1_800_000_000,
+      }),
+      40
+    );
+
+    const resolved = resolveAuthTokenValue([...stale, ...fresh]);
+
+    expect(decodeAuthTokenValue(resolved as string)?.refresh_token).toBe(
+      "new-refresh"
+    );
   });
 
   it("concatenates chunks in index order", () => {
@@ -98,7 +146,7 @@ describe("resolveAuthTokenValue", () => {
         { name: "sb-testref-auth-token.1", value: "B" },
         { name: "sb-testref-auth-token.0", value: "A" },
         { name: "sb-testref-auth-token.2", value: "C" },
-      ]),
+      ])
     ).toBe("ABC");
   });
 
@@ -108,7 +156,7 @@ describe("resolveAuthTokenValue", () => {
       resolveAuthTokenValue([
         { name: "sb-testref-auth-token.0", value: "A" },
         { name: "sb-testref-auth-token.2", value: "C" },
-      ]),
+      ])
     ).toBe("A");
   });
 
@@ -119,7 +167,7 @@ describe("resolveAuthTokenValue", () => {
           name: "sb-testref-auth-token-code-verifier",
           value: "verifier",
         },
-      ]),
+      ])
     ).toBeNull();
   });
 
@@ -129,14 +177,14 @@ describe("resolveAuthTokenValue", () => {
     // a session.
     const stale = chunked(
       encodeSession({ access_token: "old", refresh_token: "old-refresh" }),
-      40,
+      40
     ).map((cookie) => ({
       ...cookie,
       name: cookie.name.replace("testref", "oldref"),
     }));
     const fresh = chunked(
       encodeSession({ access_token: "new", refresh_token: "new-refresh" }),
-      40,
+      40
     );
 
     const resolved = resolveAuthTokenValue([...stale, ...fresh]);
@@ -157,14 +205,22 @@ describe("decodeAuthTokenValue", () => {
 
   it("still accepts raw JSON when cookieEncoding is not base64url", () => {
     expect(
-      decodeAuthTokenValue(JSON.stringify({ expires_at: 42 })),
+      decodeAuthTokenValue(JSON.stringify({ expires_at: 42 }))
     ).toMatchObject({ expires_at: 42 });
   });
 
   it("returns null for undecodable or non-object payloads", () => {
     expect(decodeAuthTokenValue("base64-!!!not-base64!!!")).toBeNull();
-    expect(decodeAuthTokenValue("base64-" + Buffer.from("hello").toString("base64url"))).toBeNull();
-    expect(decodeAuthTokenValue("base64-" + Buffer.from("[1,2]").toString("base64url"))).toBeNull();
+    expect(
+      decodeAuthTokenValue(
+        "base64-" + Buffer.from("hello").toString("base64url")
+      )
+    ).toBeNull();
+    expect(
+      decodeAuthTokenValue(
+        "base64-" + Buffer.from("[1,2]").toString("base64url")
+      )
+    ).toBeNull();
     expect(decodeAuthTokenValue("")).toBeNull();
   });
 });
@@ -180,8 +236,8 @@ describe("wire format", () => {
             value: encodeSession(serverWrittenSession),
           },
         ],
-        1_800_000_000,
-      ),
+        1_800_000_000
+      )
     ).toBe(true);
   });
 
@@ -214,8 +270,8 @@ describe("hasUsableSessionCookie", () => {
             value: encodeSession({ ...liveSession, expires_at: NOW + 3600 }),
           },
         ],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(true);
   });
 
@@ -231,8 +287,8 @@ describe("hasUsableSessionCookie", () => {
             value: encodeSession({ ...liveSession, expires_at: NOW - 60 }),
           },
         ],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(true);
   });
 
@@ -248,8 +304,8 @@ describe("hasUsableSessionCookie", () => {
             }),
           },
         ],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(false);
   });
 
@@ -266,8 +322,8 @@ describe("hasUsableSessionCookie", () => {
     expect(
       hasUsableSessionCookie(
         [{ name: "sb-testref-auth-token", value: "base64-@@@corrupt@@@" }],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(false);
   });
 
@@ -288,8 +344,8 @@ describe("hasUsableSessionCookie", () => {
             value: encodeSession({ access_token: "a.b.c" }),
           },
         ],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(true);
   });
 
@@ -304,8 +360,8 @@ describe("hasUsableSessionCookie", () => {
               value: encodeSession({ some: "other shape" }),
             },
           ],
-          NOW,
-        ),
+          NOW
+        )
       ).toBe(false);
       expect(warn).toHaveBeenCalled();
     } finally {
@@ -330,8 +386,8 @@ describe("hasLiveSessionCookie", () => {
             value: encodeSession({ ...liveSession, expires_at: NOW + 3600 }),
           },
         ],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(true);
   });
 
@@ -347,8 +403,8 @@ describe("hasLiveSessionCookie", () => {
             value: encodeSession({ ...liveSession, expires_at: NOW - 60 }),
           },
         ],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(false);
   });
 
@@ -361,8 +417,8 @@ describe("hasLiveSessionCookie", () => {
             value: encodeSession({ refresh_token: "refresh-only-token" }),
           },
         ],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(false);
   });
 
@@ -376,8 +432,8 @@ describe("hasLiveSessionCookie", () => {
             value: encodeSession({ access_token: "a.b.c" }),
           },
         ],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(false);
   });
 
@@ -385,8 +441,8 @@ describe("hasLiveSessionCookie", () => {
     expect(
       hasLiveSessionCookie(
         [{ name: "sb-testref-auth-token", value: "base64-@@@corrupt@@@" }],
-        NOW,
-      ),
+        NOW
+      )
     ).toBe(false);
   });
 });

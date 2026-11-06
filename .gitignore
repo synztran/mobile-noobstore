@@ -22,7 +22,7 @@ dist/
 build/
 tsconfig.tsbuildinfo
 ./github/
-docs/
+# docs/
 supabase/.temp/
 .agents/
 .clinerules/
@@ -32,4 +32,11 @@ supabase/.temp/
 .github/*
 !.github/workflows/
 !.github/workflows/*
-supabase/
+# Ignore local Supabase CLI state and edge functions, but NOT migrations:
+# RLS/security fixes only exist as reviewable artifacts if they are versioned.
+# `supabase/*` excludes the directory contents; the negation re-includes the
+# migrations folder (Git cannot un-ignore a path inside an ignored directory).
+supabase/*
+!supabase/migrations/
+mockup-ui/
+!supabase/migrations/153_warehouse_catalog.sql

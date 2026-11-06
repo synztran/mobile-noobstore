@@ -43,15 +43,18 @@ function makeClient(results: Record<string, Row[]>) {
         thenableValue({ data: results[table]?.[0] ?? null, error: null });
       query.maybeSingle = () =>
         thenableValue({ data: results[table]?.[0] ?? null, error: null });
-      query.update = (payload: Row) => ({
-        eq: (_col: string, id: string) => {
-          updateCalls.push({ table, payload, id: String(id) });
-          return {
-            then: (cb: (r: { data: null; error: null }) => unknown) =>
-              cb({ data: null, error: null }),
-          };
-        },
-      });
+      query.update = (...args: unknown[]) => {
+        const payload = args[0] as Row;
+        return {
+          eq: (_col: string, id: string) => {
+            updateCalls.push({ table, payload, id: String(id) });
+            return {
+              then: (cb: (r: { data: null; error: null }) => unknown) =>
+                cb({ data: null, error: null }),
+            };
+          },
+        };
+      };
       // Make the query builder awaitable: await ... resolves to {data, error}
       const awaited = {
         then: (resolve: (r: { data: Row[]; error: null }) => unknown) =>
@@ -62,27 +65,27 @@ function makeClient(results: Record<string, Row[]>) {
   };
 }
 
-import { restoreOrderStock } from "@/lib/services/orderService";
-import * as adminModule from "@/lib/supabase/admin";
+const { restoreOrderStock } = await import("@/lib/services/orderService");
+const { getAdminClient } = await import("@/lib/supabase/admin");
+const mockedGetAdminClient = vi.mocked(getAdminClient);
 
 vi.mock("@/lib/supabase/admin", () => ({
-  getAdminClient: () => {
+  getAdminClient: vi.fn(() => {
     throw new Error("getAdminClient stub");
-  },
+  }),
 }));
 
-let currentAdmin: typeof adminModule.getAdminClient;
 beforeEach(() => {
   updateCalls.length = 0;
-  currentAdmin = vi
-    .spyOn(adminModule, "getAdminClient")
-    .mockImplementation(() => {
-      throw new Error("client not configured for this test");
-    });
+  mockedGetAdminClient.mockImplementation(() => {
+    throw new Error("client not configured for this test");
+  });
 });
 
 function runWith(client: ReturnType<typeof makeClient>) {
-  currentAdmin.mockImplementation(() => client);
+  mockedGetAdminClient.mockReturnValue(
+    client as unknown as ReturnType<typeof getAdminClient>
+  );
 }
 
 describe("restoreOrderStock", () => {
@@ -114,9 +117,7 @@ describe("restoreOrderStock", () => {
       id: "variant-1",
     });
     // The parent product (a kit) must NOT be updated as a simple product.
-    expect(
-      updateCalls.filter((u) => u.table === "products").length
-    ).toBe(0);
+    expect(updateCalls.filter((u) => u.table === "products").length).toBe(0);
   });
 
   it("scales restore by component quantity > 1", async () => {

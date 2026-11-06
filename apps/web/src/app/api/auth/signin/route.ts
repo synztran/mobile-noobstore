@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { signInWithPassword } from "@/modules/user/server/auth";
+import { clearLegacyAuthCookie } from "@/lib/auth/legacy-auth-cookie";
 import { getAuthLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,9 @@ export async function POST(req: NextRequest) {
         { error: "Quá nhiều lần đăng nhập. Vui lòng thử lại sau." },
         {
           status: 429,
-          headers: { "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)) },
+          headers: {
+            "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)),
+          },
         }
       );
     }
@@ -48,5 +51,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  return NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true });
+  clearLegacyAuthCookie(response, req);
+  return response;
 }

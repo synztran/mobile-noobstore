@@ -2,6 +2,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { triggerMissionProgress } from "@/modules/gacha/server/missions";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { isClientMissionTriggerAllowed } from "@/modules/gacha/server/mission-trigger";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +40,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { event_id, mission_type, context = {} } = body;
+  const { event_id, mission_type } = body;
 
-  if (!event_id || !mission_type) {
+  // Browser-triggered missions are limited to login only. Order/spend/play
+  // progress is recorded by trusted server flows (checkout and gacha draw).
+  if (!event_id || !isClientMissionTriggerAllowed(mission_type)) {
     return NextResponse.json(
-      { error: "event_id and mission_type are required" },
+      { error: "Only login mission progress may be triggered by the client" },
       { status: 400 }
     );
   }
@@ -53,10 +56,13 @@ export async function POST(req: NextRequest) {
     user.id,
     event_id,
     mission_type,
-    context
+    {}
   );
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.status }
+    );
   }
 
   return NextResponse.json({ completed: result.completed });

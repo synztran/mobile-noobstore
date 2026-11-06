@@ -62,10 +62,10 @@ export const DualRangeSlider = memo(function DualRangeSlider({
 	};
 
 	return (
-		<div className="space-y-3">
+		<div className="space-y-2 px-4">
 			{/* Price labels */}
 			<div className="flex justify-between items-center">
-				<div className="bg-surface-container rounded-xl px-3 py-1.5 text-center min-w-[100px]">
+				<div className="bg-surface-container rounded-xl px-2.5 py-1 text-center min-w-[88px]">
 					<p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
 						Từ
 					</p>
@@ -74,7 +74,7 @@ export const DualRangeSlider = memo(function DualRangeSlider({
 					</p>
 				</div>
 				<div className="w-4 h-px bg-outline-variant" />
-				<div className="bg-surface-container rounded-xl px-3 py-1.5 text-center min-w-[100px]">
+				<div className="bg-surface-container rounded-xl px-2.5 py-1 text-center min-w-[88px]">
 					<p className="text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">
 						Đến
 					</p>
@@ -87,7 +87,7 @@ export const DualRangeSlider = memo(function DualRangeSlider({
 			{/* Track */}
 			<div
 				ref={trackRef}
-				className="relative h-8 flex items-center select-none touch-none cursor-pointer"
+				className="relative h-7 flex items-center select-none touch-none cursor-pointer"
 				onPointerDown={handlePointerDown}
 				onPointerMove={handlePointerMove}
 				onPointerUp={handlePointerUp}

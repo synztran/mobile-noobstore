@@ -2,8 +2,8 @@
 
 import { DualRangeSlider } from "@/components/ui/DualRangeSlider";
 import clsx from "clsx";
-import { Banknote, Check, LayoutGrid, RotateCcw, Store, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Banknote, Check, LayoutGrid, RotateCcw, Store } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface FilterState {
   category: string | null;
@@ -48,6 +48,8 @@ export function FilterOverlay({
   const [selectedPriceMax, setSelectedPriceMax] = useState<number>(
     initialState?.priceMax ?? 0
   );
+  const brandListRef = useRef<HTMLDivElement>(null);
+  const [brandListOverflowing, setBrandListOverflowing] = useState(false);
 
   const uniqueBrands = useMemo(() => {
     const seen = new Map<string, string>();
@@ -59,6 +61,14 @@ export function FilterOverlay({
     }
     return Array.from(seen.values());
   }, [brands]);
+
+  // iOS hides scrollbars until the user scrolls, so show a fade only when the
+  // brand chips actually overflow their 130px window.
+  useEffect(() => {
+    const el = brandListRef.current;
+    if (!el) return;
+    setBrandListOverflowing(el.scrollHeight > el.clientHeight + 1);
+  }, [uniqueBrands.length]);
 
   const activeCount = useMemo(() => {
     let n = 0;
@@ -93,12 +103,12 @@ export function FilterOverlay({
 
       {/* Panel — slides from top */}
       <div
-        className={`fixed left-0 right-0 z-[70] flex flex-col overflow-hidden rounded-b-3xl bg-surface shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out ${
-          isOpen ? "bottom-[8vh] top-0" : "bottom-[110%] top-[-110%]"
+        className={`fixed left-0 right-0 top-0 z-[70] flex max-h-[calc(100dvh-8vh)] flex-col overflow-hidden rounded-b-3xl bg-surface pt-[env(safe-area-inset-top,0px)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-out ${
+          isOpen ? "translate-y-0" : "-translate-y-full"
         }`}
       >
         {/* Drag handle */}
-        <div className="flex justify-center pt-2 pb-1">
+        <div className="flex justify-center pb-1 pt-2">
           <div className="h-1 w-10 rounded-full bg-outline-variant/40" />
         </div>
 
@@ -113,15 +123,25 @@ export function FilterOverlay({
             )}
           </div>
           <button
-            onClick={onClose}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-surface-container px-3 text-xs font-bold text-on-surface-variant transition-all hover:bg-surface-container-high active:scale-95"
+            onClick={() => {
+              setSelectedCategory(null);
+              setSelectedBrand(null);
+              setSelectedPriceMin(0);
+              setSelectedPriceMax(0);
+            }}
+            className={clsx(
+              "flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-all duration-200 active:scale-95",
+              activeCount > 0
+                ? "border-primary/30 text-primary hover:bg-primary/5"
+                : "border-outline-variant/40 text-on-surface-variant"
+            )}
           >
-            <X className="h-4 w-4" />
-            Đóng
+            <RotateCcw className="h-4 w-4" />
+            Đặt lại
           </button>
         </div>
 
-        <div className="hide-scrollbar flex-1 space-y-5 overflow-y-auto px-6 py-5">
+        <div className="hide-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
           {/* Category */}
           {categories.length > 0 && (
             <section
@@ -186,34 +206,42 @@ export function FilterOverlay({
                   Thương hiệu
                 </h3>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedBrand(null)}
-                  className={clsx(
-                    "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
-                    selectedBrand === null
-                      ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
-                      : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
-                  )}
+              <div className="relative">
+                <div
+                  ref={brandListRef}
+                  className="flex max-h-[130px] flex-wrap gap-2 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]"
                 >
-                  Tất cả
-                </button>
-                {uniqueBrands.map((b) => (
                   <button
-                    key={b}
-                    onClick={() =>
-                      setSelectedBrand(selectedBrand === b ? null : b)
-                    }
+                    onClick={() => setSelectedBrand(null)}
                     className={clsx(
                       "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
-                      selectedBrand === b
+                      selectedBrand === null
                         ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
                         : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
                     )}
                   >
-                    {b}
+                    Tất cả
                   </button>
-                ))}
+                  {uniqueBrands.map((b) => (
+                    <button
+                      key={b}
+                      onClick={() =>
+                        setSelectedBrand(selectedBrand === b ? null : b)
+                      }
+                      className={clsx(
+                        "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
+                        selectedBrand === b
+                          ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
+                          : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
+                      )}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+                {brandListOverflowing && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-surface to-transparent" />
+                )}
               </div>
             </section>
           )}
@@ -226,13 +254,13 @@ export function FilterOverlay({
             )}
             style={{ transitionDelay: isOpen ? "150ms" : "0ms" }}
           >
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-2 flex items-center gap-2">
               <Banknote className="h-4 w-4 text-primary" />
               <h3 className="text-sm font-black uppercase tracking-wide text-on-surface">
                 Khoảng giá
               </h3>
             </div>
-            <div className="rounded-2xl bg-surface-container p-4">
+            <div className="rounded-xl bg-surface-container p-3">
               <DualRangeSlider
                 min={selectedPriceMin}
                 max={selectedPriceMax}
@@ -248,24 +276,10 @@ export function FilterOverlay({
         {/* Footer */}
         <div className="flex flex-none items-center gap-3 border-t border-outline-variant/15 bg-surface px-6 py-4">
           <button
-            onClick={() => {
-              setSelectedCategory(null);
-              setSelectedBrand(null);
-              setSelectedPriceMin(0);
-              setSelectedPriceMax(0);
-            }}
-            className={clsx(
-              "flex items-center gap-1.5 rounded-full border px-5 py-2.5 text-sm font-bold transition-all duration-200",
-              activeCount > 0
-                ? "border-primary/30 text-primary hover:bg-primary/5"
-                : "border-outline-variant/40 text-on-surface-variant"
-            )}
+            onClick={onClose}
+            className="flex items-center justify-center rounded-full border border-outline-variant/40 px-5 py-2.5 text-sm font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container active:scale-[0.97]"
           >
-            <RotateCcw className="h-4 w-4" />
-            Đặt lại
-            {activeCount > 0 && (
-              <span className="ml-0.5 text-[10px] opacity-60">({activeCount})</span>
-            )}
+            Đóng
           </button>
           <button
             onClick={() => {
