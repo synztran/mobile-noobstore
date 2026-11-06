@@ -113,11 +113,21 @@ export function FilterOverlay({
             )}
           </div>
           <button
-            onClick={onClose}
-            className="flex h-8 items-center gap-1.5 rounded-full bg-surface-container px-3 text-xs font-bold text-on-surface-variant transition-all hover:bg-surface-container-high active:scale-95"
+            onClick={() => {
+              setSelectedCategory(null);
+              setSelectedBrand(null);
+              setSelectedPriceMin(0);
+              setSelectedPriceMax(0);
+            }}
+            className={clsx(
+              "flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-all duration-200 active:scale-95",
+              activeCount > 0
+                ? "border-primary/30 text-primary hover:bg-primary/5"
+                : "border-outline-variant/40 text-on-surface-variant"
+            )}
           >
-            <X className="h-4 w-4" />
-            Đóng
+            <RotateCcw className="h-4 w-4" />
+            Đặt lại
           </button>
         </div>
 
@@ -248,26 +258,11 @@ export function FilterOverlay({
         {/* Footer */}
         <div className="flex flex-none items-center gap-3 border-t border-outline-variant/15 bg-surface px-6 py-4">
           <button
-            onClick={() => {
-              setSelectedCategory(null);
-              setSelectedBrand(null);
-              setSelectedPriceMin(0);
-              setSelectedPriceMax(0);
-            }}
-            className={clsx(
-              "flex items-center gap-1.5 rounded-full border px-5 py-2.5 text-sm font-bold transition-all duration-200",
-              activeCount > 0
-                ? "border-primary/30 text-primary hover:bg-primary/5"
-                : "border-outline-variant/40 text-on-surface-variant"
-            )}
+            onClick={onClose}
+            className="flex items-center gap-1.5 rounded-full border border-outline-variant/40 px-5 py-2.5 text-sm font-bold text-on-surface-variant transition-all duration-200 hover:bg-surface-container active:scale-[0.97]"
           >
-            <RotateCcw className="h-4 w-4" />
-            Đặt lại
-            {activeCount > 0 && (
-              <span className="ml-0.5 text-[10px] opacity-60">
-                ({activeCount})
-              </span>
-            )}
+            <X className="h-4 w-4" />
+            Đóng
           </button>
           <button
             onClick={() => {
