@@ -34,11 +34,11 @@ Reduce unauthenticated `GET /api/health` to a stable minimal contract:
 
 Do not return Supabase URL, table names, row counts, SQL/PostgREST errors, SQLSTATE codes, or exception messages. Keep a 200 response for a completed probe whose aggregate status is degraded, and use 500 only when the health handler itself cannot produce a status. Internal diagnostic detail remains in server logs/monitoring and must not be copied to a public incident summary.
 
-The current anon probe flags `users` as inaccessible because customer RLS intentionally blocks anon reads. Replace the database signal with checks that represent actual customer-facing capability, using a server-only admin client where needed and low-cost bounded queries. Probe only the dependencies needed by public service components; avoid exact counts and never report them. The cron route must consume the minimal status contract and keep its current deduplication/resolve behavior.
+The current anon probe flags `users` as inaccessible because customer RLS intentionally blocks anon reads. Replace the table sweep with bounded checks: Auth session reachability, a read-only existence query for an active product (`products.id`, `is_active = true`, limit 1), and a read-only fees config query (`fees.id = 1`) using the server-only admin client. A successful query with no active products is still reachable/healthy; query errors indicate degraded dependency health. Never probe `users` as anon, request exact counts, or return row data. The cron route consumes only the minimal status contract and keeps its current deduplication/resolve behavior.
 
 ### Storefront discovery
 
-Add a small `Trạng thái dịch vụ` link to the existing support/help/footer navigation pointing to `https://status.noobstore.xyz`. The status page itself remains hosted by Better Stack, so storefront code does not proxy customer subscriptions or incident updates.
+Add a small `Trạng thái dịch vụ` link to the existing support/help/footer navigation pointing to `NEXT_PUBLIC_STATUS_PAGE_URL`; omit the link when the env var is unset. Production config sets it to `https://status.noobstore.xyz` only after DNS/TLS verification. The status page itself remains hosted by Better Stack, so storefront code does not proxy customer subscriptions or incident updates.
 
 ## Security and privacy
 
