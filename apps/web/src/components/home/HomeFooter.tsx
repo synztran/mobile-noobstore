@@ -19,6 +19,8 @@ function InstagramIcon({ className }: { className?: string }) {
 }
 
 export function HomeFooter() {
+  const statusPageUrl = process.env.NEXT_PUBLIC_STATUS_PAGE_URL;
+
   return (
     <footer className="!mt-0 bg-surface-container p-4 lg:p-6">
       <div className="flex flex-col items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
@@ -27,6 +29,16 @@ export function HomeFooter() {
           <Link href="/policy">Chính sách</Link>
           <Link href="/terms">Điều khoản</Link>
           <Link href="/delivery-terms">Vận chuyển</Link>
+          {statusPageUrl ? (
+            <a
+              href={statusPageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline-offset-4 hover:underline"
+            >
+              Trạng thái dịch vụ
+            </a>
+          ) : null}
         </div>
 
         <div className="flex w-full items-center justify-center gap-2">
