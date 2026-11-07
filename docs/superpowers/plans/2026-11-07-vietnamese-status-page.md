@@ -95,7 +95,7 @@ git commit -m "fix(health): expose aggregate status only"
   - `resolves existing incident on healthy` asserts `bsFindBySource` and `bsResolve` calls.
   - `creates one generic incident for degraded` asserts summary/cause omit dependency names and raw errors.
   - `deduplicates an already-open degraded incident` asserts no duplicate `bsTrigger` call.
-  - `treats non-2xx health response as unreachable` asserts generic incident content and no response-body leakage.
+- `treats non-2xx health response as monitor error` asserts a generic 502 response and no response-body leakage; dependency failures are reported by `/api/health` as HTTP 200 with `degraded` status and do trigger the incident lifecycle.
 - [ ] **Step 2: Run tests and verify they fail**
 
 Run: `yarn vitest run -c apps/web/vitest.config.mts src/app/api/cron/health-check/route.test.ts`
@@ -104,7 +104,7 @@ Expected: current cron testability/incident text does not satisfy the new minima
 
 - [ ] **Step 3: Update cron mapping and sanitized incident content**
   - Remove table parsing and failed-table summaries.
-  - Map `healthy` to resolve, `degraded`/`error` to one generic incident, and non-2xx to generic unreachable incident.
+  - Map `healthy` to resolve and `degraded`/`error` to one generic incident; treat non-2xx health responses as generic monitor errors without leaking response details or attempting a second Better Stack request.
   - Keep payment security alert drain behavior and cron-secret protection unchanged.
 - [ ] **Step 4: Run cron tests**
 
@@ -133,7 +133,7 @@ git commit -m "fix(health): sanitize status incidents"
   - Assert the footer renders the Vietnamese label and points to configured URL.
   - If this component has no test harness, use the existing web type-check plus direct review of the rendered anchor; do not add a new testing dependency.
 - [ ] **Step 2: Add the link and env example**
-  - Add `NEXT_PUBLIC_STATUS_PAGE_URL=https://status.noobstore.xyz` to `.env.example`.
+  - Document `NEXT_PUBLIC_STATUS_PAGE_URL=https://status.noobstore.xyz` in `apps/web/.env.example` (commented until the status page domain is verified).
   - Render the footer link beside policy/terms/delivery links only when the URL is configured, with safe external-link attributes.
 - [ ] **Step 3: Verify**
 

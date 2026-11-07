@@ -30,22 +30,19 @@ export async function POST(req: NextRequest) {
       headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
     });
 
-    // Unreachable — create (or re-trigger) a critical incident
+    // An unavailable health endpoint is a monitor failure, not a classified
+    // service state. Avoid cascading retries if Better Stack is also failing.
     if (!healthRes.ok) {
-      const existing = await bsFindBySource(HEALTH_SOURCE);
-      const result = existing
-        ? { data: { id: existing } }
-        : await bsTrigger({
-            summary: `Health endpoint returned HTTP ${healthRes.status}`,
-            cause: `The /api/health endpoint returned HTTP ${healthRes.status}. The API may be unreachable.`,
-            metadata: { Source: { value: HEALTH_SOURCE } },
-            channels: HEALTH_PAGE_CHANNELS,
-          });
-      return NextResponse.json({ status: "unreachable", incident: result });
+      return NextResponse.json({ status: "error" }, { status: 502 });
     }
 
     const data = await healthRes.json();
-    const status: string = data.status ?? "unknown";
+    const status: string =
+      data?.status === "healthy" ||
+      data?.status === "degraded" ||
+      data?.status === "error"
+        ? data.status
+        : "error";
 
     if (status === "healthy") {
       // Resolve any open incident for this source
@@ -54,20 +51,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ status: "healthy", incident: result });
     }
 
-    // degraded or error — create/update incident
-    const failedTables = data.tables
-      ? Object.entries(data.tables as Record<string, { ok: boolean; error?: string }>)
-          .filter(([, t]) => !t.ok)
-          .map(([name, t]) => `${name}: ${t.error ?? "failed"}`)
-      : [];
-
+    // Degraded/error — publish customer-safe incident copy only.
     const existing = await bsFindBySource(HEALTH_SOURCE);
-    // If an incident is already open, this update re-triggers the on-call
+    // Reuse an open incident so each five-minute probe does not create another.
     const result = existing
       ? { data: { id: existing } }
       : await bsTrigger({
-          summary: `Site health: ${status}${failedTables.length > 0 ? ` — ${failedTables.join(", ")}` : ""}`,
-          cause: `Health check returned "${status}". ${failedTables.length} table(s) failing.`,
+          summary: "NoobStore đang gặp gián đoạn dịch vụ",
+          cause:
+            "Một số dịch vụ có thể hoạt động không ổn định. Đội ngũ NoobStore đang kiểm tra và sẽ cập nhật tại trang trạng thái.",
           metadata: {
             Source: { value: HEALTH_SOURCE },
             Status: { value: status },
@@ -77,14 +69,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ status, incident: result });
   } catch (err) {
-    const existing = await bsFindBySource(HEALTH_SOURCE);
-    const result = existing
-      ? { data: { id: existing } }
-      : await bsTrigger({
-          summary: `Health check failed: ${err instanceof Error ? err.message : "Unknown error"}`,
-          metadata: { Source: { value: HEALTH_SOURCE } },
-          channels: HEALTH_PAGE_CHANNELS,
-        });
-    return NextResponse.json({ status: "error", incident: result }, { status: 500 });
+    console.error(
+      "[health-check] failed",
+      err instanceof Error ? err.name : "UnknownError",
+    );
+    return NextResponse.json({ status: "error" }, { status: 502 });
   }
 }
