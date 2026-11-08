@@ -11,6 +11,7 @@ interface Props {
 
 const PAGES = [
   { label: "Dashboard", href: "/dashboard", group: "Pages" },
+  { label: "Checkout Error Codes", href: "/checkout-error-codes", group: "Pages" },
   { label: "Products", href: "/products", group: "Pages" },
   { label: "Orders", href: "/orders", group: "Pages" },
   { label: "Users", href: "/users", group: "Pages" },

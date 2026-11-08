@@ -158,6 +158,18 @@ describe("useCheckoutStore", () => {
       expect(state.paymentType).toBe("full");
       expect(state.depositPercentage).toBe(50);
       expect(state.shippingFormDraft).toBeNull();
+      expect(state.idempotencyKey).toBeNull();
+    });
+  });
+
+  describe("idempotency key", () => {
+    it("reuses one key until cleared", () => {
+      const store = useCheckoutStore.getState();
+      const first = store.getOrCreateIdempotencyKey();
+      expect(first).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(useCheckoutStore.getState().getOrCreateIdempotencyKey()).toBe(first);
+      useCheckoutStore.getState().clearIdempotencyKey();
+      expect(useCheckoutStore.getState().getOrCreateIdempotencyKey()).not.toBe(first);
     });
   });
 });

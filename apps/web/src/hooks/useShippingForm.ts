@@ -17,6 +17,7 @@ import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore } from "@/store";
+import { isPickupSelectionValid } from "@/lib/pickup-selection";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -564,6 +565,32 @@ export function useShippingForm() {
     }
     return slots;
   }, [pickupDate]);
+
+  // A saved pickup slot can become invalid while the customer is away from
+  // checkout (for example, today's 08:30 slot after it has passed).
+  useEffect(() => {
+    if (!ready || !isPickup || hasPreOrder || !pickupDate || !pickupTime) return;
+
+    if (!isPickupSelectionValid({
+      date: pickupDate,
+      time: pickupTime,
+      minDate: minPickupDate,
+      availableSlots: pickupSlots,
+    })) {
+      setPickupDate("");
+      setPickupTime("");
+    }
+  }, [
+    ready,
+    isPickup,
+    hasPreOrder,
+    pickupDate,
+    pickupTime,
+    minPickupDate,
+    pickupSlots,
+    setPickupDate,
+    setPickupTime,
+  ]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {

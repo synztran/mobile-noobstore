@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Award,
   Bell,
+  AlertTriangle,
   Building2,
   ChevronDown,
   ChevronRight,
@@ -54,6 +55,7 @@ type NavItem =
 
 const navigation: NavItem[] = [
   { label: "Audit Log", href: "/audit-log", icon: ShieldAlert },
+  { label: "Checkout Error Codes", href: "/checkout-error-codes", icon: AlertTriangle },
   { label: "Blog", href: "/blog", icon: Newspaper },
   {
     label: "Cart Monitoring",

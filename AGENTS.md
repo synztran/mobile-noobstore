@@ -35,6 +35,10 @@ Run these from the workspace root. The only app currently is `apps/web`.
 
 ## Key Conventions
 
+### Database function errors
+
+- Every SQL function/RPC added or changed by a migration must return a stable `error_code` for failures. Keep internal explanations and remediation guidance out of customer responses and expose them only in the admin error catalog.
+
 ### Package changes — approval required
 
 - Before adding a new package or upgrading an existing package, ask the owner for explicit approval and wait before changing manifests, lockfiles, or installing it.
@@ -47,6 +51,10 @@ Run these from the workspace root. The only app currently is `apps/web`.
 | Browser | `src/lib/supabase/client.ts` | Client components |
 | Server (SSR) | `src/lib/supabase/server.ts` | Server components, API routes |
 | Admin | `src/lib/supabase/admin.ts` | Server-only, bypasses RLS — use sparingly |
+
+### Database IDs
+
+- Use `uuid` for entity IDs and their foreign keys by default; do not introduce `text` IDs. Keep SQL column types, function parameters, and comparisons consistent with the referenced ID type. Use `text` only for non-ID values or when an existing external schema requires it.
 
 ### Data Fetching
 

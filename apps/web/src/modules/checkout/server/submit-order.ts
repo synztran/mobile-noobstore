@@ -12,6 +12,7 @@ import {
 } from "@/modules/payments/server/evidence";
 import { after } from "next/server";
 import { randomBase36 } from "@/lib/random";
+import { createHash } from "node:crypto";
 import type { AppliedVoucherSummary } from "@/types/voucher";
 import { getMaxVouchersPerOrder } from "@/lib/vouchers/config";
 import { canUseDeposit, clampDepositPercentage } from "@/lib/deposit";
@@ -41,17 +42,22 @@ import {
   toNumber,
   type VoucherValidationRow,
 } from "./submit-order-logic";
+import { checkoutRpcErrorCode } from "./submit-order-errors";
 
 export async function submitOrder(req: NextRequest) {
   let phase = "parse request";
   try {
     const body: SubmitOrderRequest = await req.json();
 
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.idempotency_key ?? "")) {
+      return NextResponse.json({ error_code: "CHECKOUT_INVALID_IDEMPOTENCY" }, { status: 400 });
+    }
+
     const shippingMethodId = normalizeShippingMethodId(body.shipping_method_id);
 
     if (!body.items?.length) {
       return NextResponse.json(
-        { error: "items are required" },
+        { error_code: "CHECKOUT_INVALID_ITEMS" },
         { status: 400 }
       );
     }
@@ -66,7 +72,7 @@ export async function submitOrder(req: NextRequest) {
       (!body.pickup_at || Number.isNaN(new Date(body.pickup_at).getTime()))
     ) {
       return NextResponse.json(
-        { error: "pickup_at is required for store pickup" },
+        { error_code: "CHECKOUT_PICKUP_TIME_REQUIRED" },
         { status: 400 }
       );
     }
@@ -82,8 +88,24 @@ export async function submitOrder(req: NextRequest) {
     // Checkout requires an authenticated account — the /checkout page is already
     // auth-gated by middleware, so align the API and prevent anonymous orders.
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error_code: "CHECKOUT_UNAUTHORIZED" }, { status: 401 });
     }
+
+    const rpc = admin.rpc.bind(admin) as unknown as (
+      fn: string,
+      args: Record<string, unknown>
+    ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    const replayQuery = await rpc("get_checkout_idempotent_response", {
+      p_user_id: user.id,
+      p_idempotency_key: body.idempotency_key,
+    });
+    if (replayQuery.error) throw new Error("Unable to verify checkout retry");
+    const storedReplay = replayQuery.data as {
+      order_id?: string;
+      order_number?: string;
+      status?: string;
+      request_hash?: string;
+    } | null;
 
     const productIds = [...new Set(body.items.map((i) => i.product_id))];
     const itemVariantIds = body.items
@@ -136,7 +158,7 @@ export async function submitOrder(req: NextRequest) {
 
     if (productErr || variantErr) {
       return NextResponse.json(
-        { error: "Failed to verify product prices" },
+        { error_code: "CHECKOUT_PRICE_LOOKUP_FAILED" },
         { status: 500 }
       );
     }
@@ -174,8 +196,7 @@ export async function submitOrder(req: NextRequest) {
     if (incompatible?.kind === "unknown") {
       return NextResponse.json(
         {
-          error: "Cấu hình sản phẩm không hợp lệ.",
-          unknown_variant_id: incompatible.variantId,
+          error_code: "CHECKOUT_INVALID_CONFIGURATION",
         },
         { status: 400 }
       );
@@ -183,9 +204,7 @@ export async function submitOrder(req: NextRequest) {
     if (incompatible?.kind === "incompatible") {
       return NextResponse.json(
         {
-          error:
-            "Tùy chọn không tương thích với phiên bản đã chọn. Vui lòng chọn lại cấu hình.",
-          incompatible_variant_id: incompatible.variantId,
+          error_code: "CHECKOUT_INCOMPATIBLE_CONFIGURATION",
         },
         { status: 400 }
       );
@@ -236,7 +255,7 @@ export async function submitOrder(req: NextRequest) {
     const maxVouchers = await getMaxVouchersPerOrder();
     if (uniqueVoucherIdsRequested.length > maxVouchers) {
       return NextResponse.json(
-        { error: `At most ${maxVouchers} vouchers may be used per order.` },
+        { error_code: "CHECKOUT_VOUCHER_LIMIT_EXCEEDED" },
         { status: 400 }
       );
     }
@@ -323,7 +342,7 @@ export async function submitOrder(req: NextRequest) {
             if (usageError) {
               return NextResponse.json(
                 {
-                  error: "Unable to validate voucher usage. Please try again.",
+                  error_code: "CHECKOUT_VOUCHER_VALIDATION_FAILED",
                 },
                 { status: 503 }
               );
@@ -353,7 +372,7 @@ export async function submitOrder(req: NextRequest) {
       } else {
         // Fail closed: never create an order with unverified voucher benefits.
         return NextResponse.json(
-          { error: "Unable to validate vouchers. Please try again." },
+          { error_code: "CHECKOUT_VOUCHER_VALIDATION_FAILED" },
           { status: 503 }
         );
       }
@@ -365,7 +384,7 @@ export async function submitOrder(req: NextRequest) {
     }
     if (appliedVouchers.some((voucher) => !voucher.voucher_id)) {
       return NextResponse.json(
-        { error: "Voucher could not be verified. Please re-apply it." },
+        { error_code: "CHECKOUT_VOUCHER_INVALID" },
         { status: 400 }
       );
     }
@@ -451,13 +470,54 @@ export async function submitOrder(req: NextRequest) {
       })
     ) {
       return NextResponse.json(
-        { error: "Đơn hàng này không đủ điều kiện đặt cọc." },
+        { error_code: "CHECKOUT_DEPOSIT_UNAVAILABLE" },
         { status: 400 }
       );
     }
 
     const orderId = crypto.randomUUID();
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${randomBase36(4)}`;
+
+    const allGiftItems = appliedVouchers.flatMap((voucher) =>
+      voucher.voucher_id ? (giftItemsByVoucherId.get(voucher.voucher_id) ?? []) : []
+    );
+    const allSnapshots = appliedVouchers
+      .map((v) => v.voucher_snapshot)
+      .filter(Boolean) as AppliedVoucherSummary[];
+    const idempotencyPayload = {
+      user_id: user.id,
+      items: rpcItems,
+      shipping_cost: safeShippingCost,
+      shipping_method_id: shippingMethodId,
+      pickup_at: body.pickup_at ?? null,
+      delivery_address: body.delivery_address ?? null,
+      payment_type: body.payment_type ?? "full",
+      deposit_percentage: body.deposit_percentage ?? null,
+      vouchers: appliedVouchers.map((voucher) => ({
+        ...voucher,
+        voucher_snapshot: null,
+        gift_items_snapshot: null,
+      })),
+      rank_discount: [safeRankDiscount, safeRankShipping],
+      services: body.service_ids ?? [],
+    };
+    const requestHash = createHash("sha256")
+      .update(JSON.stringify(idempotencyPayload))
+      .digest("hex");
+
+    if (storedReplay?.order_id && storedReplay.order_number) {
+      if (storedReplay.request_hash !== requestHash) {
+        return NextResponse.json(
+          { error_code: "CHECKOUT_IDEMPOTENCY_CONFLICT" },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json({
+        order_id: storedReplay.order_id,
+        order_number: storedReplay.order_number,
+        status: storedReplay.status ?? "pending",
+      } satisfies SubmitOrderResponse);
+    }
 
     phase = "create order and reserve stock (database RPC)";
     const submitOrderRpc = admin.rpc.bind(admin) as unknown as (
@@ -477,16 +537,27 @@ export async function submitOrder(req: NextRequest) {
       p_shipping_cost: safeShippingCost,
       p_items: rpcItems,
     };
-    const { data, error } =
-      giftItems.length > 0
-        ? await submitOrderRpc("submit_order_with_gifts", {
-            ...submitOrderArgs,
-            p_gift_items: giftItems,
-          })
-        : await submitOrderRpc("submit_order", submitOrderArgs);
+    const { data, error } = await submitOrderRpc("submit_order_with_checkout", {
+      ...submitOrderArgs,
+      p_gift_items: giftItems,
+      p_idempotency_key: body.idempotency_key,
+      p_request_hash: requestHash,
+      p_vouchers: appliedVouchers.map((voucher) => ({
+        voucher_id: voucher.voucher_id,
+        voucher_code: voucher.voucher_code,
+      })),
+      p_voucher_discount_amount: safeVoucherDiscount,
+      p_shipping_discount_amount: safeShippingDiscount,
+      p_voucher_snapshot: allSnapshots.length ? toJson(allSnapshots) : null,
+      p_gift_items_snapshot: allGiftItems.length ? toJson(allGiftItems) : null,
+    });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      const diagnostic = error.message;
+      const code = checkoutRpcErrorCode(diagnostic);
+      const conflict = code === "CHECKOUT_IDEMPOTENCY_CONFLICT" || code === "CHECKOUT_VOUCHER_LIMIT_EXCEEDED" || code === "CHECKOUT_VOUCHER_UNAVAILABLE";
+      console.error("[submit] checkout RPC failed", { code, phase, message: diagnostic });
+      return NextResponse.json({ error_code: code }, { status: conflict ? 409 : 400 });
     }
 
     // `submit_order` decremented stock in the DB — invalidate the product
@@ -503,71 +574,21 @@ export async function submitOrder(req: NextRequest) {
       order_id: string;
       order_number: string;
       status: string;
+      replayed?: boolean;
     };
+
+    if (result.replayed) {
+      return NextResponse.json({
+        order_id: result.order_id,
+        order_number: result.order_number,
+        status: result.status,
+      } satisfies SubmitOrderResponse);
+    }
 
     // ── Persist multi-voucher fields on order ──────────────────────────
     phase = "persist voucher details and usage";
-    if (appliedVouchers.length > 0) {
-      const primaryVoucher = appliedVouchers[0];
-      const allGiftItems = appliedVouchers.flatMap((voucher) =>
-        voucher.voucher_id
-          ? (giftItemsByVoucherId.get(voucher.voucher_id) ?? [])
-          : []
-      );
-      const allSnapshots = appliedVouchers
-        .map((v) => v.voucher_snapshot)
-        .filter(Boolean) as AppliedVoucherSummary[];
-
-      const orderVoucherUpdate = {
-        voucher_id: primaryVoucher?.voucher_id ?? null,
-        voucher_code: primaryVoucher?.voucher_code ?? null,
-        voucher_discount_amount: safeVoucherDiscount,
-        shipping_discount_amount: safeShippingDiscount,
-        voucher_snapshot: allSnapshots.length > 0 ? toJson(allSnapshots) : null,
-        gift_items_snapshot:
-          allGiftItems.length > 0 ? toJson(allGiftItems) : null,
-      };
-
-      // Orders UPDATE via admin client — user RLS UPDATE removed
-      const { error: adminUpdateOrderError } = await admin
-        .from("orders")
-        .update(orderVoucherUpdate)
-        .eq("id", result.order_id);
-
-      const voucherPersisted = !adminUpdateOrderError;
-      if (adminUpdateOrderError) {
-        console.error(
-          "[submit] failed to persist voucher fields:",
-          adminUpdateOrderError
-        );
-      }
-
-      // Increment usage count for EACH applied voucher
-      if (voucherPersisted) {
-        for (const v of appliedVouchers) {
-          if (v.voucher_id) {
-            const rpc = admin.rpc.bind(admin) as unknown as (
-              fn: string,
-              args: Record<string, unknown>
-            ) => Promise<{
-              data: unknown;
-              error: { message: string } | null;
-            }>;
-            const { error: incrementUsageError } = await rpc(
-              "increment_voucher_used_count",
-              { p_voucher_id: v.voucher_id }
-            );
-
-            if (incrementUsageError) {
-              console.error(
-                `[submit] failed to increment voucher used_count for ${v.voucher_id}:`,
-                incrementUsageError
-              );
-            }
-          }
-        }
-      }
-    }
+    // Voucher snapshots and quota reservations committed atomically inside the
+    // checkout RPC with stock and order rows.
 
     // ── Persist delivery address + shipping method ────────────────────────
     phase = "persist delivery and pickup details";
@@ -637,10 +658,7 @@ export async function submitOrder(req: NextRequest) {
           "[submit] failed to persist delivery details:",
           addressError
         );
-        return NextResponse.json(
-          { error: "Failed to save delivery details" },
-          { status: 500 }
-        );
+        return NextResponse.json({ error_code: "CHECKOUT_DELIVERY_SAVE_FAILED" }, { status: 500 });
       }
     }
 
@@ -853,12 +871,11 @@ export async function submitOrder(req: NextRequest) {
       status: result.status,
     } satisfies SubmitOrderResponse);
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Internal server error";
     console.error("[submit] unexpected error:", {
       phase,
-      message: msg,
+      message: err instanceof Error ? err.message : "Internal server error",
       stack: err instanceof Error ? err.stack : undefined,
     });
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error_code: "CHECKOUT_INTERNAL_ERROR" }, { status: 500 });
   }
 }

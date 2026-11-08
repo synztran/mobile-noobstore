@@ -31,7 +31,12 @@ export function useSubmitOrder() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Không thể tạo đơn hàng");
+      if (!res.ok) {
+        const code = typeof data.error_code === "string" && /^CHECKOUT_[A-Z_]+$/.test(data.error_code)
+          ? data.error_code
+          : "CHECKOUT_SUBMIT_FAILED";
+        throw new Error(code);
+      }
       return data as SubmitOrderResponse;
     },
   });
