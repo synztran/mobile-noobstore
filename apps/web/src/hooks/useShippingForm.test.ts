@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isPickupSelectionValid } from "./useShippingForm";
+import { isPickupSelectionValid } from "@/lib/pickup-selection";
 
 describe("isPickupSelectionValid", () => {
   const now = new Date("2026-11-08T10:00:00");

@@ -17,6 +17,7 @@ import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/useCartStore";
 import { useCheckoutStore } from "@/store";
+import { isPickupSelectionValid } from "@/lib/pickup-selection";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -148,23 +149,6 @@ const FORM_FIELD_NAMES = [
 ] as const;
 
 const REQUIRED_FIELDS = ["fullName", "streetAddress", "city"] as const;
-
-export function isPickupSelectionValid(args: {
-  date: string;
-  time: string;
-  minDate: string;
-  availableSlots: string[];
-  now?: Date;
-}) {
-  const { date, time, minDate, availableSlots, now = new Date() } = args;
-  const selectedAt = new Date(`${date}T${time}:00`);
-  return (
-    !Number.isNaN(selectedAt.getTime()) &&
-    date >= minDate &&
-    selectedAt.getTime() > now.getTime() &&
-    availableSlots.includes(time)
-  );
-}
 
 export function useShippingForm() {
   const router = useRouter();
