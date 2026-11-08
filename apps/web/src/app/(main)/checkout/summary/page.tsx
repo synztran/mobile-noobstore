@@ -311,8 +311,13 @@ export default function SummaryPage() {
       clearCart();
       router.push(`/checkout/checking/${result.order_number}`);
     } catch (err) {
+      const errorCode = err instanceof Error && /^CHECKOUT_[A-Z_]+$/.test(err.message)
+        ? err.message
+        : null;
       toast.error(
-        err instanceof Error ? err.message : "Lỗi kết nối, vui lòng thử lại"
+        errorCode
+          ? `Checkout failed (${errorCode}). Please contact support.`
+          : "Checkout failed. Please try again or contact support."
       );
       setSubmitting(false);
     }

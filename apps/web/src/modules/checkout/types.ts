@@ -82,3 +82,9 @@ export interface SubmitOrderResponse {
   order_number: string;
   status: string;
 }
+
+export interface SubmitOrderErrorResponse {
+  error_code: string;
+  unknown_variant_id?: string;
+  incompatible_variant_id?: string;
+}

@@ -42,6 +42,7 @@ import {
   toNumber,
   type VoucherValidationRow,
 } from "./submit-order-logic";
+import { checkoutRpcErrorCode } from "./submit-order-errors";
 
 export async function submitOrder(req: NextRequest) {
   let phase = "parse request";
@@ -49,14 +50,14 @@ export async function submitOrder(req: NextRequest) {
     const body: SubmitOrderRequest = await req.json();
 
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.idempotency_key ?? "")) {
-      return NextResponse.json({ error: "Invalid checkout idempotency key" }, { status: 400 });
+      return NextResponse.json({ error_code: "CHECKOUT_INVALID_IDEMPOTENCY" }, { status: 400 });
     }
 
     const shippingMethodId = normalizeShippingMethodId(body.shipping_method_id);
 
     if (!body.items?.length) {
       return NextResponse.json(
-        { error: "items are required" },
+        { error_code: "CHECKOUT_INVALID_ITEMS" },
         { status: 400 }
       );
     }
@@ -71,7 +72,7 @@ export async function submitOrder(req: NextRequest) {
       (!body.pickup_at || Number.isNaN(new Date(body.pickup_at).getTime()))
     ) {
       return NextResponse.json(
-        { error: "pickup_at is required for store pickup" },
+        { error_code: "CHECKOUT_PICKUP_TIME_REQUIRED" },
         { status: 400 }
       );
     }
@@ -87,7 +88,7 @@ export async function submitOrder(req: NextRequest) {
     // Checkout requires an authenticated account — the /checkout page is already
     // auth-gated by middleware, so align the API and prevent anonymous orders.
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error_code: "CHECKOUT_UNAUTHORIZED" }, { status: 401 });
     }
 
     const rpc = admin.rpc.bind(admin) as unknown as (
@@ -157,7 +158,7 @@ export async function submitOrder(req: NextRequest) {
 
     if (productErr || variantErr) {
       return NextResponse.json(
-        { error: "Failed to verify product prices" },
+        { error_code: "CHECKOUT_PRICE_LOOKUP_FAILED" },
         { status: 500 }
       );
     }
@@ -195,8 +196,7 @@ export async function submitOrder(req: NextRequest) {
     if (incompatible?.kind === "unknown") {
       return NextResponse.json(
         {
-          error: "Cấu hình sản phẩm không hợp lệ.",
-          unknown_variant_id: incompatible.variantId,
+          error_code: "CHECKOUT_INVALID_CONFIGURATION",
         },
         { status: 400 }
       );
@@ -204,9 +204,7 @@ export async function submitOrder(req: NextRequest) {
     if (incompatible?.kind === "incompatible") {
       return NextResponse.json(
         {
-          error:
-            "Tùy chọn không tương thích với phiên bản đã chọn. Vui lòng chọn lại cấu hình.",
-          incompatible_variant_id: incompatible.variantId,
+          error_code: "CHECKOUT_INCOMPATIBLE_CONFIGURATION",
         },
         { status: 400 }
       );
@@ -257,7 +255,7 @@ export async function submitOrder(req: NextRequest) {
     const maxVouchers = await getMaxVouchersPerOrder();
     if (uniqueVoucherIdsRequested.length > maxVouchers) {
       return NextResponse.json(
-        { error: `At most ${maxVouchers} vouchers may be used per order.` },
+        { error_code: "CHECKOUT_VOUCHER_LIMIT_EXCEEDED" },
         { status: 400 }
       );
     }
@@ -344,7 +342,7 @@ export async function submitOrder(req: NextRequest) {
             if (usageError) {
               return NextResponse.json(
                 {
-                  error: "Unable to validate voucher usage. Please try again.",
+                  error_code: "CHECKOUT_VOUCHER_VALIDATION_FAILED",
                 },
                 { status: 503 }
               );
@@ -374,7 +372,7 @@ export async function submitOrder(req: NextRequest) {
       } else {
         // Fail closed: never create an order with unverified voucher benefits.
         return NextResponse.json(
-          { error: "Unable to validate vouchers. Please try again." },
+          { error_code: "CHECKOUT_VOUCHER_VALIDATION_FAILED" },
           { status: 503 }
         );
       }
@@ -386,7 +384,7 @@ export async function submitOrder(req: NextRequest) {
     }
     if (appliedVouchers.some((voucher) => !voucher.voucher_id)) {
       return NextResponse.json(
-        { error: "Voucher could not be verified. Please re-apply it." },
+        { error_code: "CHECKOUT_VOUCHER_INVALID" },
         { status: 400 }
       );
     }
@@ -472,7 +470,7 @@ export async function submitOrder(req: NextRequest) {
       })
     ) {
       return NextResponse.json(
-        { error: "Đơn hàng này không đủ điều kiện đặt cọc." },
+        { error_code: "CHECKOUT_DEPOSIT_UNAVAILABLE" },
         { status: 400 }
       );
     }
@@ -510,7 +508,7 @@ export async function submitOrder(req: NextRequest) {
     if (storedReplay?.order_id && storedReplay.order_number) {
       if (storedReplay.request_hash !== requestHash) {
         return NextResponse.json(
-          { error: "Checkout idempotency key reused with different payload" },
+          { error_code: "CHECKOUT_IDEMPOTENCY_CONFLICT" },
           { status: 409 }
         );
       }
@@ -555,8 +553,11 @@ export async function submitOrder(req: NextRequest) {
     });
 
     if (error) {
-      const conflict = /Idempotency key reused|usage limit exceeded|Voucher unavailable/i.test(error.message);
-      return NextResponse.json({ error: conflict ? "Checkout changed or already submitted. Refresh and try again." : error.message }, { status: conflict ? 409 : 400 });
+      const diagnostic = error.message;
+      const code = checkoutRpcErrorCode(diagnostic);
+      const conflict = code === "CHECKOUT_IDEMPOTENCY_CONFLICT" || code === "CHECKOUT_VOUCHER_LIMIT_EXCEEDED" || code === "CHECKOUT_VOUCHER_UNAVAILABLE";
+      console.error("[submit] checkout RPC failed", { code, phase, message: diagnostic });
+      return NextResponse.json({ error_code: code }, { status: conflict ? 409 : 400 });
     }
 
     // `submit_order` decremented stock in the DB — invalidate the product
@@ -657,10 +658,7 @@ export async function submitOrder(req: NextRequest) {
           "[submit] failed to persist delivery details:",
           addressError
         );
-        return NextResponse.json(
-          { error: "Failed to save delivery details" },
-          { status: 500 }
-        );
+        return NextResponse.json({ error_code: "CHECKOUT_DELIVERY_SAVE_FAILED" }, { status: 500 });
       }
     }
 
@@ -873,12 +871,11 @@ export async function submitOrder(req: NextRequest) {
       status: result.status,
     } satisfies SubmitOrderResponse);
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Internal server error";
     console.error("[submit] unexpected error:", {
       phase,
-      message: msg,
+      message: err instanceof Error ? err.message : "Internal server error",
       stack: err instanceof Error ? err.stack : undefined,
     });
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error_code: "CHECKOUT_INTERNAL_ERROR" }, { status: 500 });
   }
 }
