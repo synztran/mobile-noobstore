@@ -25,7 +25,7 @@ import {
   isFeePendingShippingMethod,
   isPickupShippingMethod,
 } from "@/lib/shipping-method";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -56,6 +56,7 @@ export default function SummaryPage() {
     setPaymentType,
     depositPercentage,
     setDepositPercentage,
+    getOrCreateIdempotencyKey,
   } = useCheckoutStore();
   const { appliedVouchers, totalDiscountAmount, totalShippingDiscountAmount } =
     useDiscountStore();
@@ -231,6 +232,7 @@ export default function SummaryPage() {
       setOosProductIds(new Set());
 
       const result = await submitOrderMutation.mutateAsync({
+        idempotency_key: getOrCreateIdempotencyKey(),
         cart_id: cartId,
         shipping_cost: shippingCost,
         payment_type: paymentType,

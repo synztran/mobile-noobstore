@@ -12,6 +12,7 @@ import {
 } from "@/modules/payments/server/evidence";
 import { after } from "next/server";
 import { randomBase36 } from "@/lib/random";
+import { createHash } from "node:crypto";
 import type { AppliedVoucherSummary } from "@/types/voucher";
 import { getMaxVouchersPerOrder } from "@/lib/vouchers/config";
 import { canUseDeposit, clampDepositPercentage } from "@/lib/deposit";
@@ -46,6 +47,10 @@ export async function submitOrder(req: NextRequest) {
   let phase = "parse request";
   try {
     const body: SubmitOrderRequest = await req.json();
+
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.idempotency_key ?? "")) {
+      return NextResponse.json({ error: "Invalid checkout idempotency key" }, { status: 400 });
+    }
 
     const shippingMethodId = normalizeShippingMethodId(body.shipping_method_id);
 
@@ -84,6 +89,22 @@ export async function submitOrder(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rpc = admin.rpc.bind(admin) as unknown as (
+      fn: string,
+      args: Record<string, unknown>
+    ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    const replayQuery = await rpc("get_checkout_idempotent_response", {
+      p_user_id: user.id,
+      p_idempotency_key: body.idempotency_key,
+    });
+    if (replayQuery.error) throw new Error("Unable to verify checkout retry");
+    const storedReplay = replayQuery.data as {
+      order_id?: string;
+      order_number?: string;
+      status?: string;
+      request_hash?: string;
+    } | null;
 
     const productIds = [...new Set(body.items.map((i) => i.product_id))];
     const itemVariantIds = body.items
@@ -459,6 +480,47 @@ export async function submitOrder(req: NextRequest) {
     const orderId = crypto.randomUUID();
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${randomBase36(4)}`;
 
+    const allGiftItems = appliedVouchers.flatMap((voucher) =>
+      voucher.voucher_id ? (giftItemsByVoucherId.get(voucher.voucher_id) ?? []) : []
+    );
+    const allSnapshots = appliedVouchers
+      .map((v) => v.voucher_snapshot)
+      .filter(Boolean) as AppliedVoucherSummary[];
+    const idempotencyPayload = {
+      user_id: user.id,
+      items: rpcItems,
+      shipping_cost: safeShippingCost,
+      shipping_method_id: shippingMethodId,
+      pickup_at: body.pickup_at ?? null,
+      delivery_address: body.delivery_address ?? null,
+      payment_type: body.payment_type ?? "full",
+      deposit_percentage: body.deposit_percentage ?? null,
+      vouchers: appliedVouchers.map((voucher) => ({
+        ...voucher,
+        voucher_snapshot: null,
+        gift_items_snapshot: null,
+      })),
+      rank_discount: [safeRankDiscount, safeRankShipping],
+      services: body.service_ids ?? [],
+    };
+    const requestHash = createHash("sha256")
+      .update(JSON.stringify(idempotencyPayload))
+      .digest("hex");
+
+    if (storedReplay?.order_id && storedReplay.order_number) {
+      if (storedReplay.request_hash !== requestHash) {
+        return NextResponse.json(
+          { error: "Checkout idempotency key reused with different payload" },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json({
+        order_id: storedReplay.order_id,
+        order_number: storedReplay.order_number,
+        status: storedReplay.status ?? "pending",
+      } satisfies SubmitOrderResponse);
+    }
+
     phase = "create order and reserve stock (database RPC)";
     const submitOrderRpc = admin.rpc.bind(admin) as unknown as (
       fn: string,
@@ -477,16 +539,24 @@ export async function submitOrder(req: NextRequest) {
       p_shipping_cost: safeShippingCost,
       p_items: rpcItems,
     };
-    const { data, error } =
-      giftItems.length > 0
-        ? await submitOrderRpc("submit_order_with_gifts", {
-            ...submitOrderArgs,
-            p_gift_items: giftItems,
-          })
-        : await submitOrderRpc("submit_order", submitOrderArgs);
+    const { data, error } = await submitOrderRpc("submit_order_with_checkout", {
+      ...submitOrderArgs,
+      p_gift_items: giftItems,
+      p_idempotency_key: body.idempotency_key,
+      p_request_hash: requestHash,
+      p_vouchers: appliedVouchers.map((voucher) => ({
+        voucher_id: voucher.voucher_id,
+        voucher_code: voucher.voucher_code,
+      })),
+      p_voucher_discount_amount: safeVoucherDiscount,
+      p_shipping_discount_amount: safeShippingDiscount,
+      p_voucher_snapshot: allSnapshots.length ? toJson(allSnapshots) : null,
+      p_gift_items_snapshot: allGiftItems.length ? toJson(allGiftItems) : null,
+    });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      const conflict = /Idempotency key reused|usage limit exceeded|Voucher unavailable/i.test(error.message);
+      return NextResponse.json({ error: conflict ? "Checkout changed or already submitted. Refresh and try again." : error.message }, { status: conflict ? 409 : 400 });
     }
 
     // `submit_order` decremented stock in the DB — invalidate the product
@@ -503,71 +573,21 @@ export async function submitOrder(req: NextRequest) {
       order_id: string;
       order_number: string;
       status: string;
+      replayed?: boolean;
     };
+
+    if (result.replayed) {
+      return NextResponse.json({
+        order_id: result.order_id,
+        order_number: result.order_number,
+        status: result.status,
+      } satisfies SubmitOrderResponse);
+    }
 
     // ── Persist multi-voucher fields on order ──────────────────────────
     phase = "persist voucher details and usage";
-    if (appliedVouchers.length > 0) {
-      const primaryVoucher = appliedVouchers[0];
-      const allGiftItems = appliedVouchers.flatMap((voucher) =>
-        voucher.voucher_id
-          ? (giftItemsByVoucherId.get(voucher.voucher_id) ?? [])
-          : []
-      );
-      const allSnapshots = appliedVouchers
-        .map((v) => v.voucher_snapshot)
-        .filter(Boolean) as AppliedVoucherSummary[];
-
-      const orderVoucherUpdate = {
-        voucher_id: primaryVoucher?.voucher_id ?? null,
-        voucher_code: primaryVoucher?.voucher_code ?? null,
-        voucher_discount_amount: safeVoucherDiscount,
-        shipping_discount_amount: safeShippingDiscount,
-        voucher_snapshot: allSnapshots.length > 0 ? toJson(allSnapshots) : null,
-        gift_items_snapshot:
-          allGiftItems.length > 0 ? toJson(allGiftItems) : null,
-      };
-
-      // Orders UPDATE via admin client — user RLS UPDATE removed
-      const { error: adminUpdateOrderError } = await admin
-        .from("orders")
-        .update(orderVoucherUpdate)
-        .eq("id", result.order_id);
-
-      const voucherPersisted = !adminUpdateOrderError;
-      if (adminUpdateOrderError) {
-        console.error(
-          "[submit] failed to persist voucher fields:",
-          adminUpdateOrderError
-        );
-      }
-
-      // Increment usage count for EACH applied voucher
-      if (voucherPersisted) {
-        for (const v of appliedVouchers) {
-          if (v.voucher_id) {
-            const rpc = admin.rpc.bind(admin) as unknown as (
-              fn: string,
-              args: Record<string, unknown>
-            ) => Promise<{
-              data: unknown;
-              error: { message: string } | null;
-            }>;
-            const { error: incrementUsageError } = await rpc(
-              "increment_voucher_used_count",
-              { p_voucher_id: v.voucher_id }
-            );
-
-            if (incrementUsageError) {
-              console.error(
-                `[submit] failed to increment voucher used_count for ${v.voucher_id}:`,
-                incrementUsageError
-              );
-            }
-          }
-        }
-      }
-    }
+    // Voucher snapshots and quota reservations committed atomically inside the
+    // checkout RPC with stock and order rows.
 
     // ── Persist delivery address + shipping method ────────────────────────
     phase = "persist delivery and pickup details";

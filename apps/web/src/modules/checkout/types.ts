@@ -27,6 +27,7 @@ export interface SubmitOrderRequestItem {
 }
 
 export interface SubmitOrderRequest {
+  idempotency_key: string;
   /**
    * Advisory only — the cart to convert is resolved server-side from the
    * session (see the conversion block below). The client sends whatever its

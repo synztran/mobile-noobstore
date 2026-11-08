@@ -21,6 +21,7 @@ export interface ShippingFormDraft {
 }
 
 interface CheckoutStore {
+	idempotencyKey: string | null;
 	shipping: ShippingDetails | null;
 	shippingCost: number;
 	orderId: string | null;
@@ -42,11 +43,14 @@ interface CheckoutStore {
 	setPaymentType: (type: "full" | "deposit_cod") => void;
 	setDepositPercentage: (pct: number) => void;
 	clearCheckout: () => void;
+	getOrCreateIdempotencyKey: () => string;
+	clearIdempotencyKey: () => void;
 }
 
 export const useCheckoutStore = create<CheckoutStore>()(
 	persist(
-		(set) => ({
+		(set): CheckoutStore => ({
+			idempotencyKey: null,
 			shipping: null,
 			shippingCost: 0,
 			orderId: null,
@@ -70,6 +74,7 @@ export const useCheckoutStore = create<CheckoutStore>()(
 				set({ depositPercentage: pct }),
 			clearCheckout: () =>
 				set({
+					idempotencyKey: null,
 					shipping: null,
 					shippingCost: 0,
 					orderId: null,
@@ -80,6 +85,15 @@ export const useCheckoutStore = create<CheckoutStore>()(
 					paymentType: "full",
 					depositPercentage: 50,
 				}),
+			getOrCreateIdempotencyKey: () => {
+				let key = useCheckoutStore.getState().idempotencyKey;
+				if (!key) {
+					key = crypto.randomUUID();
+					set({ idempotencyKey: key });
+				}
+				return key;
+			},
+			clearIdempotencyKey: () => set({ idempotencyKey: null }),
 		}),
 		{ name: "noobstore-checkout" },
 	),

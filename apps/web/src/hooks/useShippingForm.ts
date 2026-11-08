@@ -149,6 +149,23 @@ const FORM_FIELD_NAMES = [
 
 const REQUIRED_FIELDS = ["fullName", "streetAddress", "city"] as const;
 
+export function isPickupSelectionValid(args: {
+  date: string;
+  time: string;
+  minDate: string;
+  availableSlots: string[];
+  now?: Date;
+}) {
+  const { date, time, minDate, availableSlots, now = new Date() } = args;
+  const selectedAt = new Date(`${date}T${time}:00`);
+  return (
+    !Number.isNaN(selectedAt.getTime()) &&
+    date >= minDate &&
+    selectedAt.getTime() > now.getTime() &&
+    availableSlots.includes(time)
+  );
+}
+
 export function useShippingForm() {
   const router = useRouter();
   const {
@@ -564,6 +581,32 @@ export function useShippingForm() {
     }
     return slots;
   }, [pickupDate]);
+
+  // A saved pickup slot can become invalid while the customer is away from
+  // checkout (for example, today's 08:30 slot after it has passed).
+  useEffect(() => {
+    if (!ready || !isPickup || hasPreOrder || !pickupDate || !pickupTime) return;
+
+    if (!isPickupSelectionValid({
+      date: pickupDate,
+      time: pickupTime,
+      minDate: minPickupDate,
+      availableSlots: pickupSlots,
+    })) {
+      setPickupDate("");
+      setPickupTime("");
+    }
+  }, [
+    ready,
+    isPickup,
+    hasPreOrder,
+    pickupDate,
+    pickupTime,
+    minPickupDate,
+    pickupSlots,
+    setPickupDate,
+    setPickupTime,
+  ]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
