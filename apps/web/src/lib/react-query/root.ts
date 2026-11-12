@@ -1,5 +1,5 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
-import { cartQueryKeys } from "@/modules/cart/client/query-keys";
+import { cartQueryKeys } from "@/modules/cart/client/react-query/query-keys";
 import { communityQueryKeys } from "./router/community";
 import { configQueryKeys } from "./router/config";
 import { gachaQueryKeys } from "@/modules/gacha/client/query-keys";

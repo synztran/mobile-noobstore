@@ -1,7 +1,7 @@
 import type { CartApiItem, CartItem } from "@/modules/cart/types";
 import type { Product, ProductVariant, SelectedComponent } from "@/modules/products/types";
 import { appQueryKeys } from "@/lib/react-query/root";
-import { useCartStore } from "./useCartStore";
+import { useCartStore } from "../hooks/useCartStore";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
