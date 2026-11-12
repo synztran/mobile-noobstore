@@ -1,77 +1,57 @@
-import type { ShopProduct } from "@/modules/products/types";
-import { formatVND } from "@/lib/currency";
-import { getNewestProducts } from "@/modules/products/server/ssr";
+import {
+  getNewestProducts,
+  getNoteworthyProducts,
+} from "@/modules/products/server/ssr";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-
-function ProductItem({
-	product,
-	index,
-}: {
-	product: ShopProduct;
-	index: number;
-}) {
-	const isFirst = index === 0;
-
-	return (
-		<Link
-			href={`/shop/${product.slug}`}
-			className={`flex flex-col gap-4 ${!isFirst ? "ml-8" : ""}`}>
-			<div
-				className={`relative flex items-center justify-center overflow-hidden ${
-					isFirst
-						? "bg-surface-container-high aspect-square p-8"
-						: "bg-surface-container-low aspect-[4/5] p-12"
-				}`}>
-				<span className="text-[8rem] font-black uppercase tracking-tighter text-on-surface/5 leading-none">
-					{product.name.charAt(0)}
-				</span>
-				{isFirst && (
-					<div className="absolute top-4 left-4 bg-primary text-on-primary text-[8px] font-bold px-2 py-1 tracking-tighter uppercase">
-						MỚI
-					</div>
-				)}
-			</div>
-			<div className="flex justify-between items-start">
-				<div>
-					<h4 className="font-extrabold text-lg uppercase tracking-tight">
-						{product.name}
-					</h4>
-					<p className="text-xs text-on-surface-variant uppercase font-bold tracking-wide mt-0.5">
-						{product.category}
-					</p>
-				</div>
-				<span className="font-extrabold text-primary">
-					{formatVND(product.min_price)}
-				</span>
-			</div>
-		</Link>
-	);
-}
+import { BundleProductCard } from "./BundleProductCard";
 
 export async function NewArrivalsSection() {
-	const products = await getNewestProducts(2);
+  const [newest, featured] = await Promise.all([
+    getNewestProducts(15),
+    getNoteworthyProducts({ limit: 5 }),
+  ]);
 
-	return (
-		<section className="py-12 px-6">
-			<div className="flex items-baseline justify-between mb-8">
-				<h2 className="text-2xl font-black tracking-tight uppercase">
-					Hàng Mới Về
-				</h2>
-				<Link
-					href="/shop"
-					className="text-[10px] font-bold text-primary underline underline-offset-4 uppercase tracking-widest">
-					XEM TẤT CẢ
-				</Link>
-			</div>
-			<div className="flex flex-col gap-12">
-				{products.map((product, index) => (
-					<ProductItem
-						key={product.id}
-						product={product}
-						index={index}
-					/>
-				))}
-			</div>
-		</section>
-	);
+  // The featured rail already shows the newest five; skip them so this rail
+  // widens the catalogue instead of repeating the same cards.
+  const featuredIds = new Set(featured.products.map((product) => product.id));
+  const fresh = newest.filter((product) => !featuredIds.has(product.id));
+  // Lead with buyable stock so the rail never opens on sold-out cards.
+  const inStock = fresh.filter((product) => product.stock_quantity > 0);
+  const soldOut = fresh.filter((product) => product.stock_quantity === 0);
+  const products = [...inStock, ...soldOut].slice(0, 5);
+
+  if (products.length === 0) return null;
+
+  return (
+    <section className="bg-surface lg:rounded-3xl lg:p-8">
+      <div className="mb-4 flex items-center justify-between gap-4 px-6 lg:px-0">
+        <h2 className="text-xl font-black uppercase tracking-tight text-on-surface lg:text-2xl">
+          Hàng mới về
+        </h2>
+        <Link
+          href="/shop?sort=newest"
+          className="group flex shrink-0 items-center gap-1 whitespace-nowrap text-[10px] font-bold uppercase tracking-widest text-primary transition-all hover:gap-2"
+        >
+          Xem tất cả
+          <ArrowRight size={10} />
+        </Link>
+      </div>
+
+      <div className="hide-scrollbar flex snap-x gap-4 overflow-x-auto px-6 pb-2 lg:gap-5 lg:px-0 lg:pb-2">
+        {products.map((product) => (
+          <div
+            key={product.id}
+            className="w-[min(62vw,260px)] shrink-0 snap-start sm:w-[min(46vw,280px)] lg:w-[calc((100%-3*1.25rem)/3.5)]"
+          >
+            <BundleProductCard
+              product={product}
+              showNewBadge
+              showSoldOutOverlay
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }

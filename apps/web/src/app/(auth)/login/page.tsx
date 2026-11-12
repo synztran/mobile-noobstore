@@ -9,6 +9,7 @@ import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useRef, useState } from "react";
+import { AuthDesktopBrand } from "../AuthDesktopBrand";
 
 function LoginForm() {
   const router = useRouter();
@@ -55,9 +56,11 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex flex-1 flex-col px-8 pb-12 pt-20">
+    <div className="grid flex-1 grid-cols-1 lg:mx-auto lg:w-full lg:max-w-6xl lg:grid-cols-[1fr_0.9fr] lg:items-center lg:gap-12 lg:px-8 lg:py-12">
+      <AuthDesktopBrand />
+      <div className="flex flex-col px-8 pb-12 pt-20 lg:mx-auto lg:w-full lg:max-w-md lg:rounded-[2rem] lg:bg-surface-container-lowest lg:px-10 lg:py-10 lg:shadow-ambient-sm">
       {/* Logo */}
-      <div className="mb-12 flex flex-col items-center">
+      <div className="mb-12 flex flex-col items-center lg:hidden">
         <div className="relative mb-2 flex h-32 w-48 items-center gap-2">
           <Image
             src="/logo/noob-store.png"
@@ -205,6 +208,7 @@ function LoginForm() {
           Đăng ký
         </Link>
       </p>
+      </div>
     </div>
   );
 }
