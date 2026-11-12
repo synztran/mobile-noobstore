@@ -9,18 +9,28 @@ import { useQuery } from "@tanstack/react-query";
 
 export interface QuickPickResponse {
 	products: ShopProduct[];
+	brandAlternatives?: ShopProduct[];
 	configuratorByProductId: Record<string, ConfiguratorGroup[]>;
 	rulesByProductId: Record<string, ComponentVariantRule[]>;
 	activeProduct?: ShopProduct | null;
 }
 
-export function useQuickPick(requestKey: string, enabled: boolean) {
+export function useQuickPick(
+	requestKey: string,
+	enabled: boolean,
+	brand = "",
+	excludeProductId = "",
+	activeProductId = ""
+) {
 	return useQuery<QuickPickResponse>({
-		...appQueryKeys.product.quickPick(requestKey),
+		...appQueryKeys.product.quickPick(requestKey, brand, excludeProductId, activeProductId),
 		enabled: enabled && !requestKey.endsWith(":"),
 		staleTime: 30_000,
 		queryFn: async () => {
 			const query = new URLSearchParams();
+			if (brand) query.set("brand", brand);
+			if (excludeProductId) query.set("excludeProductId", excludeProductId);
+			if (activeProductId) query.set("productId", activeProductId);
 			if (requestKey.startsWith("category:")) {
 				const slug = requestKey.replace("category:", "");
 				if (slug) query.set("categorySlug", slug);

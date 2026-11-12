@@ -108,6 +108,7 @@ export type ProductConfiguratorProps = {
   /** Variant IDs that are unavailable due to conditional rules. */
   disabledVariantIds?: Set<string>;
   showTitle?: boolean;
+  showStockInline?: boolean;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -121,6 +122,7 @@ export function ProductConfigurator({
   onSelect,
   disabledVariantIds,
   showTitle = true,
+  showStockInline = false,
 }: ProductConfiguratorProps) {
   const hasComponents = groups.length > 0;
 
@@ -188,7 +190,6 @@ export function ProductConfigurator({
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 {group.variants.map((v) => {
-                  console.log(v);
                   const selected = groupSelection.includes(v.id);
                   const soldOut = v.stock_quantity === 0;
                   const ruleDisabled = disabledVariantIds?.has(v.id) ?? false;
@@ -205,10 +206,11 @@ export function ProductConfigurator({
                         { selected, soldOut, ruleDisabled, isDisabled }
                       )}
                     >
-                      <div className="inline-flex items-center gap-1">
-                        <p className="text-left text-xs font-black">
+                      <div className="flex flex-col items-start gap-0.5">
+                        <div className="inline-flex items-center gap-1">
+                          <p className="text-left text-xs font-black">
                           {v.variant_name}
-                        </p>
+                          </p>
                         {(() => {
                           const eff =
                             v.effective_price_adjustment ??
@@ -232,6 +234,10 @@ export function ProductConfigurator({
                             </p>
                           );
                         })()}
+                        </div>
+                        {showStockInline && <span className={clsx("text-[9px] font-semibold", soldOut ? "text-on-surface-variant" : v.stock_quantity <= 2 ? "text-amber-700" : "text-emerald-700")}>
+                          {soldOut ? "Hết hàng" : v.is_pre_order ? "Đặt trước" : v.stock_quantity <= 2 ? `Sắp hết · Còn ${v.stock_quantity}` : `Còn ${v.stock_quantity}`}
+                        </span>}
                       </div>
                       <div className="absolute -top-2 left-1">
                         <VariantStatusBadge

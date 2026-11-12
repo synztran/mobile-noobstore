@@ -144,6 +144,54 @@ export async function spendPoints(
   };
 }
 
+export async function spendDailyCheckinPoints(
+  supabase: Supabase,
+  userId: string,
+  points: number,
+  sourceRef?: string,
+  note?: string
+): Promise<PointsResult> {
+  const [row] = await callRpc<{ transaction_id: string; new_balance: string }>(
+    supabase,
+    "spend_checkin_points",
+    {
+      p_user_id: userId,
+      p_amount: points,
+      p_source_ref: sourceRef ?? null,
+      p_note: note ?? null,
+    }
+  );
+
+  return {
+    transactionId: Number(row.transaction_id),
+    newBalance: Number(row.new_balance),
+  };
+}
+
+export async function redeemDailyCheckinReward(
+  supabase: Supabase,
+  userId: string,
+  rewardItemId: string
+): Promise<{ voucherId: string | null; voucherCode: string | null; pointsSpent: number; newBalance: number; rewardName: string; rewardType: string }> {
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>
+  ) => Promise<{ data: unknown; error: { message: string } | null }>)("redeem_daily_checkin_reward", {
+    p_user_id: userId,
+    p_reward_item_id: rewardItemId,
+  });
+  if (error) throw new Error(`[points] redeem_daily_checkin_reward failed: ${error.message}`);
+  const row = data as Record<string, unknown>;
+  return {
+    voucherId: (row.voucher_id as string | null) ?? null,
+    voucherCode: (row.voucher_code as string | null) ?? null,
+    pointsSpent: Number(row.points_spent),
+    newBalance: Number(row.new_balance),
+    rewardName: String(row.reward_name),
+    rewardType: String(row.reward_type),
+  };
+}
+
 // ─── Admin adjust ─────────────────────────────────────────────
 
 export async function adminAdjustPoints(

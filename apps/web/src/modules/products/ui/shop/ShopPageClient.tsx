@@ -1,21 +1,25 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   ProductCard,
   ProductCardSkeleton,
 } from "@/modules/products/ui/product/ProductCard";
 import { ShopControls } from "@/modules/products/ui/shop/ShopControls";
+import { ShopFilterPanel } from "@/modules/products/ui/shop/ShopFilterPanel";
 import { RecentlyViewedRail } from "@/modules/products/ui/recently-viewed/RecentlyViewedRail";
 import type { CategoryItem } from "@/modules/products/server/ssr";
 import {
   buildShopFilters,
   useShopInfiniteQuery,
 } from "@/modules/products/client/shop-infinite";
+import { useShopControls } from "@/modules/products/client/useShopControls";
+import { useRecentSearches } from "@/modules/products/client/useRecentSearches";
 import type { ProductsResponse, ShopProduct } from "@/modules/products/types";
 import { trackViewItemList, toGAProduct } from "@/lib/analytics";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 
 function ProductGridSkeleton() {
   return (
@@ -27,7 +31,15 @@ function ProductGridSkeleton() {
   );
 }
 
-function EmptyProductState({ search }: { search?: string }) {
+function EmptyProductState({
+  search,
+  hasFilters,
+  onClearFilters,
+}: {
+  search?: string;
+  hasFilters?: boolean;
+  onClearFilters?: () => void;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
@@ -57,6 +69,15 @@ function EmptyProductState({ search }: { search?: string }) {
       <p className="text-xs text-outline">
         Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
       </p>
+      {hasFilters && onClearFilters ? (
+        <button
+          type="button"
+          onClick={onClearFilters}
+          className="mt-1 rounded-full bg-primary px-4 py-2 text-xs font-bold text-on-primary transition-colors hover:bg-primary/90"
+        >
+          Xoá bộ lọc
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -94,13 +115,29 @@ function InfiniteScrollSentinel({
   isFetchingNextPage: boolean;
   sentinelRef: (node: HTMLDivElement | null) => void;
 }) {
+  const shouldReduceMotion = useReducedMotion();
   if (!hasNextPage) return null;
   return (
-    <div ref={sentinelRef} className="flex justify-center py-6">
+    <div ref={sentinelRef} className="relative flex min-h-16 justify-center py-6">
       {isFetchingNextPage ? (
         <span className="loading loading-spinner loading-sm text-primary" />
       ) : hasNextPage ? (
-        <div className="h-4" />
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="pointer-events-none fixed bottom-24 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full bg-surface-container-lowest px-3 py-1.5 text-xs font-semibold text-on-surface-variant shadow-ambient-sm lg:bottom-6"
+          aria-hidden="true"
+        >
+          <span>Cuộn để xem thêm</span>
+          <motion.span
+            animate={shouldReduceMotion ? undefined : { y: [0, 3, 0] }}
+            transition={{ duration: 1.2, repeat: 2, ease: "easeInOut" }}
+            className="inline-flex"
+          >
+            <ChevronDown size={14} />
+          </motion.span>
+        </motion.div>
       ) : null}
     </div>
   );
@@ -117,6 +154,15 @@ export function ShopPageClient({
 }) {
   const sp = useSearchParams();
   const filters = useMemo(() => buildShopFilters(sp), [sp]);
+
+  // The controls state lives here (not inside ShopControls) so the desktop
+  // filter rail and the toolbar share exactly one instance of it. Two
+  // instances would both write to the URL and could clobber each other's
+  // search/sort values.
+  const recents = useRecentSearches();
+  const controls = useShopControls((term) => {
+    if (term.trim().length >= 2) recents.addSearch(term);
+  });
 
   const { data, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useShopInfiniteQuery(filters, initialData);
@@ -175,36 +221,57 @@ export function ShopPageClient({
   );
 
   return (
-    <>
-      <ShopControls
-        total={total}
-        categories={categories}
-        brands={brands}
-        isTotalLoading={isInitialLoading}
-        isSearching={isRefreshing}
-      />
-
-      <div
-        className={`transition-all duration-300 ${
-          isRefreshing ? "opacity-60 blur-sm" : ""
-        }`}
+    <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <aside
+        aria-label="Bộ lọc sản phẩm"
+        className="hide-scrollbar hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
       >
-        {isInitialLoading ? (
-          <ProductGridSkeleton />
-        ) : products.length === 0 && !isFetching ? (
-          <EmptyProductState search={filters.search} />
-        ) : (
-          <ProductGrid products={products} />
-        )}
+        <ShopFilterPanel
+          categories={categories}
+          brands={brands}
+          initialState={controls.filterState}
+          onApply={controls.handleApplyFilter}
+          onClear={controls.handleClearFilters}
+        />
+      </aside>
+
+      <div className="min-w-0">
+        <ShopControls
+          total={total}
+          categories={categories}
+          brands={brands}
+          isTotalLoading={isInitialLoading}
+          isSearching={isRefreshing}
+          controls={controls}
+          recents={recents}
+        />
+
+        <div
+          className={`transition-all duration-300 ${
+            isRefreshing ? "opacity-60 blur-sm" : ""
+          }`}
+        >
+          {isInitialLoading ? (
+            <ProductGridSkeleton />
+          ) : products.length === 0 && !isFetching ? (
+            <EmptyProductState
+              search={filters.search}
+              hasFilters={Boolean(filters.search) || controls.filterApplied}
+              onClearFilters={controls.handleClearAll}
+            />
+          ) : (
+            <ProductGrid products={products} />
+          )}
+        </div>
+
+        <RecentlyViewedRail />
+
+        <InfiniteScrollSentinel
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          sentinelRef={sentinelRef}
+        />
       </div>
-
-      <RecentlyViewedRail />
-
-      <InfiniteScrollSentinel
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        sentinelRef={sentinelRef}
-      />
-    </>
+    </div>
   );
 }

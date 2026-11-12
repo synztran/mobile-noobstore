@@ -2,7 +2,7 @@
 
 import { ArrowLeft, CircleHelp, Heart, Menu, ShoppingCart } from "lucide-react";
 import { useIsMounted } from "@/hooks/useIsMounted";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import clsx from "clsx";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";

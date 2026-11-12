@@ -15,7 +15,7 @@ vi.mock("gooey-toast", () => ({
   },
 }));
 
-import { useCartStore } from "./useCartStore";
+import { useCartStore } from "./hooks/useCartStore";
 
 // ─── Test helpers ────────────────────────────────────────────────────────────
 

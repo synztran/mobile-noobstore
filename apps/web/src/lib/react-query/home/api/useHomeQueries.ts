@@ -1,7 +1,7 @@
 import type { CommunityPhoto } from "@/app/api/home/community-gallery/route";
 import type { Creator } from "@/app/api/home/creators/route";
 import type { HeroCampaign } from "@/app/api/home/hero/route";
-import type { Testimonial } from "@/app/api/home/testimonials/route";
+import type { HomeTestimonialsResponse } from "@/app/api/home/testimonials/route";
 import type { TrustProp } from "@/app/api/home/trust-props/route";
 import type { ShopProduct } from "@/modules/products/types";
 import { appQueryKeys } from "@/lib/react-query/root";
@@ -59,7 +59,7 @@ export function useHomeNoteworthy(categorySlug: string) {
 export function useHomeSaleProducts(
   categorySlug: string,
   limit: number,
-  sort: string,
+  sort: string
 ) {
   return useQuery<{ products: ShopProduct[]; total: number }>({
     ...appQueryKeys.home.saleProducts(categorySlug, limit, sort),
@@ -104,15 +104,19 @@ export function useHomeCreators() {
 }
 
 export function useHomeTestimonials() {
-  return useQuery<Testimonial[]>({
+  return useQuery<HomeTestimonialsResponse>({
     ...appQueryKeys.home.testimonials,
     staleTime: Infinity,
     gcTime: Infinity,
     queryFn: async () => {
       const res = await fetch("/api/home/testimonials");
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      if (!res.ok) {
+        return { testimonials: [], summary: { count: 0, averageRating: null } };
+      }
+      const data = (await res.json()) as HomeTestimonialsResponse;
+      return data && Array.isArray(data.testimonials)
+        ? data
+        : { testimonials: [], summary: { count: 0, averageRating: null } };
     },
   });
 }

@@ -29,10 +29,10 @@ interface SplashScreenProps {
  * deliberately excluded so they can't pin the splash open.
  */
 const CORE_QUERY_MATCHES: Array<(key: readonly unknown[]) => boolean> = [
+  // Only block the splash on data needed for the first viewport. Lower-page
+  // rails and the cart hydrate in the background; waiting on them can leave
+  // the boot screen parked at START_PCT on a slow API.
   (key) => key[0] === "home" && key[1] === "hero",
-  (key) => key[0] === "home" && key[1] === "noteworthy",
-  (key) => key[0] === "home" && key[1] === "saleProducts",
-  (key) => key[0] === "cart" && key[1] === "all",
 ];
 
 const START_PCT = 12;

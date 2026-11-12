@@ -1,15 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatVND } from "@/lib/currency";
 import { toast } from "@/lib/toast";
 import AdaptiveImage from "@/components/ui/AdaptiveImage";
-import { Check, Copy } from "lucide-react";
+import { AlertCircle, Check, Copy, QrCode, ShieldCheck, Sparkles } from "lucide-react";
 
 interface Details {
   orderId: string;
   orderNumber: string;
+  status: string;
   total: number;
   subtotal: number;
   received: number;
@@ -34,7 +35,15 @@ interface Details {
   } | null;
 }
 
-function CopyButton({ value, label }: { value: string; label: string }) {
+function CopyButton({
+  value,
+  label,
+  variant = "icon",
+}: {
+  value: string;
+  label: string;
+  variant?: "icon" | "button";
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -45,17 +54,36 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     });
   };
 
+  if (variant === "button") {
+    return (
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="btn btn-primary btn-xs h-7 min-h-[28px] rounded-lg px-2.5 text-[10px] font-black uppercase tracking-wider text-surface shadow-xs transition-transform active:scale-95"
+      >
+        {copied ? (
+          <>
+            <Check size={12} className="stroke-[3]" />
+            Đã chép
+          </>
+        ) : (
+          "Sao chép"
+        )}
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
       aria-label={`Sao chép ${label}`}
       onClick={handleCopy}
-      className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container transition-transform hover:bg-surface-container-high active:scale-90"
+      className="grid h-7 w-7 place-items-center rounded-lg border border-outline-variant/30 bg-surface-container text-on-surface-variant transition-colors hover:border-primary hover:text-primary active:scale-90"
     >
       {copied ? (
-        <Check className="h-4 w-4 text-secondary" />
+        <Check size={13} className="text-emerald-700 stroke-[3]" />
       ) : (
-        <Copy className="h-4 w-4 text-primary" />
+        <Copy size={13} />
       )}
     </button>
   );
@@ -67,6 +95,20 @@ export function OrderPaymentInstructions({
   identifier: string;
 }) {
   const [imageError, setImageError] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(900); // 15 mins countdown
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatCountdown = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const query = useQuery<Details>({
     queryKey: ["verified-payment-details", identifier],
@@ -96,17 +138,15 @@ export function OrderPaymentInstructions({
     );
   }
 
-  // Never keep rendering stale bank details following an authorization/network error.
   if (query.isError) {
     return (
-      <div className="alert alert-warning flex-col items-start" role="alert">
-        <p>
-          Chưa tải được thông tin thanh toán. Vui lòng thử lại trước khi chuyển
-          tiền.
+      <div className="alert alert-warning flex-col items-start rounded-2xl" role="alert">
+        <p className="text-xs font-semibold">
+          Chưa tải được thông tin thanh toán. Vui lòng thử lại trước khi chuyển tiền.
         </p>
         <button
           type="button"
-          className="btn btn-sm"
+          className="btn btn-sm mt-2 rounded-xl"
           onClick={() => query.refetch()}
         >
           Thử lại
@@ -117,244 +157,202 @@ export function OrderPaymentInstructions({
 
   const details = query.data;
 
-  if (!details.active) {
+  if (details.balanceDue <= 0 && details.active) {
     return (
-      <div className="rounded-2xl bg-surface-container p-4 text-center">
-        <p className="text-sm font-semibold text-on-surface-variant">
-          Đơn hàng hiện không nhận thanh toán.
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
+        <p className="text-sm font-bold text-green-900 dark:text-green-900">
+          ✓ Đơn hàng đã được ghi nhận thanh toán đầy đủ.
         </p>
       </div>
     );
   }
 
-  if (details.balanceDue <= 0) {
-    return (
-      <div className="alert alert-success">
-        <p>Cửa hàng đã ghi nhận thanh toán đủ.</p>
-      </div>
-    );
-  }
+  const isDeposit = details.paymentType === "deposit_cod";
+  const isAwaitingSecondPayment = isDeposit && details.depositPaid;
+  const effectiveAmount = isAwaitingSecondPayment
+    ? details.remainingAmount
+    : details.amountDue > 0
+      ? details.amountDue
+      : details.depositAmount > 0
+        ? details.depositAmount
+        : details.balanceDue > 0
+          ? details.balanceDue
+          : details.total;
+  const remainingPercentage = Math.max(0, 100 - details.depositPercentage);
+
+  const qrImageUrl = details.bank
+    ? details.qrUrl
+      ? `${details.qrUrl}?balance=${effectiveAmount}`
+      : `https://img.vietqr.io/image/${details.bank.platform_name.toLowerCase().replace(/\s+/g, "")}-${details.bank.account_number}-compact2.png?amount=${effectiveAmount}&addInfo=${encodeURIComponent(details.orderNumber)}&accountName=${encodeURIComponent(details.bank.account_name)}`
+    : null;
 
   return (
-    <section
-      className="space-y-4"
-      aria-label="Thông tin chuyển khoản đã xác thực"
-    >
-      {/* Deposit callout */}
-      {details.paymentType === "deposit_cod" && !details.depositPaid && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-100 p-3">
-          <p className="text-xs font-bold text-amber-800">Thanh toán đặt cọc</p>
-          <p className="text-xs leading-relaxed text-amber-700">
-            Đơn hàng đặt cọc {details.depositPercentage}% (
-            {formatVND(details.depositAmount)}). Vui lòng chuyển khoản đủ số
-            tiền đặt cọc. Số còn lại ({formatVND(details.remainingAmount)}) sẽ
-            thanh toán khi nhận hàng.
-          </p>
+    <div className="rounded-2xl border border-outline-variant/20 bg-surface p-5 shadow-ambient-sm md:p-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/15 pb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary">
+            <QrCode size={18} className="stroke-[2.2]" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-on-surface sm:text-base">
+              Quét mã QR Banking thanh toán tự động
+            </h3>
+            <p className="text-[11px] text-on-surface-variant">
+              Mở ứng dụng ngân hàng bất kỳ để quét mã thanh toán tức thì
+            </p>
+          </div>
         </div>
-      )}
+        {!details.active ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-900">
+            Đơn hàng đã hủy (Thông tin lưu trữ)
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-800">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+            Khớp đơn tự động 24/7
+          </span>
+        )}
+      </div>
 
-      {/* QR Code & Amount Breakdown Card */}
-      <div className="relative flex flex-col items-center overflow-hidden rounded-2xl bg-surface-container-low p-4 shadow-ambient">
-        {details.bank && details.qrUrl && !imageError ? (
-          <div className="relative z-10 mb-2 flex h-64 w-full items-center justify-center rounded-2xl border border-outline-variant/30 bg-white p-4">
-            <div className="relative h-full w-full">
+      {/* Main Grid: QR Left + Bank Details Right */}
+      <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-[220px_minmax(0,1fr)] md:items-start">
+        {/* Left: QR Code Box */}
+        <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-outline-variant/25 bg-surface-container-low/50 p-4">
+          <div className="relative flex h-48 w-48 items-center justify-center overflow-hidden rounded-xl border border-outline-variant/30 bg-white p-2 shadow-xs sm:h-52 sm:w-52">
+            {qrImageUrl && !imageError ? (
               <AdaptiveImage
-                src={`${details.qrUrl}?balance=${details.amountDue}`}
+                src={qrImageUrl}
                 alt={`Mã QR thanh toán đơn ${details.orderNumber}`}
                 fill
-                sizes="280px"
+                sizes="220px"
                 className="object-contain"
                 unoptimized
                 onError={() => setImageError(true)}
               />
+            ) : (
+              <div className="p-4 text-center text-xs text-on-surface-variant">
+                Mã QR không khả dụng. Vui lòng chuyển khoản thủ công theo thông tin bên cạnh.
+              </div>
+            )}
+          </div>
+          {(!isDeposit || !details.depositPaid) && (
+            <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+              <span>⏳ Giữ hàng & mã QR:</span>
+              <span className="font-mono font-black">{formatCountdown(timeLeft)}</span>
             </div>
-          </div>
-        ) : (
-          <div className="relative z-10 mb-2 flex h-64 w-full items-center justify-center rounded-2xl bg-surface-container">
-            <p className="px-6 text-center text-sm font-semibold text-on-surface-variant">
-              {details.bank
-                ? "Nếu QR không khả dụng, vui lòng chuyển khoản theo thông tin bên dưới."
-                : "Chưa có cấu hình thanh toán ngân hàng."}
-            </p>
-          </div>
-        )}
+          )}
+        </div>
 
-        <p className="relative z-10 text-center text-xs leading-relaxed text-on-surface-variant">
-          Mở app banking và quét mã để hoàn tất thanh toán.
-        </p>
-
-        {/* Amount breakdown */}
-        <div className="relative z-10 mt-3 w-full space-y-2 rounded-2xl bg-surface-container-high p-4">
-          <div className="flex justify-between text-sm">
-            <span className="text-on-surface-variant">Tạm tính</span>
-            <span className="font-bold text-on-surface">
-              {formatVND(details.subtotal)}
+        {/* Right: Bank Details Table */}
+        <div className="space-y-2.5">
+          {/* Amount Due Row */}
+          <div className="flex items-center justify-between rounded-xl bg-surface-container/40 px-3.5 py-2.5">
+            <span className="text-xs text-on-surface-variant">
+              {isAwaitingSecondPayment
+                ? `Số tiền còn lại (${remainingPercentage}%):`
+                : isDeposit
+                  ? `Số tiền đặt cọc (${details.depositPercentage}%):`
+                  : "Số tiền cần thanh toán:"}
+            </span>
+            <span className="text-base font-black text-primary">
+              {formatVND(effectiveAmount)}
             </span>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-on-surface-variant">Phí vận chuyển</span>
-            <span
-              className={`text-xs font-bold ${
-                details.shippingFee === 0 && details.shippingFeePending
-                  ? "text-emerald-600"
-                  : "text-on-surface-variant"
-              }`}
-            >
-              {details.shippingFeePending
-                ? "Cập nhật sau"
-                : details.shippingFee === 0
-                  ? "Miễn phí"
-                  : formatVND(details.shippingFee)}
-            </span>
-          </div>
-
-          {details.voucherDiscount > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">Giảm giá voucher</span>
-              <span className="font-bold text-green-600">
-                -{formatVND(details.voucherDiscount)}
+          {/* Remaining COD if deposit */}
+          {isDeposit && !details.depositPaid && details.remainingAmount > 0 && (
+            <div className="flex items-center justify-between rounded-xl bg-surface-container/20 px-3.5 py-2 text-xs">
+              <span className="text-on-surface-variant">Còn lại thanh toán COD khi nhận:</span>
+              <span className="font-bold text-on-surface">
+                {formatVND(details.remainingAmount)}
               </span>
             </div>
           )}
 
-          {details.shippingDiscount > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-on-surface-variant">
-                Giảm phí vận chuyển
-              </span>
-              <span className="font-bold text-secondary">
-                -{formatVND(details.shippingDiscount)}
-              </span>
-            </div>
-          )}
-
-          <div className="h-px bg-outline-variant/30" />
-
-          {details.paymentType === "deposit_cod" ? (
+          {/* Bank Platform */}
+          {details.bank && (
             <>
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Đặt cọc ({details.depositPercentage}%)
-                </span>
-                <span className="font-bold text-primary">
-                  {details.depositPaid
-                    ? "Đã thanh toán"
-                    : formatVND(details.depositAmount)}
+              <div className="flex items-center justify-between rounded-xl bg-surface-container/40 px-3.5 py-2.5">
+                <span className="text-xs text-on-surface-variant">Ngân hàng thụ hưởng:</span>
+                <div className="flex min-w-0 items-center gap-2">
+                  {details.bank.bank_logo_url ? (
+                    <div className="relative h-7 w-24 shrink-0">
+                      <AdaptiveImage
+                        src={details.bank.bank_logo_url}
+                        alt={details.bank.platform_name}
+                        fill
+                        sizes="96px"
+                        className="object-contain object-right"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-xs font-bold text-on-surface">
+                      {details.bank.platform_name || "Ngân hàng"}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Account Number */}
+              <div className="flex items-center justify-between rounded-xl bg-surface-container/40 px-3.5 py-2.5">
+                <span className="text-xs text-on-surface-variant">Số tài khoản:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-sm font-black text-on-surface">
+                    {details.bank.account_number}
+                  </span>
+                  <CopyButton
+                    value={details.bank.account_number}
+                    label="Số tài khoản"
+                  />
+                </div>
+              </div>
+
+              {/* Account Name */}
+              <div className="flex items-center justify-between rounded-xl bg-surface-container/40 px-3.5 py-2.5">
+                <span className="text-xs text-on-surface-variant">Chủ tài khoản:</span>
+                <span className="text-xs font-bold uppercase text-on-surface">
+                  {details.bank.account_name}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant">Còn lại (COD)</span>
-                <span className="font-bold text-secondary">
-                  {formatVND(details.remainingAmount)}
-                </span>
-              </div>
-              <div className="h-px bg-outline-variant/30" />
-              <div className="flex justify-between">
-                <span className="font-black text-on-surface">
-                  {details.depositPaid
-                    ? "Còn cần chuyển khoản (lần 2)"
-                    : "Cần chuyển khoản (đặt cọc)"}
-                </span>
-                <span className="text-lg font-black text-primary">
-                  {formatVND(details.amountDue)}
-                </span>
+
+              {/* Transfer Content (Crucial) */}
+              <div className="flex items-center justify-between rounded-xl border border-dashed border-primary/40 bg-primary/5 px-3.5 py-2.5">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+                    Nội dung chuyển khoản (bắt buộc)
+                  </p>
+                  <p className="font-mono text-sm font-black text-on-surface">
+                    {details.orderNumber}
+                  </p>
+                </div>
+                <CopyButton
+                  value={details.orderNumber}
+                  label="Nội dung chuyển khoản"
+                  variant="button"
+                />
               </div>
             </>
-          ) : (
-            <div className="flex justify-between">
-              <span className="font-black text-on-surface">Tổng cộng</span>
-              <span className="text-lg font-black text-primary">
-                {formatVND(
-                  details.amountDue > 0 ? details.amountDue : details.total
-                )}
-              </span>
-            </div>
           )}
         </div>
       </div>
 
-      {/* Bank Transfer Information */}
-      {details.bank && (
-        <div className="flex flex-wrap gap-3 rounded-2xl bg-surface-container p-4">
-          {/* Bank name */}
-          <div className="flex w-full items-center justify-between rounded-xl">
-            <div>
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-outline">
-                Ngân hàng
-              </p>
-              <div className="flex items-center gap-2 text-base font-bold text-on-surface">
-                {details.bank.bank_logo_url ? (
-                  <AdaptiveImage
-                    src={details.bank.bank_logo_url}
-                    alt="bank logo"
-                    width={120}
-                    height={60}
-                    className="object-contain"
-                  />
-                ) : null}
-                {/* <span>{details.bank.platform_name}</span> */}
-              </div>
-            </div>
-          </div>
-
-          {/* Account number */}
-          <div className="flex w-[calc(50%-0.375rem)] items-center justify-between rounded-xl">
-            <div>
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-outline">
-                Số tài khoản
-              </p>
-              <div className="text-base font-bold text-on-surface">
-                {details.bank.account_number}
-              </div>
-            </div>
-            <CopyButton
-              value={details.bank.account_number}
-              label="Số tài khoản"
-            />
-          </div>
-
-          {/* Account name */}
-          <div className="flex w-[calc(50%-0.375rem)] items-center justify-between rounded-xl">
-            <div>
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-outline">
-                Chủ tài khoản
-              </p>
-              <div className="text-base font-bold text-on-surface">
-                {details.bank.account_name}
-              </div>
-            </div>
-            <CopyButton
-              value={details.bank.account_name}
-              label="Chủ tài khoản"
-            />
-          </div>
-
-          {/* Transfer content / reference */}
-          <div className="flex max-w-max items-center justify-between rounded-xl">
-            <div>
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-outline">
-                Nội dung chuyển khoản
-              </p>
-              <div className="text-base font-bold text-primary">
-                {details.orderNumber}
-              </div>
-            </div>
-            <CopyButton
-              value={details.orderNumber}
-              label="Nội dung chuyển khoản"
-            />
-          </div>
+      {/* Auto-Listen Status Banner */}
+      {!details.active ? (
+        <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-amber-950">
+          <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-800" />
+          <p className="text-xs font-medium leading-relaxed text-amber-950">
+            <strong className="font-bold text-amber-950">Lưu ý:</strong> Đơn hàng hiện không ở trạng thái chờ thanh toán (đã hủy hoặc hết hạn). Thông tin tài khoản và mã QR Banking được lưu lại để đối soát.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+          <div className="h-4 w-4 shrink-0 rounded-full border-2 border-emerald-700 border-t-transparent animate-spin" />
+          <p className="text-xs leading-relaxed text-emerald-950">
+            <strong className="font-bold">Đang chờ tín hiệu chuyển khoản:</strong> Trang sẽ tự động hoàn tất và gửi thông báo ngay khi hệ thống ngân hàng ghi nhận giao dịch (thường từ 5–15 giây).
+          </p>
         </div>
       )}
-
-      {/* Security alert & verification notice */}
-      <div className="space-y-1">
-        <p className="rounded-xl bg-surface-container-low px-4 py-2 text-center text-xs text-on-surface-variant">
-          Kiểm tra đúng tên người nhận, số tài khoản và số tiền trong app ngân
-          hàng trước khi xác nhận.
-        </p>
-      </div>
-    </section>
+    </div>
   );
 }

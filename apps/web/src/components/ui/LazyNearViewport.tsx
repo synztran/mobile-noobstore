@@ -6,12 +6,14 @@ interface LazyNearViewportProps {
   children: ReactNode;
   fallback?: ReactNode;
   rootMargin?: string;
+  className?: string;
 }
 
 export function LazyNearViewport({
   children,
   fallback,
   rootMargin = "500px 0px",
+  className,
 }: LazyNearViewportProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -39,8 +41,8 @@ export function LazyNearViewport({
   }, [rootMargin, visible]);
 
   return (
-    <div ref={ref} className="min-h-0">
-      {visible ? children : fallback ?? null}
+    <div ref={ref} className={`min-h-0 ${className ?? ""}`}>
+      {visible ? children : (fallback ?? null)}
     </div>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
-import { useNewsletterSubscribe, useReleaseSubscribe } from "@/lib/react-query/newsletter/api/useNewsletterMutations";
+import {
+  useNewsletterSubscribe,
+  useReleaseSubscribe,
+} from "@/lib/react-query/newsletter/api/useNewsletterMutations";
 import { toast } from "@/lib/toast";
 import { trackNewsletterSubscribe } from "@/lib/analytics";
 import { useState } from "react";
@@ -34,50 +37,49 @@ export function NewsletterCTA() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-on-surface px-6 py-8 text-surface lg:rounded-3xl lg:py-12">
-      <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-primary/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-secondary/10 blur-2xl" />
+    <div className="relative mb-2 mt-10 overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary-fixed/60 via-surface-container-low to-surface-container-low p-5 sm:p-6 lg:mb-4 lg:mt-12 lg:flex lg:items-center lg:gap-10">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-secondary/10 blur-3xl" />
 
-      <div className="relative z-10 lg:flex lg:items-center lg:gap-12">
-        <div className="lg:flex-1">
-          <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-outline">
-            Nhận thông báo sớm nhất
-          </p>
-          <p className="mb-3 text-3xl font-black uppercase leading-tight tracking-tight lg:text-4xl">
-            HÃY LÀ
-            <br />
-            NGƯỜI ĐẦU TIÊN
-            <br />
-            BIẾT VỀ ƯU ĐÃI
-          </p>
-          <p className="mb-8 max-w-xs text-xs leading-relaxed text-outline lg:mb-0 lg:text-sm">
-            Đăng ký để nhận thông báo về sản phẩm mới, restock, groupbuy và ưu đãi
-            độc quyền trước mọi người.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 lg:flex-1 lg:max-w-md">
-          <input
-            type="email"
-            placeholder="email@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-surface outline-none transition-all duration-200 placeholder:text-outline focus:border-primary-fixed-dim focus:bg-white/10 focus:ring-2 focus:ring-primary-fixed-dim/30"
-          />
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isPending}
-            className="w-full rounded-xl bg-primary py-4 text-xs font-black uppercase tracking-widest text-on-primary transition-all duration-200 hover:brightness-110 active:scale-95 disabled:opacity-60"
-          >
-            {isPending ? (
-              <span className="loading loading-spinner loading-sm" />
-            ) : (
-              "ĐĂNG KÝ NGAY"
-            )}
-          </button>
-        </div>
+      <div className="relative z-10 lg:flex-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+          Nhận thông báo sớm nhất
+        </p>
+        <p className="mt-2 max-w-[30ch] text-xl font-black uppercase leading-tight tracking-tight text-on-surface sm:text-2xl">
+          Ưu đãi mới, đến tay bạn trước.
+        </p>
+        <p className="mt-2 max-w-[52ch] text-xs leading-relaxed text-on-surface-variant">
+          Sản phẩm mới, restock, group buy và ưu đãi độc quyền — gửi thẳng vào
+          hộp thư của bạn.
+        </p>
       </div>
-    </section>
+
+      <div className="relative z-10 mt-4 flex flex-col gap-2 sm:flex-row lg:mt-0 lg:w-[min(420px,46%)]">
+        <label htmlFor="newsletter-email" className="sr-only">
+          Email nhận thông báo
+        </label>
+        <input
+          id="newsletter-email"
+          type="email"
+          placeholder="email@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          className="w-full min-w-0 rounded-xl border border-outline-variant/60 bg-surface px-4 py-3 text-sm text-on-surface outline-none transition-all duration-200 placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isPending}
+          className="shrink-0 rounded-xl bg-primary px-6 py-3 text-xs font-black uppercase tracking-widest text-on-primary transition-all duration-200 hover:brightness-110 active:scale-95 disabled:opacity-60"
+        >
+          {isPending ? (
+            <span className="loading loading-spinner loading-sm" />
+          ) : (
+            "ĐĂNG KÝ NGAY"
+          )}
+        </button>
+      </div>
+    </div>
   );
 }

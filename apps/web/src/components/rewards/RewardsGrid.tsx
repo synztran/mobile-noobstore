@@ -1,6 +1,6 @@
 "use client";
 
-import { Gift } from "lucide-react";
+import { ArrowDown, Gift } from "lucide-react";
 import type { RewardItem, RewardsResponse } from "@/types/reward";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useRef } from "react";
@@ -47,57 +47,116 @@ export function RewardsGrid({ balance, onRedeem }: Props) {
     [hasNextPage, isFetchingNextPage, fetchNextPage]
   );
 
+  const loadMore = () => {
+    if (!isFetchingNextPage) void fetchNextPage();
+  };
+
   const rewards = data?.pages.flatMap((p) => p.rewards) ?? [];
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-2">
-        {[1, 2, 3, 4].map((i) => (
-          <RewardCardSkeleton key={i} />
-        ))}
-      </div>
+      <>
+        <div className="mb-4 hidden items-end justify-between lg:flex">
+          <div>
+            <h2 className="text-xl font-extrabold tracking-tight text-on-surface">
+              Quà dành cho bạn
+            </h2>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Đổi điểm NSP hoặc điểm chuyên cần lấy phần thưởng
+            </p>
+          </div>
+          <span className="text-xs text-on-surface-variant">Đang tải quà…</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <RewardCardSkeleton key={i} />
+          ))}
+        </div>
+      </>
     );
   }
 
   if (rewards.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-4 py-16">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
-          <Gift size={24} className="text-outline-variant" />
+      <>
+        <div className="mb-4 hidden items-end justify-between lg:flex">
+          <div>
+            <h2 className="text-xl font-extrabold tracking-tight text-on-surface">
+              Quà dành cho bạn
+            </h2>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              Đổi điểm NSP hoặc điểm chuyên cần lấy phần thưởng
+            </p>
+          </div>
+          <span className="text-xs text-on-surface-variant">0 phần thưởng</span>
         </div>
-        <p className="text-center text-sm font-semibold text-on-surface-variant">
-          Chưa có phần thưởng nào
-        </p>
-      </div>
+        <div className="flex flex-col items-center gap-4 py-16 lg:col-span-9">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
+            <Gift size={24} className="text-outline-variant" />
+          </div>
+          <p className="text-center text-sm font-semibold text-on-surface-variant">
+            Chưa có phần thưởng nào
+          </p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {rewards.map((reward) => (
-        <RewardCard
-          key={reward.id}
-          reward={reward}
-          onRedeem={onRedeem}
-          balance={balance}
-        />
-      ))}
-      {hasNextPage && (
-        <div ref={sentinelRef} className="col-span-2 flex justify-center py-4">
-          {isFetchingNextPage ? (
-            <span className="loading loading-spinner loading-sm text-primary" />
-          ) : (
-            <div className="h-4" />
-          )}
+    <>
+      <div className="mb-4 hidden items-end justify-between lg:flex">
+        <div>
+          <h2 className="text-xl font-extrabold tracking-tight text-on-surface">
+            Quà dành cho bạn
+          </h2>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            Đổi điểm NSP hoặc điểm chuyên cần lấy phần thưởng
+          </p>
         </div>
+        <span className="text-xs text-on-surface-variant">
+          {data?.pages[0]?.total ?? rewards.length} phần thưởng
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3">
+        {rewards.map((reward) => (
+          <RewardCard
+            key={reward.id}
+            reward={reward}
+            onRedeem={onRedeem}
+            balance={balance}
+          />
+        ))}
+        {hasNextPage && (
+          <div
+            ref={sentinelRef}
+            className="col-span-full flex justify-center py-4 lg:hidden"
+          >
+            {isFetchingNextPage ? (
+              <span className="loading loading-spinner loading-sm text-primary" />
+            ) : (
+              <div className="h-4" />
+            )}
+          </div>
+        )}
+      </div>
+      {hasNextPage && (
+        <button
+          type="button"
+          onClick={loadMore}
+          disabled={isFetchingNextPage}
+          className="mx-auto mt-3 hidden items-center gap-1 rounded-full bg-surface-container px-4 py-2 text-xs font-bold text-primary hover:bg-surface-container-high disabled:opacity-60 lg:flex"
+        >
+          {isFetchingNextPage ? "Đang tải…" : "Xem thêm"}{" "}
+          <ArrowDown size={14} />
+        </button>
       )}
-    </div>
+    </>
   );
 }
 
 function RewardCardSkeleton() {
   return (
-    <div className="animate-pulse space-y-2 rounded-2xl bg-surface-container-lowest p-3 shadow-ambient-sm">
+    <div className="animate-pulse space-y-2 rounded-2xl bg-surface-container-lowest p-3 shadow-ambient-sm lg:min-h-[220px] lg:rounded-xl lg:border lg:border-surface-container-high">
       <div className="mx-auto h-10 w-10 rounded-xl bg-surface-container" />
       <div className="space-y-1.5 text-center">
         <div className="mx-auto h-3 w-3/4 rounded-full bg-surface-container" />

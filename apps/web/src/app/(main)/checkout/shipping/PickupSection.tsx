@@ -6,6 +6,7 @@ import "react-wheel-scroller/styles.css";
 import clsx from "clsx";
 import { Calendar, Clock, Store } from "lucide-react";
 import { memo, useMemo } from "react";
+import { getPickupTimeOptions } from "@/lib/pickup-slot";
 
 interface Props {
   hasPreOrder: boolean;
@@ -80,14 +81,18 @@ function PickupSection({
   const dateInvalid = isPickupFieldInvalid("pickupDate");
 
   const timeData = useMemo(
-    () =>
-      pickupTime
-        ? pickupSlots.map((s) => ({ text: s, value: s }))
-        : [
-            TIME_PLACEHOLDER,
-            ...pickupSlots.map((s) => ({ text: s, value: s })),
-          ],
-    [pickupSlots, pickupTime]
+    () => {
+      const now = new Date();
+      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      const slots = getPickupTimeOptions({
+        slots: pickupSlots,
+        selectedDate: pickupDate,
+        today: localToday,
+        nowMinutes: now.getHours() * 60 + now.getMinutes(),
+      });
+      return pickupTime ? slots : [TIME_PLACEHOLDER, ...slots];
+    },
+    [pickupSlots, pickupTime, pickupDate, minPickupDate]
   );
 
   return (
@@ -177,6 +182,7 @@ function PickupSection({
             </label>
             <div className="relative">
               <WsSelect
+                key={`${pickupDate}:${pickupSlots.join(",")}:${pickupTime ? "selected" : "empty"}`}
                 data={timeData}
                 dataText="text"
                 dataValue="value"

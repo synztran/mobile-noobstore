@@ -13,6 +13,7 @@ import type {
   ComponentVariantRule,
   ConfiguratorGroup,
   ProductDetail,
+  ProductAddonDeal,
   ShopProduct,
   ShopVariantDetail,
 } from "@/modules/products/types";
@@ -124,9 +125,9 @@ export const getCategories = cache(async function getCategories(): Promise<
 type RawVariantRow = {
   id: string;
   variant_name: string;
-  price_adjustment: number;
+  price_adjustment: number | null;
   thumbnail: string | null;
-  stock_quantity: number;
+  stock_quantity: number | null;
   is_pre_order: boolean;
   pre_order_config: unknown;
   attributes: unknown;
@@ -137,15 +138,15 @@ type RawListRow = {
   slug: string;
   name: string;
   brand: string | null;
-  description: string;
+  description: string | null;
   base_price: number;
-  stock_quantity: number;
+  stock_quantity: number | null;
   thumbnail: string | null;
   images: unknown;
   product_type: string;
-  is_used: boolean;
-  is_pre_order: boolean;
-  sold_count: number;
+  is_used: boolean | null;
+  is_pre_order: boolean | null;
+  sold_count: number | null;
   categories: { id: string; name: string } | null;
   product_variants: RawVariantRow[] | null;
 };
@@ -331,6 +332,7 @@ export interface GetProductsParams {
   productTypes?: Array<"standard" | "kit" | "component">;
   /** Trim list payload (excerpt description, one variant for standards). */
   slim?: boolean;
+  includeImages?: boolean;
   /**
    * Sink sold-out products below available ones. Availability is derived in
    * JS, so this switches off SQL pagination and slices after partitioning —
@@ -348,6 +350,8 @@ export interface GetNoteworthyProductsParams {
 export interface GetQuickPickDataParams {
   categorySlug?: string;
   productId?: string;
+  brand?: string;
+  excludeProductId?: string;
   search?: string;
   limit?: number;
   sort?: "newest" | "price_asc" | "price_desc";
@@ -355,6 +359,7 @@ export interface GetQuickPickDataParams {
 
 export interface QuickPickData {
   products: ShopProduct[];
+  brandAlternatives: ShopProduct[];
   configuratorByProductId: Record<string, ConfiguratorGroup[]>;
   rulesByProductId: Record<string, ComponentVariantRule[]>;
   activeProduct: ShopProduct | null;
@@ -379,6 +384,7 @@ export const getProducts = cache(async function getProducts(
     limit,
     offset = 0,
     slim = false,
+    includeImages = false,
     soldOutLast = false,
   } = params;
 
@@ -393,6 +399,7 @@ export const getProducts = cache(async function getProducts(
       limit,
       offset,
       slim,
+      includeImages,
       soldOutLast,
     });
     const cached = await getCache<{ products: ShopProduct[]; total: number }>(
@@ -411,6 +418,7 @@ export const getProducts = cache(async function getProducts(
       excludeUncategorized: true,
       offset,
       slim,
+      includeImages,
       soldOutLast,
     });
 
@@ -567,19 +575,66 @@ export const getQuickPickData = cache(async function getQuickPickData(
   const {
     categorySlug = "",
     productId,
+    brand = "",
+    excludeProductId,
     search = "",
     limit,
     sort = "newest",
   } = params;
 
   try {
-    const cacheKey = `${CACHE_VERSION}:quick-pick:${categorySlug}:${productId ?? ""}:${search}:${limit ?? ""}:${sort}`;
+    const cacheKey = `${CACHE_VERSION}:quick-pick:${categorySlug}:${productId ?? ""}:${brand}:${excludeProductId ?? ""}:${search}:${limit ?? ""}:${sort}`;
     const cached = await getCache<QuickPickData>(cacheKey);
     if (cached) return cached;
+
+    if (brand.trim()) {
+      let brandQuery = getPublicClient()
+        .from("products")
+        .select("id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_pre_order, sold_count, categories(id, name), product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)")
+        .ilike("brand", brand.trim())
+        .eq("is_active", true)
+        .neq("product_type", "gift")
+        .in("product_type", ["standard", "kit"])
+        .order("name", { ascending: true });
+      if (excludeProductId) brandQuery = brandQuery.neq("id", excludeProductId);
+      const { data: brandRows, error: brandError } = await brandQuery.limit(32);
+      if (brandError) {
+        console.error("[getQuickPickData] Same-brand query failed:", brandError);
+        throw brandError;
+      }
+      const ids = (brandRows ?? []).map((row) => row.id);
+      const { kitSupplements, giftsByProductId } = ids.length
+        ? await prepareSupplements(
+            ids,
+            (brandRows ?? []).filter((row) => row.product_type === "kit").map((row) => row.id)
+          )
+        : {
+            kitSupplements: {
+              childVariantsByProductId: new Map(),
+              requiredMinPriceByProductId: new Map(),
+              kitStockById: new Map(),
+            } as KitSupplement,
+            giftsByProductId: new Map(),
+          };
+      const brandAlternatives = (brandRows ?? [])
+        .map((row) => shapeRow(row, kitSupplements, giftsByProductId))
+        .slice(0, 8);
+      const alternativesResult: QuickPickData = {
+        products: [],
+        brandAlternatives,
+        configuratorByProductId: {},
+        rulesByProductId: {},
+        activeProduct: null,
+        total: brandAlternatives.length,
+      };
+      await setCache(cacheKey, alternativesResult, 60);
+      return alternativesResult;
+    }
 
     const shouldFetchProductList = Boolean(categorySlug || search || limit);
 
     let products: ShopProduct[] = [];
+    let brandAlternatives: ShopProduct[] = [];
     let activeProduct: ShopProduct | null = null;
     let configuratorByProductId: Record<string, ConfiguratorGroup[]> = {};
     let rulesByProductId: Record<string, ComponentVariantRule[]> = {};
@@ -906,6 +961,7 @@ export const getQuickPickData = cache(async function getQuickPickData(
 
     const quickPickResult: QuickPickData = {
       products,
+      brandAlternatives,
       configuratorByProductId,
       rulesByProductId,
       activeProduct,
@@ -917,6 +973,7 @@ export const getQuickPickData = cache(async function getQuickPickData(
     console.error("[getQuickPickData] Unexpected error:", err);
     return {
       products: [],
+      brandAlternatives: [],
       configuratorByProductId: {},
       rulesByProductId: {},
       activeProduct: null,
@@ -926,16 +983,17 @@ export const getQuickPickData = cache(async function getQuickPickData(
 });
 
 /**
- * Fetch the N newest products for use in server components.
- * Cached with React.cache() (per‑render deduplication) + Redis (cross‑request, 120s TTL).
+ * Shared rail loader: newest products and best sellers use the same row shape,
+ * kit/gift supplements, and Redis cache; only the ordering differs.
+ * Cached with React.cache() (per-render deduplication) + Redis (120s TTL).
  */
-export const getNewestProducts = cache(async function getNewestProducts(
-  limit: number
+async function getProductRail(
+  cacheKey: string,
+  limit: number,
+  order: { column: "created_at" | "sold_count"; ascending?: boolean }
 ): Promise<ShopProduct[]> {
   try {
-    const cached = await getCache<ShopProduct[]>(
-      `${CACHE_VERSION}:newest-products:${limit}`
-    );
+    const cached = await getCache<ShopProduct[]>(cacheKey);
     if (cached) return cached;
 
     const { data, error } = await getPublicClient()
@@ -948,10 +1006,12 @@ export const getNewestProducts = cache(async function getNewestProducts(
       .eq("is_active", true)
       .neq("product_type", "gift")
       .in("product_type", ["standard", "kit"])
+      .order(order.column, { ascending: order.ascending ?? false })
+      .order("id", { ascending: true })
       .limit(limit);
 
     if (error) {
-      console.error("[getNewestProducts] Supabase error:", error.message);
+      console.error(`[${cacheKey}] Supabase error:`, error.message);
       return [];
     }
     if (!data) return [];
@@ -970,12 +1030,30 @@ export const getNewestProducts = cache(async function getNewestProducts(
       shapeRow(row, kitSupplements, giftsByProductId)
     );
 
-    await setCache(`${CACHE_VERSION}:newest-products:${limit}`, products, 120);
+    await setCache(cacheKey, products, 120);
     return products;
   } catch (err) {
-    console.error("[getNewestProducts] Unexpected error:", err);
+    console.error(`[${cacheKey}] Unexpected error:`, err);
     return [];
   }
+}
+
+/** Fetch the N newest products for use in server components. */
+export const getNewestProducts = cache(async function getNewestProducts(
+  limit: number
+): Promise<ShopProduct[]> {
+  return getProductRail(`${CACHE_VERSION}:newest-products:${limit}`, limit, {
+    column: "created_at",
+  });
+});
+
+/** Fetch the N best-selling products (products.sold_count) for home rails. */
+export const getBestSellers = cache(async function getBestSellers(
+  limit: number
+): Promise<ShopProduct[]> {
+  return getProductRail(`${CACHE_VERSION}:best-sellers:${limit}`, limit, {
+    column: "sold_count",
+  });
 });
 
 /**
@@ -1072,6 +1150,96 @@ export const getFrequentlyBoughtTogether = unstable_cache(
   ["frequently-bought-together"],
   { revalidate: 300, tags: ["products"] }
 );
+
+/**
+ * Get configured product add-ons from `product_addons`.
+ * If manual add-ons exist, returns them formatted with computed discount.
+ * Fallback to empty array if no manual add-ons exist.
+ */
+export async function getProductAddonDeals(
+  productId: string
+): Promise<ProductAddonDeal[]> {
+  try {
+    const supabase = getPublicClient();
+    const { data: rows } = await (supabase as any)
+      .from("product_addons")
+      .select("id, addon_product_id, discount_type, discount_value, sort_order")
+      .eq("main_product_id", productId)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (!rows || rows.length === 0) return [];
+
+    type AddonRow = {
+      id: string;
+      addon_product_id: string;
+      discount_type: "percentage" | "fixed_amount";
+      discount_value: number;
+      sort_order: number;
+    };
+    const typedRows = rows as AddonRow[];
+    const addonIds = typedRows.map((r) => r.addon_product_id);
+    const { data: products } = await getPublicClient()
+      .from("products")
+      .select(
+        `id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_active, sold_count,
+       categories(id, name),
+       product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)`
+      )
+      .eq("is_active", true)
+      .in("id", addonIds);
+
+    if (!products) return [];
+
+    const rawRows = products as unknown as RawListRow[];
+    const kitIds = rawRows
+      .filter((r) => r.product_type === "kit")
+      .map((r) => r.id);
+    const allIds = rawRows.map((r) => r.id);
+    const { kitSupplements, giftsByProductId } = await prepareSupplements(
+      allIds,
+      kitIds
+    );
+
+    const shapedProducts = new Map(
+      rawRows.map((r) => [r.id, shapeRow(r, kitSupplements, giftsByProductId)])
+    );
+
+    const deals: ProductAddonDeal[] = [];
+    for (const row of typedRows) {
+      const prod = shapedProducts.get(row.addon_product_id);
+      if (!prod) continue;
+      const basePrice = prod.min_price || prod.base_price || 0;
+      let discountedPrice = basePrice;
+      let savedAmount = 0;
+
+      if (row.discount_type === "percentage") {
+        const pct = Math.min(100, Math.max(0, Number(row.discount_value)));
+        savedAmount = Math.round((basePrice * pct) / 100);
+        discountedPrice = Math.max(0, basePrice - savedAmount);
+      } else {
+        const fixed = Math.max(0, Number(row.discount_value));
+        savedAmount = Math.min(basePrice, fixed);
+        discountedPrice = Math.max(0, basePrice - savedAmount);
+      }
+
+      deals.push({
+        id: row.id,
+        addon_product_id: row.addon_product_id,
+        discount_type: row.discount_type as "percentage" | "fixed_amount",
+        discount_value: Number(row.discount_value),
+        sort_order: row.sort_order,
+        product: prod,
+        discounted_price: discountedPrice,
+        saved_amount: savedAmount,
+      });
+    }
+
+    return deals;
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Get the number of times a product has been purchased (delivered orders).

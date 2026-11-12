@@ -44,7 +44,7 @@ export function OurStrongPoints() {
   return (
     <section
       ref={sectionRef}
-      className={`relative overflow-hidden bg-[#221210] px-6 py-8 text-surface transition-all duration-700 md:rounded-3xl lg:px-8 ${
+      className={`relative flex h-full flex-col justify-center overflow-hidden bg-[#221210] px-6 py-8 text-surface transition-all duration-700 md:rounded-3xl lg:px-8 ${
         visible ? "opacity-100" : "translate-y-4 opacity-0"
       }`}
     >

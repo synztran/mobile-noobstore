@@ -9,6 +9,8 @@ export async function GET(req: NextRequest) {
 
 	const categorySlug = sp.get("categorySlug")?.trim() ?? "";
 	const productId = sp.get("productId")?.trim() ?? "";
+	const brand = sp.get("brand")?.trim() ?? "";
+	const excludeProductId = sp.get("excludeProductId")?.trim() ?? "";
 	const search = sp.get("search")?.trim() ?? "";
 	const limit = sp.get("limit")?.trim() ?? "";
 	const sortRaw = sp.get("sort")?.trim() ?? "newest";
@@ -25,12 +27,16 @@ export async function GET(req: NextRequest) {
 				search,
 				limit,
 				sort,
+				brand,
+				excludeProductId,
 			),
 			600,
 			() =>
 				getQuickPickData({
 					categorySlug,
 					productId: productId || undefined,
+					brand,
+					excludeProductId,
 					search,
 					limit: limit ? Number(limit) : undefined,
 					sort,

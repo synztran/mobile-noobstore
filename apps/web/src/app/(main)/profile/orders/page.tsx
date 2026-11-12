@@ -7,6 +7,7 @@ import OrderStatusTabs, {
 } from "@/components/orders/OrderStatusTabs";
 import { ServiceOrderDetailDrawer } from "@/components/orders/ServiceOrderDetailDrawer";
 import { SupportFAB } from "@/components/support/SupportFAB";
+import { DesktopAccountSidebar } from "@/components/profile/DesktopAccountSidebar";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { formatVND } from "@/lib/currency";
@@ -252,8 +253,49 @@ function OrdersPage() {
   const rendered = authLoading || isLoading;
   const empty = !rendered && allOrders.length === 0;
 
+  const renderOrders = (desktop: boolean) => rendered ? (
+    <OrderSkeleton />
+  ) : empty ? (
+    <div className="flex flex-col items-center justify-center gap-4 py-20">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container"><ReceiptText size={28} className="text-outline-variant" /></div>
+      <p className="text-sm font-semibold text-on-surface-variant">{q || activeStatus !== "all" ? "Không tìm thấy đơn hàng" : "Chưa có đơn hàng nào"}</p>
+    </div>
+  ) : desktop ? (
+    <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-ambient-sm">
+      <table className="w-full text-left text-sm">
+        <thead className="border-b border-outline-variant/30 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant"><tr><th className="px-5 py-3">Mã đơn</th><th className="px-5 py-3">Ngày đặt</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3 text-right">Tổng tiền</th></tr></thead>
+        <tbody className="divide-y divide-outline-variant/20">{allOrders.map((order) => <tr key={order.id} className="hover:bg-surface-container-low/60">
+          <td className="px-5 py-4"><button type="button" onClick={() => order.service_line_count > 0 && order.item_count === 0 ? setSelectedServiceOrderId(order.id) : setSelectedOrderId(order.id)} className="min-h-11 font-black tracking-wide text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">{order.order_number ?? `#${order.id}`}</button></td>
+          <td className="whitespace-nowrap px-5 py-4 text-on-surface-variant">{new Date(order.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
+          <td className="px-5 py-4"><StatusBadge status={order.status} /></td><td className="px-5 py-4 text-on-surface-variant">{order.item_count} sản phẩm</td><td className="whitespace-nowrap px-5 py-4 text-right font-black text-on-surface">{formatVND(order.total_price)}{order.status === "delivered" && (order.points_earned ?? 0) > 0 && <span className="ml-2 text-xs text-amber-600">+{order.points_earned} NSP</span>}</td>
+        </tr>)}</tbody>
+      </table>
+      {isFetchingNextPage && <LoadMoreSkeleton />}
+    </div>
+  ) : (
+    <div className="space-y-3">
+      {allOrders.map((order) => <button key={order.id} onClick={() => order.service_line_count > 0 && order.item_count === 0 ? setSelectedServiceOrderId(order.id) : setSelectedOrderId(order.id)} className="w-full space-y-3 rounded-3xl bg-surface-container-lowest p-4 text-left shadow-ambient-sm transition-transform active:scale-[0.99]">
+        <div className="flex w-full flex-col gap-2"><div className="flex items-center justify-between gap-2"><span className="text-sm font-black tracking-widest text-primary">{order.order_number ?? `#${order.id}`}</span><StatusBadge status={order.status} /></div><span className="text-xs text-on-surface-variant">{new Date(order.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span></div>
+        <div className="flex items-center justify-between"><span className="text-xs font-medium text-on-surface-variant">{order.item_count} sản phẩm</span><span className="text-base font-black text-on-surface">{formatVND(order.total_price)}{order.status === "delivered" && (order.points_earned ?? 0) > 0 && <span className="ml-2 text-xs text-amber-600">+{order.points_earned} NSP</span>}</span></div>
+      </button>)}
+      {isFetchingNextPage && <LoadMoreSkeleton />}{hasNextPage && !isFetchingNextPage && <div className="flex items-center justify-center py-2 text-xs text-on-surface-variant"><Loader2 size={14} className="mr-2 animate-spin" />Đang tải thêm đơn hàng...</div>}
+    </div>
+  );
+
   return (
-    <div className="space-y-5 px-4 pb-24 pt-2">
+    <>
+    <div className="hidden px-6 pb-16 pt-8 lg:block">
+      <div className="mx-auto grid max-w-7xl grid-cols-[15rem_minmax(0,1fr)] gap-8">
+        <DesktopAccountSidebar activeHref="/profile/orders" />
+        <main className="min-w-0 space-y-5">
+          <div className="flex items-end justify-between"><div><h1 className="text-3xl font-extrabold text-on-surface">Đơn hàng của tôi</h1><p className="mt-1 text-sm text-on-surface-variant">{total} đơn hàng</p></div></div>
+          <div className="flex items-center gap-3 rounded-2xl border-2 border-transparent bg-surface-container px-4 py-3 focus-within:border-primary"><Search size={18} className="flex-shrink-0 text-outline-variant" /><input type="text" placeholder="Tìm theo mã đơn, mã giao dịch..." value={q} onChange={(e) => setQ(e.target.value)} className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40" />{q && <button aria-label="Xoá tìm kiếm" onClick={() => setQ("")}><X size={18} /></button>}</div>
+          <OrderStatusTabs value={activeStatus} onChange={setActiveStatus} options={STATUS_TABS.map((tab) => ({ ...tab, count: statusCounts[tab.value] ?? 0 }))} />
+          {renderOrders(true)}
+        </main>
+      </div>
+    </div>
+    <div className="space-y-5 px-4 pb-24 pt-2 lg:hidden">
       {/* Header */}
       <div className="mb-2 flex items-center gap-3">
         <Link
@@ -302,121 +344,15 @@ function OrdersPage() {
       />
 
       {/* List */}
-      {rendered ? (
-        <OrderSkeleton />
-      ) : empty ? (
-        <div className="flex flex-col items-center justify-center gap-4 py-20">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
-            <ReceiptText size={28} className="text-outline-variant" />
-          </div>
-          <p className="text-sm font-semibold text-on-surface-variant">
-            {q || activeStatus !== "all"
-              ? "Không tìm thấy đơn hàng"
-              : "Chưa có đơn hàng nào"}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {allOrders.map((order) => (
-            <button
-              key={order.id}
-              onClick={() =>
-                order.service_line_count > 0 && order.item_count === 0
-                  ? setSelectedServiceOrderId(order.id)
-                  : setSelectedOrderId(order.id)
-              }
-              className="w-full space-y-3 rounded-3xl bg-surface-container-lowest p-4 text-left shadow-ambient-sm transition-transform active:scale-[0.99]"
-            >
-              {/* Row 1: order number + status */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex w-full flex-col gap-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-black tracking-widest text-primary">
-                      {order.order_number ?? `#${order.id}`}
-                    </span>
-                    <StatusBadge status={order.status} />
-                  </div>
-                  <span className="text-xs text-on-surface-variant">
-                    {new Date(order.created_at).toLocaleDateString("vi-VN", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              </div>
-
-              {/* Row 2: items count + total */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-on-surface-variant">
-                  {order.item_count} sản phẩm
-                </span>
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-base font-black text-on-surface">
-                    {formatVND(order.total_price)}
-                  </span>
-                  {order.status === "delivered" &&
-                    order.points_earned != null &&
-                    order.points_earned > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-600">
-                        <svg
-                          width="10"
-                          height="10"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          aria-hidden="true"
-                        >
-                          <circle
-                            cx="10"
-                            cy="10"
-                            r="10"
-                            className="fill-amber-200"
-                          />
-                          <text
-                            x="50%"
-                            y="50%"
-                            dominantBaseline="central"
-                            textAnchor="middle"
-                            fontSize="12"
-                            fontWeight="900"
-                            fill="#d97706"
-                          >
-                            P
-                          </text>
-                        </svg>
-                        +{order.points_earned} NSP
-                      </span>
-                    )}
-                </div>
-              </div>
-            </button>
-          ))}
-
-          {isFetchingNextPage ? <LoadMoreSkeleton /> : null}
-
-          <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-2" />
-
-          {hasNextPage && !isFetchingNextPage ? (
-            <div className="flex items-center justify-center py-2 text-xs text-on-surface-variant">
-              <Loader2 size={14} className="mr-2 animate-spin" />
-              Đang tải thêm đơn hàng...
-            </div>
-          ) : null}
-        </div>
-      )}
-
-      <OrderDetailDrawer
-        orderId={selectedOrderId}
-        onClose={handleCloseDetail}
-      />
-      <ServiceOrderDetailDrawer
-        orderId={selectedServiceOrderId}
-        onClose={() => setSelectedServiceOrderId(null)}
-      />
+      {renderOrders(false)}
       <SupportFAB />
     </div>
+    {hasNextPage && <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-2" />}
+    <OrderDetailDrawer orderId={selectedOrderId} onClose={handleCloseDetail} />
+      <div className="lg:hidden">
+        <ServiceOrderDetailDrawer orderId={selectedServiceOrderId} onClose={() => setSelectedServiceOrderId(null)} />
+      </div>
+    </>
   );
 }
 

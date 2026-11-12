@@ -6,8 +6,8 @@ import {
   useClearCart,
   useRemoveCartItem,
   useUpdateCartItem,
-} from "@/modules/cart/client/mutations";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+} from "@/modules/cart/client/react-query/mutations";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { cartItemToGA, trackRemoveFromCart } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";

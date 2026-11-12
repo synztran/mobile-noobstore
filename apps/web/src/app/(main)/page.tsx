@@ -1,12 +1,15 @@
 import { AnnouncementBanner } from "@/components/home/AnnouncementBanner";
-import { CommunityGallery } from "@/components/home/CommunityGallery";
+import { DesktopHomeDock } from "@/components/home/DesktopHomeDock";
 import { CommunityPromo } from "@/components/home/CommunityPromo";
-import { CustomerTestimonial } from "@/components/home/CustomerTestimonial";
 import { FlashSaleStrip } from "@/components/home/FlashSaleStrip";
+import { GachaFeatureSlot } from "@/components/home/GachaFeatureSlot";
+import { HomeBlogSection } from "@/components/home/HomeBlogSection";
+import { HotDropsSection } from "@/components/home/HotDropsSection";
+import { NewArrivalsSection } from "@/components/home/NewArrivalsSection";
+import { NewsletterCTA } from "@/components/home/NewsletterCTA";
 import { OurStrongPoints } from "@/components/home/OurStrongPoints";
 import { HeroSection } from "@/components/home/HeroSection";
 import { HomeTestimonials } from "@/components/home/HomeTestimonials";
-import { NewsletterCTA } from "@/components/home/NewsletterCTA";
 import { NoteworthySection } from "@/components/home/NoteworthySection";
 import { HomeSaleSection } from "@/components/home/SaleSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
@@ -30,36 +33,45 @@ export const metadata: Metadata = buildOg({
 
 export default function HomePage() {
   return (
-    <div className="relative clear-both mx-auto max-w-7xl space-y-8">
+    <div className="relative clear-both mx-auto max-w-7xl space-y-6 lg:space-y-8">
       <Suspense fallback={<AnnouncementBanner />}>
         <AnnouncementBannerInitial />
       </Suspense>
       <Suspense fallback={<HeroFallback />}>
         <HeroSectionInitial />
       </Suspense>
+      <DesktopHomeDock />
       <NoteworthySection />
+      <Suspense fallback={<HomeProductRailFallback />}>
+        <NewArrivalsSection />
+      </Suspense>
       <Suspense fallback={null}>
         <FlashSaleStripInitial />
       </Suspense>
       <HomeSaleSection />
-      <LazyNearViewport>
-        <OurStrongPoints />
-      </LazyNearViewport>
-      <LazyNearViewport>
-        <CommunityPromo />
-      </LazyNearViewport>
-      <LazyNearViewport>
-        <CommunityGallery />
-      </LazyNearViewport>
-      <LazyNearViewport>
-        <CustomerTestimonial />
-      </LazyNearViewport>
+      <Suspense fallback={<HomeProductRailFallback />}>
+        <HotDropsSection />
+      </Suspense>
+      <div className="hidden lg:block">
+        <GachaFeatureSlot />
+      </div>
+      <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:space-y-0">
+        <LazyNearViewport className="h-full">
+          <OurStrongPoints />
+        </LazyNearViewport>
+        <LazyNearViewport className="h-full">
+          <CommunityPromo />
+        </LazyNearViewport>
+      </div>
       <LazyNearViewport>
         <HomeTestimonials />
       </LazyNearViewport>
-      <LazyNearViewport>
+      {/* <Suspense fallback={<HomeBlogFallback />}>
+        <HomeBlogSection />
+      </Suspense> */}
+      <div className="px-4 lg:px-0">
         <NewsletterCTA />
-      </LazyNearViewport>
+      </div>
       <HomeFooter />
     </div>
   );
@@ -111,6 +123,50 @@ function HeroFallback() {
           </div>
           <div className="mt-2 h-12 w-full rounded-xl bg-surface-container-high" />
         </div>
+      </div>
+    </section>
+  );
+}
+
+function HomeProductRailFallback() {
+  return (
+    <section aria-hidden="true" className="bg-surface lg:rounded-3xl lg:p-8">
+      <div className="mb-4 h-7 w-48 animate-pulse rounded-lg bg-surface-container" />
+      <div className="hide-scrollbar flex gap-4 overflow-hidden px-6 pb-2 lg:gap-5 lg:px-0">
+        {Array.from({ length: 5 }, (_, index) => (
+          <div
+            key={index}
+            className="w-[min(62vw,260px)] shrink-0 animate-pulse space-y-3 sm:w-[min(46vw,280px)] lg:w-[calc((100%-2*1.25rem)/2.6)]"
+          >
+            <div className="aspect-square rounded-2xl bg-surface-container" />
+            <div className="h-3 w-1/3 rounded bg-surface-container" />
+            <div className="h-4 w-4/5 rounded bg-surface-container" />
+            <div className="h-4 w-1/2 rounded bg-surface-container" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeBlogFallback() {
+  return (
+    <section aria-hidden="true" className="px-6 lg:px-0">
+      <div className="mb-4 h-7 w-36 animate-pulse rounded-lg bg-surface-container" />
+      <div className="grid gap-4 sm:grid-cols-3">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div
+            key={index}
+            className="animate-pulse overflow-hidden rounded-2xl bg-surface-container-low"
+          >
+            <div className="aspect-[16/9] bg-surface-container" />
+            <div className="space-y-3 p-4">
+              <div className="h-4 w-20 rounded-full bg-surface-container" />
+              <div className="h-4 w-full rounded bg-surface-container" />
+              <div className="h-3 w-2/3 rounded bg-surface-container" />
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

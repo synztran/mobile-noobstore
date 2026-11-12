@@ -18,6 +18,7 @@ import {
 } from "@/lib/og";
 import { Suspense } from "react";
 import { BoughtTogetherSection } from "@/modules/products/ui/product/BoughtTogetherSection";
+import { AddonDealTeaserSection } from "@/modules/products/ui/product/AddonDealTeaserSection";
 import { RelatedProductsSection } from "@/modules/products/ui/product/RelatedProductsSection";
 import { ScrollToTopOnNav } from "./ScrollToTopOnNav";
 
@@ -237,7 +238,12 @@ async function ProductLoader({ slug }: { slug: string }) {
         }
         boughtTogetherSlot={
           <Suspense key="bought-together" fallback={<RailSkeleton />}>
-            <BoughtTogetherSection productId={detail.product.id} />
+            <BoughtTogetherSection product={detail.product} />
+          </Suspense>
+        }
+        addonTeaserSlot={
+          <Suspense key="addon-teaser" fallback={null}>
+            <AddonDealTeaserSection product={detail.product} />
           </Suspense>
         }
       />

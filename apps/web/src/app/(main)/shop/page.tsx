@@ -35,7 +35,7 @@ export const metadata: Metadata = buildOg({
 
 export default function ShopPage(props: ShopPageProps) {
   return (
-    <div className="clear-both p-4">
+    <div className="clear-both p-4 pb-10 lg:px-0 lg:pb-10 lg:pt-0">
       <Suspense fallback={<ShopFallback />}>
         <ShopContent searchParams={props.searchParams} />
       </Suspense>
@@ -113,12 +113,17 @@ function ShopControlsSkeleton() {
 
 function ShopFallback() {
   return (
-    <div>
-      <ShopControlsSkeleton />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
-        {Array.from({ length: 8 }, (_, i) => (
-          <ProductCardSkeleton key={i} />
-        ))}
+    <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <div className="hidden lg:block">
+        <div className="h-[420px] animate-pulse rounded-2xl bg-surface-container" />
+      </div>
+      <div>
+        <ShopControlsSkeleton />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }, (_, i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
       </div>
     </div>
   );

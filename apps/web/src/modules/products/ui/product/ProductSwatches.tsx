@@ -11,6 +11,7 @@ interface ProductSwatchesProps {
   activeVariantId: string | null;
   onSelect: (variantId: string | null) => void;
   productThumbnail?: string | null;
+  layout?: "horizontal" | "vertical";
 }
 
 function getColorVariant(variant: ShopVariant): string | null {
@@ -22,6 +23,7 @@ export const ProductSwatches = memo(function ProductSwatches({
   activeVariantId,
   onSelect,
   productThumbnail,
+  layout = "horizontal",
 }: ProductSwatchesProps) {
   const colorVariants = useMemo(() => {
     return variants.filter((v) => getColorVariant(v) !== null);
@@ -32,12 +34,11 @@ export const ProductSwatches = memo(function ProductSwatches({
   const visible = colorVariants.slice(0, MAX_VISIBLE);
   const overflow = colorVariants.length - MAX_VISIBLE;
   const activeVariant = activeVariantId
-    ? colorVariants.find((v) => v.id === activeVariantId)
+    ? colorVariants.find((variant) => variant.id === activeVariantId)
     : null;
-
   return (
     <div>
-      <div className="flex items-center gap-1.5 overflow-x-auto px-0.5 py-2">
+      <div className={layout === "vertical" ? "hide-scrollbar absolute right-0.5 top-2 z-20 flex max-h-max flex-col items-center gap-1 overflow-y-auto rounded-2xl border border-outline-variant/50 bg-surface/95 p-1 shadow-ambient-sm" : "hide-scrollbar flex items-center gap-1.5 overflow-x-auto px-0.5 py-2"}>
         {visible.map((variant) => {
           const color = getColorVariant(variant);
           const isActive = variant.id === activeVariantId;
@@ -55,8 +56,8 @@ export const ProductSwatches = memo(function ProductSwatches({
               aria-label={`Chon ${variant.variant_name}`}
               className={`relative h-6 w-6 shrink-0 overflow-hidden rounded-full border-2 transition-all ${
                 isActive
-                  ? "border-primary ring-2 ring-primary/30"
-                  : "border-outline-variant/60 hover:border-outline"
+                  ? "border-primary ring-2 ring-primary/40"
+                  : "border-outline-variant hover:border-primary/70"
               }`}
             >
               {imgSrc ? (
@@ -82,7 +83,7 @@ export const ProductSwatches = memo(function ProductSwatches({
           </span>
         )}
       </div>
-      {activeVariant && (
+      {layout === "horizontal" && activeVariant && (
         <p className="truncate text-xs text-on-surface lg:text-sm">
           {activeVariant.variant_name}
         </p>

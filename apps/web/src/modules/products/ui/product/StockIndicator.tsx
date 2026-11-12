@@ -15,7 +15,7 @@ export const StockIndicator = memo(function StockIndicator({
   }
 
   return (
-    <div className="text-center text-[8px] font-black uppercase tracking-wide text-slate-500 lg:text-[10px]">
+    <div className="text-right text-[9px] font-bold uppercase tracking-wide text-amber-700/80 lg:text-[10px]">
       Còn lại {stockQuantity} sản phẩm
     </div>
   );

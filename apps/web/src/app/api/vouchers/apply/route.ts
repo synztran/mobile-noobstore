@@ -4,6 +4,7 @@ import {
   sameShippingMethod,
 } from "@/lib/shipping-method";
 import { createClient } from "@/lib/supabase/server";
+import { getMaxVouchersPerOrder } from "@/lib/vouchers/config";
 import {
   computeVoucherDiscount,
   isShippingReward,
@@ -34,17 +35,6 @@ function toNumber(value: unknown, fallback = 0): number {
   }
 
   return fallback;
-}
-
-async function getMaxVouchersPerOrder(): Promise<number> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("fees")
-    .select("max_vouchers_per_order")
-    .eq("id", 1)
-    .maybeSingle();
-
-  return Math.max(1, toNumber(data?.max_vouchers_per_order, 2));
 }
 
 /**

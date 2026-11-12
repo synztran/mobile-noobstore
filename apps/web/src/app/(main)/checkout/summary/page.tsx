@@ -1,15 +1,12 @@
 "use client";
 
 import { ConfirmOrderDialog } from "@/components/checkout/ConfirmOrderDialog";
-import { DeliveryAddressCard } from "@/components/checkout/DeliveryAddressCard";
 import { DepositPaymentSection } from "@/components/checkout/DepositPaymentSection";
-import { OrderItemsList } from "@/components/checkout/OrderItemsList";
 import { OrderSummaryCard } from "@/components/checkout/OrderSummaryCard";
 import { PreOrderBanner } from "@/components/checkout/PreOrderBanner";
-import { ShippingMethodCard } from "@/components/checkout/ShippingMethodCard";
-import { SummaryHeader } from "@/components/checkout/SummaryHeader";
 import { RankBenefitModal } from "@/components/rank/RankBenefitModal";
-import VoucherComponent from "@/components/voucher/VoucherComponent";
+import { formatVND } from "@/lib/currency";
+import { Check, CheckCircle2, MapPin, Truck } from "lucide-react";
 import { useIsMounted } from "@/hooks/useIsMounted";
 import { cartItemToGA, trackRemoveFromCart } from "@/lib/analytics";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
@@ -25,7 +22,7 @@ import {
   isFeePendingShippingMethod,
   isPickupShippingMethod,
 } from "@/lib/shipping-method";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -237,7 +234,15 @@ export default function SummaryPage() {
         shipping_cost: shippingCost,
         payment_type: paymentType,
         deposit_percentage:
-          paymentType === "deposit_cod" ? depositPercentage : undefined,
+          paymentType === "deposit_cod"
+            ? Math.min(
+                80,
+                Math.max(
+                  minDepositPercentage(hasPreOrder, orderTotal),
+                  depositPercentage
+                )
+              )
+            : undefined,
         shipping_method_id:
           shipping?.shippingMethodId ?? shipping?.deliverySpeed ?? null,
         pickup_at:
@@ -327,67 +332,201 @@ export default function SummaryPage() {
     router.back();
   };
 
+  const deliveryLabel = isPickup
+    ? "Nhận tại cửa hàng"
+    : shipping?.deliverySpeed === ShippingMethod.Express
+      ? "Giao Hỏa tốc"
+      : shipping?.deliverySpeed === ShippingMethod.Carrier4h
+        ? "Giao nhanh 4H qua ĐVVC"
+        : "Giao Tiêu chuẩn";
+
   return (
     <div className="space-y-4">
-      <SummaryHeader />
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_410px] lg:items-start lg:gap-8">
+        {/* Left Column: Review Details & Payment Selection */}
+        <div className="space-y-4">
+          {/* Card 1: Recipient & Address */}
+          <section className="rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient-sm md:p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                  <MapPin size={18} />
+                </div>
+                <div className="space-y-1">
+                  <div className="text-sm font-bold text-on-surface">
+                    {isPickup ? (
+                      <span>Nhận tại cửa hàng: NoobStore HCM</span>
+                    ) : (
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-on-surface">
+                          {shipping?.fullName || "Chưa có tên người nhận"}
+                        </p>
+                        <p className="text-xs font-semibold text-primary">
+                          {shipping?.phoneNumber}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-on-surface-variant">
+                    {isPickup
+                      ? "70/4b đường 47, Phường Hiệp Bình Chánh, Thủ Đức, TP.Hồ Chí Minh"
+                      : (isCarrierMethod
+                          ? [
+                              shipping?.apartment,
+                              shipping?.streetAddress,
+                              shipping?.ward,
+                              shipping?.district,
+                              shipping?.city,
+                            ]
+                          : [shipping?.apartment, shipping?.streetAddress]
+                        )
+                          .filter(Boolean)
+                          .join(", ")}
+                  </p>
+                  {shipping?.notes && (
+                    <p className="text-[11px] text-on-surface-variant">
+                      <span className="font-bold">Ghi chú:</span> {shipping.notes}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleEditShipping}
+                className="flex-shrink-0 rounded-xl border border-outline-variant/40 bg-surface px-3 py-1.5 text-xs font-bold text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+              >
+                Thay đổi
+              </button>
+            </div>
+          </section>
 
-      {hasPreOrder && <PreOrderBanner />}
+          {/* Card 2: Delivery Method & NoobStore Shipping Features */}
+          <section className="rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient-sm md:p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <div className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <Truck size={18} />
+                </div>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-bold text-on-surface">
+                      {deliveryLabel}
+                    </span>
+                    {!isPickup && !isCarrierMethod ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-md border border-[#cce8d7] bg-[#f0f9f4] px-2 py-0.5 text-[10px] font-bold text-[#1e5e2e]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#1e8e3e]" />
+                        NoobStore trực tiếp xử lý
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-surface-container px-2 py-0.5 text-[10px] font-bold text-on-surface-variant">
+                        {isPickup ? "Nhận tại shop" : "ĐVVC đối tác"}
+                      </span>
+                    )}
+                  </div>
 
-      <div className="space-y-4">
-        <OrderItemsList
-          items={items}
-          oosProductIds={oosProductIds}
-          onRemove={handleRemoveItem}
-        />
+                  <p className="text-xs font-bold text-primary">
+                    Cước phí:{" "}
+                    {shippingFeePending
+                      ? "Cập nhật sau"
+                      : shippingCost === 0
+                        ? "Miễn phí"
+                        : formatVND(shippingCost)}
+                  </p>
+
+                  {/* NoobStore Guarantee list */}
+                  {!isPickup && !isCarrierMethod && (
+                    <div className="mt-3 space-y-1.5 border-t border-outline-variant/15 pt-3">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
+                        Đặc quyền giao nhận từ NoobStore
+                      </p>
+                      <ul className="space-y-1.5 text-xs text-on-surface-variant">
+                        <li className="flex items-center gap-2">
+                          <Check size={14} className="flex-shrink-0 text-[#1e8e3e] stroke-[3]" />
+                          <span>Đảm bảo an toàn 100% trong quá trình vận chuyển</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check size={14} className="flex-shrink-0 text-[#1e8e3e] stroke-[3]" />
+                          <span>Đóng gói chắc chắn, bọc lót bảo vệ cẩn thận</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Check size={14} className="flex-shrink-0 text-[#1e8e3e] stroke-[3]" />
+                          <span>Rider chủ động liên hệ trước & ưu tiên thời gian người nhận</span>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleEditShipping}
+                className="flex-shrink-0 rounded-xl border border-outline-variant/40 bg-surface px-3 py-1.5 text-xs font-bold text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+              >
+                Đổi phương thức
+              </button>
+            </div>
+          </section>
+
+          {/* Card 3: Payment & Deposit Method */}
+          <section className="rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient-sm md:p-6">
+            <div className="mb-4 flex items-center gap-2.5">
+              <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 text-xs font-black text-primary">
+                💳
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-on-surface">
+                  Hình thức thanh toán
+                </h3>
+                <p className="text-[11px] text-on-surface-variant">
+                  Chọn phương thức thanh toán hoặc đặt cọc phù hợp với bạn
+                </p>
+              </div>
+            </div>
+
+            <DepositPaymentSection
+              paymentType={paymentType}
+              setPaymentType={setPaymentType}
+              depositPercentage={depositPercentage}
+              setDepositPercentage={setDepositPercentage}
+              hasPreOrder={hasPreOrder}
+              subtotal={subtotal}
+              orderTotal={orderTotal}
+              disabledReason={
+                shippingFeePending
+                  ? "Đặt cọc không hỗ trợ đơn hàng giao qua đơn vị vận chuyển."
+                  : undefined
+              }
+            />
+          </section>
+
+          {/* Banner Pre-order moved to the bottom */}
+          {hasPreOrder && <PreOrderBanner />}
+        </div>
+
+        {/* Right Column: Unified Sticky Overview (Cart Preview, Voucher, Price Breakdown, Submit CTA) */}
+        <aside className="mt-4 lg:sticky lg:top-6 lg:mt-0">
+          <OrderSummaryCard
+            subtotal={subtotal}
+            shippingCost={shippingCost}
+            shippingFeePending={shippingFeePending}
+            totalShippingDiscountAmount={totalShippingDiscountAmount}
+            totalDiscountAmount={totalDiscountAmount}
+            rankDiscountAmount={rankDiscountAmount}
+            rankShippingDiscount={rankShippingDiscount}
+            currentRank={rankData?.currentRank ?? null}
+            orderTotal={orderTotal}
+            submitting={submitting}
+            onConfirm={() => setShowConfirm(true)}
+            onRankClick={() => setRankModalOpen(true)}
+            shippingMethodId={
+              shipping?.shippingMethodId ?? shipping?.deliverySpeed ?? undefined
+            }
+            voucherItems={voucherItems}
+            paymentType={paymentType}
+            depositPercentage={depositPercentage}
+          />
+        </aside>
       </div>
-
-      <VoucherComponent
-        subtotal={subtotal}
-        shippingCost={shippingCost}
-        shippingMethodId={
-          shipping?.shippingMethodId ?? shipping?.deliverySpeed ?? undefined
-        }
-        items={voucherItems}
-      />
-
-      {shipping && shipping.deliverySpeed !== ShippingMethod.Pickup && (
-        <DeliveryAddressCard
-          shipping={shipping}
-          isCarrierMethod={isCarrierMethod}
-        />
-      )}
-
-      <ShippingMethodCard shipping={shipping} onEdit={handleEditShipping} />
-
-      <DepositPaymentSection
-        paymentType={paymentType}
-        setPaymentType={setPaymentType}
-        depositPercentage={depositPercentage}
-        setDepositPercentage={setDepositPercentage}
-        hasPreOrder={hasPreOrder}
-        subtotal={subtotal}
-        orderTotal={orderTotal}
-        disabledReason={
-          shippingFeePending
-            ? "Đặt cọc không hỗ trợ đơn hàng giao qua đơn vị vận chuyển."
-            : undefined
-        }
-      />
-
-      <OrderSummaryCard
-        subtotal={subtotal}
-        shippingCost={shippingCost}
-        shippingFeePending={shippingFeePending}
-        totalShippingDiscountAmount={totalShippingDiscountAmount}
-        totalDiscountAmount={totalDiscountAmount}
-        rankDiscountAmount={rankDiscountAmount}
-        rankShippingDiscount={rankShippingDiscount}
-        currentRank={rankData?.currentRank ?? null}
-        orderTotal={orderTotal}
-        submitting={submitting}
-        onConfirm={() => setShowConfirm(true)}
-        onRankClick={() => setRankModalOpen(true)}
-      />
 
       <ConfirmOrderDialog
         showConfirm={showConfirm}

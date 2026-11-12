@@ -31,6 +31,12 @@ export interface CartItem {
   gifts?: CartGift[];
   is_pre_order?: boolean;
   pre_order_config?: PreOrderConfig | null;
+  /** Resolved dynamically when a main product exists in cart */
+  addon_deal?: {
+    discount_amount: number;
+    discount_percent?: number;
+    original_price: number;
+  } | null;
 }
 
 /** Server wire shape for one cart_items row (parent or child) + joined rows. */
@@ -61,6 +67,11 @@ export interface CartApiItem {
   } | null;
   children: CartApiItem[];
   component_group?: string | null;
+  addon_deal?: {
+    discount_amount: number;
+    discount_percent?: number;
+    original_price: number;
+  } | null;
 }
 
 export interface UpsertCartInput {

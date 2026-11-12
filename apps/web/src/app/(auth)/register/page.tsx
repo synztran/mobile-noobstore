@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MailWarning } from "lucide-react";
+import { AuthDesktopBrand } from "../AuthDesktopBrand";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -53,7 +54,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col px-8 pb-12 pt-16">
+    <div className="grid flex-1 grid-cols-1 lg:mx-auto lg:w-full lg:max-w-6xl lg:grid-cols-[1fr_0.9fr] lg:items-center lg:gap-12 lg:px-8 lg:py-12">
+      <AuthDesktopBrand />
+      <div className="flex flex-col px-8 pb-12 pt-16 lg:mx-auto lg:w-full lg:max-w-md lg:rounded-[2rem] lg:bg-surface-container-lowest lg:px-10 lg:py-8 lg:shadow-ambient-sm">
       {/* Heading */}
       <h2 className="mb-2 text-4xl font-black tracking-tight text-on-surface">
         Tạo tài khoản
@@ -309,6 +312,7 @@ export default function RegisterPage() {
           Đăng nhập
         </Link>
       </p>
+      </div>
     </div>
   );
 }

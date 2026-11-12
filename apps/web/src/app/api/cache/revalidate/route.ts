@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
  * `revalidateTag()` called from admin only marks admin's own cache entries —
  * the web app's `unstable_cache({ tags: ["products"] })` results and the
  * ISR'd /shop/[slug] pages would stay stale for their full `revalidate`
- * window. Admin POSTs here after every product mutation so both apps purge
- * in lockstep.
+ * window. Admin POSTs here after product and Home testimonial mutations so
+ * both apps purge in lockstep.
  *
  * Auth: `x-internal-secret` must match NOTIFICATION_INTERNAL_SECRET (shared
  * by both apps).
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as { tags?: unknown };
   const requested = Array.isArray(body.tags) ? body.tags : ["products"];
   // Allowlist — callers may only purge tags this app actually uses.
-  const allowed = new Set(["products"]);
+  const allowed = new Set(["products", "testimonials"]);
   const revalidated: string[] = [];
   for (const tag of requested) {
     if (typeof tag === "string" && allowed.has(tag)) {

@@ -854,6 +854,33 @@ function OrderDetailContent({
         />
       )}
 
+      {/* Deposit/COD breakdown is separate from the order total for easier scanning. */}
+      {detail.payment_type === "deposit_cod" && (
+        <section
+          aria-label="Chi tiết thanh toán"
+          className="space-y-3 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3"
+        >
+          <h3 className="text-xs font-black uppercase tracking-widest text-on-surface-variant">
+            Thanh toán
+          </h3>
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-on-surface-variant">
+              {detail.deposit_paid_at ? "Đã đặt cọc" : "Đặt cọc"} (
+              {detail.deposit_percentage ?? 0}%)
+            </span>
+            <span className="font-bold tabular-nums text-primary">
+              {formatVND(detail.deposit_amount ?? 0)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-on-surface-variant">Còn lại (COD)</span>
+            <span className="font-bold tabular-nums text-secondary">
+              {formatVND(detail.remaining_amount ?? 0)}
+            </span>
+          </div>
+        </section>
+      )}
+
       {/* Price summary */}
       {[
         "confirmed",
@@ -900,24 +927,6 @@ function OrderDetailContent({
                 -{formatVND(shippingDiscount)}
               </span>
             </div>
-          )}
-          {detail.payment_type === "deposit_cod" && (
-            <>
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant">
-                  Đặt cọc ({detail.deposit_percentage ?? 0}%)
-                </span>
-                <span className="font-bold text-primary">
-                  {formatVND(detail.deposit_amount ?? 0)}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-on-surface-variant">Còn lại (COD)</span>
-                <span className="font-bold text-secondary">
-                  {formatVND(detail.remaining_amount ?? 0)}
-                </span>
-              </div>
-            </>
           )}
           <div className="h-px bg-outline-variant/30" />
           <div className="flex justify-between">
@@ -1151,7 +1160,8 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[60] !mt-0 bg-on-surface/30 backdrop-blur-sm transition-opacity duration-300 ${
+        aria-hidden="true"
+        className={`fixed inset-0 z-[60] !mt-0 bg-on-surface/30 backdrop-blur-sm transition-opacity duration-300 lg:transition-opacity ${
           isOpen
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
@@ -1160,13 +1170,17 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
 
       {/* Drawer */}
       <div
-        className={`duration-250 fixed left-0 right-0 z-[999] !mt-0 flex max-h-[85dvh] flex-col rounded-t-5xl bg-surface transition-all ease-out ${
-          isOpen ? "bottom-0" : "-bottom-full"
+        role="dialog"
+        aria-modal={isOpen ? true : undefined}
+        aria-label="Chi tiết đơn hàng"
+        aria-hidden={!isOpen}
+        inert={!isOpen}
+        className={`duration-250 fixed left-0 right-0 z-[999] !mt-0 flex h-dvh max-h-dvh flex-col rounded-t-5xl bg-surface transition-all ease-out lg:bottom-0 lg:left-auto lg:right-0 lg:top-0 lg:w-[min(40%,100vw)] lg:rounded-none lg:shadow-2xl lg:transition-transform ${
+          isOpen ? "bottom-0 lg:translate-x-0" : "-bottom-full lg:translate-x-full"
         }`}
-        style={{ height: "85dvh" }}
       >
         {/* Handle */}
-        <div className="flex flex-shrink-0 justify-center pb-1 pt-3">
+        <div className="flex flex-shrink-0 justify-center pb-1 pt-3 lg:hidden">
           <div className="h-1 w-10 rounded-full bg-outline-variant" />
         </div>
 

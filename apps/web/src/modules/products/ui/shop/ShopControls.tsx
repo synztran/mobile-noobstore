@@ -9,9 +9,14 @@ import type { CategoryItem } from "@/modules/products/server/ssr";
 import { SORT_OPTIONS } from "@/constants/shop";
 import { ShopTour } from "./ShopTour";
 import { SortSheet } from "./SortSheet";
-import { useShopControls } from "@/modules/products/client/useShopControls";
-import { useRecentSearches } from "@/modules/products/client/useRecentSearches";
+import type { useShopControls } from "@/modules/products/client/useShopControls";
+import type { useRecentSearches } from "@/modules/products/client/useRecentSearches";
+import type { SortOption } from "@/modules/products/types";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+type ShopControlsState = ReturnType<typeof useShopControls>;
+type RecentSearchesState = ReturnType<typeof useRecentSearches>;
+
 
 function formatFilterPills(filters: FilterState): string[] {
   const pills: string[] = [];
@@ -37,19 +42,23 @@ export function ShopControls({
   brands = [],
   isTotalLoading = false,
   isSearching = false,
+  controls,
+  recents,
 }: {
   total: number;
   categories?: CategoryItem[];
   brands?: string[];
   isTotalLoading?: boolean;
   isSearching?: boolean;
+  controls: ShopControlsState;
+  recents: RecentSearchesState;
 }) {
   const {
     searches: recentSearches,
     addSearch,
     removeSearch,
     clearSearches,
-  } = useRecentSearches();
+  } = recents;
 
   const {
     search,
@@ -65,10 +74,7 @@ export function ShopControls({
     handleClearFilters,
     setShowFilter,
     setShowSort,
-  } = useShopControls((term) => {
-    // Save to recents only once the search has settled (debounced commit fires)
-    if (term.trim().length >= 2) addSearch(term);
-  });
+  } = controls;
 
   // Dropdown shows only while the input is focused with an empty/short query;
   // once the user starts typing it hides and the grid filters live (as before).
@@ -170,7 +176,7 @@ export function ShopControls({
           <button
             data-tour="filter"
             onClick={() => setShowFilter(true)}
-            className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-colors ${
+            className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold transition-colors lg:hidden ${
               filterApplied
                 ? "bg-primary text-on-primary"
                 : "bg-surface-container text-on-surface"
@@ -182,11 +188,23 @@ export function ShopControls({
           <button
             data-tour="sort"
             onClick={() => setShowSort(true)}
-            className="flex items-center gap-2 rounded-full bg-surface-container px-4 py-2.5 text-xs font-bold text-on-surface transition-colors"
+            className="flex items-center gap-2 rounded-full bg-surface-container px-4 py-2.5 text-xs font-bold text-on-surface transition-colors lg:hidden"
           >
             {SORT_OPTIONS.find((o) => o.value === sort)?.icon}
             Sắp xếp
           </button>
+          <select
+            aria-label="Sắp xếp sản phẩm"
+            value={sort}
+            onChange={(e) => handleSort(e.target.value as SortOption)}
+            className="hidden rounded-xl border border-outline-variant/40 bg-surface-container py-2.5 pl-4 pr-10 text-xs font-bold text-on-surface outline-none transition-colors focus:border-primary lg:block [background-position:right_1.25rem_center]"
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

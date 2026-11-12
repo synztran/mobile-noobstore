@@ -6,10 +6,8 @@ import {
   DistrictSearchInput,
   WardSearchInput,
 } from "@/components/ui/CityDistrictSelect";
-import { House } from "lucide-react";
-import AutoResizeTextarea from "@/components/ui/AutoResizeTextarea";
+import { CheckCircle2, House, Info, MapPinHouse, NotebookPen } from "lucide-react";
 import clsx from "clsx";
-import { CheckCircle2, NotebookPen } from "lucide-react";
 import { memo } from "react";
 import ShippingDistanceMap from "./ShippingDistanceMap";
 
@@ -18,6 +16,7 @@ interface Props {
   district: string;
   ward: string;
   streetAddress: string;
+  apartment?: string;
   notes: string;
   cityCode: string | null;
   cityTouched: boolean;
@@ -45,6 +44,7 @@ function AddressFields({
   district,
   ward,
   streetAddress,
+  apartment = "",
   notes,
   cityCode,
   cityTouched,
@@ -68,86 +68,90 @@ function AddressFields({
 
   return (
     <div className="relative clear-both space-y-4">
-      <div>
-        <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-          Tỉnh / Thành phố <span className="ml-0.5 text-primary">*</span>
-        </label>
-        <CitySearchInput
-          value={city}
-          onChange={onCityChange}
-          onBlur={onCityTouched}
-          disabled={false}
-          hasError={cityTouched && !city}
-        />
-        {cityTouched && !city && (
-          <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-            Vui lòng chọn tỉnh / thành phố
-          </p>
-        )}
-        {city && !isHCM && (
-          <p className="ml-1 mt-1 text-xs font-bold text-on-surface-variant">
-            ⚠️ Khu vực ngoài TP.HCM — chỉ giao hàng bởi đơn vị vận chuyển
-          </p>
-        )}
-      </div>
-
-      <div>
-        <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-          Quận / Huyện <span className="ml-0.5 text-primary">*</span>
-        </label>
-        <DistrictSearchInput
-          value={district}
-          onChange={onDistrictChange}
-          onBlur={() => {}}
-          disabled={false}
-          hasError={cityTouched && !district}
-          cityCode={cityCode}
-        />
-        {cityTouched && !district && (
-          <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-            Vui lòng chọn quận / huyện
-          </p>
-        )}
-      </div>
-
-      {isHCM && (
+      {/* 3 Dropdowns Address Grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
-          <label className="mb-2 ml-1 mt-3 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-            Phường / Xã <span className="ml-0.5 text-primary">*</span>
+          <label className="mb-1.5 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Tỉnh / Thành phố <span className="ml-0.5 text-primary">*</span>
           </label>
-          <WardSearchInput
-            value={ward}
-            onChange={onWardChange}
-            onCodeChange={onWardCodeChange}
-            onBlur={() => {}}
+          <CitySearchInput
+            value={city}
+            onChange={onCityChange}
+            onBlur={onCityTouched}
             disabled={false}
-            hasError={cityTouched && !ward}
-            cityName={city}
-            districtName={district}
+            hasError={cityTouched && !city}
           />
-          {cityTouched && !ward && (
+          {cityTouched && !city && (
             <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-              Vui lòng chọn Phường / Xã
+              Vui lòng chọn tỉnh / thành phố
+            </p>
+          )}
+          {city && !isHCM && (
+            <p className="ml-1 mt-1 text-xs font-bold text-on-surface-variant">
+              ⚠️ Ngoài TP.HCM: Giao qua ĐVVC
             </p>
           )}
         </div>
-      )}
 
-      <div>
-        <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-          Địa chỉ cụ thể <span className="ml-0.5 text-primary">*</span>
+        <div>
+          <label className="mb-1.5 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Quận / Huyện <span className="ml-0.5 text-primary">*</span>
+          </label>
+          <DistrictSearchInput
+            value={district}
+            onChange={onDistrictChange}
+            onBlur={() => {}}
+            disabled={false}
+            hasError={cityTouched && !district}
+            cityCode={cityCode}
+          />
+          {cityTouched && !district && (
+            <p className="ml-1 mt-1 text-[10px] font-bold text-error">
+              Vui lòng chọn quận / huyện
+            </p>
+          )}
+        </div>
+
+        {isHCM && (
+          <div>
+            <label className="mb-1.5 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+              Phường / Xã <span className="ml-0.5 text-primary">*</span>
+            </label>
+            <WardSearchInput
+              value={ward}
+              onChange={onWardChange}
+              onCodeChange={onWardCodeChange}
+              onBlur={() => {}}
+              disabled={false}
+              hasError={cityTouched && !ward}
+              cityName={city}
+              districtName={district}
+            />
+            {cityTouched && !ward && (
+              <p className="ml-1 mt-1 text-[10px] font-bold text-error">
+                Vui lòng chọn Phường / Xã
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Detailed Address */}
+      <div className="relative z-30 focus-within:z-50">
+        <label className="mb-1.5 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+          Địa chỉ cụ thể / Số nhà, tên đường <span className="ml-0.5 text-primary">*</span>
         </label>
         <div
           className={clsx(
-            "relative flex items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
+            "relative flex items-center gap-2.5 rounded-xl border bg-surface-container/60 px-3.5 py-2.5 transition-all",
             streetInvalid
-              ? "border-error"
-              : "border-transparent focus-within:border-primary"
+              ? "border-error bg-error/5"
+              : "border-outline-variant/30 focus-within:border-primary focus-within:bg-surface"
           )}
         >
           <House
             className={clsx(
-              "h-5 w-5 flex-shrink-0 transition-colors",
+              "h-4 w-4 flex-shrink-0 transition-colors",
               streetInvalid ? "text-error" : "text-outline-variant"
             )}
           />
@@ -181,27 +185,57 @@ function AddressFields({
             <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
           )}
         </div>
-        {streetInvalid && (
+        {streetInvalid ? (
           <p className="ml-1 mt-1 text-[10px] font-bold text-error">
             Trường này là bắt buộc
           </p>
-        )}
+        ) : isHCM ? (
+          <p className="ml-1 mt-1.5 flex items-start gap-1.5 text-[11px] leading-tight text-on-surface-variant/75">
+            <Info size={13} className="mt-0.5 flex-shrink-0 text-primary" />
+            <span>
+              Nếu không tìm thấy địa chỉ chính xác, bạn có thể chọn địa điểm nổi bật gần đó và bổ sung số nhà ở mục <strong>Ghi chú giao hàng</strong>.
+            </span>
+          </p>
+        ) : null}
       </div>
 
-      <div>
-        <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-          Ghi chú
-        </label>
-        <div className="flex items-start gap-3 rounded-2xl border-2 border-transparent bg-surface-container px-4 py-3.5 transition-all focus-within:border-primary">
-          <NotebookPen className="flex-shrink-0 text-xl text-outline-variant" />
-          <AutoResizeTextarea
-            name="notes"
-            value={notes}
-            onChange={onChange}
-            placeholder="Lưu ý về giờ giấc, địa điểm giao hàng,..."
-            maxHeight={160}
-            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
-          />
+      {/* 2 Columns: Apartment & Notes */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Căn hộ / Tầng (Tùy chọn)
+          </label>
+          <div className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container/60 px-3.5 py-2.5 transition-all focus-within:border-primary focus-within:bg-surface">
+            <MapPinHouse className="h-4 w-4 flex-shrink-0 text-outline-variant" />
+            <input
+              name="apartment"
+              value={apartment}
+              onChange={onChange}
+              onBlur={onBlur}
+              placeholder="Ví dụ: Tầng 4B, Chung cư..."
+              type="text"
+              autoComplete="off"
+              className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+            Ghi chú giao hàng (Tùy chọn)
+          </label>
+          <div className="flex items-center gap-2 rounded-xl border border-outline-variant/30 bg-surface-container/60 px-3.5 py-2.5 transition-all focus-within:border-primary focus-within:bg-surface">
+            <NotebookPen className="h-4 w-4 flex-shrink-0 text-outline-variant" />
+            <input
+              name="notes"
+              value={notes}
+              onChange={onChange}
+              placeholder="Ví dụ: Gọi trước khi giao 15 phút..."
+              type="text"
+              autoComplete="off"
+              className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+            />
+          </div>
         </div>
       </div>
 

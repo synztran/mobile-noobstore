@@ -139,6 +139,17 @@ export interface ProductsResponse {
   total: number;
 }
 
+export interface ProductAddonDeal {
+  id: string;
+  addon_product_id: string;
+  discount_type: "percentage" | "fixed_amount";
+  discount_value: number;
+  sort_order: number;
+  product: ShopProduct;
+  discounted_price: number;
+  saved_amount: number;
+}
+
 // ─── Product detail contract (GET /api/products/[slug]) ──────────────────────
 
 export interface ShopVariantDetail {

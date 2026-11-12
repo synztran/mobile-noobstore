@@ -3,8 +3,8 @@
 > Adaptive desktop experience for `www.noobstore.xyz` — phones route to
 > `m.noobstore.xyz`, tablets and desktops see the desktop shell.
 
-**Status:** foundation phase — shell + routing + responsive breakpoints. Page
-treatments (home, shop, product, checkout, services, profile) are next.
+**Status:** shell, routing, home, shop listing, and product detail are implemented.
+Checkout, services, and profile desktop treatments remain future work.
 
 ## Dependency direction (STRICT)
 
@@ -27,9 +27,9 @@ modules/desktop/
 ├── README.md             # This file
 └── ui/
     ├── shell/
-    │   ├── DesktopShell.tsx      # Main wrapper: sidebar + topbar + content area
-    │   ├── DesktopSidebar.tsx    # Fixed left sidebar with primary + secondary nav
-    │   └── DesktopTopBar.tsx     # Top bar with search, cart, notifications (Bell badge + drawer)
+│   ├── DesktopShell.tsx      # Main wrapper: topbar + centred content area
+│   ├── DesktopSearch.tsx     # Header search with live suggestion dropdown
+│   └── DesktopTopBar.tsx     # Horizontal navigation, search, cart, notifications
     ├── cart/
     │   └── DesktopCartDrawer.tsx # Right-side cart panel (32rem, translate-x slide)
     └── notifications/
@@ -49,15 +49,21 @@ modules/desktop/
 3. **Root layout** (`app/layout.tsx`) skips `MobileViewportGuard` on desktop.
 
 4. **`MainLayoutDynamic`** receives `hideSearch` prop to suppress the floating
-   search FAB on desktop (desktop has inline search in `DesktopTopBar`).
+   search FAB on desktop (desktop has inline search in `DesktopSearch`).
 
 ## Responsive breakpoints
 
-| Breakpoint | Sidebar | Content | Notes |
+| Breakpoint | Navigation | Content | Notes |
 |---|---|---|---|
-| < 768px | Hidden | Full width | Mobile chrome renders instead |
-| 768–1024px | Collapsed (64px, icon-only) | Offset by 64px | Tablet — sidebar auto-collapses |
-| > 1024px | Expanded (240px) | Offset by 240px | Desktop — full sidebar with labels |
+| < 1024px | Mobile navigation | Full width | Existing mobile chrome renders |
+| 1024–1279px | Horizontal, icons only | Centred, max 1360px | Desktop shell, compact nav |
+| ≥ 1280px | Horizontal, labels visible | Centred, max 1360px | Desktop shell, full nav |
+
+## Desktop storefront surfaces
+
+- **Home:** multi-column product sections, static testimonial grid, four-column footer.
+- **Shop:** URL-driven filters in a sticky 260px rail; mobile keeps its filter overlay.
+- **Product detail:** gallery beside a sticky 420px purchase panel; description and related sections stay below; mobile keeps its single-column flow and fixed purchase bar.
 
 ## Device routing
 

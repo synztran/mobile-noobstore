@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   ComponentVariantRule,
@@ -17,8 +17,8 @@ import {
 import { trackAddToCart, toGAProduct } from "@/lib/analytics";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { toast } from "@/lib/toast";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
-import { useAddCartItem } from "@/modules/cart/client/mutations";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
+import { useAddCartItem } from "@/modules/cart/client/react-query/mutations";
 import { useQuickPick } from "@/modules/products/client/queries";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import {
@@ -35,7 +35,13 @@ type UseQuickPickDrawerProps = {
 };
 
 export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
-  const { isOpen, onClose, isCategoryMode, propCategory, propProduct } = props;
+  const {
+    isOpen,
+    onClose,
+    isCategoryMode,
+    propCategory,
+    propProduct,
+  } = props;
 
   // ── State ────────────────────────────────────────────────────────────────
   const [selections, setSelections] = useState<Record<string, string[]>>({});
@@ -52,8 +58,13 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
     ? `category:${propCategory?.slug ?? ""}`
     : `product:${propProduct?.id ?? ""}`;
 
-  const quickPickQuery = useQuickPick(requestKey, isOpen);
-
+  const quickPickQuery = useQuickPick(
+    requestKey,
+    isOpen,
+    "",
+    "",
+    isCategoryMode ? selectedProductId ?? "" : propProduct?.id ?? ""
+  );
   // ── Derived data ─────────────────────────────────────────────────────────
   const view = isCategoryMode
     ? (selectedProductId ? "configurator" : "product-list")
@@ -68,6 +79,16 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
       ? (selectedProductId ? products.find((p) => p.id === selectedProductId) ?? null : null)
       : propProduct
   );
+
+  const brandAlternativesQuery = useQuickPick(
+    `brand:${activeProduct?.brand ?? ""}`,
+    isOpen && isCategoryMode && Boolean(activeProduct?.brand),
+    activeProduct?.brand ?? "",
+    activeProduct?.id ?? ""
+  );
+  const brandAlternatives = (
+    brandAlternativesQuery.data?.brandAlternatives ?? []
+  ).filter((item) => item.id !== activeProduct?.id);
 
   const groups = configuratorData[activeProduct?.id ?? ""] ?? [];
   const productRules = rulesData[activeProduct?.id ?? ""] ?? [];
@@ -87,15 +108,6 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
   useEffect(() => {
     setSelections({});
   }, [activeProduct?.id]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, onClose]);
 
   usePreventScroll(isOpen);
 
@@ -480,6 +492,8 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
 
   return {
     products,
+    brandAlternatives,
+    loadingBrandAlternatives: brandAlternativesQuery.isFetching,
     activeProduct,
     groups: enrichedGroups,
     productRules,
@@ -489,6 +503,7 @@ export function useQuickPickDrawer(props: UseQuickPickDrawerProps) {
     view,
     loadingProducts,
     loadingConfigurator,
+    loadingGallery: quickPickQuery.isFetching,
     isFetchingVariants,
     isSubmittingOrPending,
     disabledVariantIds,

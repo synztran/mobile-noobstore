@@ -87,4 +87,10 @@ export interface SubmitOrderErrorResponse {
   error_code: string;
   unknown_variant_id?: string;
   incompatible_variant_id?: string;
+  error: {
+    code: string;
+    message: string;
+    phase?: string;
+    postgresCode?: string;
+  };
 }

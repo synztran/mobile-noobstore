@@ -22,6 +22,7 @@ import clsx from "clsx";
 import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RecentlyViewedRail } from "@/modules/products/ui/recently-viewed/RecentlyViewedRail";
 import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
@@ -56,6 +57,7 @@ export function ProductView({
   purchaseCount = 0,
   relatedSlot,
   boughtTogetherSlot,
+  addonTeaserSlot,
 }: {
   product: ProductDetail;
   componentGroups?: ConfiguratorGroup[];
@@ -63,6 +65,7 @@ export function ProductView({
   purchaseCount?: number;
   relatedSlot?: ReactNode;
   boughtTogetherSlot?: ReactNode;
+  addonTeaserSlot?: ReactNode;
 }) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
@@ -114,8 +117,6 @@ export function ProductView({
     handleAddToCart,
     disabledVariantIds,
     resolvedUnitPrice,
-    quantity,
-    setQuantity,
   } = useProductViewData(product, componentGroups, componentRules);
 
   useEffect(() => {
@@ -221,193 +222,228 @@ export function ProductView({
         ]}
       /> */}
 
-      <main className="my-auto space-y-4 pb-12 md:pb-24">
-        {/* ── Hero Image Gallery ── */}
-        <HeroImageGallery
-          images={mediaImages}
-          productName={product.name}
-          activeIndex={activeImageIndex}
-          onSelect={setActiveImageIndex}
-          hasDiscount={hasDiscount}
-          discountPercent={discountPercent}
-          saleEndsAt={product.sale_ends_at}
-          onImageClick={openViewerAtHero}
-        />
-
-        {/* ── Product Info ── */}
-        <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
-          {/* <div className="mb-2 flex flex-wrap items-center gap-2">
-            <ProductBadges badges={badges} purchaseCount={purchaseCount} />
-          </div> */}
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-primary">
-                {product.category}
-              </p>
-              <p className="text-balance text-xl font-black uppercase leading-none text-on-surface">
-                {product.name}
-              </p>
-              {product.brand && (
-                <p className="mt-1 text-xs font-semibold text-on-surface-variant">
-                  bởi {product.brand}
-                </p>
-              )}
-            </div>
-            <ShareButton
+      <main className="my-auto space-y-4">
+        {/*
+          Desktop: gallery left, sticky purchase panel right.
+          Grouped in its own grid wrapper so sticky panel's boundary stops
+          at the bottom of the gallery section and never overlaps ProductInfoTabs below.
+        */}
+        <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-8 lg:space-y-0">
+          <div className="space-y-6 lg:col-start-1 lg:row-start-1">
+            {/* ── Hero Image Gallery ── */}
+            <HeroImageGallery
+              images={mediaImages}
               productName={product.name}
-              productSlug={product.slug}
+              activeIndex={activeImageIndex}
+              onSelect={setActiveImageIndex}
+              hasDiscount={hasDiscount}
+              discountPercent={discountPercent}
+              saleEndsAt={product.sale_ends_at}
+              onImageClick={openViewerAtHero}
             />
-          </div>
-          <div className="mt-4 flex items-baseline justify-end gap-2">
-            <span
-              className={clsx(
-                "text-2xl font-black leading-none text-primary",
-                hasDiscount ? "text-red-500" : "text-on-surface"
-              )}
-            >
-              {formatVND(displayPrice)}
-            </span>
-            <div className="flex items-baseline gap-2">
-              {hasDiscount && (
-                <span className="text-sm text-on-surface-variant line-through opacity-60">
-                  {formatVND(product.base_price)}
-                </span>
-              )}
-              {selectedVariant && selectedVariant.price_adjustment !== 0 && (
-                <span className="text-sm text-on-surface-variant line-through opacity-60">
-                  {formatVND(product.min_price)}
-                </span>
-              )}
+
+            {/* ── Desktop Tabbed Info (Description / Specs / Shipping) ── */}
+            <div className="hidden rounded-2xl bg-surface p-4 shadow-ambient-sm lg:block">
+              <ProductInfoTabs
+                product={product}
+                editorialContent={editorialContent}
+                specItems={specItems}
+                productSlug={product.slug}
+              />
             </div>
           </div>
-        </section>
 
-        {/* ── Configurator (variants + component groups) ── */}
-        {hasConfigurator && (
-          <section className="space-y-2 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
-            <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
-              Lựa chọn cấu hình
-            </div>
-            <div className="space-y-4 rounded-xl">
-              {loadingVariants ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {[1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="h-[88px] animate-pulse rounded-lg bg-surface-container-low"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <>
-                  <ProductConfigurator
-                    groups={groups}
-                    variants={variants}
-                    selections={selections}
-                    loadingConfigurator={loadingConfigurator}
-                    basePrice={product.base_price}
-                    onSelect={select}
-                    disabledVariantIds={disabledVariantIds}
-                    showTitle={false}
-                  />
-                  <SelectedConditionSummary
-                    groups={groups}
-                    selections={selections}
-                    productVariants={variants}
-                    onShowImage={openViewerAt}
-                  />
-                </>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ── Keyset preview (slug-gated, mock-data trial) ── */}
-        {/* {keysetPreviewData && (
-          <section className="px-4">
-            <KeysetPreviewSection colorway={keysetPreviewData} />
-          </section>
-        )} */}
-
-        {/* ── Low stock urgency banner ── */}
-        {isLowStock && effectiveStockQuantity > 0 && (
-          <motion.section
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
-            className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm"
-          >
-            <div className="flex items-center gap-3 rounded-2xl border border-red-400/40 bg-red-50 px-4 py-3">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 2,
-                  ease: "easeInOut",
-                }}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="currentColor"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                </svg>
-              </motion.div>
-              <div className="flex-1">
-                <p className="text-sm font-black text-red-700">
-                  Chỉ còn {effectiveStockQuantity} sản phẩm
-                </p>
-                <p className="text-xs text-red-600">Đặt ngay kẻo lỡ!</p>
-              </div>
-            </div>
-          </motion.section>
-        )}
-
-        {/* ── Quantity stepper ── */}
-        {/* {!isOutOfStock && (
-          <section className="px-4">
-            <div className="flex items-center justify-between rounded-2xl bg-surface-container-lowest px-4 py-3">
-              <p className="text-xs font-black uppercase tracking-wider text-on-surface-variant">
-                Số lượng
-              </p>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-30"
-                >
-                  <Minus size={14} />
-                </button>
-                <span className="w-8 text-center text-base font-black text-on-surface">
-                  {quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setQuantity(Math.min(effectiveStockQuantity, quantity + 1))
-                  }
-                  disabled={quantity >= effectiveStockQuantity}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-30"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-            </div>
-          </section>
-        )} */}
-
-        {/* ── Pre-order Info Banner ── */}
-        {selectedPreOrderConfig && (
+          {/* Purchase panel — price, variants, stock, pre-order */}
+          <div className="hide-scrollbar space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:max-h-[calc(100dvh-96px)] lg:overflow-y-auto lg:h-fit lg:self-start lg:pr-1">
+          {/* ── Product Info ── */}
           <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
-            <PreOrderBanner config={selectedPreOrderConfig} />
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <ProductBadges badges={badges} purchaseCount={purchaseCount} />
+            </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-primary">
+                  {product.category}
+                </p>
+                <p className="text-balance text-xl font-black uppercase leading-none text-on-surface">
+                  {product.name}
+                </p>
+                {product.brand && (
+                  <p className="mt-1 text-xs font-semibold text-on-surface-variant">
+                    bởi {product.brand}
+                  </p>
+                )}
+              </div>
+              <ShareButton
+                productName={product.name}
+                productSlug={product.slug}
+              />
+            </div>
+            <div className="mt-4 flex items-baseline justify-end gap-2">
+              <span
+                className={clsx(
+                  "text-2xl font-black leading-none text-primary",
+                  hasDiscount ? "text-red-500" : "text-on-surface"
+                )}
+              >
+                {formatVND(displayPrice)}
+              </span>
+              <div className="flex items-baseline gap-2">
+                {hasDiscount && (
+                  <span className="text-sm text-on-surface-variant line-through opacity-60">
+                    {formatVND(product.base_price)}
+                  </span>
+                )}
+                {selectedVariant && selectedVariant.price_adjustment !== 0 && (
+                  <span className="text-sm text-on-surface-variant line-through opacity-60">
+                    {formatVND(product.min_price)}
+                  </span>
+                )}
+              </div>
+            </div>
           </section>
-        )}
 
-        {/* ── Tabbed Info (Description / Specs / Shipping) ── */}
-        <div className="mb-12 mt-12 md:mb-6 md:mt-0 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
+          {/* ── Configurator (variants + component groups) ── */}
+          {hasConfigurator && (
+            <section className="space-y-2 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
+              <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
+                Lựa chọn cấu hình
+              </div>
+              <div className="space-y-4 rounded-xl">
+                {loadingVariants ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {[1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="h-[88px] animate-pulse rounded-lg bg-surface-container-low"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <ProductConfigurator
+                      groups={groups}
+                      variants={variants}
+                      selections={selections}
+                      loadingConfigurator={loadingConfigurator}
+                      basePrice={product.base_price}
+                      onSelect={select}
+                      disabledVariantIds={disabledVariantIds}
+                      showTitle={false}
+                    />
+                    <SelectedConditionSummary
+                      groups={groups}
+                      selections={selections}
+                      productVariants={variants}
+                      onShowImage={openViewerAt}
+                    />
+                  </>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* ── Keyset preview (slug-gated, mock-data trial) ── */}
+          {/* {keysetPreviewData && (
+              <section className="px-4">
+                <KeysetPreviewSection colorway={keysetPreviewData} />
+              </section>
+            )} */}
+
+          {/* ── Low stock urgency banner ── */}
+          {isLowStock && effectiveStockQuantity > 0 && (
+            <motion.section
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+              className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm"
+            >
+              <div className="flex items-center gap-3 rounded-2xl border border-red-400/40 bg-red-50 px-4 py-3">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2,
+                    ease: "easeInOut",
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="currentColor"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                  </svg>
+                </motion.div>
+                <div className="flex-1">
+                  <p className="text-sm font-black text-red-700">
+                    Chỉ còn {effectiveStockQuantity} sản phẩm
+                  </p>
+                  <p className="text-xs text-red-600">Đặt ngay kẻo lỡ!</p>
+                </div>
+              </div>
+            </motion.section>
+          )}
+
+          {/* ── Pre-order Info Banner ── */}
+          {selectedPreOrderConfig && (
+            <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
+              <PreOrderBanner config={selectedPreOrderConfig} />
+            </section>
+          )}
+
+          {/* ── Purchase actions ──
+                One instance only: a fixed bar on mobile, an inline card at the
+                bottom of the sticky desktop panel. Moving the markup instead of
+                duplicating it keeps a single add-to-cart mutation in flight. */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              mass: 0.8,
+            }}
+            className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md lg:static lg:z-auto lg:rounded-2xl lg:border lg:bg-surface lg:p-3 lg:shadow-ambient-sm lg:backdrop-blur-none"
+          >
+            <WishlistButton
+              productId={product.id}
+              product={product}
+              showLabel
+              size="md"
+              className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
+              iconOnly={false}
+            />
+            {isOutOfStock ? (
+              <StockAlertButton
+                productId={product.id}
+                variantId={selectedVariant?.id ?? ""}
+              />
+            ) : (
+              <AddToCartButton
+                isOutOfStock={isOutOfStock}
+                missingVariantSelection={missingVariantSelection}
+                missingConfiguration={missingConfiguration}
+                isLoading={isLoadingAddToCart}
+                isPreOrder={selectedPreOrderConfig !== null}
+                onClick={() => handleAddToCart(1)}
+              />
+            )}
+          </motion.div>
+
+          {/* ── Add-on Deals Anchor Teaser ── */}
+          {addonTeaserSlot && (
+            <div className="px-4 lg:px-0">
+              {addonTeaserSlot}
+            </div>
+          )}
+        </div>
+        </div>
+
+        {/* ── Mobile Tabbed Info (Description / Specs / Shipping) ── */}
+        <div className="mb-4 mt-4 px-4 md:mb-6 md:mt-0 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm lg:hidden">
           <ProductInfoTabs
             product={product}
             editorialContent={editorialContent}
@@ -486,37 +522,8 @@ export function ProductView({
       {/* ── Related Products ── */}
       {relatedSlot}
 
-      {/* ── Bottom Action Bar ── */}
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
-        className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md"
-      >
-        <WishlistButton
-          productId={product.id}
-          product={product}
-          showLabel
-          size="md"
-          className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
-          iconOnly={false}
-        />
-        {isOutOfStock ? (
-          <StockAlertButton
-            productId={product.id}
-            variantId={selectedVariant?.id ?? ""}
-          />
-        ) : (
-          <AddToCartButton
-            isOutOfStock={isOutOfStock}
-            missingVariantSelection={missingVariantSelection}
-            missingConfiguration={missingConfiguration}
-            isLoading={isLoadingAddToCart}
-            isPreOrder={selectedPreOrderConfig !== null}
-            onClick={() => handleAddToCart(quantity)}
-          />
-        )}
-      </motion.div>
+      {/* ── Recently Viewed ── */}
+      <RecentlyViewedRail />
     </article>
   );
 }
