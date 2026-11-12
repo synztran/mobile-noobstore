@@ -1,6 +1,6 @@
 "use client";
 
-import { useCartQuery } from "@/modules/cart/client/queries";
+import { useCartQuery } from "@/modules/cart/client/react-query/queries";
 import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useEffect } from "react";
 

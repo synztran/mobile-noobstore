@@ -11,7 +11,7 @@ import type {
 } from "@/modules/products/types";
 import { kitPriceOverrides } from "@/modules/products/kit-pricing";
 import { cartItemToGA, trackAddToCart } from "@/lib/analytics";
-import { useAddCartItem } from "@/modules/cart/client/mutations";
+import { useAddCartItem } from "@/modules/cart/client/react-query/mutations";
 import { toast } from "@/lib/toast";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import {

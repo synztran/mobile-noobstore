@@ -1,6 +1,6 @@
 "use client";
 
-import { useFlyToCartStore } from "@/modules/cart/client/useFlyToCart";
+import { useFlyToCartStore } from "@/modules/cart/client/hooks/useFlyToCart";
 import Image from "@/components/ui/AdaptiveImage";
 import { useCallback, useEffect, useRef } from "react";
 
