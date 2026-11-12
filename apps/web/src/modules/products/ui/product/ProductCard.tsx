@@ -227,13 +227,14 @@ export const ProductCard = memo(function ProductCard({
             </Link>
 
             {!isBundle && product.variants.some((variant) => variant.attributes?.color != null) && (
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-10">
-                <div className="pointer-events-auto">
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-20 hidden w-10 lg:block">
+                <div className="pointer-events-auto relative">
                   <ProductSwatches
                     variants={product.variants}
                     activeVariantId={activeVariantId}
                     onSelect={setActiveVariantId}
                     productThumbnail={product.thumbnail}
+                    layout="vertical"
                   />
                 </div>
               </div>
@@ -246,6 +247,14 @@ export const ProductCard = memo(function ProductCard({
 
         <div className="mt-auto flex flex-col gap-0.5 overflow-hidden lg:overflow-visible">
           <ProductCardPricing product={product} />
+          {!isBundle ? (
+            <ProductSwatches
+              variants={product.variants}
+              activeVariantId={activeVariantId}
+              onSelect={setActiveVariantId}
+              productThumbnail={product.thumbnail}
+            />
+          ) : null}
           <StockIndicator stockQuantity={product.stock_quantity} />
           <div className="mt-2 flex items-center gap-1.5">
             <WishlistButton

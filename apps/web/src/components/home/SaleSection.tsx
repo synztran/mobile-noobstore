@@ -65,7 +65,7 @@ export function HomeSaleSection() {
             />
           </div>
           <div
-            className="bg-gradient-to-r from-red-600 via-orange-400 to-red-600 bg-[length:200%_100%] bg-clip-text text-xl font-black uppercase tracking-tight text-transparent"
+            className="bg-gradient-to-r from-red-600 via-orange-400 to-red-600 bg-[length:200%_100%] bg-clip-text text-xl font-black uppercase tracking-tight text-transparent lg:text-2xl"
             style={{ animation: "sale-shimmer 3s linear infinite" }}
           >
             Sản Phẩm Sale
@@ -117,16 +117,21 @@ export function HomeSaleSection() {
       {/* Product Carousel */}
       <div
         ref={railRef}
-        className="hide-scrollbar flex cursor-grab gap-4 overflow-x-auto px-6 pb-2 active:cursor-grabbing lg:px-0"
+        className="hide-scrollbar flex cursor-grab gap-4 overflow-x-auto px-6 pb-2 active:cursor-grabbing lg:cursor-grab lg:gap-5 lg:overflow-x-auto lg:px-0 lg:pb-2 lg:active:cursor-grabbing"
       >
         {isLoading
-          ? Array.from({ length: 3 }, (_, i) => (
-              <BundleProductCardSkeleton key={i} />
+          ? Array.from({ length: 5 }, (_, i) => (
+              <div
+                key={i}
+                className="w-[180px] shrink-0 lg:w-[calc((100%-3*1.25rem)/3.5)]"
+              >
+                <BundleProductCardSkeleton />
+              </div>
             ))
           : products.map((product, i) => (
               <div
                 key={product.id}
-                className="min-w-[180px] animate-[fadeSlideUp_0.5s_ease-out_forwards] lg:min-w-[220px]"
+                className="w-[180px] shrink-0 animate-[fadeSlideUp_0.5s_ease-out_forwards] lg:w-[calc((100%-3*1.25rem)/3.5)]"
                 style={{ animationDelay: `${i * 60}ms`, opacity: 0 }}
               >
                 <BundleProductCard product={product} showSoldOutOverlay />
@@ -152,7 +157,7 @@ export function HomeSaleSection() {
         {!isLoading && products.length > 0 && (
           <Link
             href="/shop"
-            className="group flex w-[120px] flex-shrink-0 flex-col items-center justify-center gap-3 rounded-2xl bg-surface-container-low transition-colors hover:bg-surface-container lg:w-[160px]"
+            className="group flex w-[120px] flex-shrink-0 flex-col items-center justify-center gap-3 rounded-2xl bg-surface-container-low transition-colors hover:bg-surface-container"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
               <ArrowRight size={18} className="text-primary" />

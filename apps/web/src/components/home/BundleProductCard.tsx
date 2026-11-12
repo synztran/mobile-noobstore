@@ -15,6 +15,7 @@ interface Props {
   showNewBadge?: boolean;
   showSoldOutOverlay?: boolean;
   showComponentTags?: boolean;
+  showSoldCount?: boolean;
 }
 
 export function BundleProductCard({
@@ -22,6 +23,7 @@ export function BundleProductCard({
   showNewBadge,
   showSoldOutOverlay,
   showComponentTags,
+  showSoldCount,
 }: Props) {
   const isNew = showNewBadge && product.tags?.some((t) => t.value === "new");
   const isSoldOut = showSoldOutOverlay && product.stock_quantity === 0;
@@ -35,9 +37,9 @@ export function BundleProductCard({
   return (
     <Link
       href={`/shop/${product.slug}`}
-      className="group w-[180px] flex-shrink-0 transition-transform active:scale-95 lg:w-[220px]"
+      className="group w-full min-w-0 transition-transform active:scale-95"
     >
-      <div className="relative mb-2 aspect-[4/3] overflow-hidden rounded-2xl bg-surface-container-high">
+      <div className="relative mb-2 aspect-[4/3] overflow-hidden rounded-2xl bg-surface-container-high lg:aspect-[4/3.6]">
         {product.thumbnail ? (
           <Image
             src={product.thumbnail}
@@ -74,9 +76,16 @@ export function BundleProductCard({
           <ProductComponentTags horizontalTags={product.tags} />
         )}
       </div>
-      <p className="truncate text-xs font-extrabold capitalize tracking-[0.1em] text-primary">
-        {product.brand || product.category}
-      </p>
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-xs font-extrabold capitalize tracking-[0.1em] text-primary">
+          {product.brand || product.category}
+        </p>
+        {showSoldCount && (
+          <p className="shrink-0 whitespace-nowrap text-[10px] font-extrabold text-primary">
+            Đã bán {product.sold_count}
+          </p>
+        )}
+      </div>
       <p className="truncate text-sm font-bold capitalize text-on-surface">
         {product.name}
       </p>
@@ -111,8 +120,8 @@ export function BundleProductCard({
 
 export function BundleProductCardSkeleton() {
   return (
-    <div className="w-[180px] flex-shrink-0 animate-pulse space-y-3 lg:w-[220px]">
-      <div className="aspect-[4/3] rounded-2xl bg-surface-container" />
+    <div className="w-full min-w-0 shrink-0 animate-pulse space-y-3">
+      <div className="aspect-[4/3] rounded-2xl bg-surface-container lg:aspect-[4/3.6]" />
       <div className="h-4 w-3/4 rounded bg-surface-container" />
       <div className="h-3 w-1/2 rounded bg-surface-container" />
       <div className="h-4 w-1/3 rounded bg-surface-container" />

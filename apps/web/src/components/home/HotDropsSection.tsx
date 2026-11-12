@@ -29,13 +29,17 @@ export async function HotDropsSection() {
         </Link>
       </div>
 
-      <div className="hide-scrollbar flex snap-x gap-4 overflow-x-auto px-6 pb-2 lg:gap-5 lg:px-0 lg:pb-2">
+      <div className="hide-scrollbar flex gap-4 overflow-x-auto px-6 pb-2 lg:snap-x lg:gap-5 lg:px-0 lg:pb-2">
         {products.map((product) => (
           <div
             key={product.id}
-            className="w-[min(62vw,260px)] shrink-0 snap-start sm:w-[min(46vw,280px)] lg:w-[calc((100%-3*1.25rem)/3.5)]"
+            className="w-[180px] shrink-0 snap-start lg:w-[calc((100%-3*1.25rem)/3.5)]"
           >
-            <BundleProductCard product={product} showSoldOutOverlay />
+            <BundleProductCard
+              product={product}
+              showSoldOutOverlay
+              showSoldCount
+            />
           </div>
         ))}
       </div>
