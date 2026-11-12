@@ -56,6 +56,7 @@ export function useOrderStatus(
 				deposit_amount: data.deposit_amount as number | undefined,
 				remaining_amount: data.remaining_amount as number | undefined,
 				deposit_paid_at: data.deposit_paid_at as string | null | undefined,
+				paid_at: data.paid_at as string | null | undefined,
 			};
 		},
 	});

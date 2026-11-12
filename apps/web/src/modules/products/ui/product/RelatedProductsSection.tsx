@@ -17,7 +17,6 @@ export async function RelatedProductsSection({
   return (
     <ProductRail
       title="Sản phẩm liên quan"
-      cardWidth="w-[160px]"
       trailing={
         brand && (
           <Link

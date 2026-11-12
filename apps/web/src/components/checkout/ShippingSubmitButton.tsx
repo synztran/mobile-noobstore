@@ -19,7 +19,7 @@ export function ShippingSubmitButton({
       type="submit"
       disabled={disabled}
       className={clsx(
-        "primary-gradient flex w-full items-center justify-center gap-2 !rounded-b-3xl py-5 text-sm font-black uppercase tracking-widest text-white transition-opacity active:opacity-90",
+        "primary-gradient flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-ambient-md transition-all active:scale-[0.99] active:opacity-90 md:text-sm",
         disabled && "cursor-not-allowed opacity-70"
       )}
     >
@@ -35,8 +35,8 @@ export function ShippingSubmitButton({
         </>
       ) : (
         <>
-          Tiếp tục thanh toán
-          <ArrowRight className="h-5 w-5" />
+          Tiếp tục kiểm tra đơn hàng
+          <ArrowRight className="h-4 w-4" />
         </>
       )}
     </button>

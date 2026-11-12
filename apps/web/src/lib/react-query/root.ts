@@ -18,6 +18,7 @@ import { supportQueryKeys } from "./router/support";
 import { voucherQueryKeys } from "./router/voucher";
 import { rankQueryKeys } from "./router/rank";
 import { stockAlertQueryKeys } from "./router/stock-alert";
+import { checkinQueryKeys } from "@/modules/checkin/client/query-keys";
 
 export const appQueryKeys = mergeQueryKeys(
   cartQueryKeys,
@@ -36,7 +37,8 @@ export const appQueryKeys = mergeQueryKeys(
   supportQueryKeys,
   voucherQueryKeys,
   rankQueryKeys,
-  stockAlertQueryKeys
+  stockAlertQueryKeys,
+  checkinQueryKeys
 );
 
 export type AppQueryKeys = typeof appQueryKeys;

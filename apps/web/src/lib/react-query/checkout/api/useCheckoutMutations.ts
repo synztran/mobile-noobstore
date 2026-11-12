@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ValidateStockResponse } from "@/app/api/checkout/validate-stock/route";
 import type {
+  SubmitOrderErrorResponse,
   SubmitOrderRequest,
   SubmitOrderResponse,
 } from "@/modules/checkout/types";
@@ -30,12 +31,15 @@ export function useSubmitOrder() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = await res.json() as SubmitOrderResponse | SubmitOrderErrorResponse;
       if (!res.ok) {
-        const code = typeof data.error_code === "string" && /^CHECKOUT_[A-Z_]+$/.test(data.error_code)
-          ? data.error_code
-          : "CHECKOUT_SUBMIT_FAILED";
-        throw new Error(code);
+        const error = "error" in data
+          ? new Error(`${data.error.code}: ${data.error.message}`)
+          : new Error("CHECKOUT_UNKNOWN_ERROR: Không thể tạo đơn hàng");
+        if ("error" in data) {
+          Object.assign(error, { code: data.error.code, phase: data.error.phase });
+        }
+        throw error;
       }
       return data as SubmitOrderResponse;
     },

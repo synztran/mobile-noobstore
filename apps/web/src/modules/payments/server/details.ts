@@ -40,7 +40,13 @@ export async function paymentDetailsForOrder(order: {
   const deposit = Number(order.deposit_amount ?? 0);
   if (![received, total, deposit].every(Number.isSafeInteger)) throw new Error("Invalid payment amount");
   const active = !["cancelled", "refunded", "returning"].includes(order.status);
-  const target = order.payment_type === "deposit_cod" && received < deposit ? deposit : total;
+  const isDepositOrder = order.payment_type === "deposit_cod";
+  const depositPaid =
+    isDepositOrder &&
+    (order.status === "first_paid" ||
+      order.status === "second_paid" ||
+      (received >= deposit && deposit > 0));
+  const target = isDepositOrder && !depositPaid ? deposit : total;
   const amountDue = active ? Math.max(0, target - received) : 0;
   const bank = bankResult.data;
   if (bank) {
@@ -58,11 +64,10 @@ export async function paymentDetailsForOrder(order: {
     const bin = bankBinFor(bank.platform_name);
     if (bin) payload = vietQR(bin, bank.account_number.replace(/\s/g, ""), amountDue, order.order_number);
   }
-  const depositPaid = order.payment_type === "deposit_cod" && received >= deposit && deposit > 0;
   const subtotal = total - Number(order.shipping_fee ?? 0) + Number(order.voucher_discount_amount ?? 0) + Number(order.shipping_discount_amount ?? 0);
 
   return { data: {
-    orderId: order.id, orderNumber: order.order_number, total, subtotal, received, amountDue,
+    orderId: order.id, orderNumber: order.order_number, status: order.status, total, subtotal, received, amountDue,
     shippingFee: Number(order.shipping_fee ?? 0), voucherDiscount: Number(order.voucher_discount_amount ?? 0),
     shippingFeePending: hasUnquotedShippingFee(order.shipping_method_id, Number(order.shipping_fee ?? 0)),
     shippingDiscount: Number(order.shipping_discount_amount ?? 0),

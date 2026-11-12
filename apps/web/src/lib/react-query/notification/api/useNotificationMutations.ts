@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { NotificationItem } from "@/app/api/notifications/route";
 
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
@@ -12,7 +13,29 @@ export function useMarkNotificationRead() {
       });
       if (!res.ok) throw new Error("Failed to mark notification as read");
     },
-    onSuccess: () => {
+    onMutate: async (notificationId) => {
+      await queryClient.cancelQueries({ queryKey: ["notification"] });
+      const previous = queryClient.getQueryData<NotificationItem[]>([
+        "notification",
+        "list",
+      ]);
+      queryClient.setQueryData<NotificationItem[]>(
+        ["notification", "list"],
+        (items) =>
+          items?.map((item) =>
+            item.id === notificationId
+              ? { ...item, read_at: new Date().toISOString() }
+              : item
+          )
+      );
+      return { previous };
+    },
+    onError: (_error, _notificationId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["notification", "list"], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notification"] });
     },
   });
@@ -30,7 +53,25 @@ export function useMarkAllNotificationsRead() {
       });
       if (!res.ok) throw new Error("Failed to mark all notifications as read");
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["notification"] });
+      const previous = queryClient.getQueryData<NotificationItem[]>([
+        "notification",
+        "list",
+      ]);
+      const readAt = new Date().toISOString();
+      queryClient.setQueryData<NotificationItem[]>(
+        ["notification", "list"],
+        (items) => items?.map((item) => ({ ...item, read_at: readAt }))
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["notification", "list"], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notification"] });
     },
   });

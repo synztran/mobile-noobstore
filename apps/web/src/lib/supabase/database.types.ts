@@ -3416,6 +3416,10 @@ export type Database = {
       };
     };
     Functions: {
+      get_checkout_idempotent_response: {
+        Args: { p_user_id: string; p_idempotency_key: string };
+        Returns: Json;
+      };
       adjust_points: {
         Args: {
           p_admin_id: string;
@@ -3563,6 +3567,25 @@ export type Database = {
           p_shipping_cost: number;
           p_total_price: number;
           p_user_id: string;
+        };
+        Returns: Json;
+      };
+      submit_order_with_checkout: {
+        Args: {
+          p_order_id: string;
+          p_user_id: string;
+          p_order_number: string;
+          p_total_price: number;
+          p_shipping_cost: number;
+          p_items: Json;
+          p_gift_items: Json;
+          p_idempotency_key: string;
+          p_request_hash: string;
+          p_vouchers: Json;
+          p_voucher_discount_amount: number;
+          p_shipping_discount_amount: number;
+          p_voucher_snapshot: Json;
+          p_gift_items_snapshot: Json;
         };
         Returns: Json;
       };

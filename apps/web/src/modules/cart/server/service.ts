@@ -343,6 +343,55 @@ export async function getCartItems(
 
   await applyKitPriceOverrides(supabase, items);
 
+  // Dynamic Addon Deals Resolution:
+  // If cart contains both main product and configured addon product, resolve deal discount
+  if (items.length > 1) {
+    const productIdsInCart = items.map((i) => i.product_id).filter(Boolean) as string[];
+    const { data: addonDeals } = await (supabase as any)
+      .from("product_addons")
+      .select("main_product_id, addon_product_id, discount_type, discount_value")
+      .in("main_product_id", productIdsInCart)
+      .in("addon_product_id", productIdsInCart)
+      .eq("is_active", true);
+
+    if (addonDeals && addonDeals.length > 0) {
+      const dealsByAddonId = new Map<string, any>(
+        addonDeals
+          .filter((deal: any) =>
+            items.some(
+              (candidate) => candidate.product_id === deal.main_product_id
+            )
+          )
+          .map((deal: any) => [deal.addon_product_id, deal])
+      );
+
+      for (const item of items) {
+        if (!item.product) continue;
+        const deal = item.product_id
+          ? dealsByAddonId.get(item.product_id)
+          : undefined;
+        if (deal) {
+          const original = item.product.base_price;
+          const discount =
+            deal.discount_type === "percentage"
+              ? Math.round((original * Number(deal.discount_value)) / 100)
+              : Math.min(original, Number(deal.discount_value));
+          const percent =
+            deal.discount_type === "percentage"
+              ? Number(deal.discount_value)
+              : Math.round((discount / (original || 1)) * 100);
+
+          item.product.base_price = Math.max(0, original - discount);
+          item.addon_deal = {
+            discount_amount: discount,
+            discount_percent: percent,
+            original_price: original,
+          };
+        }
+      }
+    }
+  }
+
   return items;
 }
 

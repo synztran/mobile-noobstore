@@ -1175,7 +1175,7 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
         aria-label="Chi tiết đơn hàng"
         aria-hidden={!isOpen}
         inert={!isOpen}
-        className={`duration-250 fixed left-0 right-0 z-[999] !mt-0 flex h-dvh max-h-dvh flex-col rounded-t-5xl bg-surface transition-all ease-out lg:bottom-0 lg:left-auto lg:right-0 lg:top-0 lg:w-[min(560px,100vw)] lg:rounded-none lg:shadow-2xl lg:transition-transform ${
+        className={`duration-250 fixed left-0 right-0 z-[999] !mt-0 flex h-dvh max-h-dvh flex-col rounded-t-5xl bg-surface transition-all ease-out lg:bottom-0 lg:left-auto lg:right-0 lg:top-0 lg:w-[min(40%,100vw)] lg:rounded-none lg:shadow-2xl lg:transition-transform ${
           isOpen ? "bottom-0 lg:translate-x-0" : "-bottom-full lg:translate-x-full"
         }`}
       >

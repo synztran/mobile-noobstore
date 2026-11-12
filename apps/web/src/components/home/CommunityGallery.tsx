@@ -6,7 +6,7 @@ import { Heart } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
 import { useEffect, useRef, useState } from "react";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 type ImageMeta = Record<string, { id: string; ratio: number; loaded: boolean }>;
 
@@ -40,25 +40,35 @@ export function CommunityGallery() {
   const photos = data?.photos ?? [];
   const hasMore = data?.hasMore ?? false;
 
-  const handleLoadingComplete = (id: string) => (img: HTMLImageElement) => {
-    const ratio =
-      img.naturalWidth && img.naturalHeight
-        ? img.naturalWidth / img.naturalHeight
-        : 1;
+  const handleLoadingComplete = (id: string) => () => {
     setImageMeta((prev) => ({
       ...prev,
-      [id]: { id, ratio, loaded: true },
+      [id]: { id, ratio: 1, loaded: true },
     }));
   };
 
   if (isLoading) {
     return (
-      <section ref={sectionRef}>
-        <div className="mb-8 h-8 animate-pulse rounded-lg bg-surface-container" />
-        <div className="grid grid-cols-2 gap-2">
-          <div className="aspect-square animate-pulse rounded-lg bg-surface-container" />
-          <div className="row-span-2 animate-pulse rounded-lg bg-surface-container" />
-          <div className="aspect-square animate-pulse rounded-lg bg-surface-container" />
+      <section ref={sectionRef} className="px-4 lg:px-0">
+        <div className="mb-8">
+          <div className="mb-2 h-4 w-24 animate-pulse rounded bg-surface-container" />
+          <div className="h-8 w-3/4 max-w-sm animate-pulse rounded-lg bg-surface-container" />
+          <div className="mt-2 h-4 w-2/3 max-w-xs animate-pulse rounded bg-surface-container" />
+        </div>
+        <div className="columns-2 gap-2 space-y-2 md:columns-3 lg:columns-4">
+          {Array.from({ length: PAGE_SIZE }, (_, index) => (
+            <div
+              key={index}
+              className={`break-inside-avoid animate-pulse overflow-hidden rounded-xl bg-surface-container-high ${
+                index % 4 === 1 ? "aspect-[3/4]" : "aspect-square"
+              }`}
+            />
+          ))}
+        </div>
+        <div className="mt-6 h-12 animate-pulse rounded-xl bg-surface-container" />
+        <div className="mt-6 space-y-2 rounded-xl border border-primary/10 bg-primary/5 px-3 py-4">
+          <div className="mx-auto h-3 w-3/4 animate-pulse rounded bg-surface-container" />
+          <div className="mx-auto h-3 w-2/3 animate-pulse rounded bg-surface-container" />
         </div>
       </section>
     );
@@ -67,7 +77,7 @@ export function CommunityGallery() {
   if (photos.length === 0) return null;
 
   return (
-    <section ref={sectionRef} className="px-4 lg:px-0">
+    <section ref={sectionRef} className="px-6 lg:px-0">
       <div
         className={`mb-8 transition-all duration-700 ${
           visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"
@@ -87,7 +97,7 @@ export function CommunityGallery() {
         </p>
       </div>
 
-      <div className="columns-2 gap-2 space-y-2 md:columns-3 lg:columns-4">
+      <div className="columns-2 gap-2 space-y-2 lg:columns-4">
         {photos.map((photo) => {
           const meta = imageMeta[photo.id];
           const isLoaded = meta?.loaded ?? false;

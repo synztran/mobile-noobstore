@@ -131,6 +131,16 @@ function CartItemRow({
             </div>
           </div>
         ))}
+        {item.addon_deal && (
+          <div className="flex items-center gap-1.5 rounded-lg bg-primary/[0.08] px-2 py-1 text-[10px] font-bold text-primary">
+            <span>🎁 Mua kèm giá tốt</span>
+            {item.addon_deal.discount_percent && (
+              <span className="rounded bg-rose-500 px-1 py-0.2 text-[9px] font-black text-white">
+                -{item.addon_deal.discount_percent}%
+              </span>
+            )}
+          </div>
+        )}
         <div className="!mt-auto flex items-center justify-between pt-2">
           <div className="flex items-center gap-2 rounded-lg border border-surface-container-highest bg-gray-200 px-2 py-1">
             <button
@@ -151,9 +161,16 @@ function CartItemRow({
               +
             </button>
           </div>
-          <p className="font-black text-primary md:text-lg">
-            {formatVND(unitTotal)}
-          </p>
+          <div className="text-right">
+            <p className="font-black text-primary md:text-lg">
+              {formatVND(unitTotal)}
+            </p>
+            {item.addon_deal && (
+              <p className="text-[10px] font-bold text-on-surface-variant/60 line-through">
+                {formatVND(item.addon_deal.original_price * item.quantity)}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

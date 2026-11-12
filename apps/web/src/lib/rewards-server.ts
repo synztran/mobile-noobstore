@@ -25,6 +25,7 @@ export async function getRewards(
 			description: (r.description as string) ?? null,
 			rewardType: r.reward_type as "voucher" | "product" | "point",
 			pointsCost: r.points_cost as number,
+			pointsCurrency: (r.points_currency as "nsp" | "daily_checkin") ?? "nsp",
 			imageUrl: (r.image_url as string) ?? null,
 			stock: (r.stock as number) ?? null,
 			claimedCount: (r.claimed_count as number) ?? 0,

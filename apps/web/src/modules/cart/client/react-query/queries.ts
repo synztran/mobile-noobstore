@@ -1,98 +1,122 @@
 import type { CartApiItem, CartItem } from "@/modules/cart/types";
-import type { Product, ProductVariant, SelectedComponent } from "@/modules/products/types";
+import type {
+  Product,
+  ProductVariant,
+  SelectedComponent,
+} from "@/modules/products/types";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useCartStore } from "../hooks/useCartStore";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function transformToCartItem(item: CartApiItem): CartItem {
-	const product: Product = {
-		id: item.product?.id ?? item.product_id ?? "",
-		name: item.product?.name ?? "",
-		category: "",
-		base_price: item.product?.base_price ?? 0,
-		stock_quantity: item.product?.stock_quantity ?? 0,
-		thumbnail: item.product?.thumbnail ?? null,
-		is_pre_order: item.product?.is_pre_order ?? false,
-		pre_order_config: item.product?.pre_order_config ?? null,
-		brand: item.product?.brand ?? "",
-	};
+  const product: Product = {
+    id: item.product?.id ?? item.product_id ?? "",
+    name: item.product?.name ?? "",
+    category: "",
+    base_price: item.product?.base_price ?? 0,
+    stock_quantity: item.product?.stock_quantity ?? 0,
+    thumbnail: item.product?.thumbnail ?? null,
+    is_pre_order: item.product?.is_pre_order ?? false,
+    pre_order_config: item.product?.pre_order_config ?? null,
+    brand: item.product?.brand ?? "",
+  };
 
-	const variant: ProductVariant | null = item.variant
-		? {
-				id: item.variant.id,
-				variant_name: item.variant.variant_name,
-				price_adjustment: item.variant.price_adjustment,
-				effective_price: (item.product?.base_price ?? 0) + (item.variant.price_adjustment ?? 0),
-				thumbnail: item.variant.thumbnail ?? null,
-				is_pre_order: item.variant.is_pre_order ?? false,
-				pre_order_config: item.variant.pre_order_config ?? null,
-			}
-		: null;
+  const variant: ProductVariant | null = item.variant
+    ? {
+        id: item.variant.id,
+        variant_name: item.variant.variant_name,
+        price_adjustment: item.variant.price_adjustment,
+        effective_price:
+          (item.product?.base_price ?? 0) +
+          (item.variant.price_adjustment ?? 0),
+        thumbnail: item.variant.thumbnail ?? null,
+        is_pre_order: item.variant.is_pre_order ?? false,
+        pre_order_config: item.variant.pre_order_config ?? null,
+      }
+    : null;
 
-	const components: SelectedComponent[] = item.children
-		.filter((c) => c.variant)
-		.map((c) => ({
-			variant_id: c.variant!.id,
-			variant_name: c.variant!.variant_name,
-			component_group: c.component_group ?? "",
-			price_adjustment: c.variant!.price_adjustment,
-			thumbnail: c.variant!.thumbnail ?? null,
-			is_pre_order: c.variant!.is_pre_order ?? false,
-			pre_order_config: c.variant!.pre_order_config ?? null,
-		}));
+  const components: SelectedComponent[] = item.children
+    .filter((c) => c.variant)
+    .map((c) => ({
+      variant_id: c.variant!.id,
+      variant_name: c.variant!.variant_name,
+      component_group: c.component_group ?? "",
+      price_adjustment: c.variant!.price_adjustment,
+      thumbnail: c.variant!.thumbnail ?? null,
+      is_pre_order: c.variant!.is_pre_order ?? false,
+      pre_order_config: c.variant!.pre_order_config ?? null,
+    }));
 
-	// NOTE: `||`, not `??` — the flags are real booleans (false when not
-	// pre-order), so `??` short-circuits and never consults the components.
-	const hasAnyPreOrder =
-		product.is_pre_order ||
-		(variant?.is_pre_order ?? false) ||
-		components.some((c) => c.is_pre_order);
-	const preOrderConfig = product.pre_order_config ?? variant?.pre_order_config ?? components.find((c) => c.pre_order_config)?.pre_order_config ?? null;
+  // NOTE: `||`, not `??` — the flags are real booleans (false when not
+  // pre-order), so `??` short-circuits and never consults the components.
+  const hasAnyPreOrder =
+    product.is_pre_order ||
+    (variant?.is_pre_order ?? false) ||
+    components.some((c) => c.is_pre_order);
+  const preOrderConfig =
+    product.pre_order_config ??
+    variant?.pre_order_config ??
+    components.find((c) => c.pre_order_config)?.pre_order_config ??
+    null;
 
-	return {
-		id: item.id,
-		product,
-		variant,
-		components: components.length > 0 ? components : undefined,
-		quantity: item.quantity,
-		is_pre_order: hasAnyPreOrder,
-		pre_order_config: preOrderConfig,
-	};
+  return {
+    id: item.id,
+    product,
+    variant,
+    components: components.length > 0 ? components : undefined,
+    quantity: item.quantity,
+    is_pre_order: hasAnyPreOrder,
+    pre_order_config: preOrderConfig,
+    addon_deal: item.addon_deal ?? null,
+  };
 }
 
 export function useCartQuery() {
-	const query = useQuery({
-		...appQueryKeys.cart.all,
-		queryFn: async () => {
-			const res = await fetch("/api/cart");
-			if (!res.ok) throw new Error("Failed to fetch cart");
-			const data = await res.json();
+  const [fetchingTimedOut, setFetchingTimedOut] = useState(false);
+  const query = useQuery({
+    ...appQueryKeys.cart.all,
+    queryFn: async () => {
+      const res = await fetch("/api/cart");
+      if (!res.ok) throw new Error("Failed to fetch cart");
+      const data = await res.json();
 
-			const items: CartItem[] = (data.items ?? []).map(transformToCartItem);
-			useCartStore.getState().setCart(items, data.cart_id);
+      const items: CartItem[] = (data.items ?? []).map(transformToCartItem);
+      useCartStore.getState().setCart(items, data.cart_id);
 
-			return data;
-		},
-		staleTime: 30_000,
-		retry: 1,
-	});
+      return data;
+    },
+    staleTime: 30_000,
+    retry: 1,
+  });
 
-	// Surface the in-flight state (initial load + refetches after mutations)
-	// so the TopNav cart icon can show a loading indicator.
-	useEffect(() => {
-		useCartStore.getState().setCartFetching(query.isFetching);
-	}, [query.isFetching]);
+  // Surface the in-flight state (initial load + refetches after mutations)
+  // so the TopNav cart icon can show a loading indicator.
+  useEffect(() => {
+    setFetchingTimedOut(false);
+    if (!query.isFetching) {
+      useCartStore.getState().setCartFetching(false);
+      return;
+    }
 
-	// Defense-in-depth: no matter what the fetch state thinks, the icon must
-	// not stay in its loading spinner once the query has settled (success or
-	// error). `cartFetching` drives the spinner in TopNav/DesktopTopBar, and a
-	// stuck value makes the icon spin forever even though the request finished.
-	useEffect(() => {
-		if (query.status === "success" || query.status === "error") {
-			useCartStore.getState().setCartFetching(false);
-		}
-	}, [query.status]);
+    useCartStore.getState().setCartFetching(true);
+    const timeout = window.setTimeout(() => setFetchingTimedOut(true), 2000);
+    return () => window.clearTimeout(timeout);
+  }, [query.isFetching]);
 
-	return query;
+  useEffect(() => {
+    if (fetchingTimedOut) useCartStore.getState().setCartFetching(false);
+  }, [fetchingTimedOut]);
+
+  // Defense-in-depth: no matter what the fetch state thinks, the icon must
+  // not stay in its loading spinner once the query has settled (success or
+  // error). `cartFetching` drives the spinner in TopNav/DesktopTopBar, and a
+  // stuck value makes the icon spin forever even though the request finished.
+  useEffect(() => {
+    if (query.status === "success" || query.status === "error") {
+      useCartStore.getState().setCartFetching(false);
+    }
+  }, [query.status]);
+
+  return query;
 }

@@ -6,6 +6,7 @@ import { DELIVERY_OPTIONS } from "@/constants";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm, type DeliverySpeed } from "@/hooks/useShippingForm";
 import { resolveDeliveryOptions } from "@/lib/delivery-options";
+import { ShippingMethod } from "@/lib/shipping-method";
 import { cartItemsToGA, trackBeginCheckout } from "@/lib/analytics";
 import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import AddressFields from "./AddressFields";
@@ -150,81 +151,186 @@ const ShippingPage = () => {
     <div className="space-y-4">
       <ShippingHeroHeader />
 
-      <form onSubmit={handleSubmit} className="shipping-form space-y-4">
-        <ContactInfoFields
-          fullName={form.fullName}
-          apartment={form.apartment}
-          phoneNumber={form.phoneNumber}
-          isPickup={isPickup}
-          fullNameInvalid={!!isInvalid("fullName", true)}
-          phoneNumberInvalid={!!isInvalid("phoneNumber", true)}
-          onChange={handleChange}
-          onBlur={handleBlur}
-        />
+      <form
+        onSubmit={handleSubmit}
+        className="shipping-form lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:items-start lg:gap-8"
+      >
+        {/* Left Column: Form Fields */}
+        <div className="space-y-4">
+          {/* Card 1: Contact Info */}
+          <section className="rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient-sm md:p-6">
+            <div className="mb-4 flex items-center gap-2.5">
+              <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 text-xs font-black text-primary">
+                👤
+              </div>
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-tight text-on-surface">
+                  Thông tin người nhận
+                </h2>
+                <p className="text-[11px] text-on-surface-variant">
+                  Thông tin dùng để liên hệ và xác nhận giao hàng
+                </p>
+              </div>
+            </div>
+            <ContactInfoFields
+              fullName={form.fullName}
+              phoneNumber={form.phoneNumber}
+              fullNameInvalid={!!isInvalid("fullName", true)}
+              phoneNumberInvalid={!!isInvalid("phoneNumber", true)}
+              onChange={handleChange}
+              onBlur={handleBlur}
+            />
+          </section>
 
-        {!isPickup && (
-          <AddressFields
-            city={form.city}
-            district={form.district}
-            ward={form.ward}
-            streetAddress={form.streetAddress}
-            notes={form.notes}
-            cityCode={cityCode}
-            cityTouched={cityTouched}
-            streetTouched={!!touched.streetAddress}
-            isHCM={!!isHCM}
-            onCityChange={handleCityChange}
-            onDistrictChange={handleDistrictChange}
-            onWardChange={handleWardChange}
-            onWardCodeChange={handleWardCodeChange}
-            onAddressSelect={handleAddressSelect}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            onCityTouched={handleCityTouched}
-            customerLocation={customerLocation}
-            storeCoords={storeCoords}
-            routeCoordinates={routeCoordinates}
-            distanceKm={distanceKm}
+          {/* Card 2: Delivery Destination & Mode */}
+          <section className="rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient-sm md:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 text-xs font-black text-primary">
+                  📍
+                </div>
+                <div>
+                  <h2 className="text-sm font-black uppercase tracking-tight text-on-surface">
+                    {isPickup ? "Nhận hàng tại cửa hàng" : "Địa chỉ nhận hàng"}
+                  </h2>
+                  <p className="text-[11px] text-on-surface-variant">
+                    {isPickup
+                      ? "Đến trực tiếp cửa hàng NoobStore nhận sản phẩm"
+                      : "Giao hàng tận nơi trên toàn quốc"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mode Toggle Switch */}
+              <div className="flex items-center gap-1.5 rounded-xl bg-surface-container p-1">
+                <button
+                  type="button"
+                  onClick={() => handleDeliveryChange(ShippingMethod.Standard)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-extrabold transition-all ${
+                    !isPickup
+                      ? "bg-surface text-primary shadow-sm"
+                      : "text-on-surface-variant hover:text-on-surface"
+                  }`}
+                >
+                  Giao tận nơi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeliveryChange(ShippingMethod.Pickup)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-extrabold transition-all ${
+                    isPickup
+                      ? "bg-surface text-primary shadow-sm"
+                      : "text-on-surface-variant hover:text-on-surface"
+                  }`}
+                >
+                  Nhận tại shop
+                </button>
+              </div>
+            </div>
+
+            {!isPickup ? (
+              <AddressFields
+                city={form.city}
+                district={form.district}
+                ward={form.ward}
+                streetAddress={form.streetAddress}
+                apartment={form.apartment}
+                notes={form.notes}
+                cityCode={cityCode}
+                cityTouched={cityTouched}
+                streetTouched={!!touched.streetAddress}
+                isHCM={!!isHCM}
+                onCityChange={handleCityChange}
+                onDistrictChange={handleDistrictChange}
+                onWardChange={handleWardChange}
+                onWardCodeChange={handleWardCodeChange}
+                onAddressSelect={handleAddressSelect}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                onCityTouched={handleCityTouched}
+                customerLocation={customerLocation}
+                storeCoords={storeCoords}
+                routeCoordinates={routeCoordinates}
+                distanceKm={distanceKm}
+                isCalculatingFee={isCalculatingFee}
+              />
+            ) : (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-primary/20 bg-primary/[0.03] p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl">🏬</span>
+                    <div className="text-xs">
+                      <p className="font-bold text-on-surface">
+                        Cửa hàng NoobStore TP.HCM
+                      </p>
+                      <p className="mt-0.5 text-on-surface-variant">
+                        70/4b đường 47, Phường Hiệp Bình Chánh, Thủ Đức, TP.Hồ Chí Minh
+                      </p>
+                      <p className="mt-1 font-semibold text-primary">
+                        Giờ mở cửa: 08:00 - 19:00 (Hàng ngày)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <PickupSection
+                  hasPreOrder={hasPreOrder}
+                  pickupDate={pickupDate}
+                  pickupTime={pickupTime}
+                  minPickupDate={minPickupDate}
+                  pickupSlots={pickupSlots}
+                  isPickupFieldInvalid={isPickupFieldInvalid}
+                  onDateChange={setPickupDate}
+                  onTimeChange={setPickupTime}
+                  onBlur={handlePickupBlur}
+                />
+              </div>
+            )}
+          </section>
+
+          {/* Card 3: Shipping Method (only when delivery) */}
+          {!isPickup && (
+            <section className="rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient-sm md:p-6">
+              <div className="mb-4 flex items-center gap-2.5">
+                <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 text-xs font-black text-primary">
+                  🚚
+                </div>
+                <div>
+                  <h2 className="text-sm font-black uppercase tracking-tight text-on-surface">
+                    Phương thức vận chuyển
+                  </h2>
+                  <p className="text-[11px] text-on-surface-variant">
+                    Thời gian dự kiến và chi phí tương ứng
+                  </p>
+                </div>
+              </div>
+              <DeliveryMethodSection
+                hasPreOrder={hasPreOrder}
+                preOrderEstimate={preOrderEstimate}
+                delivery={delivery}
+                setDelivery={handleDeliveryChange}
+                deliveryOptions={deliveryOptions}
+                isCalculatingFee={isCalculatingFee}
+                distanceKm={distanceKm}
+                immediateFee={immediateFee}
+                basicFee={basicFee}
+              />
+            </section>
+          )}
+        </div>
+
+        {/* Right Column: Sticky Cart Preview & Order Summary */}
+        <aside className="mt-4 space-y-4 lg:sticky lg:top-6 lg:mt-0">
+          <DiscountTeaser />
+          <OrderSummary
+            subtotal={subtotal}
+            shippingCost={shippingCost}
+            orderTotal={orderTotal}
             isCalculatingFee={isCalculatingFee}
+            isSubmitting={isSubmitting}
+            shippingFeePending={isFeePending}
           />
-        )}
-
-        <DeliveryMethodSection
-          hasPreOrder={hasPreOrder}
-          preOrderEstimate={preOrderEstimate}
-          delivery={delivery}
-          setDelivery={handleDeliveryChange}
-          deliveryOptions={deliveryOptions}
-          isCalculatingFee={isCalculatingFee}
-          distanceKm={distanceKm}
-          immediateFee={immediateFee}
-          basicFee={basicFee}
-        />
-
-        {isPickup ? (
-          <PickupSection
-            hasPreOrder={hasPreOrder}
-            pickupDate={pickupDate}
-            pickupTime={pickupTime}
-            minPickupDate={minPickupDate}
-            pickupSlots={pickupSlots}
-            isPickupFieldInvalid={isPickupFieldInvalid}
-            onDateChange={setPickupDate}
-            onTimeChange={setPickupTime}
-            onBlur={handlePickupBlur}
-          />
-        ) : null}
-
-        <DiscountTeaser />
-
-        <OrderSummary
-          subtotal={subtotal}
-          shippingCost={shippingCost}
-          orderTotal={orderTotal}
-          isCalculatingFee={isCalculatingFee}
-          isSubmitting={isSubmitting}
-          shippingFeePending={isFeePending}
-        />
+        </aside>
       </form>
     </div>
   );

@@ -102,6 +102,7 @@ export default function SearchSuggestions({
           {suggestions.map((product, idx) => (
             <li key={product.id} onClick={() => onSelect(product)}>
               <button
+                type="button"
                 className={clsx(
                   "flex w-full items-center gap-2 p-2 text-left transition-colors",
                   idx === selectedIndex

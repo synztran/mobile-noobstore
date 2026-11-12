@@ -56,8 +56,8 @@ export function HeroSection({
 
   if (isLoading) {
     return (
-      <section className="relative !mt-0 h-[680px] animate-pulse overflow-hidden bg-surface-container">
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-surface-container-high" />
+      <section className="relative !mt-0 h-[680px] animate-pulse overflow-hidden bg-surface-container lg:h-[560px]">
+        <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/50 to-surface-container-high lg:bg-gradient-to-r lg:from-surface lg:via-surface/70 lg:to-transparent" />
 
         <div className="absolute inset-0 z-10 flex flex-col justify-end p-4">
           <div className="flex flex-col gap-4">
@@ -95,7 +95,7 @@ export function HeroSection({
 
   return (
     <section
-      className="relative !mt-0 h-[680px] select-none overflow-hidden"
+      className="relative !mt-0 h-[680px] select-none overflow-hidden lg:h-[560px]"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -116,16 +116,16 @@ export function HeroSection({
             fetchPriority={i === 0 ? "high" : "auto"}
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-surface/5" />
-          <div className="absolute inset-0 bg-surface/5" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-surface/5 lg:bg-gradient-to-r lg:from-surface lg:via-surface/60 lg:to-transparent" />
+          <div className="absolute inset-0 bg-surface/5 lg:bg-transparent" />
         </div>
       ))}
 
       {/* Content */}
-      <div className="absolute inset-0 z-10 flex flex-col justify-end p-4 lg:flex-row lg:items-end lg:justify-between lg:p-8">
+      <div className="absolute inset-0 z-10 flex flex-col justify-end p-4 lg:flex-row lg:items-end lg:justify-between lg:px-14 lg:py-10">
         <div
           key={current}
-          className="flex animate-[fadeSlideUp_0.5s_ease_forwards] flex-col gap-4 lg:max-w-lg"
+          className="flex animate-[fadeSlideUp_0.5s_ease_forwards] flex-col gap-4 lg:w-[min(44%,560px)] lg:gap-5"
         >
           <div className="flex items-center gap-2">
             <div className="h-5 w-1 rounded-full bg-primary" />
@@ -133,15 +133,15 @@ export function HeroSection({
               {slide.subtitle}
             </p>
           </div>
-          <p className="text-5xl font-black uppercase leading-tight tracking-tighter text-on-surface lg:text-6xl">
+          <p className="text-5xl font-black uppercase leading-tight tracking-tighter text-on-surface lg:text-[clamp(2.5rem,4vw,3.75rem)] lg:leading-[1.02]">
             {slide.title}
           </p>
-          <p className="max-w-xs text-sm leading-relaxed text-on-surface-variant lg:text-base">
+          <p className="max-w-xs text-sm leading-relaxed text-on-surface-variant lg:max-w-[42ch] lg:text-base">
             {slide.description}
           </p>
           <Link
             href={slide.cta_link}
-            className="mt-2 flex w-full items-center justify-between rounded-xl bg-primary px-6 py-4 text-xs font-black tracking-widest text-on-primary shadow-lg transition-transform active:scale-95 lg:w-auto lg:px-8"
+            className="mt-2 flex w-full items-center justify-between gap-6 rounded-xl bg-primary px-6 py-4 text-xs font-black tracking-widest text-on-primary shadow-lg transition-transform active:scale-95 lg:w-fit lg:min-w-52 lg:justify-center lg:px-8"
           >
             <span>{slide.cta_text}</span>
             <ArrowRight size={16} />
@@ -150,7 +150,7 @@ export function HeroSection({
 
         {/* Dot indicators */}
         {slides.length > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2 lg:mt-0 lg:flex-col lg:gap-3">
+          <div className="mt-6 flex items-center justify-center gap-2 lg:absolute lg:bottom-10 lg:right-14 lg:mt-0 lg:flex-row lg:gap-2">
             {slides.map((_, i) => (
               <button
                 key={i}
@@ -158,7 +158,7 @@ export function HeroSection({
                 onClick={() => goTo(i)}
                 className={`rounded-full transition-all duration-300 ${
                   i === current
-                    ? "h-1.5 w-6 bg-primary lg:h-6 lg:w-1.5"
+                    ? "h-1.5 w-6 bg-primary"
                     : "h-1.5 w-1.5 bg-on-surface/30"
                 }`}
               />

@@ -17,7 +17,7 @@ import { useAuth } from "@/modules/user/client/AuthProvider";
 import { toast } from "@/lib/toast";
 import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useCheckoutStore } from "@/store";
-import { isPickupSelectionValid } from "@/lib/pickup-selection";
+import { isPickupSelectionValid } from "@/lib/pickup-slot";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -154,6 +154,7 @@ export function useShippingForm() {
   const router = useRouter();
   const {
     setShipping,
+    clearCheckout,
     shipping,
     shippingFormDraft,
     saveShippingDraft,
@@ -184,6 +185,7 @@ export function useShippingForm() {
   const [delivery, setDelivery] = useState<DeliverySpeed>("standard");
   const [pickupDate, setPickupDate] = useState("");
   const [pickupTime, setPickupTime] = useState("");
+  const [pickupClock, setPickupClock] = useState(() => Date.now());
   const [cityTouched, setCityTouched] = useState(false);
   const [immediatePricePerKm, setImmediatePricePerKm] = useState(12000);
   const [basicPricePerKm, setBasicPricePerKm] = useState(5500);
@@ -271,6 +273,11 @@ export function useShippingForm() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setPickupClock(Date.now()), 30_000);
+    return () => window.clearInterval(interval);
   }, []);
 
   const fetchedRef = useRef(false);
@@ -522,7 +529,7 @@ export function useShippingForm() {
   // Earliest allowed pickup date (YYYY-MM-DD): today (or tomorrow after close),
   // never before the earliest pre-order available date.
   const minPickupDate = useMemo(() => {
-    const now = new Date();
+    const now = new Date(pickupClock);
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     let min = new Date(today);
@@ -536,13 +543,13 @@ export function useShippingForm() {
       }
     }
     return `${min.getFullYear()}-${String(min.getMonth() + 1).padStart(2, "0")}-${String(min.getDate()).padStart(2, "0")}`;
-  }, [earliestPreOrderPickupDate]);
+  }, [earliestPreOrderPickupDate, pickupClock]);
 
   const pickupSlots = useMemo(() => {
     // Slots follow the schedule of the selected pickup day: weekdays end at
     // 19:00, weekends at 17:00. Falls back to today's window when no date is
     // picked yet.
-    const now = new Date();
+    const now = new Date(pickupClock);
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
     const isToday =
       pickupDate ===
@@ -564,7 +571,34 @@ export function useShippingForm() {
       );
     }
     return slots;
-  }, [pickupDate]);
+  }, [pickupDate, pickupClock]);
+
+  // A stored pickup slot may have passed since the customer last visited.
+  useEffect(() => {
+    if (!ready || !isPickup || hasPreOrder || !pickupDate || !pickupTime) return;
+
+    if (
+      !isPickupSelectionValid({
+        date: pickupDate,
+        time: pickupTime,
+        minDate: minPickupDate,
+        availableSlots: pickupSlots,
+      })
+    ) {
+      setPickupDate("");
+      setPickupTime("");
+    }
+  }, [
+    ready,
+    isPickup,
+    hasPreOrder,
+    pickupDate,
+    pickupTime,
+    minPickupDate,
+    pickupSlots,
+    setPickupDate,
+    setPickupTime,
+  ]);
 
   // A saved pickup slot can become invalid while the customer is away from
   // checkout (for example, today's 08:30 slot after it has passed).
@@ -642,6 +676,7 @@ export function useShippingForm() {
         }
 
         setIsSubmitting(true);
+        clearCheckout();
         clearShippingDraft();
         setShipping(
           {
@@ -673,6 +708,7 @@ export function useShippingForm() {
       }
 
       setIsSubmitting(true);
+      clearCheckout();
       clearShippingDraft();
       setShipping(
         {
@@ -692,6 +728,7 @@ export function useShippingForm() {
       pickupTime,
       router,
       setShipping,
+      clearCheckout,
       shippingCost,
     ]
   );

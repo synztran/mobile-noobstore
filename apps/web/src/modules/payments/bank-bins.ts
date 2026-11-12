@@ -1,5 +1,5 @@
 /**
- * Reviewed bank BINs for VietQR.
+ * Reviewed bank BINs for QR Banking.
  *
  * Shared by the storefront payment details and the admin QR re-provision
  * panel so both encode the same recipient. Unknown bank configuration fails

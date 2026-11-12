@@ -229,11 +229,13 @@
 
   .min-main-content {
     /* min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 9.25rem); */
-    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    min-height: calc(
+      100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
   }
 }
 
-.maplibregl-ctrl-bottom-right  {
+.maplibregl-ctrl-bottom-right {
   display: none;
 }
 
@@ -249,98 +251,142 @@
 }
 
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes community-feature-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeSlideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(155, 63, 28, 0.3); }
-  50% { box-shadow: 0 0 0 6px rgba(155, 63, 28, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(155, 63, 28, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(155, 63, 28, 0);
+  }
 }
 
 @keyframes icon-bounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-@property --border-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@keyframes border-spin {
-  to { --border-angle: 360deg; }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* ── gooey-toast overrides ──
    gooey-toast uses oklch() which can be dropped by Next.js production
    CSS minification. Hex fallbacks ensure colors survive the build.       */
 :root {
-	--gooey-state-success: #16a34a;
-	--gooey-state-loading: #6b7280;
-	--gooey-state-error: #dc2626;
-	--gooey-state-warning: #d97706;
-	--gooey-state-info: #2563eb;
-	--gooey-state-action: #4f46e5;
+  --gooey-state-success: #16a34a;
+  --gooey-state-loading: #6b7280;
+  --gooey-state-error: #dc2626;
+  --gooey-state-warning: #d97706;
+  --gooey-state-info: #2563eb;
+  --gooey-state-action: #4f46e5;
 }
 
-[data-gooey-badge][data-state="error"], [data-gooey-title][data-state="error"] {
-	color: #dc2626;
-	background: color-mix(in srgb, var(--_tone) 18%, transparent);
-  font-size: .8rem!important;
+[data-gooey-badge][data-state="error"],
+[data-gooey-title][data-state="error"] {
+  color: #dc2626;
+  background: color-mix(in srgb, var(--_tone) 18%, transparent);
+  font-size: 0.8rem !important;
 }
 
-[data-gooey-badge][data-state="success"], [data-gooey-title][data-state="success"] {
+[data-gooey-badge][data-state="success"],
+[data-gooey-title][data-state="success"] {
   color: #16a34a;
-  font-size: .8rem!important;
+  font-size: 0.8rem !important;
 }
 
 [data-gooey-header] {
-  padding: 0.55rem 0.45rem!important;
+  padding: 0.55rem 0.45rem !important;
 }
 
 [data-gooey-description] {
-  padding: 0.575rem 0.575rem 0.65rem!important;
-  font-size: 0.8rem!important;
+  padding: 0.575rem 0.575rem 0.65rem !important;
+  font-size: 0.8rem !important;
 }
 
 [data-gooey-time-fill] {
-  background-color: #9b3f1c!important;
+  background-color: #9b3f1c !important;
 }
 
 [data-gooey-title] {
-	font-size: 0.8125rem;
+  font-size: 0.8125rem;
 }
 
 [data-gooey-description] {
-	font-size: 0.8125rem;
+  font-size: 0.8125rem;
 }
 
 .content-html h2 {
@@ -367,10 +413,12 @@
   margin-left: 1rem;
   list-style: disc;
 }
-.content-html ul, .content-html ol {
+.content-html ul,
+.content-html ol {
   padding-left: 0;
 }
-.content-html ul li, .content-html ol li {
+.content-html ul li,
+.content-html ol li {
   margin-bottom: 0.25rem;
 }
 .content-html ol {
@@ -418,7 +466,9 @@
    DesktopShell state only — do not reintroduce CSS width overrides here. */
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -479,4 +529,25 @@
   --input: #e4e2de;
   --ring: #9b3f1c;
   --primary-foreground: #ffffff;
+}
+
+/* The check-in teaser renders nothing for signed-out visitors, so collapse its
+   wrapper and drop the sibling gap instead of leaving an empty row. */
+.home-checkin-slot:empty {
+  display: none;
+}
+
+.home-checkin-slot:empty + .home-community-gallery {
+  margin-top: 0;
+}
+
+@media (min-width: 1024px) {
+  .home-community-checkin-grid:has(.home-checkin-slot:empty) {
+    display: block;
+  }
+
+  .home-community-checkin-grid:has(.home-checkin-slot:empty)
+    .home-community-gallery {
+    display: block;
+  }
 }

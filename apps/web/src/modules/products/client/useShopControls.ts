@@ -133,6 +133,21 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
     commit(search, sort, cleared);
   }, [search, sort, commit]);
 
+  // Used by the empty state: clears the search term AND every filter, so the
+  // "Xoá bộ lọc" action always returns the full catalogue. Calling
+  // handleClearFilters alone would keep the search that produced zero results.
+  const handleClearAll = useCallback(() => {
+    const cleared: FilterState = {
+      category: null,
+      brand: null,
+      priceMin: 0,
+      priceMax: 0,
+    };
+    setSearch("");
+    setFilterState(cleared);
+    commit("", sort, cleared);
+  }, [sort, commit]);
+
   const filterApplied =
     filterState.category !== null ||
     filterState.brand !== null ||
@@ -151,6 +166,7 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
     handleSort,
     handleApplyFilter,
     handleClearFilters,
+    handleClearAll,
     setShowFilter,
     setShowSort,
   };

@@ -10,6 +10,7 @@ export interface OrderSummary {
   total_price: number;
   item_count: number;
   service_line_count: number;
+  product_summaries: Array<{ name: string; variant: string | null; quantity: number }>;
   created_at: string;
   voucher_code: string | null;
   voucher_discount_amount: number;
@@ -77,7 +78,7 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(quantity), order_services(count), created_at",
+        "id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(id, quantity, product_name), order_services(count), created_at",
         {
           count: "exact",
         }
@@ -123,7 +124,7 @@ export async function GET(req: NextRequest) {
         voucher_code: string | null;
         voucher_discount_amount: number | string | null;
         shipping_discount_amount: number | string | null;
-        order_items: Array<{ quantity: number }>;
+        order_items: Array<{ id: string; quantity: number; product_name: string }>;
         order_services: Array<{ count: number }>;
         created_at: string;
       }> | null;
@@ -133,6 +134,21 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const orderItemIds = (data ?? []).flatMap((row) => (row.order_items ?? []).map((item) => item.id));
+    const variantNamesByItemId = new Map<string, string[]>();
+    if (orderItemIds.length > 0) {
+      const { data: components } = await supabase
+        .from("order_item_components")
+        .select("order_item_id, variant_name")
+        .in("order_item_id", orderItemIds);
+      for (const component of components ?? []) {
+        if (!component.order_item_id || !component.variant_name) continue;
+        const names = variantNamesByItemId.get(component.order_item_id) ?? [];
+        names.push(component.variant_name);
+        variantNamesByItemId.set(component.order_item_id, names);
+      }
     }
 
     // Batch-fetch NSP points earned for delivered orders in this page
@@ -161,6 +177,7 @@ export async function GET(req: NextRequest) {
         row.order_items?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
         0,
       service_line_count: row.order_services?.[0]?.count ?? 0,
+      product_summaries: (row.order_items ?? []).map((item) => ({ name: item.product_name, variant: variantNamesByItemId.get(item.id)?.join(", ") ?? null, quantity: item.quantity })),
       created_at: row.created_at,
       voucher_code: row.voucher_code ?? null,
       voucher_discount_amount: Number(row.voucher_discount_amount ?? 0),

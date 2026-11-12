@@ -32,13 +32,14 @@ modules/cart/
                         snapshot adapter (loadAvailabilitySnapshot)
     reminders.ts        sendStaleCartReminder — stale-cart push notification (extracted from GET /api/cart)
     service.test.ts / availability.test.ts
-  client/           client-only ("use client"); react-query + zustand state
-    query-keys.ts       cartQueryKeys factory (merged into appQueryKeys)
-    queries.ts          useCartQuery — fetches /api/cart, transforms CartApiItem → CartItem into the store
-    mutations.ts        useAddCartItem / useUpdateCartItem / useRemoveCartItem / useClearCart
-    useCartStore.ts     the zustand cart store (persisted as "noobstore-cart") — was store/index.ts
-    useFlyToCart.ts     useFlyToCartStore — tiny animation state (was store/useFlyToCart.ts)
-    useCartStore.test.ts
+  client/           client-only behavior
+    react-query/       TanStack Query hooks + query keys
+      query-keys.ts      cartQueryKeys factory (merged into appQueryKeys)
+      queries.ts         useCartQuery — fetches /api/cart and maps response into the store
+      mutations.ts       useAddCartItem / useUpdateCartItem / useRemoveCartItem / useClearCart
+    hooks/             Zustand stores and local client hooks
+      useCartStore.ts    persisted Zustand cart store — was store/index.ts
+      useFlyToCart.ts    useFlyToCartStore — animation state
   ui/               components
     CartDrawer.tsx      mobile bottom-sheet drawer (dynamic-imported in (main)/layout.tsx)
     DesktopCartDrawer.tsx  desktop right-side drawer (built in modules/desktop, shares useCartDrawerState)
@@ -47,6 +48,9 @@ modules/cart/
     CartItemRow.tsx     one line (+ its component pills)
     FlyToCart.tsx       flying-image overlay (rendered once in app/layout.tsx)
     CartHydrator.tsx    null renderer: runs useCartQuery + store rehydrate (rendered in (main)/layout.tsx)
+  tests/
+    client/useCartStore.test.ts
+    server/service.test.ts / availability.test.ts
 ```
 
 ## Rules that keep this clean
@@ -191,12 +195,12 @@ Mutations instead: hook → `fetch /api/cart/items…` → route validates auth
 
 ## Tests
 
-- `server/service.test.ts` — mocked-Supabase coverage of the "kit bypass" bug:
+- `tests/server/service.test.ts` — mocked-Supabase coverage of the "kit bypass" bug:
   kit upserts never exceed variant stock across the cart (global semantics) nor
   the product `max_quantity`; update path enforces the line's own variant.
-- `server/availability.test.ts` — the pure rule engine: standard/variant/kit
+- `tests/server/availability.test.ts` — the pure rule engine: standard/variant/kit
   shapes, multiplicity, committed usage, decreases always allowed.
-- `client/useCartStore.test.ts` — store logic (merge same kit config,
+- `tests/client/useCartStore.test.ts` — store logic (merge same kit config,
   add/remove/updateQty/totals).
 - Full flow is covered by type-check + build (server/client boundary) + e2e
   against a seeded DB.

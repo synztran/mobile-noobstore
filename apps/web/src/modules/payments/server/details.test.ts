@@ -45,6 +45,15 @@ describe("server-owned payment instructions", () => {
     expect("data" in result && result.data?.amountDue).toBe(700);
     expect("payload" in result && result.payload).toContain("5403700");
   });
+  it("treats first_paid as the first deposit being complete", async () => {
+    mocks.order.status = "first_paid";
+    mocks.receipts = [{ amount: 100 }];
+
+    const result = await paymentDetails("NS123");
+
+    expect("data" in result && result.data?.depositPaid).toBe(true);
+    expect("data" in result && result.data?.amountDue).toBe(900);
+  });
   it("fails closed for unapproved recipient or unavailable ledger", async () => {
     mocks.bank.account_number = "99999999";
     await expect(paymentDetails("NS123")).rejects.toThrow("deployment-approved");

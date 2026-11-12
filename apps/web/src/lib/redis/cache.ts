@@ -56,8 +56,10 @@ export const CACHE_KEYS = {
     productId: string,
     search: string,
     limit: string,
-    sort: string
-  ) => `quick-pick:${categorySlug}:${productId}:${search}:${limit}:${sort}`,
+    sort: string,
+    brand = "",
+    excludeProductId = ""
+  ) => `quick-pick:${categorySlug}:${productId}:${search}:${limit}:${sort}:${brand}:${excludeProductId}`,
   wards: (city: string, district: string) => `wards:${city}:${district}`,
   noteworthy: (categorySlug: string, limit: number) =>
     `${CACHE_VERSION}:noteworthy:${categorySlug}:${limit}`,
@@ -87,6 +89,7 @@ export function buildProductListCacheKey(params: {
   limit?: number;
   offset?: number;
   slim?: boolean;
+  includeImages?: boolean;
   soldOutLast?: boolean;
 }): string {
   const {
@@ -99,9 +102,10 @@ export function buildProductListCacheKey(params: {
     limit,
     offset = 0,
     slim = false,
+    includeImages = false,
     soldOutLast = false,
   } = params;
-  return `products:${CACHE_VERSION}:${search}:${categorySlug}:${brand}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}:${slim ? "slim" : "full"}:${soldOutLast ? "sol" : "nosol"}`;
+  return `products:${CACHE_VERSION}:${search}:${categorySlug}:${brand}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}:${slim ? "slim" : "full"}:${includeImages ? "images" : "noimages"}:${soldOutLast ? "sol" : "nosol"}`;
 }
 
 /**

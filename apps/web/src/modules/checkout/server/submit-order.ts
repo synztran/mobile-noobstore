@@ -42,7 +42,50 @@ import {
   toNumber,
   type VoucherValidationRow,
 } from "./submit-order-logic";
-import { checkoutRpcErrorCode } from "./submit-order-errors";
+
+const CHECKOUT_DIAGNOSTIC_CODES: Array<[RegExp, string]> = [
+  [/operator does not exist: text = uuid/i, "CHECKOUT_SCHEMA_TYPE_MISMATCH"],
+  [/Idempotency key reused/i, "CHECKOUT_IDEMPOTENCY_CONFLICT"],
+  [/usage limit exceeded|Voucher unavailable/i, "CHECKOUT_VOUCHER_UNAVAILABLE"],
+];
+
+const CHECKOUT_ERROR_MESSAGES: Record<string, string> = {
+  CHECKOUT_SCHEMA_TYPE_MISMATCH:
+    "Checkout database schema mismatch. Please contact support with this error code.",
+  CHECKOUT_GIFT_STOCK:
+    "A gift item is no longer available. Update the voucher and try again.",
+  CHECKOUT_IDEMPOTENCY_CONFLICT:
+    "Checkout changed or a voucher is no longer available. Refresh and try again.",
+  CHECKOUT_VOUCHER_UNAVAILABLE:
+    "Checkout changed or a voucher is no longer available. Refresh and try again.",
+  CHECKOUT_VOUCHER_LIMIT:
+    "Checkout changed or a voucher is no longer available. Refresh and try again.",
+  CHECKOUT_DATABASE_REJECTED:
+    "Checkout could not be completed. Please contact support with this error code.",
+};
+
+function getCheckoutErrorCode(
+  explicitCode: string | undefined,
+  sqlPhase: string | undefined,
+  diagnostic: string
+) {
+  if (explicitCode === "CHECKOUT_DATABASE_ERROR") {
+    return sqlPhase
+      ? `CHECKOUT_FAILED_${sqlPhase.toUpperCase()}`
+      : "CHECKOUT_DATABASE_REJECTED";
+  }
+  if (explicitCode) return explicitCode;
+  return CHECKOUT_DIAGNOSTIC_CODES.find(([pattern]) => pattern.test(diagnostic))?.[1]
+    ?? "CHECKOUT_DATABASE_REJECTED";
+}
+
+function getCheckoutErrorMessage(code: string) {
+  if (code.startsWith("CHECKOUT_FAILED_")) {
+    const phase = code.slice("CHECKOUT_FAILED_".length).toLowerCase().replaceAll("_", " ");
+    return `Checkout failed during ${phase}. Please share this code with support.`;
+  }
+  return CHECKOUT_ERROR_MESSAGES[code] ?? CHECKOUT_ERROR_MESSAGES.CHECKOUT_DATABASE_REJECTED;
+}
 
 export async function submitOrder(req: NextRequest) {
   let phase = "parse request";
@@ -50,7 +93,7 @@ export async function submitOrder(req: NextRequest) {
     const body: SubmitOrderRequest = await req.json();
 
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.idempotency_key ?? "")) {
-      return NextResponse.json({ error_code: "CHECKOUT_INVALID_IDEMPOTENCY" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid checkout idempotency key" }, { status: 400 });
     }
 
     const shippingMethodId = normalizeShippingMethodId(body.shipping_method_id);
@@ -91,15 +134,35 @@ export async function submitOrder(req: NextRequest) {
       return NextResponse.json({ error_code: "CHECKOUT_UNAUTHORIZED" }, { status: 401 });
     }
 
-    const rpc = admin.rpc.bind(admin) as unknown as (
-      fn: string,
-      args: Record<string, unknown>
-    ) => Promise<{ data: unknown; error: { message: string } | null }>;
-    const replayQuery = await rpc("get_checkout_idempotent_response", {
+    const replayQuery = await admin.rpc("get_checkout_idempotent_response", {
       p_user_id: user.id,
       p_idempotency_key: body.idempotency_key,
     });
-    if (replayQuery.error) throw new Error("Unable to verify checkout retry");
+    if (replayQuery.error) {
+      const schemaMismatch = /operator does not exist: text = uuid/i.test(replayQuery.error.message);
+      const code = schemaMismatch
+        ? "CHECKOUT_SCHEMA_TYPE_MISMATCH"
+        : "CHECKOUT_IDEMPOTENCY_LOOKUP_FAILED";
+      console.error("[submit] checkout idempotency lookup failed", {
+        code,
+        postgresCode: replayQuery.error.code,
+        message: replayQuery.error.message,
+        details: replayQuery.error.details,
+        hint: replayQuery.error.hint,
+      });
+      return NextResponse.json(
+        {
+          error: {
+            code,
+            message: schemaMismatch
+              ? "Checkout database schema mismatch. Please contact support with this error code."
+              : "Unable to verify checkout retry. Please contact support with this error code.",
+            phase: "idempotency_lookup",
+          },
+        },
+        { status: 500 }
+      );
+    }
     const storedReplay = replayQuery.data as {
       order_id?: string;
       order_number?: string;
@@ -166,6 +229,32 @@ export async function submitOrder(req: NextRequest) {
     const productPriceMap = new Map<string, number>(
       (productRows ?? []).map((p) => [p.id, Number(p.base_price)])
     );
+
+    // Dynamic Addon Deals Resolution for checkout
+    if (productIds.length > 1) {
+      const { data: addonDeals } = await (supabase as any)
+        .from("product_addons")
+        .select("main_product_id, addon_product_id, discount_type, discount_value")
+        .in("main_product_id", productIds)
+        .in("addon_product_id", productIds)
+        .eq("is_active", true);
+
+      const dealsByAddonId = new Map<string, any>(
+        (addonDeals ?? [])
+          .filter((deal: any) => productIds.includes(deal.main_product_id))
+          .map((deal: any) => [deal.addon_product_id, deal])
+      );
+      for (const [addonProductId, deal] of dealsByAddonId) {
+        const original = productPriceMap.get(addonProductId);
+        if (original !== undefined) {
+          const discount =
+            deal.discount_type === "percentage"
+              ? Math.round((original * Number(deal.discount_value)) / 100)
+              : Math.min(original, Number(deal.discount_value));
+          productPriceMap.set(addonProductId, Math.max(0, original - discount));
+        }
+      }
+    }
     const variantAdjMap = new Map<string, number>(
       (variantRows ?? []).map((v) => [v.id, Number(v.price_adjustment)])
     );
@@ -252,6 +341,7 @@ export async function submitOrder(req: NextRequest) {
       .map((voucher) => voucher.voucher_id)
       .filter((id): id is string => Boolean(id));
     const uniqueVoucherIdsRequested = [...new Set(voucherIdsRequested)];
+    phase = "load voucher checkout settings";
     const maxVouchers = await getMaxVouchersPerOrder();
     if (uniqueVoucherIdsRequested.length > maxVouchers) {
       return NextResponse.json(
@@ -287,6 +377,7 @@ export async function submitOrder(req: NextRequest) {
       .filter((id): id is string => Boolean(id));
     const appliedVoucherIdsUnique = [...new Set(appliedVoucherIds)];
     if (appliedVoucherIdsUnique.length > 0) {
+      phase = "validate applied vouchers";
       const { data: voucherRows, error: voucherErr } = await supabase
         .from("vouchers")
         .select("*")
@@ -508,7 +599,7 @@ export async function submitOrder(req: NextRequest) {
     if (storedReplay?.order_id && storedReplay.order_number) {
       if (storedReplay.request_hash !== requestHash) {
         return NextResponse.json(
-          { error_code: "CHECKOUT_IDEMPOTENCY_CONFLICT" },
+          { error: "Checkout idempotency key reused with different payload" },
           { status: 409 }
         );
       }
@@ -523,7 +614,10 @@ export async function submitOrder(req: NextRequest) {
     const submitOrderRpc = admin.rpc.bind(admin) as unknown as (
       fn: string,
       args: Record<string, unknown>
-    ) => Promise<{ data: unknown; error: { message: string } | null }>;
+    ) => Promise<{
+      data: unknown;
+      error: { code?: string; message: string; details?: string; hint?: string } | null;
+    }>;
     const giftItems = appliedVouchers.flatMap((voucher) =>
       voucher.voucher_id
         ? (giftItemsByVoucherId.get(voucher.voucher_id) ?? [])
@@ -553,11 +647,35 @@ export async function submitOrder(req: NextRequest) {
     });
 
     if (error) {
-      const diagnostic = error.message;
-      const code = checkoutRpcErrorCode(diagnostic);
-      const conflict = code === "CHECKOUT_IDEMPOTENCY_CONFLICT" || code === "CHECKOUT_VOUCHER_LIMIT_EXCEEDED" || code === "CHECKOUT_VOUCHER_UNAVAILABLE";
-      console.error("[submit] checkout RPC failed", { code, phase, message: diagnostic });
-      return NextResponse.json({ error_code: code }, { status: conflict ? 409 : 400 });
+      const diagnostic = `${error.message} ${error.details ?? ""} ${error.hint ?? ""}`;
+      const conflict = /Idempotency key reused|usage limit exceeded|Voucher unavailable|CHECKOUT_IDEMPOTENCY_CONFLICT|CHECKOUT_VOUCHER_LIMIT|CHECKOUT_VOUCHER_UNAVAILABLE/i.test(diagnostic);
+      const explicitCode = /CHECKOUT_[A-Z_]+/.exec(diagnostic)?.[0];
+      const sqlPhase = /during ([a-z_]+) \(sqlstate ([0-9a-z]+)\)/i.exec(diagnostic)?.[1]
+        ?? /phase=([^;\s]+)/i.exec(diagnostic)?.[1];
+      const code = getCheckoutErrorCode(explicitCode, sqlPhase, diagnostic);
+      const message = getCheckoutErrorMessage(code);
+
+      console.error("[submit] checkout database RPC failed", {
+        phase,
+        code,
+        postgresCode: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      const failedPhase = sqlPhase ?? "create_order";
+      const responseMessage = code.startsWith("CHECKOUT_FAILED_")
+        ? `Checkout failed during ${failedPhase.replaceAll("_", " ")}. Please share code ${code} with support.`
+        : message;
+      return NextResponse.json(
+        { error: {
+          code,
+          message: responseMessage,
+          phase: failedPhase,
+          postgresCode: /SQLSTATE\s+([0-9A-Z]+)/i.exec(diagnostic)?.[1]?.toUpperCase(),
+        } },
+        { status: conflict ? 409 : 400 }
+      );
     }
 
     // `submit_order` decremented stock in the DB — invalidate the product
@@ -876,6 +994,12 @@ export async function submitOrder(req: NextRequest) {
       message: err instanceof Error ? err.message : "Internal server error",
       stack: err instanceof Error ? err.stack : undefined,
     });
-    return NextResponse.json({ error_code: "CHECKOUT_INTERNAL_ERROR" }, { status: 500 });
+    return NextResponse.json({
+      error: {
+        code: "CHECKOUT_INTERNAL_ERROR",
+        message: "Checkout could not be completed. Please contact support with this error code.",
+        phase,
+      },
+    }, { status: 500 });
   }
 }

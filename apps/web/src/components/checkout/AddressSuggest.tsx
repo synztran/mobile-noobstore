@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MapPin, Sparkles, X } from "lucide-react";
+import clsx from "clsx";
 
 interface Suggestion {
   place_id?: string;
@@ -56,10 +58,12 @@ export default function AddressSuggest({
   disabled,
   placeholder,
 }: Props) {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(_value || "");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fetchTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const changeTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -68,6 +72,13 @@ export default function AddressSuggest({
 
   const locationQuery = buildQuery(ward, district, city);
   const hasLocation = !!ward && !!city;
+
+  // Sync external value when not interacting
+  useEffect(() => {
+    if (_value && _value !== inputValue && !isOpen) {
+      setInputValue(_value);
+    }
+  }, [_value, isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const doFetch = useCallback(
     (query: string, count: number) => {
@@ -86,10 +97,11 @@ export default function AddressSuggest({
   useEffect(() => {
     setInputValue("");
     setSuggestions([]);
+    setIsOpen(false);
     selectedRef.current = false;
   }, [ward, district, city]);
 
-  // Auto-fetch when ward/district/city changes (debounced)
+  // Pre-fetch suggestions when ward/district/city changes
   useEffect(() => {
     if (!hasLocation) {
       setSuggestions([]);
@@ -99,18 +111,32 @@ export default function AddressSuggest({
     clearTimeout(changeTimerRef.current);
     changeTimerRef.current = setTimeout(() => {
       const count = ++reqRef.current;
-      setSuggestions([]);
       doFetch("", count);
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(changeTimerRef.current);
   }, [ward, district, city, hasLocation, doFetch]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Debounced fetch when user types
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     setInputValue(v);
     selectedRef.current = false;
+    setIsOpen(true);
     if (!hasLocation || v.trim().length < 2) return;
 
     clearTimeout(fetchTimerRef.current);
@@ -118,7 +144,7 @@ export default function AddressSuggest({
 
     fetchTimerRef.current = setTimeout(() => {
       doFetch(v, count);
-    }, 400);
+    }, 350);
   };
 
   const select = (idx: number) => {
@@ -126,7 +152,7 @@ export default function AddressSuggest({
     if (!s) return;
 
     selectedRef.current = true;
-    setSuggestions([]);
+    setIsOpen(false);
     setInputValue(s.place_name);
 
     if (s.lat !== undefined && s.lon !== undefined) {
@@ -150,7 +176,7 @@ export default function AddressSuggest({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (suggestions.length === 0) return;
+    if (!isOpen || suggestions.length === 0) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -161,10 +187,12 @@ export default function AddressSuggest({
     } else if (e.key === "Enter" && activeIdx >= 0) {
       e.preventDefault();
       select(activeIdx);
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
     }
   };
 
-  const showList = suggestions.length > 0;
+  const showList = isOpen && suggestions.length > 0;
 
   const handleBlurInternal = () => {
     // Sync typed text to parent on blur if user didn't select a suggestion
@@ -174,27 +202,40 @@ export default function AddressSuggest({
     onBlur?.();
   };
 
+  // Helper to split place_name into main part and address details
+  const formatAddressParts = (placeName: string) => {
+    const parts = placeName.split(",").map((p) => p.trim());
+    if (parts.length <= 1) return { main: placeName, sub: "" };
+    const main = parts[0];
+    const sub = parts.slice(1).join(", ");
+    return { main, sub };
+  };
+
   return (
-    <div className="w-full">
+    <div ref={containerRef} className="min-w-0 flex-1">
       <div className="flex items-center gap-2">
         <input
           ref={inputRef}
           type="text"
           value={inputValue}
           onChange={handleChange}
+          onFocus={() => {
+            if (suggestions.length > 0) setIsOpen(true);
+          }}
           onKeyDown={handleKeyDown}
           onBlur={handleBlurInternal}
           disabled={disabled}
           placeholder={
             hasLocation
-              ? "Gõ ít nhất 2 ký tự để tìm gợi ý..."
+              ? "Số nhà, tên đường (hoặc chọn gợi ý)..."
               : (placeholder ??
-                "Chọn Tỉnh/Thành phố, Quận/Huyện, Phường/Xã trước")
+                "Chọn Tỉnh/Thành, Quận/Huyện trước")
           }
-          className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-on-surface-variant/40"
+          className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"
+          aria-expanded={showList}
         />
         {inputValue && (
           <button
@@ -204,49 +245,73 @@ export default function AddressSuggest({
               onChange("");
               setInputValue("");
               setSuggestions([]);
+              setIsOpen(false);
               inputRef.current?.focus();
             }}
-            className="flex-shrink-0 rounded-full p-0.5 text-on-surface-variant/50 transition-colors hover:text-on-surface"
+            className="flex-shrink-0 rounded-full p-1 text-on-surface-variant/40 transition-colors hover:bg-surface-container-high hover:text-on-surface"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X size={14} />
           </button>
         )}
-        {loading ? (
+        {loading && (
           <span className="loading loading-spinner loading-xs text-primary" />
-        ) : null}
+        )}
       </div>
 
-      {hasLocation && !showList && !loading && inputValue.length === 0 && (
-        <p className="mt-1 text-xs font-medium text-on-surface-variant/60">
-          Đang tải gợi ý...
-        </p>
-      )}
-
       {showList && (
-        <div className="absolute left-0 right-0 top-12 z-10 overflow-hidden rounded-b-xl border border-outline-variant bg-surface shadow-sm">
-          <div className="border-b border-outline-variant/30 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/50">
-            Gợi ý địa chỉ
+        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface p-1.5 shadow-2xl">
+          <div className="flex items-center gap-1.5 border-b border-outline-variant/10 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
+            <Sparkles size={12} className="text-primary" />
+            <span>Gợi ý địa chỉ tại {ward || district || "khu vực"}</span>
           </div>
-          <ul role="listbox" className="max-h-56 overflow-y-auto">
-            {suggestions.map((s, i) => (
-              <li
-                key={s.place_id ?? `${s.lat}-${s.lon}-${i}`}
-                role="option"
-                aria-selected={i === activeIdx}
-                onMouseDown={() => select(i)}
-                onMouseEnter={() => setActiveIdx(i)}
-                className={`cursor-pointer border-b border-outline-variant/20 px-3 py-3 text-xs leading-tight transition-colors last:border-b-0 ${
-                  i === activeIdx
-                    ? "bg-primary/10 text-on-surface"
-                    : "text-on-surface-variant hover:bg-surface-container-high"
-                }`}
-              >
-                {s.place_name}
-              </li>
-            ))}
+          <ul role="listbox" className="max-h-56 space-y-0.5 overflow-y-auto">
+            {suggestions.map((s, i) => {
+              const isSelected = i === activeIdx;
+              const { main, sub } = formatAddressParts(s.place_name);
+
+              return (
+                <li
+                  key={s.place_id ?? `${s.lat}-${s.lon}-${i}`}
+                  role="option"
+                  aria-selected={isSelected}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // prevent blur
+                    select(i);
+                  }}
+                  onMouseEnter={() => setActiveIdx(i)}
+                  className={clsx(
+                    "flex cursor-pointer items-start gap-2.5 rounded-xl px-3 py-2 text-left transition-all",
+                    isSelected
+                      ? "bg-primary/10 text-primary"
+                      : "text-on-surface hover:bg-surface-container/70"
+                  )}
+                >
+                  <div
+                    className={clsx(
+                      "mt-0.5 grid h-6 w-6 flex-shrink-0 place-items-center rounded-lg transition-colors",
+                      isSelected
+                        ? "bg-primary text-surface"
+                        : "bg-surface-container text-on-surface-variant"
+                    )}
+                  >
+                    <MapPin size={13} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold leading-snug">{main}</p>
+                    {sub && (
+                      <p className="mt-0.5 truncate text-[11px] text-on-surface-variant">
+                        {sub}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
+          <div className="border-t border-outline-variant/10 bg-surface-container-low/70 px-3 py-2 text-[11px] leading-relaxed text-on-surface-variant">
+            <span className="font-bold text-primary">💡 Mẹo: </span>
+            Nếu không có địa chỉ chính xác, bạn có thể chọn địa điểm gần đó nhất và thêm số nhà tại ô <strong>Ghi chú giao hàng</strong>.
+          </div>
         </div>
       )}
     </div>

@@ -31,7 +31,6 @@ export const WishlistButton = memo(function WishlistButton({
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
-  const isProductPage = /^\/shop\/.+$/.test(pathname);
   const { isInWishlist, isPendingFor, toggleWishlist } = useWishlist();
   const wished = isInWishlist(productId);
   const pending = isPendingFor(productId);
@@ -47,7 +46,7 @@ export const WishlistButton = memo(function WishlistButton({
 
   const sizeClass =
     size === "sm"
-      ? "h-8 min-w-8 px-2 text-xs lg:text-sm lg:h-12 lg:min-w-12"
+      ? "h-8 w-8 min-w-8 text-xs lg:h-10 lg:w-10 lg:min-w-10"
       : "h-12 min-w-12 px-2 text-sm lg:text-base lg:h-14 lg:min-w-14";
 
   return (
@@ -61,12 +60,11 @@ export const WishlistButton = memo(function WishlistButton({
       aria-pressed={wished}
       whileTap={{ scale: 0.92 }}
       className={clsx(
-        "inline-flex items-center justify-center gap-2 rounded-2xl font-black tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex shrink-0 items-center justify-center rounded-xl font-black tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-60",
         sizeClass,
-        isProductPage ? "h-12" : "",
         wished
-          ? "border border-green-600 text-green-700"
-          : "bg-surface-container text-on-surface-variant",
+          ? "border border-green-600 text-green-700 bg-green-50/50"
+          : "bg-surface-container text-on-surface-variant hover:text-green-600",
         className
       )}
     >

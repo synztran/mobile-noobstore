@@ -535,6 +535,8 @@ export interface GetProductListParams {
   excludeUncategorized?: boolean;
   /** Trim list payload: excerpt description, keep one variant for standards. */
   slim?: boolean;
+  /** Include product image gallery for Quick Pick's no-brand-alternative fallback. */
+  includeImages?: boolean;
   /**
    * Sink sold-out products below every available one, preserving the requested
    * sort order WITHIN each group. Opt-in: only /shop and /api/products set it.
@@ -591,6 +593,7 @@ export async function getProductListByFilters(
     // productTypes = ["standard", "kit", "component"],
     excludeUncategorized = false,
     slim = false,
+    includeImages = false,
     soldOutLast = false,
   } = params;
 
@@ -656,7 +659,7 @@ export async function getProductListByFilters(
     // ── Fetch paginated products (sorted by user's choice) ──
     // Note: `images` is intentionally omitted — the list rails/cards only use
     // `thumbnail`; the full gallery is fetched by the detail/configurator paths.
-    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, product_type, description, is_used, is_active, is_pre_order, created_at, sold_count, sale_ends_at,
+    const SELECT_COLUMNS = `id, slug, name, brand, base_price, stock_quantity, thumbnail, ${includeImages ? "images, " : ""}product_type, description, is_used, is_active, is_pre_order, created_at, sold_count, sale_ends_at,
        categories(id, name),
        product_variants(${VARIANT_COLUMNS})`;
 

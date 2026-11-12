@@ -21,6 +21,8 @@ interface DeliveryAvailabilitySectionProps {
    * working-hour ETAs. Empty/undefined → falls back to `variants`.
    */
   selectedVariants?: ShopVariant[];
+  /** Show methods in a 2-column grid (desktop view). */
+  twoColumns?: boolean;
 }
 
 interface MethodRow extends DeliveryMethodAvailability {
@@ -37,6 +39,7 @@ const ICON_BY_ID = Object.fromEntries(
 export function DeliveryAvailabilitySection({
   variants,
   selectedVariants,
+  twoColumns = false,
 }: DeliveryAvailabilitySectionProps) {
   const [now, setNow] = useState<Date | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -86,7 +89,7 @@ export function DeliveryAvailabilitySection({
   if (!now && !hasUnselectedVariants) return null;
 
   return (
-    <div className="w-full rounded-xl bg-[#f8f8f8] p-2">
+    <div className="rounded-xl border border-outline-variant/30 bg-surface p-3 shadow-ambient-sm">
       <button
         type="button"
         aria-expanded={expanded}
@@ -95,7 +98,7 @@ export function DeliveryAvailabilitySection({
       >
         <div className="inline-flex w-full flex-wrap items-center justify-between">
           <div className="space-x-1">
-            <span className="text-sm font-black uppercase text-primary">
+            <span className="text-xs font-black uppercase text-primary">
               Vận chuyển
             </span>
           </div>
@@ -122,7 +125,7 @@ export function DeliveryAvailabilitySection({
       </button>
 
       {expanded && (
-        <div className="mt-2 space-y-1">
+        <div className={clsx("mt-2", twoColumns ? "grid grid-cols-2 gap-x-3 gap-y-1" : "space-y-1")}>
           {methods.map((m) => (
             <div
               key={m.id}

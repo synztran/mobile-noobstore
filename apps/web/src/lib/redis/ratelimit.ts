@@ -59,6 +59,10 @@ const LIMITER_CONFIGS = {
     limiter: Ratelimit.fixedWindow(60, "1 m"),
     prefix: "ratelimit:api",
   },
+  checkin: {
+    limiter: Ratelimit.fixedWindow(20, "1 m"),
+    prefix: "ratelimit:checkin",
+  },
   alert: {
     limiter: Ratelimit.fixedWindow(100, "1 m"),
     prefix: "ratelimit:alert",
@@ -104,6 +108,10 @@ export function getCheckoutLimiter() {
 
 export function getApiLimiter() {
   return getLimiter("api");
+}
+
+export function getCheckinLimiter() {
+  return getLimiter("checkin");
 }
 
 export function getAlertLimiter() {

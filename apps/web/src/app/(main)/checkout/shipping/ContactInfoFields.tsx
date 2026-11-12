@@ -46,9 +46,9 @@ const FIELDS: Field[] = [
 
 interface Props {
   fullName: string;
-  apartment: string;
+  apartment?: string;
   phoneNumber: string;
-  isPickup: boolean;
+  isPickup?: boolean;
   fullNameInvalid: boolean;
   phoneNumberInvalid: boolean;
   onChange: (
@@ -59,79 +59,97 @@ interface Props {
 
 function ContactInfoFields({
   fullName,
-  apartment,
   phoneNumber,
-  isPickup,
   fullNameInvalid,
   phoneNumberInvalid,
   onChange,
   onBlur,
 }: Props) {
-  const values: Record<string, string> = { fullName, apartment, phoneNumber };
-  const invalidFlags: Record<string, boolean> = {
-    fullName: fullNameInvalid,
-    phoneNumber: phoneNumberInvalid,
-  };
-
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {FIELDS.filter(
-        (field) =>
-          !isPickup || field.name === "fullName" || field.name === "phoneNumber"
-      ).map((field) => {
-        const invalid = invalidFlags[field.name] ?? false;
-        return (
+    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+      {/* Full Name */}
+      <div>
+        <label className="mb-1.5 ml-1 block text-[11px] font-extrabold uppercase tracking-wider text-on-surface-variant">
+          Họ và tên <span className="ml-0.5 text-primary">*</span>
+        </label>
+        <div
+          className={clsx(
+            "flex items-center gap-2 rounded-xl border bg-surface-container/60 px-3.5 py-2.5 transition-all",
+            fullNameInvalid
+              ? "border-error bg-error/5"
+              : "border-outline-variant/30 focus-within:border-primary focus-within:bg-surface"
+          )}
+        >
           <div
-            key={field.name}
-            className={
-              field.colSpan === 2 && !isPickup ? "col-span-2" : "col-span-1"
-            }
-          >
-            <label className="mb-2 ml-1 block text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-              {field.label}
-              {field.required && <span className="ml-0.5 text-primary">*</span>}
-            </label>
-            <div
-              className={clsx(
-                "flex items-center gap-2 rounded-2xl border-2 bg-surface-container px-2 py-3 transition-all",
-                invalid
-                  ? "border-error"
-                  : "border-transparent focus-within:border-primary"
-              )}
-            >
-              <div
-                className={clsx(
-                  "flex-shrink-0 text-xl transition-colors",
-                  invalid ? "text-error" : "text-primary"
-                )}
-              >
-                {field.icon}
-              </div>
-              <input
-                name={field.name}
-                value={values[field.name]}
-                onChange={onChange}
-                onBlur={onBlur}
-                placeholder={field.placeholder}
-                type={field.type}
-                autoComplete="off"
-                className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
-              />
-              {values[field.name] && !invalid && (
-                <CheckCircle2
-                  size={16}
-                  className="flex-shrink-0 text-green-600"
-                />
-              )}
-            </div>
-            {invalid && (
-              <p className="ml-1 mt-1 text-[10px] font-bold text-error">
-                Trường này là bắt buộc
-              </p>
+            className={clsx(
+              "flex-shrink-0 text-xl transition-colors",
+              fullNameInvalid ? "text-error" : "text-primary"
             )}
+          >
+            <User size={18} />
           </div>
-        );
-      })}
+          <input
+            name="fullName"
+            value={fullName}
+            onChange={onChange}
+            onBlur={onBlur}
+            placeholder="Ví dụ: Nguyễn Văn A"
+            type="text"
+            autoComplete="off"
+            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+          />
+          {fullName && !fullNameInvalid && (
+            <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
+          )}
+        </div>
+        {fullNameInvalid && (
+          <p className="ml-1 mt-1 text-[10px] font-bold text-error">
+            Trường này là bắt buộc
+          </p>
+        )}
+      </div>
+
+      {/* Phone Number */}
+      <div>
+        <label className="mb-1.5 ml-1 block text-[11px] font-extrabold uppercase tracking-wider text-on-surface-variant">
+          Số điện thoại <span className="ml-0.5 text-primary">*</span>
+        </label>
+        <div
+          className={clsx(
+            "flex items-center gap-2 rounded-xl border bg-surface-container/60 px-3.5 py-2.5 transition-all",
+            phoneNumberInvalid
+              ? "border-error bg-error/5"
+              : "border-outline-variant/30 focus-within:border-primary focus-within:bg-surface"
+          )}
+        >
+          <div
+            className={clsx(
+              "flex-shrink-0 text-xl transition-colors",
+              phoneNumberInvalid ? "text-error" : "text-primary"
+            )}
+          >
+            <Phone size={18} />
+          </div>
+          <input
+            name="phoneNumber"
+            value={phoneNumber}
+            onChange={onChange}
+            onBlur={onBlur}
+            placeholder="Ví dụ: 0901 234 567"
+            type="tel"
+            autoComplete="off"
+            className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+          />
+          {phoneNumber && !phoneNumberInvalid && (
+            <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
+          )}
+        </div>
+        {phoneNumberInvalid && (
+          <p className="ml-1 mt-1 text-[10px] font-bold text-error">
+            Trường này là bắt buộc
+          </p>
+        )}
+      </div>
     </div>
   );
 }

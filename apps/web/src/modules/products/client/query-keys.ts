@@ -5,7 +5,7 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
  * Aggregated into `appQueryKeys` by src/lib/react-query/root.ts.
  */
 export const productQueryKeys = createQueryKeys("product", {
-	quickPick: (requestKey: string) => [requestKey],
+	quickPick: (requestKey: string, brand = "", excludeProductId = "", activeProductId = "") => [requestKey, brand, excludeProductId, activeProductId],
 	search: (q: string) => [q],
 	recentlyViewed: (ids: string) => [ids],
 });

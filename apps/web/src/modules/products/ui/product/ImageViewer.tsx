@@ -27,6 +27,15 @@ export function ImageViewer({ images, initialIndex, isOpen, onClose }: Props) {
     lastScale.current = 1;
   }, [initialIndex, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); onClose(); }
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, [isOpen, onClose]);
+
   // Spinner must reflect the CURRENT slide: without this reset the flag stays
   // true after the first load and later slides pop in with no indication.
   useEffect(() => {

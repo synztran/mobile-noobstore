@@ -1,5 +1,3 @@
-import { MAIL_DOMAIN } from "@/constants";
-import { Mail } from "lucide-react";
 import Link from "next/link";
 
 function FacebookIcon({ className }: { className?: string }) {
@@ -18,55 +16,107 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-on-surface">
+        {title}
+      </p>
+      <ul className="flex flex-col gap-2 text-xs font-semibold normal-case tracking-normal text-on-surface-variant">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="transition-colors hover:text-primary"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function HomeFooter() {
   const statusPageUrl = process.env.NEXT_PUBLIC_STATUS_PAGE_URL;
 
   return (
-    <footer className="!mt-0 bg-surface-container p-4 lg:p-6">
-      <div className="flex flex-col items-center gap-2 text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-        <div className="flex w-full justify-between gap-2 text-xs lg:w-auto lg:gap-4">
-          {/* <Link href="/news">Tin tức</Link> */}
-          <Link href="/policy">Chính sách</Link>
-          <Link href="/terms">Điều khoản</Link>
-          <Link href="/delivery-terms">Vận chuyển</Link>
-          {statusPageUrl ? (
+    <footer className="!mt-0 border-t border-on-surface/10 bg-surface-container p-6 pb-5 lg:p-10 lg:pb-5">
+      <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+        {/* Brand */}
+        <div className="col-span-2 flex flex-col gap-3 lg:col-span-1">
+          <Link
+            href="/"
+            className="text-lg font-black uppercase tracking-tight text-primary"
+          >
+            NoobStore
+          </Link>
+          <p className="max-w-[280px] text-xs font-semibold leading-relaxed text-on-surface-variant">
+            Đồ chơi bàn phím cơ tuyển chọn: bàn phím custom, switch, keycap và
+            phụ kiện. Build cùng cộng đồng NoobStore, giao hàng toàn quốc, bảo
+            hành minh bạch.
+          </p>
+          <div className="flex items-center gap-2">
             <a
-              href={statusPageUrl}
+              href="https://facebook.com/noobstore"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline-offset-4 hover:underline"
+              aria-label="Facebook"
+              data-tip="Facebook"
+              className="tooltip tooltip-top flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary"
             >
-              Trạng thái dịch vụ
+              <FacebookIcon className="h-5 w-5" />
             </a>
-          ) : null}
+            <a
+              href="https://instagram.com/noobstore"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              data-tip="Instagram"
+              className="tooltip tooltip-top flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary"
+            >
+              <InstagramIcon className="h-5 w-5" />
+            </a>
+          </div>
         </div>
 
-        <div className="flex w-full items-center justify-center gap-2">
-          <a
-            href="https://facebook.com/noobstore"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary lg:h-8 lg:w-8"
-          >
-            <FacebookIcon className="h-5 w-5" />
-          </a>
-          <a
-            href="https://instagram.com/noobstore"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary lg:h-8 lg:w-8"
-          >
-            <InstagramIcon className="h-5 w-5" />
-          </a>
-          <a
-            href={`mailto:${MAIL_DOMAIN}`}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:text-primary lg:h-8 lg:w-8"
-          >
-            <Mail size={20} />
-          </a>
-        </div>
+        <FooterColumn
+          title="Mua sắm"
+          links={[
+            { href: "/shop", label: "Cửa hàng" },
+            { href: "/gacha", label: "Gacha" },
+            { href: "/rewards", label: "Đổi thưởng" },
+            { href: "/community", label: "Cộng đồng" },
+          ]}
+        />
+        <FooterColumn
+          title="Hỗ trợ"
+          links={[
+            { href: "/profile/support", label: "Liên hệ hỗ trợ" },
+            { href: "/policy", label: "Chính sách" },
+            { href: "/delivery-terms", label: "Vận chuyển" },
+            { href: "/terms", label: "Điều khoản" },
+          ]}
+        />
+        <FooterColumn
+          title="Về NoobStore"
+          links={[
+            { href: "/about", label: "Về chúng tôi" },
+            { href: "/blogs", label: "Blog" },
+            { href: "/profile/points", label: "Điểm thưởng" },
+          ]}
+        />
+      </div>
 
-        <p className="opacity-50 lg:text-right">© 2026 NoobStore</p>
+      <div className="mt-8 flex flex-col items-center justify-center gap-2 border-t border-on-surface/10 pt-5 text-center text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+        <p>© 2026 NoobStore</p>
       </div>
     </footer>
   );

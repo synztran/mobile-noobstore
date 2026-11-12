@@ -60,7 +60,9 @@ export function HeroImageGallery({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative h-80 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm lg:h-[52rem]">
+      {/* Desktop gallery is beside a 420px purchase panel, so the hero has to
+          fit one viewport instead of the old full-width 52rem block. */}
+      <div className="relative h-80 w-full overflow-hidden rounded-2xl bg-surface-container-low shadow-ambient-sm lg:h-[68vh] lg:max-h-[44rem] lg:min-h-[26rem]">
         <button
           type="button"
           aria-label="Xem ảnh sản phẩm"
