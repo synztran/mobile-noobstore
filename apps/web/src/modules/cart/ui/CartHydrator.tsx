@@ -1,7 +1,7 @@
 "use client";
 
 import { useCartQuery } from "@/modules/cart/client/queries";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useEffect } from "react";
 
 export function CartHydrator() {

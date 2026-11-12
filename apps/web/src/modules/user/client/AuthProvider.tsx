@@ -2,7 +2,7 @@
 
 import type { Tables } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
 import type { AuthChangeEvent } from "@supabase/supabase-js";
 import type { Session, User } from "@supabase/supabase-js";

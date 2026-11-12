@@ -7,7 +7,7 @@ import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { useShippingForm, type DeliverySpeed } from "@/hooks/useShippingForm";
 import { resolveDeliveryOptions } from "@/lib/delivery-options";
 import { cartItemsToGA, trackBeginCheckout } from "@/lib/analytics";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import AddressFields from "./AddressFields";
 import ContactInfoFields from "./ContactInfoFields";
 import DeliveryMethodSection from "./DeliveryMethodSection";

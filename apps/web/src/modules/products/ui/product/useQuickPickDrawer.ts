@@ -17,7 +17,7 @@ import {
 import { trackAddToCart, toGAProduct } from "@/lib/analytics";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { toast } from "@/lib/toast";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useAddCartItem } from "@/modules/cart/client/mutations";
 import { useQuickPick } from "@/modules/products/client/queries";
 import { useAuth } from "@/modules/user/client/AuthProvider";

@@ -25,7 +25,7 @@ import {
   isFeePendingShippingMethod,
   isPickupShippingMethod,
 } from "@/lib/shipping-method";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useCheckoutStore, useDiscountStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";

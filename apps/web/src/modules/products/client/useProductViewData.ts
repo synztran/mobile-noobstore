@@ -18,7 +18,7 @@ import {
   LoginRequiredError,
   redirectToLogin,
 } from "@/modules/user/client/login-redirect";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
