@@ -2,7 +2,8 @@
 
 import type { ShopVariant } from "@/modules/products/types";
 import Image from "@/components/ui/AdaptiveImage";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 const MAX_VISIBLE = 5;
 
@@ -23,6 +24,7 @@ export const ProductSwatches = memo(function ProductSwatches({
   onSelect,
   productThumbnail,
 }: ProductSwatchesProps) {
+  const [tooltip, setTooltip] = useState<{ name: string; x: number; y: number } | null>(null);
   const colorVariants = useMemo(() => {
     return variants.filter((v) => getColorVariant(v) !== null);
   }, [variants]);
@@ -31,13 +33,9 @@ export const ProductSwatches = memo(function ProductSwatches({
 
   const visible = colorVariants.slice(0, MAX_VISIBLE);
   const overflow = colorVariants.length - MAX_VISIBLE;
-  const activeVariant = activeVariantId
-    ? colorVariants.find((v) => v.id === activeVariantId)
-    : null;
-
   return (
     <div>
-      <div className="flex items-center gap-1.5 overflow-x-auto px-0.5 py-2">
+      <div className="hide-scrollbar absolute right-0.5 top-2 z-20 flex max-h-max flex-col items-center gap-1 overflow-y-auto rounded-2xl border border-outline-variant/50 bg-surface/95 p-1 shadow-ambient-sm">
         {visible.map((variant) => {
           const color = getColorVariant(variant);
           const isActive = variant.id === activeVariantId;
@@ -47,6 +45,16 @@ export const ProductSwatches = memo(function ProductSwatches({
             <button
               key={variant.id}
               type="button"
+              onPointerEnter={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                setTooltip({ name: variant.variant_name, x: rect.left + rect.width / 2, y: rect.top });
+              }}
+              onPointerLeave={() => setTooltip(null)}
+              onFocus={(event) => {
+                const rect = event.currentTarget.getBoundingClientRect();
+                setTooltip({ name: variant.variant_name, x: rect.left + rect.width / 2, y: rect.top });
+              }}
+              onBlur={() => setTooltip(null)}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -55,8 +63,8 @@ export const ProductSwatches = memo(function ProductSwatches({
               aria-label={`Chon ${variant.variant_name}`}
               className={`relative h-6 w-6 shrink-0 overflow-hidden rounded-full border-2 transition-all ${
                 isActive
-                  ? "border-primary ring-2 ring-primary/30"
-                  : "border-outline-variant/60 hover:border-outline"
+                  ? "border-primary ring-2 ring-primary/40"
+                  : "border-outline-variant hover:border-primary/70"
               }`}
             >
               {imgSrc ? (
@@ -82,10 +90,15 @@ export const ProductSwatches = memo(function ProductSwatches({
           </span>
         )}
       </div>
-      {activeVariant && (
-        <p className="truncate text-xs text-on-surface lg:text-sm">
-          {activeVariant.variant_name}
-        </p>
+      {tooltip && typeof document !== "undefined" && createPortal(
+        <span
+          role="tooltip"
+          className="pointer-events-none fixed z-[9999] -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg bg-neutral px-2 py-1 text-xs font-semibold text-neutral-content shadow-lg"
+          style={{ left: tooltip.x, top: tooltip.y - 8 }}
+        >
+          {tooltip.name}
+        </span>,
+        document.body
       )}
     </div>
   );

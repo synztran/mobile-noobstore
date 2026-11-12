@@ -4,9 +4,9 @@ import type { ShopProduct } from "@/modules/products/types";
 import { Package, ShoppingCart } from "lucide-react";
 import WishlistButton from "@/modules/user/ui/wishlist/WishlistButton";
 import { toast } from "@/lib/toast";
-import { useCartStore } from "@/modules/cart/client/useCartStore";
-import { useFlyToCartStore } from "@/modules/cart/client/useFlyToCart";
-import { useAddCartItem } from "@/modules/cart/client/mutations";
+import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
+import { useFlyToCartStore } from "@/modules/cart/client/hooks/useFlyToCart";
+import { useAddCartItem } from "@/modules/cart/client/react-query/mutations";
 import { trackAddToCart, toGAProduct } from "@/lib/analytics";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import {
@@ -88,6 +88,13 @@ export const ProductCard = memo(function ProductCard({
     [product.variants]
   );
 
+  const buttonLabel = useMemo(() => {
+    if (submitting) return "Đang thêm";
+    if (product.stock_quantity === 0) return "Hết hàng";
+    if (product.is_pre_order) return "Đặt trước";
+    return "Thêm vào giỏ";
+  }, [submitting, product.stock_quantity, product.is_pre_order]);
+
   useEffect(() => {
     if (hasSwatches && prevDisplayImageRef.current !== displayImage) {
       prevDisplayImageRef.current = displayImage;
@@ -163,10 +170,8 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <>
-      <div className="group relative flex h-full flex-col justify-between gap-2">
-        <Link href={`/shop/${product.slug}`} className="block">
-          {/* ── Image box ─────────────────────────────────────────────── */}
-          <div
+        <div className="group relative flex h-full flex-col justify-between gap-2">
+        <div
             ref={imageRef}
             className="relative mb-2 aspect-[1/1] overflow-hidden rounded-xl bg-surface-container"
             style={{
@@ -174,6 +179,7 @@ export const ProductCard = memo(function ProductCard({
             }}
           >
             {/* Thumbnail or placeholder */}
+            <Link href={`/shop/${product.slug}`} className="absolute inset-0">
             {displayImage ? (
               <>
                 <Image
@@ -218,43 +224,49 @@ export const ProductCard = memo(function ProductCard({
                 </p>
               </div>
             )}
-          </div>
+            </Link>
 
+            {!isBundle && product.variants.some((variant) => variant.attributes?.color != null) && (
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-10">
+                <div className="pointer-events-auto">
+                  <ProductSwatches
+                    variants={product.variants}
+                    activeVariantId={activeVariantId}
+                    onSelect={setActiveVariantId}
+                    productThumbnail={product.thumbnail}
+                  />
+                </div>
+              </div>
+            )}
+        </div>
+
+        <Link href={`/shop/${product.slug}`} className="block">
           <ProductCardDetails product={product} isBundle={isBundle} />
         </Link>
 
-        <div className={`mt-auto flex flex-col gap-0.5 overflow-hidden`}>
+        <div className="mt-auto flex flex-col gap-0.5 overflow-hidden lg:overflow-visible">
           <ProductCardPricing product={product} />
-          {!isBundle ? (
-            <ProductSwatches
-              variants={product.variants}
-              activeVariantId={activeVariantId}
-              onSelect={setActiveVariantId}
-              productThumbnail={product.thumbnail}
-            />
-          ) : null}
           <StockIndicator stockQuantity={product.stock_quantity} />
-          <div className="mt-auto flex items-center gap-1">
+          <div className="mt-2 flex items-center gap-1.5">
             <WishlistButton
               productId={product.id}
               product={product}
               size="sm"
-              showLabel
-              className="w-[32px] rounded-xl"
+              className="!h-9 !w-9 !min-w-9 shrink-0 rounded-xl lg:!h-10 lg:!w-10 lg:!min-w-10"
             />
             <button
               type="button"
               onClick={handleQuickAdd}
               aria-label={`Quick add ${product.name}`}
               disabled={product.stock_quantity === 0 || submitting}
-              className="btn-sm flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-[10px] font-black uppercase tracking-[0.14em] text-surface transition-all lg:btn-md hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/50 disabled:text-surface/50 lg:text-xs"
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-2 text-[11px] font-bold text-surface transition-all lg:h-10 lg:px-3 lg:text-xs hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-on-surface/40 disabled:text-surface/70"
             >
               {submitting ? (
                 <span className="loading loading-spinner loading-xs" />
               ) : (
-                <ShoppingCart size={16} />
+                <ShoppingCart size={15} className="shrink-0" />
               )}
-              {!isBundle && (submitting ? "Đang thêm" : "Mua ngay")}
+              <span className="truncate">{buttonLabel}</span>
             </button>
           </div>
         </div>
