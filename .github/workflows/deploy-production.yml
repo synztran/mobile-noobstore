@@ -1,11 +1,11 @@
 name: Deploy production (web)
 
-# Production is manual. A merge to `prd` runs CI and a Vercel preview build but
-# never touches production: `vercel.json` skips git-triggered production builds,
-# and the `production` GitHub environment below holds the required reviewer.
-# A maintainer dispatches this workflow from the `prd` branch; it refuses any
-# other ref and any commit that is not the current `origin/prd` HEAD.
+# Production deployment runs automatically on push/merge to `prd` (or manually via workflow_dispatch).
+# `vercel.json` skips Vercel's automatic git-triggered builds so deployments go
+# through this workflow's verification (type-check + unit tests) first.
 on:
+  push:
+    branches: [prd]
   workflow_dispatch:
 
 permissions:
