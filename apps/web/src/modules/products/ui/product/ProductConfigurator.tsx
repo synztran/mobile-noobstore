@@ -163,13 +163,13 @@ export function ProductConfigurator({
   }
 
   return (
-    <div className="space-y-2 rounded-xl bg-[#f8f8f8] p-2 lg:space-y-0 lg:rounded-none lg:bg-transparent lg:p-0">
+    <div className="rounded-xl bg-[#f8f8f8] p-2 lg:rounded-none lg:bg-transparent lg:p-0">
       {showTitle ? (
         <span className="block text-sm font-black uppercase text-primary lg:mb-3">
           Lựa chọn cấu hình
         </span>
       ) : null}
-      <div className="flex min-h-0 flex-wrap gap-2 lg:block">
+      <div className="mt-2 flex min-h-0 flex-wrap gap-2 lg:block">
         {/* Component group selectors */}
         {groups?.map((group) => {
           const groupSelection = selections[group.component_group] ?? [];
@@ -265,7 +265,7 @@ export function ProductConfigurator({
                             );
                           })()}
                         </div>
-                        {showStockInline && (
+                        {/* {showStockInline && (
                           <span
                             className={clsx(
                               "text-[9px] font-semibold",
@@ -284,7 +284,7 @@ export function ProductConfigurator({
                                   ? `Sắp hết · Còn ${v.stock_quantity}`
                                   : `Còn ${v.stock_quantity}`}
                           </span>
-                        )}
+                        )} */}
                       </div>
                       <div className="absolute -top-2 left-1">
                         <VariantStatusBadge
@@ -304,7 +304,7 @@ export function ProductConfigurator({
                   );
                 })}
               </div>
-              <div className="hidden flex-wrap items-start gap-2 lg:flex">
+              <div className="hidden flex-wrap items-start gap-4 lg:flex">
                 {group.variants.map((v) => {
                   const selected = groupSelection.includes(v.id);
                   const soldOut = v.stock_quantity === 0;
@@ -329,7 +329,7 @@ export function ProductConfigurator({
                       aria-pressed={selected}
                       onClick={() => onSelect(group.component_group, v.id)}
                       className={clsx(
-                        "relative grid min-h-[76px] w-fit max-w-full grid-cols-[minmax(0,1fr)] items-center gap-x-2 rounded-xl border p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:max-w-max",
+                        "relative grid min-h-[76px] w-fit min-w-[min(100%,180px)] max-w-full grid-cols-[minmax(0,1fr)] items-center gap-x-2 rounded-xl border p-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:max-w-max",
                         selected
                           ? "border-primary bg-primary/[0.06]"
                           : "border-outline-variant/30 bg-surface hover:border-primary/50",
@@ -358,7 +358,7 @@ export function ProductConfigurator({
                         <span className="break-words text-sm font-bold text-on-surface">
                           {v.variant_name}
                         </span>
-                        {!v.is_pre_order && (
+                        {/* {!v.is_pre_order && (
                           <span
                             className={clsx(
                               "shrink-0 text-xs font-semibold",
@@ -367,7 +367,7 @@ export function ProductConfigurator({
                           >
                             {status.label}
                           </span>
-                        )}
+                        )} */}
                       </span>
                       <span className="flex items-center justify-end gap-2 text-right text-sm">
                         {hasAdjustment && (

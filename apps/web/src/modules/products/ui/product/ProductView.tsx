@@ -6,14 +6,12 @@ import type {
   ProductDetail,
 } from "@/modules/products/types";
 import { TopNav } from "@/components/layout/TopNav";
-import { AddToCartButton } from "@/modules/products/ui/product/AddToCartButton";
 import { ProductBadges } from "@/modules/products/ui/product/ProductBadges";
 import { useProductBadges } from "@/modules/products/ui/product/useProductBadges";
-import { StockAlertButton } from "@/modules/products/ui/product/StockAlertButton";
 import { HeroImageGallery } from "@/modules/products/ui/product/HeroImageGallery";
 import { ProductConfigurator } from "@/modules/products/ui/product/ProductConfigurator";
 import { SelectedConditionSummary } from "@/modules/products/ui/product/SelectedConditionSummary";
-import WishlistButton from "@/modules/user/ui/wishlist/WishlistButton";
+import { ProductPurchaseActions } from "@/modules/products/ui/product/ProductPurchaseActions";
 import { useProductViewData } from "@/modules/products/client/useProductViewData";
 import { useRecentlyViewed } from "@/modules/products/client/useRecentlyViewed";
 import { trackViewItem, toGAProduct } from "@/lib/analytics";
@@ -84,14 +82,6 @@ export function ProductView({
     return Array.from(new Set(all));
   }, [product.thumbnail, product.images]);
 
-  const viewerImages = useMemo(
-    () =>
-      Array.from(
-        new Set([viewerStart, ...mediaImages].filter(Boolean))
-      ) as string[],
-    [viewerStart, mediaImages]
-  );
-
   const openViewerAt = useCallback((image: string) => {
     setViewerStart(image);
     setImageViewerOpen(true);
@@ -119,6 +109,34 @@ export function ProductView({
     disabledVariantIds,
     resolvedUnitPrice,
   } = useProductViewData(product, componentGroups, componentRules);
+
+  const selectedVariantImage = useMemo(() => {
+    if (selectedVariant?.thumbnail) return selectedVariant.thumbnail;
+    for (const group of groups) {
+      const selectedId = selections[group.component_group]?.at(-1);
+      const selected = group.variants.find(
+        (variant) => variant.id === selectedId
+      );
+      if (selected?.thumbnail) return selected.thumbnail;
+    }
+    return null;
+  }, [groups, selections, selectedVariant]);
+
+  const galleryImages = useMemo(
+    () =>
+      selectedVariantImage && !mediaImages.includes(selectedVariantImage)
+        ? [...mediaImages, selectedVariantImage]
+        : mediaImages,
+    [mediaImages, selectedVariantImage]
+  );
+
+  const viewerImages = useMemo(
+    () =>
+      Array.from(
+        new Set([viewerStart, ...galleryImages].filter(Boolean))
+      ) as string[],
+    [viewerStart, galleryImages]
+  );
 
   useEffect(() => {
     trackViewItem(toGAProduct(product, selectedVariant));
@@ -233,6 +251,12 @@ export function ProductView({
     setActiveImageIndex(0);
   }, [product.slug]);
 
+  useEffect(() => {
+    if (!selectedVariantImage) return;
+    const imageIndex = galleryImages.indexOf(selectedVariantImage);
+    if (imageIndex >= 0) setActiveImageIndex(imageIndex);
+  }, [galleryImages, selectedVariantImage]);
+
   return (
     <article className="pb-4">
       <TopNav showBack backHref="/shop" showCart showFavorite />
@@ -256,7 +280,7 @@ export function ProductView({
           <div className="space-y-6 lg:col-start-1 lg:row-start-1">
             {/* ── Hero Image Gallery ── */}
             <HeroImageGallery
-              images={mediaImages}
+              images={galleryImages}
               productName={product.name}
               activeIndex={activeImageIndex}
               onSelect={setActiveImageIndex}
@@ -347,7 +371,7 @@ export function ProductView({
                   <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
                     Lựa chọn cấu hình
                   </div>
-                  <div className="space-y-4 rounded-xl">
+                  <div className="rounded-xl">
                     {loadingVariants ? (
                       <div className="grid grid-cols-2 gap-3">
                         {[1, 2].map((i) => (
@@ -369,43 +393,16 @@ export function ProductView({
                           disabledVariantIds={disabledVariantIds}
                           showTitle={false}
                           purchaseActions={
-                            <motion.div
-                              initial={{ y: "100%" }}
-                              animate={{ y: 0 }}
-                              transition={{
-                                type: "spring",
-                                stiffness: 300,
-                                damping: 30,
-                                mass: 0.8,
-                              }}
-                              className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md lg:static lg:z-auto lg:w-full lg:rounded-2xl lg:border lg:bg-surface lg:p-3 lg:shadow-ambient-sm lg:backdrop-blur-none"
-                            >
-                              <WishlistButton
-                                productId={product.id}
-                                product={product}
-                                showLabel
-                                size="md"
-                                className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
-                                iconOnly={false}
-                              />
-                              {isOutOfStock ? (
-                                <StockAlertButton
-                                  productId={product.id}
-                                  variantId={selectedVariant?.id ?? ""}
-                                />
-                              ) : (
-                                <AddToCartButton
-                                  isOutOfStock={isOutOfStock}
-                                  missingVariantSelection={
-                                    missingVariantSelection
-                                  }
-                                  missingConfiguration={missingConfiguration}
-                                  isLoading={isLoadingAddToCart}
-                                  isPreOrder={selectedPreOrderConfig !== null}
-                                  onClick={() => handleAddToCart(1)}
-                                />
-                              )}
-                            </motion.div>
+                            <ProductPurchaseActions
+                              product={product}
+                              selectedVariant={selectedVariant}
+                              isOutOfStock={isOutOfStock}
+                              missingVariantSelection={missingVariantSelection}
+                              missingConfiguration={missingConfiguration}
+                              isLoadingAddToCart={isLoadingAddToCart}
+                              isPreOrder={selectedPreOrderConfig !== null}
+                              onAddToCart={() => handleAddToCart(1)}
+                            />
                           }
                         />
                         <SelectedConditionSummary
@@ -421,41 +418,20 @@ export function ProductView({
               </>
             )}
             {!hasConfigurator && (
-              <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  mass: 0.8,
-                }}
-                className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md lg:static lg:z-auto lg:w-full lg:rounded-2xl lg:border lg:bg-surface lg:p-3 lg:shadow-ambient-sm lg:backdrop-blur-none"
-              >
-                <WishlistButton
-                  productId={product.id}
-                  product={product}
-                  showLabel
-                  size="md"
-                  className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
-                  iconOnly={false}
-                />
-                {isOutOfStock ? (
-                  <StockAlertButton
-                    productId={product.id}
-                    variantId={selectedVariant?.id ?? ""}
-                  />
-                ) : (
-                  <AddToCartButton
-                    isOutOfStock={isOutOfStock}
-                    missingVariantSelection={missingVariantSelection}
-                    missingConfiguration={missingConfiguration}
-                    isLoading={isLoadingAddToCart}
-                    isPreOrder={selectedPreOrderConfig !== null}
-                    onClick={() => handleAddToCart(1)}
-                  />
-                )}
-              </motion.div>
+              <ProductPurchaseActions
+                product={product}
+                selectedVariant={selectedVariant}
+                isOutOfStock={isOutOfStock}
+                missingVariantSelection={missingVariantSelection}
+                missingConfiguration={missingConfiguration}
+                isLoadingAddToCart={isLoadingAddToCart}
+                isPreOrder={selectedPreOrderConfig !== null}
+                onAddToCart={() => handleAddToCart(1)}
+              />
+            )}
+
+            {addonTeaserSlot && (
+              <div className="px-4 lg:px-0">{addonTeaserSlot}</div>
             )}
 
             {/* ── Keyset preview (slug-gated, mock-data trial) ── */}
@@ -476,11 +452,6 @@ export function ProductView({
             <div className="hidden lg:block">
               <ShippingInfoSection />
             </div>
-
-            {/* ── Add-on Deals Anchor Teaser ── */}
-            {addonTeaserSlot && (
-              <div className="px-4 lg:px-0">{addonTeaserSlot}</div>
-            )}
           </div>
         </div>
 
