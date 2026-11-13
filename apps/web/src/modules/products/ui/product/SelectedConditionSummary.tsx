@@ -133,52 +133,50 @@ export function SelectedConditionSummary({
         </span>
       </div>
       <ul ref={listRef} className="flex flex-wrap gap-2">
-        {visibleRows
-          .sort((a, b) => (a?.text?.length || 0) - (b?.text?.length || 0))
-          .map((r, i) => {
-            const thumb = r.thumbnail;
-            const atLineEnd = lineEnds
-              ? lineEnds.has(i)
-              : i === visibleRows.length - 1;
-            return (
-              <li
-                key={`${r.group}:${r.label}`}
-                className="flex max-w-max items-center gap-2"
-              >
-                {thumb ? (
-                  <button
-                    type="button"
-                    aria-label={`Xem ảnh lớn: ${r.label}`}
-                    onClick={() => onShowImage?.(thumb)}
-                    className="group relative box-border h-12 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-surface-container-high bg-surface-container-high transition-transform active:scale-95"
-                  >
-                    <Image
-                      src={thumb}
-                      alt={r.label}
-                      width={64}
-                      height={48}
-                      className="h-full w-full object-cover"
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                      <Eye className="h-4 w-4 text-white" />
-                    </span>
-                  </button>
-                ) : null}
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="truncate text-sm font-semibold leading-tight tracking-wide text-on-surface">
-                    {r.group && (countByLabel.get(r.label) ?? 0) > 1
-                      ? `${r.group} · `
-                      : ""}
-                    {r.label}
-                  </p>
-                  <p className="text-xs text-on-surface-variant">{r.text}</p>
-                </div>
-                {!atLineEnd ? (
-                  <span className="h-1/2 w-[1px] bg-slate-300" />
-                ) : null}
-              </li>
-            );
-          })}
+        {visibleRows.map((r, i) => {
+          const thumb = r.thumbnail;
+          const atLineEnd = lineEnds
+            ? lineEnds.has(i)
+            : i === visibleRows.length - 1;
+          return (
+            <li
+              key={`${r.group}:${r.label}`}
+              className="flex max-w-max items-center gap-2"
+            >
+              {thumb ? (
+                <button
+                  type="button"
+                  aria-label={`Xem ảnh lớn: ${r.label}`}
+                  onClick={() => onShowImage?.(thumb)}
+                  className="group relative box-border h-12 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-surface-container-high bg-surface-container-high transition-transform active:scale-95"
+                >
+                  <Image
+                    src={thumb}
+                    alt={r.label}
+                    width={64}
+                    height={48}
+                    className="h-full w-full object-cover"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/25 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <Eye className="h-4 w-4 text-white" />
+                  </span>
+                </button>
+              ) : null}
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p className="truncate text-sm font-semibold leading-tight tracking-wide text-on-surface">
+                  {r.group && (countByLabel.get(r.label) ?? 0) > 1
+                    ? `${r.group} · `
+                    : ""}
+                  {r.label}
+                </p>
+                <p className="text-xs text-on-surface-variant">{r.text}</p>
+              </div>
+              {!atLineEnd ? (
+                <span className="h-1/2 w-[1px] bg-slate-300" />
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

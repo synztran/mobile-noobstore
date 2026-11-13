@@ -70,7 +70,13 @@ export function HeroImageGallery({
           className="relative h-full w-full"
         >
           {!loaded && heroImage && (
-            <div className="absolute inset-0 animate-pulse bg-surface-container-high" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span
+                className="loading loading-spinner loading-lg text-primary"
+                role="status"
+                aria-label="Đang tải ảnh sản phẩm"
+              />
+            </div>
           )}
           <Image
             src={heroImage || NOT_FOUND_IMAGE}

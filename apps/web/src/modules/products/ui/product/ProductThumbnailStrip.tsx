@@ -115,11 +115,20 @@ export function ProductThumbnailStrip({
               alt={`${productName} - ${i + 1}`}
               fill
               className={clsx(
-                "object-cover transition-opacity duration-300",
+                "object-cover",
                 loaded[i] ? "opacity-100" : "opacity-0"
               )}
               sizes="64px"
-              onLoad={() => setLoaded((prev) => ({ ...prev, [i]: true }))}
+              // Product galleries are short; fetch thumbnail-sized variants up
+              // front so the first slide change does not wait on lazy loading.
+              loading="eager"
+              onLoad={(event) => {
+                const image = event.currentTarget;
+                const reveal = () =>
+                  setLoaded((prev) => ({ ...prev, [i]: true }));
+                if (image.complete && image.naturalWidth > 0) reveal();
+                else image.decode().then(reveal).catch(reveal);
+              }}
             />
           </button>
         ))}
