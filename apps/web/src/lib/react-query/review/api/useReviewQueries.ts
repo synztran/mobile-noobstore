@@ -8,6 +8,12 @@ export interface ReviewItem {
   body: string | null;
   created_at: string;
   reviewer_name: string;
+  images?: string[];
+  criteria?: {
+    packaging: number | null;
+    description: number | null;
+    delivery: number | null;
+  };
 }
 
 export interface ReviewsResponse {

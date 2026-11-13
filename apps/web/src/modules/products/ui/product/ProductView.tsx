@@ -47,7 +47,9 @@ const ImageViewer = dynamic(
 // );
 import { PreOrderBanner } from "@/modules/products/ui/product/PreOrderBanner";
 import { ProductInfoTabs } from "@/modules/products/ui/product/ProductInfoTabs";
+import { ProductRatingSection } from "@/modules/products/ui/product/ProductRatingSection";
 import { ShareButton } from "@/modules/products/ui/product/ShareButton";
+import { Star } from "lucide-react";
 // import { getKeysetPreviewData } from "@/modules/keyset-preview/constants/mock-colorways";
 
 export function ProductView({
@@ -146,13 +148,31 @@ export function ProductView({
       )
     : 0;
 
-  const minVariantPrice = useMemo(
-    () =>
-      variants.length > 0
-        ? Math.min(...variants.map((v) => v.effective_price))
-        : product.min_price,
-    [variants, product.min_price]
-  );
+  const fromPrice = useMemo(() => {
+    const ownPrices = variants
+      .map((variant) => variant.effective_price)
+      .filter((price) => price > 0);
+    const requiredGroupPrices = groups
+      .filter((group) => group.is_required)
+      .map((group) =>
+        Math.min(
+          ...group.variants
+            .map((variant) => product.base_price + variant.price_adjustment)
+            .filter((price) => price > 0)
+        )
+      );
+
+    if (requiredGroupPrices.length > 0) {
+      return requiredGroupPrices.reduce(
+        (total, price) => total + (Number.isFinite(price) ? price : 0),
+        product.base_price
+      );
+    }
+
+    return ownPrices.length > 0
+      ? Math.min(...ownPrices)
+      : product.min_price || product.base_price;
+  }, [variants, groups, product.base_price, product.min_price]);
 
   // The live configurator total: base + the selected kit variant + components,
   // with any per-pairing override applied. Replaces the old
@@ -161,10 +181,15 @@ export function ProductView({
   //
   // Non-kit products keep the existing fallback to the cheapest variant, because
   // their `base_price` is often 0 with the real price carried per variant.
-  const displayPrice =
-    groups.length > 0
+  const hasUnselectedVariants =
+    !selectedVariant &&
+    !Object.values(selections).some((selectedIds) => selectedIds.length > 0) &&
+    (variants.length > 0 || groups.some((group) => group.is_required));
+  const displayPrice = hasUnselectedVariants
+    ? fromPrice
+    : groups.length > 0
       ? resolvedUnitPrice
-      : (selectedVariant?.effective_price ?? minVariantPrice);
+      : (selectedVariant?.effective_price ?? fromPrice);
 
   const badges = useProductBadges({
     product,
@@ -254,192 +279,203 @@ export function ProductView({
           </div>
 
           {/* Purchase panel — price, variants, stock, pre-order */}
-          <div className="hide-scrollbar space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:max-h-[calc(100dvh-96px)] lg:overflow-y-auto lg:h-fit lg:self-start lg:pr-1">
-          {/* ── Product Info ── */}
-          <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <ProductBadges badges={badges} purchaseCount={purchaseCount} />
-            </div>
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
-                <p className="text-sm font-black uppercase tracking-[0.18em] text-primary">
-                  {product.category}
-                </p>
-                <p className="text-balance text-xl font-black uppercase leading-none text-on-surface">
-                  {product.name}
-                </p>
-                {product.brand && (
-                  <p className="mt-1 text-xs font-semibold text-on-surface-variant">
-                    bởi {product.brand}
+          <div className="hide-scrollbar space-y-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1 lg:h-fit lg:max-h-[calc(100dvh-96px)] lg:self-start lg:overflow-y-auto lg:pr-1">
+            {/* ── Product Info ── */}
+            <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <ProductBadges badges={badges} purchaseCount={purchaseCount} />
+                <a
+                  href="#product-rating-reviews-section"
+                  className="flex items-center gap-1 rounded bg-amber-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700 transition-colors hover:bg-amber-500/20"
+                >
+                  <Star size={11} className="fill-amber-400 text-amber-500" />
+                  <span>4.9 (28 đánh giá)</span>
+                </a>
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-primary">
+                    {product.category}
                   </p>
-                )}
+                  <p className="text-balance text-xl font-black uppercase leading-none text-on-surface">
+                    {product.name}
+                  </p>
+                  {product.brand && (
+                    <p className="mt-1 text-xs font-semibold text-on-surface-variant">
+                      bởi {product.brand}
+                    </p>
+                  )}
+                </div>
+                <ShareButton
+                  productName={product.name}
+                  productSlug={product.slug}
+                />
               </div>
-              <ShareButton
-                productName={product.name}
-                productSlug={product.slug}
-              />
-            </div>
-            <div className="mt-4 flex items-baseline justify-end gap-2">
-              <span
-                className={clsx(
-                  "text-2xl font-black leading-none text-primary",
-                  hasDiscount ? "text-red-500" : "text-on-surface"
-                )}
-              >
-                {formatVND(displayPrice)}
-              </span>
-              <div className="flex items-baseline gap-2">
-                {hasDiscount && (
-                  <span className="text-sm text-on-surface-variant line-through opacity-60">
-                    {formatVND(product.base_price)}
+              <div className="mt-4 flex items-baseline justify-end gap-2">
+                {hasUnselectedVariants && (
+                  <span className="text-sm font-semibold text-on-surface-variant">
+                    Giá chỉ từ
                   </span>
                 )}
-                {selectedVariant && selectedVariant.price_adjustment !== 0 && (
-                  <span className="text-sm text-on-surface-variant line-through opacity-60">
-                    {formatVND(product.min_price)}
-                  </span>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* ── Configurator (variants + component groups) ── */}
-          {hasConfigurator && (
-            <section className="space-y-2 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
-              <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
-                Lựa chọn cấu hình
-              </div>
-              <div className="space-y-4 rounded-xl">
-                {loadingVariants ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {[1, 2].map((i) => (
-                      <div
-                        key={i}
-                        className="h-[88px] animate-pulse rounded-lg bg-surface-container-low"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <>
-                    <ProductConfigurator
-                      groups={groups}
-                      variants={variants}
-                      selections={selections}
-                      loadingConfigurator={loadingConfigurator}
-                      basePrice={product.base_price}
-                      onSelect={select}
-                      disabledVariantIds={disabledVariantIds}
-                      showTitle={false}
-                    />
-                    <SelectedConditionSummary
-                      groups={groups}
-                      selections={selections}
-                      productVariants={variants}
-                      onShowImage={openViewerAt}
-                    />
-                  </>
-                )}
+                <span
+                  className={clsx(
+                    "text-2xl font-black leading-none text-primary",
+                    hasDiscount ? "text-red-500" : "text-on-surface"
+                  )}
+                >
+                  {formatVND(displayPrice)}
+                </span>
+                <div className="flex items-baseline gap-2">
+                  {hasDiscount && (
+                    <span className="text-sm text-on-surface-variant line-through opacity-60">
+                      {formatVND(product.base_price)}
+                    </span>
+                  )}
+                  {selectedVariant &&
+                    selectedVariant.price_adjustment !== 0 && (
+                      <span className="text-sm text-on-surface-variant line-through opacity-60">
+                        {formatVND(product.min_price)}
+                      </span>
+                    )}
+                </div>
               </div>
             </section>
-          )}
 
-          {/* ── Keyset preview (slug-gated, mock-data trial) ── */}
-          {/* {keysetPreviewData && (
+            {/* ── Configurator (variants + component groups) ── */}
+            {hasConfigurator && (
+              <section className="space-y-2 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
+                <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
+                  Lựa chọn cấu hình
+                </div>
+                <div className="space-y-4 rounded-xl">
+                  {loadingVariants ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      {[1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className="h-[88px] animate-pulse rounded-lg bg-surface-container-low"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <ProductConfigurator
+                        groups={groups}
+                        variants={variants}
+                        selections={selections}
+                        loadingConfigurator={loadingConfigurator}
+                        basePrice={product.base_price}
+                        onSelect={select}
+                        disabledVariantIds={disabledVariantIds}
+                        showTitle={false}
+                      />
+                      <SelectedConditionSummary
+                        groups={groups}
+                        selections={selections}
+                        productVariants={variants}
+                        onShowImage={openViewerAt}
+                      />
+                    </>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* ── Keyset preview (slug-gated, mock-data trial) ── */}
+            {/* {keysetPreviewData && (
               <section className="px-4">
                 <KeysetPreviewSection colorway={keysetPreviewData} />
               </section>
             )} */}
 
-          {/* ── Low stock urgency banner ── */}
-          {isLowStock && effectiveStockQuantity > 0 && (
-            <motion.section
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
-              className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm"
-            >
-              <div className="flex items-center gap-3 rounded-2xl border border-red-400/40 bg-red-50 px-4 py-3">
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 2,
-                    ease: "easeInOut",
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4"
-                    fill="currentColor"
+            {/* ── Low stock urgency banner ── */}
+            {isLowStock && effectiveStockQuantity > 0 && (
+              <motion.section
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+                className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm"
+              >
+                <div className="flex items-center gap-3 rounded-2xl border border-red-400/40 bg-red-50 px-4 py-3">
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 2,
+                      ease: "easeInOut",
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
                   >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                  </svg>
-                </motion.div>
-                <div className="flex-1">
-                  <p className="text-sm font-black text-red-700">
-                    Chỉ còn {effectiveStockQuantity} sản phẩm
-                  </p>
-                  <p className="text-xs text-red-600">Đặt ngay kẻo lỡ!</p>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="currentColor"
+                    >
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                    </svg>
+                  </motion.div>
+                  <div className="flex-1">
+                    <p className="text-sm font-black text-red-700">
+                      Chỉ còn {effectiveStockQuantity} sản phẩm
+                    </p>
+                    <p className="text-xs text-red-600">Đặt ngay kẻo lỡ!</p>
+                  </div>
                 </div>
-              </div>
-            </motion.section>
-          )}
+              </motion.section>
+            )}
 
-          {/* ── Pre-order Info Banner ── */}
-          {selectedPreOrderConfig && (
-            <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
-              <PreOrderBanner config={selectedPreOrderConfig} />
-            </section>
-          )}
+            {/* ── Pre-order Info Banner ── */}
+            {selectedPreOrderConfig && (
+              <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
+                <PreOrderBanner config={selectedPreOrderConfig} />
+              </section>
+            )}
 
-          {/* ── Purchase actions ──
+            {/* ── Purchase actions ──
                 One instance only: a fixed bar on mobile, an inline card at the
                 bottom of the sticky desktop panel. Moving the markup instead of
                 duplicating it keeps a single add-to-cart mutation in flight. */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 30,
-              mass: 0.8,
-            }}
-            className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md lg:static lg:z-auto lg:rounded-2xl lg:border lg:bg-surface lg:p-3 lg:shadow-ambient-sm lg:backdrop-blur-none"
-          >
-            <WishlistButton
-              productId={product.id}
-              product={product}
-              showLabel
-              size="md"
-              className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
-              iconOnly={false}
-            />
-            {isOutOfStock ? (
-              <StockAlertButton
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 30,
+                mass: 0.8,
+              }}
+              className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md lg:static lg:z-auto lg:rounded-2xl lg:border lg:bg-surface lg:p-3 lg:shadow-ambient-sm lg:backdrop-blur-none"
+            >
+              <WishlistButton
                 productId={product.id}
-                variantId={selectedVariant?.id ?? ""}
+                product={product}
+                showLabel
+                size="md"
+                className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
+                iconOnly={false}
               />
-            ) : (
-              <AddToCartButton
-                isOutOfStock={isOutOfStock}
-                missingVariantSelection={missingVariantSelection}
-                missingConfiguration={missingConfiguration}
-                isLoading={isLoadingAddToCart}
-                isPreOrder={selectedPreOrderConfig !== null}
-                onClick={() => handleAddToCart(1)}
-              />
-            )}
-          </motion.div>
+              {isOutOfStock ? (
+                <StockAlertButton
+                  productId={product.id}
+                  variantId={selectedVariant?.id ?? ""}
+                />
+              ) : (
+                <AddToCartButton
+                  isOutOfStock={isOutOfStock}
+                  missingVariantSelection={missingVariantSelection}
+                  missingConfiguration={missingConfiguration}
+                  isLoading={isLoadingAddToCart}
+                  isPreOrder={selectedPreOrderConfig !== null}
+                  onClick={() => handleAddToCart(1)}
+                />
+              )}
+            </motion.div>
 
-          {/* ── Add-on Deals Anchor Teaser ── */}
-          {addonTeaserSlot && (
-            <div className="px-4 lg:px-0">
-              {addonTeaserSlot}
-            </div>
-          )}
-        </div>
+            {/* ── Add-on Deals Anchor Teaser ── */}
+            {addonTeaserSlot && (
+              <div className="px-4 lg:px-0">{addonTeaserSlot}</div>
+            )}
+          </div>
         </div>
 
         {/* ── Mobile Tabbed Info (Description / Specs / Shipping) ── */}
@@ -518,6 +554,12 @@ export function ProductView({
 
       {/* ── Frequently Bought Together ── */}
       {boughtTogetherSlot}
+
+      {/* ── Rating & Reviews Section ── */}
+      <ProductRatingSection
+        productSlug={product.slug}
+        productName={product.name}
+      />
 
       {/* ── Related Products ── */}
       {relatedSlot}

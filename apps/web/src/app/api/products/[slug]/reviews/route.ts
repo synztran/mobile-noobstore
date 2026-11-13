@@ -1,12 +1,36 @@
 import { createClient } from "@/lib/supabase/server";
+import { canUserReviewProduct } from "./eligibility";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+const REVIEW_CRITERIA = ["packaging", "description", "delivery"] as const;
+type ReviewCriteria = Record<(typeof REVIEW_CRITERIA)[number], number | null>;
+
+function parseCriteria(value: unknown): ReviewCriteria {
+  const input =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {};
+  return Object.fromEntries(
+    REVIEW_CRITERIA.map((key) => {
+      const score = input[key];
+      return [
+        key,
+        typeof score === "number" &&
+        Number.isFinite(score) &&
+        score >= 1 &&
+        score <= 5 &&
+        Number.isInteger(score)
+          ? score
+          : null,
+      ];
+    })
+  ) as ReviewCriteria;
+}
+
 type ReviewsDb = {
-  select: (
-    columns: string
-  ) => {
+  select: (columns: string) => {
     eq: (
       column: string,
       value: string
@@ -38,7 +62,14 @@ function maskName(name: string): string {
   if (!name) return "Ẩn danh";
   const parts = name.trim().split(/\s+/);
   if (parts.length <= 1) return name;
-  return parts[0] + " " + parts.slice(1).map((p) => "*".repeat(p.length)).join(" ");
+  return (
+    parts[0] +
+    " " +
+    parts
+      .slice(1)
+      .map((p) => "*".repeat(p.length))
+      .join(" ")
+  );
 }
 
 function reviewsDb(supabase: Awaited<ReturnType<typeof createClient>>) {
@@ -67,10 +98,25 @@ export async function GET(
 
     const db = reviewsDb(supabase);
 
-    const { data, error } = await db
-      .select("id, rating, title, body, reviewer_name, created_at")
+    let { data, error } = await db
+      .select(
+        "id, rating, title, body, reviewer_name, created_at, images, criteria"
+      )
       .eq("product_id", product.id)
       .order("created_at", { ascending: false });
+
+    // Fallback if images column does not exist yet
+    if (
+      error &&
+      (error.message?.includes("images") || error.message?.includes("criteria"))
+    ) {
+      const fallback = await db
+        .select("id, rating, title, body, reviewer_name, created_at, images")
+        .eq("product_id", product.id)
+        .order("created_at", { ascending: false });
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -81,7 +127,10 @@ export async function GET(
     const average =
       total > 0
         ? Math.round(
-            (rows.reduce((s: number, r: Record<string, unknown>) => s + Number(r.rating), 0) /
+            (rows.reduce(
+              (s: number, r: Record<string, unknown>) => s + Number(r.rating),
+              0
+            ) /
               total) *
               10
           ) / 10
@@ -95,13 +144,18 @@ export async function GET(
         body: r.body ?? null,
         reviewer_name: maskName((r.reviewer_name as string) ?? ""),
         created_at: r.created_at,
+        images: Array.isArray(r.images) ? (r.images as string[]) : [],
+        criteria: parseCriteria(r.criteria),
       })),
       average,
       total,
     });
   } catch (err) {
     console.error("[reviews] unexpected error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -130,14 +184,32 @@ export async function POST(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
+    if (!(await canUserReviewProduct(supabase, user.id, product.id))) {
+      return NextResponse.json(
+        { error: "Chỉ khách đã nhận sản phẩm mới có thể đánh giá" },
+        { status: 403 }
+      );
+    }
+
     const body = (await req.json()) as {
       rating: number;
       title?: string;
       body?: string;
+      images?: string[];
+      criteria?: unknown;
     };
 
-    if (!body.rating || body.rating < 1 || body.rating > 5) {
-      return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 });
+    if (
+      typeof body.rating !== "number" ||
+      !Number.isFinite(body.rating) ||
+      body.rating < 1 ||
+      body.rating > 5 ||
+      Math.round(body.rating * 2) !== body.rating * 2
+    ) {
+      return NextResponse.json(
+        { error: "Rating must be between 1 and 5 in 0.5 increments" },
+        { status: 400 }
+      );
     }
 
     const db = reviewsDb(supabase);
@@ -160,14 +232,39 @@ export async function POST(
       (user.user_metadata?.name as string) ||
       "";
 
-    const { error } = await db.insert({
+    const insertPayload: Record<string, unknown> = {
       product_id: product.id,
       user_id: user.id,
       rating: body.rating,
       title: body.title ?? null,
       body: body.body ?? null,
       reviewer_name: reviewerName || "Ẩn danh",
-    });
+      images: Array.isArray(body.images) ? body.images : [],
+      criteria: parseCriteria(body.criteria),
+    };
+
+    let { error } = await db.insert(insertPayload);
+
+    if (error?.message?.includes("criteria")) {
+      const { criteria: _criteria, ...legacyPayload } = insertPayload;
+      const legacyInsert = await db.insert(legacyPayload);
+      error = legacyInsert.error;
+    }
+
+    // Fallback if DB schema has not yet migrated rating to decimal or images column.
+    if (
+      error &&
+      (error.message?.includes("smallint") || error.message?.includes("images"))
+    ) {
+      const fallbackPayload: Record<string, unknown> = {
+        ...insertPayload,
+        rating: Math.round(body.rating),
+      };
+      delete fallbackPayload.images;
+      delete fallbackPayload.criteria;
+      const res = await db.insert(fallbackPayload);
+      error = res.error;
+    }
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -176,6 +273,9 @@ export async function POST(
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[reviews] unexpected error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

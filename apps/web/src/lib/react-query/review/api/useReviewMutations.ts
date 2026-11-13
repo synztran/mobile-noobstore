@@ -8,6 +8,12 @@ export function useSubmitReview(productSlug: string) {
       rating: number;
       title?: string;
       body?: string;
+      images?: string[];
+      criteria?: {
+        packaging: number | null;
+        description: number | null;
+        delivery: number | null;
+      };
     }) => {
       const res = await fetch(`/api/products/${productSlug}/reviews`, {
         method: "POST",
