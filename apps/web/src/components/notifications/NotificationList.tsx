@@ -10,8 +10,25 @@ interface NotificationListProps {
   onMarkRead: (id: string) => void;
 }
 
-function NotificationList({ items, isLoading, onMarkRead }: NotificationListProps) {
+function NotificationList({
+  items,
+  isLoading,
+  onMarkRead,
+}: NotificationListProps) {
   const router = useRouter();
+
+  const renderBody = (body: string) => {
+    const pointsPattern = /(\d[\d.,]*\s*điểm)/gi;
+    return body.split(pointsPattern).map((part, index) =>
+      /\d[\d.,]*\s*điểm/i.test(part) ? (
+        <span key={index} className="font-bold text-green-600">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
 
   if (isLoading) {
     return (
@@ -63,7 +80,9 @@ function NotificationList({ items, isLoading, onMarkRead }: NotificationListProp
               <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
             )}
           </div>
-          <p className="mt-1 text-xs text-on-surface-variant">{item.body}</p>
+          <p className="mt-1 text-xs text-on-surface-variant">
+            {renderBody(item.body)}
+          </p>
           <p className="mt-2 text-[10px] uppercase tracking-wider text-on-surface-variant">
             {new Date(item.created_at).toLocaleString("vi-VN")}
           </p>

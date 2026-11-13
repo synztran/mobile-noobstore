@@ -18,6 +18,7 @@ import type {
   ShopVariantDetail,
 } from "@/modules/products/types";
 import { toRulesByProductId } from "@/modules/products/kit-pricing";
+import { sortConfiguratorVariants } from "./configurator-order";
 import {
   fetchGiftSupplement,
   fetchKitStockMap,
@@ -590,7 +591,9 @@ export const getQuickPickData = cache(async function getQuickPickData(
     if (brand.trim()) {
       let brandQuery = getPublicClient()
         .from("products")
-        .select("id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_pre_order, sold_count, categories(id, name), product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)")
+        .select(
+          "id, slug, name, brand, description, base_price, stock_quantity, thumbnail, images, product_type, is_used, is_pre_order, sold_count, categories(id, name), product_variants(id, variant_name, price_adjustment, thumbnail, stock_quantity, is_pre_order, pre_order_config, attributes)"
+        )
         .ilike("brand", brand.trim())
         .eq("is_active", true)
         .neq("product_type", "gift")
@@ -599,14 +602,19 @@ export const getQuickPickData = cache(async function getQuickPickData(
       if (excludeProductId) brandQuery = brandQuery.neq("id", excludeProductId);
       const { data: brandRows, error: brandError } = await brandQuery.limit(32);
       if (brandError) {
-        console.error("[getQuickPickData] Same-brand query failed:", brandError);
+        console.error(
+          "[getQuickPickData] Same-brand query failed:",
+          brandError
+        );
         throw brandError;
       }
       const ids = (brandRows ?? []).map((row) => row.id);
       const { kitSupplements, giftsByProductId } = ids.length
         ? await prepareSupplements(
             ids,
-            (brandRows ?? []).filter((row) => row.product_type === "kit").map((row) => row.id)
+            (brandRows ?? [])
+              .filter((row) => row.product_type === "kit")
+              .map((row) => row.id)
           )
         : {
             kitSupplements: {
@@ -1385,7 +1393,10 @@ const getProductDetailUncached = cache(async function getProductDetailUncached(
 
     return {
       product,
-      componentGroups: Array.from(groupMap.values()),
+      componentGroups: Array.from(groupMap.values()).map((group) => ({
+        ...group,
+        variants: sortConfiguratorVariants(group.variants),
+      })),
       componentRules,
     };
   } catch (err) {
@@ -1531,7 +1542,7 @@ const getProductBySlugUncached = cache(async function getProductBySlugUncached(
         product_type: row.product_type,
         stock_quantity: row.stock_quantity,
         variantStocks: (row.product_variants ?? []).map((v) =>
-          Number(v.stock_quantity ?? 0),
+          Number(v.stock_quantity ?? 0)
         ),
       });
     }
@@ -1633,7 +1644,7 @@ const getProductBySlugUncached = cache(async function getProductBySlugUncached(
     await setCache(
       `${CACHE_VERSION}:product:slug:${slug}`,
       productDetail,
-      PRODUCT_DETAIL_CACHE_TTL,
+      PRODUCT_DETAIL_CACHE_TTL
     );
     return productDetail;
   } catch (err) {

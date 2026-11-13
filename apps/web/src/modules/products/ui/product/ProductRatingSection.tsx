@@ -18,6 +18,8 @@ import Image from "@/components/ui/AdaptiveImage";
 import clsx from "clsx";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { ReviewSubmitForm } from "./ReviewSubmitForm";
+import { usePurchaseCheck } from "@/lib/react-query/review/api/usePurchaseCheck";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 
 interface ProductRatingSectionProps {
   productSlug: string;
@@ -90,6 +92,9 @@ export function ProductRatingSection({
   productName,
 }: ProductRatingSectionProps) {
   const { data: realData, isLoading } = useReviews(productSlug);
+  const { user } = useAuth();
+  const { data: purchaseData, isLoading: purchaseCheckLoading } =
+    usePurchaseCheck(productSlug, !!user);
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [helpfulVotes, setHelpfulVotes] = useState<Record<string, boolean>>({});
   const [writeModalOpen, setWriteModalOpen] = useState(false);
@@ -108,6 +113,15 @@ export function ProductRatingSection({
 
   const totalReviews = realData?.total ?? 0;
   const averageRating = realData?.average ?? 0;
+  const reviewDisabled =
+    !user || purchaseCheckLoading || !purchaseData?.can_review;
+  const reviewDisabledReason = !user
+    ? "Đăng nhập để viết đánh giá"
+    : purchaseCheckLoading
+      ? "Đang kiểm tra điều kiện đánh giá"
+      : purchaseData?.has_reviewed
+        ? "Bạn đã đánh giá sản phẩm này rồi"
+        : "Chỉ khách đã nhận sản phẩm mới có thể đánh giá";
 
   // Star breakdown
   const starCounts = useMemo(() => {
@@ -172,11 +186,11 @@ export function ProductRatingSection({
   return (
     <section
       id="product-rating-reviews-section"
-      className="mt-8 scroll-mt-24 rounded-3xl border border-outline-variant/30 bg-surface p-5 shadow-ambient-sm md:p-8"
+      className="mt-8 scroll-mt-24 rounded-3xl border border-outline-variant/30 bg-surface p-4 shadow-ambient-sm"
       aria-label="Đánh giá sản phẩm"
     >
       {/* ── Section Header ── */}
-      <div className="flex flex-col gap-4 border-b border-outline-variant/20 pb-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-outline-variant/20 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400/15 text-amber-500">
@@ -192,20 +206,35 @@ export function ProductRatingSection({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setWriteModalOpen(true)}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-black uppercase tracking-widest text-surface shadow-ambient-sm transition-all hover:bg-on-surface/90 active:scale-[0.98]"
-        >
-          <PenSquare size={15} />
-          Viết đánh giá
-        </button>
+        <div className="group relative">
+          <button
+            type="button"
+            onClick={() => setWriteModalOpen(true)}
+            disabled={reviewDisabled}
+            aria-describedby={
+              reviewDisabled ? "review-disabled-reason" : undefined
+            }
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-black uppercase tracking-widest text-surface shadow-ambient-sm transition-all hover:bg-on-surface/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:bg-primary disabled:active:scale-100"
+          >
+            <PenSquare size={15} />
+            Viết đánh giá
+          </button>
+          {reviewDisabled && (
+            <span
+              id="review-disabled-reason"
+              role="tooltip"
+              className="shadow-popover pointer-events-none absolute bottom-full right-0 z-30 mb-2 w-max max-w-64 rounded-lg bg-on-surface px-3 py-2 text-xs font-medium text-surface opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+            >
+              {reviewDisabledReason}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* ── Scorecard & Distribution Grid ── */}
-      <div className="mt-6 grid grid-cols-1 gap-6 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-5 md:grid-cols-12 md:p-6">
+      <div className="mt-3 grid grid-cols-1 gap-6 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 md:grid-cols-12">
         {/* Left: Overall Big Score */}
-        <div className="flex flex-col items-center justify-center border-b border-outline-variant/20 pb-5 text-center md:col-span-4 md:border-b-0 md:border-r md:pb-0 md:pr-6">
+        <div className="flex flex-col items-center justify-center border-b border-outline-variant/20 pb-5 text-center md:col-span-3 md:border-b-0 md:border-r md:pb-0">
           <p className="text-5xl font-black tracking-tight text-on-surface md:text-6xl">
             {averageRating.toFixed(1)}
           </p>
@@ -217,7 +246,7 @@ export function ProductRatingSection({
           </p>
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-600">
             <CheckCircle2 size={13} strokeWidth={2.5} />
-            {totalReviews > 0 ? "Đánh giá từ khách hàng" : "Chưa có đánh giá"}
+            {totalReviews > 0 ? "Đánh giá từ khách hàng" : "Chưa có"}
           </div>
         </div>
 
@@ -265,7 +294,7 @@ export function ProductRatingSection({
         </div>
 
         {/* Right: Key Customer Sentiment Highlights */}
-        <div className="flex flex-col justify-center gap-2.5 border-t border-outline-variant/20 pt-5 md:col-span-3 md:border-l md:border-t-0 md:pl-6 md:pt-0">
+        <div className="flex flex-col justify-center gap-2.5 border-t border-outline-variant/20 pt-5 md:col-span-4 md:border-l md:border-t-0 md:pl-5 md:pt-0">
           <p className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
             Điểm nổi bật
           </p>
@@ -286,7 +315,7 @@ export function ProductRatingSection({
                   <span className="font-semibold text-on-surface">{label}</span>
                   <span className="font-black text-primary">
                     {average === null
-                      ? "Chưa có đánh giá"
+                      ? "Chưa có"
                       : `${Math.round((average / 5) * 100)}%`}
                   </span>
                 </div>
@@ -341,13 +370,15 @@ export function ProductRatingSection({
                 ? "Chưa có đánh giá ở phân khúc này"
                 : "Chưa có đánh giá nào phù hợp với bộ lọc"}
             </p>
-            <button
-              type="button"
-              onClick={() => setSelectedFilter("all")}
-              className="mt-3 text-xs font-bold text-primary hover:underline"
-            >
-              Xem tất cả đánh giá
-            </button>
+            {totalReviews > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedFilter("all")}
+                className="mt-3 text-xs font-bold text-primary hover:underline"
+              >
+                Xem tất cả đánh giá
+              </button>
+            )}
           </div>
         ) : (
           filteredReviews.map((review) => {
@@ -461,8 +492,8 @@ export function ProductRatingSection({
           role="dialog"
           aria-modal="true"
         >
-          <div className="relative max-h-[80vh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-outline-variant/30 bg-surface p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
+          <div className="flex max-h-[calc(90dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-outline-variant/30 bg-surface shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-outline-variant/20 px-4 py-4">
               <div className="flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <PenSquare size={16} />
@@ -481,7 +512,7 @@ export function ProductRatingSection({
               </button>
             </div>
 
-            <div className="mt-4">
+            <div className="flex min-h-0 flex-1 flex-col p-4">
               <ReviewSubmitForm productSlug={productSlug} />
             </div>
           </div>

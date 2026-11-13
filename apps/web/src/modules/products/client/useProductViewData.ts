@@ -9,7 +9,10 @@ import type {
   ShopVariant,
   ShopVariantDetail,
 } from "@/modules/products/types";
-import { kitPriceOverrides } from "@/modules/products/kit-pricing";
+import {
+  kitPriceOverrides,
+  resolveKitUnitPrice,
+} from "@/modules/products/kit-pricing";
 import { cartItemToGA, trackAddToCart } from "@/lib/analytics";
 import { useAddCartItem } from "@/modules/cart/client/react-query/mutations";
 import { toast } from "@/lib/toast";
@@ -261,6 +264,20 @@ export function useProductViewData(
     }));
   }, [initialGroups, initialRules, selectedVariant, selectedComponents]);
 
+  const resolvedUnitPrice = useMemo(
+    () =>
+      resolveKitUnitPrice({
+        basePrice: product.base_price,
+        kitVariant: selectedVariant,
+        components: selectedComponents,
+        overrides: kitPriceOverrides(initialRules, [
+          ...(selectedVariant ? [selectedVariant.id] : []),
+          ...selectedComponents.map((component) => component.variant_id),
+        ]),
+      }).unitPrice,
+    [product.base_price, selectedVariant, selectedComponents, initialRules]
+  );
+
 
     const handleAddToCart = async (qty?: number) => {
     if (authLoading) return;
@@ -422,7 +439,7 @@ export function useProductViewData(
     isLoadingAddToCart,
     handleAddToCart,
     disabledVariantIds,
-    resolvedUnitPrice: 0,
+    resolvedUnitPrice,
     quantity,
     setQuantity,
   };

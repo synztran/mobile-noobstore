@@ -47,6 +47,7 @@ const ImageViewer = dynamic(
 // );
 import { PreOrderBanner } from "@/modules/products/ui/product/PreOrderBanner";
 import { ProductInfoTabs } from "@/modules/products/ui/product/ProductInfoTabs";
+import { ShippingInfoSection } from "@/modules/products/ui/product/ShippingInfoSection";
 import { ProductRatingSection } from "@/modules/products/ui/product/ProductRatingSection";
 import { ShareButton } from "@/modules/products/ui/product/ShareButton";
 import { Star } from "lucide-react";
@@ -113,8 +114,6 @@ export function ProductView({
     missingVariantSelection,
     missingConfiguration,
     isOutOfStock,
-    isLowStock,
-    effectiveStockQuantity,
     isLoadingAddToCart,
     handleAddToCart,
     disabledVariantIds,
@@ -253,7 +252,7 @@ export function ProductView({
           Grouped in its own grid wrapper so sticky panel's boundary stops
           at the bottom of the gallery section and never overlaps ProductInfoTabs below.
         */}
-        <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-8 lg:space-y-0">
+        <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-4 lg:space-y-0">
           <div className="space-y-6 lg:col-start-1 lg:row-start-1">
             {/* ── Hero Image Gallery ── */}
             <HeroImageGallery
@@ -343,42 +342,120 @@ export function ProductView({
 
             {/* ── Configurator (variants + component groups) ── */}
             {hasConfigurator && (
-              <section className="space-y-2 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
-                <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
-                  Lựa chọn cấu hình
-                </div>
-                <div className="space-y-4 rounded-xl">
-                  {loadingVariants ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      {[1, 2].map((i) => (
-                        <div
-                          key={i}
-                          className="h-[88px] animate-pulse rounded-lg bg-surface-container-low"
+              <>
+                <section className="space-y-2 px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
+                  <div className="text-sm font-black uppercase tracking-wider text-on-surface-variant">
+                    Lựa chọn cấu hình
+                  </div>
+                  <div className="space-y-4 rounded-xl">
+                    {loadingVariants ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        {[1, 2].map((i) => (
+                          <div
+                            key={i}
+                            className="h-[88px] animate-pulse rounded-lg bg-surface-container-low"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <ProductConfigurator
+                          groups={groups}
+                          variants={variants}
+                          selections={selections}
+                          loadingConfigurator={loadingConfigurator}
+                          basePrice={product.base_price}
+                          onSelect={select}
+                          disabledVariantIds={disabledVariantIds}
+                          showTitle={false}
+                          purchaseActions={
+                            <motion.div
+                              initial={{ y: "100%" }}
+                              animate={{ y: 0 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30,
+                                mass: 0.8,
+                              }}
+                              className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md lg:static lg:z-auto lg:w-full lg:rounded-2xl lg:border lg:bg-surface lg:p-3 lg:shadow-ambient-sm lg:backdrop-blur-none"
+                            >
+                              <WishlistButton
+                                productId={product.id}
+                                product={product}
+                                showLabel
+                                size="md"
+                                className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
+                                iconOnly={false}
+                              />
+                              {isOutOfStock ? (
+                                <StockAlertButton
+                                  productId={product.id}
+                                  variantId={selectedVariant?.id ?? ""}
+                                />
+                              ) : (
+                                <AddToCartButton
+                                  isOutOfStock={isOutOfStock}
+                                  missingVariantSelection={
+                                    missingVariantSelection
+                                  }
+                                  missingConfiguration={missingConfiguration}
+                                  isLoading={isLoadingAddToCart}
+                                  isPreOrder={selectedPreOrderConfig !== null}
+                                  onClick={() => handleAddToCart(1)}
+                                />
+                              )}
+                            </motion.div>
+                          }
                         />
-                      ))}
-                    </div>
-                  ) : (
-                    <>
-                      <ProductConfigurator
-                        groups={groups}
-                        variants={variants}
-                        selections={selections}
-                        loadingConfigurator={loadingConfigurator}
-                        basePrice={product.base_price}
-                        onSelect={select}
-                        disabledVariantIds={disabledVariantIds}
-                        showTitle={false}
-                      />
-                      <SelectedConditionSummary
-                        groups={groups}
-                        selections={selections}
-                        productVariants={variants}
-                        onShowImage={openViewerAt}
-                      />
-                    </>
-                  )}
-                </div>
-              </section>
+                        <SelectedConditionSummary
+                          groups={groups}
+                          selections={selections}
+                          productVariants={variants}
+                          onShowImage={openViewerAt}
+                        />
+                      </>
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
+            {!hasConfigurator && (
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  mass: 0.8,
+                }}
+                className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md lg:static lg:z-auto lg:w-full lg:rounded-2xl lg:border lg:bg-surface lg:p-3 lg:shadow-ambient-sm lg:backdrop-blur-none"
+              >
+                <WishlistButton
+                  productId={product.id}
+                  product={product}
+                  showLabel
+                  size="md"
+                  className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
+                  iconOnly={false}
+                />
+                {isOutOfStock ? (
+                  <StockAlertButton
+                    productId={product.id}
+                    variantId={selectedVariant?.id ?? ""}
+                  />
+                ) : (
+                  <AddToCartButton
+                    isOutOfStock={isOutOfStock}
+                    missingVariantSelection={missingVariantSelection}
+                    missingConfiguration={missingConfiguration}
+                    isLoading={isLoadingAddToCart}
+                    isPreOrder={selectedPreOrderConfig !== null}
+                    onClick={() => handleAddToCart(1)}
+                  />
+                )}
+              </motion.div>
             )}
 
             {/* ── Keyset preview (slug-gated, mock-data trial) ── */}
@@ -389,41 +466,6 @@ export function ProductView({
             )} */}
 
             {/* ── Low stock urgency banner ── */}
-            {isLowStock && effectiveStockQuantity > 0 && (
-              <motion.section
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
-                className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm"
-              >
-                <div className="flex items-center gap-3 rounded-2xl border border-red-400/40 bg-red-50 px-4 py-3">
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 2,
-                      ease: "easeInOut",
-                    }}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4"
-                      fill="currentColor"
-                    >
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                    </svg>
-                  </motion.div>
-                  <div className="flex-1">
-                    <p className="text-sm font-black text-red-700">
-                      Chỉ còn {effectiveStockQuantity} sản phẩm
-                    </p>
-                    <p className="text-xs text-red-600">Đặt ngay kẻo lỡ!</p>
-                  </div>
-                </div>
-              </motion.section>
-            )}
-
             {/* ── Pre-order Info Banner ── */}
             {selectedPreOrderConfig && (
               <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
@@ -431,45 +473,9 @@ export function ProductView({
               </section>
             )}
 
-            {/* ── Purchase actions ──
-                One instance only: a fixed bar on mobile, an inline card at the
-                bottom of the sticky desktop panel. Moving the markup instead of
-                duplicating it keeps a single add-to-cart mutation in flight. */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-                mass: 0.8,
-              }}
-              className="fixed bottom-0 left-0 right-0 z-[100] flex items-center gap-2 rounded-t-2xl border-t border-outline-variant/20 bg-surface/95 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-float backdrop-blur-md lg:static lg:z-auto lg:rounded-2xl lg:border lg:bg-surface lg:p-3 lg:shadow-ambient-sm lg:backdrop-blur-none"
-            >
-              <WishlistButton
-                productId={product.id}
-                product={product}
-                showLabel
-                size="md"
-                className="flex shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 px-4"
-                iconOnly={false}
-              />
-              {isOutOfStock ? (
-                <StockAlertButton
-                  productId={product.id}
-                  variantId={selectedVariant?.id ?? ""}
-                />
-              ) : (
-                <AddToCartButton
-                  isOutOfStock={isOutOfStock}
-                  missingVariantSelection={missingVariantSelection}
-                  missingConfiguration={missingConfiguration}
-                  isLoading={isLoadingAddToCart}
-                  isPreOrder={selectedPreOrderConfig !== null}
-                  onClick={() => handleAddToCart(1)}
-                />
-              )}
-            </motion.div>
+            <div className="hidden lg:block">
+              <ShippingInfoSection />
+            </div>
 
             {/* ── Add-on Deals Anchor Teaser ── */}
             {addonTeaserSlot && (
@@ -479,7 +485,7 @@ export function ProductView({
         </div>
 
         {/* ── Mobile Tabbed Info (Description / Specs / Shipping) ── */}
-        <div className="mb-4 mt-4 px-4 md:mb-6 md:mt-0 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm lg:hidden">
+        <div className="mb-4 mt-4 md:mb-6 md:mt-0 md:rounded-2xl md:bg-surface md:shadow-ambient-sm lg:hidden">
           <ProductInfoTabs
             product={product}
             editorialContent={editorialContent}
@@ -565,7 +571,9 @@ export function ProductView({
       {relatedSlot}
 
       {/* ── Recently Viewed ── */}
-      <RecentlyViewedRail />
+      <div className="px-4 lg:px-0">
+        <RecentlyViewedRail />
+      </div>
     </article>
   );
 }

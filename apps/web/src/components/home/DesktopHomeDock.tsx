@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ArrowUpRight,
   BookOpenText,
@@ -10,6 +12,7 @@ import {
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
+import { useCheckinCalendar } from "@/modules/checkin/client/queries";
 
 const QUICK_CATEGORIES = [
   { label: "Bàn phím", href: "/shop?category=keyboards", icon: Keyboard },
@@ -20,6 +23,13 @@ const QUICK_CATEGORIES = [
 ];
 
 export function DesktopHomeDock() {
+  const month = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+  }).format(new Date());
+  const checkin = useCheckinCalendar(month);
+
   return (
     <section
       aria-label="Khám phá NoobStore"
@@ -47,24 +57,26 @@ export function DesktopHomeDock() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1 border-l border-outline-variant/50 pl-3 xl:gap-2 xl:pl-5">
-          <Link
-            href="/checkin"
-            className="group flex items-center gap-3 rounded-xl border border-primary/15 bg-surface px-3 py-2.5 text-on-surface transition-colors hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary xl:min-w-[240px]"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary">
-              <Sparkles aria-hidden="true" className="h-4 w-4" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-xs font-bold">Điểm danh</span>
-              <span className="mt-0.5 block text-[10px] leading-snug text-on-surface-variant">
-                Tích điểm mỗi ngày
+          {checkin.data?.enabled === true && (
+            <Link
+              href="/checkin"
+              className="group flex items-center gap-3 rounded-xl border border-primary/15 bg-surface px-3 py-2.5 text-on-surface transition-colors hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary xl:min-w-[240px]"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary">
+                <Sparkles aria-hidden="true" className="h-4 w-4" />
               </span>
-            </span>
-            <ArrowUpRight
-              aria-hidden="true"
-              className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-            />
-          </Link>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-bold">Điểm danh</span>
+                <span className="mt-0.5 block text-[10px] leading-snug text-on-surface-variant">
+                  Tích điểm mỗi ngày
+                </span>
+              </span>
+              <ArrowUpRight
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              />
+            </Link>
+          )}
           <Link
             href="/documents"
             className="group flex items-center gap-3 rounded-xl border border-primary/15 bg-surface px-3 py-2.5 text-on-surface transition-colors hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary xl:min-w-[240px]"

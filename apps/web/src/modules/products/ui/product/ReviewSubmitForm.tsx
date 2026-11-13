@@ -73,9 +73,9 @@ function StarRating({
             <Star
               className={clsx(
                 starDimensions,
-                "fill-transparent text-outline-variant/40"
+                "fill-surface text-on-surface-variant/70"
               )}
-              strokeWidth={1.5}
+              strokeWidth={2.25}
             />
 
             {/* Overlay filled portion (supports half and full stars) */}
@@ -147,6 +147,7 @@ export function ReviewSubmitForm({ productSlug }: Props) {
     description: null,
     delivery: null,
   });
+  const [criteriaEnabled, setCriteriaEnabled] = useState(false);
   const [formBody, setFormBody] = useState("");
   const [images, setImages] = useState<ImageItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -288,6 +289,7 @@ export function ReviewSubmitForm({ productSlug }: Props) {
             setFormBody("");
             setFormRating(5.0);
             setCriteria({ packaging: null, description: null, delivery: null });
+            setCriteriaEnabled(false);
             setImages([]);
             setIsUploading(false);
           },
@@ -359,252 +361,278 @@ export function ReviewSubmitForm({ productSlug }: Props) {
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-outline-variant/30 bg-surface-container-low/60 p-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-low/60">
       {/* ── Purchased items summary ── */}
-      {purchaseData.purchased_items.length > 0 && (
-        <div className="space-y-1.5 border-b border-outline-variant/20 pb-3">
-          {purchaseData.purchased_items.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-4 rounded-xl border border-outline-variant/20 bg-surface p-3"
-            >
-              {item.thumbnail && (
-                <img
-                  src={item.thumbnail}
-                  alt={item.product_name}
-                  className="h-16 w-16 shrink-0 rounded-xl object-cover"
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-on-surface">
-                  {item.product_name}
-                </p>
-                <p className="mt-1 truncate text-xs text-on-surface-variant">
-                  {item.variant_summary}
-                </p>
+      <div className="sticky top-0 z-20 -mx-4 shrink-0 space-y-1.5 rounded-t-[50%] border-b border-outline-variant/20 px-4 backdrop-blur-sm sm:-mx-6 sm:px-6">
+        {purchaseData.purchased_items.length > 0 && (
+          <>
+            {purchaseData.purchased_items.map((item, i) => (
+              <div key={i} className="flex items-center gap-4 rounded-2xl p-3">
+                {item.thumbnail && (
+                  <img
+                    src={item.thumbnail}
+                    alt={item.product_name}
+                    className="h-16 w-16 shrink-0 rounded-xl object-cover"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-on-surface">
+                    {item.product_name}
+                  </p>
+                  <p className="mt-1 truncate text-xs text-on-surface-variant">
+                    {item.variant_summary}
+                  </p>
+                </div>
               </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain p-4">
+        {/* ── Star rating selection ── */}
+        <div className="space-y-2">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider text-on-surface">
+                Đánh giá chất lượng
+              </p>
+              <p className="text-[11px] text-on-surface-variant">
+                Chọn từ 1.0 đến 5.0 sao
+              </p>
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* ── Star rating selection ── */}
-      <div className="space-y-2">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-wider text-on-surface">
-              Đánh giá chất lượng
-            </p>
-            <p className="text-[11px] text-on-surface-variant">
-              Chọn từ 1.0 đến 5.0 sao
-            </p>
+            <div className="flex items-center gap-2">
+              <StarRating
+                value={formRating}
+                onChange={setFormRating}
+                size="lg"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <StarRating value={formRating} onChange={setFormRating} size="lg" />
+          {/* Quick Star Presets */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {RATING_PRESETS.map((preset) => (
+              <button
+                key={preset.val}
+                type="button"
+                onClick={() => setFormRating(preset.val)}
+                className={clsx(
+                  "rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all active:scale-95",
+                  formRating === preset.val
+                    ? "bg-amber-400 text-stone-900 shadow-sm"
+                    : "border border-outline-variant/30 bg-surface text-on-surface-variant hover:text-on-surface"
+                )}
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Quick Star Presets */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          {RATING_PRESETS.map((preset) => (
-            <button
-              key={preset.val}
-              type="button"
-              onClick={() => setFormRating(preset.val)}
-              className={clsx(
-                "rounded-lg px-2.5 py-1 text-[11px] font-bold transition-all active:scale-95",
-                formRating === preset.val
-                  ? "bg-amber-400 text-stone-900 shadow-sm"
-                  : "border border-outline-variant/30 bg-surface text-on-surface-variant hover:text-on-surface"
-              )}
+        <div
+          role="group"
+          aria-labelledby="review-criteria-label"
+          className="space-y-2"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <p
+              id="review-criteria-label"
+              className="text-xs font-black uppercase tracking-wider text-on-surface"
             >
-              {preset.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <fieldset className="space-y-2">
-        <legend className="text-xs font-black uppercase tracking-wider text-on-surface">
-          Đánh giá chi tiết{" "}
-          <span className="font-medium normal-case tracking-normal text-on-surface-variant">
-            (không bắt buộc)
-          </span>
-        </legend>
-        {REVIEW_CRITERIA.map(({ key, label }) => (
-          <div
-            key={key}
-            className="flex items-center justify-between gap-3 rounded-xl bg-surface-container/60 px-3 py-2"
-          >
-            <span className="text-xs font-semibold text-on-surface">
-              {label}
-            </span>
-            <StarRating
-              size="sm"
-              value={criteria[key] ?? 0}
-              onChange={(value) =>
-                setCriteria((prev) => ({ ...prev, [key]: value }))
-              }
-              allowHalf={false}
-            />
-            {criteria[key] !== null && (
-              <button
-                type="button"
-                onClick={() =>
-                  setCriteria((prev) => ({ ...prev, [key]: null }))
+              Đánh giá chi tiết{" "}
+              <span className="text-[10px] font-medium normal-case tracking-normal text-on-surface-variant">
+                (không bắt buộc)
+              </span>
+            </p>
+            <input
+              type="checkbox"
+              className="toggle toggle-primary toggle-sm"
+              checked={criteriaEnabled}
+              onChange={(event) => {
+                const enabled = event.target.checked;
+                setCriteriaEnabled(enabled);
+                if (enabled) {
+                  setCriteria({ packaging: 5, description: 5, delivery: 5 });
+                } else {
+                  setCriteria({
+                    packaging: null,
+                    description: null,
+                    delivery: null,
+                  });
                 }
-                className="text-xs text-on-surface-variant"
-                aria-label={`Bỏ điểm ${label}`}
-              >
-                <X size={14} />
-              </button>
-            )}
+              }}
+              aria-label="Bật đánh giá chi tiết"
+            />
           </div>
-        ))}
-      </fieldset>
-
-      {/* ── Quick Suggestions (Chips) ── */}
-      <div className="space-y-1.5 border-t border-outline-variant/20 pt-3">
-        <div className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant">
-          <Sparkles size={13} className="text-amber-500" />
-          <span>Gợi ý nhanh (chạm để chèn):</span>
+          {criteriaEnabled && (
+            <div className="space-y-2">
+              {REVIEW_CRITERIA.map(({ key, label }) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-surface-container/60 px-3 py-2"
+                >
+                  <span className="max-w-[45%] text-xs font-semibold text-on-surface">
+                    {label}
+                  </span>
+                  <StarRating
+                    size="sm"
+                    value={criteria[key] ?? 5}
+                    onChange={(value) =>
+                      setCriteria((prev) => ({ ...prev, [key]: value }))
+                    }
+                    allowHalf={false}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {QUICK_SUGGESTIONS.map((sug, i) => {
-            const isSelected = formBody.includes(sug);
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => toggleSuggestion(sug)}
-                className={clsx(
-                  "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all active:scale-95",
-                  isSelected
-                    ? "bg-primary font-semibold text-surface"
-                    : "border border-outline-variant/30 bg-surface text-on-surface-variant hover:border-primary/40 hover:text-on-surface"
-                )}
-              >
-                {isSelected && <Check size={11} strokeWidth={3} />}
-                <span>{sug}</span>
-              </button>
-            );
-          })}
+        {/* ── Quick Suggestions (Chips) ── */}
+        <div className="space-y-2 border-t border-outline-variant/20 pt-2">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-on-surface-variant">
+            <Sparkles size={13} className="text-amber-500" />
+            <span>Gợi ý nhanh (chạm để chèn):</span>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_SUGGESTIONS.map((sug, i) => {
+              const isSelected = formBody.includes(sug);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => toggleSuggestion(sug)}
+                  className={clsx(
+                    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all active:scale-95",
+                    isSelected
+                      ? "bg-primary font-semibold text-surface"
+                      : "border border-outline-variant/30 bg-surface text-on-surface-variant hover:border-primary/40 hover:text-on-surface"
+                  )}
+                >
+                  {isSelected && <Check size={11} strokeWidth={3} />}
+                  <span>{sug}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Review Body Textarea ── */}
+        <div className="space-y-1.5">
+          <textarea
+            value={formBody}
+            onChange={(e) => setFormBody(e.target.value)}
+            placeholder="Hãy chia sẻ cảm nhận thực tế của bạn về sản phẩm này (chất lượng phím, âm thanh gõ, đóng gói, giao hàng)..."
+            rows={3}
+            className="w-full resize-none rounded-xl border border-outline-variant/30 bg-surface px-3 py-2.5 text-xs leading-relaxed text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
+          />
+        </div>
+
+        {/* ── Photo Upload Section ── */}
+        <div
+          onDragOver={handleImageDragOver}
+          onDragLeave={handleImageDragLeave}
+          onDrop={handleImageDrop}
+          className={clsx(
+            "space-y-2 rounded-xl transition-colors",
+            isDraggingImages && "bg-primary/5"
+          )}
+        >
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-on-surface">
+            <Camera size={14} className="text-primary" />
+            <span>Ảnh thực tế</span>
+            <span className="font-normal text-on-surface-variant">
+              ({images.length}/4) · Kéo ảnh vào khung hoặc chọn ảnh
+            </span>
+          </p>
+          <div className="grid grid-cols-4 gap-2">
+            {Array.from({ length: 4 }, (_, idx) => {
+              const item = images[idx];
+              return (
+                <div
+                  key={item?.previewUrl ?? `empty-${idx}`}
+                  className={clsx(
+                    "relative aspect-square min-w-0 overflow-hidden rounded-xl border-2 border-dashed bg-surface transition-colors",
+                    item
+                      ? "border-outline-variant/50"
+                      : "border-outline-variant/60 hover:border-primary/60",
+                    isDraggingImages && "border-primary bg-primary/5"
+                  )}
+                  onClick={() => !item && fileInputRef.current?.click()}
+                  role={!item ? "button" : undefined}
+                  tabIndex={!item ? 0 : undefined}
+                  onKeyDown={(e) => {
+                    if (!item && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  aria-label={!item ? `Thêm ảnh ${idx + 1}` : undefined}
+                >
+                  {item ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImage(item.previewUrl)}
+                        className="h-full w-full cursor-zoom-in"
+                        aria-label={`Xem ảnh ${idx + 1} phóng to`}
+                      >
+                        <img
+                          src={item.previewUrl}
+                          alt={`Ảnh tải lên ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx)}
+                        className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black"
+                        aria-label="Xoá ảnh"
+                      >
+                        <X size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-on-surface-variant">
+                      <Camera size={18} />
+                      <span className="text-[10px] font-medium">Thêm ảnh</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/jpg"
+            multiple
+            className="hidden"
+            onChange={handleFilesSelected}
+          />
         </div>
       </div>
 
-      {/* ── Review Body Textarea ── */}
-      <div className="space-y-1.5">
-        <textarea
-          value={formBody}
-          onChange={(e) => setFormBody(e.target.value)}
-          placeholder="Hãy chia sẻ cảm nhận thực tế của bạn về sản phẩm này (chất lượng phím, âm thanh gõ, đóng gói, giao hàng)..."
-          rows={3}
-          className="w-full resize-none rounded-xl border border-outline-variant/30 bg-surface px-3 py-2.5 text-xs leading-relaxed text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary focus:outline-none"
-        />
-      </div>
-
-      {/* ── Photo Upload Section ── */}
-      <div
-        onDragOver={handleImageDragOver}
-        onDragLeave={handleImageDragLeave}
-        onDrop={handleImageDrop}
-        className={clsx(
-          "space-y-2 rounded-xl p-3 transition-colors",
-          isDraggingImages && "bg-primary/5"
-        )}
-      >
-        <p className="mb-2 flex items-center gap-1.5 text-xs font-bold text-on-surface">
-          <Camera size={14} className="text-primary" />
-          <span>Ảnh thực tế</span>
-          <span className="font-normal text-on-surface-variant">
-            ({images.length}/4) · Kéo ảnh vào khung hoặc chọn ảnh
+      <div className="shrink-0 border-t border-outline-variant/25 bg-surface px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={submitReview.isPending || isUploading}
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-xs font-black uppercase tracking-widest text-surface shadow-ambient-sm transition-all hover:bg-on-surface active:scale-[0.99] disabled:opacity-50"
+        >
+          {(submitReview.isPending || isUploading) && (
+            <Loader2 size={14} className="animate-spin" />
+          )}
+          <span>
+            {submitReview.isPending || isUploading
+              ? "Đang gửi..."
+              : "Gửi đánh giá"}
           </span>
-        </p>
-        <div className="grid grid-cols-4 gap-2">
-          {Array.from({ length: 4 }, (_, idx) => {
-            const item = images[idx];
-            return (
-              <div
-                key={item?.previewUrl ?? `empty-${idx}`}
-                className={clsx(
-                  "relative aspect-square min-w-0 overflow-hidden rounded-xl border-2 border-dashed bg-surface transition-colors",
-                  item
-                    ? "border-outline-variant/50"
-                    : "border-outline-variant/60 hover:border-primary/60",
-                  isDraggingImages && "border-primary bg-primary/5"
-                )}
-                onClick={() => !item && fileInputRef.current?.click()}
-                role={!item ? "button" : undefined}
-                tabIndex={!item ? 0 : undefined}
-                onKeyDown={(e) => {
-                  if (!item && (e.key === "Enter" || e.key === " ")) {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-                aria-label={!item ? `Thêm ảnh ${idx + 1}` : undefined}
-              >
-                {item ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewImage(item.previewUrl)}
-                      className="h-full w-full cursor-zoom-in"
-                      aria-label={`Xem ảnh ${idx + 1} phóng to`}
-                    >
-                      <img
-                        src={item.previewUrl}
-                        alt={`Ảnh tải lên ${idx + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeImage(idx)}
-                      className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black"
-                      aria-label="Xoá ảnh"
-                    >
-                      <X size={14} />
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-on-surface-variant">
-                    <Camera size={18} />
-                    <span className="text-[10px] font-medium">Thêm ảnh</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/jpg"
-          multiple
-          className="hidden"
-          onChange={handleFilesSelected}
-        />
+        </button>
       </div>
-
-      {/* ── Submit Button ── */}
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={submitReview.isPending || isUploading}
-        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-xs font-black uppercase tracking-widest text-surface shadow-ambient-sm transition-all hover:bg-on-surface active:scale-[0.99] disabled:opacity-50"
-      >
-        {(submitReview.isPending || isUploading) && (
-          <Loader2 size={14} className="animate-spin" />
-        )}
-        <span>
-          {submitReview.isPending || isUploading
-            ? "Đang gửi..."
-            : "Gửi đánh giá"}
-        </span>
-      </button>
 
       {previewImage && (
         <div

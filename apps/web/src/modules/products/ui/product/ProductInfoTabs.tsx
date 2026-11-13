@@ -7,7 +7,7 @@ import clsx from "clsx";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 // Reviews only render when the "Đánh giá" tab is opened — split them out of the
 // initial route bundle so the product page hydrates less client JS.
@@ -36,6 +36,7 @@ interface Props {
 }
 
 const TABS = ["Mô tả", "Thông số", "Vận chuyển", "Đánh giá"] as const;
+const DESKTOP_TABS = ["Mô tả", "Thông số"] as const;
 type Tab = (typeof TABS)[number];
 
 // ── Shared tab content ─────────────────────────────────────────────────────
@@ -66,6 +67,36 @@ function TabContent({
   descExpanded,
   setDescExpanded,
 }: ContentProps) {
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const [descriptionOverflows, setDescriptionOverflows] = useState(false);
+
+  useLayoutEffect(() => {
+    if (activeTab !== "Mô tả") return;
+    const content = descriptionRef.current;
+    if (!content) return;
+
+    const measureOverflow = () => {
+      const overflows = content.scrollHeight > 90;
+      setDescriptionOverflows(overflows);
+      if (!overflows) setDescExpanded(false);
+    };
+
+    measureOverflow();
+    const resizeObserver = new ResizeObserver(measureOverflow);
+    resizeObserver.observe(content);
+    const mutationObserver = new MutationObserver(measureOverflow);
+    mutationObserver.observe(content, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [activeTab, editorialContent, setDescExpanded]);
+
   return (
     <>
       {activeTab === "Mô tả" && (
@@ -76,25 +107,28 @@ function TabContent({
             }`}
           >
             <div
+              ref={descriptionRef}
               className="editor-content pl-[8px] text-sm text-on-surface"
               dangerouslySetInnerHTML={{ __html: safeHtml(editorialContent) }}
             />
-            {!descExpanded && (
+            {!descExpanded && descriptionOverflows && (
               <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-surface to-transparent" />
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setDescExpanded(!descExpanded)}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-surface-container px-4 py-2.5 text-xs font-black text-on-surface"
-          >
-            {descExpanded ? "Thu gọn" : "Xem thêm"}
-            <ChevronDown
-              className={`text-sm transition-transform duration-300 ${
-                descExpanded ? "-rotate-180" : ""
-              }`}
-            />
-          </button>
+          {descriptionOverflows && (
+            <button
+              type="button"
+              onClick={() => setDescExpanded(!descExpanded)}
+              className="mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-surface-container px-4 py-2.5 text-xs font-black text-on-surface"
+            >
+              {descExpanded ? "Thu gọn" : "Xem thêm"}
+              <ChevronDown
+                className={`text-sm transition-transform duration-300 ${
+                  descExpanded ? "-rotate-180" : ""
+                }`}
+              />
+            </button>
+          )}
         </div>
       )}
 
@@ -204,8 +238,6 @@ function TabContent({
           </div>
         </div>
       )}
-
-      {activeTab === "Đánh giá" && <ProductReviews productSlug={productSlug} />}
     </>
   );
 }
@@ -286,7 +318,7 @@ export function ProductInfoTabs({
         {/* Sidebar nav */}
         <nav className="w-36 shrink-0 border-r border-outline-variant/20 pr-2 pt-1">
           <ul className="space-y-0.5">
-            {TABS.map((tab) => (
+            {DESKTOP_TABS.map((tab) => (
               <li key={tab}>
                 <button
                   type="button"
@@ -308,7 +340,7 @@ export function ProductInfoTabs({
           </ul>
         </nav>
         {/* Content */}
-        <div className="min-w-0 flex-1 pl-2 pt-1 max-h-[500px] overflow-y-auto pr-1">
+        <div className="max-h-[500px] min-w-0 flex-1 overflow-y-auto pl-2 pr-1 pt-1">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
