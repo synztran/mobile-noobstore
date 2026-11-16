@@ -11,9 +11,7 @@ import { DesktopAccountSidebar } from "@/components/profile/DesktopAccountSideba
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { formatVND } from "@/lib/currency";
-import {
-  useOrders,
-} from "@/lib/react-query/order/api/useOrderQueries";
+import { useOrders } from "@/lib/react-query/order/api/useOrderQueries";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -24,12 +22,17 @@ import {
   ReceiptText,
   RotateCcw,
   Search,
+  Star,
   Truck,
   X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ProductQuickRatingModal,
+  type RatingProductTarget,
+} from "@/components/orders/ProductQuickRatingModal";
 
 const STATUS_CONFIG: Record<
   string,
@@ -65,7 +68,7 @@ const STATUS_CONFIG: Record<
     bg: "bg-sky-50",
   },
   second_paid: {
-    label: "Đã thanh toán đủ",
+    label: "Đã tất toán",
     Icon: CheckCircle2,
     color: "text-emerald-600",
     bg: "bg-emerald-50",
@@ -189,11 +192,34 @@ function OrdersPage() {
   const [debouncedQ, setDebouncedQ] = useState("");
   const [activeStatus, setActiveStatus] = useState("all");
   const orderNumberParam = searchParams.get("orderNumber");
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(orderNumberParam);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(
+    orderNumberParam
+  );
   const [selectedServiceOrderId, setSelectedServiceOrderId] = useState<
     string | null
   >(null);
+  const [quickRatingTarget, setQuickRatingTarget] =
+    useState<RatingProductTarget | null>(null);
   const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null);
+
+  const handleQuickRateOrder = (order: OrderSummary) => {
+    const unreviewedItem =
+      order.product_summaries?.find((p) => !p.has_reviewed) ||
+      order.product_summaries?.[0];
+
+    setQuickRatingTarget({
+      id: unreviewedItem?.id || order.id,
+      product_id: unreviewedItem?.product_id || null,
+      product_slug: unreviewedItem?.product_slug || null,
+      product_name:
+        unreviewedItem?.name || order.order_number || "Sản phẩm NoobStore",
+      thumbnail: unreviewedItem?.thumbnail || null,
+      variant_info: unreviewedItem?.variant || undefined,
+      has_reviewed: order.has_reviewed || unreviewedItem?.has_reviewed || false,
+      reviewed_rating: unreviewedItem?.reviewed_rating ?? null,
+      reviewed_comment: unreviewedItem?.reviewed_comment ?? null,
+    });
+  };
 
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useOrders({ q: debouncedQ, status: activeStatus });
@@ -253,104 +279,313 @@ function OrdersPage() {
   const rendered = authLoading || isLoading;
   const empty = !rendered && allOrders.length === 0;
 
-  const renderOrders = (desktop: boolean) => rendered ? (
-    <OrderSkeleton />
-  ) : empty ? (
-    <div className="flex flex-col items-center justify-center gap-4 py-20">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container"><ReceiptText size={28} className="text-outline-variant" /></div>
-      <p className="text-sm font-semibold text-on-surface-variant">{q || activeStatus !== "all" ? "Không tìm thấy đơn hàng" : "Chưa có đơn hàng nào"}</p>
-    </div>
-  ) : desktop ? (
-    <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-ambient-sm">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-outline-variant/30 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant"><tr><th className="px-5 py-3">Mã đơn</th><th className="px-5 py-3">Ngày đặt</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3 text-right">Tổng tiền</th></tr></thead>
-        <tbody className="divide-y divide-outline-variant/20">{allOrders.map((order) => <tr key={order.id} className="hover:bg-surface-container-low/60">
-          <td className="px-5 py-4"><button type="button" onClick={() => order.service_line_count > 0 && order.item_count === 0 ? setSelectedServiceOrderId(order.id) : setSelectedOrderId(order.id)} className="min-h-11 font-black tracking-wide text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">{order.order_number ?? `#${order.id}`}</button></td>
-          <td className="whitespace-nowrap px-5 py-4 text-on-surface-variant">{new Date(order.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}</td>
-          <td className="px-5 py-4"><StatusBadge status={order.status} /></td><td className="px-5 py-4 text-on-surface-variant">{order.item_count} sản phẩm</td><td className="whitespace-nowrap px-5 py-4 text-right font-black text-on-surface">{formatVND(order.total_price)}{order.status === "delivered" && (order.points_earned ?? 0) > 0 && <span className="ml-2 text-xs text-amber-600">+{order.points_earned} NSP</span>}</td>
-        </tr>)}</tbody>
-      </table>
-      {isFetchingNextPage && <LoadMoreSkeleton />}
-    </div>
-  ) : (
-    <div className="space-y-3">
-      {allOrders.map((order) => <button key={order.id} onClick={() => order.service_line_count > 0 && order.item_count === 0 ? setSelectedServiceOrderId(order.id) : setSelectedOrderId(order.id)} className="w-full space-y-3 rounded-3xl bg-surface-container-lowest p-4 text-left shadow-ambient-sm transition-transform active:scale-[0.99]">
-        <div className="flex w-full flex-col gap-2"><div className="flex items-center justify-between gap-2"><span className="text-sm font-black tracking-widest text-primary">{order.order_number ?? `#${order.id}`}</span><StatusBadge status={order.status} /></div><span className="text-xs text-on-surface-variant">{new Date(order.created_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span></div>
-        <div className="flex items-center justify-between"><span className="text-xs font-medium text-on-surface-variant">{order.item_count} sản phẩm</span><span className="text-base font-black text-on-surface">{formatVND(order.total_price)}{order.status === "delivered" && (order.points_earned ?? 0) > 0 && <span className="ml-2 text-xs text-amber-600">+{order.points_earned} NSP</span>}</span></div>
-      </button>)}
-      {isFetchingNextPage && <LoadMoreSkeleton />}{hasNextPage && !isFetchingNextPage && <div className="flex items-center justify-center py-2 text-xs text-on-surface-variant"><Loader2 size={14} className="mr-2 animate-spin" />Đang tải thêm đơn hàng...</div>}
-    </div>
-  );
+  const renderOrders = (desktop: boolean) =>
+    rendered ? (
+      <OrderSkeleton />
+    ) : empty ? (
+      <div className="flex flex-col items-center justify-center gap-4 py-20">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container">
+          <ReceiptText size={28} className="text-outline-variant" />
+        </div>
+        <p className="text-sm font-semibold text-on-surface-variant">
+          {q || activeStatus !== "all"
+            ? "Không tìm thấy đơn hàng"
+            : "Chưa có đơn hàng nào"}
+        </p>
+      </div>
+    ) : desktop ? (
+      <div className="overflow-hidden rounded-2xl bg-surface-container-lowest shadow-ambient-sm">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-outline-variant/30 bg-surface-container-low text-xs uppercase tracking-wide text-on-surface-variant">
+            <tr>
+              <th className="px-5 py-3">Mã đơn</th>
+              <th className="px-5 py-3">Ngày đặt</th>
+              <th className="px-5 py-3">Trạng thái</th>
+              <th className="px-5 py-3">Sản phẩm</th>
+              <th className="px-5 py-3 text-right">Tổng tiền</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-outline-variant/20">
+            {allOrders.map((order) => (
+              <tr key={order.id} className="hover:bg-surface-container-low/60">
+                <td className="px-5 py-4 text-left">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      order.service_line_count > 0 && order.item_count === 0
+                        ? setSelectedServiceOrderId(order.id)
+                        : setSelectedOrderId(order.id)
+                    }
+                    className="min-h-11 text-left font-black tracking-wide text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                  >
+                    {order.order_number ?? `#${order.id}`}
+                  </button>
+                </td>
+                <td className="whitespace-nowrap px-5 py-4 text-on-surface-variant">
+                  {new Date(order.created_at).toLocaleDateString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
+                </td>
+                <td className="px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={order.status} />
+                    {order.status === "delivered" && (
+                      <div
+                        className="tooltip tooltip-top"
+                        data-tip={order.has_reviewed ? "Đã đánh giá" : "Đánh giá nhanh"}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQuickRateOrder(order);
+                          }}
+                          className={`btn btn-circle btn-ghost btn-xs ${
+                            order.has_reviewed
+                              ? "text-emerald-500 hover:bg-emerald-500/10"
+                              : "text-amber-500 hover:bg-amber-500/10"
+                          }`}
+                          aria-label={order.has_reviewed ? "Đã đánh giá" : "Đánh giá nhanh sản phẩm"}
+                        >
+                          <Star
+                            size={14}
+                            className={
+                              order.has_reviewed
+                                ? "fill-emerald-400 text-emerald-400"
+                                : "fill-amber-400 text-amber-400"
+                            }
+                          />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-5 py-4 text-on-surface-variant">
+                  {order.item_count}
+                </td>
+                <td className="whitespace-nowrap px-5 py-4 text-right">
+                  <div className="font-black text-on-surface">
+                    {formatVND(order.total_price)}
+                  </div>
+                  {order.status === "delivered" &&
+                    (order.points_earned ?? 0) > 0 && (
+                      <div className="text-xs font-semibold text-amber-600">
+                        +{Number(order.points_earned).toLocaleString("vi-VN")} NSP
+                      </div>
+                    )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {isFetchingNextPage && <LoadMoreSkeleton />}
+      </div>
+    ) : (
+      <div className="space-y-3">
+        {allOrders.map((order) => (
+          <button
+            key={order.id}
+            onClick={() =>
+              order.service_line_count > 0 && order.item_count === 0
+                ? setSelectedServiceOrderId(order.id)
+                : setSelectedOrderId(order.id)
+            }
+            className="w-full space-y-3 rounded-3xl bg-surface-container-lowest p-4 text-left shadow-ambient-sm transition-transform active:scale-[0.99]"
+          >
+            <div className="flex w-full flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-black tracking-widest text-primary">
+                  {order.order_number ?? `#${order.id}`}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <StatusBadge status={order.status} />
+                  {order.status === "delivered" && (
+                    <div
+                      className="tooltip tooltip-left"
+                      data-tip={order.has_reviewed ? "Đã đánh giá" : "Đánh giá nhanh"}
+                    >
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleQuickRateOrder(order);
+                        }}
+                        className={`btn btn-circle btn-ghost btn-xs ${
+                          order.has_reviewed
+                            ? "text-emerald-500 hover:bg-emerald-500/10"
+                            : "text-amber-500 hover:bg-amber-500/10"
+                        }`}
+                        aria-label={order.has_reviewed ? "Đã đánh giá" : "Đánh giá nhanh"}
+                      >
+                        <Star
+                          size={14}
+                          className={
+                            order.has_reviewed
+                              ? "fill-emerald-400 text-emerald-400"
+                              : "fill-amber-400 text-amber-400"
+                          }
+                        />
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <span className="text-xs text-on-surface-variant">
+                {new Date(order.created_at).toLocaleDateString("vi-VN", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-on-surface-variant">
+                {order.item_count} sản phẩm
+              </span>
+              <span className="text-base font-black text-on-surface">
+                {formatVND(order.total_price)}
+                {order.status === "delivered" &&
+                  (order.points_earned ?? 0) > 0 && (
+                    <span className="ml-2 text-xs text-amber-600">
+                      +{Number(order.points_earned).toLocaleString("vi-VN")} NSP
+                    </span>
+                  )}
+              </span>
+            </div>
+          </button>
+        ))}
+        {isFetchingNextPage && <LoadMoreSkeleton />}
+        {hasNextPage && !isFetchingNextPage && (
+          <div className="flex items-center justify-center py-2 text-xs text-on-surface-variant">
+            <Loader2 size={14} className="mr-2 animate-spin" />
+            Đang tải thêm đơn hàng...
+          </div>
+        )}
+      </div>
+    );
 
   return (
     <>
-    <div className="hidden px-6 pb-16 pt-8 lg:block">
-      <div className="mx-auto grid max-w-7xl grid-cols-[15rem_minmax(0,1fr)] gap-8">
-        <DesktopAccountSidebar activeHref="/profile/orders" />
-        <main className="min-w-0 space-y-5">
-          <div className="flex items-end justify-between"><div><h1 className="text-3xl font-extrabold text-on-surface">Đơn hàng của tôi</h1><p className="mt-1 text-sm text-on-surface-variant">{total} đơn hàng</p></div></div>
-          <div className="flex items-center gap-3 rounded-2xl border-2 border-transparent bg-surface-container px-4 py-3 focus-within:border-primary"><Search size={18} className="flex-shrink-0 text-outline-variant" /><input type="text" placeholder="Tìm theo mã đơn, mã giao dịch..." value={q} onChange={(e) => setQ(e.target.value)} className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40" />{q && <button aria-label="Xoá tìm kiếm" onClick={() => setQ("")}><X size={18} /></button>}</div>
-          <OrderStatusTabs value={activeStatus} onChange={setActiveStatus} options={STATUS_TABS.map((tab) => ({ ...tab, count: statusCounts[tab.value] ?? 0 }))} />
-          {renderOrders(true)}
-        </main>
-      </div>
-    </div>
-    <div className="space-y-5 px-4 pb-24 pt-2 lg:hidden">
-      {/* Header */}
-      <div className="mb-2 flex items-center gap-3">
-        <Link
-          href="/profile"
-          aria-label="Quay lại"
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
-        >
-          <ArrowLeft size={18} className="text-on-surface" />
-        </Link>
-        <div>
-          <p className="text-xl font-black tracking-tight text-on-surface">
-            Đơn hàng của tôi
-          </p>
-          {rendered ? (
-            <div className="mt-1 h-3 w-16 rounded-full bg-surface-container-high" />
-          ) : (
-            <p className="text-xs text-on-surface-variant">{total} đơn hàng</p>
-          )}
+      <div className="hidden px-6 pb-16 pt-8 lg:block">
+        <div className="mx-auto grid max-w-7xl grid-cols-[15rem_minmax(0,1fr)] gap-6">
+          <DesktopAccountSidebar activeHref="/profile/orders" />
+          <main className="min-w-0 space-y-5">
+            <div className="flex items-end justify-between">
+              <div>
+                <h1 className="text-3xl font-extrabold text-on-surface">
+                  Đơn hàng của tôi
+                </h1>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  {total} đơn hàng
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-2xl border-2 border-transparent bg-surface-container px-4 py-3 focus-within:border-primary">
+              <Search
+                size={18}
+                className="flex-shrink-0 text-outline-variant"
+              />
+              <input
+                type="text"
+                placeholder="Tìm theo mã đơn, mã giao dịch..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+              />
+              {q && (
+                <button aria-label="Xoá tìm kiếm" onClick={() => setQ("")}>
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+            <OrderStatusTabs
+              value={activeStatus}
+              onChange={setActiveStatus}
+              options={STATUS_TABS.map((tab) => ({
+                ...tab,
+                count: statusCounts[tab.value] ?? 0,
+              }))}
+            />
+            {renderOrders(true)}
+          </main>
         </div>
       </div>
+      <div className="space-y-5 px-4 pb-24 pt-2 lg:hidden">
+        {/* Header */}
+        <div className="mb-2 flex items-center gap-3">
+          <Link
+            href="/profile"
+            aria-label="Quay lại"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-container transition-transform active:scale-90"
+          >
+            <ArrowLeft size={18} className="text-on-surface" />
+          </Link>
+          <div>
+            <p className="text-xl font-black tracking-tight text-on-surface">
+              Đơn hàng của tôi
+            </p>
+            {rendered ? (
+              <div className="mt-1 h-3 w-16 rounded-full bg-surface-container-high" />
+            ) : (
+              <p className="text-xs text-on-surface-variant">
+                {total} đơn hàng
+              </p>
+            )}
+          </div>
+        </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-3 rounded-2xl border-2 border-transparent bg-surface-container px-4 py-3 transition-all focus-within:border-primary">
-        <Search size={18} className="flex-shrink-0 text-outline-variant" />
-        <input
-          type="text"
-          placeholder="Tìm theo mã đơn, mã giao dịch..."
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+        {/* Search */}
+        <div className="flex items-center gap-3 rounded-2xl border-2 border-transparent bg-surface-container px-4 py-3 transition-all focus-within:border-primary">
+          <Search size={18} className="flex-shrink-0 text-outline-variant" />
+          <input
+            type="text"
+            placeholder="Tìm theo mã đơn, mã giao dịch..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+          />
+          {q && (
+            <button aria-label="Xoá tìm kiếm" onClick={() => setQ("")}>
+              <X size={18} className="text-outline-variant" />
+            </button>
+          )}
+        </div>
+
+        <OrderStatusTabs
+          value={activeStatus}
+          onChange={setActiveStatus}
+          options={STATUS_TABS.map((tab) => ({
+            ...tab,
+            count: statusCounts[tab.value] ?? 0,
+          }))}
         />
-        {q && (
-          <button aria-label="Xoá tìm kiếm" onClick={() => setQ("")}>
-            <X size={18} className="text-outline-variant" />
-          </button>
-        )}
+
+        {/* List */}
+        {renderOrders(false)}
+        <SupportFAB />
       </div>
-
-      <OrderStatusTabs
-        value={activeStatus}
-        onChange={setActiveStatus}
-        options={STATUS_TABS.map((tab) => ({
-          ...tab,
-          count: statusCounts[tab.value] ?? 0,
-        }))}
+      {hasNextPage && (
+        <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-2" />
+      )}
+      <OrderDetailDrawer
+        orderId={selectedOrderId}
+        onClose={handleCloseDetail}
       />
-
-      {/* List */}
-      {renderOrders(false)}
-      <SupportFAB />
-    </div>
-    {hasNextPage && <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-2" />}
-    <OrderDetailDrawer orderId={selectedOrderId} onClose={handleCloseDetail} />
+      <ProductQuickRatingModal
+        isOpen={Boolean(quickRatingTarget)}
+        onClose={() => setQuickRatingTarget(null)}
+        product={quickRatingTarget}
+      />
       <div className="lg:hidden">
-        <ServiceOrderDetailDrawer orderId={selectedServiceOrderId} onClose={() => setSelectedServiceOrderId(null)} />
+        <ServiceOrderDetailDrawer
+          orderId={selectedServiceOrderId}
+          onClose={() => setSelectedServiceOrderId(null)}
+        />
       </div>
     </>
   );

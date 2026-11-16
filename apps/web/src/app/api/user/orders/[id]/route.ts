@@ -15,6 +15,7 @@ export interface OrderItemComponentDetail {
 export interface OrderItemDetail {
   id: string;
   product_id: string | null;
+  product_slug?: string | null;
   product_name: string;
   unit_price: number;
   quantity: number;
@@ -28,6 +29,9 @@ export interface OrderItemDetail {
   isPreOrder: boolean;
   preOrderConfig: any;
   preOrderTracking: unknown;
+  has_reviewed?: boolean;
+  reviewed_rating?: number | null;
+  reviewed_comment?: string | null;
 }
 
 export interface OrderDetail {
@@ -90,6 +94,7 @@ export interface OrderDetail {
   } | null;
   invoice_url: string | null;
   items: OrderItemDetail[];
+  has_reviewed?: boolean;
 }
 
 interface RawOrderRow {
@@ -217,18 +222,41 @@ export async function GET(
       )
     );
 
-    let productRows: Array<{ id: string; thumbnail: string | null }> = [];
+    let productRows: Array<{
+      id: string;
+      thumbnail: string | null;
+      slug: string | null;
+    }> = [];
+    let reviewMap = new Map<
+      string,
+      { rating: number; body: string | null }
+    >();
+
     if (productIds.length > 0) {
-      const { data } = await supabase
-        .from("products")
-        .select("id, thumbnail")
-        .eq("is_active", true)
-        .in("id", productIds);
-      productRows = data ?? [];
+      const [{ data: prodData }, { data: reviewData }] = await Promise.all([
+        supabase
+          .from("products")
+          .select("id, thumbnail, slug")
+          .in("id", productIds),
+        supabase
+          .from("product_reviews")
+          .select("product_id, rating, body")
+          .eq("user_id", user.id)
+          .in("product_id", productIds),
+      ]);
+      productRows = prodData ?? [];
+      if (reviewData) {
+        reviewMap = new Map(
+          reviewData.map((r) => [
+            r.product_id,
+            { rating: Number(r.rating), body: r.body ?? null },
+          ])
+        );
+      }
     }
 
-    const productThumbnailById = new Map(
-      productRows.map((row) => [row.id, row.thumbnail])
+    const productMap = new Map(
+      productRows.map((row) => [row.id, row])
     );
 
     const giftsByProductId: Record<
@@ -291,9 +319,16 @@ export async function GET(
         components as OrderItemComponentDetail[]
       ).find((comp: OrderItemComponentDetail) => comp.thumbnail)?.thumbnail;
 
+      const review = row.product_id
+        ? reviewMap.get(row.product_id as string)
+        : null;
+
       return {
         id: row.id as string,
         product_id: row.product_id as string | null,
+        product_slug: row.product_id
+          ? (productMap.get(row.product_id as string)?.slug ?? null)
+          : null,
         product_name: row.product_name as string,
         unit_price: Number(row.unit_price),
         quantity: row.quantity as number,
@@ -301,7 +336,7 @@ export async function GET(
           (row.thumbnail as string | null) ??
           componentThumbnail ??
           (row.product_id
-            ? (productThumbnailById.get(row.product_id as string) ?? null)
+            ? (productMap.get(row.product_id as string)?.thumbnail ?? null)
             : null),
         components,
         gifts: row.product_id
@@ -314,6 +349,9 @@ export async function GET(
           (row as Record<string, unknown>).pre_order_config ?? null,
         preOrderTracking:
           (row as Record<string, unknown>).pre_order_tracking ?? null,
+        has_reviewed: Boolean(review),
+        reviewed_rating: review ? review.rating : null,
+        reviewed_comment: review ? review.body : null,
       };
     });
 
@@ -321,6 +359,9 @@ export async function GET(
       id: order.id,
       order_number: order.order_number,
       status: order.status as OrderDetail["status"],
+      has_reviewed:
+        items.length > 0 &&
+        items.every((it) => it.has_reviewed),
       total_price: Number(order.total_price),
       shipping_fee: Number(order.shipping_fee ?? 0),
       payment_type: order.payment_type as "full" | "deposit_cod",

@@ -129,7 +129,7 @@ const DEPOSIT_STEPS = [
   },
   {
     key: "second_paid",
-    label: "Thanh toán đủ",
+    label: "Đã tất toán",
     description: "Đã thanh toán phần còn lại (lần 2)",
     icon: PackageCheck,
   },

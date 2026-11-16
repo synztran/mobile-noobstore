@@ -31,6 +31,7 @@ import {
   RefreshCw,
   RotateCcw,
   ShieldCheck,
+  Star,
   Timer,
   Truck,
 } from "lucide-react";
@@ -40,6 +41,11 @@ import { useCallback, useEffect, useState } from "react";
 import { usePreventScroll } from "@/hooks/usePreventScroll";
 import { NOT_FOUND_IMAGE } from "@/lib/images";
 import { useAuth } from "@/modules/user/client/AuthProvider";
+import { GoogleReviewBanner } from "@/components/orders/GoogleReviewBanner";
+import {
+  ProductRatingForm,
+  type RatingProductTarget,
+} from "@/components/orders/ProductQuickRatingModal";
 
 const STATUS_CONFIG: Record<
   string,
@@ -64,7 +70,7 @@ const STATUS_CONFIG: Record<
     bg: "bg-sky-100",
   },
   second_paid: {
-    label: "Đã thanh toán đủ",
+    label: "Đã tất toán",
     Icon: CheckCircle2,
     color: "text-emerald-600",
     bg: "bg-emerald-100",
@@ -220,6 +226,10 @@ function OrderDetailContent({
   } | null>(null);
   const [pickupCodeSecondsLeft, setPickupCodeSecondsLeft] = useState(0);
   const [pickupWaitSecondsLeft, setPickupWaitSecondsLeft] = useState(0);
+  const [ratingTarget, setRatingTarget] = useState<RatingProductTarget | null>(
+    null
+  );
+  const [ratedItemIds, setRatedItemIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!activePickupCode) return;
@@ -304,6 +314,7 @@ function OrderDetailContent({
     detail.status === "delivered" &&
     isWithinReturnWindow(detail.delivered_at) &&
     isPickup;
+  const canReview = detail.status === "delivered";
   const cfg = STATUS_CONFIG[detail.status] ?? STATUS_CONFIG.pending;
   const voucherDiscount = detail.voucher_discount_amount ?? 0;
   const shippingDiscount = detail.shipping_discount_amount ?? 0;
@@ -354,6 +365,33 @@ function OrderDetailContent({
     }
   };
 
+  if (ratingTarget) {
+    return (
+      <ProductRatingForm
+        product={ratingTarget}
+        allProducts={detail.items.map((it) => ({
+          id: it.id,
+          product_id: it.product_id,
+          product_slug: it.product_slug,
+          product_name: it.product_name,
+          thumbnail: it.thumbnail,
+          has_reviewed: it.has_reviewed || ratedItemIds.has(it.id),
+          reviewed_rating: it.reviewed_rating,
+          reviewed_comment: it.reviewed_comment,
+          variant_info: it.components
+            .map((c) => `${c.component_group}: ${c.variant_name}`)
+            .join(", "),
+        }))}
+        onSelectProduct={(p) => setRatingTarget(p)}
+        onBack={() => setRatingTarget(null)}
+        onSubmitSuccess={(id) => {
+          setRatedItemIds((prev) => new Set([...prev, id]));
+          setRatingTarget(null);
+        }}
+      />
+    );
+  }
+
   return (
     <>
       {/* Status */}
@@ -378,6 +416,9 @@ function OrderDetailContent({
 
       {/* Status timeline */}
       <OrderTrackingTimeline order={detail} />
+
+      {/* Google Review Banner for delivered orders */}
+      {canReview && <GoogleReviewBanner />}
 
       {/* Return request reason (returning) */}
       {detail.status === "returning" && detail.returning_reason && (
@@ -945,25 +986,103 @@ function OrderDetailContent({
         </div>
       )}
 
-      {/* Invoice download */}
-      {detail.invoice_url &&
-        [
-          "confirmed",
-          "second_paid",
-          "delivering",
-          "delivered",
-          "returning",
-        ].includes(detail.status) && (
-          <a
-            href={detail.invoice_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto flex max-w-max items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-black text-white transition-transform active:scale-95"
-          >
-            <PackageCheck size={18} />
-            Tải hóa đơn
-          </a>
-        )}
+      {/* Action buttons (Rating + Invoice) */}
+      {(() => {
+        const showInvoice =
+          detail.invoice_url &&
+          [
+            "confirmed",
+            "second_paid",
+            "delivering",
+            "delivered",
+            "returning",
+          ].includes(detail.status);
+
+        if (!canReview && !showInvoice) return null;
+
+        const isFullyReviewed =
+          detail.items.length === 1
+            ? Boolean(detail.items[0].has_reviewed || ratedItemIds.has(detail.items[0].id))
+            : detail.items.every((it) => it.has_reviewed || ratedItemIds.has(it.id));
+
+        const handleRatingClick = () => {
+          if (detail.items.length === 1) {
+            const item = detail.items[0];
+            const hasRev = Boolean(item.has_reviewed || ratedItemIds.has(item.id));
+            setRatingTarget({
+              id: item.id,
+              product_id: item.product_id,
+              product_slug: item.product_slug,
+              product_name: item.product_name,
+              thumbnail: item.thumbnail,
+              has_reviewed: hasRev,
+              reviewed_rating: item.reviewed_rating,
+              reviewed_comment: item.reviewed_comment,
+              variant_info: item.components
+                .map((c) => `${c.component_group}: ${c.variant_name}`)
+                .join(", "),
+            });
+          } else {
+            const targetItem =
+              detail.items.find((it) => !it.has_reviewed && !ratedItemIds.has(it.id)) ||
+              detail.items[0];
+            const hasRev = Boolean(targetItem.has_reviewed || ratedItemIds.has(targetItem.id));
+            setRatingTarget({
+              id: targetItem.id,
+              product_id: targetItem.product_id,
+              product_slug: targetItem.product_slug,
+              product_name: targetItem.product_name,
+              thumbnail: targetItem.thumbnail,
+              has_reviewed: hasRev,
+              reviewed_rating: targetItem.reviewed_rating,
+              reviewed_comment: targetItem.reviewed_comment,
+              variant_info: targetItem.components
+                .map((c) => `${c.component_group}: ${c.variant_name}`)
+                .join(", "),
+            });
+          }
+        };
+
+        return (
+          <div className="flex items-center gap-3">
+            {canReview && (
+              <button
+                type="button"
+                onClick={handleRatingClick}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition-transform active:scale-95 ${
+                  isFullyReviewed
+                    ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                    : "border border-amber-500/40 bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                }`}
+              >
+                {isFullyReviewed ? (
+                  <>
+                    <CheckCircle2 size={18} />
+                    <span>Đã đánh giá</span>
+                  </>
+                ) : (
+                  <>
+                    <Star size={18} className="fill-amber-400 text-amber-400" />
+                    <span>Đánh giá sản phẩm</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {showInvoice && (
+              <a
+                href={detail.invoice_url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-black text-white transition-transform active:scale-95"
+              >
+                <PackageCheck size={18} />
+                <span>Tải hóa đơn</span>
+              </a>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Return request button */}
       {canRequestReturn ? (
@@ -1176,7 +1295,9 @@ export function OrderDetailDrawer({ orderId, onClose }: Props) {
         aria-hidden={!isOpen}
         inert={!isOpen}
         className={`duration-250 fixed left-0 right-0 z-[999] !mt-0 flex h-dvh max-h-dvh flex-col rounded-t-5xl bg-surface transition-all ease-out lg:bottom-0 lg:left-auto lg:right-0 lg:top-0 lg:w-[min(40%,100vw)] lg:rounded-none lg:shadow-2xl lg:transition-transform ${
-          isOpen ? "bottom-0 lg:translate-x-0" : "-bottom-full lg:translate-x-full"
+          isOpen
+            ? "bottom-0 lg:translate-x-0"
+            : "-bottom-full lg:translate-x-full"
         }`}
       >
         {/* Handle */}

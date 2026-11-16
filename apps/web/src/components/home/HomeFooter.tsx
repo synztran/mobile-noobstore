@@ -1,3 +1,4 @@
+import { ExternalLink, MapPin } from "lucide-react";
 import Link from "next/link";
 
 function FacebookIcon({ className }: { className?: string }) {
@@ -48,10 +49,51 @@ export function HomeFooter() {
   const statusPageUrl = process.env.NEXT_PUBLIC_STATUS_PAGE_URL;
 
   return (
-    <footer className="!mt-0 border-t border-on-surface/10 bg-surface-container p-6 pb-5 lg:p-10 lg:pb-5">
-      <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+    <footer className="!mt-0 bg-surface-container p-5">
+      {/* Store Location & Google Map embed section */}
+      <div className="mb-[14px] hidden border-b border-on-surface/10 pb-[14px] lg:block">
+        <section className="grid grid-cols-1 gap-6 rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 shadow-ambient-sm lg:grid-cols-12 lg:items-center lg:gap-8 lg:p-6">
+          <div className="flex flex-col gap-3 lg:col-span-5">
+            <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-primary">
+              <MapPin className="h-4 w-4" />
+              Ghé thăm cửa hàng
+            </p>
+            <h3 className="text-xl font-black tracking-tight text-on-surface lg:text-2xl">
+              NoobStore
+            </h3>
+            <p className="text-xs font-semibold leading-relaxed text-on-surface-variant">
+              Trải nghiệm trực tiếp các mẫu bàn phím cơ custom cao cấp, switch tuyển chọn và phụ kiện tại không gian NoobStore.
+            </p>
+            <a
+              href="https://maps.app.goo.gl/RujaNa6xfJ1yRqEj8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-fit items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-black text-on-primary shadow-sm transition-all hover:opacity-95 active:scale-95"
+            >
+              <MapPin className="h-4 w-4" />
+              <span>Xem trên Google Maps</span>
+              <ExternalLink className="h-3.5 w-3.5 opacity-80" />
+            </a>
+          </div>
+          <div className="relative h-64 w-full overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-low lg:col-span-7 lg:h-72">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.711894928146!2d106.72272430000001!3d10.833345900000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752906cfa2e82d%3A0x7ce4c6ee6260e38!2sNoobstore!5e0!3m2!1sen!2s!4v1794848743714!5m2!1sen!2s"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              title="Vị trí NoobStore trên Google Maps"
+              className="h-full w-full"
+            />
+          </div>
+        </section>
+      </div>
+
+      <div className="grid grid-cols-2 gap-8 lg:grid-cols-5">
         {/* Brand */}
-        <div className="col-span-2 flex flex-col gap-3 lg:col-span-1">
+        <div className="col-span-2 flex flex-col gap-3 lg:col-span-2">
           <Link
             href="/"
             className="text-lg font-black uppercase tracking-tight text-primary"

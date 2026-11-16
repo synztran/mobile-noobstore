@@ -105,13 +105,13 @@ export async function GET(
       .eq("product_id", product.id)
       .order("created_at", { ascending: false });
 
-    // Fallback if images column does not exist yet
+    // Fallback if images or criteria column does not exist yet
     if (
       error &&
       (error.message?.includes("images") || error.message?.includes("criteria"))
     ) {
       const fallback = await db
-        .select("id, rating, title, body, reviewer_name, created_at, images")
+        .select("id, rating, title, body, reviewer_name, created_at")
         .eq("product_id", product.id)
         .order("created_at", { ascending: false });
       data = fallback.data;

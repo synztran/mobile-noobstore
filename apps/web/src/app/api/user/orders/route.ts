@@ -3,6 +3,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+export interface OrderSummaryProduct {
+  id?: string;
+  product_id?: string | null;
+  product_slug?: string | null;
+  name: string;
+  variant: string | null;
+  quantity: number;
+  thumbnail: string | null;
+  has_reviewed?: boolean;
+  reviewed_rating?: number | null;
+  reviewed_comment?: string | null;
+}
+
 export interface OrderSummary {
   id: string;
   order_number: string;
@@ -10,11 +23,12 @@ export interface OrderSummary {
   total_price: number;
   item_count: number;
   service_line_count: number;
-  product_summaries: Array<{ name: string; variant: string | null; quantity: number }>;
+  product_summaries: OrderSummaryProduct[];
   created_at: string;
   voucher_code: string | null;
   voucher_discount_amount: number;
   shipping_discount_amount: number;
+  has_reviewed?: boolean;
   /** NSP points earned for this order (only set for delivered orders) */
   points_earned?: number;
 }
@@ -78,7 +92,7 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from("orders")
       .select(
-        "id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(id, quantity, product_name), order_services(count), created_at",
+        "id, order_number, status, total_price, voucher_code, voucher_discount_amount, shipping_discount_amount, order_items(id, quantity, product_name, thumbnail, product_id), order_services(count), created_at",
         {
           count: "exact",
         }
@@ -124,7 +138,13 @@ export async function GET(req: NextRequest) {
         voucher_code: string | null;
         voucher_discount_amount: number | string | null;
         shipping_discount_amount: number | string | null;
-        order_items: Array<{ id: string; quantity: number; product_name: string }>;
+        order_items: Array<{
+          id: string;
+          quantity: number;
+          product_name: string;
+          thumbnail: string | null;
+          product_id: string | null;
+        }>;
         order_services: Array<{ count: number }>;
         created_at: string;
       }> | null;
@@ -136,7 +156,58 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const orderItemIds = (data ?? []).flatMap((row) => (row.order_items ?? []).map((item) => item.id));
+    const orderItems = (data ?? []).flatMap(
+      (row) => row.order_items ?? []
+    );
+    const orderItemIds = orderItems.map((item) => item.id);
+    const productIds = Array.from(
+      new Set(
+        orderItems
+          .map((item) => item.product_id)
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+
+    let productMap = new Map<
+      string,
+      { slug: string; thumbnail: string | null }
+    >();
+    let reviewMap = new Map<
+      string,
+      { rating: number; body: string | null; criteria?: unknown }
+    >();
+
+    if (productIds.length > 0) {
+      const [{ data: prodRows }, { data: reviewRows }] = await Promise.all([
+        supabase
+          .from("products")
+          .select("id, slug, thumbnail")
+          .in("id", productIds),
+        supabase
+          .from("product_reviews")
+          .select("product_id, rating, body")
+          .eq("user_id", user.id)
+          .in("product_id", productIds),
+      ]);
+
+      if (prodRows) {
+        productMap = new Map(
+          prodRows.map((p) => [
+            p.id,
+            { slug: p.slug, thumbnail: p.thumbnail },
+          ])
+        );
+      }
+      if (reviewRows) {
+        reviewMap = new Map(
+          reviewRows.map((r) => [
+            r.product_id,
+            { rating: Number(r.rating), body: r.body ?? null },
+          ])
+        );
+      }
+    }
+
     const variantNamesByItemId = new Map<string, string[]>();
     if (orderItemIds.length > 0) {
       const { data: components } = await supabase
@@ -177,7 +248,27 @@ export async function GET(req: NextRequest) {
         row.order_items?.reduce((sum, item) => sum + (item.quantity ?? 0), 0) ??
         0,
       service_line_count: row.order_services?.[0]?.count ?? 0,
-      product_summaries: (row.order_items ?? []).map((item) => ({ name: item.product_name, variant: variantNamesByItemId.get(item.id)?.join(", ") ?? null, quantity: item.quantity })),
+      product_summaries: (row.order_items ?? []).map((item) => {
+        const prod = item.product_id ? productMap.get(item.product_id) : null;
+        const review = item.product_id ? reviewMap.get(item.product_id) : null;
+        return {
+          id: item.id,
+          product_id: item.product_id ?? null,
+          product_slug: prod?.slug ?? null,
+          name: item.product_name,
+          variant: variantNamesByItemId.get(item.id)?.join(", ") ?? null,
+          quantity: item.quantity,
+          thumbnail: item.thumbnail || prod?.thumbnail || null,
+          has_reviewed: Boolean(review),
+          reviewed_rating: review ? review.rating : null,
+          reviewed_comment: review ? review.body : null,
+        };
+      }),
+      has_reviewed:
+        (row.order_items ?? []).length > 0 &&
+        (row.order_items ?? []).every(
+          (item) => item.product_id && reviewMap.has(item.product_id)
+        ),
       created_at: row.created_at,
       voucher_code: row.voucher_code ?? null,
       voucher_discount_amount: Number(row.voucher_discount_amount ?? 0),

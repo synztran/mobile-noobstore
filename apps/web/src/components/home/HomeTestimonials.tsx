@@ -186,32 +186,46 @@ export function HomeTestimonials() {
         </div>
 
         {!isLoading && (summary?.count ?? 0) > 0 && (
-          <div className="hidden shrink-0 items-center gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-3 shadow-ambient-sm lg:flex">
-            <Star className="h-7 w-7 fill-amber-400 text-amber-400" />
-            <div>
-              <p className="flex items-baseline gap-1">
-                <span className="text-xl font-black leading-none text-on-surface">
-                  {summary?.averageRating?.toFixed(1) ?? "—"}
-                </span>
-                <span className="text-xs font-semibold text-on-surface-variant">
-                  / 5
-                </span>
-              </p>
-              <div className="flex items-center">
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-outline">
-                  {summary?.count ?? 0} đánh giá trên{" "}
-                </p>&nbsp;
-                <GoogleIcon className="h-4 w-4" />
-              </div>
-            </div>
+          <div className="hidden shrink-0 items-center gap-3 lg:flex">
+            {/* Button viết đánh giá Google (bên trái badge thông tin) */}
             <a
-              href="https://www.google.com/maps/search/?api=1&query=NoobStore%20Vietnam"
+              href={
+                process.env.NEXT_PUBLIC_GOOGLE_REVIEW_URL ||
+                "https://maps.app.goo.gl/RujaNa6xfJ1yRqEj8"
+              }
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-2 text-[10px] font-bold text-primary underline underline-offset-2"
+              className="flex min-h-[60px] max-h-[65px] w-52 items-center gap-3 rounded-2xl border border-outline-variant/30 bg-white px-4 py-2.5 text-left text-xs font-bold text-on-surface shadow-ambient-sm transition-all hover:bg-surface-container-low active:scale-95 dark:bg-surface-container-lowest"
             >
-              Mở Maps
+              <GoogleIcon className="h-5 w-5 shrink-0" />
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span>Đánh giá NoobStore</span>
+                <span className="text-[11px] font-medium text-on-surface-variant">
+                  Chia sẻ trải nghiệm của bạn
+                </span>
+              </span>
             </a>
+
+            {/* Badge thông tin đánh giá */}
+            <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-2.5 shadow-ambient-sm">
+              <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
+              <div>
+                <p className="flex items-baseline gap-1">
+                  <span className="text-lg font-black leading-none text-on-surface">
+                    {summary?.averageRating?.toFixed(1) ?? "—"}
+                  </span>
+                  <span className="text-xs font-semibold text-on-surface-variant">
+                    / 5
+                  </span>
+                </p>
+                <div className="flex items-center">
+                  <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-outline">
+                    {summary?.count ?? 0} đánh giá trên{" "}
+                  </p>&nbsp;
+                  <GoogleIcon className="h-3.5 w-3.5" />
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
