@@ -3,13 +3,7 @@
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import { getWards, WardUnit } from "@/lib/address/wards";
 import clsx from "clsx";
-import {
-  Building2,
-  CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  MapPin,
-} from "lucide-react";
+import { Building2, ChevronDown, ChevronUp, MapPin } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -115,7 +109,7 @@ export function CitySearchInput({
     <div ref={triggerRef}>
       <label
         className={clsx(
-          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
+          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-3.5 py-2.5 transition-all",
           hasError
             ? "border-error"
             : open
@@ -139,9 +133,6 @@ export function CitySearchInput({
           disabled={disabled}
           className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40 disabled:opacity-50"
         />
-        {value && !open && (
-          <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
-        )}
         {open ? (
           <ChevronUp size={16} className="flex-shrink-0 text-outline-variant" />
         ) : (
@@ -313,7 +304,7 @@ export function DistrictSearchInput({
     <div ref={triggerRef}>
       <label
         className={clsx(
-          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
+          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-3.5 py-2.5 transition-all",
           isDisabled && "opacity-60",
           hasError
             ? "border-error"
@@ -338,9 +329,6 @@ export function DistrictSearchInput({
           disabled={isDisabled}
           className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40 disabled:cursor-not-allowed"
         />
-        {value && !open && (
-          <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
-        )}
         {!isDisabled &&
           (open ? (
             <ChevronUp
@@ -515,7 +503,7 @@ export function WardSearchInput({
     <div ref={triggerRef}>
       <label
         className={clsx(
-          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-4 py-3.5 transition-all",
+          "flex cursor-pointer items-center gap-3 rounded-2xl border-2 bg-surface-container px-3.5 py-2.5 transition-all",
           disabled && "opacity-60",
           hasError
             ? "border-error"
@@ -540,9 +528,6 @@ export function WardSearchInput({
           disabled={disabled || !cityName || !districtName}
           className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40 disabled:cursor-not-allowed"
         />
-        {value && !open && (
-          <CheckCircle2 size={16} className="flex-shrink-0 text-green-600" />
-        )}
         {!disabled &&
           (open ? (
             <ChevronUp

@@ -60,7 +60,7 @@ export function DesktopNotificationsDrawer({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[35] bg-on-surface/20 backdrop-blur-[2px] transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[997] bg-on-surface/20 backdrop-blur-[2px] transition-opacity duration-300 ${
           open
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
@@ -72,7 +72,7 @@ export function DesktopNotificationsDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="Thông báo"
-        className={`fixed right-0 top-16 z-[40] flex max-h-[min(70dvh,36rem)] w-full max-w-lg flex-col overflow-hidden rounded-b-2xl border-b border-l border-on-surface/10 bg-surface shadow-2xl transition-transform duration-300 ease-out ${
+        className={`fixed right-0 top-16 z-[998] flex max-h-[min(70dvh,36rem)] w-full max-w-lg flex-col overflow-hidden rounded-b-2xl border-b border-l border-on-surface/10 bg-surface shadow-2xl transition-transform duration-300 ease-out ${
           open ? "translate-y-0" : "-translate-y-[calc(100%+4rem)]"
         }`}
       >

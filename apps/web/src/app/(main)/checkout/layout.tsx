@@ -52,7 +52,7 @@ export default function CheckoutLayout({
   return (
     <div className="min-h-screen bg-background md:min-h-0 md:bg-transparent">
       {/* Mobile TopAppBar & Stepper (Screen < 768px) */}
-      <nav className="fixed top-0 z-50 w-full md:hidden">
+      <nav className="fixed top-0 z-[999] w-full md:hidden">
         <div className="glass-nav top-nav-pad flex items-center justify-between px-4">
           <Link
             href="/"

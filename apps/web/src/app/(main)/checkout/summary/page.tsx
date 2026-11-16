@@ -165,6 +165,35 @@ export default function SummaryPage() {
   const depositAmount = Math.round((subtotal * depositPercentage) / 100);
   const codAmount = Math.max(0, orderTotal - depositAmount);
 
+  const hasRecipientInfo = Boolean(
+    shipping?.fullName?.trim() && shipping?.phoneNumber?.trim()
+  );
+
+  const hasDeliveryAddress = Boolean(
+    shipping?.streetAddress?.trim() &&
+    shipping?.city?.trim() &&
+    (shipping?.district?.trim() || shipping?.ward?.trim())
+  );
+
+  const isShippingValid = Boolean(
+    shipping && hasRecipientInfo && (isPickup ? true : hasDeliveryAddress)
+  );
+
+  const handleOpenConfirm = () => {
+    if (!isShippingValid) {
+      if (!hasRecipientInfo && !hasDeliveryAddress) {
+        toast.error("Vui lòng nhập thông tin người nhận và địa chỉ giao hàng");
+      } else if (!hasRecipientInfo) {
+        toast.error("Vui lòng nhập họ tên và số điện thoại người nhận");
+      } else {
+        toast.error("Vui lòng nhập địa chỉ giao hàng");
+      }
+      router.push("/checkout/shipping");
+      return;
+    }
+    setShowConfirm(true);
+  };
+
   const handleRemoveItem = useCallback(
     (productId: string, variantId: string | null) => {
       const item = items.find(
@@ -199,6 +228,17 @@ export default function SummaryPage() {
   }
 
   const handleConfirmOrder = async () => {
+    if (!isShippingValid) {
+      if (!hasRecipientInfo && !hasDeliveryAddress) {
+        toast.error("Vui lòng nhập thông tin người nhận và địa chỉ giao hàng");
+      } else if (!hasRecipientInfo) {
+        toast.error("Vui lòng nhập họ tên và số điện thoại người nhận");
+      } else {
+        toast.error("Vui lòng nhập địa chỉ giao hàng");
+      }
+      router.push("/checkout/shipping");
+      return;
+    }
     setSubmitting(true);
     try {
       // ── Pre-check: validate stock before deducting ──────────────────
@@ -316,9 +356,10 @@ export default function SummaryPage() {
       clearCart();
       router.push(`/checkout/checking/${result.order_number}`);
     } catch (err) {
-      const errorCode = err instanceof Error && /^CHECKOUT_[A-Z_]+$/.test(err.message)
-        ? err.message
-        : null;
+      const errorCode =
+        err instanceof Error && /^CHECKOUT_[A-Z_]+$/.test(err.message)
+          ? err.message
+          : null;
       toast.error(
         errorCode
           ? `Checkout failed (${errorCode}). Please contact support.`
@@ -329,7 +370,7 @@ export default function SummaryPage() {
   };
 
   const handleEditShipping = () => {
-    router.back();
+    router.push("/checkout/shipping");
   };
 
   const deliveryLabel = isPickup
@@ -346,24 +387,58 @@ export default function SummaryPage() {
         {/* Left Column: Review Details & Payment Selection */}
         <div className="space-y-4">
           {/* Card 1: Recipient & Address */}
-          <section className="rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient-sm md:p-5">
+          <section
+            className={`rounded-2xl border p-4 shadow-ambient-sm transition-colors md:p-5 ${
+              !isShippingValid
+                ? "border-rose-500/40 bg-rose-500/5"
+                : "border-outline-variant/20 bg-surface"
+            }`}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="grid h-8 w-8 flex-shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                <div
+                  className={`grid h-8 w-8 flex-shrink-0 place-items-center rounded-xl ${
+                    !isShippingValid
+                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                      : "bg-emerald-500/10 text-emerald-600"
+                  }`}
+                >
                   <MapPin size={18} />
                 </div>
                 <div className="space-y-1">
                   <div className="text-sm font-bold text-on-surface">
                     {isPickup ? (
-                      <span>Nhận tại cửa hàng: NoobStore HCM</span>
+                      <div className="space-y-0.5">
+                        <span>Nhận tại cửa hàng: NoobStore HCM</span>
+                        {shipping?.fullName ? (
+                          <p className="text-xs font-semibold text-primary">
+                            Người nhận: {shipping.fullName} -{" "}
+                            {shipping.phoneNumber}
+                          </p>
+                        ) : (
+                          <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                            Chưa có thông tin người nhận
+                          </p>
+                        )}
+                      </div>
                     ) : (
                       <div className="space-y-0.5">
                         <p className="font-bold text-on-surface">
-                          {shipping?.fullName || "Chưa có tên người nhận"}
+                          {shipping?.fullName || (
+                            <span className="text-rose-600 dark:text-rose-400">
+                              Chưa có tên người nhận
+                            </span>
+                          )}
                         </p>
-                        <p className="text-xs font-semibold text-primary">
-                          {shipping?.phoneNumber}
-                        </p>
+                        {shipping?.phoneNumber ? (
+                          <p className="text-xs font-semibold text-primary">
+                            {shipping.phoneNumber}
+                          </p>
+                        ) : (
+                          <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                            Chưa có số điện thoại
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -381,21 +456,36 @@ export default function SummaryPage() {
                           : [shipping?.apartment, shipping?.streetAddress]
                         )
                           .filter(Boolean)
-                          .join(", ")}
+                          .join(", ") || (
+                          <span className="text-rose-600 dark:text-rose-400">
+                            Chưa có địa chỉ giao hàng
+                          </span>
+                        )}
                   </p>
                   {shipping?.notes && (
                     <p className="text-[11px] text-on-surface-variant">
-                      <span className="font-bold">Ghi chú:</span> {shipping.notes}
+                      <span className="font-bold">Ghi chú:</span>{" "}
+                      {shipping.notes}
                     </p>
+                  )}
+                  {!isShippingValid && (
+                    <div className="mt-2 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                      ⚠️ Cần nhập thông tin người nhận và địa chỉ giao hàng
+                      trước khi đặt hàng.
+                    </div>
                   )}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={handleEditShipping}
-                className="flex-shrink-0 rounded-xl border border-outline-variant/40 bg-surface px-3 py-1.5 text-xs font-bold text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+                className={`flex-shrink-0 rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors ${
+                  !isShippingValid
+                    ? "border-rose-500/40 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 dark:text-rose-400"
+                    : "border-outline-variant/40 bg-surface text-on-surface-variant hover:border-primary hover:text-primary"
+                }`}
               >
-                Thay đổi
+                {isShippingValid ? "Thay đổi" : "Bổ sung thông tin"}
               </button>
             </div>
           </section>
@@ -441,16 +531,32 @@ export default function SummaryPage() {
                       </p>
                       <ul className="space-y-1.5 text-xs text-on-surface-variant">
                         <li className="flex items-center gap-2">
-                          <Check size={14} className="flex-shrink-0 text-[#1e8e3e] stroke-[3]" />
-                          <span>Đảm bảo an toàn 100% trong quá trình vận chuyển</span>
+                          <Check
+                            size={14}
+                            className="flex-shrink-0 stroke-[3] text-[#1e8e3e]"
+                          />
+                          <span>
+                            Đảm bảo an toàn 100% trong quá trình vận chuyển
+                          </span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <Check size={14} className="flex-shrink-0 text-[#1e8e3e] stroke-[3]" />
-                          <span>Đóng gói chắc chắn, bọc lót bảo vệ cẩn thận</span>
+                          <Check
+                            size={14}
+                            className="flex-shrink-0 stroke-[3] text-[#1e8e3e]"
+                          />
+                          <span>
+                            Đóng gói chắc chắn, bọc lót bảo vệ cẩn thận
+                          </span>
                         </li>
                         <li className="flex items-center gap-2">
-                          <Check size={14} className="flex-shrink-0 text-[#1e8e3e] stroke-[3]" />
-                          <span>Rider chủ động liên hệ trước & ưu tiên thời gian người nhận</span>
+                          <Check
+                            size={14}
+                            className="flex-shrink-0 stroke-[3] text-[#1e8e3e]"
+                          />
+                          <span>
+                            Rider chủ động liên hệ trước & ưu tiên thời gian
+                            người nhận
+                          </span>
                         </li>
                       </ul>
                     </div>
@@ -516,7 +622,7 @@ export default function SummaryPage() {
             currentRank={rankData?.currentRank ?? null}
             orderTotal={orderTotal}
             submitting={submitting}
-            onConfirm={() => setShowConfirm(true)}
+            onConfirm={handleOpenConfirm}
             onRankClick={() => setRankModalOpen(true)}
             shippingMethodId={
               shipping?.shippingMethodId ?? shipping?.deliverySpeed ?? undefined
@@ -524,6 +630,7 @@ export default function SummaryPage() {
             voucherItems={voucherItems}
             paymentType={paymentType}
             depositPercentage={depositPercentage}
+            isShippingValid={isShippingValid}
           />
         </aside>
       </div>

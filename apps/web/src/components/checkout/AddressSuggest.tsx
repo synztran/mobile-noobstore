@@ -64,7 +64,7 @@ export default function AddressSuggest({
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const fetchTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const changeTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const reqRef = useRef(0);
@@ -73,12 +73,18 @@ export default function AddressSuggest({
   const locationQuery = buildQuery(ward, district, city);
   const hasLocation = !!ward && !!city;
 
-  // Sync external value when not interacting
+  // Sync external value whenever parent changes it
   useEffect(() => {
-    if (_value && _value !== inputValue && !isOpen) {
-      setInputValue(_value);
-    }
-  }, [_value, isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+    setInputValue(_value || "");
+  }, [_value]);
+
+  // Auto resize textarea height (up to 2 lines)
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 46)}px`;
+  }, [inputValue]);
 
   const doFetch = useCallback(
     (query: string, count: number) => {
@@ -93,9 +99,8 @@ export default function AddressSuggest({
     [locationQuery]
   );
 
-  // Clear internal input when ward/district/city changes
+  // Reset dropdown when ward/district/city changes
   useEffect(() => {
-    setInputValue("");
     setSuggestions([]);
     setIsOpen(false);
     selectedRef.current = false;
@@ -132,7 +137,7 @@ export default function AddressSuggest({
   }, []);
 
   // Debounced fetch when user types
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const v = e.target.value;
     setInputValue(v);
     selectedRef.current = false;
@@ -213,10 +218,9 @@ export default function AddressSuggest({
 
   return (
     <div ref={containerRef} className="min-w-0 flex-1">
-      <div className="flex items-center gap-2">
-        <input
+      <div className="flex items-start gap-2">
+        <textarea
           ref={inputRef}
-          type="text"
           value={inputValue}
           onChange={handleChange}
           onFocus={() => {
@@ -228,10 +232,10 @@ export default function AddressSuggest({
           placeholder={
             hasLocation
               ? "Số nhà, tên đường (hoặc chọn gợi ý)..."
-              : (placeholder ??
-                "Chọn Tỉnh/Thành, Quận/Huyện trước")
+              : (placeholder ?? "Chọn Tỉnh/Thành, Quận/Huyện trước")
           }
-          className="min-w-0 flex-1 bg-transparent text-sm font-medium text-on-surface outline-none placeholder:text-on-surface-variant/40"
+          rows={1}
+          className="max-h-16 min-h-[22px] min-w-0 flex-1 resize-none bg-transparent text-sm font-medium leading-relaxed text-on-surface outline-none placeholder:text-on-surface-variant/40"
           autoComplete="off"
           role="combobox"
           aria-autocomplete="list"
@@ -248,13 +252,13 @@ export default function AddressSuggest({
               setIsOpen(false);
               inputRef.current?.focus();
             }}
-            className="flex-shrink-0 rounded-full p-1 text-on-surface-variant/40 transition-colors hover:bg-surface-container-high hover:text-on-surface"
+            className="mt-0.5 flex-shrink-0 rounded-full p-1 text-on-surface-variant/40 transition-colors hover:bg-surface-container-high hover:text-on-surface"
           >
             <X size={14} />
           </button>
         )}
         {loading && (
-          <span className="loading loading-spinner loading-xs text-primary" />
+          <span className="loading loading-spinner loading-xs mt-1 text-primary" />
         )}
       </div>
 
@@ -310,7 +314,8 @@ export default function AddressSuggest({
           </ul>
           <div className="border-t border-outline-variant/10 bg-surface-container-low/70 px-3 py-2 text-[11px] leading-relaxed text-on-surface-variant">
             <span className="font-bold text-primary">💡 Mẹo: </span>
-            Nếu không có địa chỉ chính xác, bạn có thể chọn địa điểm gần đó nhất và thêm số nhà tại ô <strong>Ghi chú giao hàng</strong>.
+            Nếu không có địa chỉ chính xác, bạn có thể chọn địa điểm gần đó nhất
+            và thêm số nhà tại ô <strong>Ghi chú giao hàng</strong>.
           </div>
         </div>
       )}

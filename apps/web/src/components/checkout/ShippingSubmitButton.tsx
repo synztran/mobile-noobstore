@@ -12,7 +12,7 @@ export function ShippingSubmitButton({
   isCalculatingFee,
   isSubmitting,
 }: Props) {
-  const disabled = isCalculatingFee || isSubmitting;
+  const disabled = isSubmitting;
 
   return (
     <button
@@ -31,7 +31,8 @@ export function ShippingSubmitButton({
       ) : isCalculatingFee ? (
         <>
           <span className="loading loading-spinner loading-sm" />
-          Đang tính phí...
+          Tiếp tục kiểm tra đơn hàng
+          <ArrowRight className="h-4 w-4" />
         </>
       ) : (
         <>

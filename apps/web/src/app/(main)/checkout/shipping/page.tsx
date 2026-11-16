@@ -58,6 +58,7 @@ const ShippingPage = () => {
     hasPreOrder,
     preOrderEstimate,
     touched,
+    addressDistanceError,
   } = useShippingForm();
 
   const cartItems = useCartStore((s) => s.items);
@@ -73,6 +74,13 @@ const ShippingPage = () => {
     () => VIETNAM_CITIES.find((c) => c.name === form.city)?.code ?? null,
     [form.city]
   );
+
+  useEffect(() => {
+    if (addressDistanceError) {
+      const el = document.getElementById("address-street-field");
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [addressDistanceError]);
 
   const handleDistrictChange = useCallback(
     (district: string) => {
@@ -184,7 +192,7 @@ const ShippingPage = () => {
 
           {/* Card 2: Delivery Destination & Mode */}
           <section className="rounded-2xl border border-outline-variant/20 bg-surface p-4 shadow-ambient-sm md:p-6">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/10 pb-3">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/10">
               <div className="flex items-center gap-2.5">
                 <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary/10 text-xs font-black text-primary">
                   📍
@@ -253,6 +261,7 @@ const ShippingPage = () => {
                 routeCoordinates={routeCoordinates}
                 distanceKm={distanceKm}
                 isCalculatingFee={isCalculatingFee}
+                addressDistanceError={addressDistanceError}
               />
             ) : (
               <div className="space-y-4">
@@ -264,7 +273,8 @@ const ShippingPage = () => {
                         Cửa hàng NoobStore TP.HCM
                       </p>
                       <p className="mt-0.5 text-on-surface-variant">
-                        70/4b đường 47, Phường Hiệp Bình Chánh, Thủ Đức, TP.Hồ Chí Minh
+                        70/4b đường 47, Phường Hiệp Bình Chánh, Thủ Đức, TP.Hồ
+                        Chí Minh
                       </p>
                       <p className="mt-1 font-semibold text-primary">
                         Giờ mở cửa: 08:00 - 19:00 (Hàng ngày)
@@ -320,7 +330,7 @@ const ShippingPage = () => {
         </div>
 
         {/* Right Column: Sticky Cart Preview & Order Summary */}
-        <aside className="mt-4 space-y-4 lg:sticky lg:top-6 lg:mt-0">
+        <aside className="mt-4 space-y-4 lg:sticky lg:top-20 lg:mt-0">
           <DiscountTeaser />
           <OrderSummary
             subtotal={subtotal}

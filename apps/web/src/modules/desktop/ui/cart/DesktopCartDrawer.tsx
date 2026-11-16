@@ -38,7 +38,7 @@ export function DesktopCartDrawer() {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[60] h-screen bg-on-surface/30 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[1000] h-screen bg-on-surface/30 backdrop-blur-sm transition-opacity duration-300 ${
           open
             ? "pointer-events-auto opacity-100"
             : "pointer-events-none opacity-0"
@@ -50,7 +50,7 @@ export function DesktopCartDrawer() {
         role="dialog"
         aria-modal="true"
         aria-label="Giỏ hàng"
-        className={`fixed inset-y-0 right-0 z-[999] flex w-full max-w-lg flex-col overflow-hidden bg-surface shadow-2xl transition-transform duration-300 ease-out ${
+        className={`fixed inset-y-0 right-0 z-[1001] flex w-full max-w-lg flex-col overflow-hidden bg-surface shadow-2xl transition-transform duration-300 ease-out ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >

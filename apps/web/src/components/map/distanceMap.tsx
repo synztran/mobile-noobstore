@@ -1,16 +1,18 @@
 "use client";
 
 import React, { useMemo } from "react";
+import Image from "@/components/ui/AdaptiveImage";
 import {
   Map,
   MapMarker,
   MarkerContent,
   MarkerLabel,
-  MapRoute,
   MapControls,
 } from "@/components/ui/map";
-import { MapPin, Store } from "lucide-react";
+import { MapPin } from "lucide-react";
+import { LOGO_NOOB_STORE } from "@/lib/images";
 import { FitMapToBounds } from "./fitMapBounds";
+import { AnimatedRoute } from "./AnimatedRoute";
 
 interface IProps {
   targetLocation: {
@@ -42,8 +44,7 @@ export default function DistanceMap({
   isLoading,
 }: IProps) {
   const store = storeLocation ?? DEFAULT_STORE;
-  const hasRoute =
-    routeCoordinates && routeCoordinates.length > 0;
+  const hasRoute = routeCoordinates && routeCoordinates.length > 0;
 
   const coordinatesToFrame: [number, number][] = useMemo(() => {
     if (!targetLocation) {
@@ -75,7 +76,9 @@ export default function DistanceMap({
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm">
             <div className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-lg">
               <span className="loading loading-spinner loading-sm" />
-              <span className="text-xs font-semibold text-slate-600">Đang tải bản đồ...</span>
+              <span className="text-xs font-semibold text-slate-600">
+                Đang tải bản đồ...
+              </span>
             </div>
           </div>
         )}
@@ -85,13 +88,19 @@ export default function DistanceMap({
 
           <MapMarker longitude={store.lon} latitude={store.lat}>
             <MarkerContent>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-md transition-transform hover:scale-110">
-                <Store className="h-5 w-5" />
+              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-surface shadow-lg transition-transform hover:scale-110">
+                <Image
+                  src={LOGO_NOOB_STORE}
+                  alt={store.label}
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
               </div>
             </MarkerContent>
             <MarkerLabel
               position="bottom"
-              className="font-semibold text-blue-900"
+              className="font-black text-primary shadow-sm"
             >
               {store.label}
             </MarkerLabel>
@@ -110,10 +119,10 @@ export default function DistanceMap({
           </MapMarker>
 
           {hasRoute && (
-            <MapRoute
+            <AnimatedRoute
               coordinates={routeCoordinates!}
-              color="#3b82f6"
-              width={4}
+              color="#2563eb"
+              glowColor="#93c5fd"
             />
           )}
         </Map>

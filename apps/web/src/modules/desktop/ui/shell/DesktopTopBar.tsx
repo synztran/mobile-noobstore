@@ -84,7 +84,7 @@ export function DesktopTopBar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-30 flex h-16 items-center gap-3 border-b border-on-surface/10 bg-surface px-4 lg:gap-6 lg:px-8">
+    <header className="fixed inset-x-0 top-0 z-[999] flex h-16 items-center gap-3 border-b border-on-surface/10 bg-surface px-4 lg:gap-6 lg:px-8">
       {/* Brand */}
       <Link href="/" className="flex shrink-0 items-center gap-2">
         <span className="relative h-8 w-8 shrink-0">

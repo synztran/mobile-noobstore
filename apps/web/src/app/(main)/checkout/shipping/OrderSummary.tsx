@@ -69,7 +69,7 @@ function OrderSummary({
 
       {/* Trust reassurance badge */}
       <div className="mt-3.5 flex items-center justify-center gap-1.5 text-[10px] text-on-surface-variant/80">
-        <span>🔒 Thanh toán bảo mật với mã hóa SSL 256-bit</span>
+        <span>🔒 Thanh toán bảo mật với mã hóa</span>
       </div>
     </div>
   );

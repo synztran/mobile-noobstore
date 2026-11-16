@@ -192,6 +192,7 @@ export function useShippingForm() {
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [isCalculatingFee, setIsCalculatingFee] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addressDistanceError, setAddressDistanceError] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<string, boolean>>>({});
   const [form, setForm] = useState<FormData>({
     fullName:
@@ -422,9 +423,12 @@ export function useShippingForm() {
     []
   );
 
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    setTouched((prev) => ({ ...prev, [e.target.name]: true }));
-  }, []);
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setTouched((prev) => ({ ...prev, [e.target.name]: true }));
+    },
+    []
+  );
 
   const handleCityChange = useCallback(
     (city: string) => {
@@ -573,16 +577,32 @@ export function useShippingForm() {
     return slots;
   }, [pickupDate, pickupClock]);
 
-  // A stored pickup slot may have passed since the customer last visited.
+  // Validate a stored pickup selection. Computes fresh slots for the given date
+  // so the check is never stale (avoids the auto-select → stale-slots → clear loop).
   useEffect(() => {
     if (!ready || !isPickup || hasPreOrder || !pickupDate || !pickupTime) return;
+
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const isToday = pickupDate === todayStr;
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const day = new Date(`${pickupDate}T00:00:00`).getDay();
+    const startMin = dayStartMinutes(day);
+    const endMin = dayEndMinutes(day);
+    const freshSlots: string[] = [];
+    for (let m = startMin; m <= endMin; m += PICKUP_SLOT_MINUTES) {
+      if (isToday && m <= nowMinutes) continue;
+      freshSlots.push(
+        `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`
+      );
+    }
 
     if (
       !isPickupSelectionValid({
         date: pickupDate,
         time: pickupTime,
         minDate: minPickupDate,
-        availableSlots: pickupSlots,
+        availableSlots: freshSlots,
       })
     ) {
       setPickupDate("");
@@ -592,39 +612,17 @@ export function useShippingForm() {
     ready,
     isPickup,
     hasPreOrder,
-    pickupDate,
-    pickupTime,
-    minPickupDate,
-    pickupSlots,
     setPickupDate,
     setPickupTime,
   ]);
 
-  // A saved pickup slot can become invalid while the customer is away from
-  // checkout (for example, today's 08:30 slot after it has passed).
+  // Auto-select the earliest valid pickup date when the customer first
+  // switches to pickup and has not yet chosen a date.
   useEffect(() => {
-    if (!ready || !isPickup || hasPreOrder || !pickupDate || !pickupTime) return;
-
-    if (!isPickupSelectionValid({
-      date: pickupDate,
-      time: pickupTime,
-      minDate: minPickupDate,
-      availableSlots: pickupSlots,
-    })) {
-      setPickupDate("");
-      setPickupTime("");
-    }
-  }, [
-    ready,
-    isPickup,
-    hasPreOrder,
-    pickupDate,
-    pickupTime,
-    minPickupDate,
-    pickupSlots,
-    setPickupDate,
-    setPickupTime,
-  ]);
+    if (!ready || !isPickup || hasPreOrder || pickupDate) return;
+    if (!minPickupDate) return;
+    setPickupDate(minPickupDate);
+  }, [ready, isPickup, hasPreOrder, pickupDate, minPickupDate, setPickupDate]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -654,6 +652,7 @@ export function useShippingForm() {
           }
 
           const combined = new Date(`${pickupDate}T${pickupTime}:00`);
+          console.log("combined", combined, combined.getTime(), Date.now())
           if (
             Number.isNaN(combined.getTime()) ||
             combined.getTime() <= Date.now()
@@ -704,8 +703,42 @@ export function useShippingForm() {
 
       if (missingRequired) {
         toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+        const missingEl =
+          !form.fullName.trim()
+            ? document.querySelector('input[name="fullName"]')
+            : !form.phoneNumber.trim()
+              ? document.querySelector('input[name="phoneNumber"]')
+              : !form.city.trim()
+                ? document.querySelector('input[placeholder*="tỉnh"]')
+                : document.getElementById("address-street-field");
+        missingEl?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
+
+      if (isCalculatingFee) {
+        toast.info(
+          "Hệ thống đang tính phí vận chuyển, vui lòng chờ trong giây lát..."
+        );
+        return;
+      }
+
+      // Standard / Express fee is distance-derived. If distanceKm is null or
+      // shippingCost is 0, the map hasn't resolved the address yet.
+      // Toast, highlight red, scroll — do not proceed to summary.
+      if (
+        (delivery === ShippingMethod.Standard ||
+          delivery === ShippingMethod.Express) &&
+        (distanceKm === null || shippingCost === 0)
+      ) {
+        setAddressDistanceError(true);
+        toast.error(
+          "Không thể tính phí vận chuyển. Vui lòng kiểm tra và chọn lại địa chỉ giao hàng."
+        );
+        const el = document.getElementById("address-street-field");
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      setAddressDistanceError(false);
 
       setIsSubmitting(true);
       clearCheckout();
@@ -723,13 +756,16 @@ export function useShippingForm() {
     [
       isPickup,
       delivery,
+      distanceKm,
       form,
+      isCalculatingFee,
       pickupDate,
       pickupTime,
       router,
       setShipping,
       clearCheckout,
       shippingCost,
+      setAddressDistanceError,
     ]
   );
 
@@ -893,6 +929,7 @@ export function useShippingForm() {
           setDistanceKm(
             typeof data.distance_km === "number" ? data.distance_km : null
           );
+          setAddressDistanceError(false);
           setCustomerLocation({
             lat: typeof data.lat === "number" ? data.lat : 0,
             lon: typeof data.lon === "number" ? data.lon : 0,
@@ -1008,5 +1045,6 @@ export function useShippingForm() {
     handleAddressSelect,
     hasPreOrder,
     preOrderEstimate,
+    addressDistanceError,
   };
 }

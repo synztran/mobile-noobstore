@@ -30,6 +30,7 @@ interface OrderSummaryCardProps {
   voucherItems?: VoucherApplyItem[];
   paymentType?: "full" | "deposit_cod";
   depositPercentage?: number;
+  isShippingValid?: boolean;
 }
 
 export function OrderSummaryCard({
@@ -49,6 +50,7 @@ export function OrderSummaryCard({
   voucherItems = [],
   paymentType = "full",
   depositPercentage = 50,
+  isShippingValid = true,
 }: OrderSummaryCardProps) {
   const [voucherCodeInput, setVoucherCodeInput] = useState("");
 
@@ -81,9 +83,7 @@ export function OrderSummaryCard({
       return;
     }
 
-    const matched = displayVouchers.find(
-      (v) => v.code?.toUpperCase() === code
-    );
+    const matched = displayVouchers.find((v) => v.code?.toUpperCase() === code);
 
     if (matched) {
       const currentIds = appliedVouchers.map((v) => v.voucherInfo.voucher_id);
@@ -151,10 +151,12 @@ export function OrderSummaryCard({
             </div>
             <button
               type="submit"
-              disabled={applyVouchersMutation.isPending || !voucherCodeInput.trim()}
+              disabled={
+                applyVouchersMutation.isPending || !voucherCodeInput.trim()
+              }
               className={`flex h-9 shrink-0 items-center justify-center rounded-xl px-4 text-xs font-black uppercase tracking-wider transition-all ${
                 voucherCodeInput.trim()
-                  ? "bg-primary text-white shadow-xs hover:opacity-95"
+                  ? "shadow-xs bg-primary text-white hover:opacity-95"
                   : "cursor-not-allowed bg-surface-container text-on-surface-variant/60"
               }`}
             >
@@ -272,18 +274,14 @@ export function OrderSummaryCard({
           {totalShippingDiscountAmount > 0 && (
             <div className="flex items-center justify-between font-bold text-[#1e5e2e]">
               <span>Giảm giá vận chuyển</span>
-              <span>
-                -{formatVND(totalShippingDiscountAmount)}
-              </span>
+              <span>-{formatVND(totalShippingDiscountAmount)}</span>
             </div>
           )}
 
           {totalDiscountAmount > 0 && (
             <div className="flex items-center justify-between font-bold text-[#1e5e2e]">
               <span>Giảm giá voucher</span>
-              <span>
-                -{formatVND(totalDiscountAmount)}
-              </span>
+              <span>-{formatVND(totalDiscountAmount)}</span>
             </div>
           )}
 
@@ -299,9 +297,7 @@ export function OrderSummaryCard({
                 )}
                 Giảm giá thành viên
               </span>
-              <span>
-                -{formatVND(rankDiscountAmount)}
-              </span>
+              <span>-{formatVND(rankDiscountAmount)}</span>
             </div>
           )}
 
@@ -317,9 +313,7 @@ export function OrderSummaryCard({
                 )}
                 Miễn ship thành viên
               </span>
-              <span>
-                -{formatVND(rankShippingDiscount)}
-              </span>
+              <span>-{formatVND(rankShippingDiscount)}</span>
             </div>
           )}
 
@@ -336,14 +330,21 @@ export function OrderSummaryCard({
             {isDeposit && (
               <div className="mt-2 flex items-center justify-between rounded-xl bg-primary/10 px-3 py-2 text-xs text-primary">
                 <span className="font-bold">Số tiền cọc thanh toán trước:</span>
-                <span className="font-black text-sm">{formatVND(depositAmount)}</span>
+                <span className="text-sm font-black">
+                  {formatVND(depositAmount)}
+                </span>
               </div>
             )}
           </div>
         </div>
 
         {/* 4. Action CTA Button */}
-        <div className="mt-5">
+        <div className="mt-5 space-y-2">
+          {!isShippingValid && (
+            <p className="text-center text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+              ⚠️ Vui lòng nhập thông tin giao hàng để xác nhận đơn
+            </p>
+          )}
           <button
             type="button"
             onClick={onConfirm}
@@ -364,7 +365,7 @@ export function OrderSummaryCard({
         {/* 5. Trust Security Reassurance */}
         <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-on-surface-variant/80">
           <ShieldCheck size={13} className="text-emerald-600" />
-          <span>Thanh toán bảo mật với mã hóa SSL 256-bit</span>
+          <span>Thanh toán bảo mật với mã hóa</span>
         </div>
       </div>
     </>

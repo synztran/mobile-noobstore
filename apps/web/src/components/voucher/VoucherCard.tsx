@@ -116,31 +116,35 @@ export const VoucherCard = memo(function VoucherCard({
           ? "border-emerald-500/40 bg-emerald-500/5 shadow-ambient-sm"
           : isValid
             ? "border-outline-variant/25 bg-surface hover:border-primary/40 hover:shadow-ambient-sm"
-            : "border-outline-variant/15 bg-surface-container/30 opacity-65"
+            : "border-dashed border-outline-variant/30 bg-surface-container/20"
       }`}
     >
       {/* Left Stub: Coupon Type Badge & Notch */}
       <div
         className={`relative flex w-24 flex-shrink-0 flex-col items-center justify-center p-3 text-center sm:w-28 ${
-          shippingScoped
-            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-            : "bg-primary/10 text-primary"
+          isApplied
+            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+            : isValid
+              ? shippingScoped
+                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                : "bg-primary/10 text-primary"
+              : "bg-surface-container text-on-surface-variant"
         }`}
       >
-        <div className="grid h-10 w-10 place-items-center rounded-xl bg-surface shadow-xs">
+        <div className="shadow-xs grid h-10 w-10 place-items-center rounded-xl bg-surface">
           <RewardIcon size={22} className="stroke-[2.2]" />
         </div>
         <span className="mt-2 text-[10px] font-black uppercase tracking-wider">
           {stubTag}
         </span>
         {voucher.code && (
-          <span className="mt-0.5 line-clamp-1 max-w-full px-1 text-[9px] font-mono font-bold text-on-surface-variant">
+          <span className="mt-0.5 line-clamp-1 max-w-full px-1 font-mono text-[9px] font-bold text-on-surface-variant">
             {voucher.code}
           </span>
         )}
 
         {/* Dashed Right Border Divider */}
-        <div className="absolute right-0 top-2 bottom-2 border-r border-dashed border-outline-variant/40" />
+        <div className="absolute bottom-2 right-0 top-2 border-r border-dashed border-outline-variant/40" />
 
         {/* Top & Bottom Circular Notches */}
         <div className="absolute -right-2 -top-2 h-4 w-4 rounded-full bg-surface-container-high/60 ring-1 ring-outline-variant/20" />
@@ -149,51 +153,32 @@ export const VoucherCard = memo(function VoucherCard({
 
       {/* Right Content & Actions */}
       <div className="flex min-w-0 flex-1 flex-col justify-between p-3.5 sm:p-4">
-        <div className="space-y-1">
+        <div className="space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <h4 className="line-clamp-1 text-sm font-black text-on-surface">
-              {rewardLabel}
-            </h4>
-          </div>
-
-          {voucher.description && (
-            <p className="line-clamp-2 text-xs leading-relaxed text-on-surface-variant">
-              {voucher.description}
-            </p>
-          )}
-
-          {!isValid && isMounted && (
-            <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
-              ⚠️ {getInvalidReason()}
-            </p>
-          )}
-        </div>
-
-        {/* Meta badges & Action Button */}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-outline-variant/10 pt-2.5">
-          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-on-surface-variant">
-            {voucher.min_order_amount > 0 && (
-              <span className="inline-flex items-center rounded-md bg-surface-container px-2 py-0.5 font-medium">
-                Đơn từ {formatVND(voucher.min_order_amount)}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span
+                className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                  shippingScoped
+                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                    : voucher.reward_type === "gift_item"
+                      ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                      : "bg-primary/10 text-primary"
+                }`}
+              >
+                {shippingScoped
+                  ? "Phí vận chuyển"
+                  : voucher.reward_type === "gift_item"
+                    ? "Quà tặng"
+                    : "Đơn hàng / Sản phẩm"}
               </span>
-            )}
-            {voucher.max_discount_amount && voucher.max_discount_amount > 0 ? (
-              <span className="inline-flex items-center rounded-md bg-surface-container px-2 py-0.5 font-medium">
-                Tối đa {formatVND(voucher.max_discount_amount)}
-              </span>
-            ) : null}
-            {validityLabel && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-on-surface-variant/80">
-                <CalendarClock size={12} />
-                HSD: {validityLabel}
-              </span>
-            )}
-          </div>
+              <h4 className="text-sm font-black text-on-surface">
+                {rewardLabel}
+              </h4>
+            </div>
 
-          {/* Action button */}
-          <div className="flex-shrink-0">
+            {/* Action button in header position if valid */}
             {isApplied ? (
-              <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs">
+              <span className="shadow-xs inline-flex shrink-0 items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white">
                 <CheckCircle2 size={14} className="stroke-[2.5]" />
                 Đã dùng
               </span>
@@ -202,7 +187,7 @@ export const VoucherCard = memo(function VoucherCard({
                 type="button"
                 onClick={onApply}
                 disabled={isApplying}
-                className="btn btn-primary btn-sm min-h-[32px] h-8 rounded-xl px-4 text-xs font-bold text-surface shadow-xs transition-all active:scale-95"
+                className="shadow-xs btn btn-primary btn-sm h-8 min-h-[32px] shrink-0 rounded-xl px-4 text-xs font-bold text-surface transition-all active:scale-95"
               >
                 {isApplying ? (
                   <span className="loading loading-spinner loading-xs" />
@@ -210,10 +195,68 @@ export const VoucherCard = memo(function VoucherCard({
                   "Áp dụng"
                 )}
               </button>
-            ) : (
-              <span className="inline-block rounded-xl bg-surface-container px-3 py-1.5 text-[11px] font-bold text-on-surface-variant/60">
-                Không đủ ĐK
+            ) : null}
+          </div>
+
+          {voucher.description && (
+            <p className="text-xs leading-relaxed text-on-surface-variant">
+              {voucher.description}
+            </p>
+          )}
+
+          {!isValid && isMounted && (
+            <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1.5 text-[11px] font-bold text-rose-700 dark:text-rose-300">
+              ⚠️ {getInvalidReason()}
+            </div>
+          )}
+
+          {/* Always visible clear condition details */}
+          <div className="space-y-1.5 rounded-xl border border-outline-variant/20 bg-surface-container/40 p-2.5 text-[11px] text-on-surface-variant">
+            <div className="flex items-start gap-1.5">
+              <span className="shrink-0 font-bold text-on-surface">
+                Áp dụng cho:
               </span>
+              <span>
+                {shippingScoped
+                  ? "Giảm trừ trực tiếp vào phí vận chuyển"
+                  : voucher.reward_type === "gift_item"
+                    ? "Tặng sản phẩm kèm theo đơn hàng"
+                    : "Giảm trực tiếp vào tổng tiền hàng"}
+              </span>
+            </div>
+            <div className="flex items-start gap-1.5">
+              <span className="shrink-0 font-bold text-on-surface">
+                Đơn tối thiểu:
+              </span>
+              <span className="font-semibold text-on-surface">
+                {voucher.min_order_amount > 0
+                  ? formatVND(voucher.min_order_amount)
+                  : "Không yêu cầu"}
+              </span>
+            </div>
+            {voucher.max_discount_amount && voucher.max_discount_amount > 0 ? (
+              <div className="flex items-start gap-1.5">
+                <span className="shrink-0 font-bold text-on-surface">
+                  Giảm tối đa:
+                </span>
+                <span>{formatVND(voucher.max_discount_amount)}</span>
+              </div>
+            ) : null}
+            {voucher.usage_limit_per_user && (
+              <div className="flex items-start gap-1.5">
+                <span className="shrink-0 font-bold text-on-surface">
+                  Giới hạn:
+                </span>
+                <span>{voucher.usage_limit_per_user} lần/khách hàng</span>
+              </div>
+            )}
+            {validityLabel && (
+              <div className="flex items-start gap-1.5">
+                <span className="shrink-0 font-bold text-on-surface">
+                  Hạn sử dụng:
+                </span>
+                <span>{validityLabel}</span>
+              </div>
             )}
           </div>
         </div>

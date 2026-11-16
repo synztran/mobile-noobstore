@@ -48,7 +48,7 @@ export function DesktopSidebar() {
   return (
     <aside
       className={clsx(
-        "fixed left-0 top-0 z-40 flex h-full flex-col border-r border-on-surface/10 bg-surface transition-[width] duration-200",
+        "fixed left-0 top-0 z-[998] flex h-full flex-col border-r border-on-surface/10 bg-surface transition-[width] duration-200",
         collapsed ? "w-16" : "w-60"
       )}
     >
