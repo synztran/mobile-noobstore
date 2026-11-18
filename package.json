@@ -19,7 +19,8 @@
 		"test:e2e": "playwright test --config=e2e/playwright.config.ts",
 		"test:e2e:ui": "playwright test --ui --config=e2e/playwright.config.ts",
 		"test:e2e:debug": "playwright test --debug --config=e2e/playwright.config.ts",
-		"deploy:log": "bash scripts/add-deployment.sh"
+		"deploy:log": "bash scripts/add-deployment.sh",
+		"dev:warehouse": "turbo dev --filter=\"./apps/warehouse\""
 	},
 	"devDependencies": {
 		"@electric-sql/pglite": "^0.5.11",
