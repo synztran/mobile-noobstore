@@ -66,7 +66,11 @@ export async function POST(req: NextRequest) {
     if (body?.slug) {
       const { scrapeFacebookProduct } = await import("@/lib/facebook/scrape");
       const url = `https://www.noobstore.xyz/shop/${body.slug}`;
-      void scrapeFacebookProduct(url);
+      // Awaited deliberately: on serverless, a fire-and-forget promise can be
+      // frozen when the response is sent, so the scrape silently never ran.
+      // The callee polls until the storefront serves a real og:url, so this
+      // only blocks on a genuinely slow first paint.
+      await scrapeFacebookProduct(url);
     }
   } catch (err) {
     console.error("[admin/products/POST] fb scrape failed:", err);

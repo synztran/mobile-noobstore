@@ -2,11 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": [
-      "ES2020",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -26,24 +22,20 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@db-types": [
-        "../web/src/lib/supabase/database.types"
-      ]
+      "@/*": ["./src/*"],
+      "@db-types": ["../web/src/lib/supabase/database.types"],
+      "@web-cache": ["../web/src/lib/redis/cache"],
+      "@web-email": ["../web/src/lib/email/email.service"],
+      "@web-tracking": ["../web/src/lib/tracking"],
+      "@web-kit-pricing": ["../web/src/modules/products/kit-pricing"],
+      "@web-stock": ["../web/src/modules/products/server/stock"],
+      "@web-vietqr": ["../web/src/modules/payments/vietqr"],
+      "@web-bank-bins": ["../web/src/modules/payments/bank-bins"]
     },
     "allowJs": true,
     "noEmit": true,
     "moduleResolution": "node"
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

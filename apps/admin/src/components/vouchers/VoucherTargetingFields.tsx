@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import AsyncMultiSelect, {
   AsyncSelectOption,
 } from "@/components/ui/AsyncMultiSelect";
-
-type VoucherScopeType = "order_total" | "shipping_fee" | "product" | "category";
+import { ShippingMethod } from "@/lib/shipping-method";
+import type { VoucherScopeType } from "./types";
 
 type CategoryRow = {
   id: string;
@@ -30,16 +30,15 @@ type Props = {
 
 const SCOPE_OPTIONS: { value: VoucherScopeType; label: string }[] = [
   { value: "order_total", label: "Toàn bộ đơn hàng" },
-  { value: "shipping_fee", label: "Phí vận chuyển" },
   { value: "product", label: "Sản phẩm chỉ định" },
   { value: "category", label: "Theo danh mục" },
 ];
 
 const SHIPPING_METHOD_OPTIONS: { key: string; label: string }[] = [
-  { key: "standard", label: "Giao tiêu chuẩn" },
-  { key: "express", label: "Giao hỏa tốc" },
-  { key: "shipment", label: "Đơn vị vận chuyển" },
-  { key: "pickup", label: "Nhận tại cửa hàng" },
+  { key: ShippingMethod.Standard, label: "Giao tiêu chuẩn" },
+  { key: ShippingMethod.Express, label: "Giao hỏa tốc" },
+  { key: ShippingMethod.Shipment, label: "Đơn vị vận chuyển" },
+  { key: ShippingMethod.Pickup, label: "Nhận tại cửa hàng" },
 ];
 
 export default function VoucherTargetingFields({

@@ -2,12 +2,17 @@
 
 import { AlertCircle, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import PriceOverrideFields, {
+  parseOverride,
+  type OverrideDrafts,
+} from "@/components/rules/PriceOverrideFields";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Variant {
   id: string;
   variant_name: string;
+  price_adjustment: number;
 }
 
 interface KitComponent {
@@ -28,6 +33,8 @@ interface Rule {
   condition_variant_id: string;
   target_component_product_id: string;
   allowed_variant_ids: string[];
+  /** Additive contribution overrides keyed by allowed component variant id. */
+  price_overrides: Record<string, number | null>;
 }
 
 interface Context {
@@ -58,6 +65,14 @@ export default function VariantRulesEditor({
   const [selectedKitId, setSelectedKitId] = useState("");
   const [targetComponentProductId, setTargetComponentProductId] = useState("");
   const [allowedVariantIds, setAllowedVariantIds] = useState<string[]>([]);
+  /** Draft overrides for the add-rule form, keyed by allowed variant id. */
+  const [overrideDrafts, setOverrideDrafts] = useState<OverrideDrafts>({});
+  /**
+   * Draft edits to saved rules, keyed `${ruleId}:${variantId}`. Kept apart from
+   * `ctx.rules` so a half-typed value is never persisted without an explicit
+   * Save — these are live production prices.
+   */
+  const [ruleDrafts, setRuleDrafts] = useState<OverrideDrafts>({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -91,17 +106,71 @@ export default function VariantRulesEditor({
   useEffect(() => {
     setTargetComponentProductId("");
     setAllowedVariantIds([]);
+    setOverrideDrafts({});
   }, [selectedKitId]);
 
   // reset allowed when target changes
   useEffect(() => {
     setAllowedVariantIds([]);
+    setOverrideDrafts({});
   }, [targetComponentProductId]);
 
   const toggleAllowed = (vid: string) => {
     setAllowedVariantIds((prev) =>
       prev.includes(vid) ? prev.filter((id) => id !== vid) : [...prev, vid]
     );
+    setOverrideDrafts((prev) => {
+      const next = { ...prev };
+      delete next[vid];
+      return next;
+    });
+  };
+
+  const setOverrideDraft = (vid: string, value: string) => {
+    setOverrideDrafts((prev) => ({ ...prev, [vid]: value }));
+  };
+
+  const setRuleDraft = (key: string, value: string) => {
+    setRuleDrafts((prev) => ({ ...prev, [key]: value }));
+  };
+
+  /**
+   * Persist one override on an existing rule. A blank field clears the override
+   * (stored as NULL), which restores the variant's own price_adjustment.
+   */
+  const handleSaveOverride = async (
+    ruleId: string,
+    variantId: string,
+    raw: string
+  ) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/component-rules", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ruleId,
+          price_overrides: { [variantId]: parseOverride(raw) },
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to save price override");
+      }
+      setRuleDrafts((prev) => {
+        const next: OverrideDrafts = {};
+        for (const [k, v] of Object.entries(prev)) {
+          if (k !== `${ruleId}:${variantId}`) next[k] = v;
+        }
+        return next;
+      });
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAdd = async () => {
@@ -126,6 +195,12 @@ export default function VariantRulesEditor({
           condition_variant_id: variantId,
           target_component_product_id: targetComponentProductId,
           allowed_variant_ids: allowedVariantIds,
+          price_overrides: Object.fromEntries(
+            allowedVariantIds.map((id) => [
+              id,
+              parseOverride(overrideDrafts[id]),
+            ])
+          ),
         }),
       });
       if (!res.ok) {
@@ -135,6 +210,7 @@ export default function VariantRulesEditor({
       setSelectedKitId("");
       setTargetComponentProductId("");
       setAllowedVariantIds([]);
+      setOverrideDrafts({});
       await fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -231,52 +307,100 @@ export default function VariantRulesEditor({
         </p>
       ) : (
         <ul className="space-y-2">
-          {ctx.rules.map((rule) => (
-            <li
-              key={rule.id}
-              className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="mb-0.5 text-xs text-slate-400">
-                  Kit:{" "}
-                  <span className="font-medium text-slate-600">
-                    {ctx.kits.find((k) => k.id === rule.kit_product_id)?.name ??
-                      rule.kit_product_id}
-                  </span>
-                </p>
-                <p className="text-slate-700">
-                  Restricts{" "}
-                  <span className="font-semibold">
-                    {getComponentName(
-                      rule.kit_product_id,
-                      rule.target_component_product_id
-                    )}
-                  </span>{" "}
-                  to:{" "}
-                  {rule.allowed_variant_ids.map((vid) => (
-                    <span
-                      key={vid}
-                      className="mr-1 inline-block rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs text-green-800"
-                    >
-                      {getVariantName(
-                        rule.kit_product_id,
-                        rule.target_component_product_id,
-                        vid
-                      )}
-                    </span>
-                  ))}
-                </p>
-              </div>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => handleDelete(rule.id)}
-                className="mt-0.5 shrink-0 text-red-400 transition-colors hover:text-red-600 disabled:opacity-40"
+          {ctx.rules.map((rule) => {
+            const targetKit = ctx.kits.find(
+              (k) => k.id === rule.kit_product_id
+            );
+            const targetComp = targetKit?.components.find(
+              (c) => c.component_product_id === rule.target_component_product_id
+            );
+            const overrideVariants = rule.allowed_variant_ids
+              .map((vid) =>
+                targetComp?.product_variants.find((v) => v.id === vid)
+              )
+              .filter((v): v is Variant => v !== undefined);
+            // Drafts are keyed per rule so two rules touching the same variant
+            // (e.g. Purple -> Pack and Trash -> Pack) never share a field.
+            const drafts: OverrideDrafts = {};
+            for (const vid of rule.allowed_variant_ids) {
+              const key = `${rule.id}:${vid}`;
+              if (ruleDrafts[key] !== undefined) drafts[vid] = ruleDrafts[key];
+            }
+
+            return (
+              <li
+                key={rule.id}
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </li>
-          ))}
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="mb-0.5 text-xs text-slate-400">
+                      Kit:{" "}
+                      <span className="font-medium text-slate-600">
+                        {targetKit?.name ?? rule.kit_product_id}
+                      </span>
+                    </p>
+                    <p className="text-slate-700">
+                      Restricts{" "}
+                      <span className="font-semibold">
+                        {getComponentName(
+                          rule.kit_product_id,
+                          rule.target_component_product_id
+                        )}
+                      </span>{" "}
+                      to:
+                    </p>
+                    <div className="mt-0.5 flex flex-wrap gap-1">
+                      {rule.allowed_variant_ids.map((vid) => (
+                        <span
+                          key={vid}
+                          className="rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs text-green-800"
+                        >
+                          {getVariantName(
+                            rule.kit_product_id,
+                            rule.target_component_product_id,
+                            vid
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => handleDelete(rule.id)}
+                    className="mt-0.5 shrink-0 text-red-400 transition-colors hover:text-red-600 disabled:opacity-40"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {overrideVariants.length > 0 && (
+                  <div className="mt-2 border-t border-slate-200 pt-2">
+                    <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                      Price overrides
+                    </p>
+                    <PriceOverrideFields
+                      variants={overrideVariants}
+                      drafts={drafts}
+                      savedOverrides={rule.price_overrides ?? {}}
+                      disabled={saving}
+                      onChange={(vid, value) =>
+                        setRuleDraft(`${rule.id}:${vid}`, value)
+                      }
+                      onSave={(vid) =>
+                        void handleSaveOverride(
+                          rule.id,
+                          vid,
+                          ruleDrafts[`${rule.id}:${vid}`] ?? ""
+                        )
+                      }
+                    />
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -366,6 +490,22 @@ export default function VariantRulesEditor({
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Optional price overrides for the ticked variants */}
+            {targetComponent && allowedVariantIds.length > 0 && (
+              <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                <p className="mb-1.5 text-xs font-medium text-slate-600">
+                  Price overrides (optional) — what each variant ADDS to the kit
+                </p>
+                <PriceOverrideFields
+                  variants={targetComponent.product_variants.filter((v) =>
+                    allowedVariantIds.includes(v.id)
+                  )}
+                  drafts={overrideDrafts}
+                  onChange={setOverrideDraft}
+                />
               </div>
             )}
           </div>

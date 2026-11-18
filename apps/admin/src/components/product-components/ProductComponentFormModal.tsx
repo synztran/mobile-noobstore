@@ -15,6 +15,8 @@ type Props = {
   products: ProductOption[];
   mode: Mode;
   component?: ProductComponentRow | null;
+  /** Pre-selects the parent kit (post-create flow attaches to the new kit). */
+  defaultParentId?: string;
 };
 
 type ComponentRow = {
@@ -39,6 +41,7 @@ export default function ProductComponentFormModal({
   products,
   mode,
   component,
+  defaultParentId,
 }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -57,7 +60,9 @@ export default function ProductComponentFormModal({
   useEffect(() => {
     if (!open) return;
     setError(null);
-    setParentProductId(component?.parent_product_id ?? "");
+    setParentProductId(
+      component?.parent_product_id ?? defaultParentId ?? ""
+    );
     setRows([emptyRow()]);
     setComponentProductId(component?.component_product_id ?? "");
     setComponentGroup(component?.component_group ?? "");
@@ -67,7 +72,7 @@ export default function ProductComponentFormModal({
         ? ""
         : String(component.max_quantity)
     );
-  }, [open, component]);
+  }, [open, component, defaultParentId]);
 
   const parentOptions = useMemo(
     () => products.filter((product) => product.product_type === "kit"),

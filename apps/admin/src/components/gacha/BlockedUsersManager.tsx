@@ -153,7 +153,7 @@ export function BlockedUsersManager({ eventId }: Props) {
                     key={user.id}
                     type="button"
                     onClick={() => handleSelectUser(user)}
-                    className="flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:bg-slate-100 "
                   >
                     <span className="text-heading">{user.email}</span>
                     {(user.first_name || user.last_name) && (
@@ -182,11 +182,11 @@ export function BlockedUsersManager({ eventId }: Props) {
       {/* List */}
       {loading ? (
         <div className="card-bg card-shadow animate-pulse rounded-lg p-6">
-          <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="h-4 w-48 rounded bg-slate-200 " />
         </div>
       ) : blockedUsers.length === 0 ? (
         <div className="card-bg card-shadow rounded-lg p-8 text-center">
-          <UserX className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
+          <UserX className="mx-auto mb-2 h-10 w-10 text-slate-300 " />
           <p className="text-muted text-sm">No blocked users</p>
         </div>
       ) : (

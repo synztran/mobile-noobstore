@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
 		start_at: body.start_at ?? null,
 		end_at: body.end_at ?? null,
 		stackable: Boolean(body.stackable),
+		auto_apply: Boolean(body.auto_apply),
 		applies_to_product_ids: body.applies_to_product_ids ?? null,
 		applies_to_category_slugs: body.applies_to_category_slugs ?? null,
 		excluded_product_ids: body.excluded_product_ids ?? null,

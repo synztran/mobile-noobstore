@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     stock: body.stock != null ? Number(body.stock) : null,
     is_active: body.is_active ?? true,
     metadata: body.metadata ?? {},
+    points_currency: body.points_currency === "daily_checkin" ? "daily_checkin" : "nsp",
   };
 
   const { error } = await (supabase as any).from("reward_items").insert(payload);

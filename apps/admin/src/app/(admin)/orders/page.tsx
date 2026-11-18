@@ -1,83 +1,54 @@
+import { fetchOrdersList } from "@/lib/orders-list-query";
 import OrdersClient from "@/components/orders/OrdersClient";
-import { getAdminClient } from "@/lib/supabase/admin";
 import { Suspense } from "react";
 
 export const metadata = { title: "Orders - NoobStore Admin" };
 
-const PAGE_SIZE = 20;
-
 interface Props {
-	searchParams: Promise<{ q?: string; by?: string; page?: string }>;
+	searchParams: Promise<{ q?: string; by?: string; page?: string; hideTest?: string }>;
 }
 
 export default async function OrdersPage({ searchParams }: Props) {
-	const { q = "", by = "order", page } = await searchParams;
+	const { q = "", by = "order", page, hideTest } = await searchParams;
 	const currentPage = Math.max(1, parseInt(page ?? "1", 10));
-	const supabase = getAdminClient();
+	const hideTestOrders = hideTest === "1";
 
-	let query = supabase
-		.from("orders")
-		.select(
-			"id, order_number, status, total_price, created_at, cancelled_at, cancelled_note, users(first_name, last_name), order_items(count), order_services(count)",
-			{
-				count: "exact",
-			},
-		)
-		.order("created_at", { ascending: false })
-		.range((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE - 1);
+	const result = await fetchOrdersList({
+		q,
+		by,
+		page: currentPage,
+		hideTest: hideTestOrders,
+	});
 
-	if (q) {
-		if (by === "customer") {
-			const { data: users } = await supabase
-				.from("users")
-				.select("id")
-				.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%`);
-			const ids = (users ?? []).map((u) => u.id);
-			if (ids.length > 0) {
-				query = query.in("user_id", ids);
-			} else {
-				return (
-					<div className="space-y-6">
-						<Suspense>
-							<OrdersClient
-								orders={[]}
-								count={0}
-								currentPage={1}
-								totalPages={1}
-								searchBy={by}
-								q={q}
-							/>
-						</Suspense>
-					</div>
-				);
-			}
-		} else {
-			query = query.ilike("order_number", `%${q}%`);
-		}
-	}
-
-	const { data: orders, count, error } = await query;
-
-	if (error) {
-		console.error("Error fetching orders:", error);
-	}
-
-	const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
-
-	type OrderRow = NonNullable<typeof orders>[number];
-
-	return (
+	const client = (
+		orders: Parameters<typeof OrdersClient>[0]["orders"],
+		count: number | null,
+		totalPages: number,
+	) => (
 		<div className="space-y-6">
 			<Suspense>
 				<OrdersClient
-					orders={(orders ?? []) as OrderRow[]}
+					orders={orders}
 					count={count}
 					currentPage={currentPage}
 					totalPages={totalPages}
 					searchBy={by}
 					q={q}
+					hideTest={hideTestOrders}
 				/>
 			</Suspense>
 		</div>
 	);
+
+	// A customer search that matched no user has nothing to page through.
+	if (!result.ok) {
+		return client([], 0, 1);
+	}
+
+	if (result.error) {
+		// Non-fatal: the page still renders, matching the previous behaviour.
+		console.error("Error fetching orders:", result.error);
+	}
+
+	return client(result.orders, result.count, result.totalPages);
 }

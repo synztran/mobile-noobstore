@@ -33,7 +33,7 @@ export default function ProductsHeader({ categories }: IProps) {
           <Plus className="h-4 w-4" />
           Add Product
         </button>
-        <ClearCacheButton scope="products" label="Clear Products Cache" />
+        <ClearCacheButton scope="products" label="Clear Products Cache (all)" />
       </div>
 
       <CreateProductModal

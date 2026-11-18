@@ -7,7 +7,7 @@ export default function RewardsTable({ rewards, totalWeight, onEdit, onDelete, o
     if (rewards.length === 0) {
         return (
             <div className="card-bg rounded-lg card-shadow p-8 text-center">
-                <Gift className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                <Gift className="w-10 h-10 text-slate-300  mx-auto mb-2" />
                 <p className="text-muted text-sm">No rewards configured</p>
             </div>
         );
@@ -36,7 +36,7 @@ export default function RewardsTable({ rewards, totalWeight, onEdit, onDelete, o
                             <td className="font-medium">{reward.id}</td>
                             <td className="font-medium">{reward.name}</td>
                             <td>
-                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700  ">
                                     {reward.reward_type}
                                 </span>
                             </td>
@@ -55,16 +55,16 @@ export default function RewardsTable({ rewards, totalWeight, onEdit, onDelete, o
                                 {reward.is_golden ? (
                                     <span className="text-yellow-500 text-lg">★</span>
                                 ) : (
-                                    <span className="text-slate-300 dark:text-slate-600">—</span>
+                                    <span className="text-slate-300 ">—</span>
                                 )}
                             </td>
                             <td className="text-center">
                                 {reward.is_active !== false ? (
-                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700  ">
                                         Active
                                     </span>
                                 ) : (
-                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500  ">
                                         Inactive
                                     </span>
                                 )}

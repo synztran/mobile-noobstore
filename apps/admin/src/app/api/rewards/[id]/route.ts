@@ -24,6 +24,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       payload.stock = body.stock != null ? Number(body.stock) : null;
     if (body.is_active !== undefined) payload.is_active = body.is_active;
     if (body.metadata !== undefined) payload.metadata = body.metadata;
+    if (body.points_currency !== undefined) {
+      if (!["nsp", "daily_checkin"].includes(body.points_currency)) {
+        return NextResponse.json({ error: "Invalid points_currency" }, { status: 400 });
+      }
+      payload.points_currency = body.points_currency;
+    }
 
     if (Object.keys(payload).length === 0) {
       return NextResponse.json(

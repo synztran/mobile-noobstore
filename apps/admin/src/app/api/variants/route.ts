@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
+import { invalidateProductCaches } from "@/lib/redis/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+  await invalidateProductCaches();
   return NextResponse.json({ success: true }, { status: 201 });
 }
 
@@ -26,6 +28,7 @@ export async function PATCH(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+  await invalidateProductCaches();
   return NextResponse.json({ success: true });
 }
 
@@ -42,5 +45,6 @@ export async function DELETE(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+  await invalidateProductCaches();
   return NextResponse.json({ success: true });
 }

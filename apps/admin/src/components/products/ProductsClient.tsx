@@ -2,11 +2,12 @@
 
 import type { ProductCardProps } from "@/components/products/ProductCard";
 import ProductCard from "@/components/products/ProductCard";
+import EmptyState from "@/components/ui/EmptyState";
 import ExportCSVButton from "@/components/ui/ExportCSVButton";
 import type { ExportColumn } from "@/lib/csv";
 import { adminQueryKeys } from "@/lib/react-query/root";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Package } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -98,14 +99,20 @@ export default function ProductsClient({
             <ProductCard key={product.id} product={product} />
           ))
         ) : (
-          <div className="col-span-full rounded-lg bg-white px-6 py-12 text-center text-slate-500 shadow">
-            No products found
-          </div>
+            <div className="col-span-full">
+              <div className="card-panel">
+                <EmptyState
+                  icon={Package}
+                  title="No products found"
+                  message="Try adjusting your search or filters."
+                />
+              </div>
+            </div>
         )}
       </div>
 
       <div className="flex items-center justify-between pt-2">
-        <span className="text-sm text-slate-500">
+        <span className="text-sm text-body">
           {count} product{count !== 1 ? "s" : ""}
           {totalPages > 1 && ` · Page ${page} of ${totalPages}`}
         </span>
@@ -122,10 +129,10 @@ export default function ProductsClient({
             <Link
               href={buildUrl(page - 1)}
               aria-disabled={page === 1}
-              className={`rounded-lg border border-slate-200 p-1.5 ${
+              className={`rounded-lg border border-[rgb(var(--admin-border))] p-1.5 ${
                 page === 1
                   ? "pointer-events-none opacity-40"
-                  : "hover:bg-slate-100"
+                  : "hover:bg-[rgb(var(--admin-hover))]"
               }`}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -143,7 +150,7 @@ export default function ProductsClient({
                 p === "…" ? (
                   <span
                     key={`ellipsis-${i}`}
-                    className="px-2 text-sm text-slate-400"
+                    className="px-2 text-sm text-[rgb(var(--admin-text-muted))]"
                   >
                     …
                   </span>
@@ -154,7 +161,7 @@ export default function ProductsClient({
                     className={`flex h-8 min-w-[2rem] items-center justify-center rounded-lg border text-sm ${
                       p === page
                         ? "border-blue-600 bg-blue-600 font-medium text-white"
-                        : "border-slate-200 hover:bg-slate-100"
+                        : "border-[rgb(var(--admin-border))] hover:bg-[rgb(var(--admin-hover))]"
                     }`}
                   >
                     {p}
@@ -164,10 +171,10 @@ export default function ProductsClient({
             <Link
               href={buildUrl(page + 1)}
               aria-disabled={page === totalPages}
-              className={`rounded-lg border border-slate-200 p-1.5 ${
+              className={`rounded-lg border border-[rgb(var(--admin-border))] p-1.5 ${
                 page === totalPages
                   ? "pointer-events-none opacity-40"
-                  : "hover:bg-slate-100"
+                  : "hover:bg-[rgb(var(--admin-hover))]"
               }`}
             >
               <ChevronRight className="h-4 w-4" />

@@ -1,4 +1,7 @@
-const DELIVERY_SERVICE_ID = "delivery_service";
+import {
+  isCarrierShippingMethod,
+  isPickupShippingMethod,
+} from "./shipping-method";
 
 type AddressRow = Record<string, string | null | undefined>;
 
@@ -17,10 +20,6 @@ function parseAddress(deliveryAddress: unknown): AddressRow {
   return {};
 }
 
-function isCarrierShipping(shippingMethodId: string | null | undefined): boolean {
-  return shippingMethodId === DELIVERY_SERVICE_ID || shippingMethodId === "shipment";
-}
-
 /**
  * Build the customer address shown on the invoice based on how the order is
  * fulfilled:
@@ -34,11 +33,11 @@ export function buildCustomerAddress(
 ): string {
   const addr = parseAddress(deliveryAddress);
 
-  if (shippingMethodId === "pickup" || !shippingMethodId) {
-    return shippingMethodId === "pickup" ? "Lấy tại cửa hàng" : "";
+  if (isPickupShippingMethod(shippingMethodId) || !shippingMethodId) {
+    return isPickupShippingMethod(shippingMethodId) ? "Lấy tại cửa hàng" : "";
   }
 
-  const parts = isCarrierShipping(shippingMethodId)
+  const parts = isCarrierShippingMethod(shippingMethodId)
     ? [
         addr.apartment,
         addr.street_address,

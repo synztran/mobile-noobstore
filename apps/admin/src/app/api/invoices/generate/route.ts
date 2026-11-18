@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildCustomerAddress } from "@/lib/order-address";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { generateAndStoreInvoice } from "@/lib/invoice";
+import {
+  buildInvoiceInput,
+  fetchInvoiceItems,
+  generateAndStoreInvoice,
+  type InvoiceItem,
+  type InvoiceOrderRow,
+} from "@/lib/invoice";
 import { IOrderDetailUser } from "@/components/orders/OrderDetailModal";
 
 export const dynamic = "force-dynamic";
@@ -35,76 +40,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Fetch order items with kit components
-    const { data: items, error: itemsError } = await supabase
-      .from("order_items")
-      .select(
-        "product_name, quantity, unit_price, order_item_components(component_group, variant_name)"
-      )
-      .eq("order_id", orderId);
-
-    if (itemsError) {
-      return NextResponse.json(
-        { error: "Failed to fetch items" },
-        { status: 500 }
-      );
+    // order_items + order_services, then gift lines from the request body on top
+    const invoiceItems: InvoiceItem[] = await fetchInvoiceItems(orderId);
+    if (Array.isArray(gifts)) {
+      invoiceItems.push(...(gifts.flat() as InvoiceItem[]));
     }
-
-    // Fetch order services if any
-    const { data: services } = await supabase
-      .from("order_services")
-      .select("service_name, price")
-      .eq("order_id", orderId);
-
-    // Build invoice items
-    const invoiceItems = (items ?? []).map((item) => ({
-      name: item.product_name,
-      quantity: item.quantity,
-      unit_cost: Number(item.unit_price),
-      components: (item.order_item_components ?? []).map(
-        (c: { component_group: string; variant_name: string }) => ({
-          component_group: c.component_group,
-          variant_name: c.variant_name,
-        })
-      ),
-    }));
-
-    // Add services as items
-    if (services?.length) {
-      services.forEach((s) => {
-        invoiceItems.push({
-          name: `Dịch vụ: ${s.service_name}`,
-          quantity: 1,
-          unit_cost: Number(s.price),
-          components: [],
-        });
-      });
-    }
-
-    // Combine with gift items
-    const allItems = [
-      ...invoiceItems,
-      ...(Array.isArray(gifts) ? gifts.flat() : []),
-    ];
-
-    // Parse delivery address
-    const customerAddress = buildCustomerAddress(
-      order.delivery_address,
-      order.shipping_method_id
-    );
 
     // Get customer name
     const customerName = `${customer?.first_name} ${customer.last_name}`;
 
-    const invoiceUrl = await generateAndStoreInvoice(orderId, {
-      orderNumber: order.order_number,
-      customerName,
-      customerAddress,
-      items: allItems,
-      shippingFee: Number(order.shipping_fee),
-      discount: Number(order.voucher_discount_amount || 0),
-      total: Number(order.total_price),
-    });
+    // Settled orders zero the header "Cần thanh toán"; the "Còn lại (COD)" row
+    // keeps the original COD amount via codAmount.
+    const settled = order.status === "delivered";
+
+    const invoiceUrl = await generateAndStoreInvoice(
+      orderId,
+      buildInvoiceInput(order as InvoiceOrderRow, {
+        customerName,
+        items: invoiceItems,
+        settled,
+      }),
+      settled ? { force: true } : undefined
+    );
 
     if (!invoiceUrl) {
       return NextResponse.json(

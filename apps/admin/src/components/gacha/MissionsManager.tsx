@@ -221,7 +221,7 @@ export function MissionsManager({ eventId }: Props) {
             <button
               type="button"
               onClick={resetForm}
-              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 "
             >
               <X className="text-muted h-4 w-4" />
             </button>
@@ -362,7 +362,7 @@ export function MissionsManager({ eventId }: Props) {
           )}
           {(form.mission_type === "first_login" ||
             form.mission_type === "login_count") && (
-            <p className="text-muted rounded-lg bg-slate-50 px-3 py-2 text-xs dark:bg-slate-800/50">
+            <p className="text-muted rounded-lg bg-slate-50 px-3 py-2 text-xs ">
               No requirement config needed — this mission completes
               automatically on the customer&apos;s first login.
             </p>
@@ -380,7 +380,7 @@ export function MissionsManager({ eventId }: Props) {
             <button
               type="button"
               onClick={resetForm}
-              className="text-body rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+              className="text-body rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium transition-colors hover:bg-slate-200  "
             >
               Cancel
             </button>
@@ -398,11 +398,11 @@ export function MissionsManager({ eventId }: Props) {
       {/* Missions table */}
       {loading ? (
         <div className="card-bg card-shadow animate-pulse rounded-lg p-6">
-          <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="h-4 w-48 rounded bg-slate-200 " />
         </div>
       ) : missions.length === 0 ? (
         <div className="card-bg card-shadow rounded-lg p-8 text-center">
-          <ListChecks className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
+          <ListChecks className="mx-auto mb-2 h-10 w-10 text-slate-300 " />
           <p className="text-muted text-sm">No missions configured</p>
         </div>
       ) : (
@@ -443,7 +443,7 @@ export function MissionsManager({ eventId }: Props) {
                       {mission.name}
                     </td>
                     <td className="text-body px-6 py-4 text-sm">
-                      <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                      <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700  ">
                         {mission.mission_type}
                       </span>
                     </td>
@@ -457,8 +457,8 @@ export function MissionsManager({ eventId }: Props) {
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                           mission.show_trigger
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                            : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                            ? "bg-green-100 text-green-700  "
+                            : "bg-slate-100 text-slate-500  "
                         }`}
                       >
                         {mission.show_trigger ? "Visible" : "Hidden"}
@@ -468,8 +468,8 @@ export function MissionsManager({ eventId }: Props) {
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                           mission.is_active
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                            : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                            ? "bg-blue-100 text-blue-700  "
+                            : "bg-slate-100 text-slate-500  "
                         }`}
                       >
                         {mission.is_active ? "Active" : "Inactive"}
@@ -479,7 +479,7 @@ export function MissionsManager({ eventId }: Props) {
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => toggleProgress(mission.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-50 text-purple-600 transition-colors hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-50 text-purple-600 transition-colors hover:bg-purple-100   "
                           title="View progress"
                         >
                           {expandedMission === mission.id ? (
@@ -509,7 +509,7 @@ export function MissionsManager({ eventId }: Props) {
                     <tr key={`${mission.id}-progress`}>
                       <td
                         colSpan={7}
-                        className="bg-slate-50 px-6 py-4 dark:bg-slate-800/50"
+                        className="bg-slate-50 px-6 py-4 "
                       >
                         <MissionProgressPanel
                           eventId={eventId}
@@ -548,8 +548,8 @@ function MissionProgressPanel({
   if (loading) {
     return (
       <div className="animate-pulse space-y-2">
-        <div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700" />
-        <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
+        <div className="h-4 w-32 rounded bg-slate-200 " />
+        <div className="h-4 w-48 rounded bg-slate-200 " />
       </div>
     );
   }
@@ -614,11 +614,11 @@ function MissionProgressPanel({
                 </td>
                 <td className="px-4 py-2 text-center">
                   {p.completed_at ? (
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700  ">
                       Completed
                     </span>
                   ) : (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700  ">
                       In Progress
                     </span>
                   )}

@@ -65,24 +65,30 @@ export default function LoginForm() {
 	}
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-			<div className="w-full max-w-md">
-				<div className="bg-white rounded-lg shadow-xl p-8">
-					<h1 className="text-3xl font-bold text-center mb-8 text-slate-900">
-						NoobStore Admin
-					</h1>
+		<div className="flex min-h-screen items-center justify-center bg-[rgb(var(--admin-bg))] px-4">
+			<div className="w-full max-w-sm">
+				<div className="card-panel p-7">
+					<div className="mb-7 flex flex-col items-center">
+						<span className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-lg font-bold text-white">
+							N
+						</span>
+						<h1 className="text-lg font-semibold tracking-tight text-heading">
+							NoobStore Admin
+						</h1>
+						<p className="mt-1 text-[13px] text-muted">
+							Sign in to continue
+						</p>
+					</div>
 
 					<form onSubmit={handleSubmit} className="space-y-4">
 						<div>
-							<label className="label">
-								<span className="label-text font-medium">
-									Email
-								</span>
+							<label className="mb-1.5 block text-[13px] font-medium text-body">
+								Email
 							</label>
 							<input
 								type="email"
 								placeholder="admin@example.com"
-								className="input-base w-full rounded-lg px-3 py-2 text-sm"
+								className="input-minimal w-full"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								required
@@ -91,15 +97,13 @@ export default function LoginForm() {
 						</div>
 
 						<div>
-							<label className="label">
-								<span className="label-text font-medium">
-									Password
-								</span>
+							<label className="mb-1.5 block text-[13px] font-medium text-body">
+								Password
 							</label>
 							<input
 								type="password"
 								placeholder="••••••••"
-								className="input-base w-full rounded-lg px-3 py-2 text-sm"
+								className="input-minimal w-full"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
 								required
@@ -108,19 +112,8 @@ export default function LoginForm() {
 						</div>
 
 						{error && (
-							<div className="alert alert-error">
-								<svg
-									className="stroke-current shrink-0 h-6 w-6"
-									fill="none"
-									viewBox="0 0 24 24">
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth="2"
-										d="M10 14l-2-2m0 0l-2-2m2 2l2-2m-2 2l-2 2m2 2l2 2m0 0l2 2m-2-2l2 2"
-									/>
-								</svg>
-								<span>{error}</span>
+							<div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] text-red-700">
+								{error}
 							</div>
 						)}
 

@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 				component_product_id,
 				products!product_components_component_product_id_fkey(
 					id, name,
-					product_variants(id, variant_name)
+					product_variants(id, variant_name, price_adjustment)
 				)
 			)`
     )
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
     .from("component_variant_rules")
     .select(
       `id, kit_product_id, condition_variant_id, target_component_product_id,
-			component_variant_rule_allowed(variant_id)`
+			component_variant_rule_allowed(variant_id, price_override)`
     )
     .eq("condition_variant_id", variantId);
 
@@ -105,6 +105,17 @@ export async function GET(req: NextRequest) {
     target_component_product_id: r.target_component_product_id,
     allowed_variant_ids: (r.component_variant_rule_allowed ?? []).map(
       (a: { variant_id: string }) => a.variant_id
+    ),
+    // NULL means "inherit this variant's own price_adjustment"; 0 means free.
+    price_overrides: Object.fromEntries(
+      (r.component_variant_rule_allowed ?? []).map(
+        (a: { variant_id: string; price_override: number | string | null }) => [
+          a.variant_id,
+          a.price_override === null || a.price_override === undefined
+            ? null
+            : Number(a.price_override),
+        ]
+      )
     ),
   }));
 

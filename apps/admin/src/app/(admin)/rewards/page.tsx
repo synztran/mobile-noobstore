@@ -31,7 +31,7 @@ export default async function RewardsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+        <h1 className="text-3xl font-bold text-slate-900 ">
           Phần thưởng
         </h1>
         <CreateRewardModal />
@@ -43,47 +43,47 @@ export default async function RewardsPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg bg-white shadow dark:bg-slate-800">
+      <div className="overflow-hidden rounded-lg bg-white shadow ">
         <table className="w-full">
-          <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900">
+          <thead className="border-b border-slate-200 bg-slate-50  ">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 ">
                 Tên
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 ">
                 Loại
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 ">
                 Chi phí điểm
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 ">
                 Kho
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 ">
                 Đã đổi
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 ">
                 Trạng thái
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 ">
                 Ngày tạo
               </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900 ">
                 Thao tác
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+          <tbody className="divide-y divide-slate-200 ">
             {rewards && rewards.length > 0 ? (
               rewards.map((reward: any) => (
                 <tr
                   key={reward.id}
-                  className="hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                  className="hover:bg-slate-50 "
                 >
-                  <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <td className="px-6 py-4 text-sm font-semibold text-slate-900 ">
                     {reward.name}
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                  <td className="px-6 py-4 text-sm text-slate-600 ">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${
                         reward.reward_type === "voucher"
@@ -96,13 +96,13 @@ export default async function RewardsPage() {
                       {getTypeLabel(reward.reward_type)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm font-mono font-semibold text-slate-900 dark:text-slate-100">
-                    {formatPoints(reward.points_cost)}
+                  <td className="px-6 py-4 text-sm font-mono font-semibold text-slate-900 ">
+                    {formatPoints(reward.points_cost)} <span className="font-sans text-xs text-slate-500">{reward.points_currency === "daily_checkin" ? "Chuyên cần" : "NSP"}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                  <td className="px-6 py-4 text-sm text-slate-600 ">
                     {reward.stock != null ? reward.stock : "∞"}
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                  <td className="px-6 py-4 text-sm text-slate-600 ">
                     {reward.claimed_count}
                   </td>
                   <td className="px-6 py-4 text-sm">
@@ -116,7 +116,7 @@ export default async function RewardsPage() {
                       {reward.is_active ? "Hoạt động" : "Tắt"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                  <td className="px-6 py-4 text-sm text-slate-500 ">
                     {new Date(reward.created_at).toLocaleDateString("vi-VN")}
                   </td>
                   <td className="px-6 py-4 text-sm">

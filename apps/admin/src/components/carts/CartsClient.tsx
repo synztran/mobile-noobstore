@@ -68,12 +68,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  guest: "bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300",
+  guest: "bg-slate-100 text-slate-700  ",
   active:
-    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    "bg-green-100 text-green-800  ",
   abandoned:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-  converted: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    "bg-yellow-100 text-yellow-800  ",
+  converted: "bg-blue-100 text-blue-800  ",
 };
 
 const FILTER_TABS = [
@@ -508,7 +508,6 @@ export default function CartsClient({
 }
 
 function CartDetail({ cart }: { cart: Cart }) {
-  console.log(cart);
   const user = cart.users;
   const fullName =
     `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim() || "—";
@@ -520,7 +519,7 @@ function CartDetail({ cart }: { cart: Cart }) {
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
             STATUS_COLORS[cart.cartStatus] ??
-            "bg-slate-100 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300"
+            "bg-slate-100 text-slate-700  "
           }`}
         >
           <ShoppingBag className="h-3 w-3" />

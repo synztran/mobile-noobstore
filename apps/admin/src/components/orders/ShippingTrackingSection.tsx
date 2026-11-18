@@ -3,6 +3,8 @@
 import { ExternalLink, Link2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { OrderDetail } from "./OrderDetailModal";
+import { isCarrierShippingMethod } from "@/lib/shipping-method";
+import { buildTrackingUrl } from "@web-tracking";
 
 interface Carrier {
   id: string;
@@ -18,12 +20,13 @@ interface Props {
   onUpdated: () => void;
 }
 
-function buildTrackingUrl(
-  template: string | null | undefined,
-  trackingNumber: string | null | undefined
-): string | null {
-  if (!template || !trackingNumber) return null;
-  return template.replace("{tracking_number}", trackingNumber);
+function parseFeeInput(raw: string): number | null | undefined {
+  const trimmed = raw.trim();
+  if (trimmed === "") return null;
+  const n = Number(trimmed);
+  // undefined = invalid input; the save button stays disabled in that case.
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return Math.round(n);
 }
 
 export default function ShippingTrackingSection({
@@ -37,6 +40,11 @@ export default function ShippingTrackingSection({
   const [trackingNumber, setTrackingNumber] = useState<string>(
     order.tracking_number ?? ""
   );
+  // Courier tiers are ordered unquoted (shipping_fee 0), so this is where the
+  // real BE / Grab / Green SM amount gets entered once the parcel is booked.
+  const [feeInput, setFeeInput] = useState<string>(
+    order.shipping_fee === null ? "" : String(order.shipping_fee)
+  );
   const [saving, setSaving] = useState(false);
   const [loadingCarriers, setLoadingCarriers] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -48,7 +56,12 @@ export default function ShippingTrackingSection({
         const res = await fetch("/api/carriers");
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "Failed to load carriers");
-        if (!cancelled) setCarriers(json.carriers ?? []);
+        // The endpoint returns every carrier (the /fees editor needs inactive
+        // ones too) — only active carriers belong in this dropdown.
+        if (!cancelled)
+          setCarriers(
+            (json.carriers ?? []).filter((c: Carrier) => c.is_active !== false)
+          );
       } catch (e) {
         if (!cancelled)
           setLoadError(
@@ -66,24 +79,39 @@ export default function ShippingTrackingSection({
   useEffect(() => {
     setCarrierId(order.tracking_carrier_id ?? "");
     setTrackingNumber(order.tracking_number ?? "");
-  }, [order.tracking_carrier_id, order.tracking_number]);
+    setFeeInput(order.shipping_fee === null ? "" : String(order.shipping_fee));
+  }, [order.tracking_carrier_id, order.tracking_number, order.shipping_fee]);
 
   const selectedCarrier = useMemo(
     () => carriers.find((c) => c.id === carrierId) ?? null,
     [carriers, carrierId]
   );
 
-  const isDeliveryService =
-    order.shipping_method_id === "delivery_service" ||
-    order.shipping_method_id === "shipment";
+  // All courier tiers (in-city and inter-city) are handed off to a carrier, so
+  // the tracking editor applies to every one of them.
+  const isCarrierMethod =
+    isCarrierShippingMethod(order.shipping_method_id);
 
-  if (!isDeliveryService) return null;
+  if (!isCarrierMethod) return null;
+
+  // A settled order keeps the total it was paid against — the server rejects
+  // the write, so surface it here instead of letting the operator hit an error.
+  const isSettled =
+    order.status === "cancelled" || order.status === "refunded";
+
+  const parsedFee = parseFeeInput(feeInput);
+  const feeInvalid = parsedFee === undefined;
+  const feeChanged =
+    parsedFee !== undefined &&
+    parsedFee !== (order.shipping_fee ?? 0);
 
   const dirty =
     carrierId !== (order.tracking_carrier_id ?? "") ||
-    trackingNumber !== (order.tracking_number ?? "");
+    trackingNumber !== (order.tracking_number ?? "") ||
+    feeChanged;
 
   const handleSave = async () => {
+    if (parsedFee === undefined) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/orders/${order.id}`, {
@@ -92,6 +120,7 @@ export default function ShippingTrackingSection({
         body: JSON.stringify({
           tracking_carrier_id: carrierId || null,
           tracking_number: trackingNumber.trim() || null,
+          shipping_fee: parsedFee,
         }),
       });
       const json = await res.json();
@@ -128,7 +157,7 @@ export default function ShippingTrackingSection({
           <select
             value={carrierId}
             onChange={(e) => setCarrierId(e.target.value)}
-            disabled={loadingCarriers}
+            disabled={loadingCarriers || isSettled}
             className="input-base w-full rounded-lg px-3 py-2 text-sm disabled:opacity-50"
           >
             <option value="">— Select carrier —</option>
@@ -147,10 +176,42 @@ export default function ShippingTrackingSection({
             type="text"
             value={trackingNumber}
             onChange={(e) => setTrackingNumber(e.target.value)}
+            disabled={isSettled}
             placeholder="e.g. GVJH123456789"
-            className="input-base w-full rounded-lg px-3 py-2 font-mono text-sm placeholder:text-slate-400"
+            className="input-base w-full rounded-lg px-3 py-2 font-mono text-sm placeholder:text-slate-400 disabled:opacity-50"
           />
         </div>
+      </div>
+
+      {/* Courier rate is not knowable at checkout, so it is entered here. */}
+      <div className="mt-2">
+        <label className="mb-1 block text-[11px] font-medium text-slate-500">
+          Delivery fee
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={feeInput}
+            onChange={(e) => setFeeInput(e.target.value)}
+            disabled={isSettled}
+            placeholder="Cập nhật sau"
+            className="input-base w-full rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 disabled:opacity-50"
+          />
+          <span className="shrink-0 text-xs text-slate-500">₫</span>
+        </div>
+        <p className="mt-1 text-[11px] text-slate-500">
+          {isSettled
+            ? `Locked — the order is ${order.status}.`
+            : "Quoted by the courier. Saving adds this to the order total and emails the customer."}
+        </p>
+        {feeInvalid && (
+          <p className="mt-1 text-[11px] text-rose-600">
+            Enter a non-negative number, or leave blank to keep the fee
+            unquoted.
+          </p>
+        )}
       </div>
 
       {selectedCarrier && trackingNumber && (
@@ -172,14 +233,14 @@ export default function ShippingTrackingSection({
         </p>
       )}
 
-      {dirty && (
+      {dirty && !isSettled && (
         <div className="mt-2 flex justify-end">
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || feeInvalid}
             className="btn btn-sm btn-primary disabled:opacity-50"
           >
-            {saving ? "Saving…" : "Save tracking"}
+            {saving ? "Saving…" : "Save shipping"}
           </button>
         </div>
       )}

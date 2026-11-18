@@ -11,6 +11,7 @@ interface UserRow {
   phone_number: string | null;
   role: string | null;
   created_at: string | null;
+  registration_source?: string | null;
 }
 
 export default function UsersExportWrapper({ users }: { users: UserRow[] }) {
@@ -21,6 +22,7 @@ export default function UsersExportWrapper({ users }: { users: UserRow[] }) {
     { label: "Email", accessor: (u) => u.email },
     { label: "Phone", accessor: (u) => u.phone_number ?? "" },
     { label: "Role", accessor: (u) => u.role },
+    { label: "Source", accessor: (u) => u.registration_source ?? "" },
     { label: "Joined", accessor: (u) => u.created_at },
   ];
 

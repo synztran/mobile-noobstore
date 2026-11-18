@@ -20,6 +20,7 @@ type RewardRow = {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  points_currency?: "nsp" | "daily_checkin";
 };
 
 type Props = {
@@ -46,6 +47,7 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
   const [description, setDescription] = useState("");
   const [rewardType, setRewardType] = useState("voucher");
   const [pointsCost, setPointsCost] = useState(0);
+  const [pointsCurrency, setPointsCurrency] = useState<"nsp" | "daily_checkin">("nsp");
   const [stock, setStock] = useState<number | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [imageUrl, setImageUrl] = useState("");
@@ -58,6 +60,7 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
       setDescription(reward.description ?? "");
       setRewardType(reward.reward_type);
       setPointsCost(reward.points_cost);
+      setPointsCurrency((reward as RewardRow & { points_currency?: "nsp" | "daily_checkin" }).points_currency ?? "nsp");
       setStock(reward.stock);
       setIsActive(reward.is_active);
       setImageUrl(reward.image_url ?? "");
@@ -68,6 +71,7 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
     setDescription("");
     setRewardType("voucher");
     setPointsCost(0);
+    setPointsCurrency("nsp");
     setStock(null);
     setIsActive(true);
     setImageUrl("");
@@ -104,6 +108,7 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
           description: description || null,
           reward_type: rewardType,
           points_cost: pointsCost,
+          points_currency: pointsCurrency,
           stock,
           is_active: isActive,
           image_url: imageUrl || null,
@@ -132,10 +137,10 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" />
-      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl dark:bg-slate-800">
+      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-2xl ">
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 ">
+          <h2 className="text-lg font-semibold text-slate-900 ">
             {title}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -155,14 +160,14 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Name */}
               <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="mb-1 block text-sm font-medium text-slate-700 ">
                   Tên phần thưởng *
                 </label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none  "
                   placeholder="VD: Voucher 50k"
                 />
               </div>
@@ -180,7 +185,7 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
 
               {/* Reward Type */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="mb-1 block text-sm font-medium text-slate-700 ">
                   Loại phần thưởng *
                 </label>
                 <InputSelection
@@ -193,6 +198,13 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
 
               {/* Points Cost */}
               <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Loại điểm dùng để đổi *</label>
+                <select value={pointsCurrency} onChange={(e) => setPointsCurrency(e.target.value as "nsp" | "daily_checkin")} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                  <option value="nsp">Điểm NSP</option>
+                  <option value="daily_checkin">Điểm chuyên cần</option>
+                </select>
+              </div>
+              <div>
                 <NumberInput
                   value={pointsCost}
                   onChange={(v) => setPointsCost(v ?? 0)}
@@ -203,7 +215,7 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
 
               {/* Stock */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="mb-1 block text-sm font-medium text-slate-700 ">
                   Số lượng (để trống nếu không giới hạn)
                 </label>
                 <input
@@ -213,20 +225,20 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
                     setStock(e.target.value ? Number(e.target.value) : null)
                   }
                   min={0}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none  "
                   placeholder="Không giới hạn"
                 />
               </div>
 
               {/* Image URL */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                <label className="mb-1 block text-sm font-medium text-slate-700 ">
                   URL hình ảnh
                 </label>
                 <input
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none  "
                   placeholder="https://..."
                 />
               </div>
@@ -234,14 +246,14 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
 
             {/* Metadata JSON */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label className="mb-1 block text-sm font-medium text-slate-700 ">
                 Metadata (JSON)
               </label>
               <textarea
                 value={metadata}
                 onChange={(e) => setMetadata(e.target.value)}
                 rows={6}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs focus:border-blue-500 focus:outline-none  "
                 placeholder='{"amount_off": 50000, ...}'
               />
               <p className="mt-1 text-xs text-slate-500">
@@ -272,7 +284,7 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
               </button>
               <label
                 onClick={() => setIsActive(!isActive)}
-                className="cursor-pointer text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="cursor-pointer text-sm font-medium text-slate-700 "
               >
                 {isActive ? "Đang hoạt động" : "Đã tắt"}
               </label>
@@ -280,11 +292,11 @@ export default function RewardFormModal({ open, onClose, mode, reward }: Props) 
           </div>
 
           {/* Footer */}
-          <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4 dark:border-slate-700">
+          <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4 ">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50  "
             >
               Huỷ
             </button>

@@ -2,24 +2,23 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   Check,
   ChevronRight,
   FileText,
+  KeyRound,
   RotateCcw,
+  ShieldCheck,
   XCircle,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { OrderDetail } from "./OrderDetailModal";
-import { VerifiedPaymentPanel } from "./VerifiedPaymentPanel";
 import { adminQueryKeys } from "@/lib/react-query/root";
+import { mainFlowFor, orderStatusLabel } from "@/lib/order-status";
+import { isPickupShippingMethod } from "@/lib/shipping-method";
+import { VerifiedPaymentPanel } from "./VerifiedPaymentPanel";
 
-const STATUS_FLOW = [
-  "pending",
-  "confirmed",
-  "delivering",
-  "delivered",
-] as const;
-type MainStatus = (typeof STATUS_FLOW)[number];
+const REFUND_DELIVERED_WINDOW_MS = 72 * 60 * 60 * 1000;
 
 const PRE_ORDER_STEPS = [
   { key: "paid", label: "Đã thanh toán" },
@@ -38,13 +37,14 @@ interface Props {
 
 function StepIndicator({
   current,
+  steps,
   direction = "horizontal",
 }: {
   current: string;
+  steps: readonly string[];
   direction?: "horizontal" | "vertical";
 }) {
-  const steps = STATUS_FLOW;
-  const currentIdx = steps.indexOf(current as MainStatus);
+  const currentIdx = steps.indexOf(current);
 
   if (direction === "vertical") {
     return (
@@ -83,7 +83,7 @@ function StepIndicator({
                         : "text-slate-400"
                   }`}
                 >
-                  {step}
+                  {orderStatusLabel(step)}
                 </span>
               </div>
             </div>
@@ -109,7 +109,7 @@ function StepIndicator({
               <span
                 className={`text-xs font-medium capitalize leading-none ${active ? "text-blue-700" : done ? "text-green-600" : "text-slate-400"}`}
               >
-                {step}
+                {orderStatusLabel(step)}
               </span>
             </div>
             {i < steps.length - 1 && (
@@ -145,10 +145,19 @@ function PreOrderProgressSection({
 
   const preOrderItems = useMemo(
     () =>
-      (order.order_items ?? []).filter((item) =>
-        (item?.order_item_components ?? []).some(
-          (c: { is_pre_order?: boolean }) => c.is_pre_order
-        )
+      (order.order_items ?? []).filter(
+        (item) =>
+          // Pre-order is tracked at two levels: order_items.is_pre_order for
+          // plain non-kit products (migration 134) and
+          // order_item_components.is_pre_order for kit assemblies. Both must be
+          // listed, otherwise the progress panel never renders for plain
+          // pre-order items, the Advance button is unreachable,
+          // order_items.pre_order_tracking is never written, and the web
+          // pre-order timeline — which is driven by that column — stays hidden.
+          item.is_pre_order ||
+          (item?.order_item_components ?? []).some(
+            (c: { is_pre_order?: boolean }) => c.is_pre_order
+          )
       ),
     [order.order_items]
   );
@@ -242,6 +251,137 @@ function PreOrderProgressSection({
   );
 }
 
+// ── Pickup verification panel ─────────────────────────────────────────────
+
+interface VerifyPickupError {
+  error?: string;
+  remainingTries?: number;
+  lockSecondsLeft?: number;
+}
+
+function PickupVerificationPanel({
+  order,
+  onUpdated,
+}: {
+  order: OrderDetail;
+  onUpdated: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [code, setCode] = useState("");
+
+  const recipientName =
+    (order.delivery_address?.full_name ??
+      [order.users?.first_name, order.users?.last_name]
+        .filter(Boolean)
+        .join(" ")) ||
+    "—";
+  const recipientPhone =
+    order.delivery_address?.phone_number ?? order.users?.phone_number ?? null;
+  const phoneLast2 = recipientPhone ? recipientPhone.slice(-2) : "—";
+
+  const verifyMutation = useMutation({
+    mutationFn: async (value: string) => {
+      const res = await fetch(`/api/orders/${order.id}/verify-pickup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: value }),
+      });
+      const json: VerifyPickupError = await res.json();
+      if (!res.ok) {
+        const err = new Error(json.error ?? "Verify failed") as Error &
+          VerifyPickupError;
+        err.remainingTries = json.remainingTries;
+        err.lockSecondsLeft = json.lockSecondsLeft;
+        throw err;
+      }
+      return json;
+    },
+    onSuccess: () => {
+      setCode("");
+      queryClient.invalidateQueries({
+        queryKey: adminQueryKeys.orderDetail(order.id),
+      });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      onUpdated();
+    },
+  });
+
+  const verifyError = verifyMutation.error as (Error & VerifyPickupError) | null;
+  const locked = Number(verifyError?.lockSecondsLeft ?? 0) > 0;
+
+  if (order.pickup_verified_at) return null;
+
+  return (
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
+      <div className="mb-2 flex items-center gap-1.5">
+        <ShieldCheck className="h-4 w-4 text-emerald-700" />
+        <p className="text-xs font-semibold text-emerald-900">
+          Xác minh mã nhận hàng (pickup)
+        </p>
+        {order.pickup_code_expires_at && (
+          <span className="ml-auto text-[11px] text-emerald-700">
+            hết hạn {new Date(order.pickup_code_expires_at).toLocaleTimeString("vi-VN")}
+          </span>
+        )}
+      </div>
+
+      {recipientName !== "—" || phoneLast2 !== "—" ? (
+        <p className="mb-2 text-[11px] text-slate-600">
+          Khách: <strong>{recipientName}</strong> · SĐT cuối:{" "}
+          <strong>…{phoneLast2}</strong>
+        </p>
+      ) : null}
+
+      <div className="flex items-center gap-1.5">
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && code.length === 6) {
+              verifyMutation.mutate(code);
+            }
+          }}
+          placeholder="6 chữ số"
+          inputMode="numeric"
+          disabled={verifyMutation.isPending || locked}
+          className="w-28 rounded-lg border border-emerald-300 bg-white px-2 py-1.5 text-center text-sm font-bold tracking-[0.25em] focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 disabled:opacity-50"
+        />
+        <button
+          onClick={() => code.length === 6 && verifyMutation.mutate(code)}
+          disabled={code.length !== 6 || verifyMutation.isPending || locked}
+          className="flex items-center gap-1 whitespace-nowrap rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {verifyMutation.isPending ? "Đang xác minh…" : "Xác minh & giao hàng"}
+        </button>
+      </div>
+
+      {verifyError && !locked && (
+        <p className="mt-2 text-[11px] text-red-600">
+          {verifyError.error}
+          {typeof verifyError.remainingTries === "number" && (
+            <span className="ml-1 font-medium">
+              Còn {verifyError.remainingTries} lần thử.
+            </span>
+          )}
+        </p>
+      )}
+
+      {locked && (
+        <p className="mt-2 flex items-center gap-1 text-[11px] font-medium text-red-600">
+          <KeyRound className="h-3.5 w-3.5" />
+          Mã bị khóa. Chờ {verifyError?.lockSecondsLeft}s hoặc làm mới trang.
+        </p>
+      )}
+
+      <p className="mt-2 flex items-start gap-1 text-[11px] text-amber-700">
+        <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+        Không có mã? Bỏ qua và dùng “Mark as delivered” bên dưới để giao hàng
+        thủ công (sẽ ghi là không xác minh).
+      </p>
+    </div>
+  );
+}
+
 export default function OrderActionBar({
   order,
   currentStatus,
@@ -252,27 +392,55 @@ export default function OrderActionBar({
   const [cancelNote, setCancelNote] = useState("");
   const [showRefund, setShowRefund] = useState(false);
 
-  const flowIdx = STATUS_FLOW.indexOf(currentStatus as MainStatus);
+  // Deposit orders advance through a 5-step flow (pending → first_paid →
+  // second_paid → delivering → delivered); full-payment orders keep the
+  // original 4-step flow. A deposit order may still sit in the legacy
+  // "confirmed" status (set before the two-installment flow existed) — treat
+  // it as "first_paid" for flow purposes so it can keep advancing. Pickup
+  // orders skip "delivering" entirely (goods are handed over at the store).
+  const isPickup = isPickupShippingMethod(order.shipping_method_id);
+  const steps = mainFlowFor(order.payment_type, isPickup);
+  const flowStatus =
+    order.payment_type === "deposit_cod" && currentStatus === "confirmed"
+      ? "first_paid"
+      : isPickup && currentStatus === "delivering"
+        ? "delivered"
+        : currentStatus;
+  const flowIdx = steps.indexOf(flowStatus);
   const nextStatus =
-    flowIdx >= 0 && flowIdx < STATUS_FLOW.length - 1
-      ? STATUS_FLOW[flowIdx + 1]
-      : null;
+    flowIdx >= 0 && flowIdx < steps.length - 1 ? steps[flowIdx + 1] : null;
 
+  const refundableFromReturn = currentStatus === "returning";
   const isTerminal =
     currentStatus === "delivered" ||
     currentStatus === "cancelled" ||
     currentStatus === "refunded";
+  const isDelivered = currentStatus === "delivered";
+
+  const deliveredAtMs = order.delivered_at
+    ? new Date(order.delivered_at).getTime()
+    : NaN;
+  // "pending" is included so the pre-order progress panel is reachable from the
+  // moment the order is placed — otherwise a brand-new pre-order order shows no
+  // panel at all, the Advance button is unreachable, pre_order_tracking is never
+  // written, and the customer never sees the web pre-order timeline.
   const isDisplayPreOrderProcess = [
+    "pending",
     "confirmed",
+    "first_paid",
+    "second_paid",
     "delivering",
     "delivered",
   ].includes(currentStatus);
 
-  const refundStatuses = ["confirmed", "delivering", "cancelled"];
+  const refundStatuses = ["confirmed", "first_paid", "second_paid", "delivering"];
   const hasPayment =
     order?.paid_at !== null ||
     (order?.payment_type === "deposit_cod" && order?.deposit_paid_at !== null);
-  const canRefund = hasPayment && refundStatuses.includes(currentStatus);
+  const canRefund =
+    refundableFromReturn ||
+    isDelivered ||
+    (hasPayment && refundStatuses.includes(currentStatus));
   const canAdvance = nextStatus !== null && !["confirmed", "first_paid", "second_paid"].includes(nextStatus);
   const canCancel = !isTerminal;
 
@@ -322,17 +490,18 @@ export default function OrderActionBar({
     },
   });
 
-  if (isTerminal && !canRefund) return <VerifiedPaymentPanel key={order.id} orderId={order.id} total={Number(order.total_price)} onUpdated={onUpdated} />;
+  if (isTerminal && !canRefund) return <VerifiedPaymentPanel key={order.id} orderId={order.id} total={Number(order.total_price)} status={order.status} paymentType={order.payment_type} paidAt={order.paid_at} onUpdated={onUpdated} />;
 
   return (
     <div className="shrink-0 space-y-4 pt-4">
-      <VerifiedPaymentPanel key={order.id} orderId={order.id} total={Number(order.total_price)} onUpdated={onUpdated} />
+      <VerifiedPaymentPanel key={order.id} orderId={order.id} total={Number(order.total_price)} status={order.status} paymentType={order.payment_type} paidAt={order.paid_at} onUpdated={onUpdated} />
       <div className="flex gap-4">
         {/* Step flow indicator — vertical */}
         {flowIdx >= 0 && (
           <div className="w-fit flex-1 shrink-0 pb-1">
             <StepIndicator
-              current={currentStatus}
+              current={flowStatus}
+              steps={steps}
               direction={isDisplayPreOrderProcess ? "vertical" : "horizontal"}
             />
           </div>
@@ -348,6 +517,15 @@ export default function OrderActionBar({
 
       {/* <div className="h-px w-full bg-slate-300" /> */}
       <div className="border-t border-slate-400 pt-4">
+        {isPickup &&
+          !order.pickup_verified_at &&
+          (order.payment_type === "deposit_cod"
+            ? currentStatus === "second_paid"
+            : currentStatus === "confirmed") && (
+            <div className="mb-4">
+              <PickupVerificationPanel order={order} onUpdated={onUpdated} />
+            </div>
+          )}
         {patchMutation.isError && (
           <p className="rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-600">
             {patchMutation.error.message}
@@ -396,7 +574,11 @@ export default function OrderActionBar({
         {showRefund && (
           <div className="flex items-center gap-2">
             <p className="flex-1 text-xs text-slate-500">
-              Mark this order as refunded?
+              {refundableFromReturn
+                ? "Package verified? Confirm refund — stock and points will be reversed."
+                : isDelivered
+                  ? "Refund this delivered order? Stock and points earned on delivery will be reversed."
+                  : "Mark this order as refunded?"}
             </p>
             <button
               onClick={() => patchMutation.mutate({ status: "refunded" })}
@@ -417,6 +599,15 @@ export default function OrderActionBar({
         {/* Action buttons */}
         {!showCancel && !showRefund && (
           <div className="flex flex-wrap items-center gap-2">
+            {isDelivered && order.delivered_at && (
+              <p className="w-full text-[11px] text-orange-600">
+                Refund window open — available until{" "}
+                {new Date(
+                  deliveredAtMs + REFUND_DELIVERED_WINDOW_MS
+                ).toLocaleString("vi-VN")}
+                (72h after delivery).
+              </p>
+            )}
             {canAdvance && (
               <button
                 onClick={() => patchMutation.mutate({ status: nextStatus! })}
@@ -424,7 +615,7 @@ export default function OrderActionBar({
                 className="flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium capitalize text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
                 <ChevronRight className="h-4 w-4" />
-                Mark as {nextStatus}
+                Mark as {orderStatusLabel(nextStatus!)}
               </button>
             )}
             {canRefund && (
@@ -434,7 +625,7 @@ export default function OrderActionBar({
                 className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-orange-300 px-3 py-2 text-sm font-medium text-orange-600 transition-colors hover:bg-orange-50 disabled:opacity-50"
               >
                 <RotateCcw className="h-4 w-4" />
-                Refund
+                {refundableFromReturn ? "Refund (approve return)" : "Refund"}
               </button>
             )}
             {canCancel && (
@@ -447,7 +638,13 @@ export default function OrderActionBar({
                 Cancel Order
               </button>
             )}
-            {["confirmed", "delivered", "delivering"].includes(order.status) &&
+            {[
+                "confirmed",
+                "first_paid",
+                "second_paid",
+                "delivered",
+                "delivering",
+              ].includes(order.status) &&
               !order.invoice_url && (
                 <button
                   onClick={() => invoiceMutation.mutate()}

@@ -18,8 +18,14 @@ export interface GachaEvent {
   is_active: boolean;
   free_tokens_per_grant: number;
   free_token_interval_days: number;
+  theme: string | null;
   created_at: string;
 }
+
+export const THEMES = [
+  { value: "classic", label: "Classic (màu trắng)" },
+  { value: "ga2", label: "Mega Arcade (đèn neon + hốc kính hồng)" },
+] as const;
 
 export default function GachaPage() {
   const queryClient = useQueryClient();
@@ -67,8 +73,8 @@ export default function GachaPage() {
 
       {/* Active event highlight */}
       {!loading && events.filter((e) => e.is_active).length > 0 && (
-        <div className="rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-4 dark:border-purple-700 dark:from-purple-900/20 dark:to-pink-900/20">
-          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+        <div className="rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-4   ">
+          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-purple-600 ">
             Currently Running
           </p>
           <p className="text-heading text-lg font-bold">
@@ -85,14 +91,14 @@ export default function GachaPage() {
               key={i}
               className="card-bg card-shadow animate-pulse rounded-lg p-6"
             >
-              <div className="mb-3 h-5 w-48 rounded bg-slate-200 dark:bg-slate-700" />
-              <div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700" />
+              <div className="mb-3 h-5 w-48 rounded bg-slate-200 " />
+              <div className="h-4 w-32 rounded bg-slate-200 " />
             </div>
           ))}
         </div>
       ) : events.length === 0 ? (
         <div className="card-bg card-shadow rounded-lg p-12 text-center">
-          <FerrisWheel className="mx-auto mb-3 h-12 w-12 text-slate-300 dark:text-slate-600" />
+          <FerrisWheel className="mx-auto mb-3 h-12 w-12 text-slate-300 " />
           <p className="text-muted">No gacha events yet</p>
         </div>
       ) : (

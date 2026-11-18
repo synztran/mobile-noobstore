@@ -134,8 +134,8 @@ export default function AbandonedCartClient({
         <div
           className={`rounded-lg px-4 py-3 text-sm font-semibold ${
             result.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-              : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+              ? "bg-green-50 text-green-700  "
+              : "bg-red-50 text-red-700  "
           }`}
         >
           {result.message}
@@ -205,7 +205,7 @@ export default function AbandonedCartClient({
                 <td colSpan={6} className="px-4 py-8 text-center text-body">
                   <ShoppingBag
                     size={24}
-                    className="mx-auto mb-2 text-slate-300 dark:text-slate-600"
+                    className="mx-auto mb-2 text-slate-300 "
                   />
                   Không có giỏ hàng nào bị bỏ quên
                 </td>
@@ -263,7 +263,7 @@ export default function AbandonedCartClient({
                       disabled={
                         sending[cart.id] || !cart.user_id
                       }
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-40 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 transition-colors hover:bg-amber-100 disabled:opacity-40   "
                     >
                       {sending[cart.id] ? (
                         <span className="loading loading-spinner loading-xs" />
@@ -286,7 +286,7 @@ export default function AbandonedCartClient({
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="rounded-lg bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+            className="rounded-lg bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30   "
           >
             <ChevronLeft size={16} />
           </button>
@@ -300,7 +300,7 @@ export default function AbandonedCartClient({
             .map((p, idx, arr) => (
               <span key={p} className="flex items-center gap-1">
                 {idx > 0 && arr[idx - 1] !== p - 1 && (
-                  <span className="px-1 text-slate-300 dark:text-slate-600">
+                  <span className="px-1 text-slate-300 ">
                     …
                   </span>
                 )}
@@ -309,7 +309,7 @@ export default function AbandonedCartClient({
                   className={`min-w-[32px] rounded-lg px-2 py-1 text-sm font-semibold transition-colors ${
                     p === currentPage
                       ? "bg-primary text-white"
-                      : "text-body hover:bg-slate-100 dark:hover:bg-slate-700"
+                      : "text-body hover:bg-slate-100 "
                   }`}
                 >
                   {p}
@@ -319,7 +319,7 @@ export default function AbandonedCartClient({
           <button
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className="rounded-lg bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+            className="rounded-lg bg-slate-100 p-2 text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30   "
           >
             <ChevronRight size={16} />
           </button>

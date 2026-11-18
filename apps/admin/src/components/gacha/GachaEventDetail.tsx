@@ -29,6 +29,7 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
     is_active: boolean;
     free_tokens_per_grant: number | null;
     free_token_interval_days: number | null;
+    theme: string;
   }>({
     name: event.name,
     description: event.description ?? "",
@@ -37,7 +38,13 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
     is_active: event.is_active,
     free_tokens_per_grant: event.free_tokens_per_grant,
     free_token_interval_days: event.free_token_interval_days,
+    theme: (event as unknown as Record<string, unknown>).theme as string ?? "classic",
   });
+
+  const THEMES = [
+    { value: "classic", label: "Classic (màu trắng)" },
+    { value: "ga2", label: "Mega Arcade (đèn neon + hốc kính hồng)" },
+  ] as const;
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
@@ -72,7 +79,7 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 transition-colors hover:bg-slate-200  "
         >
           <ArrowLeft className="text-body h-5 w-5" />
         </button>
@@ -88,7 +95,7 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
         {!editing ? (
           <button
             onClick={() => setEditing(true)}
-            className="text-body inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+            className="text-body inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-200  "
           >
             <Pencil className="h-4 w-4" />
             Edit Event
@@ -97,7 +104,7 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
           <div className="flex gap-2">
             <button
               onClick={() => setEditing(false)}
-              className="text-body inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+              className="text-body inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-200  "
             >
               <X className="h-4 w-4" />
               Cancel
@@ -142,6 +149,23 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
               >
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-body mb-1 block text-sm font-medium">
+                Theme
+              </label>
+              <select
+                value={form.theme}
+                onChange={(e) => setForm({ ...form, theme: e.target.value })}
+                className="input-base w-full rounded-lg border px-3 py-2 text-sm"
+              >
+                {THEMES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
@@ -222,6 +246,14 @@ export function GachaEventDetail({ event, onBack, onUpdate }: Props) {
               <p className="text-heading font-semibold">
                 {event.free_tokens_per_grant} / {event.free_token_interval_days}{" "}
                 days
+              </p>
+            </div>
+
+            <div>
+              <p className="text-muted">Theme</p>
+              <p className="text-heading font-semibold">
+                {THEMES.find((t) => t.value === (event as unknown as Record<string, unknown>).theme)?.label ??
+                  "Classic"}
               </p>
             </div>
           </div>

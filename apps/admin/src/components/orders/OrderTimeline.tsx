@@ -26,10 +26,12 @@ interface Props {
   cancelledAt: string | null;
   cancelledNote: string | null;
   refundedAt: string | null;
+  returningAt?: string | null;
   status: string;
   updatedAt: string | null;
   depositPaidAt?: string | null;
   paymentType?: "full" | "deposit_cod";
+  isPickup?: boolean;
 }
 
 function fmtDate(ts: string) {
@@ -51,10 +53,12 @@ export default function OrderTimeline({
   cancelledAt,
   cancelledNote,
   refundedAt,
+  returningAt,
   status,
   updatedAt,
   depositPaidAt,
   paymentType,
+  isPickup,
 }: Props) {
   const entries: TimelineEntry[] = [
     {
@@ -68,33 +72,48 @@ export default function OrderTimeline({
     ...(paymentType === "deposit_cod"
       ? [
           {
-            key: "deposit_paid" as const,
-            label: "Deposit paid",
+            key: "first_paid" as const,
+            label: "1st payment (deposit)",
             timestamp: depositPaidAt ?? null,
             icon: <Coins className="h-4 w-4" />,
             color: "border-green-200 text-green-600",
             bg: "bg-green-100",
           },
+          {
+            key: "second_paid" as const,
+            label: "2nd payment (balance)",
+            timestamp: paidAt ?? null,
+            icon: <BanknoteIcon className="h-4 w-4" />,
+            color: "border-green-300 text-green-700",
+            bg: "bg-green-50",
+          },
         ]
-      : []),
-    {
-      key: "paid",
-      label: "Payment confirmed",
-      timestamp: paidAt,
-      icon: <BanknoteIcon className="h-4 w-4" />,
-      color: "border-green-300 text-green-700",
-      bg: "bg-green-50",
-    },
-    {
-      key: "delivering",
-      label: "Out for delivery",
-      timestamp:
-        deliveringAt ??
-        (status === "delivering" || status === "delivered" ? updatedAt : null),
-      icon: <Truck className="h-4 w-4" />,
-      color: "border-purple-300 text-purple-700",
-      bg: "bg-purple-50",
-    },
+      : [
+          {
+            key: "paid" as const,
+            label: "Payment confirmed",
+            timestamp: paidAt,
+            icon: <BanknoteIcon className="h-4 w-4" />,
+            color: "border-green-300 text-green-700",
+            bg: "bg-green-50",
+          },
+        ]),
+    ...(isPickup
+      ? []
+      : [
+          {
+            key: "delivering" as const,
+            label: "Out for delivery",
+            timestamp:
+              deliveringAt ??
+              (status === "delivering" || status === "delivered"
+                ? updatedAt
+                : null),
+            icon: <Truck className="h-4 w-4" />,
+            color: "border-purple-300 text-purple-700",
+            bg: "bg-purple-50",
+          },
+        ]),
     {
       key: "delivered",
       label: "Delivered",
@@ -102,6 +121,14 @@ export default function OrderTimeline({
       icon: <PackageCheck className="h-4 w-4" />,
       color: "border-green-400 text-green-800",
       bg: "bg-green-50",
+    },
+    {
+      key: "returning",
+      label: "Returning requested",
+      timestamp: returningAt ?? null,
+      icon: <RotateCcw className="h-4 w-4" />,
+      color: "border-amber-300 text-amber-700",
+      bg: "bg-amber-50",
     },
     {
       key: "cancelled",

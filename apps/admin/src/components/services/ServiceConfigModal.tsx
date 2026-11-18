@@ -88,13 +88,13 @@ export default function ServiceConfigModal({
   return (
     <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" />
-      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-md flex-col rounded-xl bg-white shadow-2xl dark:bg-slate-800">
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
+      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-md flex-col rounded-xl bg-white shadow-2xl ">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 ">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-slate-900 ">
               Cấu hình dịch vụ
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-500 ">
               {serviceName}
             </p>
           </div>
@@ -111,7 +111,7 @@ export default function ServiceConfigModal({
               </div>
             )}
 
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-500 ">
               Các giá trị bên dưới ghi đè giá mặc định từ danh mục dịch vụ.
               <span className="mt-1 block">
                 Mặc định hiện tại: {formatVND(defaultPrice)} ·{" "}
@@ -126,7 +126,7 @@ export default function ServiceConfigModal({
               min={0}
               step={1000}
             />
-            <p className="text-right text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-right text-xs text-slate-400 ">
               {formatVND(price ?? 0)}
             </p>
 
@@ -138,7 +138,7 @@ export default function ServiceConfigModal({
               min={0}
               step={1}
             />
-            <p className="text-right text-xs text-slate-400 dark:text-slate-500">
+            <p className="text-right text-xs text-slate-400 ">
               {days ?? 0} ngày
             </p>
 
@@ -149,7 +149,7 @@ export default function ServiceConfigModal({
             )}
           </div>
 
-          <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 px-6 py-4 dark:border-slate-700">
+          <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 px-6 py-4 ">
             <button
               type="button"
               onClick={onClose}

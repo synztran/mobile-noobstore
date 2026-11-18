@@ -86,6 +86,10 @@ export async function POST(req: NextRequest) {
     .upload(storagePath, arrayBuffer, {
       contentType: file.type,
       upsert: false,
+      // Object URLs are immutable (unique filename per upload) → safe to cache
+      // hard in the browser/CDN. Long TTL means return visits fetch product
+      // images from local cache instead of revalidating every time.
+      cacheControl: "public, max-age=31536000, immutable",
     });
 
   if (error) {

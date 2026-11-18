@@ -344,7 +344,7 @@ function TicketDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 dark:bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10  backdrop-blur-sm">
       <div className="mx-4 max-h-[85vh] w-full max-w-5xl overflow-y-auto rounded-2xl card-bg p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-heading">

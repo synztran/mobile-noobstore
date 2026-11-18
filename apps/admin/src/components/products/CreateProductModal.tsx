@@ -1,6 +1,8 @@
 "use client";
 
 import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
+import ProductComponentFormModal from "@/components/product-components/ProductComponentFormModal";
+import type { ProductOption } from "@/components/product-components/types";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import AttributesEditor from "@/components/ui/AttributesEditor";
 import KitSelector, { type KitOption } from "@/components/ui/KitSelector";
@@ -40,6 +42,8 @@ export default function CreateProductModal({
   const [kitOptions, setKitOptions] = useState<KitOption[]>([]);
   const [kitOptionsLoading, setKitOptionsLoading] = useState(false);
   const [createdKitId, setCreatedKitId] = useState<string | null>(null);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [attachOptions, setAttachOptions] = useState<ProductOption[]>([]);
   const [categoryType, setCategoryType] = useState("");
   const [description, setDescription] = useState("");
   const [attributes, setAttributes] = useState<Record<string, string>>({});
@@ -195,7 +199,9 @@ export default function CreateProductModal({
         parent_product_id,
         category_id,
         attributes: Object.keys(attributes).length > 0 ? attributes : null,
-        is_active: isActive,
+        // Kits go live only after component products are attached — the API
+        // rejects an active kit insert, so always create them inactive.
+        is_active: isKit ? false : isActive,
         is_pre_order: isPreOrder,
         is_used: isUsed,
       }),
@@ -214,6 +220,35 @@ export default function CreateProductModal({
 
     if (product_type === "kit" && data.id) {
       setCreatedKitId(data.id);
+      // Options for the attach-components step (component-type products).
+      fetch("/api/products")
+        .then((r) => r.json())
+        .then((rows) =>
+          setAttachOptions(
+            Array.isArray(rows)
+              ? rows.map(
+                  (p: {
+                    id: string;
+                    name: string;
+                    product_type: string;
+                    thumbnail?: string | null;
+                    base_price?: number | null;
+                    stock_quantity?: number | null;
+                    brand?: string | null;
+                  }) => ({
+                    id: p.id,
+                    name: p.name,
+                    product_type: p.product_type,
+                    thumbnail: p.thumbnail ?? null,
+                    base_price: p.base_price ?? null,
+                    stock_quantity: p.stock_quantity ?? null,
+                    brand: p.brand ?? null,
+                  }),
+                )
+              : [],
+          )
+        )
+        .catch(() => setAttachOptions([]));
     } else {
       onClose();
       router.refresh();
@@ -235,11 +270,11 @@ export default function CreateProductModal({
           <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Configure Variant Rules
+                Configure Kit
               </h2>
               <p className="mt-0.5 text-xs text-slate-500">
-                Optional — restrict which component variants are available for
-                each kit variant.
+                Step 1 — attach component products. The kit stays inactive and
+                cannot be sold until this is done.
               </p>
             </div>
             <button
@@ -249,10 +284,39 @@ export default function CreateProductModal({
               <X className="h-5 w-5 text-slate-500" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            <ComponentRulesEditor kitProductId={createdKitId} />
+          <div className="flex-1 space-y-6 overflow-y-auto p-6">
+            <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    1. Component products
+                  </h3>
+                  <p className="mt-0.5 text-xs text-slate-600">
+                    Required — a kit without components cannot be added to cart.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAttachOpen(true)}
+                  className="shrink-0 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700"
+                >
+                  Attach Components
+                </button>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-2 text-sm font-semibold text-slate-900">
+                2. Variant rules
+              </h3>
+              <p className="mb-3 text-xs text-slate-500">
+                Optional — restrict which component variants are available for
+                each kit variant.
+              </p>
+              <ComponentRulesEditor kitProductId={createdKitId} />
+            </section>
           </div>
-          <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
             <button
               type="button"
               onClick={handleDone}
@@ -261,6 +325,18 @@ export default function CreateProductModal({
               Done
             </button>
           </div>
+
+          <ProductComponentFormModal
+            open={attachOpen}
+            onClose={() => {
+              setAttachOpen(false);
+              // Refresh the kit list so the activation guard sees components.
+              queryClient.invalidateQueries({ queryKey: ["products"] });
+            }}
+            products={attachOptions}
+            mode="create"
+            defaultParentId={createdKitId}
+          />
         </div>
       </div>
     );
@@ -378,9 +454,10 @@ export default function CreateProductModal({
                 <NumberInput
                   name="stock_quantity"
                   min={0}
-                  disabled={isKit}
+                  disabled
                   placeholder={isKit ? "—" : "0"}
                   label="Stock Quantity"
+                  subLabel="Nhập kho qua Warehouse Inbound"
                 />
               </div>
 
@@ -426,16 +503,30 @@ export default function CreateProductModal({
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
+                    disabled={isKit}
                     onClick={() => setIsActive((v) => !v)}
-                    className={`relative h-6 w-10 rounded-full transition-colors ${isActive ? "bg-green-500" : "bg-slate-300"}`}
+                    className={`relative h-6 w-10 rounded-lg transition-colors ${
+                      isKit
+                        ? "cursor-not-allowed bg-slate-300"
+                        : isActive
+                          ? "bg-green-500"
+                          : "bg-slate-300"
+                    }`}
                   >
                     <span
-                      className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${isActive ? "translate-x-4" : ""}`}
+                      className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                        isActive && !isKit ? "translate-x-4" : ""
+                      }`}
                     />
                   </button>
                   <span className="text-sm font-medium text-slate-700">
-                    {isActive ? "Active" : "Inactive"}
+                    {isKit ? "Inactive" : isActive ? "Active" : "Inactive"}
                   </span>
+                  {isKit && (
+                    <span className="text-xs text-slate-500">
+                      Kits activate after component products are attached
+                    </span>
+                  )}
                 </div>
               </div>
 

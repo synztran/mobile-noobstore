@@ -15,6 +15,8 @@ export default function OrderStatusBanner({
 }: Props) {
 	if (
 		status === "confirmed" ||
+		status === "first_paid" ||
+		status === "second_paid" ||
 		status === "delivering" ||
 		status === "delivered"
 	) {

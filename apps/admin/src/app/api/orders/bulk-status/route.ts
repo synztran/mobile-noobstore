@@ -2,6 +2,7 @@ import { logAuditEvent } from "@/lib/audit-log";
 import { invalidateProductCaches } from "@/lib/redis/cache";
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import type { Database } from "@db-types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,17 +11,23 @@ export const dynamic = "force-dynamic";
 const VALID_STATUSES = [
   "pending",
   "confirmed",
+  "first_paid",
+  "second_paid",
   "delivering",
   "delivered",
+  "returning",
   "cancelled",
   "refunded",
 ] as const;
 
 const TRANSITIONS: Record<string, Set<string>> = {
-  pending: new Set(["confirmed", "cancelled"]),
-  confirmed: new Set(["delivering", "cancelled", "refunded"]),
+  pending: new Set(["confirmed", "first_paid", "cancelled"]),
+  confirmed: new Set(["delivering", "second_paid", "cancelled", "refunded"]),
+  first_paid: new Set(["second_paid", "cancelled", "refunded"]),
+  second_paid: new Set(["delivering", "cancelled", "refunded"]),
   delivering: new Set(["delivered", "cancelled"]),
   delivered: new Set([]),
+  returning: new Set(["refunded"]),
   cancelled: new Set([]),
   refunded: new Set([]),
 };
@@ -31,6 +38,12 @@ function buildUpdate(status: string): OrderUpdate {
   const update: OrderUpdate = {};
   update.status = status;
   if (status === "confirmed") update.paid_at = new Date().toISOString();
+  if (status === "first_paid") {
+    (update as Record<string, unknown>).deposit_paid_at = new Date().toISOString();
+  }
+  if (status === "second_paid") {
+    update.paid_at = new Date().toISOString();
+  }
   if (status === "cancelled") {
     update.cancelled_at = new Date().toISOString();
     update.cancelled_note = "Bulk cancelled (admin)";
@@ -41,6 +54,9 @@ function buildUpdate(status: string): OrderUpdate {
   }
   if (status === "delivered") {
     (update as Record<string, unknown>).delivered_at = new Date().toISOString();
+  }
+  if (status === "returning") {
+    (update as Record<string, unknown>).returning_at = new Date().toISOString();
   }
   return update;
 }
@@ -63,7 +79,6 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = getAdminClient();
-
     if (["confirmed", "first_paid", "second_paid"].includes(body.status)) {
       return NextResponse.json({ error: "Payment verification requires an individual receipt per order. Use the payment panel." }, { status: 409 });
     }
@@ -71,7 +86,7 @@ export async function POST(req: NextRequest) {
     // Fetch current orders to validate they exist
     const { data: orders } = await supabase
       .from("orders")
-      .select("id, status")
+      .select("id, status, payment_type")
       .in("id", body.orderIds);
 
     if (!orders?.length) {
@@ -96,6 +111,29 @@ export async function POST(req: NextRequest) {
 
     for (const order of orders) {
       const allowed = TRANSITIONS[order.status];
+      const isDeposit = order.payment_type === "deposit_cod";
+      const usesDepositStatus =
+        body.status === "first_paid" || body.status === "second_paid";
+
+      if (isDeposit && body.status === "confirmed") {
+        invalidOrders.push({
+          id: order.id,
+          from: order.status,
+          to: body.status,
+          reason:
+            'Deposit orders must be marked "first_paid" (đặt cọc) instead of "confirmed"',
+        });
+        continue;
+      }
+      if (!isDeposit && usesDepositStatus) {
+        invalidOrders.push({
+          id: order.id,
+          from: order.status,
+          to: body.status,
+          reason: `Status "${body.status}" is only valid for deposit orders`,
+        });
+        continue;
+      }
       if (!allowed?.has(body.status)) {
         invalidOrders.push({
           id: order.id,
@@ -111,7 +149,7 @@ export async function POST(req: NextRequest) {
     if (validOrderIds.length === 0) {
       return NextResponse.json(
         {
-          error: `No orders can transition to "${body.status}". Transition rules: pending→confirmed/cancelled, confirmed→delivering/cancelled/refunded, delivering→delivered/cancelled.`,
+          error: `No orders can transition to "${body.status}". Transition rules: pending→confirmed/first_paid/cancelled, confirmed→delivering/second_paid/cancelled/refunded, first_paid→second_paid/cancelled/refunded, second_paid→delivering/cancelled/refunded, delivering→delivered/cancelled.`,
           failed: invalidOrders,
         },
         { status: 400 }
@@ -146,20 +184,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Resolve acting admin for point-reversal audit guard (refunded flow).
+    let adminId: string | null = null;
+    if (body.status === "refunded") {
+      const authClient = await createServerClient();
+      const {
+        data: { user: adminUser },
+      } = await authClient.auth.getUser();
+      adminId = adminUser?.id ?? null;
+    }
+
     // Fire-and-forget side effects: push notifications, points, missions
     for (const id of validOrderIds) {
       if (
         body.status &&
-        ["confirmed", "delivering", "delivered", "cancelled", "refunded"].includes(
-          body.status
-        )
+        [
+          "confirmed",
+          "first_paid",
+          "second_paid",
+          "delivering",
+          "delivered",
+          "returning",
+          "cancelled",
+          "refunded",
+        ].includes(body.status)
       ) {
-        void triggerOrderSideEffects(supabase, id, body.status);
+        void triggerOrderSideEffects(supabase, id, body.status, adminId);
       }
     }
 
+    // TODO(email): restore customer status notifications when a replacement
+    // provider is configured. Bulk order updates still complete normally.
+
     // Invalidate storefront product caches so sold_count reflects the delivery
     if (body.status === "delivered") {
+      await invalidateProductCaches();
+    }
+
+    // Confirmation seals reserved stock; cancel/refund restores it — refresh
+    // the product cache so /shop and product pages don't show stale stock.
+    if (
+      body.status === "confirmed" ||
+      body.status === "first_paid" ||
+      body.status === "second_paid" ||
+      body.status === "cancelled" ||
+      body.status === "refunded"
+    ) {
       await invalidateProductCaches();
     }
 
@@ -192,7 +262,8 @@ async function triggerOrderSideEffects(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   orderId: string,
-  status: string
+  status: string,
+  adminId: string | null
 ) {
   const { data: orderRow } = await supabase
     .from("orders")
@@ -256,6 +327,16 @@ async function triggerOrderSideEffects(
     }
   }
 
+  // Reverse NSP points earned on delivery when a bulk-refunded order.
+  if (status === "refunded" && adminId && orderRow.user_id) {
+    await supabase.rpc("reverse_point_transactions", {
+      p_admin_id: adminId,
+      p_user_id: orderRow.user_id,
+      p_source_ref: orderId,
+      p_note: `Order #${orderRow.order_number} refunded (bulk)`,
+    });
+  }
+
   // Push notification
   let title = "";
   let nbody = "";
@@ -266,6 +347,14 @@ async function triggerOrderSideEffects(
       title = "Xác nhận thanh toán";
       nbody = `Đơn hàng ${orderNum} đã được xác nhận thanh toán thành công với số tiền ${orderRow.total_price?.toLocaleString("vi-VN")}₫`;
       break;
+    case "first_paid":
+      title = "Xác nhận đặt cọc";
+      nbody = `Đơn hàng ${orderNum} đã nhận được tiền đặt cọc (thanh toán lần 1).`;
+      break;
+    case "second_paid":
+      title = "Xác nhận thanh toán đủ";
+      nbody = `Đơn hàng ${orderNum} đã được thanh toán đầy đủ (thanh toán lần 2).`;
+      break;
     case "delivering":
       title = `Đơn hàng ${orderNum} đang được vận chuyển`;
       nbody = `Đơn hàng ${orderNum} đã và đang được vận chuyển đến bạn.`;
@@ -273,6 +362,10 @@ async function triggerOrderSideEffects(
     case "delivered":
       title = `Đơn hàng ${orderNum} đã được giao hàng thành công`;
       nbody = `Đơn hàng ${orderNum} đã được giao đến bạn. Cảm ơn bạn đã tin tưởng và mua hàng ở NoobStore`;
+      break;
+    case "returning":
+      title = `Đơn hàng ${orderNum} đang chờ xác minh hoàn hàng`;
+      nbody = `Gói hàng ${orderNum} đang được cửa hàng xác minh. Tiền sẽ được hoàn về tài khoản sau khi xác minh thành công.`;
       break;
     case "cancelled":
       title = `Đơn hàng ${orderNum} đã được hủy`;

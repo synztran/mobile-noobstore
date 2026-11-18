@@ -209,7 +209,7 @@ export function RewardsManager({ eventId }: Props) {
             <button
               type="button"
               onClick={resetForm}
-              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
+              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 "
             >
               <X className="text-muted h-4 w-4" />
             </button>
@@ -389,7 +389,7 @@ export function RewardsManager({ eventId }: Props) {
             <button
               type="button"
               onClick={resetForm}
-              className="text-body rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+              className="text-body rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium transition-colors hover:bg-slate-200  "
             >
               Cancel
             </button>
@@ -407,7 +407,7 @@ export function RewardsManager({ eventId }: Props) {
       {/* Rewards table */}
       {loading ? (
         <div className="card-bg card-shadow animate-pulse rounded-lg p-6">
-          <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="h-4 w-48 rounded bg-slate-200 " />
         </div>
       ) : (
         <>

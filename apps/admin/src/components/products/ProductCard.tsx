@@ -2,6 +2,7 @@
 
 import CopyToClipboardButton from "@/components/products/CopyToClipboardButton";
 import EditProductModal from "@/components/products/EditProductModal";
+import ProductAddonsModal from "@/components/products/ProductAddonsModal";
 import ComponentRulesEditor from "@/components/products/ComponentRulesEditor";
 import Tag from "@/components/ui/Tag";
 import { useQueryClient } from "@tanstack/react-query";
@@ -156,6 +157,13 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <Trash2 className="h-3.5 w-3.5" />
                     Xóa
                   </button>
+                  <ProductAddonsModal
+                    product={{
+                      id: product.id,
+                      name: product.name,
+                      thumbnail: product.thumbnail,
+                    }}
+                  />
                   <EditProductModal product={product} />
                 </div>
               </div>

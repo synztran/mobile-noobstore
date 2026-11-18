@@ -108,13 +108,13 @@ export default function ServiceOptionModal({
 	return (
 		<div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
 			<div className="absolute inset-0 bg-black/50" />
-			<div className="relative mx-4 flex max-h-[90vh] w-full max-w-md flex-col rounded-xl bg-white shadow-2xl dark:bg-slate-800">
-				<div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
+			<div className="relative mx-4 flex max-h-[90vh] w-full max-w-md flex-col rounded-xl bg-white shadow-2xl ">
+				<div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 ">
 					<div>
-						<h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+						<h2 className="text-lg font-semibold text-slate-900 ">
 							{isEdit ? "Sửa tuỳ chọn" : "Thêm tuỳ chọn"}
 						</h2>
-						<p className="text-sm text-slate-500 dark:text-slate-400">
+						<p className="text-sm text-slate-500 ">
 							{serviceName}
 						</p>
 					</div>
@@ -128,13 +128,13 @@ export default function ServiceOptionModal({
 				<form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
 					<div className="flex-1 space-y-4 overflow-y-auto p-6">
 						{error && (
-							<div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+							<div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700   ">
 								{error}
 							</div>
 						)}
 
 						<div>
-							<label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+							<label className="mb-1 block text-sm font-medium text-slate-700 ">
 								Nhãn tuỳ chọn *
 							</label>
 							<input
@@ -162,13 +162,13 @@ export default function ServiceOptionModal({
 								checked={isRequired}
 								onChange={(e) => setIsRequired(e.target.checked)}
 							/>
-							<span className="text-sm text-slate-700 dark:text-slate-300">
+							<span className="text-sm text-slate-700 ">
 								Bắt buộc chọn (required)
 							</span>
 						</label>
 					</div>
 
-					<div className="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200 px-6 py-4 dark:border-slate-700">
+					<div className="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200 px-6 py-4 ">
 						{isEdit ? (
 							<button
 								type="button"

@@ -11,8 +11,10 @@ import {
 import { useEffect, useState } from "react";
 
 const TRANSITIONS: Record<string, string[]> = {
-  pending: ["confirmed", "cancelled"],
-  confirmed: ["delivering", "cancelled", "refunded"],
+  pending: ["confirmed", "first_paid", "cancelled"],
+  confirmed: ["delivering", "second_paid", "cancelled", "refunded"],
+  first_paid: ["second_paid", "cancelled", "refunded"],
+  second_paid: ["delivering", "cancelled", "refunded"],
   delivering: ["delivered", "cancelled"],
   delivered: [],
   cancelled: [],
@@ -21,6 +23,8 @@ const TRANSITIONS: Record<string, string[]> = {
 
 const ACTION_META: Record<string, { label: string; icon: typeof CheckCircle2; color: string }> = {
   confirmed: { label: "Confirm", icon: CheckCircle2, color: "btn-primary" },
+  first_paid: { label: "1st paid", icon: CheckCircle2, color: "btn-primary" },
+  second_paid: { label: "2nd paid", icon: CheckCircle2, color: "btn-primary" },
   delivering: { label: "Delivering", icon: Truck, color: "btn-info" },
   delivered: { label: "Delivered", icon: PackageCheck, color: "btn-success" },
   cancelled: { label: "Cancel", icon: XCircle, color: "btn-error" },

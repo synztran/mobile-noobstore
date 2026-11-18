@@ -121,7 +121,7 @@ export default function StockAlertsClient() {
           {[1, 2, 3, 4, 5].map((i) => (
             <div
               key={i}
-              className="h-16 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700"
+              className="h-16 animate-pulse rounded-lg bg-slate-200 "
             />
           ))}
         </div>

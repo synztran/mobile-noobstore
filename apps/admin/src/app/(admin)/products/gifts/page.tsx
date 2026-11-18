@@ -233,7 +233,7 @@ export default function GiftProductsPage() {
                       }}
                       className="table-row-hover flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
                     >
-                      <div className="h-6 w-6 flex-shrink-0 overflow-hidden rounded bg-slate-100 dark:bg-slate-600">
+                      <div className="h-6 w-6 flex-shrink-0 overflow-hidden rounded bg-slate-100 ">
                         {p.thumbnail && (
                           <Image src={p.thumbnail} alt="" width={24} height={24} className="object-cover" />
                         )}
@@ -244,8 +244,8 @@ export default function GiftProductsPage() {
                 </div>
               )}
               {selectedMain && (
-                <div className="mt-1 flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-sm dark:bg-violet-900/30">
-                  <span className="flex-1 truncate font-medium text-violet-700 dark:text-violet-300">{selectedMain.name}</span>
+                <div className="mt-1 flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-sm ">
+                  <span className="flex-1 truncate font-medium text-violet-700 ">{selectedMain.name}</span>
                   <button
                     onClick={() => {
                       setSelectedMain(null);
@@ -283,7 +283,7 @@ export default function GiftProductsPage() {
                       onClick={() => addGiftEntry(p)}
                       className="table-row-hover flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
                     >
-                      <div className="h-6 w-6 flex-shrink-0 overflow-hidden rounded bg-slate-100 dark:bg-slate-600">
+                      <div className="h-6 w-6 flex-shrink-0 overflow-hidden rounded bg-slate-100 ">
                         {p.thumbnail && (
                           <Image src={p.thumbnail} alt="" width={24} height={24} className="object-cover" />
                         )}
@@ -305,7 +305,7 @@ export default function GiftProductsPage() {
                     key={entry.product.id}
                     className="flex items-center gap-3 rounded-lg border table-border px-3 py-2"
                   >
-                    <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-slate-100 dark:bg-slate-600">
+                    <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-slate-100 ">
                       {entry.product.thumbnail && (
                         <Image src={entry.product.thumbnail} alt="" width={32} height={32} className="object-cover" />
                       )}
@@ -316,7 +316,7 @@ export default function GiftProductsPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => updateGiftQuantity(entry.product.id, -1)}
-                        className="rounded p-0.5 text-muted hover:bg-slate-100 dark:hover:bg-slate-700"
+                        className="rounded p-0.5 text-muted hover:bg-slate-100 "
                       >
                         <Minus size={14} />
                       </button>
@@ -325,7 +325,7 @@ export default function GiftProductsPage() {
                       </span>
                       <button
                         onClick={() => updateGiftQuantity(entry.product.id, 1)}
-                        className="rounded p-0.5 text-muted hover:bg-slate-100 dark:hover:bg-slate-700"
+                        className="rounded p-0.5 text-muted hover:bg-slate-100 "
                       >
                         <Plus size={14} />
                       </button>
@@ -345,7 +345,7 @@ export default function GiftProductsPage() {
           <div className="flex justify-end gap-2">
             <button
               onClick={resetForm}
-              className="rounded-lg border table-border px-4 py-2 text-sm font-medium text-body transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"
+              className="rounded-lg border table-border px-4 py-2 text-sm font-medium text-body transition-colors hover:bg-slate-50 "
             >
               Huỷ
             </button>
@@ -363,7 +363,7 @@ export default function GiftProductsPage() {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-700" />
+            <div key={i} className="h-16 animate-pulse rounded-lg bg-slate-100 " />
           ))}
         </div>
       ) : gifts.length === 0 ? (
@@ -405,7 +405,7 @@ export default function GiftProductsPage() {
                 <tr key={group.product_id} className="table-row-hover">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-slate-100 dark:bg-slate-600">
+                      <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-slate-100 ">
                         {group.product_thumbnail && (
                           <Image src={group.product_thumbnail} alt="" width={32} height={32} className="object-cover" />
                         )}
@@ -417,7 +417,7 @@ export default function GiftProductsPage() {
                     <div className="space-y-1.5">
                       {group.gifts.map((g) => (
                         <div key={g.id} className="flex items-center gap-2">
-                          <div className="h-6 w-6 flex-shrink-0 overflow-hidden rounded bg-slate-100 dark:bg-slate-600">
+                          <div className="h-6 w-6 flex-shrink-0 overflow-hidden rounded bg-slate-100 ">
                             {g.gift_thumbnail && (
                               <Image src={g.gift_thumbnail} alt="" width={24} height={24} className="object-cover" />
                             )}
@@ -448,7 +448,7 @@ export default function GiftProductsPage() {
                             .then(() => fetchGifts());
                         }
                       }}
-                      className="rounded-lg p-1.5 text-muted transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                      className="rounded-lg p-1.5 text-muted transition-colors hover:bg-red-50 hover:text-red-500 "
                       title="Xóa tất cả"
                     >
                       <Trash2 size={16} />

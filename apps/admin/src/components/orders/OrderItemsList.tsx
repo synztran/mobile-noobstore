@@ -24,6 +24,8 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   thumbnail: string | null;
+  is_pre_order: boolean;
+  pre_order_config: unknown;
   order_item_components: KitComponent[];
   gifts?: GiftInfo[];
 }
@@ -71,9 +73,9 @@ export default function OrderItemsList({ items }: Props) {
         Products ({items.length})
       </div>
       {items.map((item) => {
-        const hasPreOrderComponent = item.order_item_components.some(
-          (c) => c.is_pre_order
-        );
+        const hasPreOrderComponent =
+          item.is_pre_order ||
+          item.order_item_components.some((c) => c.is_pre_order);
 
         return (
           <div

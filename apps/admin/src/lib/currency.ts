@@ -1,3 +1,12 @@
+// One shared Intl.NumberFormat for the whole process — see the note in
+// apps/web/src/lib/currency.ts. Constructing an Intl object per call showed up
+// against Vercel's Active CPU budget on the admin inventory grid.
+const VND_FORMATTER = new Intl.NumberFormat("vi-VN", {
+	style: "currency",
+	currency: "VND",
+	maximumFractionDigits: 0,
+});
+
 /**
  * Format a number as Vietnamese Dong (VND).
  *
@@ -5,13 +14,13 @@
  *   formatVND(285000)   → "285.000 ₫"
  *   formatVND(1500000)  → "1.500.000 ₫"
  *   formatVND(0)        → "0 ₫"
+ *
+ * Note: unlike the web app's copy this does NOT clamp negatives, because the
+ * admin price inputs surface negative adjustments. Keep the two in step
+ * deliberately — do not "fix" one to match the other by accident.
  */
 export function formatVND(amount: number): string {
-	return new Intl.NumberFormat("vi-VN", {
-		style: "currency",
-		currency: "VND",
-		maximumFractionDigits: 0,
-	}).format(amount);
+	return VND_FORMATTER.format(amount);
 }
 
 /**

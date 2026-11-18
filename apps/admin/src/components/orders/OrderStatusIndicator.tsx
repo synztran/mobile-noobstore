@@ -1,4 +1,9 @@
-import { CheckCircle2, Circle, Clock, FileText, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, FileText, RotateCcw, XCircle } from "lucide-react";
+
+import {
+  getPaymentState,
+  type PaymentState,
+} from "@/lib/order-status";
 
 interface Props {
   status: string;
@@ -23,6 +28,16 @@ const STATUS_BADGES: Record<
     classes: "bg-blue-50 border-blue-200 text-blue-700",
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
   },
+  first_paid: {
+    label: "First Paid",
+    classes: "bg-cyan-50 border-cyan-200 text-cyan-700",
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+  },
+  second_paid: {
+    label: "Second Paid",
+    classes: "bg-blue-50 border-blue-200 text-blue-700",
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+  },
   delivering: {
     label: "Delivering",
     classes: "bg-purple-50 border-purple-200 text-purple-700",
@@ -32,6 +47,11 @@ const STATUS_BADGES: Record<
     label: "Delivered",
     classes: "bg-green-50 border-green-200 text-green-700",
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+  },
+  returning: {
+    label: "Returning",
+    classes: "bg-amber-50 border-amber-300 text-amber-700",
+    icon: <RotateCcw className="h-3.5 w-3.5" />,
   },
   cancelled: {
     label: "Cancelled",
@@ -45,37 +65,39 @@ const STATUS_BADGES: Record<
   },
 };
 
-function getPaymentStatus(
-  paidAt: string | null,
-  refundedAt: string | null,
-  depositPaidAt?: string | null,
-  paymentType?: string
-) {
-  if (refundedAt)
-    return {
-      label: "Refunded",
-      color: "text-orange-600 bg-orange-50 border-orange-200",
-    };
-  if (paidAt)
-    return {
-      label: "Paid",
-      color: "text-green-600 bg-green-50 border-green-200",
-    };
-  if (paymentType === "deposit_cod" && depositPaidAt)
-    return {
-      label: "Deposit Paid",
-      color: "text-green-600 bg-green-50 border-green-200",
-    };
-  if (paymentType === "deposit_cod")
-    return {
-      label: "Awaiting Deposit",
-      color: "text-amber-500 bg-amber-50 border-amber-200",
-    };
-  return {
+/**
+ * Presentation only. The precedence that decides WHICH state an order is in
+ * lives in getPaymentState() so the orders list column and this modal cannot
+ * drift into disagreeing about the same order.
+ */
+const PAYMENT_BADGES: Record<
+  PaymentState,
+  { label: string; classes: string; icon?: React.ReactNode }
+> = {
+  refunded: {
+    label: "Refunded",
+    classes: "text-orange-600 bg-orange-50 border-orange-200",
+    icon: <XCircle className="h-3.5 w-3.5" />,
+  },
+  paid: {
+    label: "Paid",
+    classes: "text-green-600 bg-green-50 border-green-200",
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+  },
+  deposit_paid: {
+    label: "Deposit Paid",
+    classes: "text-green-600 bg-green-50 border-green-200",
+  },
+  awaiting_deposit: {
+    label: "Awaiting Deposit",
+    classes: "text-amber-500 bg-amber-50 border-amber-200",
+  },
+  unpaid: {
     label: "Unpaid",
-    color: "text-slate-500 bg-slate-50 border-slate-200",
-  };
-}
+    classes: "text-slate-500 bg-slate-50 border-slate-200",
+    icon: <Clock className="h-3.5 w-3.5" />,
+  },
+};
 
 export default function OrderStatusIndicator({
   status,
@@ -86,12 +108,9 @@ export default function OrderStatusIndicator({
   invoiceUrl,
 }: Props) {
   const badge = STATUS_BADGES[status];
-  const payment = getPaymentStatus(
-    paidAt,
-    refundedAt,
-    depositPaidAt,
-    paymentType
-  );
+  const payment = PAYMENT_BADGES[
+    getPaymentState({ paymentType, paidAt, refundedAt, depositPaidAt })
+  ];
   const invoiceGenerated = Boolean(invoiceUrl);
 
   return (
@@ -123,15 +142,9 @@ export default function OrderStatusIndicator({
             Payment:
           </span>
           <span
-            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold ${payment.color}`}
+            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold ${payment.classes}`}
           >
-            {payment.label === "Paid" && (
-              <CheckCircle2 className="h-3.5 w-3.5" />
-            )}
-            {payment.label === "Unpaid" && <Clock className="h-3.5 w-3.5" />}
-            {payment.label === "Refunded" && (
-              <XCircle className="h-3.5 w-3.5" />
-            )}
+            {payment.icon}
             {payment.label}
           </span>
         </div>

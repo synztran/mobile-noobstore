@@ -1,13 +1,26 @@
 import { logAuditEvent } from "@/lib/audit-log";
-import { generateAndStoreInvoice } from "@/lib/invoice";
-import { buildCustomerAddress } from "@/lib/order-address";
+import { formatVND } from "@/lib/currency";
+import {
+  buildInvoiceInput,
+  fetchInvoiceItems,
+  generateAndStoreInvoice,
+  regenerateSettledInvoice,
+  type InvoiceOrderRow,
+} from "@/lib/invoice";
+import { notifyOrderStatusEmail } from "@/lib/order-status-email";
 import { invalidateProductCaches } from "@/lib/redis/cache";
 import { restoreOrderStock } from "@/lib/services/orderService";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import type { Database } from "@db-types";
+import { buildTrackingUrl } from "@web-tracking";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
+// Ceiling for a staff-entered courier fee. Guards against a stray keypress
+// (5,000,000₫ ≈ 200× a normal intra-city parcel) turning into a real charge.
+const MAX_COURIER_SHIPPING_FEE = 5_000_000;
 
 export async function GET(
   _req: NextRequest,
@@ -22,15 +35,16 @@ export async function GET(
       `
 			id, order_number, status, total_price, shipping_fee,
 			voucher_code, voucher_discount_amount, shipping_discount_amount,
-			created_at, updated_at, cancelled_at, cancelled_note, paid_at, refunded_at, delivering_at, delivered_at,
+			created_at, updated_at, cancelled_at, cancelled_note, paid_at, refunded_at, delivering_at, delivered_at, returning_at, returning_reason,
 			delivery_address, shipping_method_id, expected_delivery_at, pickup_at,
+			pickup_code_expires_at, pickup_code_tries, pickup_code_locked_until, pickup_verified_at,
 			tracking_carrier_id, tracking_number,
 			carriers(id, name, logo, tracking_url_template),
 			user_id,
 			invoice_url,
 			payment_type, deposit_percentage, deposit_amount, remaining_amount, deposit_paid_at,
 			users(id, first_name, last_name, email, phone_number),
-			order_items(id, product_id, product_name, quantity, unit_price, thumbnail, pre_order_tracking, order_item_components(id, component_group, variant_name, price_adjustment, product_variant_id, thumbnail, is_pre_order, pre_order_config)),
+			order_items(id, product_id, product_name, quantity, unit_price, thumbnail, is_pre_order, pre_order_config, pre_order_tracking, order_item_components(id, component_group, variant_name, price_adjustment, product_variant_id, thumbnail, is_pre_order, pre_order_config)),
 			order_services(
 				id, service_id, service_name, price, quantity, selected_options, customer_note,
 				services(base_price)
@@ -259,6 +273,7 @@ export async function PATCH(
     };
     tracking_carrier_id?: string | null;
     tracking_number?: string | null;
+    shipping_fee?: number | null;
   };
 
   const supabase = getAdminClient();
@@ -338,8 +353,11 @@ export async function PATCH(
   const VALID_STATUSES = [
     "pending",
     "confirmed",
+    "first_paid",
+    "second_paid",
     "delivering",
     "delivered",
+    "returning",
     "cancelled",
     "refunded",
   ];
@@ -353,13 +371,111 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  // Enforce refund transition rules server-side. A status flip to "refunded"
+  // is only legal from the returning/confirmed/delivering statuses, or from
+  // "delivered" (regardless of age — the client displays the 72h window hint).
+  if (body.status === "refunded") {
+    const { data: currentOrder } = await supabase
+      .from("orders")
+      .select("status")
+      .eq("id", id)
+      .single();
+    const currentStatus = currentOrder?.status ?? null;
+
+    const canRefund =
+      currentStatus === "returning" ||
+      currentStatus === "confirmed" ||
+      currentStatus === "first_paid" ||
+      currentStatus === "second_paid" ||
+      currentStatus === "delivering" ||
+      currentStatus === "delivered";
+
+    if (!canRefund) {
+      const message =
+        currentStatus === "refunded"
+          ? "Order is already refunded"
+          : `Order cannot be refunded from status "${currentStatus}"`;
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
+  // Enforce deposit-payment status rules: first_paid/second_paid are the two
+  // installment milestones for deposit orders, and deposit orders must never
+  // enter "confirmed". Full-payment orders ignore the new statuses.
+  if (
+    body.status === "confirmed" ||
+    body.status === "first_paid" ||
+    body.status === "second_paid"
+  ) {
+    const { data: currentOrder } = await supabase
+      .from("orders")
+      .select("status, payment_type")
+      .eq("id", id)
+      .single();
+    const currentStatus = currentOrder?.status ?? null;
+    const orderPaymentType = currentOrder?.payment_type ?? null;
+    const isDeposit = orderPaymentType === "deposit_cod";
+
+    if (isDeposit && body.status === "confirmed") {
+      return NextResponse.json(
+        {
+          error:
+            'Deposit orders must be marked "first_paid" (đặt cọc) instead of "confirmed"',
+        },
+        { status: 400 }
+      );
+    }
+    if (
+      !isDeposit &&
+      (body.status === "first_paid" || body.status === "second_paid")
+    ) {
+      return NextResponse.json(
+        {
+          error: `Status "${body.status}" is only valid for deposit orders`,
+        },
+        { status: 400 }
+      );
+    }
+    if (
+      body.status === "first_paid" &&
+      currentStatus !== "pending" &&
+      !(isDeposit && currentStatus === "confirmed")
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            '"first_paid" (đặt cọc) can only be marked from "pending" (or legacy "confirmed" for deposit orders)',
+        },
+        { status: 400 }
+      );
+    }
+    if (
+      body.status === "second_paid" &&
+      currentStatus !== "first_paid" &&
+      !(isDeposit && currentStatus === "confirmed")
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            '"second_paid" requires the order to be "first_paid" first (deposit orders still in legacy "confirmed" count as first_paid)',
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   type OrderUpdate = Database["public"]["Tables"]["orders"]["Update"];
   const update: OrderUpdate = {};
   if (body.status) update.status = body.status;
 
   // Fetch payment_type to determine deposit vs full payment
   let paymentType: string | null = null;
-  if (body.status === "confirmed" || body.status === "delivered") {
+  if (
+    body.status === "confirmed" ||
+    body.status === "delivered" ||
+    body.status === "first_paid" ||
+    body.status === "second_paid"
+  ) {
     const { data: orderRow } = await supabase
       .from("orders")
       .select("payment_type")
@@ -377,6 +493,15 @@ export async function PATCH(
       update.paid_at = new Date().toISOString();
     }
   }
+  if (body.status === "first_paid") {
+    // Instalment 1 — customer paid the deposit
+    (update as Record<string, unknown>).deposit_paid_at =
+      new Date().toISOString();
+  }
+  if (body.status === "second_paid") {
+    // Instalment 2 — customer paid the remaining balance
+    update.paid_at = new Date().toISOString();
+  }
   if (body.status === "delivered") {
     (update as Record<string, unknown>).delivered_at = new Date().toISOString();
     // Delivery is not evidence of money collected. Record cash/COD first.
@@ -392,6 +517,10 @@ export async function PATCH(
     (update as Record<string, unknown>).delivering_at =
       new Date().toISOString();
   }
+  if (body.status === "returning") {
+    (update as Record<string, unknown>).returning_at =
+      new Date().toISOString();
+  }
 
   if (body.tracking_carrier_id !== undefined) {
     update.tracking_carrier_id = body.tracking_carrier_id || null;
@@ -400,16 +529,79 @@ export async function PATCH(
     update.tracking_number = body.tracking_number?.trim() || null;
   }
 
-  // Fetch old data for audit log
-  const { data: oldOrder } = body.status
+  // Fetch old data for audit log. Also needed for the courier-fee delta below,
+  // which must know the fee/total/remaining it is adjusting — and for the
+  // customer status email, which must only fire on an actual TRANSITION (see
+  // the notify block after the write).
+  const needsOldOrder = Boolean(body.status) || body.shipping_fee !== undefined;
+  const { data: oldOrder } = needsOldOrder
     ? await supabase
         .from("orders")
         .select(
-          "status, paid_at, cancelled_at, cancelled_note, delivering_at, delivered_at, refunded_at, deposit_paid_at, payment_type"
+          "status, paid_at, cancelled_at, cancelled_note, delivering_at, delivered_at, refunded_at, returning_at, deposit_paid_at, payment_type, shipping_fee, total_price, deposit_amount, remaining_amount"
         )
         .eq("id", id)
         .single()
     : { data: null };
+
+  // Status the order is leaving, captured before the write below overwrites it.
+  const previousStatus = (oldOrder?.status ?? null) as string | null;
+
+  // ── Courier delivery fee ────────────────────────────────────────────────
+  // Courier tiers (carrier_4h / delivery_service) are created
+  // with a zero shipping_fee because the BE / Grab / Green SM rate is not
+  // knowable at checkout. Staff enter the real amount here once the parcel is
+  // booked; total_price and remaining_amount move by the same delta so the
+  // customer is not charged for a fee nobody quoted.
+  const shippingFeeRequested = body.shipping_fee !== undefined;
+  let shippingFeeChanged = false;
+
+  if (shippingFeeRequested) {
+    if (!oldOrder) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    // A settled order must keep the total it was paid against — changing the
+    // fee would silently rewrite history and skew revenue reporting.
+    if (oldOrder.status === "cancelled" || oldOrder.status === "refunded") {
+      return NextResponse.json(
+        {
+          error: `Cannot edit the delivery fee of a ${oldOrder.status} order`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const rawFee = Number(body.shipping_fee);
+    if (!Number.isFinite(rawFee) || rawFee < 0) {
+      return NextResponse.json(
+        { error: "shipping_fee must be a non-negative number" },
+        { status: 400 }
+      );
+    }
+
+    const oldFee = Number(oldOrder.shipping_fee ?? 0);
+    const nextFee = Math.min(Math.round(rawFee), MAX_COURIER_SHIPPING_FEE);
+    if (nextFee !== oldFee) {
+      const delta = nextFee - oldFee;
+      shippingFeeChanged = true;
+      update.shipping_fee = nextFee;
+      // Checkout charged the quoted total against this fee, so adjusting the
+      // fee has to move the total by exactly the same amount.
+      update.total_price = Number(oldOrder.total_price ?? 0) + delta;
+      // Deposit is a percentage of the item subtotal, not of the total, so it
+      // is unaffected by a delivery-fee change — only the balance moves.
+      if (oldOrder.remaining_amount !== null) {
+        update.remaining_amount = Math.max(
+          0,
+          update.total_price - Number(oldOrder.deposit_amount ?? 0)
+        );
+      }
+    }
+  }
 
   // Restore stock BEFORE updating status — the restoreOrderStock guard
   // checks current status to prevent double-restore; it must see the OLD
@@ -431,6 +623,17 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Email provider temporarily unavailable; order status changes still save.
+
+  // ── Notify the customer when the shipping picture changes ───────────────
+  // Courier tiers are ordered unquoted, so this email is how the customer finds
+  // out what they now owe. One combined email covers a fee change, a tracking
+  // number, or both — a fee edit and a tracking save in the same PATCH must not
+  // produce two mails. Purely informational: the order is already saved, and a
+  // Resend outage must not surface as a failed update to the operator.
+  // TODO(email): restore customer shipping notification when a replacement
+  // provider is configured. Shipping data still saves normally.
+
   // Log audit event
   if (body.status && oldOrder) {
     const newData: Record<string, unknown> = {};
@@ -449,70 +652,49 @@ export async function PATCH(
       },
       supabase
     );
+  } else if (shippingFeeChanged && oldOrder) {
+    // Fee-only edit — no status transition, so it gets its own audit action.
+    void logAuditEvent(
+      {
+        action: "order.update_shipping_fee",
+        entity_type: "orders",
+        entity_id: id,
+        old_data: oldOrder as unknown as Record<string, unknown>,
+        new_data: update as unknown as Record<string, unknown>,
+      },
+      supabase
+    );
   }
 
-  // Generate invoice when order is confirmed (fire-and-forget)
-  if (body.status === "confirmed") {
+  // Generate invoice once it's fully paid; on "delivered" regenerate it with
+  // the balance settled (fire-and-forget).
+  if (body.status === "delivered") {
+    void regenerateSettledInvoice(id);
+  } else if (body.status === "confirmed" || body.status === "second_paid") {
     void (async () => {
       try {
         const { data: order } = await supabase
           .from("orders")
           .select(
-            "order_number, total_price, shipping_fee, shipping_discount_amount, voucher_discount_amount, delivery_address, shipping_method_id, payment_type, deposit_percentage, deposit_amount, remaining_amount"
+            "order_number, status, payment_type, shipping_fee, shipping_discount_amount, voucher_discount_amount, delivery_address, shipping_method_id, total_price, deposit_percentage, deposit_amount, remaining_amount"
           )
           .eq("id", id)
           .single();
 
-        const { data: items } = await supabase
-          .from("order_items")
-          .select(
-            "product_name, quantity, unit_price, order_item_components(component_group, variant_name)"
-          )
-          .eq("order_id", id);
-
-        if (order && items && order.delivery_address) {
+        if (order && order.delivery_address) {
+          const items = await fetchInvoiceItems(id);
           const addr = order.delivery_address as Record<string, string | null>;
           const customerName = [addr.full_name, addr.phone_number]
             .filter(Boolean)
             .join(" - ");
-          const customerAddress = buildCustomerAddress(
-            order.delivery_address,
-            order.shipping_method_id
-          );
 
-          await generateAndStoreInvoice(id, {
-            orderNumber: order.order_number,
-            customerName: customerName || "Khách hàng",
-            customerAddress: customerAddress || "",
-            items: (items ?? []).map((i) => ({
-              name: i.product_name,
-              quantity: i.quantity,
-              unit_cost: Number(i.unit_price),
-              components: (i.order_item_components ?? []).map(
-                (c: { component_group: string; variant_name: string }) => ({
-                  component_group: c.component_group,
-                  variant_name: c.variant_name,
-                })
-              ),
-            })),
-            shippingFee: Number(order.shipping_fee ?? 0),
-            discount:
-              Number(order.shipping_discount_amount ?? 0) +
-              Number(order.voucher_discount_amount ?? 0),
-            total: Number(order.total_price),
-            paymentType: (order as Record<string, unknown>).payment_type as
-              | "full"
-              | "deposit_cod"
-              | undefined,
-            depositPercentage: (order as Record<string, unknown>)
-              .deposit_percentage as number | undefined,
-            depositAmount: (order as Record<string, unknown>).deposit_amount as
-              | number
-              | undefined,
-            balanceDue: (order as Record<string, unknown>).remaining_amount as
-              | number
-              | undefined,
-          });
+          await generateAndStoreInvoice(
+            id,
+            buildInvoiceInput(order as InvoiceOrderRow, {
+              customerName: customerName || "Khách hàng",
+              items,
+            })
+          );
         }
       } catch (invoiceErr) {
         console.error(
@@ -596,6 +778,19 @@ export async function PATCH(
     await invalidateProductCaches();
   }
 
+  // Order confirmation/cancellation/refund changes product availability/stock
+  // (confirmed seals reserved stock; cancel/refund restores it). Invalidate so
+  // /shop and product pages don't keep showing stale stock for the cache TTL.
+  if (
+    body.status === "confirmed" ||
+    body.status === "first_paid" ||
+    body.status === "second_paid" ||
+    body.status === "cancelled" ||
+    body.status === "refunded"
+  ) {
+    await invalidateProductCaches();
+  }
+
   // Earn store points when order is marked as delivered (fire-and-forget)
   if (body.status === "delivered") {
     void (async () => {
@@ -646,12 +841,59 @@ export async function PATCH(
     })();
   }
 
+  // Reverse NSP points earned on delivery when the order is refunded
+  // (fire-and-forget). Idempotent via reverse_point_transactions RPC.
+  if (body.status === "refunded") {
+    void (async () => {
+      try {
+        const { data: orderRow } = await supabase
+          .from("orders")
+          .select("user_id, order_number")
+          .eq("id", id)
+          .single();
+
+        if (!orderRow?.user_id) return;
+
+        // Resolve the acting admin for the RPC audit guard.
+        const authClient = await createServerClient();
+        const {
+          data: { user: adminUser },
+        } = await authClient.auth.getUser();
+        if (!adminUser) return;
+
+        await (
+          supabase.rpc as unknown as (
+            fn: string,
+            args: Record<string, unknown>
+          ) => Promise<{ data: unknown; error: unknown }>
+        )("reverse_point_transactions", {
+          p_admin_id: adminUser.id,
+          p_user_id: orderRow.user_id,
+          p_source_ref: id,
+          p_note: `Order #${orderRow.order_number} refunded`,
+        });
+      } catch (reverseErr) {
+        console.error(
+          `[orders] failed to reverse points for order ${id}:`,
+          reverseErr
+        );
+      }
+    })();
+  }
+
   // Send push notification to customer on status changes (fire-and-forget)
   if (
     body.status &&
-    ["confirmed", "delivering", "delivered", "cancelled", "refunded"].includes(
-      body.status
-    )
+    [
+      "confirmed",
+      "first_paid",
+      "second_paid",
+      "delivering",
+      "delivered",
+      "returning",
+      "cancelled",
+      "refunded",
+    ].includes(body.status)
   ) {
     void (async () => {
       try {
@@ -671,6 +913,14 @@ export async function PATCH(
           case "confirmed":
             title = "Xác nhận thanh toán";
             nbody = `Đơn hàng ${orderNum} đã được xác nhận thanh toán thành công với số tiền ${orderRow.total_price?.toLocaleString("vi-VN")}₫`;
+            break;
+          case "first_paid":
+            title = "Xác nhận đặt cọc";
+            nbody = `Đơn hàng ${orderNum} đã nhận được tiền đặt cọc (thanh toán lần 1).`;
+            break;
+          case "second_paid":
+            title = "Xác nhận thanh toán đủ";
+            nbody = `Đơn hàng ${orderNum} đã được thanh toán đầy đủ (thanh toán lần 2).`;
             break;
           case "delivering":
             title = `Đơn hàng ${orderNum} đang được vận chuyển`;
@@ -702,6 +952,10 @@ export async function PATCH(
             nbody = `Đơn hàng ${orderNum} đã được giao đến bạn.${pointsStr} Cảm ơn bạn đã tin tưởng và mua hàng ở NoobStore`;
             break;
           }
+          case "returning":
+            title = `Đơn hàng ${orderNum} đang chờ xác minh hoàn hàng`;
+            nbody = `Gói hàng ${orderNum} đang được cửa hàng xác minh. Tiền sẽ được hoàn về tài khoản sau khi xác minh thành công.`;
+            break;
           case "cancelled":
             title = `Đơn hàng ${orderNum} đã được hủy`;
             nbody = `Đơn hàng ${orderNum} đã được hủy. Với lí do: ${orderRow.cancelled_note ?? "Không có ghi chú"}`;

@@ -34,16 +34,16 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
-				<h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+				<h1 className="text-3xl font-bold text-slate-900 ">
 					Services
 				</h1>
-				<span className="text-sm text-slate-500 dark:text-slate-400">
+				<span className="text-sm text-slate-500 ">
 					{services.length} service(s)
 				</span>
 			</div>
 
 			{error && (
-				<div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+				<div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700   ">
 					Không thể tải danh sách dịch vụ.
 				</div>
 			)}
@@ -58,41 +58,41 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 						return (
 							<div
 								key={service.id}
-								className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow dark:border-slate-700 dark:bg-slate-800">
+								className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow  ">
 								{/* Service header */}
-								<div className="flex flex-wrap items-center gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-700 dark:bg-slate-900/50">
+								<div className="flex flex-wrap items-center gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4  ">
 									<div className="min-w-0 flex-1">
 										<div className="flex flex-wrap items-center gap-2">
-											<span className="font-semibold text-slate-900 dark:text-slate-100">
+											<span className="font-semibold text-slate-900 ">
 												{service.name}
 											</span>
 											<span
-												className={`${badgeBase} bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300`}>
+												className={`${badgeBase} bg-blue-100 text-blue-700  `}>
 												{service.service_type}
 											</span>
 											{service.service_section && (
 												<span
-													className={`${badgeBase} bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300`}>
+													className={`${badgeBase} bg-purple-100 text-purple-700  `}>
 													{service.service_section}
 												</span>
 											)}
 											<span
 												className={`${badgeBase} ${
 													service.is_active
-														? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
-														: "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+														? "bg-green-100 text-green-700  "
+														: "bg-gray-100 text-gray-500  "
 												}`}>
 												{service.is_active ? "Active" : "Inactive"}
 											</span>
 											{service.is_bookable_on_services_page && (
 												<span
-													className={`${badgeBase} bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300`}>
+													className={`${badgeBase} bg-teal-100 text-teal-700  `}>
 													Bookable
 												</span>
 											)}
 											{config && (
 												<span
-													className={`${badgeBase} bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300`}>
+													className={`${badgeBase} bg-amber-100 text-amber-700  `}>
 													Cấu hình riêng
 												</span>
 											)}
@@ -100,13 +100,13 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 									</div>
 									<div className="flex shrink-0 items-center gap-3 text-right">
 										<div>
-											<div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+											<div className="text-sm font-semibold text-slate-800 ">
 												{(
 													config?.base_price ?? service.base_price
 												).toLocaleString("vi-VN")}
 												₫
 											</div>
-											<div className="text-xs text-slate-500 dark:text-slate-400">
+											<div className="text-xs text-slate-500 ">
 												{config?.handling_days ??
 													service.handling_days}
 												&nbsp;ngày xử lý
@@ -130,7 +130,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 
 								{/* Options tree */}
 								{options.length > 0 ? (
-									<div className="divide-y divide-slate-100 dark:divide-slate-700/60">
+									<div className="divide-y divide-slate-100 ">
 										{options.map((option) => {
 											const values = [
 												...(option.service_option_values ?? []),
@@ -141,7 +141,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 											return (
 												<div key={option.id} className="px-5 py-3">
 													<div className="mb-2 flex items-center gap-2">
-														<span className="inline-block h-px w-3 bg-slate-300 dark:bg-slate-600" />
+														<span className="inline-block h-px w-3 bg-slate-300 " />
 														<button
 															onClick={() =>
 																setOptionModal({
@@ -150,7 +150,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 																	option,
 																})
 															}
-															className="text-sm font-medium text-slate-700 hover:text-blue-600 hover:underline dark:text-slate-300 dark:hover:text-blue-400">
+															className="text-sm font-medium text-slate-700 hover:text-blue-600 hover:underline  ">
 															{option.label}
 														</button>
 														{option.is_required && (
@@ -171,7 +171,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 																			value: val,
 																		})
 																	}
-																	className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
+																	className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 transition hover:bg-slate-200   ">
 																	{val.label}
 																	{val.price_adjustment !==
 																		0 && (
@@ -179,8 +179,8 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 																			className={
 																				val.price_adjustment >
 																				0
-																					? "text-green-600 dark:text-green-400"
-																					: "text-red-600 dark:text-red-400"
+																					? "text-green-600 "
+																					: "text-red-600 "
 																			}>
 																			{
 																				val.price_adjustment >
@@ -205,7 +205,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 																	})
 																}
 																title="Thêm giá trị"
-																className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs text-slate-500 transition hover:border-blue-400 hover:text-blue-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-blue-400">
+																className="inline-flex items-center gap-0.5 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-xs text-slate-500 transition hover:border-blue-400 hover:text-blue-600    ">
 																<Plus className="h-3 w-3" />
 																giá trị
 															</button>
@@ -215,13 +215,13 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 										})}
 									</div>
 								) : (
-									<div className="px-5 py-3 text-sm italic text-slate-400 dark:text-slate-500">
+									<div className="px-5 py-3 text-sm italic text-slate-400 ">
 										Chưa có tuỳ chọn nào
 									</div>
 								)}
 
 								{/* Add option footer */}
-								<div className="border-t border-slate-100 px-5 py-2.5 dark:border-slate-700/60">
+								<div className="border-t border-slate-100 px-5 py-2.5 ">
 									<button
 										onClick={() =>
 											setOptionModal({
@@ -230,7 +230,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 												option: null,
 											})
 										}
-										className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+										className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 transition hover:text-blue-700  ">
 										<Plus className="h-3.5 w-3.5" />
 										Thêm tuỳ chọn
 									</button>
@@ -241,7 +241,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 				</div>
 			) : (
 				!error && (
-					<div className="rounded-lg bg-white px-6 py-12 text-center text-slate-500 shadow dark:bg-slate-800 dark:text-slate-400">
+					<div className="rounded-lg bg-white px-6 py-12 text-center text-slate-500 shadow  ">
 						No services found
 					</div>
 				)

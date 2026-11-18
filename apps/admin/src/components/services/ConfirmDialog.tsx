@@ -29,17 +29,17 @@ export default function ConfirmDialog({
 				className="absolute inset-0 bg-black/50"
 				onClick={busy ? undefined : onClose}
 			/>
-			<div className="relative mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl dark:bg-slate-800">
+			<div className="relative mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-2xl ">
 				<button
 					onClick={onClose}
 					disabled={busy}
-					className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+					className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 ">
 					<X className="h-5 w-5" />
 				</button>
-				<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+				<h3 className="text-lg font-semibold text-slate-900 ">
 					{title}
 				</h3>
-				<p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+				<p className="mt-2 text-sm text-slate-500 ">
 					{message}
 				</p>
 				<div className="mt-5 flex justify-end gap-2">

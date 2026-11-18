@@ -56,6 +56,9 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   if (Object.prototype.hasOwnProperty.call(body, "stackable")) {
     sanitized.stackable = body.stackable;
   }
+  if (Object.prototype.hasOwnProperty.call(body, "auto_apply")) {
+    sanitized.auto_apply = Boolean(body.auto_apply);
+  }
   if (Object.prototype.hasOwnProperty.call(body, "applies_to_product_ids")) {
     sanitized.applies_to_product_ids = body.applies_to_product_ids;
   }

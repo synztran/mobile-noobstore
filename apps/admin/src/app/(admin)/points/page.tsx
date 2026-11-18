@@ -79,23 +79,23 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
 
 const SOURCE_COLORS: Record<string, string> = {
   order_delivered:
-    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    "bg-blue-100 text-blue-700  ",
   service_completed:
-    "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300",
+    "bg-cyan-100 text-cyan-700  ",
   gacha_reward:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    "bg-purple-100 text-purple-700  ",
   gacha_event:
-    "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
+    "bg-pink-100 text-pink-700  ",
   social_event:
-    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+    "bg-orange-100 text-orange-700  ",
   gift_card:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+    "bg-amber-100 text-amber-700  ",
   admin_adjustment:
-    "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
+    "bg-slate-100 text-slate-700  ",
   voucher_exchange:
-    "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    "bg-red-100 text-red-700  ",
   product_exchange:
-    "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    "bg-red-100 text-red-700  ",
 };
 
 function fmt(n: number) {
@@ -175,7 +175,7 @@ function TransactionsTab() {
               setSourceFilter("");
               setPage(1);
             }}
-            className="text-muted inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="text-muted inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm hover:bg-slate-100 "
           >
             <X className="h-3.5 w-3.5" /> Clear
           </button>
@@ -217,7 +217,7 @@ function TransactionsTab() {
                     <tr key={i}>
                       {Array.from({ length: 6 }).map((_, j) => (
                         <td key={j} className="px-5 py-3">
-                          <div className="h-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                          <div className="h-4 animate-pulse rounded bg-slate-200 " />
                         </td>
                       ))}
                     </tr>
@@ -241,7 +241,7 @@ function TransactionsTab() {
                       </td>
                       <td className="px-5 py-3 text-right">
                         <span
-                          className={`inline-flex items-center gap-1 text-sm font-bold tabular-nums ${tx.delta > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                          className={`inline-flex items-center gap-1 text-sm font-bold tabular-nums ${tx.delta > 0 ? "text-green-600 " : "text-red-600 "}`}
                         >
                           {tx.delta > 0 ? (
                             <ArrowUpCircle className="h-3.5 w-3.5" />
@@ -278,7 +278,7 @@ function TransactionsTab() {
 
         {!loading && transactions.length === 0 && (
           <div className="py-16 text-center">
-            <Coins className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
+            <Coins className="mx-auto mb-2 h-10 w-10 text-slate-300 " />
             <p className="text-muted text-sm">No transactions found</p>
           </div>
         )}
@@ -294,14 +294,14 @@ function TransactionsTab() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40 dark:hover:bg-slate-700"
+              className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40 "
             >
               <ChevronLeft className="h-4 w-4" /> Prev
             </button>
             <button
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40 dark:hover:bg-slate-700"
+              className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40 "
             >
               Next <ChevronRight className="h-4 w-4" />
             </button>
@@ -382,7 +382,7 @@ function RulesTab() {
               </h3>
               <button
                 onClick={() => setEditing(null)}
-                className="rounded-full p-1 hover:bg-slate-100 dark:hover:bg-slate-700"
+                className="rounded-full p-1 hover:bg-slate-100 "
               >
                 <X className="text-muted h-4 w-4" />
               </button>
@@ -450,7 +450,7 @@ function RulesTab() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setEditing(null)}
-                className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+                className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200  "
               >
                 Cancel
               </button>
@@ -497,7 +497,7 @@ function RulesTab() {
                   <tr key={i}>
                     {Array.from({ length: 6 }).map((_, j) => (
                       <td key={j} className="px-5 py-3">
-                        <div className="h-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                        <div className="h-4 animate-pulse rounded bg-slate-200 " />
                       </td>
                     ))}
                   </tr>
@@ -529,7 +529,7 @@ function RulesTab() {
                     </td>
                     <td className="px-5 py-3 text-center">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${rule.is_active ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"}`}
+                        className={`rounded-full px-2 py-0.5 text-xs font-semibold ${rule.is_active ? "bg-green-100 text-green-700  " : "bg-slate-100 text-slate-500  "}`}
                       >
                         {rule.is_active ? "Active" : "Inactive"}
                       </span>
@@ -537,7 +537,7 @@ function RulesTab() {
                     <td className="px-5 py-3 text-center">
                       <button
                         onClick={() => startEdit(rule)}
-                        className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                        className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200   "
                       >
                         <Pencil className="h-3 w-3" /> Edit
                       </button>
@@ -612,14 +612,14 @@ function CustomerSearchPicker({
         <span className="text-muted font-normal">(optional)</span>
       </label>
       {value ? (
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-700/50 dark:bg-amber-900/20">
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2  ">
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-amber-700 dark:text-amber-300">
+            <p className="truncate text-sm font-semibold text-amber-700 ">
               {results.find((r) => r.id === value)?.full_name ??
                 results.find((r) => r.id === value)?.email ??
                 ""}
             </p>
-            <p className="truncate text-xs text-amber-600/70 dark:text-amber-400/70">
+            <p className="truncate text-xs text-amber-600/70 ">
               {results.find((r) => r.id === value)?.email ?? value}
             </p>
           </div>
@@ -632,7 +632,7 @@ function CustomerSearchPicker({
               setQuery("");
               setOpen(false);
             }}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-amber-700 transition-colors hover:bg-amber-300 disabled:opacity-40 dark:bg-amber-800 dark:text-amber-200"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-200/60 text-amber-700 transition-colors hover:bg-amber-300 disabled:opacity-40  "
             title="Bỏ giới hạn"
           >
             <X className="h-3.5 w-3.5" />
@@ -651,7 +651,7 @@ function CustomerSearchPicker({
             className="input-base w-full rounded-lg border py-2 pl-9 pr-3 text-sm disabled:opacity-50"
           />
           {open && results.length > 0 && (
-            <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border table-border bg-surface-card card-shadow dark:bg-slate-800">
+            <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border table-border bg-surface-card card-shadow ">
               {results.map((r) => (
                 <button
                   key={r.id}
@@ -661,7 +661,7 @@ function CustomerSearchPicker({
                     setQuery("");
                     setOpen(false);
                   }}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-amber-50 dark:hover:bg-slate-700"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-amber-50 "
                 >
                   <span className="min-w-0">
                     <span className="block truncate font-medium text-heading">
@@ -811,7 +811,7 @@ function GiftCardsTab() {
                       key={c.code}
                       className="flex items-center justify-between gap-3"
                     >
-                      <code className="text-heading rounded bg-slate-100 px-2 py-0.5 font-mono text-sm dark:bg-slate-800">
+                      <code className="text-heading rounded bg-slate-100 px-2 py-0.5 font-mono text-sm ">
                         {c.code}
                       </code>
                       <span className="text-xs font-semibold text-amber-600">
@@ -822,7 +822,7 @@ function GiftCardsTab() {
                 </div>
                 <button
                   onClick={() => setShowCreate(false)}
-                  className="w-full rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+                  className="w-full rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200  "
                 >
                   Close
                 </button>
@@ -837,7 +837,7 @@ function GiftCardsTab() {
                   <button
                     type="button"
                     onClick={() => setShowCreate(false)}
-                    className="rounded-full p-1 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    className="rounded-full p-1 hover:bg-slate-100 "
                   >
                     <X className="text-muted h-4 w-4" />
                   </button>
@@ -929,7 +929,7 @@ function GiftCardsTab() {
                   <button
                     type="button"
                     onClick={() => setShowCreate(false)}
-                    className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+                    className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200  "
                   >
                     Cancel
                   </button>
@@ -988,7 +988,7 @@ function GiftCardsTab() {
                     <tr key={i}>
                       {Array.from({ length: 8 }).map((_, j) => (
                         <td key={j} className="px-5 py-3">
-                          <div className="h-4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+                          <div className="h-4 animate-pulse rounded bg-slate-200 " />
                         </td>
                       ))}
                     </tr>
@@ -1001,7 +1001,7 @@ function GiftCardsTab() {
                     return (
                       <tr key={card.id} className="table-row-hover">
                         <td className="px-5 py-3">
-                          <code className="text-heading rounded bg-slate-100 px-2 py-0.5 font-mono text-sm dark:bg-slate-800">
+                          <code className="text-heading rounded bg-slate-100 px-2 py-0.5 font-mono text-sm ">
                             {card.code}
                           </code>
                         </td>
@@ -1023,12 +1023,12 @@ function GiftCardsTab() {
                                   </p>
                                 </div>
                               ) : (
-                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700  ">
                                   Có hạn chế
                                 </span>
                               ))
                             : (
-                              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600  ">
                                 Chưa cấp
                               </span>
                             )}
@@ -1054,19 +1054,19 @@ function GiftCardsTab() {
                         </td>
                         <td className="px-5 py-3 text-center">
                           {isRedeemed ? (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500  ">
                               Used
                             </span>
                           ) : isExpired ? (
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-600  ">
                               Expired
                             </span>
                           ) : card.is_active ? (
-                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700  ">
                               Active
                             </span>
                           ) : (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-700">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 ">
                               Inactive
                             </span>
                           )}
@@ -1090,7 +1090,7 @@ function GiftCardsTab() {
 
         {!loading && cards.length === 0 && (
           <div className="py-16 text-center">
-            <Gift className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
+            <Gift className="mx-auto mb-2 h-10 w-10 text-slate-300 " />
             <p className="text-muted text-sm">No gift cards yet</p>
           </div>
         )}
@@ -1106,14 +1106,14 @@ function GiftCardsTab() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40 dark:hover:bg-slate-700"
+              className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40 "
             >
               <ChevronLeft className="h-4 w-4" /> Prev
             </button>
             <button
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40 dark:hover:bg-slate-700"
+              className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-40 "
             >
               Next <ChevronRight className="h-4 w-4" />
             </button>
@@ -1153,14 +1153,14 @@ export default function PointsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex gap-1 border-b border-slate-200 ">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}
             className={`inline-flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
               tab === id
-                ? "border-amber-500 text-amber-600 dark:text-amber-400"
+                ? "border-amber-500 text-amber-600 "
                 : "text-muted hover:text-body border-transparent"
             }`}
           >

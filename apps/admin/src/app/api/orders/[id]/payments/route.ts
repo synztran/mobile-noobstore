@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   let body;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
   if (!body || typeof body !== "object" || body.verified !== true ||
-      typeof body.reference !== "string" || body.reference.length > 100 ||
+      typeof body.reference !== "string" || body.reference.trim().length < 3 || body.reference.length > 100 ||
       typeof body.note !== "string" || body.note.length > 1000 ||
       typeof body.receivedAt !== "string" || !Number.isFinite(Date.parse(body.receivedAt)) ||
       (body.reversalOf ? !uuid.test(body.reversalOf) :
@@ -41,7 +41,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { data, error } = await (db.rpc as any)("record_verified_order_payment", {
     p_order_id: id, p_admin_id: auth.user!.id, p_amount: body.reversalOf ? 0 : body.amount,
     p_method: body.method, p_receiving_account: body.bankId || null,
-    p_reference: body.reference.trim().toUpperCase(), p_received_at: new Date(body.receivedAt).toISOString(),
+    p_reference: body.reference.trim().toUpperCase(),
+    p_received_at: new Date(body.receivedAt).toISOString(),
     p_note: body.note.trim(), p_reversal_of: body.reversalOf || null,
   });
   if (error) {

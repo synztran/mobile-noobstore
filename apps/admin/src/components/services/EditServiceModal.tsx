@@ -104,13 +104,13 @@ export default function EditServiceModal({
 	return (
 		<div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
 			<div className="absolute inset-0 bg-black/50" />
-			<div className="relative mx-4 flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl bg-white shadow-2xl dark:bg-slate-800">
-				<div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
+			<div className="relative mx-4 flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl bg-white shadow-2xl ">
+				<div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 ">
 					<div>
-						<h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+						<h2 className="text-lg font-semibold text-slate-900 ">
 							Sửa thông tin dịch vụ
 						</h2>
-						<p className="text-sm text-slate-500 dark:text-slate-400">
+						<p className="text-sm text-slate-500 ">
 							{service.name}
 						</p>
 					</div>
@@ -124,13 +124,13 @@ export default function EditServiceModal({
 				<form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
 					<div className="flex-1 space-y-4 overflow-y-auto p-6">
 						{error && (
-							<div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+							<div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700   ">
 								{error}
 							</div>
 						)}
 
 						<div>
-							<label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+							<label className="mb-1 block text-sm font-medium text-slate-700 ">
 								Tên dịch vụ *
 							</label>
 							<input
@@ -143,7 +143,7 @@ export default function EditServiceModal({
 						</div>
 
 						<div>
-							<label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+							<label className="mb-1 block text-sm font-medium text-slate-700 ">
 								Slug
 							</label>
 							<input
@@ -156,7 +156,7 @@ export default function EditServiceModal({
 						</div>
 
 						<div>
-							<label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+							<label className="mb-1 block text-sm font-medium text-slate-700 ">
 								Mô tả
 							</label>
 							<textarea
@@ -169,7 +169,7 @@ export default function EditServiceModal({
 
 						<div className="grid grid-cols-2 gap-4">
 							<div>
-								<label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+								<label className="mb-1 block text-sm font-medium text-slate-700 ">
 									Loại dịch vụ (service_type)
 								</label>
 								<input
@@ -180,7 +180,7 @@ export default function EditServiceModal({
 								/>
 							</div>
 							<div>
-								<label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+								<label className="mb-1 block text-sm font-medium text-slate-700 ">
 									Nhóm hiển thị (section)
 								</label>
 								<select
@@ -236,7 +236,7 @@ export default function EditServiceModal({
 									checked={isActive}
 									onChange={(e) => setIsActive(e.target.checked)}
 								/>
-								<span className="text-sm text-slate-700 dark:text-slate-300">
+								<span className="text-sm text-slate-700 ">
 									Đang hoạt động
 								</span>
 							</label>
@@ -247,14 +247,14 @@ export default function EditServiceModal({
 									checked={isBookable}
 									onChange={(e) => setIsBookable(e.target.checked)}
 								/>
-								<span className="text-sm text-slate-700 dark:text-slate-300">
+								<span className="text-sm text-slate-700 ">
 									Bookable trên storefront
 								</span>
 							</label>
 						</div>
 					</div>
 
-					<div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 px-6 py-4 dark:border-slate-700">
+					<div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 px-6 py-4 ">
 						<button type="button" onClick={onClose} className="btn btn-ghost">
 							Huỷ
 						</button>

@@ -3,12 +3,35 @@ import CreateVoucherModal from "@/components/vouchers/CreateVoucherModal";
 import InactivateVoucherModal from "@/components/vouchers/InactivateVoucherModal";
 import UpdateVoucherModal from "@/components/vouchers/UpdateVoucherModal";
 import Link from "next/link";
+import { Gift, Ticket } from "lucide-react";
 
 export const metadata = {
   title: "Vouchers - NoobStore Admin",
 };
 
 const PAGE_SIZE = 20;
+
+/** Human-readable discount cell for the vouchers table. */
+function formatVoucherDiscount(voucher: {
+  reward_type: string;
+  amount_off: number | null;
+  percent_off: number | null;
+}): string {
+  switch (voucher.reward_type) {
+    case "percent_off":
+      return `${voucher.percent_off}%`;
+    case "shipping_percent_off":
+      return `${voucher.percent_off}% ship`;
+    case "amount_off":
+      return `${(voucher.amount_off ?? 0).toLocaleString("vi-VN")}₫`;
+    case "shipping_amount_off":
+      return `${(voucher.amount_off ?? 0).toLocaleString("vi-VN")}₫ ship`;
+    case "free_shipping":
+      return "Free ship";
+    default:
+      return voucher.reward_type;
+  }
+}
 
 export default async function VouchersPage(props: {
   searchParams: Promise<{ search?: string; status?: string; page?: string }>;
@@ -20,11 +43,12 @@ export default async function VouchersPage(props: {
 
   const supabase = getAdminClient();
 
-  let query = supabase
+  let query = (supabase as any)
     .from("vouchers")
     .select(
       `
 			id,
+			source_type,
 			name,
 			code,
 			description,
@@ -35,6 +59,7 @@ export default async function VouchersPage(props: {
 			usage_limit_per_user,
 			min_order_amount,
 			stackable,
+			auto_apply,
 			scope_type,
 			applies_to_product_ids,
 			applies_to_category_slugs,
@@ -166,6 +191,9 @@ export default async function VouchersPage(props: {
                 Status
               </th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">
+                Auto
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">
                 Created
               </th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">
@@ -184,14 +212,10 @@ export default async function VouchersPage(props: {
                     {voucher.code}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
-                    {voucher.name}
+                    <span className="inline-flex items-center gap-2">{voucher.source_type === "event" ? <Gift size={15} className="text-amber-600" aria-label="Voucher sự kiện"/> : <Ticket size={15} className="text-slate-500" aria-label="Voucher thường"/>}{voucher.name}</span>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
-                    {voucher.reward_type === "percent_off"
-                      ? `${voucher.percent_off}%`
-                      : voucher.reward_type === "amount_off"
-                        ? `${(voucher.amount_off ?? 0).toLocaleString("vi-VN")}₫`
-                        : voucher.reward_type}
+                    {formatVoucherDiscount(voucher)}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
                     {voucher.used_count || 0} /{" "}
@@ -209,6 +233,17 @@ export default async function VouchersPage(props: {
                     >
                       {voucher.status}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    {voucher.auto_apply ? (
+                      <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800">
+                        Auto
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 text-xs text-slate-300">
+                        —
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
                     {new Date(voucher.created_at).toLocaleDateString("vi-VN")}

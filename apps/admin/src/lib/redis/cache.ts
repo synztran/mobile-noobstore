@@ -1,5 +1,57 @@
 import { getRedis } from "./client";
 
+// The shared web lib owns the full-surface (v2-prefixed) product key set so
+// both apps sweep the exact same keys — keeping it in the web lib avoids the
+// historical v1/v2 drift where admin patterns never matched.
+export { invalidateCacheByPattern } from "@web-cache";
+import { invalidateProductCaches as invalidateProductCachesWeb } from "@web-cache";
+
+// Admin and web are separate Next runtimes sharing one Upstash Redis: the
+// Redis sweep below clears the REST-level cache, but revalidateTag() called
+// inside admin only marks admin's own entries. The web app's
+// unstable_cache({ tags: ["products"] }) results and the ISR'd /shop/[slug]
+// pages need an explicit purge on the web side — bridge over HTTP after
+// every product mutation so both apps drop stale data in lockstep.
+const WEB_REVALIDATE_URL = (
+	process.env.WEB_APP_URL ?? "https://www.noobstore.xyz"
+).replace(/\/$/, "") + "/api/cache/revalidate";
+
+async function notifyWebRevalidate(): Promise<void> {
+	const secret = process.env.NOTIFICATION_INTERNAL_SECRET;
+	if (!secret) return;
+	try {
+		await fetch(WEB_REVALIDATE_URL, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"x-internal-secret": secret,
+			},
+			body: JSON.stringify({ tags: ["products"] }),
+			cache: "no-store",
+			signal: AbortSignal.timeout(5_000),
+		});
+	} catch (err) {
+		// Non-fatal: worst case the web cache self-heals within its revalidate
+		// window. Logged, not swallowed — a failed purge means the storefront
+		// serves stale stock for up to a full TTL, which presents as a data bug
+		// ("listing says sold out, product page says available") and is very
+		// hard to diagnose without this line.
+		console.warn(
+			`[admin/cache] failed to notify web revalidate (${WEB_REVALIDATE_URL}) — storefront may serve stale product data:`,
+			err,
+		);
+	}
+}
+
+/**
+ * Full-surface product invalidation: sweeps the shared Redis key set AND
+ * tells the web app to revalidate its tagged Data Cache / ISR entries.
+ */
+export async function invalidateProductCaches(): Promise<void> {
+	await invalidateProductCachesWeb();
+	await notifyWebRevalidate();
+}
+
 function redis() {
 	return getRedis();
 }
@@ -37,42 +89,13 @@ export async function invalidateCache(...keys: string[]): Promise<void> {
 	}
 }
 
-export async function invalidateCacheByPattern(pattern: string): Promise<void> {
-	try {
-		const keys = await redis().keys(pattern);
-		if (keys.length > 0) {
-			await redis().del(...keys);
-		}
-	} catch {
-		// non-fatal
-	}
-}
-
+/**
+ * Narrower invalidation used by the admin "clear products cache" flow:
+ * product list + quick-pick only. `invalidateProductCaches()` is the
+ * full-surface variant.
+ */
 export async function invalidateProductsCache(): Promise<void> {
-	// `products:*` covers list/ssr keys; quick-pick is cleared here too because
-	// the kit configurator feeds off `/api/products/quick-pick` (route-level key
-	// `quick-pick:*`) and server components (self-cached `v2:quick-pick:*`).
 	await Promise.all([
-		invalidateCacheByPattern("products:*"),
-		invalidateCacheByPattern("quick-pick:*"),
-		invalidateCacheByPattern("v2:quick-pick:*"),
-	]);
-}
-
-export async function invalidateProductCaches(): Promise<void> {
-	await invalidateCache("categories", "v1:product-seo-data");
-	await Promise.all([
-		invalidateCacheByPattern("products:*"),
-		invalidateCacheByPattern("v1:product:slug:*"),
-		invalidateCacheByPattern("v1:product-detail:*"),
-		invalidateCacheByPattern("v1:related-products:*"),
-		invalidateCacheByPattern("v1:fbt:*"),
-		invalidateCacheByPattern("v1:purchase-count:*"),
-		invalidateCacheByPattern("quick-pick:*"),
-		invalidateCacheByPattern("v2:quick-pick:*"),
-		invalidateCacheByPattern("v1:noteworthy:*"),
-		invalidateCacheByPattern("v1:sale-products:*"),
-		invalidateCacheByPattern("v1:newest-products:*"),
-		invalidateCacheByPattern("v1:search:suggestions:*"),
+		invalidateProductCaches(),
 	]);
 }

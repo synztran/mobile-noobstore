@@ -2,12 +2,23 @@
 
 import { Trash2, Plus, AlertCircle } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import PriceOverrideFields, {
+  formatVND,
+  parseOverride,
+  type OverrideDrafts,
+} from "@/components/rules/PriceOverrideFields";
+import {
+  effectiveContribution,
+  kitPriceOverrides,
+  resolveKitUnitPrice,
+} from "@web-kit-pricing";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface Variant {
   id: string;
   variant_name: string;
+  price_adjustment: number;
 }
 
 interface ComponentProduct {
@@ -27,6 +38,7 @@ interface ComponentLink {
 
 interface KitDetail {
   id: string;
+  base_price: number;
   product_variants: Variant[];
   product_components: ComponentLink[];
 }
@@ -36,6 +48,8 @@ interface Rule {
   condition_variant_id: string;
   target_component_product_id: string;
   allowed_variant_ids: string[];
+  /** Additive contribution overrides keyed by allowed component variant id. */
+  price_overrides: Record<string, number | null>;
 }
 
 // ─── Props ─────────────────────────────────────────────────────────────────────
@@ -60,6 +74,20 @@ export default function ComponentRulesEditor({ kitProductId }: Props) {
   const [conditionVariantId, setConditionVariantId] = useState("");
   const [targetComponentProductId, setTargetComponentProductId] = useState("");
   const [allowedVariantIds, setAllowedVariantIds] = useState<string[]>([]);
+  /**
+   * Draft overrides for the new-rule form, keyed by allowed variant id.
+   * Kept as strings so a blank field means "inherit the variant's own
+   * price_adjustment" (NULL) while "0" stays a real override.
+   */
+  const [overrideDrafts, setOverrideDrafts] = useState<OverrideDrafts>({});
+  /**
+   * Draft edits to saved rules' overrides, keyed by `${ruleId}:${variantId}`.
+   * Kept apart from `rules` so a half-typed value is never persisted by accident
+   * — each field needs an explicit Save.
+   */
+  const [ruleOverrideDrafts, setRuleOverrideDrafts] = useState<OverrideDrafts>(
+    {}
+  );
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -106,6 +134,19 @@ export default function ComponentRulesEditor({ kitProductId }: Props) {
         ? prev.filter((id) => id !== variantId)
         : [...prev, variantId]
     );
+    setOverrideDrafts((prev) => {
+      const next = { ...prev };
+      delete next[variantId];
+      return next;
+    });
+  };
+
+  const setOverrideDraft = (variantId: string, value: string) => {
+    setOverrideDrafts((prev) => ({ ...prev, [variantId]: value }));
+  };
+
+  const setRuleOverrideDraft = (fieldKey: string, value: string) => {
+    setRuleOverrideDrafts((prev) => ({ ...prev, [fieldKey]: value }));
   };
 
   const handleAddRule = async () => {
@@ -131,6 +172,12 @@ export default function ComponentRulesEditor({ kitProductId }: Props) {
           condition_variant_id: conditionVariantId,
           target_component_product_id: targetComponentProductId,
           allowed_variant_ids: allowedVariantIds,
+          price_overrides: Object.fromEntries(
+            allowedVariantIds.map((id) => [
+              id,
+              parseOverride(overrideDrafts[id]),
+            ])
+          ),
         }),
       });
       if (!res.ok) {
@@ -142,6 +189,39 @@ export default function ComponentRulesEditor({ kitProductId }: Props) {
       setConditionVariantId("");
       setTargetComponentProductId("");
       setAllowedVariantIds([]);
+      setOverrideDrafts({});
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveOverrides = async (
+    ruleId: string,
+    overrides: Record<string, number | null>
+  ) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/component-rules", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ruleId, price_overrides: overrides }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to save price overrides");
+      }
+      // Drop this rule's drafts so the inputs re-seed from the saved values.
+      setRuleOverrideDrafts((prev) => {
+        const next: Record<string, string> = {};
+        for (const [k, v] of Object.entries(prev)) {
+          if (!k.startsWith(`${ruleId}:`)) next[k] = v;
+        }
+        return next;
+      });
       await fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -189,6 +269,75 @@ export default function ComponentRulesEditor({ kitProductId }: Props) {
     return comp?.products.name ?? productId;
   };
 
+  const findVariant = (variantId: string): Variant | null => {
+    if (!kit) return null;
+    const own = kit.product_variants.find((v) => v.id === variantId);
+    if (own) return own;
+    for (const comp of kit.product_components) {
+      const cv = comp.products.product_variants.find((v) => v.id === variantId);
+      if (cv) return cv;
+    }
+    return null;
+  };
+
+  /**
+   * What the kit line costs for the minimum legal choice under a rule:
+   * kit base + kit variant adjustment + every component group's cheapest
+   * contribution (using this rule's override for its target group).
+   */
+  const rulePricePreview = (rule: Rule): number | null => {
+    if (!kit) return null;
+
+    // Pick the cheapest legal variant per component group, then let the shared
+    // resolver do the arithmetic. This used to re-derive the formula here, which
+    // is how the admin preview drifted from the storefront's real price.
+    const overrides = kitPriceOverrides([rule], rule.condition_variant_id);
+    const counted = new Set<string>();
+    const components: Array<{
+      variant_id: string;
+      price_adjustment: number;
+    }> = [];
+
+    for (const comp of kit.product_components) {
+      const productId = comp.component_product_id;
+      if (counted.has(productId)) continue;
+      counted.add(productId);
+
+      const candidates =
+        productId === rule.target_component_product_id
+          ? rule.allowed_variant_ids
+              .map((id) => findVariant(id))
+              .filter((v): v is Variant => v !== null)
+          : comp.products.product_variants;
+      if (candidates.length === 0) continue;
+
+      const cheapest = candidates.reduce((best, v) =>
+        effectiveContribution(overrides[v.id], v) <
+        effectiveContribution(overrides[best.id], best)
+          ? v
+          : best
+      );
+      components.push({
+        variant_id: cheapest.id,
+        price_adjustment: cheapest.price_adjustment,
+      });
+    }
+
+    return resolveKitUnitPrice({
+      basePrice: kit.base_price,
+      // The condition variant is itself one of the selected components when the
+      // rule is keyed on a component variant (which is how every live rule is
+      // authored), so it must not be added twice.
+      kitVariant: kit.product_variants.some(
+        (v) => v.id === rule.condition_variant_id
+      )
+        ? findVariant(rule.condition_variant_id)
+        : null,
+      components,
+      overrides,
+    }).unitPrice;
+  };
+
   // ── Render ────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -229,39 +378,76 @@ export default function ComponentRulesEditor({ kitProductId }: Props) {
           {rules.map((rule) => (
             <li
               key={rule.id}
-              className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
             >
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-slate-800">
-                  When{" "}
-                  <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs text-blue-800">
-                    {getVariantName(rule.condition_variant_id)}
-                  </span>{" "}
-                  is selected
-                </p>
-                <p className="mt-0.5 text-slate-600">
-                  <span className="font-medium">
-                    {getComponentProductName(rule.target_component_product_id)}
-                  </span>{" "}
-                  restricted to:{" "}
-                  {rule.allowed_variant_ids.map((vid) => (
-                    <span
-                      key={vid}
-                      className="mr-1 inline-block rounded bg-green-100 px-1.5 py-0.5 font-mono text-xs text-green-800"
-                    >
-                      {getVariantName(vid)}
-                    </span>
-                  ))}
-                </p>
+              <div className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-slate-800">
+                    When{" "}
+                    <span className="rounded bg-blue-100 px-1.5 py-0.5 font-mono text-xs text-blue-800">
+                      {getVariantName(rule.condition_variant_id)}
+                    </span>{" "}
+                    is selected
+                  </p>
+                  <p className="mt-0.5 text-slate-600">
+                    <span className="font-medium">
+                      {getComponentProductName(
+                        rule.target_component_product_id
+                      )}
+                    </span>{" "}
+                    restricted to:
+                  </p>
+                  {rulePricePreview(rule) !== null && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Cheapest legal build:{" "}
+                      <span className="font-semibold text-slate-700">
+                        {formatVND(rulePricePreview(rule)!)}
+                      </span>
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => handleDeleteRule(rule.id)}
+                  className="mt-0.5 flex-shrink-0 text-red-400 transition-colors hover:text-red-600 disabled:opacity-40"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => handleDeleteRule(rule.id)}
-                className="mt-0.5 flex-shrink-0 text-red-400 transition-colors hover:text-red-600 disabled:opacity-40"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+
+              {/* Per-variant additive contribution. Blank = inherit the
+                  component variant's own price_adjustment. */}
+              <div className="mt-2 border-t border-slate-200 pt-2">
+                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Price overrides
+                </p>
+                <PriceOverrideFields
+                  variants={rule.allowed_variant_ids
+                    .map((vid) => findVariant(vid))
+                    .filter((v): v is Variant => v !== null)}
+                  drafts={Object.fromEntries(
+                    rule.allowed_variant_ids.flatMap((vid) => {
+                      const key = `${rule.id}:${vid}`;
+                      return ruleOverrideDrafts[key] !== undefined
+                        ? [[vid, ruleOverrideDrafts[key]]]
+                        : [];
+                    })
+                  )}
+                  savedOverrides={rule.price_overrides ?? {}}
+                  disabled={saving}
+                  onChange={(vid, value) =>
+                    setRuleOverrideDraft(`${rule.id}:${vid}`, value)
+                  }
+                  onSave={(vid) => {
+                    const next: Record<string, number | null> = {};
+                    next[vid] = parseOverride(
+                      ruleOverrideDrafts[`${rule.id}:${vid}`] ?? ""
+                    );
+                    void handleSaveOverrides(rule.id, next);
+                  }}
+                />
+              </div>
             </li>
           ))}
         </ul>
@@ -384,6 +570,49 @@ export default function ComponentRulesEditor({ kitProductId }: Props) {
                             </button>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Optional price overrides for the ticked variants */}
+                    {allowedVariantIds.length > 0 && (
+                      <div className="mt-3 space-y-1.5 rounded-lg border border-slate-200 bg-white p-3">
+                        <label className="block text-xs font-medium text-slate-600">
+                          Price overrides (optional) — what each variant ADDS to
+                          the kit
+                        </label>
+                        {allowedVariantIds.map((vid) => {
+                          const v = targetProduct.product_variants.find(
+                            (x) => x.id === vid
+                          );
+                          if (!v) return null;
+                          return (
+                            <div
+                              key={vid}
+                              className="flex items-center gap-2 text-xs"
+                            >
+                              <span className="min-w-0 flex-1 truncate font-mono text-slate-700">
+                                {v.variant_name}
+                              </span>
+                              <span className="text-slate-400">
+                                own {formatVND(v.price_adjustment)}
+                              </span>
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                placeholder={String(v.price_adjustment)}
+                                value={overrideDrafts[vid] ?? ""}
+                                onChange={(e) =>
+                                  setOverrideDraft(vid, e.target.value)
+                                }
+                                className="w-24 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          );
+                        })}
+                        <p className="text-[11px] leading-snug text-slate-400">
+                          Blank uses the variant&apos;s own price. &quot;0&quot;
+                          makes it free in this pairing.
+                        </p>
                       </div>
                     )}
                   </div>

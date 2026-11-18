@@ -87,7 +87,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
       : null;
     const stock_quantity = fd.get("stock_quantity")
       ? Number(fd.get("stock_quantity"))
-      : null;
+      : 0;
 
     const res = await fetch("/api/variants", {
       method: "POST",
@@ -286,9 +286,11 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
               <NumberInput
                 name="stock_quantity"
                 min={0}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
                 placeholder="0"
-                label="Stock Quantity (leave empty for unlimited)"
+                label="Stock Quantity"
+                subLabel="Nhập kho qua Warehouse Inbound"
               />
             </div>
 
@@ -360,6 +362,7 @@ export default function CreateVariantModal({ open, onClose, products }: Props) {
               label="Thumbnail"
               value={thumbnail}
               onChange={setThumbnail}
+              allowProcessBackground
             />
 
             {/* Tình trạng (condition) */}

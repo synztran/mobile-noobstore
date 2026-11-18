@@ -1,14 +1,19 @@
 "use client";
 
-import { Tag, X } from "lucide-react";
+import { AlertTriangle, Tag, X } from "lucide-react";
 import OrderActionBar from "./OrderActionBar";
 import OrderCustomerInfoCard from "./OrderCustomerInfoCard";
 import OrderItemsList from "./OrderItemsList";
+import OrderPaymentQrSection from "./OrderPaymentQrSection";
 import OrderShippingDetails from "./OrderShippingDetails";
 import OrderServicesList from "./OrderServicesList";
 import OrderStatusIndicator from "./OrderStatusIndicator";
 import OrderTimeline from "./OrderTimeline";
 import ShippingTrackingSection from "./ShippingTrackingSection";
+import {
+  hasUnquotedShippingFee,
+  isPickupShippingMethod,
+} from "@/lib/shipping-method";
 
 interface KitComponent {
   id: string;
@@ -27,6 +32,8 @@ interface OrderItem {
   quantity: number;
   unit_price: number;
   thumbnail: string | null;
+  is_pre_order: boolean;
+  pre_order_config: unknown;
   order_item_components: KitComponent[];
   pre_order_tracking: unknown;
   gifts?: {
@@ -61,7 +68,16 @@ export interface IOrderDetailUser {
 export interface OrderDetail {
   id: string;
   order_number: string;
-  status: "pending" | "confirmed" | "delivering" | "delivered" | "refunded";
+  status:
+    | "pending"
+    | "confirmed"
+    | "first_paid"
+    | "second_paid"
+    | "delivering"
+    | "delivered"
+    | "returning"
+    | "refunded"
+    | "cancelled";
   total_price: number;
   shipping_fee: number | null;
   payment_type?: "full" | "deposit_cod";
@@ -72,6 +88,10 @@ export interface OrderDetail {
   shipping_method_id: string | null;
   expected_delivery_at: string | null;
   pickup_at: string | null;
+  pickup_code_expires_at: string | null;
+  pickup_code_tries: number;
+  pickup_code_locked_until: string | null;
+  pickup_verified_at: string | null;
   tracking_carrier_id: string | null;
   tracking_number: string | null;
   carriers: {
@@ -116,6 +136,8 @@ export interface OrderDetail {
   cancelled_note: string | null;
   paid_at: string | null;
   refunded_at: string | null;
+  returning_at: string | null;
+  returning_reason: string | null;
   delivering_at: string | null;
   delivered_at: string | null;
   users: IOrderDetailUser | null;
@@ -212,9 +234,12 @@ function OrderPriceSummary({ order }: { order: OrderDetail }) {
         <div className="flex justify-between text-sm text-slate-600">
           <span>Delivery</span>
           <span className="font-medium text-slate-800">
-            {order.shipping_fee !== null
-              ? `${order.shipping_fee.toLocaleString("vi-VN")}₫`
-              : "—"}
+            {hasUnquotedShippingFee(
+              order.shipping_method_id,
+              order.shipping_fee
+            )
+              ? "Cập nhật sau"
+              : `${(order.shipping_fee ?? 0).toLocaleString("vi-VN")}₫`}
           </span>
         </div>
 
@@ -354,6 +379,27 @@ export default function OrderDetailModal({
                 phoneNumber={order.users?.phone_number}
               />
 
+              {/* Returning warning badge */}
+              {order.status === "returning" && (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <div className="text-xs text-amber-800">
+                    <p className="font-semibold">
+                      Order has an issue and needs returning verification.
+                    </p>
+                    <p className="mt-0.5">
+                      Verify the package before issuing a refund. Stock and
+                      points will be reversed once the order is refunded.
+                    </p>
+                    {order.returning_reason && (
+                      <p className="mt-1.5 italic text-amber-700">
+                        Reason: {order.returning_reason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* <OrderStatusIndicator
                 status={order.status}
                 paidAt={order.paid_at}
@@ -448,12 +494,15 @@ export default function OrderDetailModal({
               cancelledAt={order.cancelled_at}
               cancelledNote={order.cancelled_note}
               refundedAt={order.refunded_at}
+              returningAt={order.returning_at ?? null}
               status={order.status}
               updatedAt={order.updated_at}
               depositPaidAt={order.deposit_paid_at}
               paymentType={order.payment_type}
+              isPickup={isPickupShippingMethod(order.shipping_method_id)}
             />
             <OrderPriceSummary order={order} />
+            <OrderPaymentQrSection orderId={order.id} />
           </div>
         </div>
       </div>

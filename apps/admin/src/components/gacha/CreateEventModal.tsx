@@ -16,16 +16,25 @@ export function CreateEventModal({ onClose, onCreated }: Props) {
     description: string;
     start_at: string;
     end_at: string;
+    is_active: boolean;
     free_tokens_per_grant: number | null;
     free_token_interval_days: number | null;
+    theme: string;
   }>({
     name: "",
     description: "",
     start_at: "",
     end_at: "",
+    is_active: false,
     free_tokens_per_grant: 3,
     free_token_interval_days: 1,
+    theme: "classic",
   });
+
+  const THEMES = [
+    { value: "classic", label: "Classic (màu trắng)" },
+    { value: "ga2", label: "Mega Arcade (đèn neon + hốc kính hồng)" },
+  ] as const;
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -33,8 +42,7 @@ export function CreateEventModal({ onClose, onCreated }: Props) {
     setSaving(true);
     const res = await fetch("/api/gacha/events", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      headers: { "Content-Type": "application/json" },        body: JSON.stringify({
         ...form,
         start_at: new Date(form.start_at).toISOString(),
         end_at: new Date(form.end_at).toISOString(),
@@ -55,7 +63,7 @@ export function CreateEventModal({ onClose, onCreated }: Props) {
           <h2 className="text-heading text-lg font-bold">Create Gacha Event</h2>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 "
           >
             <X className="text-muted h-5 w-5" />
           </button>
@@ -74,6 +82,23 @@ export function CreateEventModal({ onClose, onCreated }: Props) {
               className="input-base w-full rounded-lg border px-3 py-2 text-sm"
               placeholder="Summer Lucky Draw"
             />
+          </div>
+
+          <div>
+            <label className="text-body mb-1 block text-sm font-medium">
+              Theme
+            </label>
+            <select
+              value={form.theme}
+              onChange={(e) => setForm({ ...form, theme: e.target.value })}
+              className="input-base w-full rounded-lg border px-3 py-2 text-sm"
+            >
+              {THEMES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <RichTextEditor
@@ -131,7 +156,7 @@ export function CreateEventModal({ onClose, onCreated }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="text-body rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+              className="text-body rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium transition-colors hover:bg-slate-200  "
             >
               Cancel
             </button>

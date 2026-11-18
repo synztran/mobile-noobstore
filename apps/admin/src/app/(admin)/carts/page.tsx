@@ -84,7 +84,7 @@ interface Props {
 }
 
 export default async function CartsPage({ searchParams }: Props) {
-	const { q = "", by = "user", status = "", page, sort: sortBy = "", dir = "asc" } = await searchParams;
+	const { q = "", by = "user", status = "", page, sort: sortBy = "updated_at", dir = "desc" } = await searchParams;
 	const currentPage = Math.max(1, parseInt(page ?? "1", 10));
 	const supabase = getAdminClient();
 
@@ -166,14 +166,20 @@ export default async function CartsPage({ searchParams }: Props) {
 			.not("user_id", "is", null)
 			.gte("updated_at", cutoffDate);
 		if (usersWithOrdersArray.length > 0) {
-			query = query.not("user_id", "in", usersWithOrdersArray);
+			query = query.not("user_id", "in", `(${usersWithOrdersArray.join(",")})`);
 		}
 	}
 
 	if (sortBy === "updated_at" || sortBy === "created_at") {
-		query = query.order(sortBy, { ascending: dir !== "desc" });
+		query = query.order(sortBy, {
+			ascending: dir !== "desc",
+			nullsFirst: false,
+		});
 	} else {
-		query = query.order("user_id", { ascending: dir !== "desc" });
+		query = query.order("user_id", {
+			ascending: dir !== "desc",
+			nullsFirst: false,
+		});
 	}
 
 	query = query.range(

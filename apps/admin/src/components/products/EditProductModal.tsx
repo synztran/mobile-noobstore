@@ -224,15 +224,14 @@ export default function EditProductModal({ product }: Props) {
     setError(null);
     setLoading(true);
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       name: name.trim(),
       slug: slug.trim(),
       base_price: Number(basePrice),
       product_type: productType,
-      stock_quantity:
-        productType === "kit" || !stockQuantity.trim()
-          ? null
-          : Number(stockQuantity),
+      // Kit stock is always null. Non-kit products manage stock via Warehouse Inbound;
+      // omit stock_quantity so editing other fields never overwrites live inventory.
+      ...(productType === "kit" ? { stock_quantity: null } : {}),
       max_quantity:
         productType === "kit" || !maxQuantity.trim()
           ? null
@@ -381,10 +380,11 @@ export default function EditProductModal({ product }: Props) {
                       setStockQuantity(v != null ? String(v) : "")
                     }
                     min={0}
-                    disabled={isKit}
+                    disabled
                     placeholder={isKit ? "—" : "0"}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
                     label="Stock Quantity"
+                    subLabel="Quản lý từ Kho (Warehouse Inbound)"
                   />
 
                   <NumberInput
@@ -506,6 +506,7 @@ export default function EditProductModal({ product }: Props) {
                       value={thumbnail}
                       onChange={setThumbnail}
                       slug={slug}
+                      allowProcessBackground
                     />
                   </div>
 
@@ -517,6 +518,7 @@ export default function EditProductModal({ product }: Props) {
                         setImagesChanged(true);
                       }}
                       slug={slug}
+                      allowProcessBackground
                     />
                   </div>
                 </div>

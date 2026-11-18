@@ -3,25 +3,17 @@
 @tailwind utilities;
 
 :root {
-	--admin-bg: 248, 250, 252;
+	/* Minimal light theme tokens */
+	--admin-bg: 250, 250, 250;
 	--admin-surface: 255, 255, 255;
-	--admin-border: 226, 232, 240;
-	--admin-text: 15, 23, 42;
-	--admin-text-secondary: 100, 116, 139;
-	--admin-text-muted: 148, 163, 184;
-	--admin-hover: 241, 245, 249;
-	--admin-header-bg: 248, 250, 252;
-}
-
-.dark {
-	--admin-bg: 15, 23, 42;
-	--admin-surface: 30, 41, 59;
-	--admin-border: 51, 65, 85;
-	--admin-text: 248, 250, 252;
-	--admin-text-secondary: 203, 213, 225;
-	--admin-text-muted: 148, 163, 184;
-	--admin-hover: 30, 41, 59;
-	--admin-header-bg: 30, 41, 59;
+	--admin-border: 230, 232, 236;
+	--admin-border-strong: 210, 213, 220;
+	--admin-text: 24, 30, 38;
+	--admin-text-secondary: 77, 87, 100;
+	--admin-text-muted: 140, 148, 160;
+	--admin-hover: 245, 246, 248;
+	--admin-header-bg: 249, 250, 251;
+	--admin-accent: 37, 99, 235;
 }
 
 * {
@@ -33,7 +25,7 @@ html {
 }
 
 body {
-	@apply bg-[rgb(var(--admin-bg))];
+	@apply bg-[rgb(var(--admin-bg))] text-[rgb(var(--admin-text))];
 }
 
 /* ─── Base form element theming ────────────────────────────────────────────── */
@@ -45,28 +37,50 @@ body {
 	}
 }
 
-/* ─── Status badge colors (dark-mode aware) ────────────────────────────────── */
+/* ─── Buttons & inputs ─────────────────────────────────────────────────────── */
+@layer components {
+	.btn-primary {
+		@apply inline-flex items-center gap-1.5 rounded-lg bg-[rgb(var(--admin-accent))] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50;
+	}
+	.btn-soft {
+		@apply inline-flex items-center gap-1.5 rounded-lg bg-[rgb(var(--admin-hover))] px-3 py-1.5 text-[13px] font-medium text-[rgb(var(--admin-text-secondary))] transition-colors hover:bg-[rgb(var(--admin-border))] disabled:opacity-50;
+	}
+	.btn-ghost {
+		@apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium text-[rgb(var(--admin-text-secondary))] transition-colors hover:bg-[rgb(var(--admin-hover))] hover:text-[rgb(var(--admin-text))] disabled:opacity-50;
+	}
+	.input-minimal {
+		@apply h-9 rounded-lg border border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-surface))] px-3 text-[13px] text-[rgb(var(--admin-text))] placeholder:text-[rgb(var(--admin-text-muted))] focus:border-[rgb(var(--admin-accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--admin-accent))]/40;
+	}
+	.select-minimal {
+		@apply h-9 rounded-lg border border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-surface))] px-2.5 text-[13px] text-[rgb(var(--admin-text-secondary))] focus:border-[rgb(var(--admin-accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--admin-accent))]/40;
+	}
+	.card-panel {
+		@apply card-bg card-shadow rounded-xl;
+	}
+}
+
+/* ─── Status badge colors ──────────────────────────────────────────────────── */
 @layer components {
 	.badge-pending {
-		@apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300;
+		@apply bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200;
 	}
 	.badge-confirmed {
-		@apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300;
+		@apply bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200;
 	}
 	.badge-delivering {
-		@apply bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300;
+		@apply bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200;
 	}
 	.badge-delivered {
-		@apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300;
+		@apply bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200;
 	}
 	.badge-cancelled {
-		@apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300;
+		@apply bg-red-50 text-red-700 ring-1 ring-inset ring-red-200;
 	}
 	.badge-active {
-		@apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300;
+		@apply bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200;
 	}
 	.badge-inactive {
-		@apply bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-300;
+		@apply bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-200;
 	}
 }
 
@@ -76,7 +90,7 @@ body {
 		@apply bg-[rgb(var(--admin-surface))];
 	}
 	.card-shadow {
-		@apply shadow shadow-black/5 dark:shadow-black/30;
+		@apply border border-[rgb(var(--admin-border))] shadow-[0_1px_2px_rgba(15,23,42,0.04)];
 	}
 	.thead-bg {
 		@apply bg-[rgb(var(--admin-header-bg))];
@@ -100,12 +114,12 @@ body {
 		@apply text-[rgb(var(--admin-text-muted))];
 	}
 	.input-base {
-		@apply border rounded-lg border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-surface))] text-[rgb(var(--admin-text))] placeholder:text-[rgb(var(--admin-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500;
+		@apply border rounded-lg border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-surface))] text-[rgb(var(--admin-text))] placeholder:text-[rgb(var(--admin-text-muted))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--admin-accent))]/40 focus:border-[rgb(var(--admin-accent))];
 	}
 	.btn-icon-edit {
-		@apply bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40;
+		@apply bg-blue-50 text-blue-600 hover:bg-blue-100;
 	}
 	.btn-icon-delete {
-		@apply bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40;
+		@apply bg-red-50 text-red-600 hover:bg-red-100;
 	}
 }

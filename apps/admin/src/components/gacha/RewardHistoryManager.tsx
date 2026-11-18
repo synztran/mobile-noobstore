@@ -40,12 +40,12 @@ interface Props {
 const PAGE_SIZE = 15;
 
 const REWARD_TYPE_COLORS: Record<string, string> = {
-  product: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  point: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  product: "bg-blue-100 text-blue-700  ",
+  point: "bg-amber-100 text-amber-700  ",
   puzzle:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    "bg-purple-100 text-purple-700  ",
   lucky_text:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+    "bg-green-100 text-green-700  ",
 };
 
 export function RewardHistoryManager({ eventId }: Props) {
@@ -128,7 +128,7 @@ export function RewardHistoryManager({ eventId }: Props) {
         <div className="flex items-center gap-3">
           <button
             onClick={handleBack}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 transition-colors hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 transition-colors hover:bg-slate-200  "
           >
             <ArrowLeft className="text-body h-4 w-4" />
           </button>
@@ -145,7 +145,7 @@ export function RewardHistoryManager({ eventId }: Props) {
 
         {loadingPlays ? (
           <div className="card-bg card-shadow animate-pulse rounded-lg p-6">
-            <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
+            <div className="h-4 w-48 rounded bg-slate-200 " />
           </div>
         ) : plays.length === 0 ? (
           <div className="card-bg card-shadow rounded-lg p-8 text-center">
@@ -188,7 +188,7 @@ export function RewardHistoryManager({ eventId }: Props) {
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                           REWARD_TYPE_COLORS[entry.reward?.reward_type ?? ""] ??
-                          "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                          "bg-slate-100 text-slate-700  "
                         }`}
                       >
                         {entry.reward?.reward_type ?? "—"}
@@ -240,11 +240,11 @@ export function RewardHistoryManager({ eventId }: Props) {
 
       {loadingUsers ? (
         <div className="card-bg card-shadow animate-pulse rounded-lg p-6">
-          <div className="h-4 w-48 rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="h-4 w-48 rounded bg-slate-200 " />
         </div>
       ) : users.length === 0 ? (
         <div className="card-bg card-shadow rounded-lg p-8 text-center">
-          <Trophy className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
+          <Trophy className="mx-auto mb-2 h-10 w-10 text-slate-300 " />
           <p className="text-muted text-sm">No participants yet</p>
         </div>
       ) : (
@@ -336,14 +336,14 @@ function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 0}
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-700 dark:hover:bg-slate-600"
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40  "
         >
           <ChevronLeft className="text-body h-4 w-4" />
         </button>
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages - 1}
-          className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-700 dark:hover:bg-slate-600"
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40  "
         >
           <ChevronRight className="text-body h-4 w-4" />
         </button>

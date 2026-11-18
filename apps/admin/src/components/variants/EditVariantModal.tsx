@@ -105,7 +105,7 @@ export default function EditVariantModal({ variant }: Props) {
         id: variant.id,
         variant_name: variantName.trim(),
         price_adjustment: priceAdjustment ?? 0,
-        stock_quantity: stockQuantity ?? 0,
+        // stock_quantity is managed via Warehouse Inbound; omitted to prevent overwriting live stock
         is_pre_order: isPreOrder,
         thumbnail: thumbnail.trim() || null,
         attributes: buildVariantAttributes(variant.attributes ?? null, condition, color),
@@ -247,9 +247,11 @@ export default function EditVariantModal({ variant }: Props) {
                     value={stockQuantity ?? 0}
                     onChange={(v) => setStockQuantity(v ?? 0)}
                     min={0}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
                     placeholder="0"
                     label="Stock Quantity"
+                    subLabel="Quản lý từ Kho (Warehouse Inbound)"
                   />
                 </div>
 

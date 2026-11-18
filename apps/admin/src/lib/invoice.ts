@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabase/admin";
+import { buildCustomerAddress } from "@/lib/order-address";
 import PDFDocument from "pdfkit";
 import bwipjs from "bwip-js";
 import fs from "fs";
@@ -13,7 +14,9 @@ interface GenerateInvoiceInput {
   discountPercentage?: string;
   shippingFee: number;
   total: number;
-  balanceDue?: number; // type deposit is remainingAmount
+  balanceDue?: number; // header "Cần thanh toán" — current outstanding balance
+  paidAmount?: number; // amount actually received; defaults to the existing order invoice behavior
+  codAmount?: number; // totals "Còn lại (COD)" — the order's original COD amount, never touched by settlement (falls back to balanceDue)
   paymentType?: "full" | "deposit_cod";
   depositPercentage?: number;
   depositAmount?: number;
@@ -28,6 +31,111 @@ interface GenerateInvoiceInput {
     unit_cost: number;
     gift_name?: string;
   }>;
+}
+
+/**
+ * Order columns the invoice reads. Every call site must select at least these —
+ * buildInvoiceInput below is the single place that decides how an order's money
+ * fields become invoice rows.
+ */
+export type InvoiceOrderRow = {
+  order_number: string;
+  status: string | null;
+  payment_type: string | null;
+  shipping_fee: number | null;
+  shipping_discount_amount: number | null;
+  voucher_discount_amount: number | null;
+  total_price: number;
+  deposit_percentage: number | null;
+  deposit_amount: number | null;
+  remaining_amount: number | null;
+  delivery_address: unknown;
+  shipping_method_id: string | null;
+};
+
+export type InvoiceItem = GenerateInvoiceInput["items"][number];
+
+/**
+ * Map an order row onto invoice money fields.
+ *
+ * This is deliberately the only place the discount columns are read. The PDF's
+ * "Giảm giá" row is a single line that must total BOTH the voucher discount and
+ * the shipping discount — otherwise "Tạm tính + Vận chuyển − Giảm giá" stops
+ * reconciling with "Tổng tiền", which is the arithmetic the customer checks
+ * against their own bank transfer.
+ */
+export function buildInvoiceInput(
+  order: InvoiceOrderRow,
+  opts: { customerName: string; items: InvoiceItem[]; settled?: boolean }
+): GenerateInvoiceInput {
+  const codAmount = Number(order.remaining_amount ?? 0);
+  return {
+    orderNumber: order.order_number,
+    customerName: opts.customerName,
+    customerAddress: buildCustomerAddress(
+      order.delivery_address,
+      order.shipping_method_id
+    ),
+    items: opts.items,
+    shippingFee: Number(order.shipping_fee ?? 0),
+    discount:
+      Number(order.shipping_discount_amount ?? 0) +
+      Number(order.voucher_discount_amount ?? 0),
+    total: Number(order.total_price),
+    paymentType:
+      (order.payment_type as "full" | "deposit_cod" | null) ?? undefined,
+    depositPercentage: order.deposit_percentage ?? undefined,
+    depositAmount: order.deposit_amount ?? undefined,
+    // Header "Cần thanh toán" is what is still owed, zeroed once settled. The
+    // totals "Còn lại (COD)" row uses codAmount and is deliberately never zeroed
+    // — it records the COD the order was created with.
+    balanceDue: opts.settled ? 0 : codAmount,
+    codAmount,
+  };
+}
+
+/**
+ * Load an order's invoice line items: order_items plus any order_services folded
+ * in as single-quantity lines. Shared so a settled regeneration cannot silently
+ * drop a service line that the initial invoice had.
+ */
+export async function fetchInvoiceItems(orderId: string): Promise<InvoiceItem[]> {
+  const supabase = getAdminClient();
+
+  const { data: items } = await supabase
+    .from("order_items")
+    .select(
+      "product_name, quantity, unit_price, order_item_components(component_group, variant_name)"
+    )
+    .eq("order_id", orderId);
+
+  const { data: services } = await supabase
+    .from("order_services")
+    .select("service_name, price")
+    .eq("order_id", orderId);
+
+  const lines: InvoiceItem[] = (items ?? []).map((i) => ({
+    name: i.product_name,
+    quantity: i.quantity,
+    unit_cost: Number(i.unit_price),
+    components: (i.order_item_components ?? []).map(
+      (c: { component_group: string; variant_name: string }) => ({
+        component_group: c.component_group,
+        variant_name: c.variant_name,
+      })
+    ),
+  }));
+
+  for (const s of services ?? []) {
+    lines.push({
+      name: `Dịch vụ: ${s.service_name}`,
+      quantity: 1,
+      unit_cost: Number(s.price),
+      components: [],
+    });
+  }
+
+  return lines;
 }
 
 function resolveFont(rel: string): string | null {
@@ -69,6 +177,20 @@ function formatVND(amount: number): string {
 
 function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
   return new Promise(async (resolve, reject) => {
+    const paidAmount = Math.min(
+      Math.max(
+        0,
+        input.paidAmount ??
+          (input.paymentType === "deposit_cod"
+            ? input.depositAmount ?? 0
+            : input.total)
+      ),
+      Math.max(0, input.total)
+    );
+    const outstandingBalance = Math.min(
+      Math.max(0, input.balanceDue ?? input.total - paidAmount),
+      Math.max(0, input.total)
+    );
     const doc = new PDFDocument({ margin: 50, size: "A4" });
     const chunks: Buffer[] = [];
 
@@ -178,17 +300,10 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     //   width: 135,
     //   align: "right",
     // });
-    if (input.paymentType === "deposit_cod") {
-      doc.text(formatVND(input.balanceDue || 0), 410, rightY, {
-        width: 135,
-        align: "right",
-      });
-    } else {
-      doc.text(formatVND(0), 410, rightY, {
-        width: 135,
-        align: "right",
-      });
-    }
+    doc.text(formatVND(outstandingBalance), 410, rightY, {
+      width: 135,
+      align: "right",
+    });
 
     // ── Customer / Bill To (Left) ───────────────────────────────────────────
     let currentY = Math.max(leftY, rightY);
@@ -332,20 +447,24 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     if (input.paymentType === "deposit_cod") {
       totals.push({
         label: `Đã thanh toán (${input.depositPercentage ?? 0}%):`,
-        value: formatVND(input.depositAmount ?? 0),
+        value: formatVND(paidAmount),
         bold: true,
       });
       totals.push({
         label: "Còn lại (COD):",
-        value: formatVND(input.balanceDue ?? 0),
+        // Preserve the original COD amount even when the outstanding balance
+        // reaches zero; legacy callers fall back to their balanceDue value.
+        value: formatVND(
+          input.codAmount ??
+            input.balanceDue ??
+            Math.max(0, input.total - paidAmount)
+        ),
         bold: true,
       });
     } else {
       totals.push({
         label: "Đã thanh toán:",
-        value: formatVND(
-          Math.max(0, subtotal + input.shippingFee - input.discount)
-        ),
+        value: formatVND(paidAmount),
         bold: true,
       });
     }
@@ -421,22 +540,25 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
 
 export async function generateAndStoreInvoice(
   orderId: string,
-  input: GenerateInvoiceInput
+  input: GenerateInvoiceInput,
+  opts?: { force?: boolean }
 ): Promise<string | null> {
   try {
-    // Check if invoice already exists
+    // Check if invoice already exists (unless forcing a regeneration)
     const supabase = getAdminClient();
     const bucket = "invoices";
     const storagePath = `${input.orderNumber}.pdf`;
 
-    const { data: existing } = await supabase.storage
-      .from(bucket)
-      .list("", { search: input.orderNumber });
-    if (existing?.length) {
-      const { data: urlData } = supabase.storage
+    if (!opts?.force) {
+      const { data: existing } = await supabase.storage
         .from(bucket)
-        .getPublicUrl(storagePath);
-      return urlData.publicUrl;
+        .list("", { search: input.orderNumber });
+      if (existing?.length) {
+        const { data: urlData } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(storagePath);
+        return urlData.publicUrl;
+      }
     }
 
     // Generate PDF locally
@@ -490,5 +612,51 @@ export async function generateAndStoreInvoice(
   } catch (err) {
     console.error("[invoice] Unexpected error:", err);
     return null;
+  }
+}
+
+/**
+ * Regenerate the invoice for an order that reached "delivered". The template
+ * is unchanged and only the "Cần thanh toán" amount changes: it is zeroed to
+ * reflect full settlement. The "Còn lại (COD)" row is left untouched — it keeps
+ * the COD amount the order was created with (orders.remaining_amount), so the
+ * document still shows what was originally due on delivery.
+ * Force-overwrites the existing PDF so the stored invoice_url stays valid.
+ */
+export async function regenerateSettledInvoice(orderId: string): Promise<void> {
+  try {
+    const supabase = getAdminClient();
+
+    const { data: order } = await supabase
+      .from("orders")
+      .select(
+        "order_number, status, payment_type, shipping_fee, shipping_discount_amount, voucher_discount_amount, delivery_address, shipping_method_id, total_price, deposit_percentage, deposit_amount, remaining_amount"
+      )
+      .eq("id", orderId)
+      .single();
+
+    if (!order || !order.delivery_address) return;
+
+    const items = await fetchInvoiceItems(orderId);
+
+    const addr = order.delivery_address as Record<string, string | null>;
+    const customerName = [addr.full_name, addr.phone_number]
+      .filter(Boolean)
+      .join(" - ");
+
+    await generateAndStoreInvoice(
+      orderId,
+      buildInvoiceInput(order as InvoiceOrderRow, {
+        customerName: customerName || "Khách hàng",
+        items,
+        settled: true,
+      }),
+      { force: true }
+    );
+  } catch (err) {
+    console.error(
+      `[invoice] Failed to regenerate settled invoice for order ${orderId}:`,
+      err
+    );
   }
 }

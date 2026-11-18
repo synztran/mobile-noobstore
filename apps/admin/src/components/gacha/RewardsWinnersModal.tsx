@@ -80,7 +80,7 @@ export default function RewardsWinnersModal({
           </h3>
           <button
             onClick={handleClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 "
           >
             <X className="text-muted h-4 w-4" />
           </button>

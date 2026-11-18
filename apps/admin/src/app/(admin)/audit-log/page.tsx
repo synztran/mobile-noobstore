@@ -125,7 +125,7 @@ export default function AuditLogPage() {
                       <div className="text-sm text-heading">{entry.admin_email}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-600 dark:text-slate-300">
+                      <span className="rounded bg-slate-100  px-2 py-0.5 font-mono text-xs text-slate-600 ">
                         {entry.action}
                       </span>
                     </td>
@@ -148,7 +148,7 @@ export default function AuditLogPage() {
                 if (expandedId === entry.id) {
                   rows.push(
                     <tr key={`${entry.id}-detail`}>
-                      <td colSpan={6} className="bg-slate-50 dark:bg-slate-800/40 px-6 py-4">
+                      <td colSpan={6} className="bg-slate-50  px-6 py-4">
                         <div className="space-y-3 text-sm">
                           {entry.diff_data && (
                             <div>
@@ -168,10 +168,10 @@ export default function AuditLogPage() {
                                       <span className="text-red-500 line-through">
                                         {JSON.stringify(change.old)}
                                       </span>
-                                      <span className="text-slate-300 dark:text-slate-600">
+                                      <span className="text-slate-300 ">
                                         →
                                       </span>
-                                      <span className="text-green-600 dark:text-green-400">
+                                      <span className="text-green-600 ">
                                         {JSON.stringify(change.new)}
                                       </span>
                                     </div>

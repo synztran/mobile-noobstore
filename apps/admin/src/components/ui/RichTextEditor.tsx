@@ -114,7 +114,7 @@ export default function RichTextEditor({
       {label && (
         <label
           htmlFor={id}
-          className="block text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400"
+          className="block text-xs font-semibold uppercase tracking-widest text-slate-500 "
         >
           {label}
           {required && <span className="ml-0.5 text-red-500">*</span>}
@@ -125,7 +125,7 @@ export default function RichTextEditor({
           "trumbowyg-editor-wrapper rounded-lg border transition-colors",
           error
             ? "border-red-400"
-            : "border-slate-300 dark:border-slate-600"
+            : "border-slate-300 "
         )}
       >
         <textarea

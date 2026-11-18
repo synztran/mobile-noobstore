@@ -100,7 +100,7 @@ export default function EditUserModal({ user }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100"
+        className="flex h-8 w-8 items-center justify-center rounded-lg bg-[rgb(var(--admin-hover))] text-[rgb(var(--admin-text-secondary))] transition-colors hover:bg-[rgb(var(--admin-border))] hover:text-[rgb(var(--admin-text))]"
         title="Edit"
       >
         <Pencil className="h-4 w-4" />
@@ -108,20 +108,16 @@ export default function EditUserModal({ user }: Props) {
 
       {open && (
         <div className="fixed inset-0 z-50 !mt-0 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/50"
-          />
-          <div className="relative mx-4 flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white shadow-2xl">
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Edit User
-              </h2>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative mx-4 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[rgb(var(--admin-border))] bg-white shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-[rgb(var(--admin-border))] px-5 py-4">
+              <h2 className="text-sm font-semibold text-heading">Edit User</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-lg p-1 transition-colors hover:bg-slate-100"
+                className="rounded-md p-1 text-[rgb(var(--admin-text-muted))] transition-colors hover:bg-[rgb(var(--admin-hover))] hover:text-[rgb(var(--admin-text))]"
               >
-                <X className="h-5 w-5 text-slate-500" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -129,7 +125,7 @@ export default function EditUserModal({ user }: Props) {
               onSubmit={handleSubmit}
               className="flex min-h-0 flex-1 flex-col"
             >
-              <div className="flex-1 space-y-6 overflow-y-auto p-6">
+              <div className="flex-1 space-y-5 overflow-y-auto p-5">
                 {error && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {error}
@@ -138,62 +134,62 @@ export default function EditUserModal({ user }: Props) {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-[13px] font-medium text-body">
                       First Name
                     </label>
                     <input
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="input-base w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input-minimal w-full"
                       placeholder="First name"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-[13px] font-medium text-body">
                       Last Name
                     </label>
                     <input
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="input-base w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input-minimal w-full"
                       placeholder="Last name"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-[13px] font-medium text-body">
                       Email
                     </label>
                     <input
                       value={user.email}
                       disabled
-                      className="w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-600 dark:text-slate-400"
+                      className="w-full cursor-not-allowed rounded-lg border border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-hover))] px-3 py-2 text-[13px] text-muted"
                     />
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted">
                       Email cannot be changed.
                     </p>
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-[13px] font-medium text-body">
                       Phone Number
                     </label>
                     <input
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="input-base w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="input-minimal w-full"
                       placeholder="Phone number"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-[13px] font-medium text-body">
                       Role
                     </label>
                     <select
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="input-base w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="select-minimal w-full"
                     >
                       {USER_ROLES.map((roleOption) => (
                         <option key={roleOption} value={roleOption}>
@@ -204,23 +200,23 @@ export default function EditUserModal({ user }: Props) {
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1.5 block text-[13px] font-medium text-body">
                       Joined
                     </label>
                     <input
-                      value={new Date(user.created_at).toLocaleString("vi-VN")}
+                      value={new Date(user.created_at).toLocaleString("en-US")}
                       disabled
-                      className="w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500 dark:bg-slate-600 dark:text-slate-400"
+                      className="w-full cursor-not-allowed rounded-lg border border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-hover))] px-3 py-2 text-[13px] text-muted"
                     />
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-slate-200 p-4">
+                <div className="rounded-xl border border-[rgb(var(--admin-border))] p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-900">
+                    <h3 className="text-[13px] font-semibold text-heading">
                       Addresses
                     </h3>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted">
                       {addresses.length} total
                     </span>
                   </div>
@@ -229,22 +225,22 @@ export default function EditUserModal({ user }: Props) {
                       {addresses.map((address) => (
                         <div
                           key={address.id}
-                          className="rounded-md border border-slate-100 bg-slate-50 p-3"
+                          className="rounded-lg border border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-hover))] p-3"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium text-slate-900">
+                            <p className="text-sm font-medium text-heading">
                               {address.full_name}
                             </p>
                             {address.is_default && (
-                              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-blue-700">
+                              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-blue-700 ring-1 ring-inset ring-blue-200">
                                 Default
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 text-xs text-slate-600">
+                          <p className="mt-1 text-xs text-body">
                             {address.phone_number}
                           </p>
-                          <p className="text-xs text-slate-600">
+                          <p className="text-xs text-body">
                             {address.address}, {address.ward},{" "}
                             {address.district}, {address.city}
                           </p>
@@ -252,18 +248,16 @@ export default function EditUserModal({ user }: Props) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-500">
-                      No addresses found.
-                    </p>
+                    <p className="text-sm text-muted">No addresses found.</p>
                   )}
                 </div>
 
-                <div className="rounded-lg border border-slate-200 p-4">
+                <div className="rounded-xl border border-[rgb(var(--admin-border))] p-4">
                   <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-900">
+                    <h3 className="text-[13px] font-semibold text-heading">
                       Wishlists
                     </h3>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted">
                       {wishlists.length} items
                     </span>
                   </div>
@@ -272,57 +266,62 @@ export default function EditUserModal({ user }: Props) {
                       {wishlists.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center gap-3 rounded-md border border-slate-100 bg-slate-50 p-3"
+                          className="flex items-center gap-3 rounded-lg border border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-hover))] p-3"
                         >
                           {item.product?.thumbnail ? (
                             <img
                               src={item.product.thumbnail}
                               alt={item.product.name}
-                              className="h-10 w-10 rounded object-cover"
+                              className="h-10 w-10 rounded-lg object-cover"
                             />
                           ) : (
-                            <div className="h-10 w-10 rounded bg-slate-200" />
+                            <div className="h-10 w-10 rounded-lg bg-[rgb(var(--admin-border))]" />
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-slate-900">
+                            <p className="truncate text-sm font-medium text-heading">
                               {item.product?.name ?? "Unknown product"}
                             </p>
-                            <p className="truncate text-xs text-slate-500">
+                            <p className="truncate text-xs text-muted">
                               /{item.product?.slug ?? "-"}
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-muted">
                               Added{" "}
                               {new Date(item.added_at).toLocaleDateString(
-                                "vi-VN"
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
                               )}
                             </p>
                           </div>
-                          <div className="shrink-0 text-xs text-slate-600">
+                          <div className="shrink-0 text-xs text-body">
                             {item.product?.base_price !== null &&
                             item.product?.base_price !== undefined
-                              ? `${item.product.base_price.toLocaleString("vi-VN")}₫`
+                              ? `${item.product.base_price.toLocaleString("en-US")}₫`
                               : "—"}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-500">No wishlist items.</p>
+                    <p className="text-sm text-muted">No wishlist items.</p>
                   )}
                 </div>
               </div>
-              <div className="flex shrink-0 justify-end gap-3 border-t border-slate-200 px-6 py-4">
+              <div className="flex shrink-0 justify-end gap-2 border-t border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-header-bg))] px-5 py-3">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                  className="btn-ghost h-9"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                  className="btn-primary h-9"
                 >
                   {loading ? "Saving..." : "Save Changes"}
                 </button>

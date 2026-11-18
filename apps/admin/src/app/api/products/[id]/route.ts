@@ -101,7 +101,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 		if (slug) {
 			const { scrapeFacebookProduct } = await import("@/lib/facebook/scrape");
 			const url = `https://www.noobstore.xyz/shop/${slug}`;
-			void scrapeFacebookProduct(url);
+			// Awaited — a fire-and-forget promise can be frozen when the
+			// response is sent, so the scrape never ran. The callee polls until
+			// the storefront serves a real og:url before hitting the Graph API.
+			await scrapeFacebookProduct(url);
 		}
 	} catch (err) {
 		console.error("[admin/products/PATCH] fb scrape failed:", err);

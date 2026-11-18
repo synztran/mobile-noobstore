@@ -35,5 +35,12 @@ export async function POST(req: NextRequest) {
 		return NextResponse.json({ error: error.message }, { status: 400 });
 	}
 
+	try {
+		const { invalidateProductCaches } = await import("@/lib/redis/cache");
+		await invalidateProductCaches();
+	} catch (err) {
+		console.error("[admin/product-components/POST] cache invalidation failed:", err);
+	}
+
 	return NextResponse.json({ success: true }, { status: 201 });
 }

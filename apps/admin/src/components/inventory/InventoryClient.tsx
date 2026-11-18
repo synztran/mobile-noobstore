@@ -1,8 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Search, ChevronLeft, ChevronRight, Package, AlertTriangle, CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  AlertTriangle,
+  CheckCircle,
+  PackageCheck,
+} from "lucide-react";
+import InboundReviewModal, {
+  type InboundBatch,
+} from "@/components/inventory/InboundReviewModal";
 
 interface Variant {
   id: string;
@@ -22,6 +33,14 @@ interface InventoryProduct {
   is_active: boolean;
   categories: { id: string; name: string } | null;
   product_variants: Variant[];
+  /**
+   * Sellable stock, computed with the storefront's own rule. For kits and any
+   * product with variants this is derived from variant rows and the raw
+   * `stock_quantity` column is not what customers can buy.
+   */
+  effective_stock: number;
+  /** True when variant rows (or components, for a kit) own the stock. */
+  stock_is_derived: boolean;
 }
 
 interface Props {
@@ -31,6 +50,7 @@ interface Props {
   totalPages: number;
   q: string;
   stock: string;
+  pendingInboundBatches?: InboundBatch[];
 }
 
 export default function InventoryClient({
@@ -39,10 +59,18 @@ export default function InventoryClient({
   totalPages,
   q,
   stock,
+  pendingInboundBatches = [],
 }: Props) {
   const router = useRouter();
   const [searchText, setSearchText] = useState(q);
-  const [updating, setUpdating] = useState<Record<string, "saving" | "idle">>({});
+  const [showInboundModal, setShowInboundModal] = useState(false);
+  const [inboundBatches, setInboundBatches] = useState<InboundBatch[]>(
+    pendingInboundBatches
+  );
+
+  useEffect(() => {
+    setInboundBatches(pendingInboundBatches);
+  }, [pendingInboundBatches]);
 
   function applyFilter(key: string, value: string) {
     const params = new URLSearchParams();
@@ -69,23 +97,6 @@ export default function InventoryClient({
     router.push(`/inventory?${params.toString()}`);
   }
 
-  async function updateStock(productId: string, newQty: number) {
-    setUpdating((prev) => ({ ...prev, [productId]: "saving" }));
-    try {
-      const res = await fetch(`/api/products/${productId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stock_quantity: Math.max(0, newQty) }),
-      });
-      if (!res.ok) throw new Error("Failed to update");
-      router.refresh();
-    } catch (err) {
-      console.error("Stock update failed:", err);
-    } finally {
-      setUpdating((prev) => ({ ...prev, [productId]: "idle" }));
-    }
-  }
-
   function getStockBadge(qty: number) {
     if (qty === 0)
       return (
@@ -110,6 +121,31 @@ export default function InventoryClient({
 
   return (
     <div className="space-y-4">
+      {/* Warehouse Inbound Pending Banner */}
+      {inboundBatches.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <PackageCheck size={20} className="text-emerald-700 shrink-0" />
+            <div>
+              <p className="font-bold">
+                {inboundBatches.length} lô nhập kho từ Warehouse đang chờ duyệt
+              </p>
+              <p className="text-xs text-emerald-700">
+                Tổng cộng +
+                {inboundBatches.reduce((sum, b) => sum + b.total_quantity, 0)}{" "}
+                sản phẩm cần cập nhật vào tồn kho.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowInboundModal(true)}
+            className="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow transition-colors hover:bg-emerald-700"
+          >
+            Xem &amp; Áp dụng nhập kho
+          </button>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <form onSubmit={handleSearch} className="relative flex-1 max-w-xs">
@@ -146,6 +182,19 @@ export default function InventoryClient({
             </button>
           ))}
         </div>
+
+        <button
+          onClick={() => setShowInboundModal(true)}
+          className="ml-auto flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          <PackageCheck size={15} className="text-emerald-600" />
+          <span>Nhập kho từ Warehouse</span>
+          {inboundBatches.length > 0 && (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-bold text-white">
+              {inboundBatches.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Table */}
@@ -211,17 +260,24 @@ export default function InventoryClient({
                     <div className="flex items-center gap-2">
                       <span
                         className={`text-lg font-black ${
-                          product.stock_quantity === 0
+                          product.effective_stock === 0
                             ? "text-red-600"
-                            : product.stock_quantity < 10
+                            : product.effective_stock < 10
                               ? "text-amber-600"
                               : "text-green-600"
                         }`}
                       >
-                        {product.stock_quantity}
+                        {product.effective_stock}
                       </span>
-                      {getStockBadge(product.stock_quantity)}
+                      {getStockBadge(product.effective_stock)}
                     </div>
+                    {product.stock_is_derived && (
+                      <p className="mt-0.5 text-[11px] leading-tight text-slate-400">
+                        {product.product_type === "kit"
+                          ? "Tính từ linh kiện (thấp nhất trong các linh kiện bắt buộc)"
+                          : "Tính từ các biến thể"}
+                      </p>
+                    )}
                     {product.product_variants.length > 0 && (
                       <details className="mt-1">
                         <summary className="cursor-pointer text-xs text-slate-400 hover:text-slate-600">
@@ -259,22 +315,25 @@ export default function InventoryClient({
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => updateStock(product.id, product.stock_quantity - 1)}
-                        disabled={updating[product.id] === "saving" || product.stock_quantity <= 0}
-                        className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30"
+                    {product.stock_is_derived ? (
+                      <span
+                        className="text-[11px] leading-tight text-slate-400"
+                        title={
+                          product.product_type === "kit"
+                            ? "Tồn kho của kit nằm ở các linh kiện. Cập nhật tồn kho tại từng linh kiện qua Warehouse."
+                            : "Tồn kho nằm ở các biến thể. Cập nhật tồn kho biến thể qua Warehouse."
+                        }
                       >
-                        −
-                      </button>
-                      <button
-                        onClick={() => updateStock(product.id, product.stock_quantity + 1)}
-                        disabled={updating[product.id] === "saving"}
-                        className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30"
+                        Quản lý ở biến thể
+                      </span>
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600"
+                        title="Tồn kho được cập nhật tự động từ phiếu nhập kho ở Warehouse"
                       >
-                        +
-                      </button>
-                    </div>
+                        Kho quản lý
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))
@@ -326,6 +385,17 @@ export default function InventoryClient({
           </button>
         </div>
       )}
+
+      {/* Warehouse Inbound Review & Apply Modal */}
+      <InboundReviewModal
+        batches={inboundBatches}
+        isOpen={showInboundModal}
+        onClose={() => setShowInboundModal(false)}
+        onApplied={() => {
+          setShowInboundModal(false);
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
