@@ -1,9 +1,8 @@
 "use client";
 
-import { apiFetch } from "@/lib/api/fetch";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Gift, Clock3, Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { useClaimCheckin, useCheckinCalendar } from "../client/queries";
+import { useClaimCheckin, useCheckinCalendar, useCheckinRewards } from "../client/queries";
 import type { CheckinReward } from "../types";
 
 const weekdays = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
@@ -14,16 +13,12 @@ export function CheckinCalendar() {
   const query = useCheckinCalendar(month);
   const claim = useClaimCheckin();
   const [toast, setToast] = useState("");
-  const [rewards, setRewards] = useState<CheckinReward[]>([]);
+  const rewardsQuery = useCheckinRewards();
+  const rewards = rewardsQuery.data ?? [];
   const eventDialog = useRef<HTMLDialogElement>(null);
   const [activeEventName, setActiveEventName] = useState("");
   const [activeEventHasVoucher, setActiveEventHasVoucher] = useState(false);
   const data = query.data;
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/checkin/rewards").then((response) => response.ok ? response.json() : []).then((items) => { if (!cancelled) setRewards(items); }).catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
   const today = data?.days.find((day) => day.state === "today");
   const offset = useMemo(() => {
     if (!data?.days.length) return 0;
@@ -80,12 +75,12 @@ export function CheckinCalendar() {
             </button>;
           })}
         </div>
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 rounded-lg bg-base-200 p-3 text-xs"><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-[#d4eca2]"/>Đã điểm danh</span><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-[#ffdbcf] ring-1 ring-[#bb5732]"/>Hôm nay</span><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-[#e4e2de]"/>Đã qua, chưa điểm danh</span><span>Cuối tuần: 2 điểm</span></div>
-        <div className="mt-4 rounded-xl bg-base-200 p-4 text-sm leading-relaxed"><h3 className="font-bold">Cách điểm danh</h3><p className="mt-2">Nhấn ngày hôm nay để nhận điểm. Ngày thường nhận 1 điểm, cuối tuần nhận 2 điểm. Bỏ lỡ ngày không mất điểm đã tích lũy.</p><p className="mt-2">Điểm danh hết hạn lúc 23:59 ngày cuối tháng. Đổi voucher tại <a className="link link-primary font-bold" href="/rewards">trang Đổi thưởng</a>. Quà đặc biệt chỉ hiển thị và nhận đúng ngày.</p></div>
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 rounded-lg bg-base-200 p-3 text-xs"><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-[#d4eca2]"/>Đã điểm danh</span><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-[#ffdbcf] ring-1 ring-[#bb5732]"/>Hôm nay</span><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-[#e4e2de]"/>Đã qua, chưa điểm danh</span><span>Cuối tuần: {data.weekendPoints} điểm</span></div>
+        <div className="mt-4 rounded-xl bg-base-200 p-4 text-sm leading-relaxed"><h3 className="font-bold">Cách điểm danh</h3><p className="mt-2">Nhấn ngày hôm nay để nhận điểm. Ngày thường nhận {data.weekdayPoints} điểm, cuối tuần nhận {data.weekendPoints} điểm. Bỏ lỡ ngày không mất điểm đã tích lũy.</p><p className="mt-2">Điểm danh hết hạn lúc 23:59 ngày cuối tháng. Đổi voucher tại <a className="link link-primary font-bold" href="/rewards">trang Đổi thưởng</a>. Quà đặc biệt chỉ hiển thị và nhận đúng ngày.</p></div>
       </section>
-       <aside className="space-y-4"><section className="rounded-2xl bg-base-100 p-5"><h2 className="font-bold">Hôm nay</h2><p className="mt-1 text-sm text-base-content/70">{today ? `${today.points} điểm chuyên cần` : "Hôm nay đã điểm danh"}</p><button className="btn btn-primary mt-4 w-full" disabled={!today || claim.isPending} onClick={() => beginCheckin(today?.event)}>{claim.isPending ? "Đang điểm danh…" : today ? "Điểm danh hôm nay" : "Đã điểm danh"}</button><p className="mt-2 text-center text-xs text-base-content/60">Ngày thường +1 điểm · Cuối tuần +2 điểm</p></section>
+       <aside className="space-y-4"><section className="rounded-2xl bg-base-100 p-5"><h2 className="font-bold">Hôm nay</h2><p className="mt-1 text-sm text-base-content/70">{today ? `${today.points} điểm chuyên cần` : "Hôm nay đã điểm danh"}</p><button className="btn btn-primary mt-4 w-full" disabled={!today || claim.isPending} onClick={() => beginCheckin(today?.event)}>{claim.isPending ? "Đang điểm danh…" : today ? "Điểm danh hôm nay" : "Đã điểm danh"}</button><p className="mt-2 text-center text-xs text-base-content/60">Ngày thường +{data.weekdayPoints} điểm · Cuối tuần +{data.weekendPoints} điểm</p></section>
         <section className="rounded-2xl bg-base-100 p-5"><div className="flex items-center justify-between"><h2 className="font-bold">Đổi điểm lấy voucher</h2><a href="/rewards" className="link link-primary text-xs font-bold">Xem tất cả</a></div>{rewards.length ? rewards.map((reward) => <div key={reward.id} className="mt-3 flex items-center justify-between border-t border-base-200 pt-3 text-sm"><span>{reward.name}<small className="block text-base-content/60">{reward.points_cost} điểm chuyên cần</small></span><span className="badge badge-ghost">{reward.stock == null ? "∞" : Math.max(0, reward.stock - reward.claimed_count)}</span></div>) : <p className="mt-3 text-sm text-base-content/70">Chưa có phần thưởng đổi bằng điểm chuyên cần.</p>}</section>
-        <section className="rounded-2xl bg-base-200 p-5"><h2 className="font-bold">Tích điểm mỗi tháng</h2><p className="mt-2 text-sm leading-relaxed">Ngày thường nhận 1 điểm, cuối tuần nhận 2 điểm. Bỏ lỡ ngày vẫn giữ điểm đã tích lũy. Ngày đặc biệt có thể tặng thêm voucher.</p></section>
+        <section className="rounded-2xl bg-base-200 p-5"><h2 className="font-bold">Tích điểm mỗi tháng</h2><p className="mt-2 text-sm leading-relaxed">Ngày thường nhận {data.weekdayPoints} điểm, cuối tuần nhận {data.weekendPoints} điểm. Bỏ lỡ ngày vẫn giữ điểm đã tích lũy. Ngày đặc biệt có thể tặng thêm voucher.</p></section>
       </aside>
     </div>
     <dialog ref={eventDialog} className="modal" aria-labelledby="checkin-event-title" onCancel={(event) => event.preventDefault()}><div className="modal-box"><button className="btn btn-circle btn-ghost btn-sm absolute right-3 top-3" aria-label="Đóng" onClick={() => eventDialog.current?.close()}>×</button><h2 id="checkin-event-title" className="text-xl font-extrabold">Quà ngày đặc biệt</h2><p className="mt-2 text-sm">{activeEventName}. Điểm danh hôm nay để nhận điểm chuyên cần{activeEventHasVoucher ? " và voucher tặng riêng" : ""}.</p>{activeEventHasVoucher && <div className="mt-4 rounded-xl bg-base-200 p-4"><strong>Voucher sự kiện</strong><p className="mt-1 text-sm">Voucher được thêm vào tài khoản khi điểm danh, số lượng có hạn.</p></div>}<div className="modal-action"><button className="btn btn-ghost" onClick={() => eventDialog.current?.close()}>Để sau</button><button className="btn btn-primary" disabled={claim.isPending} onClick={async () => { await checkIn(); eventDialog.current?.close(); }}>{claim.isPending ? "Đang điểm danh…" : "Điểm danh và nhận quà"}</button></div></div><div className="modal-backdrop" /></dialog>

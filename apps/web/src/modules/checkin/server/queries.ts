@@ -147,6 +147,8 @@ export async function getCheckinCalendar(
     availablePoints,
     earliestExpiry,
     days,
+    weekdayPoints: Number(settings.weekday_points ?? 1),
+    weekendPoints: Number(settings.weekend_points ?? 2),
   };
 }
 

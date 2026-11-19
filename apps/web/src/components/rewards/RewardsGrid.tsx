@@ -11,10 +11,11 @@ const LIMIT = 12;
 
 interface Props {
   balance: number;
+  dailyCheckinBalance?: number;
   onRedeem: (r: RewardItem) => void;
 }
 
-export function RewardsGrid({ balance, onRedeem }: Props) {
+export function RewardsGrid({ balance, dailyCheckinBalance = 0, onRedeem }: Props) {
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useInfiniteQuery<RewardsResponse>({
       queryKey: ["rewards", "infinite"],
@@ -68,8 +69,8 @@ export function RewardsGrid({ balance, onRedeem }: Props) {
           </div>
           <span className="text-xs text-on-surface-variant">Đang tải quà…</span>
         </div>
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 lg:gap-4">
+          {[1, 2, 3, 4].map((i) => (
             <RewardCardSkeleton key={i} />
           ))}
         </div>
@@ -118,13 +119,14 @@ export function RewardsGrid({ balance, onRedeem }: Props) {
           {data?.pages[0]?.total ?? rewards.length} phần thưởng
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 lg:gap-4">
         {rewards.map((reward) => (
           <RewardCard
             key={reward.id}
             reward={reward}
             onRedeem={onRedeem}
             balance={balance}
+            dailyCheckinBalance={dailyCheckinBalance}
           />
         ))}
         {hasNextPage && (
@@ -157,16 +159,21 @@ export function RewardsGrid({ balance, onRedeem }: Props) {
 
 function RewardCardSkeleton() {
   return (
-    <div className="animate-pulse space-y-2 rounded-2xl bg-surface-container-lowest p-3 shadow-ambient-sm lg:min-h-[220px] lg:rounded-xl lg:border lg:border-surface-container-high">
-      <div className="mx-auto h-10 w-10 rounded-xl bg-surface-container" />
-      <div className="space-y-1.5 text-center">
-        <div className="mx-auto h-3 w-3/4 rounded-full bg-surface-container" />
-        <div className="mx-auto h-3 w-12 rounded-full bg-surface-container" />
-      </div>
-      <div className="mx-auto h-3 w-5/6 rounded-lg bg-surface-container" />
-      <div className="flex flex-col items-center gap-1.5">
-        <div className="mx-auto h-3 w-16 rounded-full bg-surface-container" />
-        <div className="mx-auto h-7 w-full rounded-xl bg-surface-container" />
+    <div className="flex min-h-[140px] animate-pulse rounded-2xl bg-surface-container-lowest shadow-ambient-sm lg:rounded-xl">
+      <div className="w-[116px] shrink-0 rounded-l-2xl bg-surface-container/60 lg:rounded-l-xl" />
+      <div className="flex flex-1 flex-col justify-between p-3.5">
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <div className="h-3.5 w-16 rounded bg-surface-container" />
+            <div className="h-3.5 w-14 rounded bg-surface-container" />
+          </div>
+          <div className="h-4 w-3/4 rounded bg-surface-container" />
+          <div className="h-3 w-1/2 rounded bg-surface-container" />
+        </div>
+        <div className="flex items-center justify-between border-t border-surface-container/60 pt-2">
+          <div className="h-3.5 w-20 rounded bg-surface-container" />
+          <div className="h-7 w-20 rounded-full bg-surface-container" />
+        </div>
       </div>
     </div>
   );

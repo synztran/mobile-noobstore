@@ -16,6 +16,8 @@ export interface CheckinCalendarResponse {
   availablePoints: number;
   earliestExpiry: string | null;
   days: CheckinCalendarDay[];
+  weekdayPoints: number;
+  weekendPoints: number;
 }
 
 export interface CheckinClaimResult {

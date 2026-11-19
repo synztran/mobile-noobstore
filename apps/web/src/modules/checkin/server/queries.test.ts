@@ -31,6 +31,8 @@ describe("getCheckinCalendar", () => {
     expect(result.days.find((day) => day.date === "2026-11-20")?.points).toBe(5);
     expect(result.days.find((day) => day.date === "2026-11-21")?.points).toBe(2);
     expect(result.availablePoints).toBe(7);
+    expect(result.weekdayPoints).toBe(1);
+    expect(result.weekendPoints).toBe(2);
   });
 
   it("rejects malformed month input", async () => {

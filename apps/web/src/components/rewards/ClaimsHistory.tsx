@@ -6,6 +6,8 @@ import { ArrowDown, Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { formatDate, formatPoints } from "./utils";
 
+const DESKTOP_VISIBLE_LIMIT = 4;
+
 interface Props {
   claims: RewardClaim[];
   isLoading: boolean;
@@ -22,7 +24,8 @@ export function ClaimsHistory({
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDesktop = variant === "desktop";
-  const visibleClaims = isDesktop && !showAll ? claims.slice(0, 3) : claims;
+  const visibleClaims =
+    isDesktop && !showAll ? claims.slice(0, DESKTOP_VISIBLE_LIMIT) : claims;
 
   useEffect(
     () => () => {
@@ -100,7 +103,7 @@ export function ClaimsHistory({
         </p>
         {isDesktop && !isLoading && claims.length > 0 && (
           <span className="text-xs text-on-surface-variant">
-            {Math.min(claims.length, 3)} gần nhất
+            {Math.min(claims.length, DESKTOP_VISIBLE_LIMIT)} gần nhất
           </span>
         )}
       </div>
@@ -111,7 +114,7 @@ export function ClaimsHistory({
       )}
       {isLoading ? (
         <div className={`space-y-2 ${isDesktop ? "lg:space-y-1.5" : ""}`}>
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
               className={`flex animate-pulse items-center justify-between rounded-xl bg-surface-container px-3 py-3 ${isDesktop ? "mb-2" : ""}`}
@@ -227,7 +230,7 @@ export function ClaimsHistory({
           ))}
         </div>
       )}
-      {isDesktop && !isLoading && claims.length > 3 && (
+      {isDesktop && !isLoading && claims.length > DESKTOP_VISIBLE_LIMIT && (
         <button
           type="button"
           onClick={() => setShowAll((value) => !value)}

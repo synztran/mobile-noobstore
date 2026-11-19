@@ -75,6 +75,7 @@ function RewardsPage() {
           isLoading={isBalanceLoading}
           balance={balance}
           dailyCheckinBalance={checkinData?.availablePoints}
+          dailyCheckinEarliestExpiry={checkinData?.earliestExpiry}
           claimsCount={claims.length}
           showHistory={showHistory}
           onToggleHistory={() => setShowHistory(!showHistory)}
@@ -111,13 +112,14 @@ function RewardsPage() {
 
       {/* Desktop catalog leads; vertical history supports. Mobile keeps its existing toggle and sequence. */}
       <div className="mt-4 lg:col-span-12 lg:mt-0 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-4 lg:gap-y-4">
-        <section className="min-w-0 lg:col-span-9">
+        <section className="min-w-0 lg:col-span-8">
           <RewardsGrid
             balance={balance}
+            dailyCheckinBalance={checkinData?.availablePoints ?? 0}
             onRedeem={(r) => setSelectedReward(r)}
           />
         </section>
-        <aside className="hidden min-w-0 lg:col-span-3 lg:block">
+        <aside className="hidden min-w-0 lg:col-span-4 lg:block">
           <ClaimsHistory
             claims={claims}
             isLoading={claimsLoading}
@@ -136,6 +138,7 @@ function RewardsPage() {
         reward={selectedReward}
         isPending={redeemMutation.isPending}
         balance={balance}
+        dailyCheckinBalance={checkinData?.availablePoints ?? 0}
         onClose={() => setSelectedReward(null)}
         onConfirm={handleRedeem}
       />

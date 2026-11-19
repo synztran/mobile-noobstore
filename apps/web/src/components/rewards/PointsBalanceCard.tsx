@@ -8,6 +8,7 @@ interface Props {
   isLoading?: boolean;
   balance: number;
   dailyCheckinBalance?: number;
+  dailyCheckinEarliestExpiry?: string | null;
   claimsCount: number;
   showHistory: boolean;
   onToggleHistory: () => void;
@@ -17,6 +18,7 @@ export function PointsBalanceCard({
   isLoading,
   balance,
   dailyCheckinBalance,
+  dailyCheckinEarliestExpiry,
   claimsCount,
   showHistory,
   onToggleHistory,
@@ -38,6 +40,15 @@ export function PointsBalanceCard({
     );
   }
 
+  const expiryFormatted = dailyCheckinEarliestExpiry
+    ? new Date(dailyCheckinEarliestExpiry).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone: "Asia/Ho_Chi_Minh",
+      })
+    : null;
+
   return (
     <div className="rounded-2xl bg-primary-gradient p-5 shadow-ambient-sm lg:flex lg:items-center lg:justify-between lg:gap-6 lg:rounded-xl lg:px-5 lg:py-3">
       <div className="mb-4 flex items-center justify-between lg:mb-0">
@@ -50,11 +61,12 @@ export function PointsBalanceCard({
             <span className="text-sm">NSP</span>
           </p>
           <p className="mt-1 text-xs font-semibold text-white/80">
-            <span className="lg:hidden">Điểm chuyên cần · </span>
-            <span className="hidden lg:inline">
+            <span>
               {typeof dailyCheckinBalance === "number"
-                ? `${formatPoints(dailyCheckinBalance)} chuyên cần · `
-                : "Chuyên cần · "}
+                ? `${formatPoints(dailyCheckinBalance)} chuyên cần${
+                    expiryFormatted ? ` (hết hạn ${expiryFormatted})` : ""
+                  } · `
+                : "Điểm chuyên cần · "}
             </span>
             <Link className="underline underline-offset-2" href="/profile/points">
               Lịch sử điểm
