@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { ProductCard, ProductCardSkeleton } from "@/modules/products/ui/product/ProductCard";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
@@ -13,6 +14,7 @@ import { buildShopUrl } from "@/modules/products/client/shop-infinite";
 import { trackSearch } from "@/lib/analytics";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { appQueryKeys } from "@/lib/react-query/root";
+
 import { CATEGORIES } from "@/lib/data";
 
 interface Props {
@@ -51,8 +53,8 @@ export function SearchPageClient({ initialData, query, initialSort }: Props) {
     isLoading,
   } = useInfiniteQuery<ProductsResponse>({
     queryKey: appQueryKeys.shop.products(`search:${query}|${sort}|${category}`).queryKey,
-    queryFn: async ({ pageParam }) => {
-      const res = await fetch(buildShopUrl(pageParam as number, filters));
+    queryFn: async ({ pageParam, signal }) => {
+      const res = await apiFetch(buildShopUrl(pageParam as number, filters), { signal });
       if (!res.ok) throw new Error("Failed to fetch products");
       return res.json();
     },

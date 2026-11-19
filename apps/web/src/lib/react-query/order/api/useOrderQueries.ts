@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
 import type { OrderSummary } from "@/app/api/user/orders/route";
 import type { PaymentInformation } from "@/lib/payment-information";
@@ -5,13 +6,14 @@ import { appQueryKeys } from "@/lib/react-query/root";
 import type { OrderListFilters, OrderStatusResult } from "@/lib/react-query/router/order";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
+
 export function usePaymentInformation(enabled = true) {
 	return useQuery<PaymentInformation[]>({
 		...appQueryKeys.order.paymentInformation,
 		staleTime: 300_000,
 		enabled,
 		queryFn: async () => {
-			const res = await fetch("/api/payment-information");
+			const res = await apiFetch("/api/payment-information");
 			if (!res.ok) throw new Error("Failed to load payment info");
 			const data = (await res.json()) as {
 				methods?: PaymentInformation[];
@@ -31,7 +33,7 @@ export function useOrderStatus(
 		enabled: enabled && !!orderNumber,
 		refetchInterval: refetchInterval ?? false,
 		queryFn: async () => {
-			const res = await fetch(`/api/orders/${orderNumber}`, {
+			const res = await apiFetch(`/api/orders/${orderNumber}`, {
 				method: "GET",
 			});
 			if (!res.ok) {
@@ -80,7 +82,7 @@ export function useOrders({ q, status }: { q: string; status: string }) {
 			if (status !== "all") params.set("status", status);
 			params.set("page", String(pageParam));
 			params.set("limit", "10");
-			const res = await fetch(`/api/user/orders?${params}`);
+			const res = await apiFetch(`/api/user/orders?${params}`);
 			if (res.status === 401) throw new Error("Unauthorized");
 			return res.json();
 		},
@@ -99,7 +101,7 @@ export function useOrderDetail(id: string | null) {
 		refetchInterval: 15_000,
 		enabled: !!id,
 		queryFn: async () => {
-			const res = await fetch(`/api/user/orders/${id}`);
+			const res = await apiFetch(`/api/user/orders/${id}`);
 			if (!res.ok) return null;
 			const data = await res.json();
 			return data?.error ? null : data;
@@ -113,7 +115,7 @@ export function useOrderByNumber(orderNumber: string | null) {
 		staleTime: 60_000,
 		enabled: !!orderNumber,
 		queryFn: async () => {
-			const res = await fetch(
+			const res = await apiFetch(
 				`/api/user/orders?q=${encodeURIComponent(orderNumber!)}&limit=10`,
 			);
 			if (!res.ok) return null;

@@ -1,5 +1,6 @@
 import type { CartItem } from "@/modules/cart/types";
 import { isTrackingEnabled } from "@/lib/analytics/config";
+import { apiFetch } from "@/lib/api/fetch";
 
 const GA_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
 
@@ -68,7 +69,7 @@ function sendEvent(name: string, params?: Record<string, unknown>) {
   });
 
   try {
-    fetch("/api/analytics/collect", {
+    apiFetch("/api/analytics/collect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,

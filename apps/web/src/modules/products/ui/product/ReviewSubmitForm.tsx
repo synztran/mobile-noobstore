@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { usePurchaseCheck } from "@/lib/react-query/review/api/usePurchaseCheck";
 import { useSubmitReview } from "@/lib/react-query/review/api/useReviewMutations";
@@ -253,11 +254,12 @@ export function ReviewSubmitForm({ productSlug }: Props) {
         const formData = new FormData();
         unuploadedFiles.forEach((f) => formData.append("files", f));
 
-        const uploadRes = await fetch(
+        const uploadRes = await apiFetch(
           `/api/products/${productSlug}/reviews/upload`,
           {
             method: "POST",
             body: formData,
+            timeoutMs: false,
           }
         );
 

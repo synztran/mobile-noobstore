@@ -1,7 +1,9 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { AddWishlistResponse, WishlistItemResponse } from "@/modules/user/types";
 import { LoginRequiredError } from "@/modules/user/client/login-redirect";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 const WISHLIST_KEY = appQueryKeys.user.wishlist.queryKey;
 
@@ -15,7 +17,7 @@ export function useWishlistQuery(
 		staleTime: 60_000,
 		initialData: initialData?.length ? initialData : undefined,
 		queryFn: async () => {
-			const res = await fetch("/api/wishlist");
+			const res = await apiFetch("/api/wishlist");
 			if (res.status === 401) return [];
 			if (!res.ok) {
 				const payload = (await res.json().catch(() => null)) as {
@@ -32,7 +34,7 @@ export function useWishlistAddMutation() {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async (productId: string): Promise<AddWishlistResponse> => {
-			const res = await fetch("/api/wishlist/add", {
+			const res = await apiFetch("/api/wishlist/add", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ productId }),
@@ -76,7 +78,7 @@ export function useWishlistRemoveMutation() {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: async (productId: string): Promise<void> => {
-			const res = await fetch("/api/wishlist/remove", {
+			const res = await apiFetch("/api/wishlist/remove", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ productId }),

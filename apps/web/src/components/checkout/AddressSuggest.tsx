@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MapPin, Sparkles, X } from "lucide-react";
 import clsx from "clsx";
@@ -164,7 +165,7 @@ export default function AddressSuggest({
       onChange(s.place_name, s.lat, s.lon);
     } else if (s.place_id) {
       setLoading(true);
-      fetch(`/api/geocode/detail?place_id=${s.place_id}`)
+      apiFetch(`/api/geocode/detail?place_id=${s.place_id}`)
         .then((res) => (res.ok ? res.json() : null))
         .then((detail) => {
           if (detail && detail.lat && detail.lon) {

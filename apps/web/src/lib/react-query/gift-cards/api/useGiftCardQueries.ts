@@ -1,4 +1,6 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 export interface GiftCardCheckResponse {
   code: string;
@@ -18,7 +20,7 @@ export function useGiftCardCheck(code: string, enabled = false) {
     staleTime: 30_000,
     retry: false,
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/gift-cards/check?code=${encodeURIComponent(code)}`
       );
       const data = await res.json();
@@ -33,7 +35,7 @@ export function useGiftCardRedeem() {
 
   return useMutation({
     mutationFn: async (code: string) => {
-      const res = await fetch("/api/gift-cards/redeem", {
+      const res = await apiFetch("/api/gift-cards/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),

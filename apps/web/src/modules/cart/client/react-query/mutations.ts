@@ -1,8 +1,11 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { AddCartItemRequest } from "@/modules/cart/types";
 import { LoginRequiredError } from "@/modules/user/client/login-redirect";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/lib/toast";
+import { useCartStore } from "../hooks/useCartStore";
+
 
 function invalidateCart(client: ReturnType<typeof useQueryClient>) {
   client.invalidateQueries({ queryKey: appQueryKeys.cart.all.queryKey });
@@ -13,7 +16,7 @@ export function useAddCartItem() {
 
   return useMutation({
     mutationFn: async (body: AddCartItemRequest) => {
-      const res = await fetch("/api/cart/items", {
+      const res = await apiFetch("/api/cart/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -49,7 +52,7 @@ export function useUpdateCartItem() {
       itemId: string;
       quantity: number;
     }) => {
-      const res = await fetch(`/api/cart/items/${itemId}`, {
+      const res = await apiFetch(`/api/cart/items/${itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity }),
@@ -81,7 +84,7 @@ export function useRemoveCartItem() {
 
   return useMutation({
     mutationFn: async (itemId: string) => {
-      const res = await fetch(`/api/cart/items/${itemId}`, {
+      const res = await apiFetch(`/api/cart/items/${itemId}`, {
         method: "DELETE",
       });
       if (res.status === 401)
@@ -90,13 +93,23 @@ export function useRemoveCartItem() {
         );
       if (!res.ok) throw new Error("Failed to remove cart item");
     },
-    // Await the refetch so callers that key UI state off `onSettled` only
-    // re-enable the row after the fresh cart has actually arrived — no gap
-    // where the removed item is rendered but clickable again.
+    onMutate: async (itemId: string) => {
+      // Optimistically remove from local store so UI re-renders immediately
+      const store = useCartStore.getState();
+      const item = store.items.find((i) => i.id === itemId);
+      if (item) {
+        store.removeItem(item.product.id, item.variant?.id ?? null, itemId);
+      }
+    },
     onSuccess: async () => {
+      invalidateCart(queryClient);
       await queryClient.refetchQueries({
         queryKey: appQueryKeys.cart.all.queryKey,
       });
+    },
+    onError: () => {
+      // Rollback/sync if server rejected the deletion
+      invalidateCart(queryClient);
     },
   });
 }
@@ -106,7 +119,7 @@ export function useClearCart() {
 
   return useMutation({
     mutationFn: async (cartId: string) => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/cart?cart_id=${encodeURIComponent(cartId)}`,
         {
           method: "DELETE",
@@ -116,6 +129,14 @@ export function useClearCart() {
         throw new LoginRequiredError("Vui lòng đăng nhập để xóa giỏ hàng");
       if (!res.ok) throw new Error("Failed to clear cart");
     },
+    onMutate: async () => {
+      // Optimistically clear store
+      useCartStore.getState().clearCart();
+    },
     onSuccess: () => invalidateCart(queryClient),
+    onError: () => {
+      // Rollback/sync if server rejected
+      invalidateCart(queryClient);
+    },
   });
 }

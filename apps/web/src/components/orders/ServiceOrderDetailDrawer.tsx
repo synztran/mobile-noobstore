@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import type { ServiceOrderDetail } from "@/app/api/user/service-orders/[id]/route";
 import { formatVND } from "@/lib/currency";
 import {
@@ -78,7 +79,7 @@ export function ServiceOrderDetailDrawer({ orderId, onClose }: Props) {
 			return;
 		}
 		setLoading(true);
-		fetch(`/api/user/service-orders/${orderId}`)
+		apiFetch(`/api/user/service-orders/${orderId}`)
 			.then((r) => r.json())
 			.then((d) => setDetail(d?.error ? null : d))
 			.catch(() => {})

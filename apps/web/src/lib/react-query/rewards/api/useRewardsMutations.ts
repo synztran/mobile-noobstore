@@ -1,6 +1,8 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { RewardClaim, RedeemResponse } from "@/types/reward";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 export interface ClaimsResponse {
   claims: RewardClaim[];
@@ -11,8 +13,8 @@ export function useClaims(enabled = true) {
     queryKey: ["claims"],
     enabled,
     staleTime: 60_000,
-    queryFn: async () => {
-      const res = await fetch("/api/claims");
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch("/api/claims", { signal });
       if (!res.ok) return { claims: [] };
       return res.json();
     },
@@ -24,7 +26,7 @@ export function useClaimReward() {
 
   return useMutation({
     mutationFn: async (rewardItemId: string) => {
-      const res = await fetch("/api/claims", {
+      const res = await apiFetch("/api/claims", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reward_id: rewardItemId }),
@@ -47,7 +49,7 @@ export function useRewardsInfinite(category: string, limit = 10) {
     queryFn: async () => {
       const params = new URLSearchParams({ limit: String(limit) });
       if (category) params.set("category", category);
-      const res = await fetch(`/api/rewards?${params.toString()}`);
+      const res = await apiFetch(`/api/rewards?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch rewards");
       return res.json();
     },
@@ -59,7 +61,7 @@ export function useRedeemReward() {
 
   return useMutation({
     mutationFn: async (rewardItemId: string) => {
-      const res = await fetch("/api/rewards/redeem", {
+      const res = await apiFetch("/api/rewards/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rewardItemId }),

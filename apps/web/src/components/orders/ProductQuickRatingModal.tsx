@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { useState } from "react";
 import Image from "@/components/ui/AdaptiveImage";
 import {
@@ -108,7 +109,7 @@ export function ProductRatingForm({
     setSubmitting(true);
     try {
       if (product.product_slug) {
-        const res = await fetch(`/api/products/${product.product_slug}/reviews`, {
+        const res = await apiFetch(`/api/products/${product.product_slug}/reviews`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

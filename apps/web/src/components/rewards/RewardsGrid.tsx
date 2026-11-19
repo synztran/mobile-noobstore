@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { ArrowDown, Gift } from "lucide-react";
 import type { RewardItem, RewardsResponse } from "@/types/reward";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -18,7 +19,7 @@ export function RewardsGrid({ balance, onRedeem }: Props) {
     useInfiniteQuery<RewardsResponse>({
       queryKey: ["rewards", "infinite"],
       queryFn: async ({ pageParam }) => {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/rewards?offset=${pageParam}&limit=${LIMIT}`
         );
         if (!res.ok) throw new Error("Failed to fetch rewards");

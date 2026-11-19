@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import type { Tables } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { useCartStore } from "@/modules/cart/client/hooks/useCartStore";
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch profile from your API route
   const fetchProfile = useCallback(async (): Promise<void> => {
     try {
-      const res = await fetch("/api/user/profile", {
+      const res = await apiFetch("/api/user/profile", {
         credentials: "include", // important if using cookies
       });
 
@@ -172,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 .limit(1)
                 .maybeSingle();
               if (activeEvent) {
-                await fetch("/api/gacha/mission/progress", {
+                await apiFetch("/api/gacha/mission/progress", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -201,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     captchaToken?: string
   ) => {
-    const res = await fetch("/api/auth/signin", {
+    const res = await apiFetch("/api/auth/signin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, captchaToken }),
@@ -239,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string,
     captchaToken?: string
   ) => {
-    const res = await fetch("/api/auth/signup", {
+    const res = await apiFetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, fullName, captchaToken }),

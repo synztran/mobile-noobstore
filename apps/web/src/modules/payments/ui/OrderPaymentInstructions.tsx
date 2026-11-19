@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { formatVND } from "@/lib/currency";
@@ -113,7 +114,7 @@ export function OrderPaymentInstructions({
   const query = useQuery<Details>({
     queryKey: ["verified-payment-details", identifier],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/orders/${encodeURIComponent(identifier)}/payment`,
         {
           cache: "no-store",

@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { GachaPromo } from "@/components/home/GachaPromo";
 import { CommunityGallery } from "@/components/home/CommunityGallery";
 import { Sparkles } from "lucide-react";
@@ -12,7 +13,7 @@ export function GachaFeatureSlot() {
   useEffect(() => {
     let mounted = true;
 
-    fetch("/api/gacha/active-event")
+    apiFetch("/api/gacha/active-event")
       .then((response) => (response.ok ? response.json() : { event: null }))
       .then((result: { event: { id: number } | null }) => {
         if (mounted) setHasActiveEvent(Boolean(result.event));

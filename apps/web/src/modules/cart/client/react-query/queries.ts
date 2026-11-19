@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { CartApiItem, CartItem } from "@/modules/cart/types";
 import type {
   Product,
@@ -6,6 +7,7 @@ import type {
 } from "@/modules/products/types";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useCartStore } from "../hooks/useCartStore";
+
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
@@ -76,8 +78,8 @@ export function useCartQuery() {
   const [fetchingTimedOut, setFetchingTimedOut] = useState(false);
   const query = useQuery({
     ...appQueryKeys.cart.all,
-    queryFn: async () => {
-      const res = await fetch("/api/cart");
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch("/api/cart", { signal });
       if (!res.ok) throw new Error("Failed to fetch cart");
       const data = await res.json();
 

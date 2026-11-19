@@ -1,6 +1,8 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { appQueryKeys } from "@/lib/react-query/root";
+
 import type {
   GachaEventResponse,
   GachaHistoryPage,
@@ -14,7 +16,7 @@ export function useGachaEvent(eventId: number) {
     ...appQueryKeys.gacha.event(eventId),
     staleTime: 60_000,
     queryFn: () =>
-      fetch(`/api/gacha?event_id=${eventId}`).then((r) => r.json()),
+      apiFetch(`/api/gacha?event_id=${eventId}`).then((r) => r.json()),
   });
 }
 
@@ -23,7 +25,7 @@ export function useGachaHistory(eventId: number, enabled: boolean) {
     ...appQueryKeys.gacha.history(eventId),
     placeholderData: keepPreviousData,
     queryFn: async ({ pageParam }) => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/gacha/history?event_id=${eventId}&page=${pageParam}`,
       );
       return res.json() as Promise<GachaHistoryPage>;
@@ -41,7 +43,7 @@ export function useGachaMissions(eventId: number) {
     ...appQueryKeys.gacha.missions(eventId),
     staleTime: 60_000,
     queryFn: () =>
-      fetch(`/api/gacha/mission?event_id=${eventId}`).then((r) =>
+      apiFetch(`/api/gacha/mission?event_id=${eventId}`).then((r) =>
         r.json(),
       ),
   });
@@ -50,7 +52,7 @@ export function useGachaMissions(eventId: number) {
 export function useGachaDraw() {
   return useMutation({
     mutationFn: async (eventId: number) => {
-      const res = await fetch("/api/gacha", {
+      const res = await apiFetch("/api/gacha", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ event_id: eventId }),
@@ -71,7 +73,7 @@ export function useClaimMission() {
       eventId: number;
       missionId: number;
     }) => {
-      const res = await fetch("/api/gacha/mission/claim", {
+      const res = await apiFetch("/api/gacha/mission/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ event_id: eventId, mission_id: missionId }),
@@ -89,7 +91,7 @@ export function useRecentWinners(eventId: number) {
     staleTime: 30_000,
     refetchInterval: 30_000,
     queryFn: () =>
-      fetch(`/api/gacha/recent-winners?event_id=${eventId}&limit=15`).then(
+      apiFetch(`/api/gacha/recent-winners?event_id=${eventId}&limit=15`).then(
         (r) => r.json(),
       ),
   });

@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { toast } from "@/lib/toast";
 import type {
   AppliedVoucherEntry,
@@ -87,7 +88,7 @@ export const useDiscountStore = create<DiscountStore>()(
       fetchVouchers: async () => {
         set({ loadingVouchers: true, error: null });
         try {
-          const res = await fetch("/api/vouchers", {
+          const res = await apiFetch("/api/vouchers", {
             method: "GET",
             headers: { "Content-Type": "application/json" },
           });
@@ -138,7 +139,7 @@ export const useDiscountStore = create<DiscountStore>()(
 
         set({ applyingVoucher: true, error: null });
         try {
-          const res = await fetch("/api/vouchers/apply", {
+          const res = await apiFetch("/api/vouchers/apply", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

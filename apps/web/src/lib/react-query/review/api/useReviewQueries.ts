@@ -1,5 +1,7 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useQuery } from "@tanstack/react-query";
+
 
 export interface ReviewItem {
   id: string;
@@ -39,7 +41,7 @@ export function useReviews(productSlug: string) {
     ...appQueryKeys.review.list(productSlug),
     staleTime: 120_000,
     queryFn: async () => {
-      const res = await fetch(`/api/products/${productSlug}/reviews`);
+      const res = await apiFetch(`/api/products/${productSlug}/reviews`);
       if (!res.ok) return { reviews: [], average: 0, total: 0 };
       return res.json() as Promise<ReviewsResponse>;
     },
@@ -51,7 +53,7 @@ export function useRecentReviews() {
     ...appQueryKeys.review.recent,
     staleTime: 120_000,
     queryFn: async () => {
-      const res = await fetch("/api/reviews/recent");
+      const res = await apiFetch("/api/reviews/recent");
       if (!res.ok) return [];
       return res.json() as Promise<RecentReviewItem[]>;
     },

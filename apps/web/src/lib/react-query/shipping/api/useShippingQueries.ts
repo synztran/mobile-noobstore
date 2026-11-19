@@ -1,4 +1,6 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { useQuery } from "@tanstack/react-query";
+
 
 export interface ShippingEstimate {
   id: string;
@@ -21,8 +23,8 @@ export function useShippingEstimate(enabled = true) {
     queryKey: ["shipping", "estimate"],
     enabled,
     staleTime: 300_000,
-    queryFn: async () => {
-      const res = await fetch("/api/shipping/estimate");
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch("/api/shipping/estimate", { signal });
       if (!res.ok) return { district: null, city: null, estimates: [] };
       return res.json();
     },

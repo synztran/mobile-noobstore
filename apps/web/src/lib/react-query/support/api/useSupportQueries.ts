@@ -1,7 +1,9 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { appQueryKeys } from "@/lib/react-query/root";
 import type { SupportListFilters } from "@/lib/react-query/router/support";
 import type { SupportTicketListItem, TicketDetail } from "@/types/support";
 import { useQuery } from "@tanstack/react-query";
+
 
 interface SupportListResponse {
   tickets: SupportTicketListItem[];
@@ -22,7 +24,7 @@ export function useSupportTickets(filters: SupportListFilters) {
       });
       if (filters.status) sp.set("status", filters.status);
 
-      const res = await fetch(`/api/support/tickets?${sp}`);
+      const res = await apiFetch(`/api/support/tickets?${sp}`);
       if (!res.ok) throw new Error("Failed to fetch tickets");
       return res.json();
     },
@@ -34,7 +36,7 @@ export function useSupportTicket(id: string | null) {
     ...appQueryKeys.support.detail(id ?? ""),
     staleTime: 60_000,
     queryFn: async () => {
-      const res = await fetch(`/api/support/tickets/${id}`);
+      const res = await apiFetch(`/api/support/tickets/${id}`);
       if (!res.ok) throw new Error("Failed to fetch ticket detail");
       return res.json();
     },

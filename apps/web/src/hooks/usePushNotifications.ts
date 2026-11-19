@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -80,7 +81,7 @@ export function usePushNotifications() {
 				return false;
 			}
 
-			const response = await fetch("/api/notifications/subscribe", {
+			const response = await apiFetch("/api/notifications/subscribe", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
@@ -122,7 +123,7 @@ export function usePushNotifications() {
 			const sub = await registration?.pushManager.getSubscription();
 			if (!sub) return true;
 
-			await fetch("/api/notifications/unsubscribe", {
+			await apiFetch("/api/notifications/unsubscribe", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ endpoint: sub.endpoint }),
