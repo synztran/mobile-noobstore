@@ -1,8 +1,9 @@
 "use client";
 
-import { Wallet } from "lucide-react";
+import { formatShortVND, formatVND } from "@/lib/currency";
 import type { RewardItem } from "@/types/reward";
-import { formatPoints, getRewardIcon } from "./utils";
+import { Coins, Gift, Percent, Tag, Truck, Wallet } from "lucide-react";
+import { formatPoints } from "./utils";
 
 interface Props {
   reward: RewardItem;
@@ -17,117 +18,218 @@ export function RewardCard({
   balance,
   dailyCheckinBalance = 0,
 }: Props) {
-  const spendable =
-    reward.pointsCurrency === "daily_checkin" ? dailyCheckinBalance : balance;
+  const isCheckin = reward.pointsCurrency === "daily_checkin";
+  const spendable = isCheckin ? dailyCheckinBalance : balance;
   const canAfford = spendable >= reward.pointsCost;
   const isSoldOut =
     reward.stock !== null && reward.claimedCount >= reward.stock;
-  const disabled = !canAfford || isSoldOut;
-  const shortage = reward.pointsCost - spendable;
-  const stockLabel =
-    reward.stock === null
-      ? "Không giới hạn"
-      : `${Math.max(0, reward.stock - reward.claimedCount)} còn lại`;
+  const shortage = Math.max(0, reward.pointsCost - spendable);
+
+  const m = reward.metadata ?? {};
+  const rt = (m.reward_type as string) || "";
+  const scopeType = (m.scope_type as string) || "order_total";
+  const amountOff = typeof m.amount_off === "number" ? m.amount_off : null;
+  const percentOff = typeof m.percent_off === "number" ? m.percent_off : null;
+  const maxDiscount =
+    typeof m.max_discount_amount === "number" ? m.max_discount_amount : null;
+  const minOrder =
+    typeof m.min_order_amount === "number" ? m.min_order_amount : 0;
+  const pointAmount = typeof m.point_amount === "number" ? m.point_amount : 0;
+
+  // 1. Phân loại hình thái dải màu bên trái (Left Strip)
+  let leftBg = "from-primary to-primary-focus";
+  let leftIcon = <Tag size={26} className="text-white" />;
+  let leftMainText = "VOUCHER";
+  let leftSubText = "ƯU ĐÃI";
+
+  if (
+    rt === "free_shipping" ||
+    rt === "shipping_percent_off" ||
+    rt === "shipping_amount_off"
+  ) {
+    leftBg = "from-emerald-600 to-teal-800";
+    leftIcon = <Truck size={26} className="text-white" />;
+    leftMainText = "FREESHIP";
+    leftSubText = rt === "free_shipping" ? "100% PHÍ" : "PHÍ SHIP";
+  } else if (rt === "percent_off") {
+    leftBg = "from-sky-600 to-blue-800";
+    leftIcon = <Percent size={26} className="text-white stroke-[2.5]" />;
+    leftMainText = `GIẢM ${percentOff ?? 0}%`;
+    leftSubText = maxDiscount ? `TỐI ĐA ${formatShortVND(maxDiscount)}` : "TỔNG ĐƠN";
+  } else if (rt === "amount_off") {
+    leftBg = "from-[#b3451e] to-[#7f2d0f]";
+    leftIcon = <Tag size={26} className="text-white" />;
+    leftMainText = "GIẢM TIỀN";
+    leftSubText = amountOff ? `-${formatShortVND(amountOff)}` : "TỔNG ĐƠN";
+  } else if (reward.rewardType === "point") {
+    leftBg = "from-amber-600 to-amber-800";
+    leftIcon = <Coins size={26} className="text-white" />;
+    leftMainText = `+${pointAmount}`;
+    leftSubText = "ĐIỂM NSP";
+  } else if (reward.rewardType === "product") {
+    leftBg = "from-violet-600 to-purple-800";
+    leftIcon = <Gift size={26} className="text-white" />;
+    leftMainText = "QUÀ TẶNG";
+    leftSubText = "VẬT LÝ";
+  }
+
+  // 2. Tỉ lệ tiến độ kho (Progress Bar góc trên)
+  const hasStockLimit = reward.stock !== null && reward.stock > 0;
+  const stockLimit = reward.stock ?? 0;
+  const claimed = reward.claimedCount;
+  const remaining = Math.max(0, stockLimit - claimed);
+  const progressPct = hasStockLimit
+    ? Math.min(100, Math.max(0, Math.round((claimed / stockLimit) * 100)))
+    : 0;
+  const isAlmostSoldOut = hasStockLimit && remaining <= 2;
+
+  // 3. Nhãn loại & điều kiện phụ
+  const scopeLabel =
+    isCheckin
+      ? "Chuyên cần"
+      : scopeType === "shipping_fee"
+        ? "Vận chuyển"
+        : reward.rewardType === "point"
+          ? "Điểm NSP"
+          : "Tổng đơn";
+
+  const conditionHint =
+    minOrder > 0
+      ? `Đơn tối thiểu ${formatVND(minOrder)}`
+      : reward.description || "Áp dụng khi thanh toán";
 
   return (
-    <div className="flex flex-col gap-2 rounded-2xl bg-surface-container-lowest p-3 shadow-ambient-sm transition-all active:scale-[0.98] lg:min-h-[220px] lg:rounded-xl lg:border lg:border-surface-container-high lg:p-3">
-      <div className="hidden items-center justify-between lg:flex">
-        <span
-          className={`text-sm font-extrabold uppercase tracking-wide ${reward.pointsCurrency === "daily_checkin" ? "text-secondary" : "text-primary"}`}
-        >
-          {reward.pointsCurrency === "daily_checkin"
-            ? "Chuyên cần"
-            : reward.rewardType === "point"
-              ? "Điểm"
-              : reward.rewardType === "product"
-                ? "Quà"
-                : "Voucher"}
-        </span>
-        <span className="text-sm text-on-surface-variant">{stockLabel}</span>
-      </div>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onRedeem(reward)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onRedeem(reward);
+        }
+      }}
+      className="group relative flex cursor-pointer select-none overflow-hidden rounded-2xl bg-surface-container-lowest shadow-ambient-sm transition-all hover:shadow-ambient-md active:scale-[0.99] lg:rounded-xl"
+      style={{
+        maskImage:
+          "radial-gradient(circle 8px at 116px 0px, transparent 8px, black 8.5px), radial-gradient(circle 8px at 116px 100%, transparent 8px, black 8.5px)",
+        WebkitMaskImage:
+          "radial-gradient(circle 8px at 116px 0px, transparent 8px, black 8.5px), radial-gradient(circle 8px at 116px 100%, transparent 8px, black 8.5px)",
+        maskComposite: "intersect",
+        WebkitMaskComposite: "source-in",
+      }}
+    >
+      {/* DẢI NHẬN DIỆN BÊN TRÁI (LEFT STRIP) */}
       <div
-        className={`hidden h-[66px] items-center justify-center rounded-lg lg:flex ${reward.pointsCurrency === "daily_checkin" ? "bg-secondary-fixed/60 text-secondary" : "bg-primary-fixed/30 text-primary"}`}
+        className={`relative flex w-[116px] shrink-0 flex-col items-center justify-center bg-gradient-to-b p-2 text-center text-white ${leftBg}`}
       >
-        {reward.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={reward.imageUrl}
-            alt=""
-            className="h-full w-full rounded-lg object-cover"
-          />
-        ) : (
-          getRewardIcon(reward.rewardType, reward.metadata)
-        )}
-      </div>
-      <div className="flex items-center gap-2 lg:flex-col lg:items-stretch lg:gap-0">
-        <div className="flex h-8 min-w-8 items-center justify-center rounded-sm bg-primary-fixed/50 text-primary lg:hidden">
-          {getRewardIcon(reward.rewardType, reward.metadata)}
+        <div className="flex items-center justify-center">
+          {leftIcon}
         </div>
+        <span className="mt-1.5 text-xs font-black tracking-tight uppercase">
+          {leftMainText}
+        </span>
+        <span className="mt-0.5 text-xs font-black tracking-tight text-white uppercase sm:text-sm">
+          {leftSubText}
+        </span>
 
-        <div className="space-y-1 text-left">
-          <div className="max-w-max rounded bg-secondary-fixed/30 px-1.5 py-0.5 text-xs font-black uppercase tracking-widest text-secondary lg:hidden">
-            {reward.rewardType === "point"
-              ? "ĐIỂM"
-              : reward.rewardType === "product"
-                ? "QUÀ"
-                : "VOUCHER"}
-          </div>
-          {reward.pointsCurrency === "daily_checkin" && (
-            <div className="max-w-max rounded bg-primary-fixed/30 px-1.5 py-0.5 text-xs font-black uppercase tracking-widest text-primary lg:hidden">
-              CHUYÊN CẦN
-            </div>
-          )}
-          <p className="truncate text-xs font-black text-on-surface lg:text-sm lg:line-clamp-2 lg:whitespace-normal lg:leading-snug">
-            {reward.name}
-          </p>
-        </div>
+        {/* Vạch nét đứt phân chia hai khối */}
+        <div className="absolute top-3.5 bottom-3.5 right-0 w-px border-r border-dashed border-white/40" />
       </div>
 
-      {reward.description && (
-        <p className="line-clamp-2 text-xs text-on-surface-variant lg:text-xs">
-          {reward.description}
-        </p>
-      )}
-
-      <div className="mt-auto flex flex-col gap-1.5">
-        <div className="flex items-center justify-center gap-1 lg:justify-start lg:border-t lg:border-surface-container-high lg:pt-2">
-          <Wallet size={11} className="text-amber-500" />
-          <span className="text-[11px] font-extrabold text-amber-600 lg:text-xs">
-            {formatPoints(reward.pointsCost)}
-          </span>
-          <span className="hidden text-xs text-on-surface-variant lg:inline">
-            ·
-          </span>
-          <span className="hidden text-xs font-bold text-on-surface-variant lg:inline">
-            {reward.pointsCurrency === "daily_checkin" ? "chuyên cần" : "điểm"}
-          </span>
-          {reward.pointsCurrency === "daily_checkin" && (
-            <span className="text-[9px] font-bold text-primary lg:hidden">
-              điểm chuyên cần
+      {/* KHỐI NỘI DUNG BÊN PHẢI (RIGHT CONTENT) */}
+      <div className="flex min-w-0 flex-1 flex-col justify-between p-3 sm:p-3.5">
+        <div>
+          {/* Header row: Badge bên trái & Mini progress bar bên phải */}
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className={`rounded px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                isCheckin
+                  ? "bg-secondary-fixed/50 text-secondary"
+                  : "bg-primary-fixed/40 text-primary"
+              }`}
+            >
+              {scopeLabel}
             </span>
-          )}
+
+            {/* Mini Progress Bar góc trên phải */}
+            {hasStockLimit ? (
+              <div className="flex flex-col items-end gap-1">
+                <span
+                  className={`text-[10px] font-bold ${
+                    isSoldOut
+                      ? "text-rose-500 font-black"
+                      : isAlmostSoldOut
+                        ? "text-rose-500 font-extrabold"
+                        : "text-on-surface-variant"
+                  }`}
+                >
+                  {isSoldOut
+                    ? "Đã hết lượt"
+                    : isAlmostSoldOut
+                      ? `Còn ${remaining} lượt`
+                      : `Đã đổi ${claimed}/${stockLimit}`}
+                </span>
+                <div className="h-1 w-16 overflow-hidden rounded-full bg-surface-container sm:w-20">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      isSoldOut || isAlmostSoldOut
+                        ? "bg-rose-500"
+                        : "bg-primary"
+                    }`}
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <span className="rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-semibold text-on-surface-variant">
+                Không giới hạn
+              </span>
+            )}
+          </div>
+
+          {/* Tiêu đề & mô tả điều kiện */}
+          <h3 className="mt-1.5 truncate text-xs font-black text-on-surface sm:text-sm">
+            {reward.name}
+          </h3>
+          <p className="mt-0.5 truncate text-[11px] font-medium text-on-surface-variant">
+            {conditionHint}
+          </p>
         </div>
-        {!canAfford && !isSoldOut && (
-          <p className="text-center text-[9px] font-semibold text-rose-500">
-            Còn thiếu {formatPoints(shortage)}
-          </p>
-        )}
-        {isSoldOut && (
-          <p className="text-center text-[9px] font-semibold text-rose-500">
-            Đã hết lượt đổi
-          </p>
-        )}
-        <button
-          onClick={() => onRedeem(reward)}
-          disabled={disabled}
-          className={`w-full rounded-xl py-2 text-[9px] font-black uppercase tracking-widest transition-all active:scale-90 lg:w-full lg:px-2 lg:py-2.5 lg:text-xs ${
-            disabled
-              ? "cursor-not-allowed bg-surface-container text-on-surface-variant/50"
-              : "primary-gradient text-white"
-          }`}
-        >
-          {isSoldOut ? "Hết lượt" : canAfford ? "Đổi ngay" : "Thiếu điểm"}
-        </button>
+
+        {/* Footer row: Chi phí & Nút hành động */}
+        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-surface-container-high/60 pt-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <Wallet size={14} className="shrink-0 text-amber-500" />
+              <span className="text-sm font-black text-primary sm:text-base">
+                {formatPoints(reward.pointsCost).replace(/ điểm$/, "")}
+              </span>
+            </div>
+            {!canAfford && !isSoldOut && (
+              <span className="block text-[9px] font-semibold text-rose-500">
+                Thiếu {formatPoints(shortage).replace(/ điểm$/, "")}
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRedeem(reward);
+            }}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-wider transition-all active:scale-95 ${
+              isSoldOut
+                ? "cursor-not-allowed bg-surface-container text-on-surface-variant/50"
+                : canAfford
+                  ? "primary-gradient text-white hover:opacity-95"
+                  : "border border-primary/20 bg-primary-fixed/20 text-primary hover:bg-primary-fixed/30"
+            }`}
+          >
+            {isSoldOut ? "Hết lượt" : canAfford ? "Đổi ngay" : "Xem chi tiết"}
+          </button>
+        </div>
       </div>
     </div>
   );

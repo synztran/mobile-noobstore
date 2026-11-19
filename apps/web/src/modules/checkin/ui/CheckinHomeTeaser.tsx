@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useClaimCheckin, useCheckinCalendar } from "../client/queries";
+import {
+  useClaimCheckin,
+  useCheckinCalendar,
+  useCheckinRewards,
+} from "../client/queries";
 import { useState } from "react";
 import { useEffect, useRef } from "react";
 import { CalendarCheck, ChevronRight, Gift } from "lucide-react";
@@ -24,14 +28,15 @@ export function CheckinHomeTeaser({
 }: {
   compactDesktop?: boolean;
 }) {
+  const { user, loading: authLoading } = useAuth();
   const month = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Ho_Chi_Minh",
     year: "numeric",
     month: "2-digit",
   }).format(new Date());
-  const query = useCheckinCalendar(month);
+  const query = useCheckinCalendar(month, { enabled: Boolean(user) });
+  const rewardsQuery = useCheckinRewards({ enabled: Boolean(user) });
   const claim = useClaimCheckin();
-  const { user, loading: authLoading } = useAuth();
   const reduceMotion = useReducedMotion();
   const [totalEarned, setTotalEarned] = useState(0);
   useEffect(() => {
@@ -133,10 +138,26 @@ export function CheckinHomeTeaser({
 
   if (query.isLoading || query.isError || !query.data?.enabled) return null;
   const today = query.data.days.find((day) => day.state === "today");
-  const nextRewardPoints = 15;
+  const weekdayPoints = query.data.weekdayPoints ?? 1;
+  const weekendPoints = query.data.weekendPoints ?? 2;
+  const availablePoints = query.data.availablePoints;
+
+  const rewards = rewardsQuery.data ?? [];
+  const activeRewards = rewards
+    .filter((r) => r.points_cost > 0)
+    .sort((a, b) => a.points_cost - b.points_cost);
+
+  const nextReward =
+    activeRewards.find((r) => r.points_cost >= availablePoints) ??
+    activeRewards[activeRewards.length - 1];
+
+  const nextRewardPoints = nextReward
+    ? nextReward.points_cost
+    : weekdayPoints * 15;
+
   const progress = Math.min(
     100,
-    Math.round((query.data.availablePoints / nextRewardPoints) * 100)
+    Math.round((availablePoints / nextRewardPoints) * 100)
   );
   async function quickClaim() {
     if (claim.isPending) return;
@@ -233,7 +254,7 @@ export function CheckinHomeTeaser({
               <div className="flex items-center justify-between gap-3 text-xs font-semibold text-on-surface-variant">
                 <span>Mốc voucher tiếp theo</span>
                 <span className="tabular-nums text-on-surface">
-                  {query.data.availablePoints} / {nextRewardPoints}
+                  {availablePoints} / {nextRewardPoints}
                 </span>
               </div>
               <div
@@ -250,39 +271,42 @@ export function CheckinHomeTeaser({
                 />
               </div>
               <p className="mt-2 text-xs text-on-surface-variant">
-                Ngày thường +1 · cuối tuần +2 điểm
+                Ngày thường +{weekdayPoints} · cuối tuần +{weekendPoints} điểm
               </p>
             </motion.div>
             <motion.div
               {...revealProps(reduceMotion, 0.2)}
-              className="flex flex-col gap-2"
+              className="flex flex-col justify-center gap-2"
             >
-              <p className="text-right text-sm font-bold text-primary">
-                {today
-                  ? `Hôm nay +${today.points} điểm`
-                  : "Đã điểm danh hôm nay"}
+              <p className="flex items-center justify-center gap-1.5 text-center text-sm font-bold text-primary">
+                {!today && <CalendarCheck size={16} aria-hidden="true" />}
+                <span>
+                  {today
+                    ? `Hôm nay +${today.points} điểm`
+                    : "Đã điểm danh hôm nay"}
+                </span>
               </p>
-              <button
-                className={`btn btn-primary w-full${claim.isPending ? " pointer-events-none" : ""}`}
-                disabled={!today}
-                aria-busy={claim.isPending}
-                aria-disabled={!today || claim.isPending}
-                onClick={quickClaim}
-              >
-                {claim.isPending ? (
-                  <>
-                    <span
-                      className="loading loading-spinner loading-sm"
-                      aria-hidden="true"
-                    />
-                    <span className="sr-only">Đang điểm danh</span>
-                  </>
-                ) : today ? (
-                  "Điểm danh nhanh"
-                ) : (
-                  "Đã điểm danh hôm nay"
-                )}
-              </button>
+              {today && (
+                <button
+                  className={`btn btn-primary w-full${claim.isPending ? " pointer-events-none" : ""}`}
+                  disabled={claim.isPending}
+                  aria-busy={claim.isPending}
+                  aria-disabled={claim.isPending}
+                  onClick={quickClaim}
+                >
+                  {claim.isPending ? (
+                    <>
+                      <span
+                        className="loading loading-spinner loading-sm"
+                        aria-hidden="true"
+                      />
+                      <span className="sr-only">Đang điểm danh</span>
+                    </>
+                  ) : (
+                    "Điểm danh nhanh"
+                  )}
+                </button>
+              )}
             </motion.div>
           </div>
         </div>

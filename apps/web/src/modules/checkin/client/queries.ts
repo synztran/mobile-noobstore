@@ -3,10 +3,10 @@
 import { apiFetch } from "@/lib/api/fetch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { appQueryKeys } from "@/lib/react-query/root";
-import type { CheckinCalendarResponse, CheckinClaimResult } from "../types";
+import type { CheckinCalendarResponse, CheckinClaimResult, CheckinReward } from "../types";
 
 
-export function useCheckinCalendar(month: string) {
+export function useCheckinCalendar(month: string, options?: { enabled?: boolean }) {
   return useQuery({
     ...appQueryKeys.checkin.calendar(month),
     queryFn: async (): Promise<CheckinCalendarResponse> => {
@@ -16,6 +16,20 @@ export function useCheckinCalendar(month: string) {
       if (!response.ok) throw new Error("Không thể tải lịch điểm danh");
       return response.json();
     },
+    enabled: options?.enabled,
+  });
+}
+
+export function useCheckinRewards(options?: { enabled?: boolean }) {
+  return useQuery({
+    ...appQueryKeys.checkin.rewards(),
+    queryFn: async (): Promise<CheckinReward[]> => {
+      const response = await apiFetch("/api/checkin/rewards");
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 60 * 1000,
+    enabled: options?.enabled,
   });
 }
 

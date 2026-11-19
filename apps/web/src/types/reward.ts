@@ -1,10 +1,21 @@
+export enum PointsCurrency {
+  NSP = "nsp",
+  DAILY_CHECKIN = "daily_checkin",
+}
+
+export enum RewardItemType {
+  VOUCHER = "voucher",
+  PRODUCT = "product",
+  POINT = "point",
+}
+
 export interface RewardItem {
   id: string;
   name: string;
   description: string | null;
-  rewardType: "voucher" | "product" | "point";
+  rewardType: RewardItemType | "voucher" | "product" | "point";
   pointsCost: number;
-  pointsCurrency?: "nsp" | "daily_checkin";
+  pointsCurrency?: PointsCurrency | "nsp" | "daily_checkin";
   imageUrl: string | null;
   stock: number | null;
   claimedCount: number;

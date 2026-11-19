@@ -5,6 +5,15 @@ export type VoucherStatus =
   | "expired"
   | "disabled";
 
+export const VoucherRewardType = {
+  AMOUNT_OFF: "amount_off",
+  PERCENT_OFF: "percent_off",
+  SHIPPING_AMOUNT_OFF: "shipping_amount_off",
+  SHIPPING_PERCENT_OFF: "shipping_percent_off",
+  FREE_SHIPPING: "free_shipping",
+  GIFT_ITEM: "gift_item",
+} as const;
+
 export type VoucherRewardType =
   | "amount_off"
   | "percent_off"
@@ -12,6 +21,12 @@ export type VoucherRewardType =
   | "shipping_percent_off"
   | "free_shipping"
   | "gift_item";
+
+export const VoucherScopeType = {
+  ORDER_TOTAL: "order_total",
+  PRODUCT: "product",
+  CATEGORY: "category",
+} as const;
 
 export type VoucherScopeType = "order_total" | "product" | "category";
 
