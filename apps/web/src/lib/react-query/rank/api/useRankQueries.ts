@@ -1,6 +1,8 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { RankResponse } from "@/types/rank";
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
+
 
 const myRankQueryKey = ["rank", "myRank"] as const;
 
@@ -12,8 +14,8 @@ export function useMyRank() {
     staleTime: 60_000,
     retry: false,
     enabled: !!user,
-    queryFn: async () => {
-      const res = await fetch("/api/user/rank");
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch("/api/user/rank", { signal });
       if (res.status === 401) {
         return {
           currentRank: null,

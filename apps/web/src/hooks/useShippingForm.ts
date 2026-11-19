@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { DISTRICT_MAP, VIETNAM_CITIES } from "@/constants/vietnam-cities";
 import {
   PICKUP_SLOT_MINUTES,
@@ -320,7 +321,7 @@ export function useShippingForm() {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
 
-    fetch("/api/fees", { credentials: "include" })
+    apiFetch("/api/fees", { credentials: "include" })
       .then((res) => {
         if (!res.ok) {
           // Previously silent, which meant a broken fees config surfaced only
@@ -911,7 +912,7 @@ export function useShippingForm() {
           presetLatRef.current = undefined;
           presetLonRef.current = undefined;
         }
-        const res = await fetch("/api/shipping/distance", {
+        const res = await apiFetch("/api/shipping/distance", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),

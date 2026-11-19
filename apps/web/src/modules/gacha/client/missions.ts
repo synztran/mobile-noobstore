@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import type { MissionType, TriggerResult } from "@/modules/gacha/types";
 
 /**
@@ -12,7 +13,7 @@ export async function triggerMissionClient(
   context: Record<string, unknown> = {}
 ): Promise<TriggerResult> {
   try {
-    const res = await fetch("/api/gacha/mission/progress", {
+    const res = await apiFetch("/api/gacha/mission/progress", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

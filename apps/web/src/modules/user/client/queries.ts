@@ -1,5 +1,7 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { ProfileAddress } from "@/modules/user/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 export interface ProfileResponse {
 	addresses?: ProfileAddress[];
@@ -12,7 +14,7 @@ export function useProfileAddresses(enabled = true) {
 		enabled,
 		staleTime: 60_000,
 		queryFn: async () => {
-			const res = await fetch("/api/user/profile", {
+			const res = await apiFetch("/api/user/profile", {
 				credentials: "include",
 			});
 			if (res.status === 401) throw new Error("Unauthorized");
@@ -27,7 +29,7 @@ export function useUpdateProfileAddresses() {
 
 	return useMutation({
 		mutationFn: async (addresses: Array<Omit<ProfileAddress, "id" | "user_id" | "created_at" | "updated_at">>) => {
-			const res = await fetch("/api/user/profile", {
+			const res = await apiFetch("/api/user/profile", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ addresses }),

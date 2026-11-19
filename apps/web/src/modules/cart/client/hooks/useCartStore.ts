@@ -40,7 +40,7 @@ interface CartStore {
       quantity: number;
     }>
   ) => { success: boolean; reason?: string };
-  removeItem: (productId: string, variantId: string | null) => void;
+  removeItem: (productId: string, variantId: string | null, itemId?: string) => void;
   updateQty: (
     productId: string,
     variantId: string | null,
@@ -178,15 +178,17 @@ export const useCartStore = create<CartStore>()(
         return { success: true };
       },
 
-      removeItem: (productId, variantId) => {
+      removeItem: (productId, variantId, itemId) => {
         set((state) => ({
-          items: state.items.filter(
-            (i) =>
-              !(
-                i.product.id === productId &&
-                (i.variant?.id ?? null) === variantId
-              )
-          ),
+          items: state.items.filter((i) => {
+            if (itemId && i.id) {
+              return i.id !== itemId;
+            }
+            return !(
+              i.product.id === productId &&
+              (i.variant?.id ?? null) === variantId
+            );
+          }),
         }));
       },
 

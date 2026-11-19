@@ -39,7 +39,7 @@ const START_PCT = 12;
 const RAMP_CEIL = 90; // bar never completes on its own — snaps to 100 when done
 const RAMP_INTERVAL_MS = 150;
 const SETTLE_MS = 300; // sustained-idle window before hiding once data lands
-const FAILSAFE_MARGIN_MS = 6000; // failsafe = minDuration + margin — never preempts the data wait
+const FAILSAFE_MARGIN_MS = 2000; // failsafe = minDuration + margin (max 3.2s total) — never traps the user
 
 /**
  * Full-screen NoobStore boot splash — plays ONLY on the home route.
@@ -78,7 +78,7 @@ export function SplashScreen({
   const [done, setDone] = useState(false);
   const [bootSettled, setBootSettled] = useState(false);
 
-  const startedAtRef = useRef<number | null>(null);
+  const startedAtRef = useRef<number>(Date.now());
   const doneRef = useRef(false);
   const prevPathnameRef = useRef<string | null>(null);
 
@@ -170,7 +170,7 @@ export function SplashScreen({
         (q) => q.state.fetchStatus === "fetching"
       );
       const allSettled =
-        matched.length > 0 &&
+        matched.length === 0 ||
         matched.every((q) => {
           const { status, fetchStatus, fetchFailureCount } = q.state;
           if (status === "success" || status === "error") return true;

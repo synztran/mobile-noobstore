@@ -4,7 +4,7 @@
 
 **Goal:** Improve measured `apps/web` behavior under the Grafana workload that failed around 550 VU/s, without speculative indexes or unsafe timeout semantics.
 
-**Architecture:** Execute three reviewable tracks in order: establish route/DB evidence and selectively add indexes; implement a web middleware deadline hint plus an API wrapper that returns 504 while aborting supported outbound work; then profile newly added client components and optimize only demonstrated rerender costs. Middleware cannot itself wrap downstream route-handler execution, and a timed-out DB promise may continue unless cancellation is verified.
+**Architecture:** Execute three reviewable tracks in order: establish route/DB evidence and selectively add indexes; add a browser-side 10-second default timeout helper for same-origin storefront API fetches with explicit long-running opt-outs; then profile newly added client components and optimize only demonstrated rerender costs. Browser abort protects customer-facing wait but does not guarantee server/database cancellation.
 
 **Tech Stack:** Next.js 15 App Router, TypeScript, Supabase/PostgREST, PostgreSQL migrations, React Profiler, Grafana.
 
@@ -15,17 +15,16 @@
 - Scope is `apps/web`; do not include unrelated dirty `apps/web`, admin, warehouse, or root changes.
 - Do not run `yarn build` or `next build`; shared `.next` artifacts can stop active development servers.
 - No index without observed frequent-query evidence and a query plan demonstrating benefit.
-- Middleware deadline is a hint; handler wrapper enforces response deadline. Promise racing alone does not cancel Supabase DB work.
+- API timeout is enforced in browser fetch helpers, not middleware; browser abort does not guarantee server/database cancellation.
 - Do not automatically retry mutations after timeout; preserve idempotency and safe error responses.
 - Every added/changed migration requires a matching system-impact document under `docs/migrations/`.
 
 ## Review Focus
 
 - **Unknown Grafana workload mix:** obtain exact routes, VU ramp, duration, and latency/error panels before selecting a hot path; record the baseline.
-- **Database cancellation uncertainty:** verify actual PostgREST client cancellation behavior; assert only bounded caller wait if cancellation is unavailable.
-- **Mutations finishing after 504:** test timeout response does not trigger retries or change idempotency semantics.
-- **Exempt/streaming routes:** classify uploads, exports, webhooks, jobs, cron and streaming before wrapper coverage; test each exemption.
-- **User-provided timeout input:** middleware must overwrite/clamp internal hints; test malformed and forged header values.
+- **Server work after browser abort:** verify timeout/UI behavior without claiming the API handler or database was stopped.
+- **Mutations finishing after client timeout:** ensure no automatic retry changes mutation/idempotency semantics.
+- **Long-running requests:** classify uploads or other legitimate long requests and test explicit opt-outs/overrides.
 
 ---
 
@@ -49,24 +48,23 @@
 - [ ] If adding a migration, include companion Markdown covering purpose, affected schema, behavior, existing data, deployment verification, and rollback.
 - [ ] Run targeted SQL/RLS checks applicable to the migration; do not run app build.
 
-### Task 2: Enforce shared API response deadlines
+### Task 2: Bound storefront browser API waits to 10 seconds
 
 **Files:**
-- Modify: `apps/web/src/middleware.ts`
-- Create: `apps/web/src/lib/api/deadline.ts`
-- Create or modify: `apps/web/src/lib/api/with-api-timeout.ts` (or the smallest established route-handler wrapper seam found during implementation)
-- Test: deadline helper and representative API route tests under `apps/web/src`
-- Modify: only explicitly classified API routes that need outbound fetch cancellation
+- Create: `apps/web/src/lib/api/fetch.ts` (or the established shared browser API fetch seam found during implementation)
+- Modify: browser API call sites under `apps/web/src` to use the helper
+- Test: helper and representative caller tests under `apps/web/src`
+- Do not modify: `apps/web/src/middleware.ts` for this timeout requirement
 
-**Interfaces:** Middleware overwrites a private deadline header. `getApiDeadline(request: Request): number | null` returns only the validated middleware-supplied deadline. `withApiTimeout(handler, options)` returns a handler wrapper that emits safe 504 when deadline expires; options declare per-route timeout/exemption and whether the route is streaming. Shared `fetchWithDeadline(input, init, deadline)` merges an `AbortSignal` without discarding a caller-provided signal.
+**Interfaces:** `apiFetch(input, init?: RequestInit & { timeoutMs?: number | false }): Promise<Response>` defaults timeout to 10,000 ms for same-origin `/api/**`, including when input is a same-origin `Request`. It composes caller `signal`, clears timers, and throws a distinguishable timeout error only when its own deadline expires. `timeoutMs: false` explicitly opts out for documented long-running uploads.
 
-- [ ] Write tests for missing, malformed, forged, expired, and clamped deadline values; middleware must replace client-supplied internal deadline values.
-- [ ] Test handler completion before deadline preserves status, headers, and body; test a never-resolving handler returns generic 504 at the configured bound.
-- [ ] Inventory API route types and explicitly exclude streaming/long-running routes and routes whose writes cannot safely tolerate a response timeout.
-- [ ] Implement deadline extraction and middleware propagation; do not imply middleware cancels downstream work.
-- [ ] Implement wrapper and fetch abort composition; verify supported external fetches stop on abort.
-- [ ] Probe Supabase/PostgREST cancellation experimentally. If unsupported/unverified, document that 504 bounds response wait only and database work may continue; do not claim cancellation.
-- [ ] Run focused tests and `yarn workspace @noobstore/web type-check`.
+- [x] Test 10-second default, timeout abort, caller-abort distinction, and explicit opt-out.
+- [x] Implement `apiFetch` signal composition using `AbortController`; do not monkey-patch global fetch.
+- [x] Inventory browser same-origin API calls and route them through the helper while preserving options and response handling.
+- [x] Leave server-side and external-provider fetches unchanged.
+- [x] Identify long-running uploads and give only those explicit timeout opt-outs.
+- [x] Ensure mutation calls are never automatically retried by `apiFetch`; no retry layer was added. Existing React Query query retries are unchanged.
+- [x] Run helper and full web/admin unit tests and `yarn workspace @noobstore/web type-check`.
 
 ### Task 3: Profile new storefront client components
 

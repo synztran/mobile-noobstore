@@ -1,9 +1,11 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { useMutation } from "@tanstack/react-query";
+
 
 export function useNewsletterSubscribe() {
   return useMutation({
     mutationFn: async (email: string) => {
-      const res = await fetch("/api/newsletter/subscribe", {
+      const res = await apiFetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -18,7 +20,7 @@ export function useNewsletterSubscribe() {
 export function useReleaseSubscribe() {
   return useMutation({
     mutationFn: async (email: string) => {
-      const res = await fetch("/api/release-subscribers", {
+      const res = await apiFetch("/api/release-subscribers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

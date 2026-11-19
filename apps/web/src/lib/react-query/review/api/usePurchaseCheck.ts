@@ -1,4 +1,6 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { useQuery } from "@tanstack/react-query";
+
 
 export interface PurchasedItem {
   product_name: string;
@@ -16,7 +18,7 @@ export function usePurchaseCheck(productSlug: string, enabled: boolean) {
   return useQuery<PurchaseCheckResponse>({
     queryKey: ["purchase-check", productSlug],
     queryFn: async () => {
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/products/${productSlug}/reviews/purchase-check`
       );
       if (!res.ok)

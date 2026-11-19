@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type {
 	ComponentVariantRule,
 	ConfiguratorGroup,
@@ -5,6 +6,7 @@ import type {
 	ShopProduct,
 } from "@/modules/products/types";
 import { appQueryKeys } from "@/lib/react-query/root";
+
 import { useQuery } from "@tanstack/react-query";
 
 export interface QuickPickResponse {
@@ -26,7 +28,7 @@ export function useQuickPick(
 		...appQueryKeys.product.quickPick(requestKey, brand, excludeProductId, activeProductId),
 		enabled: enabled && !requestKey.endsWith(":"),
 		staleTime: 30_000,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const query = new URLSearchParams();
 			if (brand) query.set("brand", brand);
 			if (excludeProductId) query.set("excludeProductId", excludeProductId);
@@ -38,8 +40,9 @@ export function useQuickPick(
 				const id = requestKey.replace("product:", "");
 				if (id) query.set("productId", id);
 			}
-			const res = await fetch(
+			const res = await apiFetch(
 				`/api/products/quick-pick?${query.toString()}`,
+				{ signal },
 			);
 			if (!res.ok) throw new Error("Failed to fetch quick pick data");
 			return res.json() as Promise<QuickPickResponse>;
@@ -52,9 +55,10 @@ export function useProductSearch(q: string) {
 		...appQueryKeys.product.search(q),
 		enabled: q.length >= 2,
 		staleTime: 30_000,
-		queryFn: async () => {
-			const res = await fetch(
+		queryFn: async ({ signal }) => {
+			const res = await apiFetch(
 				`/api/products/search?q=${encodeURIComponent(q)}&exclude_types=component`,
+				{ signal },
 			);
 			if (!res.ok) throw new Error("Failed to search products");
 			const data: ProductSuggestion[] = await res.json();
@@ -68,9 +72,10 @@ export function useRecentlyViewedProducts(ids: string[]) {
 		...appQueryKeys.product.recentlyViewed(ids.join(",")),
 		enabled: ids.length > 0,
 		staleTime: 60_000,
-		queryFn: async () => {
-			const res = await fetch(
+		queryFn: async ({ signal }) => {
+			const res = await apiFetch(
 				`/api/products?ids=${encodeURIComponent(ids.join(","))}`,
+				{ signal },
 			);
 			if (!res.ok) throw new Error("Failed to fetch recently viewed products");
 			const data: { products: ShopProduct[] } = await res.json();

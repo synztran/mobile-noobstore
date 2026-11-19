@@ -20,15 +20,15 @@ Inventory existing indexes and map the hot read/write paths to their SQL predica
 
 Initial paths to prioritize: product listing/detail reads, cart read paths, checkout/order submission, and any route that Grafana identifies as a high-latency/high-volume endpoint. Existing index coverage must be checked before proposing additions.
 
-### 2. Shared API timeout/deadline
+### 2. Shared storefront API request timeout
 
-Implement a web-only two-layer deadline contract:
+Use a browser-side timeout to prevent the storefront UI from waiting indefinitely for API responses. After 10 seconds without a response, abort the browser's API request and expose a recoverable timeout error.
 
-1. Middleware attaches a bounded internal deadline/timeout hint to matched API requests. Middleware alone cannot enforce a timeout on the handler after `NextResponse.next()`.
-2. A shared API-handler utility consumes that deadline and returns a stable safe 504 response when the handler exceeds it. It must preserve existing status/body behavior when the handler completes before the deadline.
-3. Pass `AbortSignal` to outbound `fetch` operations where supported so the underlying work can stop. A `Promise.race` against a Supabase/PostgREST query only bounds how long the caller waits; unless cancellation is confirmed for the installed client/runtime, document that database work may continue after a 504.
-4. Do not apply the wrapper blindly to streaming responses, long-running uploads/exports, cron/jobs, webhooks, or payment/order mutations. Inventory routes and classify them before rollout; route-specific exemptions/overrides must be explicit and tested.
-5. Never treat client-provided deadline headers as trusted configuration: middleware overwrites the internal header, clamps values to the configured maximum, and handlers reject malformed/missing values safely.
+1. Route all browser-originated same-origin `/api/**` calls through one shared helper with a 10,000 ms default timeout. This includes fetches initiated in components, hooks, stores, API-client modules, and TanStack Query functions; server-side requests and external providers are excluded.
+2. Compose the helper's `AbortSignal` with any caller-provided signal and clear its timer on completion. Distinguish timeout from caller cancellation and ordinary network errors.
+3. Long-running uploads or other legitimate requests may explicitly opt out or pass a longer timeout; document and test every exception. Add no automatic retries, especially for mutations. The policy covers browser-originated same-origin API calls only; server-side and external-provider fetches remain unchanged.
+4. Middleware is not the enforcement point and must not add deadline hints for this purpose. Browser abort protects customer-facing wait but does not guarantee Next.js, Supabase, or PostgreSQL stops work already in progress. Server/database resource limits are separate work if telemetry shows need.
+5. Preserve existing response parsing, status handling, credentials, headers, request body, and auth behavior. Do not monkey-patch global `window.fetch`.
 
 ### 3. Client render-cost audit
 
@@ -36,8 +36,8 @@ Profile newly added `apps/web` client components associated with the performance
 
 ## Error and Safety Behavior
 
-- Timeout response is HTTP 504 with a stable generic customer-safe message; do not expose database/provider details.
-- A timeout must not convert an uncertain write into an automatic retry. Mutations may have completed after the client receives 504; preserve idempotency and communicate that limitation.
+- Timeout abort is a distinguishable client-side timeout error with a stable, generic customer-safe message; do not expose provider details.
+- A timeout must not convert an uncertain write into an automatic retry. Server/database work may finish after browser abort; preserve idempotency and communicate that limitation.
 - Keep existing auth, rate-limit, RLS, and API error-code behavior intact.
 - No build command during verification because running dev servers share `.next` artifacts. Use targeted type-check/tests/static checks.
 
@@ -45,8 +45,9 @@ Profile newly added `apps/web` client components associated with the performance
 
 - Baseline captures the Grafana scenario, route latency/error distribution, database CPU/connections/locks/cache metrics where available, and the top bottleneck paths; no index is added without query-plan evidence.
 - Any approved index migration includes synchronized system-impact documentation and a verification/rollback note.
-- An API handler exceeding its configured deadline returns 504 within the expected bound; a handler completing in time returns its normal response. Exempt routes and streaming responses retain their required behavior.
-- Outbound fetches using the shared helper observe cancellation; database cancellation claims are made only if verified against the actual Supabase/PostgREST setup.
+- Browser API fetches with no response by 10 seconds are aborted; faster responses preserve existing behavior.
+- Caller cancellation remains distinguishable from timeout; explicit long-running exceptions behave as documented.
+- No claim is made that browser abort cancels server or database work.
 - Newly added UI components changed for render performance have before/after profiler evidence and preserve behavior.
 - `apps/web` targeted type-check/tests pass, and no unrelated admin/warehouse or dirty web feature work is included accidentally.
 

@@ -1,5 +1,7 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 
 export class PickupCodeError extends Error {
   readonly cooldownSecondsLeft?: number;
@@ -27,7 +29,7 @@ export function useCancelOrder() {
       orderId: string;
       reason: string;
     }) => {
-      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+      const res = await apiFetch(`/api/orders/${orderId}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason }),
@@ -57,7 +59,7 @@ export function useReturnOrder() {
       orderId: string;
       reason: string;
     }) => {
-      const res = await fetch(`/api/orders/${orderId}/return`, {
+      const res = await apiFetch(`/api/orders/${orderId}/return`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason }),
@@ -89,7 +91,7 @@ export function usePickupCode() {
       email?: boolean;
       code?: string;
     }) => {
-      const res = await fetch(`/api/orders/${orderId}/pickup-code`, {
+      const res = await apiFetch(`/api/orders/${orderId}/pickup-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(

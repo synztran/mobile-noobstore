@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import clsx from "clsx";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import Image from "@/components/ui/AdaptiveImage";
@@ -46,9 +47,10 @@ export function RepairEntryConfig({
 
 		setUploading(true);
 		try {
-			const res = await fetch("/api/service-bookings/attachments", {
+			const res = await apiFetch("/api/service-bookings/attachments", {
 				method: "POST",
 				body: formData,
+				timeoutMs: false,
 			});
 			const data = await res.json();
 			if (!res.ok) {

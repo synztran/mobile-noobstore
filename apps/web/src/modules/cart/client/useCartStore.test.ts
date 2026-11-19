@@ -206,6 +206,20 @@ describe("useCartStore", () => {
       expect(useCartStore.getState().items).toHaveLength(0);
     });
 
+    it("removes item by exact itemId when provided", () => {
+      const product = makeProduct();
+      useCartStore.getState().addItem(product, null);
+      // Simulate server-hydrated item with itemId
+      const item = useCartStore.getState().items[0];
+      useCartStore.getState().setCart([{ ...item, id: "server-item-123" }], "cart-1");
+
+      expect(useCartStore.getState().items).toHaveLength(1);
+      expect(useCartStore.getState().items[0].id).toBe("server-item-123");
+
+      useCartStore.getState().removeItem("prod-1", null, "server-item-123");
+      expect(useCartStore.getState().items).toHaveLength(0);
+    });
+
     it("does not remove items with different variant IDs", () => {
       const product = makeProduct();
       const variant = makeVariant();

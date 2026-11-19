@@ -1,9 +1,11 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { trackVoucherApply } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { useDiscountStore } from "@/store/useDiscount";
 import type { ApplyVoucherResponse, VoucherApplyItem } from "@/types/voucher";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 
 export function useApplyVouchers() {
   const queryClient = useQueryClient();
@@ -42,7 +44,7 @@ export function useApplyVouchers() {
         return null;
       }
 
-      const res = await fetch("/api/vouchers/apply", {
+      const res = await apiFetch("/api/vouchers/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

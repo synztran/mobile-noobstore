@@ -12,6 +12,7 @@ import {
 } from "@/lib/react-query/order/api/useOrderQueries";
 import { formatVND } from "@/lib/currency";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api/fetch";
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: "Chờ xác nhận",
@@ -122,7 +123,7 @@ function NewTicketPageContent() {
   }>({
     queryKey: ["orders-picker"],
     queryFn: async () => {
-      const res = await fetch("/api/user/orders?page=1&limit=50");
+      const res = await apiFetch("/api/user/orders?page=1&limit=50");
       return res.json();
     },
     enabled: !hasParams,

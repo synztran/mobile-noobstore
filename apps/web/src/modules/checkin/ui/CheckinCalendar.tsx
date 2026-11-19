@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/api/fetch";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Gift, Clock3, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useClaimCheckin, useCheckinCalendar } from "../client/queries";
@@ -20,7 +21,7 @@ export function CheckinCalendar() {
   const data = query.data;
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/checkin/rewards").then((response) => response.ok ? response.json() : []).then((items) => { if (!cancelled) setRewards(items); }).catch(() => {});
+    apiFetch("/api/checkin/rewards").then((response) => response.ok ? response.json() : []).then((items) => { if (!cancelled) setRewards(items); }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
   const today = data?.days.find((day) => day.state === "today");

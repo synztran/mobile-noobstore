@@ -87,22 +87,24 @@ export function useCartDrawerState() {
 
   const confirmRemove = useCallback(() => {
     if (clearAllMode) {
+      useCartStore.getState().clearCart();
       if (cartId) clearCartMutation.mutate(cartId);
       for (const item of visibleItems) trackRemoveFromCart(cartItemToGA(item));
       setClearAllMode(false);
     } else if (pendingRemoval) {
       trackRemoveFromCart(cartItemToGA(pendingRemoval));
+      // Optimistically remove from store so UI updates immediately
+      removeItem(
+        pendingRemoval.product.id,
+        pendingRemoval.variant?.id ?? null,
+        pendingRemoval.id
+      );
       if (pendingRemoval.id) {
         setRemovingItemId(pendingRemoval.id);
         removeMutation.mutate(pendingRemoval.id, {
           onSettled: () => setRemovingItemId(null),
           onError: (err) => void handleAuthError(err),
         });
-      } else {
-        removeItem(
-          pendingRemoval.product.id,
-          pendingRemoval.variant?.id ?? null
-        );
       }
       setPendingRemoval(null);
     }

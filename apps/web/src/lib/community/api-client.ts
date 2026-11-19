@@ -1,4 +1,5 @@
 import type { PostRow, DocumentRow, ListResult, PostStatus } from "@/lib/community-server";
+import { apiFetch } from "@/lib/api/fetch";
 
 // Client-side helpers for the community + firmware flows. All writes go
 // through API routes, and file bytes are PUT directly to Supabase signed URLs.
@@ -36,7 +37,7 @@ export interface PublicCommunityConfig {
 }
 
 export async function getConfig(): Promise<PublicCommunityConfig> {
-  const res = await fetch("/api/community/config");
+  const res = await apiFetch("/api/community/config");
   return json<PublicCommunityConfig>(res);
 }
 
@@ -67,7 +68,7 @@ export async function createPostDraft(
   postType: string,
   files: DraftFileInput[],
 ): Promise<PostDraft> {
-  const res = await fetch("/api/community/posts", {
+  const res = await apiFetch("/api/community/posts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, post_type: postType, files }),
@@ -76,10 +77,11 @@ export async function createPostDraft(
 }
 
 export async function uploadToSignedUrl(url: string, file: File): Promise<void> {
-  const res = await fetch(url, {
+  const res = await apiFetch(url, {
     method: "PUT",
     body: file,
     headers: { "Content-Type": file.type },
+    timeoutMs: false,
   });
   if (!res.ok) {
     throw new Error("Tải tệp lên thất bại, vui lòng thử lại");
@@ -93,7 +95,7 @@ export async function finalizePost(params: {
   content: string;
   uploads: PresignUpload[];
 }): Promise<{ id: string; status: string }> {
-  const res = await fetch("/api/community/posts/finalize", {
+  const res = await apiFetch("/api/community/posts/finalize", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
@@ -107,7 +109,7 @@ export async function getPostList(
   limit = 12,
 ): Promise<ListResult<PostRow>> {
   const sp = new URLSearchParams({ type, page: String(page), limit: String(limit) });
-  const res = await fetch(`/api/community/posts?${sp.toString()}`);
+  const res = await apiFetch(`/api/community/posts?${sp.toString()}`);
   return json<ListResult<PostRow>>(res);
 }
 
@@ -137,7 +139,7 @@ export async function createDocumentDraft(params: {
   notes: string;
   files: { name: string; mime: string; size: number }[];
 }): Promise<DocumentDraft> {
-  const res = await fetch("/api/documents", {
+  const res = await apiFetch("/api/documents", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
@@ -153,7 +155,7 @@ export async function finalizeDocument(params: {
   notes: string;
   files: { name: string; mime: string; size: number; path: string }[];
 }): Promise<{ id: string; status: string }> {
-  const res = await fetch("/api/documents/finalize", {
+  const res = await apiFetch("/api/documents/finalize", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
@@ -168,6 +170,6 @@ export async function getDocumentList(
 ): Promise<ListResult<DocumentRow>> {
   const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (query) sp.set("q", query);
-  const res = await fetch(`/api/documents?${sp.toString()}`);
+  const res = await apiFetch(`/api/documents?${sp.toString()}`);
   return json<ListResult<DocumentRow>>(res);
 }

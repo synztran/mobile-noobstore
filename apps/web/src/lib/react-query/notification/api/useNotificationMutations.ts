@@ -1,12 +1,14 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NotificationItem } from "@/app/api/notifications/route";
+
 
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      const res = await fetch("/api/notifications/read", {
+      const res = await apiFetch("/api/notifications/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notificationId }),
@@ -46,7 +48,7 @@ export function useMarkAllNotificationsRead() {
 
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/notifications/read", {
+      const res = await apiFetch("/api/notifications/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ markAll: true }),
@@ -80,7 +82,7 @@ export function useMarkAllNotificationsRead() {
 export function useSendTestPush() {
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/notifications/push-self", {
+      const res = await apiFetch("/api/notifications/push-self", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

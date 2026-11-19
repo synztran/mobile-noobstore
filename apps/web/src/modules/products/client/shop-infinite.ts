@@ -1,5 +1,7 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { ProductsResponse } from "@/modules/products/types";
 import { appQueryKeys } from "@/lib/react-query/root";
+
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 
 const PAGE_SIZE = 12;
@@ -48,8 +50,8 @@ export function useShopInfiniteQuery(
   return useInfiniteQuery<ProductsResponse>({
     queryKey: appQueryKeys.shop.products(filtersToKey(filters)).queryKey,
     placeholderData: keepPreviousData,
-    queryFn: async ({ pageParam }) => {
-      const res = await fetch(buildShopUrl(pageParam as number, filters));
+    queryFn: async ({ pageParam, signal }) => {
+      const res = await apiFetch(buildShopUrl(pageParam as number, filters), { signal });
       if (!res.ok) throw new Error("Failed to fetch products");
       return res.json();
     },

@@ -1,7 +1,9 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { queryPresets } from "@/lib/react-query/config";
 import { appQueryKeys } from "@/lib/react-query/root";
 import type { VoucherRow } from "@/types/voucher";
 import { useQuery } from "@tanstack/react-query";
+
 
 type EligibleResponse = {
   vouchers?: VoucherRow[];
@@ -19,7 +21,7 @@ export function useVoucherList(initialVouchers: VoucherRow[] = []) {
     staleTime: 60_000,
     placeholderData: initialVouchers,
     queryFn: async () => {
-      const res = await fetch("/api/vouchers", {
+      const res = await apiFetch("/api/vouchers", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -52,7 +54,7 @@ export function useEligibleVouchers(
       params.set("product_ids", productIds.join(","));
       if (variantIds.length > 0) params.set("variant_ids", variantIds.join(","));
       if (shippingMethodId) params.set("shipping_method_id", shippingMethodId);
-      const res = await fetch(
+      const res = await apiFetch(
         `/api/vouchers/eligible?${params.toString()}`,
         { credentials: "include" },
       );
@@ -72,7 +74,7 @@ export function useFeesConfig() {
     ...appQueryKeys.voucher.fees,
     ...queryPresets.temporary,
     queryFn: async () => {
-      const res = await fetch("/api/fees", { credentials: "include" });
+      const res = await apiFetch("/api/fees", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch fees config");
       return (await res.json()) as FeesResponse;
     },

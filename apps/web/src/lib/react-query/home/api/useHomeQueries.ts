@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api/fetch";
 import type { CommunityPhoto } from "@/app/api/home/community-gallery/route";
 import type { Creator } from "@/app/api/home/creators/route";
 import type { HeroCampaign } from "@/app/api/home/hero/route";
@@ -5,14 +6,15 @@ import type { HomeTestimonialsResponse } from "@/app/api/home/testimonials/route
 import type { TrustProp } from "@/app/api/home/trust-props/route";
 import type { ShopProduct } from "@/modules/products/types";
 import { appQueryKeys } from "@/lib/react-query/root";
+
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function useHomeHero({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery<HeroCampaign[]>({
     ...appQueryKeys.home.hero,
     enabled,
-    queryFn: async () => {
-      const res = await fetch("/api/home/hero");
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch("/api/home/hero", { signal });
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
@@ -27,8 +29,8 @@ export function useHomeCommunityGallery(limit: number) {
     ...appQueryKeys.home.communityGallery(limit),
     staleTime: Infinity,
     gcTime: Infinity,
-    queryFn: async () => {
-      const res = await fetch(`/api/home/community-gallery?limit=${limit + 1}`);
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch(`/api/home/community-gallery?limit=${limit + 1}`, { signal });
       if (!res.ok) return { photos: [], hasMore: false };
       const raw = await res.json();
       const all: CommunityPhoto[] = Array.isArray(raw) ? raw : [];
@@ -45,10 +47,10 @@ export function useHomeNoteworthy(categorySlug: string) {
   return useQuery<ShopProduct[]>({
     ...appQueryKeys.home.noteworthy(categorySlug),
     staleTime: 120_000,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const query = new URLSearchParams({ limit: "5" });
       if (categorySlug) query.set("category", categorySlug);
-      const res = await fetch(`/api/products/noteworthy?${query.toString()}`);
+      const res = await apiFetch(`/api/products/noteworthy?${query.toString()}`, { signal });
       if (!res.ok) throw new Error("Failed to fetch noteworthy products");
       const data = (await res.json()) as { products?: ShopProduct[] };
       return data.products ?? [];
@@ -64,10 +66,10 @@ export function useHomeSaleProducts(
   return useQuery<{ products: ShopProduct[]; total: number }>({
     ...appQueryKeys.home.saleProducts(categorySlug, limit, sort),
     staleTime: 120_000,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const query = new URLSearchParams({ limit: String(limit), sort });
       if (categorySlug) query.set("category", categorySlug);
-      const res = await fetch(`/api/products/sale?${query.toString()}`);
+      const res = await apiFetch(`/api/products/sale?${query.toString()}`, { signal });
       if (!res.ok) throw new Error("Failed to fetch sale products");
       return res.json() as Promise<{ products: ShopProduct[]; total: number }>;
     },
@@ -80,8 +82,8 @@ export function useHomeTrustProps() {
     ...appQueryKeys.home.trustProps,
     staleTime: Infinity,
     gcTime: Infinity,
-    queryFn: async () => {
-      const res = await fetch("/api/home/trust-props");
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch("/api/home/trust-props", { signal });
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
@@ -94,8 +96,8 @@ export function useHomeCreators() {
     ...appQueryKeys.home.creators,
     staleTime: Infinity,
     gcTime: Infinity,
-    queryFn: async () => {
-      const res = await fetch("/api/home/creators");
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch("/api/home/creators", { signal });
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
@@ -108,8 +110,8 @@ export function useHomeTestimonials() {
     ...appQueryKeys.home.testimonials,
     staleTime: Infinity,
     gcTime: Infinity,
-    queryFn: async () => {
-      const res = await fetch("/api/home/testimonials");
+    queryFn: async ({ signal }) => {
+      const res = await apiFetch("/api/home/testimonials", { signal });
       if (!res.ok) {
         return { testimonials: [], summary: { count: 0, averageRating: null } };
       }
@@ -124,7 +126,7 @@ export function useHomeTestimonials() {
 export function useNewsletterSubscribe() {
   return useMutation({
     mutationFn: async (email: string) => {
-      const res = await fetch("/api/newsletter/subscribe", {
+      const res = await apiFetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

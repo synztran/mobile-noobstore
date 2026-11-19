@@ -1,5 +1,7 @@
+import { apiFetch } from "@/lib/api/fetch";
 import { appQueryKeys } from "@/lib/react-query/root";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 export function useStockAlertCheck(productId: string, variantId: string) {
   return useQuery<{ subscribed: boolean }>({
@@ -9,7 +11,7 @@ export function useStockAlertCheck(productId: string, variantId: string) {
     queryFn: async () => {
       const params = new URLSearchParams({ product_id: productId });
       if (variantId) params.set("variant_id", variantId);
-      const res = await fetch(`/api/stock-alerts/check?${params.toString()}`);
+      const res = await apiFetch(`/api/stock-alerts/check?${params.toString()}`);
       if (!res.ok) return { subscribed: false };
       return res.json();
     },
@@ -29,7 +31,7 @@ export function useStockAlertList() {
     queryKey: appQueryKeys["stock-alert"].list.queryKey,
     staleTime: 60_000,
     queryFn: async () => {
-      const res = await fetch("/api/stock-alerts");
+      const res = await apiFetch("/api/stock-alerts");
       if (!res.ok) return { subscriptions: [] };
       return res.json();
     },
@@ -47,7 +49,7 @@ export function useStockAlertSubscribe() {
       productId: string;
       variantId: string;
     }) => {
-      const res = await fetch("/api/stock-alerts", {
+      const res = await apiFetch("/api/stock-alerts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -84,7 +86,7 @@ export function useStockAlertUnsubscribe() {
       productId: string;
       variantId: string;
     }) => {
-      const res = await fetch("/api/stock-alerts", {
+      const res = await apiFetch("/api/stock-alerts", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
