@@ -202,6 +202,12 @@
     -webkit-backdrop-filter: blur(20px);
   }
 
+  /* Hide mobile bottom navigation when a modal or dialog is open */
+  body:has(.modal.modal-open) nav.glass-nav,
+  body.hide-bottom-nav nav.glass-nav {
+    display: none !important;
+  }
+
   /* ── iOS Safe Area (notch / Dynamic Island / home indicator) ── */
   .top-nav-pad {
     /* existing 1rem padding + safe area on top */
