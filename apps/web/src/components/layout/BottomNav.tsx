@@ -4,6 +4,7 @@ import clsx from "clsx";
 import { Dices, Gift, House, ShoppingBasket, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const navItems = [
   {
@@ -40,6 +41,28 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [hiddenByModal, setHiddenByModal] = useState(false);
+
+  useEffect(() => {
+    const check = () => {
+      const isHidden =
+        document.body.classList.contains("hide-bottom-nav") ||
+        !!document.querySelector(".modal.modal-open");
+      setHiddenByModal(isHidden);
+    };
+
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const excludedPaths = [
     "/checkout",
     "/services",
@@ -49,6 +72,10 @@ export function BottomNav() {
     "/community",
     "/documents",
   ];
+
+  if (hiddenByModal) {
+    return null;
+  }
 
   if (excludedPaths.some((path) => pathname.startsWith(path))) {
     return null;

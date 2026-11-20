@@ -3,6 +3,7 @@
 import { CheckCircle } from "lucide-react";
 import type { RedeemResponse } from "@/types/reward";
 import { formatPoints } from "./utils";
+import { useEffect } from "react";
 
 interface Props {
   result: RedeemResponse | null;
@@ -11,14 +12,23 @@ interface Props {
 }
 
 export function SuccessModal({ result, open, onClose }: Props) {
+  useEffect(() => {
+    if (open) {
+      document.body.classList.add("hide-bottom-nav");
+      return () => {
+        document.body.classList.remove("hide-bottom-nav");
+      };
+    }
+  }, [open]);
+
   if (!result) return null;
 
   return (
     <dialog
       onCancel={(e) => e.preventDefault()}
-      className={`modal modal-bottom sm:modal-middle ${open ? "modal-open" : ""}`}
+      className={`modal modal-bottom sm:modal-middle my-0 !my-0 !mt-0 !mb-0 z-[9999] ${open ? "modal-open" : ""}`}
     >
-      <div className="modal-box rounded-2xl bg-surface px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <div className="modal-box my-0 !my-0 !mt-0 !mb-0 rounded-2xl bg-surface px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <div className="flex flex-col items-center py-4 text-center">
           <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
             <CheckCircle size={40} className="text-emerald-600" />

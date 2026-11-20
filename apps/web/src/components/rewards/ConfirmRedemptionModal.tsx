@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { formatPoints, getRewardIcon } from "./utils";
+import { useEffect } from "react";
 
 interface Props {
   reward: RewardItem | null;
@@ -32,6 +33,15 @@ export function ConfirmRedemptionModal({
   onClose,
   onConfirm,
 }: Props) {
+  useEffect(() => {
+    if (reward) {
+      document.body.classList.add("hide-bottom-nav");
+      return () => {
+        document.body.classList.remove("hide-bottom-nav");
+      };
+    }
+  }, [reward]);
+
   if (!reward) return null;
 
   const isCheckin = reward.pointsCurrency === "daily_checkin";
@@ -111,9 +121,9 @@ export function ConfirmRedemptionModal({
     <dialog
       onCancel={(e) => e.preventDefault()}
       aria-labelledby="voucher-detail-title"
-      className={`modal modal-bottom sm:modal-middle ${reward ? "modal-open" : ""}`}
+      className={`modal modal-bottom sm:modal-middle my-0 !my-0 !mt-0 !mb-0 z-[9999] ${reward ? "modal-open" : ""}`}
     >
-      <div className="modal-box w-full max-w-[480px] rounded-2xl bg-surface-container-lowest p-5 shadow-ambient-lg sm:p-6">
+      <div className="modal-box my-0 !my-0 !mt-0 !mb-0 w-full max-w-[480px] rounded-2xl bg-surface-container-lowest p-5 shadow-ambient-lg sm:p-6">
         {/* Header bar */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-1.5">

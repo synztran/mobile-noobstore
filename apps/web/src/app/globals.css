@@ -235,6 +235,14 @@
   }
 }
 
+/* Hide mobile bottom navigation when any modal or dialog is open */
+body:has(.modal.modal-open) nav.glass-nav,
+body:has(.modal-open) nav.glass-nav,
+body:has(dialog[open].modal) nav.glass-nav,
+body.hide-bottom-nav nav.glass-nav {
+  display: none !important;
+}
+
 .maplibregl-ctrl-bottom-right {
   display: none;
 }
