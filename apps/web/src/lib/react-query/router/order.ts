@@ -1,31 +1,11 @@
 import { createQueryKeys } from "@lukemorales/query-key-factory";
-
-export interface OrderStatusResult {
-	order_number?: string;
-	order_id?: string;
-	status: string;
-	voucher_discount_amount: number;
-	shipping_discount_amount: number;
-	payment_type?: "full" | "deposit_cod";
-	deposit_percentage?: number;
-	deposit_amount?: number;
-	remaining_amount?: number;
-	deposit_paid_at?: string | null;
-	paid_at?: string | null;
-	notFound?: boolean;
-}
-
-export interface OrderListFilters {
-	q: string;
-	status: string;
-	page: number;
-	limit: number;
-}
+// Types moved to modules/orders/types — re-exported here for backward compat.
+export type { OrderStatusResult, OrderListFilters } from "@/modules/orders/types";
 
 export const orderQueryKeys = createQueryKeys("order", {
 	paymentInformation: null,
 	status: (orderNumber: string | undefined) => [orderNumber ?? ""],
-	list: (filters: OrderListFilters) => [filters],
+	list: (filters: import("@/modules/orders/types").OrderListFilters) => [filters],
 	byNumber: (orderNumber: string) => [orderNumber],
 	detail: (id: string) => [id],
 });

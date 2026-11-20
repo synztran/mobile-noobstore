@@ -1,53 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+// Types live in modules/orders/types — re-exported here for thin consumers
+// that import directly from the route. Prefer @/modules/orders/types in new code.
+export type {
+  OrderSummary,
+  OrderSummaryProduct,
+  OrdersPagination,
+  OrdersResponse,
+} from "@/modules/orders/types";
+import type {
+  OrderSummary,
+  OrdersPagination,
+  OrdersResponse,
+} from "@/modules/orders/types";
 
 export const dynamic = "force-dynamic";
-
-export interface OrderSummaryProduct {
-  id?: string;
-  product_id?: string | null;
-  product_slug?: string | null;
-  name: string;
-  variant: string | null;
-  quantity: number;
-  thumbnail: string | null;
-  has_reviewed?: boolean;
-  reviewed_rating?: number | null;
-  reviewed_comment?: string | null;
-}
-
-export interface OrderSummary {
-  id: string;
-  order_number: string;
-  status: string;
-  total_price: number;
-  item_count: number;
-  service_line_count: number;
-  product_summaries: OrderSummaryProduct[];
-  created_at: string;
-  voucher_code: string | null;
-  voucher_discount_amount: number;
-  shipping_discount_amount: number;
-  has_reviewed?: boolean;
-  /** NSP points earned for this order (only set for delivered orders) */
-  points_earned?: number;
-}
-
-export interface OrdersPagination {
-  page: number;
-  limit: number;
-  total: number;
-  total_pages: number;
-  has_next_page: boolean;
-  has_prev_page: boolean;
-}
-
-export interface OrdersResponse {
-  orders: OrderSummary[];
-  total: number;
-  pagination: OrdersPagination;
-  status_counts: Record<string, number>;
-}
 
 const ALLOWED_STATUS_FILTERS = new Set([
   "pending",

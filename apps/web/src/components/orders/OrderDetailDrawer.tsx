@@ -1,6 +1,6 @@
 "use client";
 
-import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
+import type { OrderDetail } from "@/modules/orders/types";
 import { OrderPaymentPanel } from "@/components/orders/OrderPaymentPanel";
 import OrderTrackingTimeline from "@/components/orders/OrderTrackingTimeline";
 import { VoucherInfo } from "@/components/voucher/VoucherInfo";
@@ -12,13 +12,13 @@ import {
 } from "@/lib/shipping-method";
 import { buildTrackingUrl } from "@/lib/tracking";
 import { toast } from "@/lib/toast";
-import { useOrderDetail } from "@/lib/react-query/order/api/useOrderQueries";
+import { useOrderDetail } from "@/modules/orders/client/queries";
 import {
   PickupCodeError,
   useCancelOrder,
   usePickupCode,
   useReturnOrder,
-} from "@/lib/react-query/order/api/useOrderMutations";
+} from "@/modules/orders/client/mutations";
 import { CopyToClipboardButton } from "@/components/ui/CopyToClipboardButton";
 import {
   AlertCircle,

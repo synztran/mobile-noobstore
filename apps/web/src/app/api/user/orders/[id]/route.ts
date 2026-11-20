@@ -1,101 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+// Types live in modules/orders/types — re-exported here for thin consumers
+// that import directly from the route. Prefer @/modules/orders/types in new code.
+export type {
+  OrderDetail,
+  OrderItemDetail,
+  OrderItemComponentDetail,
+} from "@/modules/orders/types";
+import type {
+  OrderDetail,
+  OrderItemDetail,
+  OrderItemComponentDetail,
+} from "@/modules/orders/types";
 
 export const dynamic = "force-dynamic";
-
-export interface OrderItemComponentDetail {
-  variant_id: string;
-  variant_name: string;
-  component_group: string;
-  price_adjustment: number;
-  thumbnail: string | null;
-  is_pre_order: boolean;
-}
-
-export interface OrderItemDetail {
-  id: string;
-  product_id: string | null;
-  product_slug?: string | null;
-  product_name: string;
-  unit_price: number;
-  quantity: number;
-  thumbnail: string | null;
-  components: OrderItemComponentDetail[];
-  gifts?: Array<{
-    gift_name: string;
-    gift_thumbnail: string | null;
-    quantity: number;
-  }> | null;
-  isPreOrder: boolean;
-  preOrderConfig: any;
-  preOrderTracking: unknown;
-  has_reviewed?: boolean;
-  reviewed_rating?: number | null;
-  reviewed_comment?: string | null;
-}
-
-export interface OrderDetail {
-  id: string;
-  order_number: string;
-  status:
-    | "pending"
-    | "confirmed"
-    | "first_paid"
-    | "second_paid"
-    | "delivering"
-    | "delivered"
-    | "returning"
-    | "cancelled"
-    | "refunded";
-  total_price: number;
-  shipping_fee: number;
-  payment_type: "full" | "deposit_cod";
-  deposit_percentage: number | null;
-  deposit_amount: number | null;
-  remaining_amount: number | null;
-  deposit_paid_at: string | null;
-  voucher_code: string | null;
-  voucher_discount_amount: number;
-  shipping_discount_amount: number;
-  voucher_snapshot: unknown | null;
-  cancelled_at: string | null;
-  cancelled_note: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  paid_at: string | null;
-  delivering_at: string | null;
-  delivered_at: string | null;
-  refunded_at: string | null;
-  returning_at: string | null;
-  returning_reason: string | null;
-  expected_delivery_at: string | null;
-  shipping_method_id: string | null;
-  pickup_at: string | null;
-  pickup_code_expires_at: string | null;
-  pickup_verified_at: string | null;
-  tracking_carrier_id: string | null;
-  tracking_number: string | null;
-  carriers: {
-    id: string;
-    name: string | null;
-    logo: string | null;
-    tracking_url_template: string | null;
-  } | null;
-  delivery_address: {
-    full_name?: string | null;
-    phone_number?: string | null;
-    street_address?: string | null;
-    apartment?: string | null;
-    ward?: string | null;
-    district?: string | null;
-    city?: string | null;
-    postal_code?: string | null;
-    notes?: string | null;
-  } | null;
-  invoice_url: string | null;
-  items: OrderItemDetail[];
-  has_reviewed?: boolean;
-}
 
 interface RawOrderRow {
   id: string;

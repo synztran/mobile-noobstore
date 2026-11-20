@@ -1,6 +1,6 @@
 "use client";
 
-import type { OrderSummary } from "@/app/api/user/orders/route";
+import type { OrderSummary } from "@/modules/orders/types";
 import { OrderDetailDrawer } from "@/components/orders/OrderDetailDrawer";
 import OrderStatusTabs, {
   type OrderStatusTabOption,
@@ -11,7 +11,7 @@ import { DesktopAccountSidebar } from "@/components/profile/DesktopAccountSideba
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import { withAuthRedirect } from "@/modules/user/ui/withAuthRedirect";
 import { formatVND } from "@/lib/currency";
-import { useOrders } from "@/lib/react-query/order/api/useOrderQueries";
+import { useOrders } from "@/modules/orders/client/queries";
 import {
   ArrowLeft,
   CheckCircle2,

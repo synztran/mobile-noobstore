@@ -23,8 +23,8 @@ import {
 import { useAuth } from "@/modules/user/client/AuthProvider";
 import type { ProfileAddress } from "@/modules/user/types";
 import { useMyRank } from "@/lib/react-query/rank/api/useRankQueries";
-import { useOrders } from "@/lib/react-query/order/api/useOrderQueries";
-import type { OrderSummary } from "@/app/api/user/orders/route";
+import { useOrders } from "@/modules/orders/client/queries";
+import type { OrderSummary } from "@/modules/orders/types";
 import { formatVND } from "@/lib/currency";
 import { toast } from "@/lib/toast";
 import Link from "next/link";

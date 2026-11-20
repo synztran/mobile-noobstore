@@ -1,6 +1,6 @@
 "use client";
 
-import type { OrderItemDetail } from "@/app/api/user/orders/[id]/route";
+import type { OrderItemDetail } from "@/modules/orders/types";
 import { SUPPORT_CATEGORY_OPTIONS } from "@/constants/support";
 import { useCreateTicket } from "@/lib/react-query/support/api/useSupportMutations";
 import { formatVND } from "@/lib/currency";

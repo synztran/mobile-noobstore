@@ -1,6 +1,6 @@
 "use client";
 
-import type { OrderDetail } from "@/app/api/user/orders/[id]/route";
+import type { OrderDetail } from "@/modules/orders/types";
 import { isPickupShippingMethod } from "@/lib/shipping-method";
 import {
   Check,
