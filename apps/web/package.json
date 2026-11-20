@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:staging": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
@@ -30,7 +32,7 @@
     "lucide-react": "^1.18.0",
     "maplibre-gl": "^5.24.0",
     "motion": "^12.38.0",
-    "next": "^15.1.0",
+    "next": "15.5.29",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-wheel-scroller": "0.6.0",
@@ -42,6 +44,7 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "1.20.18",
     "@types/node": "^20.14.10",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -51,6 +54,7 @@
     "shadcn": "^4.11.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.6",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "wrangler": "4.166.0"
   }
 }

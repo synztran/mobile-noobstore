@@ -67,3 +67,6 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+
+// The adapter exposes Cloudflare bindings to `next dev` when developing locally.
+require("@opennextjs/cloudflare").initOpenNextCloudflareForDev();
