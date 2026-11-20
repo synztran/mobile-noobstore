@@ -1138,11 +1138,13 @@ export type Database = {
           expires_at: string | null;
           id: number;
           is_active: boolean;
+          is_scratched: boolean;
           issued_to_user_id: string | null;
           note: string | null;
           points_value: number;
           redeemed_at: string | null;
           redeemed_by_user_id: string | null;
+          theme_id: string | null;
         };
         Insert: {
           batch_label?: string | null;
@@ -1151,11 +1153,13 @@ export type Database = {
           expires_at?: string | null;
           id?: number;
           is_active?: boolean;
+          is_scratched?: boolean;
           issued_to_user_id?: string | null;
           note?: string | null;
           points_value: number;
           redeemed_at?: string | null;
           redeemed_by_user_id?: string | null;
+          theme_id?: string | null;
         };
         Update: {
           batch_label?: string | null;
@@ -1164,11 +1168,13 @@ export type Database = {
           expires_at?: string | null;
           id?: number;
           is_active?: boolean;
+          is_scratched?: boolean;
           issued_to_user_id?: string | null;
           note?: string | null;
           points_value?: number;
           redeemed_at?: string | null;
           redeemed_by_user_id?: string | null;
+          theme_id?: string | null;
         };
         Relationships: [];
       };

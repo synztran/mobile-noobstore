@@ -19,6 +19,7 @@ interface Details {
   balanceDue: number;
   active: boolean;
   qrUrl: string | null;
+  createdAt?: string | null;
   shippingFee: number;
   shippingFeePending: boolean;
   voucherDiscount: number;
@@ -96,20 +97,7 @@ export function OrderPaymentInstructions({
   identifier: string;
 }) {
   const [imageError, setImageError] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(900); // 15 mins countdown
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatCountdown = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
+  const [timeLeft, setTimeLeft] = useState(12 * 3600); // 12h countdown
 
   const query = useQuery<Details>({
     queryKey: ["verified-payment-details", identifier],
@@ -126,6 +114,30 @@ export function OrderPaymentInstructions({
     refetchInterval: 15000,
     staleTime: 0,
   });
+
+  useEffect(() => {
+    if (!query.data?.createdAt) return;
+    const createdAtMs = new Date(query.data.createdAt).getTime();
+    if (Number.isFinite(createdAtMs)) {
+      const expiryMs = createdAtMs + 12 * 3600 * 1000;
+      const initial = Math.max(0, Math.floor((expiryMs - Date.now()) / 1000));
+      setTimeLeft(initial);
+    }
+  }, [query.data?.createdAt]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatCountdown = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   if (query.isPending) {
     return (
@@ -219,7 +231,7 @@ export function OrderPaymentInstructions({
       {/* Main Grid: QR Left + Bank Details Right */}
       <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-[220px_minmax(0,1fr)] md:items-start">
         {/* Left: QR Code Box */}
-        <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-outline-variant/25 bg-surface-container-low/50 p-4">
+        <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-outline-variant/25 bg-surface-container-low/50 px-5 py-4">
           <div className="relative flex h-48 w-48 items-center justify-center overflow-hidden rounded-xl border border-outline-variant/30 bg-white p-2 shadow-xs sm:h-52 sm:w-52">
             {qrImageUrl && !imageError ? (
               <AdaptiveImage
@@ -239,7 +251,7 @@ export function OrderPaymentInstructions({
           </div>
           {(!isDeposit || !details.depositPaid) && (
             <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
-              <span>⏳ Giữ hàng & mã QR:</span>
+              <span>⏳ Tự động hủy sau:</span>
               <span className="font-mono font-black">{formatCountdown(timeLeft)}</span>
             </div>
           )}
@@ -249,7 +261,7 @@ export function OrderPaymentInstructions({
         <div className="space-y-2.5">
           {/* Amount Due Row */}
           <div className="flex items-center justify-between rounded-xl bg-surface-container/40 px-3.5 py-2.5">
-            <span className="text-xs text-on-surface-variant">
+            <span className="text-sm text-on-surface-variant">
               {isAwaitingSecondPayment
                 ? `Số tiền còn lại (${remainingPercentage}%):`
                 : isDeposit
@@ -275,7 +287,7 @@ export function OrderPaymentInstructions({
           {details.bank && (
             <>
               <div className="flex items-center justify-between rounded-xl bg-surface-container/40 px-3.5 py-2.5">
-                <span className="text-xs text-on-surface-variant">Ngân hàng thụ hưởng:</span>
+                <span className="text-sm text-on-surface-variant">Ngân hàng thụ hưởng:</span>
                 <div className="flex min-w-0 items-center gap-2">
                   {details.bank.bank_logo_url ? (
                     <div className="relative h-7 w-24 shrink-0">
@@ -297,7 +309,7 @@ export function OrderPaymentInstructions({
 
               {/* Account Number */}
               <div className="flex items-center justify-between rounded-xl bg-surface-container/40 px-3.5 py-2.5">
-                <span className="text-xs text-on-surface-variant">Số tài khoản:</span>
+                <span className="text-sm text-on-surface-variant">Số tài khoản:</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-sm font-black text-on-surface">
                     {details.bank.account_number}
@@ -311,7 +323,7 @@ export function OrderPaymentInstructions({
 
               {/* Account Name */}
               <div className="flex items-center justify-between rounded-xl bg-surface-container/40 px-3.5 py-2.5">
-                <span className="text-xs text-on-surface-variant">Chủ tài khoản:</span>
+                <span className="text-sm text-on-surface-variant">Chủ tài khoản:</span>
                 <span className="text-xs font-bold uppercase text-on-surface">
                   {details.bank.account_name}
                 </span>
@@ -347,11 +359,14 @@ export function OrderPaymentInstructions({
           </p>
         </div>
       ) : (
-        <div className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
-          <div className="h-4 w-4 shrink-0 rounded-full border-2 border-emerald-700 border-t-transparent animate-spin" />
-          <p className="text-xs leading-relaxed text-emerald-950">
-            <strong className="font-bold">Đang chờ tín hiệu chuyển khoản:</strong> Trang sẽ tự động hoàn tất và gửi thông báo ngay khi hệ thống ngân hàng ghi nhận giao dịch (thường từ 5–15 giây).
-          </p>
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+          <div className="mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 border-emerald-700 border-t-transparent animate-spin" />
+          <div className="text-xs leading-relaxed text-emerald-950">
+            <p className="font-bold">Đang chờ tín hiệu chuyển khoản</p>
+            <p className="text-emerald-900/80">
+              Trang sẽ tự động hoàn tất và gửi thông báo ngay khi hệ thống ngân hàng ghi nhận giao dịch (thường từ 5–15 giây).
+            </p>
+          </div>
         </div>
       )}
     </div>

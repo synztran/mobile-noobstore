@@ -188,7 +188,7 @@ export function ProductConfigurator({
           return (
             <div
               key={group.component_group}
-              className="-mt-4 w-full max-w-max space-y-2.5 rounded-lg bg-surface-container-low p-2 lg:mt-0 lg:max-w-none lg:space-y-2 lg:rounded-xl lg:bg-surface lg:p-0"
+              className="w-full max-w-max space-y-2.5 rounded-lg bg-surface-container-low p-2 lg:mt-0 lg:max-w-none lg:space-y-2 lg:rounded-xl lg:bg-surface lg:p-0"
             >
               <div className="flex items-center gap-2 lg:justify-between">
                 <div className="flex min-w-0 items-center gap-2">

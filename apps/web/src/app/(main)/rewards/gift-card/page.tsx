@@ -14,9 +14,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 function GiftCardPage() {
+  const searchParams = useSearchParams();
   const { refreshProfile } = useAuth();
   const { data: balance = 0, isLoading: balanceLoading } = usePointsBalance();
 
@@ -30,6 +32,14 @@ function GiftCardPage() {
     code: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const initialCode = searchParams.get("code")?.trim().toUpperCase();
+    if (initialCode) {
+      setCode(initialCode);
+      setTypedCode(initialCode);
+    }
+  }, [searchParams]);
 
   const checkQuery = useGiftCardCheck(typedCode, typedCode.length > 0);
   const redeemMutation = useGiftCardRedeem();

@@ -118,7 +118,10 @@ function InfiniteScrollSentinel({
   const shouldReduceMotion = useReducedMotion();
   if (!hasNextPage) return null;
   return (
-    <div ref={sentinelRef} className="relative flex min-h-16 justify-center py-6">
+    <div
+      ref={sentinelRef}
+      className="relative flex min-h-16 justify-center py-6"
+    >
       {isFetchingNextPage ? (
         <span className="loading loading-spinner loading-sm text-primary" />
       ) : hasNextPage ? (
@@ -266,11 +269,11 @@ export function ShopPageClient({
 
         <RecentlyViewedRail />
 
-        <InfiniteScrollSentinel
+        {/* <InfiniteScrollSentinel
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           sentinelRef={sentinelRef}
-        />
+        /> */}
       </div>
     </div>
   );

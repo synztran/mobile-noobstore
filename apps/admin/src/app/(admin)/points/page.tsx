@@ -10,6 +10,7 @@ import {
   Coins,
   Gift,
   Loader2,
+  Palette,
   Pencil,
   Plus,
   Search,
@@ -53,6 +54,8 @@ interface GiftCard {
   batch_label: string | null;
   note: string | null;
   is_active: boolean;
+  theme_id: string | null;
+  is_scratched: boolean;
   expires_at: string | null;
   created_at: string;
   redeemed_at: string | null;
@@ -100,6 +103,46 @@ const SOURCE_COLORS: Record<string, string> = {
 
 function fmt(n: number) {
   return n.toLocaleString("vi-VN");
+}
+
+const GIFT_CARD_THEMES = {
+  amber: "linear-gradient(135deg, #f59e0b, #b91c1c)",
+  emerald: "linear-gradient(135deg, #10b981, #065f46)",
+  indigo: "linear-gradient(135deg, #6366f1, #312e81)",
+  rose: "linear-gradient(135deg, #ec4899, #831843)",
+  sky: "linear-gradient(135deg, #0ea5e9, #075985)",
+} as const;
+
+function giftCardPreviewTheme(themeId: string, code: string) {
+  const themes = Object.keys(GIFT_CARD_THEMES) as (keyof typeof GIFT_CARD_THEMES)[];
+  let hash = 0;
+  for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) >>> 0;
+  return GIFT_CARD_THEMES[(themeId in GIFT_CARD_THEMES ? themeId : themes[hash % themes.length]) as keyof typeof GIFT_CARD_THEMES];
+}
+
+function GiftCardPreview({ points, themeId, code, batchLabel, note }: {
+  points: number | null;
+  themeId: string;
+  code: string;
+  batchLabel: string;
+  note: string;
+}) {
+  return (
+    <div className="space-y-2" aria-label="Gift card preview">
+      <p className="text-muted text-xs font-semibold uppercase tracking-wide">Preview</p>
+      <div className="relative aspect-[1.586/1] overflow-hidden rounded-2xl p-5 text-white shadow-lg" style={{ background: giftCardPreviewTheme(themeId, code) }}>
+        <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/20 blur-3xl" />
+        <div className="relative flex h-full flex-col justify-between">
+          <div className="flex items-center justify-between text-xs font-black uppercase tracking-[0.2em] text-white/90"><span>NoobStore · Gift Card</span><span>Gift</span></div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-white/75">Giá trị quy đổi</p>
+            <p className="mt-1 text-3xl font-black tabular-nums">{fmt(points ?? 0)} <span className="text-sm">điểm</span></p>
+            <p className="mt-2 truncate text-xs font-semibold text-white/85">{batchLabel || note || "Thẻ quà tặng"}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ─── Tab: Transactions ────────────────────────────────────────
@@ -695,6 +738,9 @@ function GiftCardsTab() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<GiftCard | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState({ points_value: 0, batch_label: "", note: "", expires_at: "", issued_to_user_id: null as string | null, is_active: true, theme_id: "" });
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({
     points_value: 500 as number | null,
@@ -703,6 +749,7 @@ function GiftCardsTab() {
     note: "",
     expires_at: "",
     issued_to_user_id: null as string | null,
+    theme_id: "",
   });
   const [created, setCreated] = useState<
     { code: string; points_value: number }[]
@@ -738,6 +785,7 @@ function GiftCardsTab() {
         expires_at: createForm.expires_at || null,
         issued_to_user_id:
           (createForm.quantity ?? 1) === 1 ? createForm.issued_to_user_id : null,
+        theme_id: createForm.theme_id || null,
       }),
     });
     const data = await res.json();
@@ -751,9 +799,42 @@ function GiftCardsTab() {
         note: "",
         expires_at: "",
         issued_to_user_id: null,
+        theme_id: "",
       });
       load();
     }
+  }
+
+  function startEdit(card: GiftCard) {
+    setEditing(card);
+    setEditForm({
+      points_value: card.points_value,
+      batch_label: card.batch_label ?? "",
+      note: card.note ?? "",
+      expires_at: card.expires_at ? new Date(card.expires_at).toISOString().slice(0, 16) : "",
+      issued_to_user_id: card.issued_to_user_id,
+      is_active: card.is_active,
+      theme_id: card.theme_id ?? "",
+    });
+  }
+
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editing) return;
+    setSaving(true);
+    const res = await fetch("/api/gift-cards", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editing.id, ...editForm, expires_at: editForm.expires_at || null, theme_id: editForm.theme_id || null }),
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) {
+      alert(data.error ?? "Could not update gift card");
+      return;
+    }
+    setEditing(null);
+    await load();
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -795,7 +876,7 @@ function GiftCardsTab() {
           <div
             className="fixed inset-0 z-40 bg-black/50"
           />
-          <div className="card-bg card-shadow fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl p-6">
+          <div className="card-bg card-shadow fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl p-6">
             {created.length > 0 ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -829,6 +910,7 @@ function GiftCardsTab() {
               </div>
             ) : (
               <form onSubmit={handleCreate} className="space-y-4">
+                <GiftCardPreview points={createForm.points_value} themeId={createForm.theme_id} code="PREVIEW-CODE-2026" batchLabel={createForm.batch_label} note={createForm.note} />
                 <div className="flex items-center justify-between">
                   <h3 className="text-heading flex items-center gap-2 font-bold">
                     <Gift className="h-5 w-5 text-amber-500" /> Create Gift
@@ -848,7 +930,8 @@ function GiftCardsTab() {
                     onChange={(v) =>
                       setCreateForm({ ...createForm, points_value: v })
                     }
-                    min={0}
+                    min={1_000}
+                    max={5_000_000}
                     step={50}
                     required
                     className="w-full"
@@ -922,6 +1005,7 @@ function GiftCardsTab() {
                   }
                   disabled={(createForm.quantity ?? 1) > 1}
                 />
+                <label className="block text-sm font-medium">Card Background<select value={createForm.theme_id} onChange={(e) => setCreateForm({ ...createForm, theme_id: e.target.value })} className="input-base mt-1 w-full rounded-lg border px-3 py-2"><option value="">Auto (based on code)</option><option value="amber">Amber</option><option value="emerald">Emerald</option><option value="indigo">Indigo</option><option value="rose">Rose</option><option value="sky">Sky</option></select></label>
                 <p className="text-muted -mt-1 text-xs">
                   Để trống Issued To = thẻ không thể được nạp bởi bất kỳ ai.
                 </p>
@@ -947,6 +1031,27 @@ function GiftCardsTab() {
               </form>
             )}
           </div>
+        </>
+      )}
+
+      {editing && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" />
+          <form onSubmit={handleEdit} className="card-bg card-shadow fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-full max-w-md -translate-x-1/2 -translate-y-1/2 space-y-4 overflow-y-auto rounded-xl p-6">
+            <GiftCardPreview points={editForm.points_value} themeId={editForm.theme_id} code={editing.code} batchLabel={editForm.batch_label} note={editForm.note} />
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading font-bold">Edit Gift Card <code className="font-mono text-sm">{editing.code}</code></h3>
+              <button type="button" onClick={() => setEditing(null)} aria-label="Close edit form"><X className="h-4 w-4" /></button>
+            </div>
+            <NumberInput value={editForm.points_value} onChange={(v) => setEditForm({ ...editForm, points_value: v ?? 0 })} min={1_000} max={5_000_000} step={50} required className="w-full" label="Point Value" />
+            <label className="block text-sm font-medium">Batch Label<input value={editForm.batch_label} onChange={(e) => setEditForm({ ...editForm, batch_label: e.target.value })} className="input-base mt-1 w-full rounded-lg border px-3 py-2" /></label>
+            <label className="block text-sm font-medium">Note<input value={editForm.note} onChange={(e) => setEditForm({ ...editForm, note: e.target.value })} className="input-base mt-1 w-full rounded-lg border px-3 py-2" /></label>
+            <label className="block text-sm font-medium">Expires At<input type="datetime-local" value={editForm.expires_at} onChange={(e) => setEditForm({ ...editForm, expires_at: e.target.value })} className="input-base mt-1 w-full rounded-lg border px-3 py-2" /></label>
+            <CustomerSearchPicker value={editForm.issued_to_user_id} onChange={(id) => setEditForm({ ...editForm, issued_to_user_id: id })} />
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editForm.is_active} onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })} /> Active</label>
+            <label className="block text-sm font-medium"><span className="flex items-center gap-1"><Palette className="h-4 w-4" /> Card Background</span><select value={editForm.theme_id} onChange={(e) => setEditForm({ ...editForm, theme_id: e.target.value })} className="input-base mt-1 w-full rounded-lg border px-3 py-2"><option value="">Auto (based on code)</option><option value="amber">Amber</option><option value="emerald">Emerald</option><option value="indigo">Indigo</option><option value="rose">Rose</option><option value="sky">Sky</option></select></label>
+            <div className="flex justify-end gap-2"><button type="button" onClick={() => setEditing(null)} className="rounded-lg bg-slate-100 px-4 py-2 text-sm">Cancel</button><button disabled={saving} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">{saving ? "Saving…" : "Save"}</button></div>
+          </form>
         </>
       )}
 
@@ -980,13 +1085,14 @@ function GiftCardsTab() {
                 <th className="text-heading px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide">
                   Created
                 </th>
+                <th className="text-heading px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody className="table-divide">
               {loading
                 ? Array.from({ length: 8 }).map((_, i) => (
                     <tr key={i}>
-                      {Array.from({ length: 8 }).map((_, j) => (
+                      {Array.from({ length: 9 }).map((_, j) => (
                         <td key={j} className="px-5 py-3">
                           <div className="h-4 animate-pulse rounded bg-slate-200 " />
                         </td>
@@ -994,7 +1100,7 @@ function GiftCardsTab() {
                     </tr>
                   ))
                 : cards.map((card) => {
-                    const isRedeemed = !!card.redeemed_at;
+                    const isRedeemed = !!(card.redeemed_at || card.redeemed_by_user_id);
                     const isExpired = card.expires_at
                       ? new Date(card.expires_at) < new Date()
                       : false;
@@ -1080,6 +1186,9 @@ function GiftCardsTab() {
                         </td>
                         <td className="text-muted whitespace-nowrap px-5 py-3 text-sm">
                           {new Date(card.created_at).toLocaleString("vi-VN")}
+                        </td>
+                        <td className="px-5 py-3 text-right">
+                          {!isRedeemed && <button type="button" onClick={() => startEdit(card)} className="rounded-lg p-2 text-amber-700 hover:bg-amber-50" aria-label={`Edit gift card ${card.code}`}><Pencil className="h-4 w-4" /></button>}
                         </td>
                       </tr>
                     );
