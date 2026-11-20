@@ -35,7 +35,7 @@ export function HomeSaleSection() {
   const railRef = useDragScroll<HTMLDivElement>();
 
   return (
-    <section className="bg-surface lg:rounded-3xl lg:p-8">
+    <section className="rounded-md bg-surface md:p-4 lg:rounded-3xl lg:p-4">
       <style>
         {`
           @keyframes sale-shimmer {
@@ -50,7 +50,7 @@ export function HomeSaleSection() {
       </style>
 
       {/* Header */}
-      <div className="mb-2 flex items-center justify-between px-6 lg:px-0">
+      <div className="mb-2 flex items-center justify-between px-0">
         <div className="flex items-center gap-1">
           <div
             className="relative h-7 w-7"
@@ -81,7 +81,7 @@ export function HomeSaleSection() {
       </div>
 
       {/* Category Pills */}
-      <div className="hide-scrollbar mb-3 flex gap-2 overflow-x-auto px-6 pb-1 lg:px-0">
+      <div className="hide-scrollbar mb-3 flex gap-2 overflow-x-auto px-0 pb-1">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.slug}
@@ -97,27 +97,10 @@ export function HomeSaleSection() {
         ))}
       </div>
 
-      {/* Sort Pills */}
-      {/* <div className="hide-scrollbar mb-4 flex gap-2 overflow-x-auto px-6 pb-1">
-        {SORTS.map((s) => (
-          <button
-            key={s.value}
-            onClick={() => setSort(s.value)}
-            className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest transition-all ${
-              sort === s.value
-                ? "border-primary bg-primary text-on-primary"
-                : "border-outline-variant bg-transparent text-on-surface-variant"
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div> */}
-
       {/* Product Carousel */}
       <div
         ref={railRef}
-        className="hide-scrollbar flex cursor-grab gap-4 overflow-x-auto px-6 pb-2 active:cursor-grabbing lg:cursor-grab lg:gap-5 lg:overflow-x-auto lg:px-0 lg:pb-2 lg:active:cursor-grabbing"
+        className="hide-scrollbar flex cursor-grab gap-4 overflow-x-auto px-0 pb-2 active:cursor-grabbing lg:cursor-grab lg:gap-5 lg:overflow-x-auto lg:pb-2 lg:active:cursor-grabbing"
       >
         {isLoading
           ? Array.from({ length: 5 }, (_, i) => (
@@ -153,19 +136,6 @@ export function HomeSaleSection() {
               <ArrowRight size={10} />
             </Link>
           </div>
-        )}
-        {!isLoading && products.length > 0 && (
-          <Link
-            href="/shop"
-            className="group flex w-[120px] flex-shrink-0 flex-col items-center justify-center gap-3 rounded-2xl bg-surface-container-low transition-colors hover:bg-surface-container"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
-              <ArrowRight size={18} className="text-primary" />
-            </div>
-            <p className="px-2 text-center text-[9px] font-black uppercase tracking-widest text-on-surface-variant">
-              Xem tất cả
-            </p>
-          </Link>
         )}
       </div>
     </section>

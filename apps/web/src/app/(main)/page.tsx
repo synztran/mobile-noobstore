@@ -33,7 +33,7 @@ export const metadata: Metadata = buildOg({
 
 export default function HomePage() {
   return (
-    <div className="relative clear-both mx-auto max-w-7xl space-y-6 lg:space-y-8">
+    <div className="relative clear-both mx-auto max-w-7xl space-y-4 md:space-y-6 lg:space-y-6">
       <Suspense fallback={<AnnouncementBanner />}>
         <AnnouncementBannerInitial />
       </Suspense>
@@ -41,17 +41,19 @@ export default function HomePage() {
         <HeroSectionInitial />
       </Suspense>
       <DesktopHomeDock />
-      <NoteworthySection />
-      <Suspense fallback={<HomeProductRailFallback />}>
-        <NewArrivalsSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <FlashSaleStripInitial />
-      </Suspense>
-      <HomeSaleSection />
-      <Suspense fallback={<HomeProductRailFallback />}>
-        <HotDropsSection />
-      </Suspense>
+      <div className="space-y-4 px-4 md:space-y-6 md:px-0 lg:space-y-6 lg:px-0">
+        <NoteworthySection />
+        <Suspense fallback={<HomeProductRailFallback />}>
+          <NewArrivalsSection />
+        </Suspense>
+        <Suspense fallback={null}>
+          <FlashSaleStripInitial />
+        </Suspense>
+        <HomeSaleSection />
+        <Suspense fallback={<HomeProductRailFallback />}>
+          <HotDropsSection />
+        </Suspense>
+      </div>
       <div className="hidden lg:block">
         <GachaFeatureSlot />
       </div>
@@ -64,12 +66,14 @@ export default function HomePage() {
         </LazyNearViewport>
       </div>
       <LazyNearViewport>
-        <HomeTestimonials />
+        <div className="px-4 md:px-0 lg:px-0">
+          <HomeTestimonials />
+        </div>
       </LazyNearViewport>
       {/* <Suspense fallback={<HomeBlogFallback />}>
         <HomeBlogSection />
       </Suspense> */}
-      <div className="px-4 lg:px-0">
+      <div className="px-4 md:px-0 lg:px-0">
         <NewsletterCTA />
       </div>
       <HomeFooter />
@@ -130,7 +134,10 @@ function HeroFallback() {
 
 function HomeProductRailFallback() {
   return (
-    <section aria-hidden="true" className="bg-surface lg:rounded-3xl lg:p-8">
+    <section
+      aria-hidden="true"
+      className="rounded-md bg-surface md:p-4 lg:rounded-3xl lg:p-4"
+    >
       <div className="mb-4 h-7 w-48 animate-pulse rounded-lg bg-surface-container" />
       <div className="hide-scrollbar flex gap-4 overflow-hidden px-6 pb-2 lg:gap-5 lg:px-0">
         {Array.from({ length: 5 }, (_, index) => (

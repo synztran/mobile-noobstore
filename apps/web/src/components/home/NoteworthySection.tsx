@@ -33,7 +33,7 @@ export function NoteworthySection() {
   const railRef = useDragScroll<HTMLDivElement>();
 
   return (
-    <section className="bg-surface lg:rounded-3xl lg:p-8">
+    <section className="rounded-md bg-surface md:p-4 lg:rounded-3xl lg:p-4">
       <style>
         {`
           @keyframes float-subtle {
@@ -52,7 +52,7 @@ export function NoteworthySection() {
       </style>
 
       {/* Header */}
-      <div className="mb-2 flex items-baseline justify-between px-6 lg:px-0">
+      <div className="mb-2 flex items-baseline justify-between px-0">
         {isFirstLoad ? (
           <div className="h-7 w-44 animate-pulse rounded-lg bg-surface-container" />
         ) : (
@@ -102,7 +102,7 @@ export function NoteworthySection() {
       </div>
 
       {/* Category Pills */}
-      <div className="hide-scrollbar mb-4 flex gap-2 overflow-x-auto px-6 pb-1 lg:px-0">
+      <div className="hide-scrollbar mb-4 flex gap-2 overflow-x-auto px-0 pb-1">
         {isFirstLoad
           ? [1, 2, 3, 4, 5].map((i) => (
               <div
@@ -128,7 +128,7 @@ export function NoteworthySection() {
       {/* Product Carousel */}
       <div
         ref={railRef}
-        className="hide-scrollbar flex cursor-grab gap-4 overflow-x-auto px-6 pb-2 active:cursor-grabbing lg:cursor-grab lg:gap-5 lg:overflow-x-auto lg:px-0 lg:pb-2 lg:active:cursor-grabbing"
+        className="hide-scrollbar flex cursor-grab gap-4 overflow-x-auto px-0 pb-2 active:cursor-grabbing lg:cursor-grab lg:gap-5 lg:overflow-x-auto lg:pb-2 lg:active:cursor-grabbing"
       >
         {isLoading
           ? Array.from({ length: 5 }, (_, i) => (

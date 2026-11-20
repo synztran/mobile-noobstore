@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import GiftCardViewer from "@/components/gift-card/GiftCardViewer";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { buildOg } from "@/lib/og";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,8 @@ type GiftCard = {
 	redeemed_at: string | null;
 	redeemed_by_user_id: string | null;
 	issued_to_user_id: string | null;
+	theme_id: string | null;
+	is_scratched: boolean;
 };
 
 async function getGiftCard(code: string): Promise<GiftCard | null> {
@@ -23,7 +26,7 @@ async function getGiftCard(code: string): Promise<GiftCard | null> {
 	const { data } = await supabase
 		.from("gift_cards")
 		.select(
-			"code, points_value, batch_label, note, expires_at, is_active, redeemed_at, redeemed_by_user_id, issued_to_user_id",
+			"code, points_value, batch_label, note, expires_at, is_active, redeemed_at, redeemed_by_user_id, issued_to_user_id, theme_id, is_scratched",
 		)
 		.ilike("code", code)
 		.maybeSingle();
@@ -67,6 +70,8 @@ export default async function GiftCardDetailPage({
 }) {
 	const { code } = await params;
 	const card = await getGiftCard(code);
+	const supabase = await createClient();
+	const { data: { user } } = await supabase.auth.getUser();
 
 	if (!card) notFound();
 
@@ -85,6 +90,15 @@ export default async function GiftCardDetailPage({
 			isRedeemed={isRedeemed}
 			isExpired={isExpired}
 			restricted={card.issued_to_user_id !== null}
+			themeId={card.theme_id}
+			isScratched={card.is_scratched}
+			canReveal={
+				!!user &&
+				card.is_active &&
+				!isRedeemed &&
+				!isExpired &&
+				(card.issued_to_user_id === null || card.issued_to_user_id === user.id)
+			}
 		/>
 	);
 }
