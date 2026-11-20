@@ -9,8 +9,8 @@ export async function HotDropsSection() {
   if (products.length === 0) return null;
 
   return (
-    <section className="bg-surface lg:rounded-3xl lg:p-8">
-      <div className="mb-4 flex items-center justify-between gap-4 px-6 lg:px-0">
+    <section className="rounded-md bg-surface md:p-4 lg:rounded-3xl lg:p-4">
+      <div className="mb-4 flex items-center justify-between gap-4 px-0">
         <h2 className="flex items-center gap-2 text-xl font-black uppercase tracking-tight text-on-surface lg:text-2xl">
           <Flame
             size={20}
@@ -29,7 +29,7 @@ export async function HotDropsSection() {
         </Link>
       </div>
 
-      <div className="hide-scrollbar flex gap-4 overflow-x-auto px-6 pb-2 lg:snap-x lg:gap-5 lg:px-0 lg:pb-2">
+      <div className="hide-scrollbar flex gap-4 overflow-x-auto px-0 pb-2 lg:snap-x lg:gap-5 lg:pb-2">
         {products.map((product) => (
           <div
             key={product.id}

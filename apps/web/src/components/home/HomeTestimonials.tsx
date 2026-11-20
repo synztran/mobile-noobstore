@@ -67,7 +67,7 @@ function TestimonialCard({
 }) {
   const [imageFailed, setImageFailed] = useState(false);
   return (
-      <article className="group/card relative mr-4 flex w-[300px] flex-shrink-0 flex-col overflow-hidden rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 lg:w-[340px] lg:p-6">
+    <article className="group/card relative mr-4 flex w-[300px] flex-shrink-0 flex-col overflow-hidden rounded-3xl border border-outline-variant/30 bg-surface-container-lowest p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10 lg:w-[340px] lg:p-6">
       <span
         aria-hidden="true"
         className="pointer-events-none absolute -right-1 -top-7 select-none font-serif text-[104px] leading-none text-primary/[0.07]"
@@ -145,48 +145,23 @@ export function HomeTestimonials() {
   );
 
   return (
-    <section className="overflow-hidden px-6 lg:px-0">
-      <style>{`
-        @keyframes testimonial-scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .testimonial-track {
-          animation: testimonial-scroll calc(var(--testimonial-duration) * 1.56) linear infinite;
-        }
-        @media (min-width: 1024px) {
-          .testimonial-track {
-            animation-duration: var(--testimonial-duration);
-          }
-        }
-        @media (min-width: 1024px) {
-          .testimonial-track:hover {
-            animation-play-state: paused;
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .testimonial-track {
-            animation: none;
-          }
-        }
-      `}</style>
-
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-primary">
+    <section className="space-y-4 overflow-hidden rounded-md border border-outline-variant/30 bg-surface-container-lowest p-4 md:space-y-6 lg:space-y-6 lg:rounded-none lg:border-none lg:bg-transparent">
+      <div className="flex flex-col gap-4 rounded-md sm:flex-row sm:items-start sm:justify-between md:rounded-none md:border-none md:bg-transparent md:p-0 lg:p-0">
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-primary">
             <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
             Đánh giá khách hàng
           </p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-on-surface lg:text-3xl">
+          <h2 className="text-xl font-black tracking-tight text-on-surface md:text-2xl lg:text-2xl">
             Khách hàng nói gì về NoobStore
           </h2>
-          <p className="mt-1 text-sm text-on-surface-variant">
+          <p className="hidden text-sm text-on-surface-variant md:block lg:block">
             Đánh giá thật từ những người đã nhận hàng.
           </p>
         </div>
 
         {!isLoading && (summary?.count ?? 0) > 0 && (
-          <div className="hidden shrink-0 items-center gap-3 lg:flex">
+          <div className="flex shrink-0 flex-col items-end gap-2">
             {/* Button viết đánh giá Google (bên trái badge thông tin) */}
             <a
               href={
@@ -195,20 +170,44 @@ export function HomeTestimonials() {
               }
               target="_blank"
               rel="noopener noreferrer"
-              className="flex min-h-[60px] max-h-[65px] w-52 items-center gap-3 rounded-2xl border border-outline-variant/30 bg-white px-4 py-2.5 text-left text-xs font-bold text-on-surface shadow-ambient-sm transition-all hover:bg-surface-container-low active:scale-95 dark:bg-surface-container-lowest"
+              className="flex min-h-[60px] max-w-max items-center gap-2 rounded-2xl border border-outline-variant/30 bg-white px-2.5 py-2.5 text-left text-xs font-bold text-on-surface shadow-ambient-sm transition-all hover:bg-surface-container-low active:scale-95 dark:bg-surface-container-lowest"
             >
-              <GoogleIcon className="h-5 w-5 shrink-0" />
+              <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+                <GoogleIcon className="h-8 w-8" />
+                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-surface-container-lowest p-0.5">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                </span>
+              </span>
               <span className="flex min-w-0 flex-col gap-0.5">
-                <span>Đánh giá NoobStore</span>
-                <span className="text-[11px] font-medium text-on-surface-variant">
+                <div className="flex items-baseline justify-between gap-1">
+                  <div className="flex items-center">
+                    <p className="mt-0.5 text-xs font-semibold tracking-wide">
+                      {summary?.count ?? 0} đánh giá
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-base font-black leading-none text-on-surface">
+                      {summary?.averageRating?.toFixed(1) ?? "—"}
+                    </span>
+                    <span className="text-xs font-semibold text-on-surface-variant">
+                      / 5
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-medium text-on-surface-variant">
                   Chia sẻ trải nghiệm của bạn
                 </span>
               </span>
             </a>
 
             {/* Badge thông tin đánh giá */}
-            <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest px-4 py-2.5 shadow-ambient-sm">
-              <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
+            {/* <div className="flex min-h-[60px] shrink-0 items-center gap-2 rounded-2xl border border-outline-variant/30 bg-surface-container-lowest p-2.5 shadow-ambient-sm">
+              <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
+                <GoogleIcon className="h-8 w-8" />
+                <span className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full border-2 border-surface-container-lowest bg-surface-container-lowest">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                </span>
+              </span>
               <div>
                 <p className="flex items-baseline gap-1">
                   <span className="text-lg font-black leading-none text-on-surface">
@@ -220,12 +219,11 @@ export function HomeTestimonials() {
                 </p>
                 <div className="flex items-center">
                   <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-outline">
-                    {summary?.count ?? 0} đánh giá trên{" "}
-                  </p>&nbsp;
-                  <GoogleIcon className="h-3.5 w-3.5" />
+                    {summary?.count ?? 0} đánh giá
+                  </p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
@@ -241,8 +239,12 @@ export function HomeTestimonials() {
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-16 bg-gradient-to-r from-surface-container-low to-transparent sm:w-24 lg:block" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-gradient-to-l from-surface-container-low to-transparent sm:w-24 lg:block" />
           <div
-            className="testimonial-track flex w-max py-1"
-            style={{ "--testimonial-duration": `${marqueeSeconds}s` } as React.CSSProperties}
+            className="testimonial-track flex w-max"
+            style={
+              {
+                "--testimonial-duration": `${marqueeSeconds}s`,
+              } as React.CSSProperties
+            }
           >
             {[...testimonials, ...testimonials].map((t, i) => (
               <TestimonialCard key={i} {...t} />

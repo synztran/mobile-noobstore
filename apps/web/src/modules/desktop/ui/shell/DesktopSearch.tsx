@@ -123,7 +123,7 @@ export function DesktopSearch() {
         event.preventDefault();
         submit();
       }}
-      className="ml-auto w-full min-w-0 max-w-xl"
+      className="ml-auto w-[clamp(320px,30vw,440px)] min-w-[320px] max-w-full"
     >
       <div ref={wrapperRef} className="relative">
         <Search
@@ -137,7 +137,7 @@ export function DesktopSearch() {
           aria-label="Tìm kiếm sản phẩm"
           aria-expanded={focused && query.trim().length >= 2}
           aria-autocomplete="list"
-          placeholder="Tìm kiếm bàn phím, keycap, switch..."
+          placeholder="Nhập ít nhất 2 ký tự để tìm kiếm..."
           value={query}
           onChange={(event) => handleChange(event.target.value)}
           onFocus={() => setFocused(true)}

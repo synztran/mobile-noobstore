@@ -37,7 +37,7 @@ export function NewsletterCTA() {
   };
 
   return (
-    <div className="relative mb-2 mt-10 overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary-fixed/60 via-surface-container-low to-surface-container-low p-5 sm:p-6 lg:mb-4 lg:mt-12 lg:flex lg:items-center lg:gap-10">
+    <div className="relative mt-6 overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary-fixed/60 via-surface-container-low to-surface-container-low p-5 sm:p-6 lg:flex lg:items-center lg:gap-10">
       <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-secondary/10 blur-3xl" />
 

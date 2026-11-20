@@ -104,7 +104,7 @@ export function DesktopTopBar() {
       {/* Primary navigation */}
       <nav
         aria-label="Điều hướng chính"
-        className="hidden items-center gap-1 lg:flex"
+        className="flex shrink-0 items-center gap-0.5 sm:gap-1"
       >
         {PRIMARY_NAV.map((item) => {
           const Icon = item.icon;
@@ -116,14 +116,20 @@ export function DesktopTopBar() {
               aria-label={item.label}
               data-tip={item.label}
               aria-current={active ? "page" : undefined}
-              className={`tooltip tooltip-bottom flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors xl:px-3.5 ${
+              className={`tooltip tooltip-bottom flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-semibold transition-colors sm:px-3 xl:px-3.5 ${
                 active
                   ? "bg-primary-fixed text-primary"
                   : "text-on-surface-variant hover:bg-on-surface/5 hover:text-on-surface"
               }`}
             >
               <Icon className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden xl:inline">{item.label}</span>
+              <span
+                className={
+                  hideSearch ? "hidden sm:inline" : "hidden xl:inline"
+                }
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
@@ -134,8 +140,8 @@ export function DesktopTopBar() {
 
       {/* Actions */}
       <div
-        className={`ml-auto flex shrink-0 items-center gap-1 ${
-          hideSearch ? "" : "lg:ml-0"
+        className={`flex shrink-0 items-center gap-1 ${
+          hideSearch ? "ml-auto" : "ml-0"
         }`}
       >
         <button
