@@ -5,10 +5,7 @@ import { useIsMounted } from "@/hooks/useIsMounted";
 import { cartItemsToGA, trackPurchase } from "@/lib/analytics";
 import { formatVND } from "@/lib/currency";
 import type { CartItem } from "@/lib/data";
-import {
-  useOrderDetail,
-  useOrderStatus,
-} from "@/lib/react-query/order/api/useOrderQueries";
+import { useOrderDetail, useOrderStatus } from "@/lib/react-query/order/api/useOrderQueries";
 import { toast } from "@/lib/toast";
 import { OrderPaymentInstructions } from "@/modules/payments/ui/OrderPaymentInstructions";
 import { useCheckoutStore } from "@/store";
@@ -334,18 +331,14 @@ export default function CheckingPageContent({
             <button
               type="button"
               onClick={handleCopyOrderNumber}
-              className="btn btn-outline btn-sm h-9 rounded-xl border-outline-variant/40 text-xs font-bold transition-all active:scale-95"
+              aria-label="Sao chép mã đơn"
+              title="Sao chép mã đơn"
+              className="btn btn-outline btn-sm h-9 w-9 p-0 rounded-xl border-outline-variant/40 transition-all active:scale-95"
             >
               {copiedOrderNumber ? (
-                <>
-                  <Check size={14} className="text-emerald-700" />
-                  Đã chép
-                </>
+                <Check size={16} className="text-emerald-600" />
               ) : (
-                <>
-                  <Copy size={14} />
-                  Sao chép mã đơn
-                </>
+                <Copy size={16} />
               )}
             </button>
           </div>
@@ -464,7 +457,7 @@ export default function CheckingPageContent({
                   <div className="h-0.5 flex-1 bg-emerald-600" />
                 </div>
                 <p className="text-xs font-black text-on-surface">Tiếp nhận đơn</p>
-                <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-600">
                   Hoàn thành
                 </p>
               </div>
@@ -562,7 +555,7 @@ export default function CheckingPageContent({
               </div>
 
               {/* Guarantees */}
-              <div className="mt-2 space-y-1.5 rounded-xl bg-surface-container/30 p-3 text-[11px] text-on-surface-variant">
+              <div className="mt-2 space-y-1.5 rounded-xl bg-surface-container-high p-3 text-[11px] text-on-surface-variant">
                 {isPickup ? (
                   <>
                     <div className="flex items-center gap-2">
@@ -636,6 +629,31 @@ export default function CheckingPageContent({
                           <p className="mt-0.5 truncate text-[11px] text-on-surface-variant">
                             {item.variant.variant_name}
                           </p>
+                        )}
+                        {item.components && item.components.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {item.components
+                              .filter(
+                                (c) =>
+                                  !item.variant ||
+                                  c.variant_name !== item.variant.variant_name,
+                              )
+                              .map((c, i) => (
+                                <span
+                                  key={c.variant_id ?? i}
+                                  className="inline-flex items-center gap-1 rounded bg-surface-container px-1.5 py-0.5 text-[10px] font-medium text-on-surface-variant"
+                                >
+                                  {c.component_group && (
+                                    <span className="opacity-70">
+                                      {c.component_group}:
+                                    </span>
+                                  )}
+                                  <span className="font-semibold text-on-surface">
+                                    {c.variant_name}
+                                  </span>
+                                </span>
+                              ))}
+                          </div>
                         )}
                       </div>
                       <div className="shrink-0 self-start font-bold text-on-surface">
