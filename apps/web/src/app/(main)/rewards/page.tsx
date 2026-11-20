@@ -54,8 +54,9 @@ function RewardsPage() {
   const claims = claimsData?.claims ?? [];
 
   return (
-    <div className="space-y-4 px-4 pb-6 pt-2 lg:grid lg:grid-cols-12 lg:gap-y-8 lg:space-y-0 lg:pt-4">
-      {/* Header */}
+    <>
+      <div className="space-y-4 px-4 pb-6 pt-2 lg:grid lg:grid-cols-12 lg:gap-y-8 lg:space-y-0 lg:pt-4">
+        {/* Header */}
       <div className="mb-2 flex items-center gap-3 lg:hidden">
         <Link
           href="/profile"
@@ -132,6 +133,7 @@ function RewardsPage() {
           </section>
         )}
       </div>
+    </div>
 
       {/* Confirm Redemption Modal */}
       <ConfirmRedemptionModal
@@ -149,7 +151,7 @@ function RewardsPage() {
         open={showSuccess}
         onClose={() => setShowSuccess(false)}
       />
-    </div>
+    </>
   );
 }
 
