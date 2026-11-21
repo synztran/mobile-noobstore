@@ -143,6 +143,7 @@ async function fetchOsrmRoute(
 
   try {
     const res = await fetch(url);
+    console.log("res", res, res.ok, res.status, startedAt)
     if (!res.ok) {
       console.warn("OSRM HTTP error", {
         status: res.status,
@@ -343,6 +344,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Fetch OSRM route for geometry (and distance if Google failed).
+    console.log(storeLat, storeLon, Number(lat), Number(lon))
     const osrmRoute = await fetchOsrmRoute(
       storeLat,
       storeLon,
