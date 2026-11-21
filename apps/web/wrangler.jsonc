@@ -19,6 +19,7 @@
   ],
   "workers_dev": true,
   "preview_urls": false,
+  "keep_vars": true,
   "routes": [
     {
       "pattern": "noobstore.xyz",
