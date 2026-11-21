@@ -317,7 +317,7 @@ export function ConfirmRedemptionModal({
             type="button"
             onClick={onClose}
             disabled={isPending}
-            className="flex-1 rounded-full bg-surface-container py-3 text-xs font-black uppercase tracking-wider text-on-surface transition-colors hover:bg-surface-container-high active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex-1 rounded-md bg-surface-container py-3 text-xs font-black uppercase tracking-wider text-on-surface transition-colors hover:bg-surface-container-high active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Đóng
           </button>
@@ -325,7 +325,7 @@ export function ConfirmRedemptionModal({
             type="button"
             onClick={() => onConfirm(reward.id)}
             disabled={isPending || !canAfford || isSoldOut}
-            className={`flex-[1.5] rounded-full py-3 text-xs font-black uppercase tracking-wider transition-all active:scale-95 ${
+            className={`flex-[1.5] rounded-md py-3 text-xs font-black uppercase tracking-wider transition-all active:scale-95 ${
               !canAfford || isSoldOut
                 ? "cursor-not-allowed bg-surface-container text-on-surface-variant/50"
                 : "primary-gradient text-white hover:opacity-95 disabled:opacity-60"

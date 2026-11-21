@@ -53,6 +53,10 @@
 }
 
 @layer components {
+  .reward-shortage-tooltip::before {
+    font-size: 0.6875rem;
+  }
+
   /* Target the gooey-toast wrapper, specifically when it's positioned at the top */
   section[data-gooey-viewport][data-position*="top"] {
     /* Push below TopNav (~3.75rem) + safe area */

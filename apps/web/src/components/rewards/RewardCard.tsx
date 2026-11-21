@@ -1,8 +1,9 @@
 "use client";
 
 import { formatShortVND, formatVND } from "@/lib/currency";
+import { toPlainText } from "@/lib/og";
 import type { RewardItem } from "@/types/reward";
-import { Coins, Gift, Percent, Tag, Truck, Wallet } from "lucide-react";
+import { AlertTriangle, Coins, Gift, Percent, Tag, Truck, Wallet } from "lucide-react";
 import { formatPoints } from "./utils";
 
 interface Props {
@@ -96,7 +97,7 @@ export function RewardCard({
   const conditionHint =
     minOrder > 0
       ? `Đơn tối thiểu ${formatVND(minOrder)}`
-      : reward.description || "Áp dụng khi thanh toán";
+      : toPlainText(reward.description) || "Áp dụng khi thanh toán";
 
   return (
     <div
@@ -153,7 +154,7 @@ export function RewardCard({
             </span>
 
             {/* Mini Progress Bar góc trên phải */}
-            {hasStockLimit ? (
+            {hasStockLimit && stockLimit > 1 ? (
               <div className="flex flex-col items-end gap-1">
                 <span
                   className={`text-[10px] font-bold ${
@@ -198,19 +199,26 @@ export function RewardCard({
         </div>
 
         {/* Footer row: Chi phí & Nút hành động */}
-        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-surface-container-high/60 pt-2">
-          <div className="min-w-0">
+        <div className="mt-2.5 flex items-end justify-between gap-2 border-t border-surface-container-high/60 pt-2">
+          <div className="flex min-w-0 flex-col items-end justify-end">
             <div className="flex items-center gap-1.5">
               <Wallet size={14} className="shrink-0 text-amber-500" />
-              <span className="text-sm font-black text-primary sm:text-base">
+              <span className="text-xs font-black text-primary sm:text-sm">
                 {formatPoints(reward.pointsCost).replace(/ điểm$/, "")}
               </span>
+              {!canAfford && !isSoldOut && (
+                <span
+                  className="tooltip reward-shortage-tooltip tooltip-top tooltip-error"
+                  data-tip={`Bạn còn thiếu ${formatPoints(shortage)}`}
+                >
+                  <AlertTriangle
+                    size={14}
+                    className="text-error"
+                    aria-label={`Bạn còn thiếu ${formatPoints(shortage)}`}
+                  />
+                </span>
+              )}
             </div>
-            {!canAfford && !isSoldOut && (
-              <span className="block text-[9px] font-semibold text-rose-500">
-                Thiếu {formatPoints(shortage).replace(/ điểm$/, "")}
-              </span>
-            )}
           </div>
 
           <button
@@ -219,7 +227,7 @@ export function RewardCard({
               e.stopPropagation();
               onRedeem(reward);
             }}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-wider transition-all active:scale-95 ${
+            className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md px-2 py-1 text-xs leading-none font-bold normal-case tracking-normal transition-all active:scale-95 ${
               isSoldOut
                 ? "cursor-not-allowed bg-surface-container text-on-surface-variant/50"
                 : canAfford
@@ -227,7 +235,8 @@ export function RewardCard({
                   : "border border-primary/20 bg-primary-fixed/20 text-primary hover:bg-primary-fixed/30"
             }`}
           >
-            {isSoldOut ? "Hết lượt" : canAfford ? "Đổi ngay" : "Xem chi tiết"}
+            {!isSoldOut && canAfford && <Wallet size={14} aria-hidden="true" />}
+            {isSoldOut ? "Hết lượt" : canAfford ? "Đổi ngay" : "Chi tiết"}
           </button>
         </div>
       </div>

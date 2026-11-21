@@ -92,7 +92,7 @@ export function PointsBalanceCard({
       </div>
       <Link
         href="/rewards/gift-card"
-        className="hidden shrink-0 items-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-extrabold text-primary transition-transform active:scale-95 lg:inline-flex"
+          className="hidden shrink-0 items-center gap-2 rounded-md bg-white px-4 py-2.5 text-xs font-extrabold text-primary transition-transform active:scale-95 lg:inline-flex"
       >
         <Ticket size={16} /> Nạp thẻ quà tặng
       </Link>

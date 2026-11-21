@@ -234,7 +234,7 @@ export function ClaimsHistory({
         <button
           type="button"
           onClick={() => setShowAll((value) => !value)}
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-full bg-surface-container py-2 text-xs font-extrabold text-primary hover:bg-surface-container-high"
+          className="mt-3 flex w-full items-center justify-center gap-1 rounded-md bg-surface-container py-2 text-xs font-extrabold text-primary hover:bg-surface-container-high"
         >
           {showAll ? "Thu gọn lịch sử" : "Xem toàn bộ lịch sử"}{" "}
           <ArrowDown className={showAll ? "rotate-180" : ""} size={14} />
