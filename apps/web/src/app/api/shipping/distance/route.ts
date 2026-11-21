@@ -139,17 +139,24 @@ async function fetchOsrmRoute(
   destLon: number
 ) {
   const url = `https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destLon},${destLat}?overview=full&geometries=geojson`;
+  const startedAt = Date.now();
 
   try {
     const res = await fetch(url);
     if (!res.ok) {
-      console.warn("OSRM HTTP error", res.status, res.statusText);
+      console.warn("OSRM HTTP error", {
+        status: res.status,
+        durationMs: Date.now() - startedAt,
+      });
       return null;
     }
 
     const data = await res.json();
     if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
-      console.warn("OSRM routing failed", data.code);
+      console.warn("OSRM routing failed", {
+        code: data.code,
+        durationMs: Date.now() - startedAt,
+      });
       return null;
     }
 
@@ -162,7 +169,11 @@ async function fetchOsrmRoute(
       geometry: route.geometry.coordinates as [number, number][],
     };
   } catch (err) {
-    console.error("OSRM request failed", err);
+    const errorName = err instanceof Error ? err.name : "UnknownError";
+    console.error("OSRM request failed", {
+      errorName,
+      durationMs: Date.now() - startedAt,
+    });
     return null;
   }
 }
