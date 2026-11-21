@@ -235,7 +235,7 @@ export function HomeTestimonials() {
           ))}
         </div>
       ) : testimonials.length === 0 ? null : (
-        <div className="group relative">
+        <div className="group relative overflow-hidden">
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-16 bg-gradient-to-r from-surface-container-low to-transparent sm:w-24 lg:block" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 hidden w-16 bg-gradient-to-l from-surface-container-low to-transparent sm:w-24 lg:block" />
           <div
