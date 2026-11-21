@@ -3,7 +3,10 @@
   "main": ".open-next/worker.js",
   "name": "mobile-noobstore",
   "compatibility_date": "2026-11-20",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -15,5 +18,15 @@
     }
   ],
   "workers_dev": true,
-  "preview_urls": false
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "noobstore.xyz",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.noobstore.xyz",
+      "custom_domain": true
+    }
+  ]
 }
