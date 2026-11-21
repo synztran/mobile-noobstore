@@ -82,6 +82,10 @@ jobs:
         run: yarn install --immutable
       - name: Build production Worker
         run: yarn workspace @noobstore/web exec opennextjs-cloudflare build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_COOKIE_DOMAIN: ${{ vars.NEXT_PUBLIC_COOKIE_DOMAIN }}
       - name: Deploy production Worker
         run: yarn workspace @noobstore/web exec opennextjs-cloudflare deploy
         env:
