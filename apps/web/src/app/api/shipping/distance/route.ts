@@ -132,20 +132,22 @@ async function fetchGoogleDistanceKm(
   }
 }
 
-async function fetchOsrmRoute(
+async function fetchMapboxRoute(
   originLat: number,
   originLon: number,
   destLat: number,
   destLon: number
 ) {
-  const url = `https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destLon},${destLat}?overview=full&geometries=geojson`;
+  const token = process.env.MAPBOX_TOKEN;
+  if (!token) return null;
+
+  const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${originLon},${originLat};${destLon},${destLat}?geometries=geojson&overview=full&access_token=${encodeURIComponent(token)}`;
   const startedAt = Date.now();
 
   try {
     const res = await fetch(url);
-    console.log("res", res, res.ok, res.status, startedAt)
     if (!res.ok) {
-      console.warn("OSRM HTTP error", {
+      console.warn("Mapbox Directions HTTP error", {
         status: res.status,
         durationMs: Date.now() - startedAt,
       });
@@ -154,7 +156,7 @@ async function fetchOsrmRoute(
 
     const data = await res.json();
     if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
-      console.warn("OSRM routing failed", {
+      console.warn("Mapbox Directions failed", {
         code: data.code,
         durationMs: Date.now() - startedAt,
       });
@@ -163,15 +165,20 @@ async function fetchOsrmRoute(
 
     const route = data.routes[0];
     const distanceMeters = Number(route.distance);
-    if (!Number.isFinite(distanceMeters)) return null;
+    const coordinates = route.geometry?.coordinates;
+    if (
+      !Number.isFinite(distanceMeters) ||
+      !Array.isArray(coordinates) ||
+      coordinates.length < 2
+    ) return null;
 
     return {
       distanceKm: distanceMeters / 1000,
-      geometry: route.geometry.coordinates as [number, number][],
+      geometry: coordinates as [number, number][],
     };
   } catch (err) {
     const errorName = err instanceof Error ? err.name : "UnknownError";
-    console.error("OSRM request failed", {
+    console.error("Mapbox Directions request failed", {
       errorName,
       durationMs: Date.now() - startedAt,
     });
@@ -343,19 +350,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Fetch OSRM route for geometry (and distance if Google failed).
-    console.log(storeLat, storeLon, Number(lat), Number(lon))
-    const osrmRoute = await fetchOsrmRoute(
+    // 2. Fetch Mapbox route geometry (and distance if Google failed).
+    const mapboxRoute = await fetchMapboxRoute(
       storeLat,
       storeLon,
       Number(lat),
       Number(lon)
     );
-    if (osrmRoute !== null) {
-      routeGeometry = osrmRoute.geometry;
+    if (mapboxRoute !== null) {
+      routeGeometry = mapboxRoute.geometry;
       if (routingMethod === "haversine_fallback") {
-        distanceKm = osrmRoute.distanceKm;
-        routingMethod = "osrm_driving";
+        distanceKm = mapboxRoute.distanceKm;
+        routingMethod = "mapbox_driving";
         routingStatus = "OK";
       }
     } else if (routingMethod === "haversine_fallback") {

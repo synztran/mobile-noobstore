@@ -937,11 +937,19 @@ export function useShippingForm() {
             label:
               `${form.streetAddress}, ${form.ward ? form.ward + ", " : ""}${form.district ? form.district + ", " : ""}${form.city}`.trim(),
           });
+          let routeGeometry: [number, number][] = [];
           if (
             Array.isArray(data.route_geometry) &&
-            data.route_geometry.length > 0
+            data.route_geometry.length >= 2 &&
+            data.route_geometry.every(
+              (point: unknown) =>
+                Array.isArray(point) &&
+                point.length >= 2 &&
+                Number.isFinite(point[0]) &&
+                Number.isFinite(point[1])
+            )
           ) {
-            setRouteCoordinates(data.route_geometry);
+            routeGeometry = data.route_geometry;
           }
           if (
             typeof data.store_lat === "number" &&
@@ -949,6 +957,7 @@ export function useShippingForm() {
           ) {
             setStoreCoords({ lat: data.store_lat, lon: data.store_lon });
           }
+          if (!cancelled) setRouteCoordinates(routeGeometry);
         }
       } catch (err) {
         if (!cancelled) {

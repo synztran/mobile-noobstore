@@ -47,6 +47,7 @@ function FooterColumn({
 
 export function HomeFooter() {
   const statusPageUrl = process.env.NEXT_PUBLIC_STATUS_PAGE_URL;
+  const buildId = process.env.NEXT_PUBLIC_BUILD_ID?.slice(0, 7);
 
   return (
     <footer className="bg-surface-container p-4 md:rounded-md lg:rounded-md">
@@ -160,6 +161,11 @@ export function HomeFooter() {
 
       <div className="mt-8 flex flex-col items-center justify-center gap-2 border-t border-on-surface/10 pt-5 text-center text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
         <p>© 2026 NoobStore</p>
+        {buildId && (
+          <p className="text-xs font-medium normal-case tracking-normal opacity-70">
+            PROD BUILD · {buildId}
+          </p>
+        )}
       </div>
     </footer>
   );
