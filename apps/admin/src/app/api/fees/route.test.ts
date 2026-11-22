@@ -21,7 +21,7 @@ vi.mock("@/lib/redis/cache", () => ({
 	invalidateFeesCache: async () => {
 		mocks.invalidated.push("config:fees");
 		try {
-			await mocks.fetch("fee-warm-up");
+			await mocks.fetch("unused-warm-up");
 		} catch (error) {
 			console.error(error);
 		}
@@ -47,11 +47,11 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("PATCH /api/fees", () => {
-	it("invalidates and refreshes fees after a successful update", async () => {
+	it("invalidates fees after a successful update without a blocking warm-up", async () => {
 		const response = await PATCH(request());
 		expect(response.status).toBe(200);
 		expect(mocks.invalidated).toEqual(["config:fees"]);
-		expect(mocks.fetch).toHaveBeenCalledWith("fee-warm-up");
+		expect(mocks.fetch).not.toHaveBeenCalled();
 	});
 
 	it("does not warm cache if the database update fails", async () => {

@@ -7,7 +7,7 @@ import {
   logRedisDegradation,
   PRODUCT_DETAIL_CACHE_TTL,
   PRODUCT_LIST_CACHE_TTL,
-  setCacheStrict,
+  CONFIG_CACHE_TTL,
 } from "./cache";
 
 // The cache module calls getRedis() lazily inside each helper. Provide a fake
@@ -15,20 +15,13 @@ import {
 // that ship to the shared Redis — without any real network.
 const del = vi.fn(async () => 0);
 const keys = vi.fn(async (pattern: string) => ["k:" + pattern]);
-const set = vi.fn(async () => "OK");
 
 vi.mock("./client", () => ({
-  getRedis: () => ({ del, keys, get: vi.fn(), set }),
+  getRedis: () => ({ del, keys, get: vi.fn(), set: vi.fn() }),
 }));
 
-describe("setCacheStrict", () => {
-  it("writes with a TTL and propagates Redis failures", async () => {
-    await setCacheStrict("fees", { enabled: true }, 3600);
-    expect(set).toHaveBeenCalledWith("fees", { enabled: true }, { ex: 3600 });
-
-    set.mockRejectedValueOnce(new Error("redis unavailable"));
-    await expect(setCacheStrict("fees", {}, 3600)).rejects.toThrow("redis unavailable");
-  });
+it("keeps low-change configuration cached for 12 hours", () => {
+  expect(CONFIG_CACHE_TTL).toBe(43_200);
 });
 
 // invalidateProductCaches() also revalidateTag("products") to purge Next's

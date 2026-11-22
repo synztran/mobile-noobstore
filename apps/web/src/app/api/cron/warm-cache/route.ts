@@ -4,8 +4,8 @@ import { getPaymentInformation } from "@/lib/payment-information";
 import { getNoteworthyProducts } from "@/modules/products/server/ssr";
 import {
 	CACHE_KEYS,
+	CONFIG_CACHE_TTL,
 	readThroughCache,
-	setCacheStrict,
 } from "@/lib/redis/cache";
 import { getSaleProducts } from "@/modules/products/server/sale";
 import { getShippingMethods } from "@/lib/shipping-methods";
@@ -25,20 +25,6 @@ export async function POST(req: NextRequest) {
 
 	const warmed: string[] = [];
 	const failed: string[] = [];
-	const refreshFees = req.nextUrl.searchParams.get("refresh") === "fees";
-	if (refreshFees) {
-		try {
-			const fees = await getFeesConfig();
-			await setCacheStrict(CACHE_KEYS.fees, fees, 3600);
-			return NextResponse.json({ warmed: 1, failed: 0, failedKeys: [] });
-		} catch {
-			return NextResponse.json(
-				{ warmed: 0, failed: 1, failedKeys: [CACHE_KEYS.fees] },
-				{ status: 500 },
-			);
-		}
-	}
-
 	async function warm(
 		key: string,
 		ttl: number,
@@ -53,12 +39,12 @@ export async function POST(req: NextRequest) {
 	}
 
 	await Promise.allSettled([
-		warm(CACHE_KEYS.fees, 3600, getFeesConfig),
-		warm(CACHE_KEYS.paymentInformation, 3600, async () => {
+		warm(CACHE_KEYS.fees, CONFIG_CACHE_TTL, getFeesConfig),
+		warm(CACHE_KEYS.paymentInformation, CONFIG_CACHE_TTL, async () => {
 			const methods = await getPaymentInformation();
 			return { methods };
 		}),
-		warm(CACHE_KEYS.shippingMethods, 3600, getShippingMethods),
+		warm(CACHE_KEYS.shippingMethods, CONFIG_CACHE_TTL, getShippingMethods),
 		warm(CACHE_KEYS.noteworthy("", 5), 1800, () =>
 			getNoteworthyProducts({ categorySlug: "", limit: 5 }),
 		),

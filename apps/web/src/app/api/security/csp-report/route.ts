@@ -23,7 +23,10 @@ export async function POST(req: NextRequest) {
     const body = report["csp-report"] ?? report;
     const directive = body["effective-directive"] ?? body.effectiveDirective;
     if (typeof directive === "string") {
-      console.info("[csp-report] violation", { directive });
+      const safeDirective = /^[A-Za-z0-9-]{1,64}$/.test(directive)
+        ? directive
+        : "unknown";
+      console.info("[csp-report] violation", { directive: safeDirective });
     }
     return new NextResponse(null, { status: 204 });
   } catch { return new NextResponse(null, { status: 400 }); }

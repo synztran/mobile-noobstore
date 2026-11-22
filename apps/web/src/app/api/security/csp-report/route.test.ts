@@ -17,6 +17,13 @@ describe("legacy CSP reports", () => {
     expect(log).toHaveBeenCalledWith("[csp-report] violation", { directive: "script-src-elem" });
     log.mockRestore();
   });
+  it("sanitizes malformed directives before logging", async () => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    const result = await POST(request(JSON.stringify({ "csp-report": { "effective-directive": "script-src\nforged log" } })));
+    expect(result.status).toBe(204);
+    expect(log).toHaveBeenCalledWith("[csp-report] violation", { directive: "unknown" });
+    log.mockRestore();
+  });
   it("retains rate and body-size limits", async () => {
     mocks.limit.mockResolvedValueOnce({ success: false });
     expect((await POST(request("{}"))).status).toBe(429);

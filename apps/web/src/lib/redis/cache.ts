@@ -28,6 +28,7 @@ export const PRODUCT_LIST_CACHE_TTL = 300;
 
 /** TTL for product detail entries (`v2:product:slug:*`). See above. */
 export const PRODUCT_DETAIL_CACHE_TTL = 300;
+export const CONFIG_CACHE_TTL = 43_200;
 
 /**
  * Canonical Redis cache keys, shared by API routes (read path) and the
@@ -141,18 +142,6 @@ export async function setCache<T>(
   }
 }
 
-export async function setCacheStrict<T>(
-  key: string,
-  value: T,
-  ttlSeconds?: number
-): Promise<void> {
-  if (ttlSeconds !== undefined) {
-    await redis().set(key, value, { ex: ttlSeconds });
-  } else {
-    await redis().set(key, value);
-  }
-}
-
 /**
  * Report a Redis failure at most once per key per window.
  *
@@ -251,8 +240,8 @@ export async function invalidateProductCaches(): Promise<void> {
     invalidateCacheByPattern("v2:related-products:*"),
     invalidateCacheByPattern("v2:fbt:*"),
     invalidateCacheByPattern("v2:purchase-count:*"),
-    invalidateCacheByPatternStrict("v2:noteworthy:*"),
-    invalidateCacheByPatternStrict("v2:sale-products:*"),
+    invalidateCacheByPattern("v2:noteworthy:*"),
+    invalidateCacheByPattern("v2:sale-products:*"),
     invalidateCacheByPattern("v2:newest-products:*"),
     invalidateCacheByPattern("v2:search:suggestions:*"),
     invalidateCacheByPattern("v2:component-rules:*"),
