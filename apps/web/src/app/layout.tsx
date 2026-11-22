@@ -9,6 +9,7 @@ import { BetterStackRUM } from "@/components/ui/BetterStackRUM";
 import { AuthProvider } from "@/modules/user/client/AuthProvider";
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
+import { headers } from "next/headers";
 import "./globals.css";
 import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
@@ -67,11 +68,12 @@ export const viewport: Viewport = {
   themeColor: "#9b3f1c",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="en"
@@ -89,8 +91,8 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        <GoogleAnalytics />
-        <BetterStackRUM />
+        <GoogleAnalytics nonce={nonce} />
+        <BetterStackRUM nonce={nonce} />
         <noscript>
           <div style={{ padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
             <h2>Vui lòng bật JavaScript</h2>

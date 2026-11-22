@@ -4,7 +4,10 @@ import { getRedis } from "./client";
 // both apps sweep the exact same keys — keeping it in the web lib avoids the
 // historical v1/v2 drift where admin patterns never matched.
 export { invalidateCacheByPattern } from "@web-cache";
-import { invalidateProductCaches as invalidateProductCachesWeb } from "@web-cache";
+import {
+	invalidateProductCaches as invalidateProductCachesWeb,
+	invalidateCacheByPatternStrict,
+} from "@web-cache";
 
 // Admin and web are separate Next runtimes sharing one Upstash Redis: the
 // Redis sweep below clears the REST-level cache, but revalidateTag() called
@@ -48,7 +51,11 @@ async function notifyWebRevalidate(): Promise<void> {
  * tells the web app to revalidate its tagged Data Cache / ISR entries.
  */
 export async function invalidateProductCaches(): Promise<void> {
-	await invalidateProductCachesWeb();
+	await Promise.all([
+		invalidateProductCachesWeb(),
+		invalidateCacheByPatternStrict("v2:noteworthy:*"),
+		invalidateCacheByPatternStrict("v2:sale-products:*"),
+	]);
 	await notifyWebRevalidate();
 }
 
@@ -86,6 +93,27 @@ export async function invalidateCache(...keys: string[]): Promise<void> {
 		await redis().del(...keys);
 	} catch {
 		// non-fatal
+	}
+}
+
+export async function invalidateFeesCache(): Promise<void> {
+	await invalidateCache("config:fees");
+	try {
+		const webUrl = process.env.WEB_APP_URL;
+		const secret = process.env.CRON_SECRET;
+		if (!webUrl || !secret) throw new Error("Missing web warm-up configuration");
+		const response = await fetch(
+			`${webUrl.replace(/\/$/, "")}/api/cron/warm-cache?refresh=fees`,
+			{
+				method: "POST",
+				headers: { Authorization: `Bearer ${secret}` },
+				cache: "no-store",
+				signal: AbortSignal.timeout(5_000),
+			},
+		);
+		if (!response.ok) throw new Error(`Fee cache warm-up returned ${response.status}`);
+	} catch (error) {
+		console.error("[admin/cache] failed to refresh web fee cache:", error);
 	}
 }
 

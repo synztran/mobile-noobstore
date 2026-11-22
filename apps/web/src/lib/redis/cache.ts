@@ -141,6 +141,18 @@ export async function setCache<T>(
   }
 }
 
+export async function setCacheStrict<T>(
+  key: string,
+  value: T,
+  ttlSeconds?: number
+): Promise<void> {
+  if (ttlSeconds !== undefined) {
+    await redis().set(key, value, { ex: ttlSeconds });
+  } else {
+    await redis().set(key, value);
+  }
+}
+
 /**
  * Report a Redis failure at most once per key per window.
  *
@@ -211,6 +223,11 @@ export async function invalidateCacheByPattern(pattern: string): Promise<void> {
   }
 }
 
+export async function invalidateCacheByPatternStrict(pattern: string): Promise<void> {
+  const keys = await redis().keys(pattern);
+  if (keys.length > 0) await redis().del(...keys);
+}
+
 /**
  * Invalidate every product-facing cache entry affected by a stock or product
  * change. Call after order placement/confirmation, cancellation/refund
@@ -234,8 +251,8 @@ export async function invalidateProductCaches(): Promise<void> {
     invalidateCacheByPattern("v2:related-products:*"),
     invalidateCacheByPattern("v2:fbt:*"),
     invalidateCacheByPattern("v2:purchase-count:*"),
-    invalidateCacheByPattern("v2:noteworthy:*"),
-    invalidateCacheByPattern("v2:sale-products:*"),
+    invalidateCacheByPatternStrict("v2:noteworthy:*"),
+    invalidateCacheByPatternStrict("v2:sale-products:*"),
     invalidateCacheByPattern("v2:newest-products:*"),
     invalidateCacheByPattern("v2:search:suggestions:*"),
     invalidateCacheByPattern("v2:component-rules:*"),

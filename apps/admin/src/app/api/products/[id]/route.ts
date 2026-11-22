@@ -123,5 +123,15 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
 		return NextResponse.json({ error: error.message }, { status: 400 });
 	}
 
+	try {
+		await invalidateProductCaches();
+	} catch (cacheError) {
+		console.error("[admin/products/DELETE] cache invalidation failed", cacheError);
+		return NextResponse.json(
+			{ error: "Product was deleted, but cache invalidation failed" },
+			{ status: 503 },
+		);
+	}
+
 	return NextResponse.json({ success: true }, { status: 200 });
 }

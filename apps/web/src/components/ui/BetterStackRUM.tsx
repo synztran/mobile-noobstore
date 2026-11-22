@@ -14,13 +14,13 @@ const RUM_TOKEN = "6apxZqfkWTEP9SvzBcig6TEB";
  * in the Lighthouse bootup-time table). Idle-time loading keeps telemetry
  * intact without taxing LCP/TBT.
  */
-export function BetterStackRUM() {
+export function BetterStackRUM({ nonce }: { nonce?: string }) {
   const enabled = process.env.NEXT_PUBLIC_BETTERSTACK_RUM === "true";
 
   if (!enabled) return null;
 
   return (
-    <Script id="betterstack-rum" strategy="lazyOnload">
+    <Script id="betterstack-rum" nonce={nonce} strategy="lazyOnload">
       {`
         (function(b,e,t,r){
           b[t]=b[t]||function(...args){(b[t].q=b[t].q||[]).push(args)};

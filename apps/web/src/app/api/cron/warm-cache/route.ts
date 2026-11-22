@@ -5,10 +5,11 @@ import { getNoteworthyProducts } from "@/modules/products/server/ssr";
 import {
 	CACHE_KEYS,
 	readThroughCache,
+	setCacheStrict,
 } from "@/lib/redis/cache";
 import { getSaleProducts } from "@/modules/products/server/sale";
 import { getShippingMethods } from "@/lib/shipping-methods";
-import { getPublicClient } from "@/lib/supabase/public";
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,19 @@ export async function POST(req: NextRequest) {
 
 	const warmed: string[] = [];
 	const failed: string[] = [];
+	const refreshFees = req.nextUrl.searchParams.get("refresh") === "fees";
+	if (refreshFees) {
+		try {
+			const fees = await getFeesConfig();
+			await setCacheStrict(CACHE_KEYS.fees, fees, 3600);
+			return NextResponse.json({ warmed: 1, failed: 0, failedKeys: [] });
+		} catch {
+			return NextResponse.json(
+				{ warmed: 0, failed: 1, failedKeys: [CACHE_KEYS.fees] },
+				{ status: 500 },
+			);
+		}
+	}
 
 	async function warm(
 		key: string,
@@ -59,13 +73,13 @@ export async function POST(req: NextRequest) {
 					excludeSoldOut: true,
 				}),
 		),
-		warm(CACHE_KEYS.testimonials, 1800, async () => {
-			const { data, error } = await getPublicClient()
+        warm(CACHE_KEYS.testimonials, 1800, async () => {
+            const supabase = await createClient();
+            const { data, error } = await supabase
 				.from("testimonials")
-				.select("id, name, rating, text, product, date")
+				.select("id, name, rating, text, product, date, image_url")
 				.eq("is_active", true)
-				.order("order", { ascending: true })
-				.limit(20);
+				.order("order", { ascending: true });
 			if (error) throw new Error(error.message);
 			return data ?? [];
 		}),

@@ -6,7 +6,7 @@ import { isTrackingEnabled } from "@/lib/analytics/config";
 
 const CONSENT_KEY = "noobstore_cookie_consent";
 
-export function GoogleAnalytics() {
+export function GoogleAnalytics({ nonce }: { nonce?: string }) {
   const gaId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
   const [consented, setConsented] = useState(false);
 
@@ -31,10 +31,11 @@ export function GoogleAnalytics() {
   return (
     <>
       <Script
+        nonce={nonce}
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
         strategy="afterInteractive"
       />
-      <Script id="google-analytics" strategy="afterInteractive">
+      <Script id="google-analytics" nonce={nonce} strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}

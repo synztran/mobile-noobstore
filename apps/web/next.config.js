@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   // Type-checking is handled by CI (`yarn type-check`), so skip the duplicate
   // tsc pass inside `next build` to keep production deploys fast.
   typescript: { ignoreBuildErrors: true },
@@ -13,11 +14,7 @@ const nextConfig = {
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "X-Frame-Options", value: "DENY" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      // Script nonces need a separate Next.js rendering/caching rollout. These
-      // directives add protection without pretending unsafe-inline is strict CSP.
       { key: "Content-Security-Policy", value: "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'" },
-      // Script reporting paused until a tested nonce/hash rollout: normal Next.js
-      // inline scripts generated report storms. Enforced policy above remains.
     ] }];
   },
 

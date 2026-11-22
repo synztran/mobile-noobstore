@@ -3,7 +3,7 @@ import {
   DEVICE_OVERRIDE_COOKIE,
   resolveDeviceRouting,
 } from "@/modules/desktop/device";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getApiLimiter, getRateLimitKey } from "@/lib/redis/ratelimit";
 import {
   fireRateLimitAlert,
@@ -71,11 +71,21 @@ function isUiCriticalRead(method: string, pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  const response = await handleRequest(request);
-  // Duplicate host-only + domain auth cookies are only detectable from the raw
-  // Cookie header, and the extra host-only copy must not outlive the response
-  // that revealed it. No-op unless a duplicate is actually present.
+  const nonce = crypto.randomUUID().replaceAll("-", "");
+  const csp = `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:; style-src 'self' 'nonce-${nonce}' https:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https://www.google.com https://*.hcaptcha.com; report-uri /api/security/csp-report`;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy-Report-Only", csp);
+  const requestWithNonce = new NextRequest(request, { headers: requestHeaders });
+  const response = await handleRequest(requestWithNonce);
   expireDuplicateAuthCookies(response, request);
+  if (
+    !request.nextUrl.pathname.startsWith("/api/") &&
+    response.status >= 200 &&
+    response.status < 300
+  ) {
+    response.headers.set("Content-Security-Policy-Report-Only", csp);
+  }
   return response;
 }
 
@@ -83,9 +93,15 @@ async function handleRequest(request: NextRequest) {
   // Forwarded to server components; the device gate sets x-device-class in
   // the try block below (unmanaged-host/error paths keep the original headers).
   const requestHeaders = new Headers(request.headers);
+  const csp = request.headers.get("Content-Security-Policy");
 
   try {
     const { pathname, hostname } = request.nextUrl;
+    requestHeaders.set("x-nonce", request.headers.get("x-nonce") ?? "");
+    requestHeaders.set(
+      "Content-Security-Policy-Report-Only",
+      request.headers.get("Content-Security-Policy-Report-Only") ?? "",
+    );
 
     // ── Device gate (modules/desktop) ──────────────────────────────────
     // Routes phones to m.noobstore.xyz and desktop/tablets to www. Pure
@@ -110,7 +126,7 @@ async function handleRequest(request: NextRequest) {
       request.nextUrl.searchParams.has("noredirect");
 
     if (resolution.action.kind === "redirect" && !skipDeviceRedirect) {
-      const url = request.nextUrl.clone();
+      const url = new URL(request.url);
       url.hostname = resolution.action.targetHost;
       url.port = "";
       return NextResponse.redirect(url, 307);
@@ -129,9 +145,11 @@ async function handleRequest(request: NextRequest) {
     };
     if (subdomain in SUBDOMAIN_ROUTES && pathname === "/") {
       request.nextUrl.pathname = SUBDOMAIN_ROUTES[subdomain];
-      return NextResponse.rewrite(request.nextUrl, {
+      const response = NextResponse.rewrite(request.nextUrl, {
         request: { headers: requestHeaders },
       });
+      if (csp) response.headers.set("Content-Security-Policy-Report-Only", csp);
+      return response;
     }
 
     // Routing-only hint (see lib/auth/session-cookie.ts): every API route and
@@ -202,12 +220,14 @@ async function handleRequest(request: NextRequest) {
         request.nextUrl.searchParams.get("next"),
         request.url
       );
-      return NextResponse.redirect(new URL(nextParam, request.url));
+      return NextResponse.redirect(new URL(safeRedirect(nextParam, request.url), request.url));
     }
   } catch (err) {
     console.error("[middleware] unexpected error:", err);
   }
 
+  requestHeaders.set("x-nonce", request.headers.get("x-nonce") ?? "");
+  requestHeaders.set("Content-Security-Policy-Report-Only", csp ?? "");
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 

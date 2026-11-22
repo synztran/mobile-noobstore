@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildProductListCacheKey,
   invalidateCacheByPattern,
+  invalidateCacheByPatternStrict,
   invalidateProductCaches,
   logRedisDegradation,
   PRODUCT_DETAIL_CACHE_TTL,
   PRODUCT_LIST_CACHE_TTL,
+  setCacheStrict,
 } from "./cache";
 
 // The cache module calls getRedis() lazily inside each helper. Provide a fake
@@ -13,10 +15,21 @@ import {
 // that ship to the shared Redis — without any real network.
 const del = vi.fn(async () => 0);
 const keys = vi.fn(async (pattern: string) => ["k:" + pattern]);
+const set = vi.fn(async () => "OK");
 
 vi.mock("./client", () => ({
-  getRedis: () => ({ del, keys, get: vi.fn(), set: vi.fn() }),
+  getRedis: () => ({ del, keys, get: vi.fn(), set }),
 }));
+
+describe("setCacheStrict", () => {
+  it("writes with a TTL and propagates Redis failures", async () => {
+    await setCacheStrict("fees", { enabled: true }, 3600);
+    expect(set).toHaveBeenCalledWith("fees", { enabled: true }, { ex: 3600 });
+
+    set.mockRejectedValueOnce(new Error("redis unavailable"));
+    await expect(setCacheStrict("fees", {}, 3600)).rejects.toThrow("redis unavailable");
+  });
+});
 
 // invalidateProductCaches() also revalidateTag("products") to purge Next's
 // Data Cache / ISR entries — that needs a static generation store, which only
@@ -42,6 +55,15 @@ describe("invalidateCacheByPattern", () => {
     keys.mockResolvedValueOnce([]);
     await invalidateCacheByPattern("nope:*");
     expect(del).not.toHaveBeenCalled();
+  });
+});
+
+describe("invalidateCacheByPatternStrict", () => {
+  it("propagates Redis scan failures", async () => {
+    keys.mockRejectedValueOnce(new Error("redis unavailable"));
+    await expect(
+      invalidateCacheByPatternStrict("v2:noteworthy:*"),
+    ).rejects.toThrow("redis unavailable");
   });
 });
 

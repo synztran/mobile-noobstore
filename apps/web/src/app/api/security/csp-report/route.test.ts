@@ -9,10 +9,13 @@ beforeEach(() => { vi.clearAllMocks(); mocks.limit.mockResolvedValue({ success: 
 const request = (body: string) => new NextRequest("https://example.com/api/security/csp-report", { method: "POST", body });
 describe("legacy CSP reports", () => {
   it("uses isolated quota and never escalates inline-script reports", async () => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
     const result = await POST(request(JSON.stringify({ "csp-report": { "effective-directive": "script-src-elem" } })));
     expect(result.status).toBe(204);
     expect(mocks.limit).toHaveBeenCalledWith("csp:test-ip");
     expect(mocks.queue).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith("[csp-report] violation", { directive: "script-src-elem" });
+    log.mockRestore();
   });
   it("retains rate and body-size limits", async () => {
     mocks.limit.mockResolvedValueOnce({ success: false });
