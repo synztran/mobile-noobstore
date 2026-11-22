@@ -6,13 +6,13 @@ import {
 } from "@/lib/redis/cache";
 import { NextResponse } from "next/server";
 
-export const revalidate = 600;
+export const revalidate = 3600;
 
 export async function GET() {
 	try {
 		const data = await readThroughCache<FeesData>(
 			CACHE_KEYS.fees,
-			600,
+			3600,
 			getFeesConfig,
 		);
 
