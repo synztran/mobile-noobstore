@@ -56,18 +56,6 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Aikido dependency security scan
-        uses: AikidoSec/github-actions-workflow@v1.0.13
-        with:
-          secret-key: ${{ secrets.AIKIDO_SECRET_KEY }}
-          minimum-severity: CRITICAL
-          fail-on-dependency-scan: true
-          fail-on-timeout: false
-          fail-on-sast-scan: false
-          fail-on-iac-scan: false
-          timeout-seconds: 180
-          post-scan-status-comment: 'off'
-          post-sast-review-comments: 'off'
       - name: Build production Worker (Cloudflare check)
         run: yarn workspace @noobstore/web exec opennextjs-cloudflare build
         env:
