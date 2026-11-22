@@ -10,7 +10,7 @@ import {
 } from "@/lib/redis/cache";
 import { NextResponse } from "next/server";
 
-export const revalidate = CONFIG_CACHE_TTL;
+export const revalidate = 43_200;
 
 export interface PaymentInformationResponse {
 	methods: PaymentInformation[];
