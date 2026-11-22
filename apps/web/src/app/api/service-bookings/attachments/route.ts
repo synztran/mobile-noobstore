@@ -68,7 +68,8 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		const ext = file.name.split(".").pop() || "jpg";
+		const requestedExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+		const ext = ["jpg", "jpeg", "png", "webp", "heic", "heif", "mp4", "mov"].includes(requestedExt) ? requestedExt : "jpg";
 		const filePath = `${user.id}/service-bookings/${Date.now()}-${Math.random()
 			.toString(36)
 			.slice(2, 8)}.${ext}`;

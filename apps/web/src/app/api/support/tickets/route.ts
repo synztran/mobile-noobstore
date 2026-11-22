@@ -62,7 +62,8 @@ export async function POST(req: NextRequest) {
       const uploadResults = [];
       for (const file of files) {
         if (file.size === 0) continue;
-        const ext = file.name.split(".").pop() || "jpg";
+        const requestedExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const ext = ["jpg", "jpeg", "png", "webp", "heic", "heif", "pdf"].includes(requestedExt) ? requestedExt : "jpg";
         const filePath = `${user.id}/${ticket.id}/${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("ticket-attachments")

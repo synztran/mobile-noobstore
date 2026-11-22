@@ -138,8 +138,9 @@ export async function fetchInvoiceItems(orderId: string): Promise<InvoiceItem[]>
   return lines;
 }
 
-function resolveFont(rel: string): string | null {
+function resolveFont(fileName: "Nunito-Regular.ttf" | "Nunito-SemiBold.ttf" | "logo.png"): string | null {
   const root = process.cwd();
+  const rel = path.join("public", "fonts", fileName);
   const candidates = [path.join(root, rel), path.join(root, "apps/admin", rel)];
   for (const c of candidates) {
     if (fs.existsSync(c)) return c;
@@ -158,9 +159,9 @@ function isValidFont(fp: string): boolean {
   }
 }
 
-const REGULAR_PATH = resolveFont("public/fonts/Nunito-Regular.ttf");
-const BOLD_PATH = resolveFont("public/fonts/Nunito-SemiBold.ttf");
-const LOGO_PATH = resolveFont("public/fonts/logo.png");
+const REGULAR_PATH = resolveFont("Nunito-Regular.ttf");
+const BOLD_PATH = resolveFont("Nunito-SemiBold.ttf");
+const LOGO_PATH = resolveFont("logo.png");
 
 const HAS_FONTS =
   REGULAR_PATH !== null &&
