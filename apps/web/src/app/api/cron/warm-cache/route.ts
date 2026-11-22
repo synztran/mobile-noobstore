@@ -1,52 +1,22 @@
 import { requireCronSecret } from "@/lib/auth/requireCronSecret";
-import { getBlogList } from "@/lib/blog-server";
 import { getFeesConfig } from "@/lib/fees";
 import { getPaymentInformation } from "@/lib/payment-information";
-import {
-	getNoteworthyProducts,
-	getProductSeoData,
-	getProductBySlug,
-	getProductPurchaseCount,
-	getRelatedProducts,
-	getFrequentlyBoughtTogether,
-	getQuickPickData,
-	getProducts,
-} from "@/modules/products/server/ssr";
+import { getNoteworthyProducts } from "@/modules/products/server/ssr";
 import {
 	CACHE_KEYS,
-	buildProductListCacheKey,
-	PRODUCT_LIST_CACHE_TTL,
 	readThroughCache,
 } from "@/lib/redis/cache";
-import { getRewards } from "@/lib/rewards-server";
 import { getSaleProducts } from "@/modules/products/server/sale";
-import {
-	getBookingConfigData,
-	getServiceBySlug,
-	getServicesList,
-} from "@/lib/services-server";
 import { getShippingMethods } from "@/lib/shipping-methods";
 import { getPublicClient } from "@/lib/supabase/public";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-/**
- * How many service-detail warms to run at once. High enough to collapse the
- * sequential round-trips that dominated this job, low enough that a large
- * booking config cannot fan out unbounded.
- */
-const SERVICE_WARM_CONCURRENCY = 6;
-
 // ─── POST /api/cron/warm-cache ────────────────────────────────────────────────
-// Pre-populates the Redis cache for the global read endpoints so the first
-// visitor to a page gets a cache hit instead of a full Supabase round trip.
+// Pre-populates only home product sections/reviews and checkout configuration.
 // Triggered by a Supabase pg_cron job (migration 108) via pg_net, guarded by
 // the shared CRON_SECRET check.
-//
-// Warms the default variants the UI actually requests. Parameterized endpoints
-// (location/wards, non-default quick-pick category/product pages) are
-// read-through cached on demand and are not warmed here.
 
 export async function POST(req: NextRequest) {
 	const authError = requireCronSecret(req);
@@ -69,24 +39,18 @@ export async function POST(req: NextRequest) {
 	}
 
 	await Promise.allSettled([
-		warm(CACHE_KEYS.fees, 600, getFeesConfig),
-		warm(CACHE_KEYS.paymentInformation, 86400, async () => {
+		warm(CACHE_KEYS.fees, 3600, getFeesConfig),
+		warm(CACHE_KEYS.paymentInformation, 3600, async () => {
 			const methods = await getPaymentInformation();
 			return { methods };
 		}),
-		warm(CACHE_KEYS.shippingMethods, 300, getShippingMethods),
-		warm(CACHE_KEYS.bookingConfig, 120, getBookingConfigData),
-		warm(CACHE_KEYS.servicesList, 120, getServicesList),
-		warm(CACHE_KEYS.blogList("", 1, 12), 300, () =>
-			getBlogList("", 1, 12),
-		),
-		warm(CACHE_KEYS.rewards(0, 12), 120, () => getRewards(0, 12)),
-		warm(CACHE_KEYS.noteworthy("", 5), 120, () =>
+		warm(CACHE_KEYS.shippingMethods, 3600, getShippingMethods),
+		warm(CACHE_KEYS.noteworthy("", 5), 1800, () =>
 			getNoteworthyProducts({ categorySlug: "", limit: 5 }),
 		),
 		warm(
 			CACHE_KEYS.saleProducts("", 5, "discount_desc"),
-			120,
+			1800,
 			() =>
 				getSaleProducts({
 					categorySlug: "",
@@ -95,7 +59,7 @@ export async function POST(req: NextRequest) {
 					excludeSoldOut: true,
 				}),
 		),
-		warm(CACHE_KEYS.testimonials, 60, async () => {
+		warm(CACHE_KEYS.testimonials, 1800, async () => {
 			const { data, error } = await getPublicClient()
 				.from("testimonials")
 				.select("id, name, rating, text, product, date")
@@ -105,102 +69,7 @@ export async function POST(req: NextRequest) {
 			if (error) throw new Error(error.message);
 			return data ?? [];
 		}),
-		warm(CACHE_KEYS.creators, 60, async () => {
-			const { data, error } = await getPublicClient()
-				.from("creators")
-				.select(
-					"id, name, role, image_url, social_handle, color_theme, bio",
-				)
-				.order("created_at", { ascending: false })
-				.limit(4);
-			if (error) throw new Error(error.message);
-			return data ?? [];
-		}),
-		// Warm the shop page's first product list page — the shared slim key is
-		// also used by /api/products and the shop SSR grid, so the first
-		// visitor's infinite scroll and the SSR grid both hit cache instead of
-		// the full query cascade (full-variant entries are only needed by the
-		// quick-pick configurator and warm themselves on demand).
-		// Must mirror the /shop and /api/products readers EXACTLY: both pass
-		// soldOutLast: true, and the flag is part of the cache key. Warming
-		// without it produced a "…:nosol" key that nothing ever read, so this
-		// — the most expensive warm in the job — was thrown away on every run
-		// while the real key expired into a cold cascade.
-		// The TTL must equal PRODUCT_LIST_CACHE_TTL for the same reason: a
-		// longer warm TTL than the readers use just delays the next miss.
-		warm(
-			buildProductListCacheKey({
-				limit: 12,
-				sort: "newest",
-				slim: true,
-				soldOutLast: true,
-			}),
-			PRODUCT_LIST_CACHE_TTL,
-			() =>
-				getProducts({
-					limit: 12,
-					sort: "newest",
-					slim: true,
-					soldOutLast: true,
-				}),
-		),
-		// Warm the quick-pick category default the storefront drawer opens to
-		// (keyboards on the home rail). Previously quick-pick was never warmed
-		// and every open paid the full configurator/rules cascade.
-		warm(
-			CACHE_KEYS.quickPick("keyboards", "", "", "", "newest"),
-			600,
-			() => getQuickPickData({ categorySlug: "keyboards" }),
-		),
 	]);
-
-	// Warm each service detail page from the booking-config slugs.
-	try {
-		const config = await getBookingConfigData();
-		const slugs = new Set<string>();
-		for (const section of config.sections) {
-			for (const svc of section.services) {
-				if (svc.slug) slugs.add(svc.slug);
-			}
-		}
-		// Parallel in bounded batches rather than one serial await per slug:
-		// the serial version stacked N sequential round-trips into every cron
-		// run (144/day). Bounded so a large booking config cannot open an
-		// unbounded number of connections at once.
-		const slugList = Array.from(slugs);
-		for (let i = 0; i < slugList.length; i += SERVICE_WARM_CONCURRENCY) {
-			const batch = slugList.slice(i, i + SERVICE_WARM_CONCURRENCY);
-			await Promise.allSettled(
-				batch.map((slug) =>
-					warm(CACHE_KEYS.serviceDetail(slug), 120, () =>
-						getServiceBySlug(slug),
-					),
-				),
-			);
-		}
-	} catch {
-		failed.push("service-detail-warm");
-	}
-
-	// Warm the newest product detail pages so /shop/[slug] first visits hit
-	// cache instead of the full query cascade. The getters self-cache in Redis.
-	try {
-		const seo = await getProductSeoData(24);
-		const warmSlugs = seo.slice(0, 12);
-		await Promise.allSettled(
-			warmSlugs.map(async (p) => {
-				const product = await getProductBySlug(p.slug);
-				if (!product) return;
-				await Promise.allSettled([
-					getProductPurchaseCount(product.id),
-					getRelatedProducts(product.brand, product.slug, 8),
-					getFrequentlyBoughtTogether(product.id),
-				]);
-			}),
-		);
-	} catch {
-		failed.push("product-pages-warm");
-	}
 
 	return NextResponse.json({
 		warmed: warmed.length,

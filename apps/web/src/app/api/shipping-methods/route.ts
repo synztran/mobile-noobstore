@@ -6,7 +6,7 @@ import {
 } from "@/lib/redis/cache";
 import { NextResponse } from "next/server";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export type { ShippingMethod };
 
@@ -14,7 +14,7 @@ export async function GET() {
 	try {
 		const data = await readThroughCache<ShippingMethod[]>(
 			CACHE_KEYS.shippingMethods,
-			300,
+			3600,
 			getShippingMethods,
 		);
 

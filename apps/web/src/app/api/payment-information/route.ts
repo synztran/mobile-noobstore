@@ -9,7 +9,7 @@ import {
 } from "@/lib/redis/cache";
 import { NextResponse } from "next/server";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export interface PaymentInformationResponse {
 	methods: PaymentInformation[];
@@ -19,9 +19,7 @@ export async function GET() {
 	try {
 		const result = await readThroughCache<PaymentInformationResponse>(
 			CACHE_KEYS.paymentInformation,
-			// 24h safety net — payment info changes rarely; staleness after an
-			// edit is capped at 24h, or instant via admin cache purge.
-			86400,
+			3600,
 			async () => {
 				const methods = await getPaymentInformation();
 				return { methods };

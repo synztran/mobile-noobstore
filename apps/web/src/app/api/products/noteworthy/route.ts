@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 	try {
 		const result = await readThroughCache(
 			CACHE_KEYS.noteworthy(categorySlug, safeLimit),
-			600,
+			1800,
 			() => getNoteworthyProducts({ categorySlug, limit: safeLimit }),
 		);
 

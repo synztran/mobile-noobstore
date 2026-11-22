@@ -6,7 +6,7 @@ import { unstable_cache } from "next/cache";
 // Redis caches the complete active set. The tagged Data Cache lets the admin
 // app invalidate the web runtime after a testimonial mutation; route
 // revalidation is a fallback when the bridge is unavailable.
-export const revalidate = 60;
+export const revalidate = 1800;
 
 export interface Testimonial {
   id: string;
@@ -37,7 +37,7 @@ async function queryActiveTestimonials(): Promise<Testimonial[]> {
 const getCachedTestimonials = unstable_cache(
   queryActiveTestimonials,
   ["home-testimonials-active"],
-  { revalidate: 60, tags: ["testimonials"] }
+  { revalidate: 1800, tags: ["testimonials"] }
 );
 
 export async function GET() {
