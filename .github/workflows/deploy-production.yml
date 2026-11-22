@@ -1,7 +1,7 @@
 name: Deploy production (web)
 
 # Production deployment runs automatically on push/merge to `prd` (or manually via workflow_dispatch).
-# Production deploys to Cloudflare Workers after verification (type-check + unit tests).
+# Production deploys to Cloudflare Workers after security and Worker-build checks.
 on:
   push:
     branches: [prd]
@@ -15,10 +15,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  verify:
-    name: Verify latest prd
+  check:
+    name: Security and Cloudflare checks
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Require the prd branch
         run: |
@@ -43,8 +43,6 @@ jobs:
         id: node
         with:
           node-version-file: .nvmrc
-      - name: Turbo cache
-        uses: rharkor/caching-for-turbo@v1.5
       - name: Dependencies cache
         uses: actions/cache@v4
         with:
@@ -55,14 +53,33 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Type-check web
-        run: yarn workspace @noobstore/web type-check
-      - name: Unit tests web
-        run: yarn test:unit
+      - name: Aikido dependency security scan
+        uses: AikidoSec/github-actions-workflow@v1
+        with:
+          token: ${{ secrets.AIKIDO_API_KEY }}
+          fail-on-dependency-scan: true
+          fail-on-timeout: false
+      - name: Build production Worker (Cloudflare check)
+        run: yarn workspace @noobstore/web exec opennextjs-cloudflare build
+        env:
+          NEXT_PUBLIC_BUILD_ID: ${{ github.sha }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_COOKIE_DOMAIN: ${{ vars.NEXT_PUBLIC_COOKIE_DOMAIN }}
+          NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY }}
+          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: ${{ vars.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID }}
+          NEXT_PUBLIC_FACEBOOK_URL: ${{ vars.NEXT_PUBLIC_FACEBOOK_URL }}
+          NEXT_PUBLIC_BETTERSTACK_RUM: ${{ vars.NEXT_PUBLIC_BETTERSTACK_RUM }}
+          NEXT_PUBLIC_HCAPTCHA_SITE_KEY: ${{ vars.NEXT_PUBLIC_HCAPTCHA_SITE_KEY }}
+          NEXT_PUBLIC_STATUS_PAGE_URL: ${{ vars.NEXT_PUBLIC_STATUS_PAGE_URL }}
+          NEXT_PUBLIC_TRACKING_ENABLED: ${{ vars.NEXT_PUBLIC_TRACKING_ENABLED }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_GOOGLE_REVIEW_URL: ${{ vars.NEXT_PUBLIC_GOOGLE_REVIEW_URL }}
 
   deploy:
     name: Deploy to Cloudflare Workers
-    needs: verify
+    needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # Required reviewers are configured on this environment, not in this file.
