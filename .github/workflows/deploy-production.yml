@@ -5,6 +5,8 @@ name: Deploy production (web)
 on:
   push:
     branches: [prd]
+  pull_request:
+    branches: [prd]
   workflow_dispatch:
 
 permissions:
@@ -21,6 +23,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Require the prd branch
+        if: github.event_name == 'workflow_dispatch'
         run: |
           if [ "$GITHUB_REF" != "refs/heads/prd" ]; then
             echo "::error::Dispatch this workflow from the prd branch (got $GITHUB_REF)."
@@ -28,9 +31,9 @@ jobs:
           fi
       - uses: actions/checkout@v4
         with:
-          ref: prd
           fetch-depth: 0
       - name: Require the current prd HEAD
+        if: github.event_name == 'push'
         run: |
           git fetch --depth=1 origin prd
           echo "checked out: $(git rev-parse HEAD)"
@@ -85,6 +88,7 @@ jobs:
 
   deploy:
     name: Deploy to Cloudflare Workers
+    if: github.event_name == 'push'
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 30
