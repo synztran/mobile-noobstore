@@ -80,7 +80,8 @@ export async function POST(
         );
       }
 
-      const ext = file.name.split(".").pop() || "jpg";
+      const requestedExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const ext = ["jpg", "jpeg", "png", "webp"].includes(requestedExt) ? requestedExt : "jpg";
       const filePath = `reviews/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
       const { error: uploadErr } = await admin.storage

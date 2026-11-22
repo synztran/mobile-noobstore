@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 
-const RUM_TOKEN = "6apxZqfkWTEP9SvzBcig6TEB";
+const RUM_TOKEN = process.env.NEXT_PUBLIC_BETTERSTACK_RUM_TOKEN;
 
 /**
  * Better Stack Real User Monitoring (RUM).
@@ -17,7 +17,7 @@ const RUM_TOKEN = "6apxZqfkWTEP9SvzBcig6TEB";
 export function BetterStackRUM() {
   const enabled = process.env.NEXT_PUBLIC_BETTERSTACK_RUM === "true";
 
-  if (!enabled) return null;
+  if (!enabled || !RUM_TOKEN) return null;
 
   return (
     <Script id="betterstack-rum" strategy="lazyOnload">

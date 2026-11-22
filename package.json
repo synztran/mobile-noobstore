@@ -8,6 +8,9 @@
 	"workspaces": [
 		"apps/*"
 	],
+	"resolutions": {
+		"vite": "8.2.6"
+	},
 	"scripts": {
 		"build": "turbo build",
 		"dev:web": "turbo dev --filter=\"./apps/web\"",

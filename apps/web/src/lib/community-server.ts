@@ -444,15 +444,25 @@ export interface PendingUpload {
   url: string;
 }
 
+function isSafeStoragePath(path: string): boolean {
+  const parts = path.split("/");
+  return path.length > 0 && !path.includes("\\") &&
+    parts.every((part) => part.length > 0 && part !== "." && part !== "..") &&
+    parts.every((part) => !/%(?:2e|2f|5c)/i.test(part));
+}
+
 export async function createSignedUploadUrls(
   bucket: string,
   folder: string,
   files: { name: string }[]
 ): Promise<PendingUpload[]> {
+  if (!isSafeStoragePath(folder)) return [];
   const supabase = getAdminClient();
   const results: PendingUpload[] = [];
   for (const file of files) {
-    const path = `${folder}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, "_")}`;
+    const name = file.name.replace(/[^\w.\-]+/g, "_");
+    if (!name || name === "." || name === "..") continue;
+    const path = `${folder}/${Date.now()}-${name}`;
     const { data, error } = await supabase.storage
       .from(bucket)
       .createSignedUploadUrl(path, { upsert: false });
@@ -463,6 +473,7 @@ export async function createSignedUploadUrls(
 }
 
 export function getPublicUrl(bucket: string, path: string): string {
+  if (!isSafeStoragePath(path)) return "";
   const supabase = getAdminClient();
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
@@ -472,6 +483,7 @@ export async function getStorageObjectSize(
   bucket: string,
   path: string
 ): Promise<number | null> {
+  if (!isSafeStoragePath(path)) return null;
   const supabase = getAdminClient();
   const parts = path.split("/");
   const fileName = parts.pop() ?? "";
