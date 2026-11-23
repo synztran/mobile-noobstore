@@ -123,5 +123,7 @@ export async function DELETE(_req: NextRequest, context: RouteContext) {
 		return NextResponse.json({ error: error.message }, { status: 400 });
 	}
 
+	await invalidateProductCaches();
+
 	return NextResponse.json({ success: true }, { status: 200 });
 }

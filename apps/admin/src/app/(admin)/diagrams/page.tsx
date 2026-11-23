@@ -27,9 +27,19 @@ export default function DiagramsPage() {
               <p className="text-sm text-base-content/70">
                 {diagram.description}
               </p>
-              <div className="card-actions mt-2 justify-between text-xs text-base-content/60">
-                <span>Source revision {diagram.sourceRevision}</span>
-                <span>Open diagram →</span>
+              <div className="card-actions mt-2 flex-col items-stretch gap-2 text-xs text-base-content/60">
+                <div className="flex items-center justify-between gap-3">
+                  <span>Source revision {diagram.sourceRevision}</span>
+                  <span className="text-primary">Open diagram →</span>
+                </div>
+                <time dateTime={diagram.lastReviewed}>
+                  Last updated {new Date(`${diagram.lastReviewed}T00:00:00Z`).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  })}
+                </time>
               </div>
             </div>
           </Link>

@@ -4,11 +4,12 @@ import { getPaymentInformation } from "@/lib/payment-information";
 import { getNoteworthyProducts } from "@/modules/products/server/ssr";
 import {
 	CACHE_KEYS,
+	CONFIG_CACHE_TTL,
 	readThroughCache,
 } from "@/lib/redis/cache";
 import { getSaleProducts } from "@/modules/products/server/sale";
 import { getShippingMethods } from "@/lib/shipping-methods";
-import { getPublicClient } from "@/lib/supabase/public";
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,6 @@ export async function POST(req: NextRequest) {
 
 	const warmed: string[] = [];
 	const failed: string[] = [];
-
 	async function warm(
 		key: string,
 		ttl: number,
@@ -39,12 +39,12 @@ export async function POST(req: NextRequest) {
 	}
 
 	await Promise.allSettled([
-		warm(CACHE_KEYS.fees, 3600, getFeesConfig),
-		warm(CACHE_KEYS.paymentInformation, 3600, async () => {
+		warm(CACHE_KEYS.fees, CONFIG_CACHE_TTL, getFeesConfig),
+		warm(CACHE_KEYS.paymentInformation, CONFIG_CACHE_TTL, async () => {
 			const methods = await getPaymentInformation();
 			return { methods };
 		}),
-		warm(CACHE_KEYS.shippingMethods, 3600, getShippingMethods),
+		warm(CACHE_KEYS.shippingMethods, CONFIG_CACHE_TTL, getShippingMethods),
 		warm(CACHE_KEYS.noteworthy("", 5), 1800, () =>
 			getNoteworthyProducts({ categorySlug: "", limit: 5 }),
 		),
@@ -59,13 +59,13 @@ export async function POST(req: NextRequest) {
 					excludeSoldOut: true,
 				}),
 		),
-		warm(CACHE_KEYS.testimonials, 1800, async () => {
-			const { data, error } = await getPublicClient()
+        warm(CACHE_KEYS.testimonials, 1800, async () => {
+            const supabase = await createClient();
+            const { data, error } = await supabase
 				.from("testimonials")
-				.select("id, name, rating, text, product, date")
+				.select("id, name, rating, text, product, date, image_url")
 				.eq("is_active", true)
-				.order("order", { ascending: true })
-				.limit(20);
+				.order("order", { ascending: true });
 			if (error) throw new Error(error.message);
 			return data ?? [];
 		}),

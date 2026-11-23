@@ -4,6 +4,7 @@ export interface AdminDiagram {
   description: string;
   file: string;
   sourceRevision: string;
+  lastReviewed: string;
 }
 
 export const ADMIN_DIAGRAMS: AdminDiagram[] = [
@@ -14,6 +15,7 @@ export const ADMIN_DIAGRAMS: AdminDiagram[] = [
       "Cart client state, React Query, API routes, stock validation, and persistence.",
     file: "cart-module.html",
     sourceRevision: "9c6c174",
+    lastReviewed: "2026-11-22",
   },
   {
     slug: "checkout-submission",
@@ -22,6 +24,16 @@ export const ADMIN_DIAGRAMS: AdminDiagram[] = [
       "Server-side validation, transactional order/stock creation, and post-order follow-ups.",
     file: "checkout-submission.html",
     sourceRevision: "9c6c174",
+    lastReviewed: "2026-11-22",
+  },
+  {
+    slug: "notification-system",
+    title: "Notification — end-to-end architecture",
+    description:
+      "Admin targeting, web push subscriptions and inbox, plus server-triggered delivery.",
+    file: "notification-system.html",
+    sourceRevision: "c2a4a6f",
+    lastReviewed: "2026-11-22",
   },
 ];
 

@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildProductListCacheKey,
   invalidateCacheByPattern,
+  invalidateCacheByPatternStrict,
   invalidateProductCaches,
   logRedisDegradation,
   PRODUCT_DETAIL_CACHE_TTL,
   PRODUCT_LIST_CACHE_TTL,
+  CONFIG_CACHE_TTL,
 } from "./cache";
 
 // The cache module calls getRedis() lazily inside each helper. Provide a fake
@@ -17,6 +19,10 @@ const keys = vi.fn(async (pattern: string) => ["k:" + pattern]);
 vi.mock("./client", () => ({
   getRedis: () => ({ del, keys, get: vi.fn(), set: vi.fn() }),
 }));
+
+it("keeps low-change configuration cached for 12 hours", () => {
+  expect(CONFIG_CACHE_TTL).toBe(43_200);
+});
 
 // invalidateProductCaches() also revalidateTag("products") to purge Next's
 // Data Cache / ISR entries — that needs a static generation store, which only
@@ -42,6 +48,15 @@ describe("invalidateCacheByPattern", () => {
     keys.mockResolvedValueOnce([]);
     await invalidateCacheByPattern("nope:*");
     expect(del).not.toHaveBeenCalled();
+  });
+});
+
+describe("invalidateCacheByPatternStrict", () => {
+  it("propagates Redis scan failures", async () => {
+    keys.mockRejectedValueOnce(new Error("redis unavailable"));
+    await expect(
+      invalidateCacheByPatternStrict("v2:noteworthy:*"),
+    ).rejects.toThrow("redis unavailable");
   });
 });
 

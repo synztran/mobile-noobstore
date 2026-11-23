@@ -19,9 +19,15 @@ export async function POST(req: NextRequest) {
       if (size > 16384) { await reader.cancel(); return new NextResponse(null, { status: 413 }); }
       chunks.push(value);
     }
-    JSON.parse(Buffer.concat(chunks).toString("utf8"));
-    // Legacy/cached-page reports are untrusted telemetry. Do not escalate normal
-    // inline-script noise to Telegram or store browser-supplied data.
+    const report = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    const body = report["csp-report"] ?? report;
+    const directive = body["effective-directive"] ?? body.effectiveDirective;
+    if (typeof directive === "string") {
+      const safeDirective = /^[A-Za-z0-9-]{1,64}$/.test(directive)
+        ? directive
+        : "unknown";
+      console.info("[csp-report] violation", { directive: safeDirective });
+    }
     return new NextResponse(null, { status: 204 });
   } catch { return new NextResponse(null, { status: 400 }); }
 }

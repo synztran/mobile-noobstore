@@ -4,12 +4,13 @@ import {
 } from "@/lib/payment-information";
 import {
 	CACHE_KEYS,
+	CONFIG_CACHE_TTL,
 	publicCacheHeaders,
 	readThroughCache,
 } from "@/lib/redis/cache";
 import { NextResponse } from "next/server";
 
-export const revalidate = 3600;
+export const revalidate = 43_200;
 
 export interface PaymentInformationResponse {
 	methods: PaymentInformation[];
@@ -19,7 +20,7 @@ export async function GET() {
 	try {
 		const result = await readThroughCache<PaymentInformationResponse>(
 			CACHE_KEYS.paymentInformation,
-			3600,
+			CONFIG_CACHE_TTL,
 			async () => {
 				const methods = await getPaymentInformation();
 				return { methods };

@@ -1,4 +1,4 @@
-import { invalidateCache } from "@/lib/redis/cache";
+import { invalidateFeesCache } from "@/lib/redis/cache";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -94,7 +94,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    await invalidateCache("config:fees");
+    await invalidateFeesCache();
 
     return NextResponse.json({ success: true });
   } catch (err) {

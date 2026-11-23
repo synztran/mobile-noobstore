@@ -28,6 +28,7 @@ export const PRODUCT_LIST_CACHE_TTL = 300;
 
 /** TTL for product detail entries (`v2:product:slug:*`). See above. */
 export const PRODUCT_DETAIL_CACHE_TTL = 300;
+export const CONFIG_CACHE_TTL = 43_200;
 
 /**
  * Canonical Redis cache keys, shared by API routes (read path) and the
@@ -209,6 +210,11 @@ export async function invalidateCacheByPattern(pattern: string): Promise<void> {
       err,
     );
   }
+}
+
+export async function invalidateCacheByPatternStrict(pattern: string): Promise<void> {
+  const keys = await redis().keys(pattern);
+  if (keys.length > 0) await redis().del(...keys);
 }
 
 /**

@@ -4,7 +4,9 @@ import { getRedis } from "./client";
 // both apps sweep the exact same keys — keeping it in the web lib avoids the
 // historical v1/v2 drift where admin patterns never matched.
 export { invalidateCacheByPattern } from "@web-cache";
-import { invalidateProductCaches as invalidateProductCachesWeb } from "@web-cache";
+import {
+	invalidateProductCaches as invalidateProductCachesWeb,
+} from "@web-cache";
 
 // Admin and web are separate Next runtimes sharing one Upstash Redis: the
 // Redis sweep below clears the REST-level cache, but revalidateTag() called
@@ -48,7 +50,11 @@ async function notifyWebRevalidate(): Promise<void> {
  * tells the web app to revalidate its tagged Data Cache / ISR entries.
  */
 export async function invalidateProductCaches(): Promise<void> {
-	await invalidateProductCachesWeb();
+	try {
+		await invalidateProductCachesWeb();
+	} catch (error) {
+		console.error("[admin/cache] product cache invalidation failed:", error);
+	}
 	await notifyWebRevalidate();
 }
 
@@ -87,6 +93,10 @@ export async function invalidateCache(...keys: string[]): Promise<void> {
 	} catch {
 		// non-fatal
 	}
+}
+
+export async function invalidateFeesCache(): Promise<void> {
+	await invalidateCache("config:fees");
 }
 
 /**
