@@ -4,16 +4,18 @@ import { useMemo, useRef, useState } from "react";
 import { Gift, Clock3, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useClaimCheckin, useCheckinCalendar, useCheckinRewards } from "../client/queries";
 import type { CheckinReward } from "../types";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 
 const weekdays = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const monthFmt = new Intl.DateTimeFormat("vi-VN", { month: "long", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
 
 export function CheckinCalendar() {
+  const { user, loading: authLoading } = useAuth();
   const [month, setMonth] = useState(() => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit" }).format(new Date()));
-  const query = useCheckinCalendar(month);
+  const query = useCheckinCalendar(month, { enabled: !authLoading && Boolean(user) });
   const claim = useClaimCheckin();
   const [toast, setToast] = useState("");
-  const rewardsQuery = useCheckinRewards();
+  const rewardsQuery = useCheckinRewards({ enabled: !authLoading && Boolean(user) });
   const rewards = rewardsQuery.data ?? [];
   const eventDialog = useRef<HTMLDialogElement>(null);
   const [activeEventName, setActiveEventName] = useState("");
@@ -51,7 +53,8 @@ export function CheckinCalendar() {
     } else void checkIn();
   }
 
-  if (query.isLoading) return <div className="mx-auto max-w-6xl space-y-5 p-4"><div className="skeleton h-20 w-2/3"/><div className="skeleton h-28 w-full"/><div className="skeleton h-[420px] w-full"/></div>;
+  if (authLoading || (user && query.isLoading)) return <div className="mx-auto max-w-6xl space-y-5 p-4"><div className="skeleton h-20 w-2/3"/><div className="skeleton h-28 w-full"/><div className="skeleton h-[420px] w-full"/></div>;
+  if (!user) return <div className="alert mx-auto max-w-3xl">Vui lòng đăng nhập để xem lịch điểm danh.</div>;
   if (query.isError) return <div className="alert alert-error mx-auto max-w-3xl">Không tải được lịch điểm danh. Vui lòng thử lại.</div>;
   if (!data?.enabled) return <div className="mx-auto max-w-3xl rounded-2xl bg-base-100 p-8 text-center"><h1 className="text-2xl font-extrabold">Điểm danh đang tạm đóng</h1><p className="mt-2 text-base-content/70">Tính năng sẽ sớm mở lại.</p></div>;
 

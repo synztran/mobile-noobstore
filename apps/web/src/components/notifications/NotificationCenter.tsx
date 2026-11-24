@@ -12,10 +12,12 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import NotificationList from "./NotificationList";
+import { useAuth } from "@/modules/user/client/AuthProvider";
 
 export function NotificationCenter() {
   const router = useRouter();
-  const { data: items, isLoading } = useNotifications();
+  const { user, loading: authLoading } = useAuth();
+  const { data: items, isLoading } = useNotifications(!authLoading && Boolean(user));
   const markOneRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const sendTestPush = useSendTestPush();

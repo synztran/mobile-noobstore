@@ -1,0 +1,93 @@
+<style>
+  .demo{max-width:1120px;margin:auto;padding:22px;background:#f7f8fa;border:1px solid #e1e5eb;border-radius:18px}
+  .demo-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:900;color:#27324a}
+  .demo-main{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px}
+  .screen{overflow:hidden;background:#fff;border:1px solid #dfe3e9;border-radius:16px;box-shadow:0 8px 22px #18243a12}
+  .nav{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:#f6f7f9;border-bottom:1px solid #e7e9ed;font-size:11px;font-weight:900;letter-spacing:.08em;color:#343b4b}
+  .body{padding:22px}
+  .back{font-size:12px;font-weight:800;color:#53688e}
+  .eyebrow{margin-top:15px;font-size:10px;font-weight:900;letter-spacing:.16em;color:#69758a}
+  h3{margin:5px 0 0;font-size:24px;line-height:1.2;letter-spacing:-.03em;color:#171b24}
+  .desc{margin:9px 0 0;font-size:12px;line-height:1.55;color:#667085}
+  .item{margin-top:15px;padding:14px;border:1px solid #e2e6ec;border-radius:13px}
+  .itemhead{display:flex;justify-content:space-between;gap:12px;align-items:start}
+  .itemhead strong{font-size:13px;color:#202532}
+  .price{white-space:nowrap;font-size:13px;font-weight:900;color:#3155a0}
+  .hint{margin:4px 0 0;font-size:11px;line-height:1.45;color:#727b8a}
+  .label{margin:13px 0 7px;font-size:10px;font-weight:900;letter-spacing:.06em;color:#687386}
+  .pills{display:flex;flex-wrap:wrap;gap:6px}
+  .pill{padding:7px 9px;border:1px solid #dce1e8;border-radius:999px;background:#f7f8fa;font-size:10px;font-weight:800;color:#424c5d}
+  .pill.on{background:#2c477f;border-color:#2c477f;color:#fff}
+  .quantity{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:800;color:#424c5d}
+  .qbtn{width:27px;height:27px;border:1px solid #dce1e8;border-radius:50%;display:grid;place-items:center}
+  .calc{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:12px;border-top:1px solid #eceef2;font-size:12px;font-weight:800;color:#536071}
+  .calc b{font-size:17px;color:#273f78}
+  .cta{display:block;margin-top:14px;padding:12px;text-align:center;border-radius:11px;background:#263f78;color:#fff;font-size:12px;font-weight:900}
+  .note{margin-top:12px;padding:11px;border-radius:10px;background:#f4f6f9;font-size:10px;line-height:1.5;color:#687386}
+  .demo-caption{margin:20px 0 0;font-size:12px;line-height:1.6;color:#687386}
+  @media(max-width:760px){.demo-main{grid-template-columns:1fr}.body{padding:16px}.demo{padding:12px}}
+</style>
+
+<h2>Mockup v3: trang nhóm và chi tiết có cấu hình + giá động</h2>
+<p class="subtitle">Theo pattern hiện tại ở /services: chọn option dạng pill, quantity stepper, từng dòng có tạm tính. Trang chi tiết hiển thị cấu hình tương ứng từng dịch vụ.</p>
+
+<div class="demo">
+  <div class="demo-top"><span>NOOBSTORE · DỊCH VỤ</span><span>Mockup luồng: Assembly → chọn dịch vụ → cấu hình</span></div>
+  <div class="demo-main">
+    <article class="screen">
+      <div class="nav"><span>NOOBSTORE</span><span>GIỎ DỊCH VỤ</span></div>
+      <div class="body">
+        <div class="back">‹ Tất cả nhóm dịch vụ</div>
+        <div class="eyebrow">NHÓM DỊCH VỤ</div>
+        <h3>Assembly</h3>
+        <p class="desc">Chọn hạng mục cần làm. Mỗi dịch vụ có cấu hình và tạm tính riêng; giá cập nhật theo lựa chọn.</p>
+
+        <div class="item">
+          <div class="itemhead"><strong>Lube switch</strong><span class="price">Từ 3.000₫ / switch</span></div>
+          <p class="hint">Giá cuối thay đổi theo loại switch, tình trạng và số lượng.</p>
+          <div class="label">LOẠI SWITCH</div><div class="pills"><span class="pill on">Linear · 3.000₫/switch</span><span class="pill">Tactile · 3.500₫/switch</span></div>
+          <div class="label">TÌNH TRẠNG SWITCH</div><div class="pills"><span class="pill on">Mới, chưa lube</span><span class="pill">Factory pre-lube · −500₫</span><span class="pill">Đã qua dùng · +500₫</span></div>
+          <div class="label">SỐ LƯỢNG</div><div class="quantity"><span class="qbtn">−</span><b>70</b><span class="qbtn">+</span></div>
+          <div class="calc"><span>Tạm tính</span><b>210.000₫</b></div>
+        </div>
+
+        <div class="item">
+          <div class="itemhead"><strong>Thay / tinh chỉnh stabilizer</strong><span class="price">Theo cấu hình</span></div>
+          <p class="hint">Chọn loại, kích thước hoặc bundle; giá tính theo lựa chọn hiện tại.</p>
+          <div class="label">KIỂU LẮP</div><div class="pills"><span class="pill on">Clip-in</span><span class="pill">Screw-in</span></div>
+          <div class="label">BUNDLE</div><div class="pills"><span class="pill">6.25u</span><span class="pill">7u</span><span class="pill on">Tùy chỉnh size</span></div>
+          <div class="calc"><span>Tạm tính</span><b>—</b></div>
+        </div>
+        <div class="cta">Tiếp tục cấu hình　→</div>
+        <div class="note">Các mục hàn / rã hàn, layout, film và lò xo sẽ hiển thị đúng theo dịch vụ và option đang bật trong booking config.</div>
+      </div>
+    </article>
+
+    <article class="screen">
+      <div class="nav"><span>NOOBSTORE</span><span>GIỎ DỊCH VỤ</span></div>
+      <div class="body">
+        <div class="back">‹ Assembly</div>
+        <div class="eyebrow">CẤU HÌNH DỊCH VỤ</div>
+        <h3>Hàn / rã hàn switch</h3>
+        <p class="desc">Chọn layout bàn phím và số lượng switch để tính tạm tính. Tùy chọn bổ sung và phụ phí hiển thị từ cấu hình dịch vụ hiện hành.</p>
+
+        <div class="item">
+          <div class="itemhead"><strong>Layout bàn phím</strong><span class="price">Bắt buộc</span></div>
+          <div class="pills" style="margin-top:10px"><span class="pill">60%</span><span class="pill on">65%</span><span class="pill">75%</span><span class="pill">TKL</span><span class="pill">100%</span></div>
+          <div class="label">THAO TÁC</div><div class="pills"><span class="pill on">Rã hàn</span><span class="pill">Hàn</span><span class="pill">Hàn + rã hàn</span></div>
+          <div class="label">SỐ LƯỢNG</div><div class="quantity"><span class="qbtn">−</span><b>68</b><span class="qbtn">+</span></div>
+          <div class="label">TÙY CHỌN THÊM (NẾU CÓ)</div><div class="pills"><span class="pill">Thay lò xo · giá theo option</span><span class="pill">Thêm film · giá theo option</span></div>
+          <div class="calc"><span>Tạm tính</span><b>— ₫</b></div>
+        </div>
+
+        <div class="item">
+          <div class="itemhead"><strong>Giá được tính minh bạch</strong></div>
+          <p class="hint">Tạm tính cập nhật ngay khi đổi layout, thao tác hàn/rã hàn, số lượng hoặc option thêm. Phí kiểm tra / xác nhận cuối (nếu có) được ghi rõ trước khi khách xác nhận.</p>
+        </div>
+        <div class="cta">Thêm vào booking　→</div>
+        <div class="note">Chỉ đưa các option có trong dịch vụ đang chọn vào UI. Không tạo lựa chọn hoặc mức giá tĩnh riêng trong frontend.</div>
+      </div>
+    </article>
+  </div>
+  <p class="demo-caption"><b>Nguyên tắc mockup:</b> dữ liệu tên option, giá điều chỉnh, required/optional, layout, đơn vị và quantity lấy từ booking config hiện có; tổng mỗi dòng dùng cùng công thức giá hiện tại (base + option adjustments) × quantity, hoặc resolver chuyên biệt hiện có cho switch lube / cleaning / keycap / stabilizer. Dấu “—” đánh dấu giá cần bind từ dữ liệu thật, không phải giá chốt.</p>
+</div>

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "09052815-59cb-4548-aafa-0f79e97501f3",
+  "status": "current",
+  "command": "deliver",
+  "type": "explainer",
+  "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/candidate.archify.md",
+  "output": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.html",
+  "specification": {
+    "sha256": "c956690b71ca4e6b49e784aa3950a7890e96ee1c7879e97ed84e0a2feafab07d",
+    "bytes": 8941
+  },
+  "artifact": {
+    "sha256": "705d0c30b07e36442149534857bf2ba7d971e41225f5d7223694c637012bd984",
+    "bytes": 998733
+  },
+  "explainer": {
+    "preparedSha256": "e710ee5a55e9c3806686f9c825d29c1979fecff25d5fa11a19c61fe899aab759",
+    "dependencies": [
+      {
+        "kind": "repository",
+        "id": "submit",
+        "path": "apps/web/src/modules/checkout/server/submit-order.ts",
+        "revision": "9c6c17488c50e818b13773b4c0489f4fd5facbe6",
+        "sha256": "3bcf07569c1c0d68577d2a7e65cabf972d806ccc1cdeff2bc004fd423ab89988",
+        "bytes": 31425
+      },
+      {
+        "kind": "repository",
+        "id": "checkout-types",
+        "path": "apps/web/src/modules/checkout/types.ts",
+        "revision": "9c6c17488c50e818b13773b4c0489f4fd5facbe6",
+        "sha256": "55d271dd63e6a367b54ced738918d41583866eb24b9121879e3cf5e20fc6c6f6",
+        "bytes": 2336
+      },
+      {
+        "kind": "diagram-spec",
+        "id": "checkout-atomic",
+        "inline": true,
+        "sha256": "1bfcb8189d2c92d80be72fe8d09f43cb46f6610cb5b8f235ee16a862486aa0ff",
+        "bytes": 1004
+      },
+      {
+        "kind": "diagram-spec",
+        "id": "idempotency",
+        "inline": true,
+        "sha256": "c1964e7556aaf8a19c66d2f6e61747adb4a15a258f34ccb36e68b299c26d8685",
+        "bytes": 1224
+      }
+    ]
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "NoobStore Checkout — Committed Submission Flow",
+    "locale": "en",
+    "output": ".archify/architecture-checkout-submission-20261108/checkout-submission.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/synztran/mobile-noobstore.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "9c6c17488c50e818b13773b4c0489f4fd5facbe6"
+    }
+  },
+  "components": [
+    {
+      "id": "customer",
+      "type": "external",
+      "label": "Customer",
+      "sublabel": "Authenticated checkout session",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 77 }],
+      "pos": [40, 280],
+      "size": [160, 64]
+    },
+    {
+      "id": "checkout-api",
+      "type": "backend",
+      "label": "Submit API route",
+      "sublabel": "POST /api/checkout/submit",
+      "sources": [{ "path": "apps/web/src/app/api/checkout/submit/route.ts", "line": 6 }],
+      "pos": [260, 280],
+      "size": [180, 64]
+    },
+    {
+      "id": "submit-order",
+      "type": "backend",
+      "label": "Submit-order orchestration",
+      "sublabel": "Auth · validate · persist follow-ups",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 45 }],
+      "pos": [500, 280],
+      "size": [200, 64]
+    },
+    {
+      "id": "price-rules",
+      "type": "backend",
+      "label": "Price & compatibility rules",
+      "sublabel": "Server-authoritative product/kit pricing",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 167 }],
+      "pos": [500, 110],
+      "size": [205, 64]
+    },
+    {
+      "id": "voucher-validation",
+      "type": "backend",
+      "label": "Voucher & discount validation",
+      "sublabel": "Scope · eligibility · totals",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 223 }],
+      "pos": [760, 110],
+      "size": [205, 64]
+    },
+    {
+      "id": "submit-rpc",
+      "type": "database",
+      "label": "Order submission RPC",
+      "sublabel": "submit_order[ _with_gifts ]",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 462 }],
+      "pos": [760, 280],
+      "size": [205, 64]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "Supabase Postgres",
+      "sublabel": "Creates order · reserves stock atomically",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 472 }],
+      "pos": [1030, 280],
+      "size": [210, 64]
+    },
+    {
+      "id": "followups",
+      "type": "backend",
+      "label": "Post-order follow-ups",
+      "sublabel": "Cache · vouchers · delivery · payment · notify",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 492 }, { "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 509 }, { "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 710 }],
+      "pos": [1300, 280],
+      "size": [215, 64]
+    },
+    {
+      "id": "cart-conversion",
+      "type": "backend",
+      "label": "Convert active cart",
+      "sublabel": "Resolve cart from authenticated user",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 779 }],
+      "pos": [1300, 110],
+      "size": [210, 64]
+    },
+    {
+      "id": "gacha-missions",
+      "type": "backend",
+      "label": "Gacha mission progress",
+      "sublabel": "Spend amount · order count",
+      "sources": [{ "path": "apps/web/src/modules/checkout/server/submit-order.ts", "line": 808 }],
+      "pos": [1300, 440],
+      "size": [210, 64]
+    }
+  ],
+  "connections": [
+    { "id": "customer-submit", "from": "customer", "to": "checkout-api", "label": "submit order", "variant": "emphasis" },
+    { "id": "api-orchestrate", "from": "checkout-api", "to": "submit-order", "label": "delegate request" },
+    { "id": "orchestrate-pricing", "from": "submit-order", "to": "price-rules", "label": "verify price & kit compatibility" },
+    { "id": "pricing-voucher", "from": "price-rules", "to": "voucher-validation", "label": "priced items" },
+    { "id": "voucher-rpc", "from": "voucher-validation", "to": "submit-rpc", "label": "validated totals" },
+    { "id": "orchestrate-rpc", "from": "submit-order", "to": "submit-rpc", "label": "create order transaction" },
+    { "id": "rpc-postgres", "from": "submit-rpc", "to": "postgres", "label": "create order + reserve stock" },
+    { "id": "rpc-followups", "from": "postgres", "to": "followups", "label": "created order result" },
+    { "id": "followup-cart", "from": "followups", "to": "cart-conversion", "label": "convert user's active cart" },
+    { "id": "followup-gacha", "from": "followups", "to": "gacha-missions", "label": "record eligible purchase" }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Trust boundary",
+      "items": [
+        "The API requires an authenticated customer.",
+        "Prices, kit compatibility, vouchers, discounts, and shipping eligibility are revalidated server-side.",
+        "The client cart_id is advisory; conversion resolves the active cart from the signed-in user."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Transactional boundary",
+      "items": [
+        "The submit_order RPC is the order-creation and stock-reservation boundary.",
+        "Cache invalidation, voucher details, delivery/payment details, notifications, cart conversion, and missions follow the RPC.",
+        "This diagram describes committed revision 9c6c174; working-tree changes are not represented."
+      ]
+    }
+  ]
+}

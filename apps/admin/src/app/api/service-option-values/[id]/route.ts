@@ -1,5 +1,6 @@
 import { logAuditEvent } from "@/lib/audit-log";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@db-types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,8 +13,19 @@ type RouteContext = {
 	params: Promise<{ id: string }>;
 };
 
+async function authorize() {
+	const session = await createClient();
+	const { data: { user }, error } = await session.auth.getUser();
+	if (error || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	const { data: profile } = await session.from("users").select("role").eq("id", user.id).maybeSingle();
+	if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+	return null;
+}
+
 // PATCH /api/service-option-values/[id]
 export async function PATCH(req: NextRequest, context: RouteContext) {
+	const denied = await authorize();
+	if (denied) return denied;
 	const { id } = await context.params;
 	const supabase = getAdminClient();
 
@@ -110,6 +122,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
 // DELETE /api/service-option-values/[id]
 export async function DELETE(_req: NextRequest, context: RouteContext) {
+	const denied = await authorize();
+	if (denied) return denied;
 	const { id } = await context.params;
 	const supabase = getAdminClient();
 

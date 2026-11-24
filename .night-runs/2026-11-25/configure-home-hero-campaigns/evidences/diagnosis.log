@@ -1,0 +1,13 @@
+Task: Configure home hero campaigns for mobile and desktop
+
+Blocker: Required design approval could not be obtained in this non-interactive run (question tool returned: "This non-interactive run cannot ask the user questions").
+
+Inspection:
+- Existing editor: apps/admin/src/components/content/CampaignModal.tsx
+- Existing APIs: apps/admin/src/app/api/content/campaigns/route.ts and [id]/route.ts
+- Storefront renderer: apps/web/src/components/home/HeroSection.tsx
+- Server loader: apps/web/src/lib/hero-server.ts
+- API type/query: apps/web/src/app/api/home/hero/route.ts
+- Existing schema in supabase/migrations/016_create_home_content_tables.sql has only image_url and shared title/subtitle/CTA fields; no responsive configuration columns.
+
+No source changes made; implementation requires a migration and coordinated API/admin/web changes. Existing unrelated modified/untracked files were present before this task.

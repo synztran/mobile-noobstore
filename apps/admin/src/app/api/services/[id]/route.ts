@@ -1,5 +1,6 @@
 import { logAuditEvent } from "@/lib/audit-log";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@db-types";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -21,9 +22,20 @@ const SECTION_VALUES = [
 	"keycap_stem",
 ] as const;
 
+async function authorize() {
+	const session = await createClient();
+	const { data: { user }, error } = await session.auth.getUser();
+	if (error || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	const { data: profile } = await session.from("users").select("role").eq("id", user.id).maybeSingle();
+	if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+	return null;
+}
+
 // PATCH /api/services/[id]
 // Update service catalog info (name, description, pricing defaults, flags...).
 export async function PATCH(req: NextRequest, context: RouteContext) {
+	const denied = await authorize();
+	if (denied) return denied;
 	const { id } = await context.params;
 	const supabase = getAdminClient();
 
@@ -45,6 +57,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 					? value.trim()
 					: null;
 		}
+	}
+	if (Object.prototype.hasOwnProperty.call(body, "slug") && sanitized.slug) {
+		const { data: duplicate } = await supabase.from("services").select("id").eq("slug", sanitized.slug).neq("id", id).maybeSingle();
+		if (duplicate) return NextResponse.json({ error: "Slug đã tồn tại. Hãy chọn slug khác." }, { status: 409 });
 	}
 
 	for (const field of ["name", "service_type"] as const) {
@@ -113,7 +129,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 		"is_bookable_on_services_page",
 	] as const) {
 		if (Object.prototype.hasOwnProperty.call(body, field)) {
-			sanitized[field] = Boolean(body[field]);
+			if (typeof body[field] !== "boolean") return NextResponse.json({ error: `${field} must be a boolean` }, { status: 400 });
+			sanitized[field] = body[field];
 		}
 	}
 
@@ -141,7 +158,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 		.maybeSingle();
 
 	if (error) {
-		return NextResponse.json({ error: error.message }, { status: 500 });
+		return NextResponse.json({ error: error.code === "23505" ? "Slug đã tồn tại. Hãy chọn slug khác." : error.message }, { status: error.code === "23505" ? 409 : 500 });
 	}
 
 	void logAuditEvent(

@@ -34,8 +34,8 @@ export function CheckinHomeTeaser({
     year: "numeric",
     month: "2-digit",
   }).format(new Date());
-  const query = useCheckinCalendar(month, { enabled: Boolean(user) });
-  const rewardsQuery = useCheckinRewards({ enabled: Boolean(user) });
+  const query = useCheckinCalendar(month, { enabled: !authLoading && Boolean(user) });
+  const rewardsQuery = useCheckinRewards({ enabled: !authLoading && Boolean(user) });
   const claim = useClaimCheckin();
   const reduceMotion = useReducedMotion();
   const [totalEarned, setTotalEarned] = useState(0);

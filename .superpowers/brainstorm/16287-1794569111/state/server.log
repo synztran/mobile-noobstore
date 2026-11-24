@@ -1,0 +1,6 @@
+{"type":"server-started","port":63781,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:63781/?key=02244bf005cdc74c9e6d8ab1c523b431359b936246415490dbd002160e3dc94a","screen_dir":"/Users/haritran/source/noobstore/mobile-noobstore/.superpowers/brainstorm/16287-1794569111/content","state_dir":"/Users/haritran/source/noobstore/mobile-noobstore/.superpowers/brainstorm/16287-1794569111/state","idle_timeout_ms":14400000}
+{"type":"screen-added","file":"/Users/haritran/source/noobstore/mobile-noobstore/.superpowers/brainstorm/16287-1794569111/content/configurator-desktop-options.html"}
+{"type":"screen-added","file":"/Users/haritran/source/noobstore/mobile-noobstore/.superpowers/brainstorm/16287-1794569111/content/variant-long-name-options.html"}
+{"type":"screen-added","file":"/Users/haritran/source/noobstore/mobile-noobstore/.superpowers/brainstorm/16287-1794569111/content/product-configurator-density.html"}
+{"type":"screen-added","file":"/Users/haritran/source/noobstore/mobile-noobstore/.superpowers/brainstorm/16287-1794569111/content/product-configurator-inline-options.html"}
+{"type":"server-stopped","reason":"idle timeout"}

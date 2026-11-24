@@ -1,0 +1,57 @@
+<div style="max-width:1180px;margin:0 auto;color:#1b1c1a;font-family:Manrope,system-ui,sans-serif">
+  <h2 style="margin:0 0 6px">Chọn hướng bố cục desktop cho Đổi thưởng</h2>
+  <p class="subtitle" style="margin-bottom:20px">Cả hai giữ nguyên nghiệp vụ hiện có. Mobile tiếp tục dùng giao diện hiện tại; bản mới chỉ xuất hiện trên desktop.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">
+    <div class="card" data-choice="a" onclick="toggleSelect(this)" style="padding:16px;border-radius:16px;border:1px solid #ddc1b8;background:#fff">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Catalog trung tâm + sidebar điểm</h3>
+        <p style="margin:4px 0 12px;color:#56423c">Quà để đổi là trọng tâm. Số dư / nạp thẻ / lịch sử nằm trong sidebar cố định.</p>
+        <div style="border:1px solid #eae8e4;border-radius:12px;padding:12px;background:#fbf9f5">
+          <div style="display:grid;grid-template-columns:1fr 190px;gap:12px">
+            <div>
+              <div style="padding:12px;border-radius:10px;background:linear-gradient(135deg,#9b3f1c,#bb5732);color:white;margin-bottom:10px">
+                <small style="opacity:.8">SỐ DƯ ĐIỂM NSP</small><div style="font-size:26px;font-weight:800">12.450 điểm</div>
+                <small>+ 320 điểm chuyên cần</small>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:10px"><span style="padding:6px 10px;border-radius:99px;background:#9b3f1c;color:white;font-size:11px">Tất cả</span><span style="padding:6px 10px;border-radius:99px;background:#f0eeea;font-size:11px">Voucher</span><span style="padding:6px 10px;border-radius:99px;background:#f0eeea;font-size:11px">Quà</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="background:white;border-radius:10px;padding:10px"><div style="font-size:20px">🎟️</div><b>Voucher 50K</b><p style="font-size:11px;color:#56423c">5.000 điểm</p><button style="background:#9b3f1c;color:white;border:0;padding:7px 12px;border-radius:99px">Đổi ngay</button></div>
+                <div style="background:white;border-radius:10px;padding:10px"><div style="font-size:20px">🎁</div><b>Voucher 100K</b><p style="font-size:11px;color:#56423c">9.000 điểm</p><button style="background:#9b3f1c;color:white;border:0;padding:7px 12px;border-radius:99px">Đổi ngay</button></div>
+              </div>
+            </div>
+            <aside style="background:white;border-radius:10px;padding:10px">
+              <b style="font-size:12px">Điểm & hoạt động</b><div style="height:1px;background:#eae8e4;margin:9px 0">
+              </div><div style="font-size:11px;padding:8px 0">🎫 Nạp thẻ quà tặng</div><div style="font-size:11px;padding:8px 0">🕒 Lịch sử đổi thưởng <b>(3)</b></div><div style="margin-top:8px;padding:9px;background:#f5f3ef;border-radius:8px;font-size:10px">Đã đổi · Voucher 30K<br><span style="color:#89726a">Hôm nay · −3.000 điểm</span></div><div style="margin-top:7px;padding:9px;background:#f5f3ef;border-radius:8px;font-size:10px">Đã đổi · 100 NSP<br><span style="color:#89726a">12/06 · −1.500 điểm</span></div>
+            </aside>
+          </div>
+        </div>
+        <p style="font-size:11px;color:#56423c;margin:10px 0 0"><b>Hợp khi:</b> catalog đổi quà cần luôn chiếm ưu tiên, lịch sử cần xem nhanh cạnh bên.</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="b" onclick="toggleSelect(this)" style="padding:16px;border-radius:16px;border:1px solid #ddc1b8;background:#fff">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Dashboard điểm + khu đổi quà rộng</h3>
+        <p style="margin:4px 0 12px;color:#56423c">Tách rõ ba việc: xem điểm, khám phá quà, kiểm tra hoạt động; catalog có nhiều không gian hơn.</p>
+        <div style="border:1px solid #eae8e4;border-radius:12px;padding:12px;background:#fbf9f5">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;background:linear-gradient(110deg,#9b3f1c,#bb5732);color:white;margin-bottom:10px">
+            <div><small style="opacity:.8">ĐIỂM CỦA BẠN</small><div style="font-size:25px;font-weight:800">12.450 <small style="font-size:13px">NSP</small></div><small>320 điểm chuyên cần · xem lịch sử điểm →</small></div>
+            <button style="background:white;color:#9b3f1c;border:0;padding:9px 12px;border-radius:99px;font-weight:700">＋ Nạp thẻ quà tặng</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0"><b>Quà dành cho bạn</b><span style="font-size:11px;color:#9b3f1c">Lịch sử đổi thưởng →</span></div>
+          <div style="display:flex;gap:8px;margin-bottom:10px"><span style="padding:6px 10px;border-radius:99px;background:#9b3f1c;color:white;font-size:11px">Tất cả</span><span style="padding:6px 10px;border-radius:99px;background:#f0eeea;font-size:11px">Voucher</span><span style="padding:6px 10px;border-radius:99px;background:#f0eeea;font-size:11px">Quà</span><span style="padding:6px 10px;border-radius:99px;background:#f0eeea;font-size:11px">Điểm chuyên cần</span></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <div style="background:white;border-radius:10px;padding:10px"><div style="font-size:20px">🎟️</div><b style="font-size:12px">Voucher 50K</b><p style="font-size:10px;color:#56423c">5.000 điểm</p><button style="background:#9b3f1c;color:white;border:0;padding:7px 12px;border-radius:99px">Đổi ngay</button></div>
+            <div style="background:white;border-radius:10px;padding:10px"><div style="font-size:20px">🎁</div><b style="font-size:12px">Voucher 100K</b><p style="font-size:10px;color:#56423c">9.000 điểm</p><button style="background:#9b3f1c;color:white;border:0;padding:7px 12px;border-radius:99px">Đổi ngay</button></div>
+            <div style="background:white;border-radius:10px;padding:10px"><div style="font-size:20px">⌨️</div><b style="font-size:12px">100 điểm NSP</b><p style="font-size:10px;color:#56423c">1.500 điểm chuyên cần</p><button style="background:#f0eeea;color:#56423c;border:0;padding:7px 12px;border-radius:99px">Thiếu điểm</button></div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:#56423c;margin:10px 0 0"><b>Hợp khi:</b> muốn trải nghiệm kiểu loyalty hub, banner điểm/nạp thẻ nổi bật và mở rộng catalog.</p>
+      </div>
+    </div>
+  </div>
+  <p class="subtitle" style="margin-top:14px">Chọn A hoặc B bằng cách bấm vào phương án, rồi gửi thêm góp ý bằng text. Có thể kết hợp nếu thích một phần ở mỗi hướng.</p>
+</div>

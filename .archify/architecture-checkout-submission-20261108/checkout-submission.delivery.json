@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "4fd379e8-c640-4c0f-880c-c205b7337054",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/candidate.json",
+  "output": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+  "specification": {
+    "sha256": "aa0a568ad4402d9a522e80ec24bdfecf3a491b1d70ea18c5ab768400974f258e",
+    "bytes": 5743
+  },
+  "artifact": {
+    "sha256": "a8574b6440d45cbd468d2804a52185ea72042c0ff7bb3f78cda7ae766dc9e5df",
+    "bytes": 852570
+  }
+}

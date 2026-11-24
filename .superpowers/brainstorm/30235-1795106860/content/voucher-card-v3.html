@@ -1,0 +1,285 @@
+<style>
+  .preview-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 3rem;
+  }
+  .options-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+  @media (max-width: 900px) {
+    .options-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .choice-card {
+    display: block !important;
+    background: var(--bg-secondary) !important;
+    border: 2px solid var(--border) !important;
+    border-radius: 18px !important;
+    padding: 1.5rem !important;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .choice-card:hover {
+    border-color: #b3451e !important;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -6px rgba(179, 69, 30, 0.15);
+  }
+  .choice-card.selected {
+    border-color: #b3451e !important;
+    background: rgba(179, 69, 30, 0.04) !important;
+    box-shadow: 0 0 0 3px rgba(179, 69, 30, 0.25) !important;
+  }
+
+  /* ===== KỸ THUẬT ĐỤC LỖ THẬT (REAL TRANSPARENT MASK) ===== */
+
+  /* 1. MẪU B+: DUAL-SEGMENT VỚI 2 LỖ KHUYẾT TRÊN & DƯỚI (SHOPEE PRO) */
+  .notch-dual-card {
+    position: relative;
+    display: flex;
+    min-height: 145px;
+    background: #ffffff;
+    /* CSS Radial Mask: khoét 2 lỗ bán nguyệt ở đỉnh và đáy tại vị trí x = 100px */
+    mask-image: 
+      radial-gradient(circle 9px at 100px 0px, transparent 9px, black 9.5px),
+      radial-gradient(circle 9px at 100px 100%, transparent 9px, black 9.5px);
+    -webkit-mask-image: 
+      radial-gradient(circle 9px at 100px 0px, transparent 9px, black 9.5px),
+      radial-gradient(circle 9px at 100px 100%, transparent 9px, black 9.5px);
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
+    border-radius: 16px;
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.07));
+  }
+
+  .notch-dual-left {
+    width: 100px;
+    flex-shrink: 0;
+    background: linear-gradient(145deg, #b3451e 0%, #872e0f 100%);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    position: relative;
+  }
+  /* Vạch răng cưa nét đứt ở giữa */
+  .notch-dual-left::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 1px;
+    border-right: 2px dashed rgba(255, 255, 255, 0.5);
+  }
+
+  .notch-dual-right {
+    flex: 1;
+    min-width: 0;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #ffffff;
+  }
+
+  /* 2. MẪU A+: TICKET NOTCH VỚI 2 LỖ KHUYẾT 2 BÊN HÔNG (NGANG) */
+  .notch-ticket-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    /* CSS Mask khoét 2 lỗ tròn 2 bên hông tại y = 88px */
+    mask-image: 
+      radial-gradient(circle 10px at 0px 88px, transparent 10px, black 10.5px),
+      radial-gradient(circle 10px at 100% 88px, transparent 10px, black 10.5px);
+    -webkit-mask-image: 
+      radial-gradient(circle 10px at 0px 88px, transparent 10px, black 10.5px),
+      radial-gradient(circle 10px at 100% 88px, transparent 10px, black 10.5px);
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
+    filter: drop-shadow(0 4px 16px rgba(179, 69, 30, 0.09));
+  }
+
+  .notch-ticket-header {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    padding: 1rem 1.25rem;
+    border-bottom: 2px dashed #fed7aa;
+  }
+
+  .notch-ticket-body {
+    padding: 1.1rem 1.25rem;
+    background: #ffffff;
+  }
+
+  /* Demo background checkerboard để thấy lỗ thủng xuyên thấu thật */
+  .demo-stage {
+    background: #f1f5f9;
+    padding: 1.25rem;
+    border-radius: 14px;
+    margin-top: 1rem;
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+</style>
+
+<div class="preview-container">
+  <h2>Đục Lỗ Thật Bằng CSS Mask (Không Dùng Border Giả)</h2>
+  <p class="subtitle">
+    Sử dụng <code>mask-image: radial-gradient</code> kết hợp <code>filter: drop-shadow</code>: Lỗ khuyết cắt xuyên thấu nền thực sự, bóng đổ cong tự nhiên theo viền cắt, hoàn toàn <strong>không có viền thừa</strong> tròn giả.
+  </p>
+
+  <div class="options-row" data-choice="notch-style">
+    <!-- OPTION B+ : DUAL SEGMENT NOTCH (ĐỨNG) -->
+    <div class="option choice-card" data-choice="option-b-plus" onclick="toggleSelect(this)">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+        <span style="background:#ffedd5; color:#c2410c; padding:0.25rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:900;">
+          LỰA CHỌN 1: DUAL-SEGMENT ĐỤC LỖ ĐỨNG (Khuyên dùng)
+        </span>
+      </div>
+      <p style="font-size:0.83rem; color:var(--text-secondary); line-height:1.45;">
+        2 lỗ khuyết bán nguyệt ở <strong>đỉnh và đáy</strong> ngay mép đường nét đứt. Thân vé chia 2 phần (bên trái là icon & mức giảm, bên phải là thông tin + nút bấm). Cực kỳ gọn và chuẩn Shopee / sàn TMĐT lớn.
+      </p>
+
+      <div class="demo-stage">
+        <!-- VOUCHER 1: FREESHIP -->
+        <div class="notch-dual-card" style="margin-bottom:1rem;">
+          <div class="notch-dual-left">
+            <div style="font-size:1.4rem;">🚚</div>
+            <div style="font-size:0.75rem; font-weight:900; text-transform:uppercase; line-height:1.15; margin-top:0.3rem;">
+              FREESHIP
+            </div>
+            <div style="font-size:0.65rem; opacity:0.85; margin-top:0.2rem;">
+              100% PHÍ
+            </div>
+          </div>
+
+          <div class="notch-dual-right">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.68rem; font-weight:900; color:#b3451e; background:#fdf2f0; padding:0.15rem 0.45rem; border-radius:4px;">
+                  VẬN CHUYỂN
+                </span>
+                <span style="font-size:0.7rem; color:#64748b;">Không giới hạn</span>
+              </div>
+              <div style="font-size:0.95rem; font-weight:800; color:#1e293b; margin-top:0.35rem;">
+                Miễn phí vận chuyển
+              </div>
+              <div style="font-size:0.75rem; color:#64748b; margin-top:0.2rem;">
+                Đơn hàng từ 200.000 ₫ · Toàn quốc
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid #f8fafc;">
+              <div>
+                <span style="font-size:0.68rem; color:#64748b;">Chi phí:</span>
+                <div style="font-size:0.95rem; font-weight:900; color:#b3451e;">50.000 NSP</div>
+              </div>
+              <button type="button" style="background:#b3451e; color:#ffffff; border:none; border-radius:24px; padding:0.45rem 1rem; font-size:0.75rem; font-weight:800; cursor:pointer;">
+                Đổi ngay
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VOUCHER 2: GIẢM TIỀN -->
+        <div class="notch-dual-card">
+          <div class="notch-dual-left" style="background:linear-gradient(145deg, #0f766e 0%, #115e59 100%);">
+            <div style="font-size:1.4rem;">🏷️</div>
+            <div style="font-size:0.75rem; font-weight:900; text-transform:uppercase; line-height:1.15; margin-top:0.3rem;">
+              GIẢM TIỀN
+            </div>
+            <div style="font-size:0.65rem; opacity:0.85; margin-top:0.2rem;">
+              -50.000 ₫
+            </div>
+          </div>
+
+          <div class="notch-dual-right">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.68rem; font-weight:900; color:#0f766e; background:#f0fdfa; padding:0.15rem 0.45rem; border-radius:4px;">
+                  GIẢM ĐƠN HÀNG
+                </span>
+                <span style="font-size:0.7rem; color:#059669; font-weight:700;">Còn 10 lượt</span>
+              </div>
+              <div style="font-size:0.95rem; font-weight:800; color:#1e293b; margin-top:0.35rem;">
+                Giảm 50.000₫ tổng đơn
+              </div>
+              <div style="font-size:0.75rem; color:#64748b; margin-top:0.2rem;">
+                Đơn hàng từ 300.000 ₫ · Mọi sản phẩm
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.5rem; border-top:1px solid #f8fafc;">
+              <div>
+                <span style="font-size:0.68rem; color:#64748b;">Chi phí:</span>
+                <div style="font-size:0.95rem; font-weight:900; color:#0f766e;">50.000 NSP</div>
+              </div>
+              <button type="button" style="background:#0f766e; color:#ffffff; border:none; border-radius:24px; padding:0.45rem 1rem; font-size:0.75rem; font-weight:800; cursor:pointer;">
+                Đổi ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION A+ : TICKET NOTCH ĐỤC LỖ NGANG -->
+    <div class="option choice-card" data-choice="option-a-plus" onclick="toggleSelect(this)">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+        <span style="background:#fee2e2; color:#b91c1c; padding:0.25rem 0.6rem; border-radius:6px; font-size:0.75rem; font-weight:900;">
+          LỰA CHỌN 2: TICKET NOTCH ĐỤC LỖ NGANG
+        </span>
+      </div>
+      <p style="font-size:0.83rem; color:var(--text-secondary); line-height:1.45;">
+        2 lỗ khuyết nằm ở <strong>2 cạnh sườn trái & phải</strong>, nối nhau bằng vạch nét đứt ngang. Cắt sạch 100% bằng CSS Mask, không viền giả.
+      </p>
+
+      <div class="demo-stage">
+        <div class="notch-ticket-card">
+          <div class="notch-ticket-header">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+              <span style="font-size:0.68rem; font-weight:900; text-transform:uppercase; color:#b3451e; background:#ffedd5; padding:0.15rem 0.45rem; border-radius:4px;">
+                VOUCHER TỔNG ĐƠN
+              </span>
+              <span style="font-size:0.72rem; color:#78350f; font-weight:700;">10 còn lại</span>
+            </div>
+            <div style="font-size:1.4rem; font-weight:900; color:#b3451e; letter-spacing:-0.02em;">
+              GIẢM 50.000 ₫
+            </div>
+            <div style="font-size:0.75rem; color:#78350f; font-weight:600; margin-top:0.2rem;">
+              Đơn từ 300.000 ₫ · Hạn 90 ngày
+            </div>
+          </div>
+
+          <div class="notch-ticket-body">
+            <div style="font-size:0.95rem; font-weight:800; color:#1e293b;">
+              Giảm 50.000₫ tổng đơn
+            </div>
+            <div style="font-size:0.78rem; color:#64748b; margin-top:0.25rem;">
+              Áp dụng cho mọi phụ kiện & phím cơ
+            </div>
+
+            <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:0.68rem; color:#64748b;">Chi phí:</div>
+                <div style="font-size:1rem; font-weight:900; color:#b3451e;">50.000 NSP</div>
+              </div>
+              <button type="button" style="background:#b3451e; color:#ffffff; border:none; border-radius:8px; padding:0.5rem 1.1rem; font-size:0.78rem; font-weight:800; cursor:pointer;">
+                ĐỔI NGAY
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

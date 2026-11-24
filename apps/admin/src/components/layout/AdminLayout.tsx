@@ -80,6 +80,7 @@ const navigation: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Điểm danh", href: "/checkin", icon: CalendarCheck },
   { label: "Fees", href: "/fees", icon: DollarSign },
+  { label: "Mid-man Tracking", href: "/mid-man", icon: ClipboardList },
   { label: "Gacha", href: "/gacha", icon: FerrisWheel },
   { label: "Inventory", href: "/inventory", icon: ClipboardList },
   { label: "Notifications", href: "/notifications", icon: FileText },

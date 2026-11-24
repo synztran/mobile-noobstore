@@ -46,27 +46,27 @@
   - **Requirements:** Keep current mobile full-width-with-gutters behavior; on desktop constrain the prompt to a readable maximum width and anchor it consistently without overflow or covering key controls. Preserve dismiss/subscribe behavior and responsive safe spacing.
   - **Verify:** At mobile and desktop viewport widths, confirm prompt width/placement, no horizontal overflow, keyboard access, and subscribe/dismiss behavior. Run web typecheck and relevant UI tests if present.
 
-- [ ] **Skip authenticated-only calendar and notification queries for signed-out users**
+- [x] **Skip authenticated-only calendar and notification queries for signed-out users**
   - **Files:** `apps/web/src/modules/checkin/client/queries.ts`, `apps/web/src/modules/checkin/ui/CheckinCalendar.tsx`, `apps/web/src/modules/desktop/ui/notifications/DesktopNotificationsDrawer.tsx`, notification query consumers and `apps/web/src/lib/react-query/notification/api/useNotificationQueries.ts`.
   - **Requirements:** Audit all consumers of `/api/checkin/calendar` and `/api/notifications`; use the existing `useAuth()` state to set query `enabled` only after auth loading completes and a user exists. Clear/avoid showing a prior user's cached private data after sign-out or account switch. Keep public check-in rewards enabled only if its route is actually public. Do not change API authorization or return fake success from protected endpoints.
   - **Verify:** Tests or a focused manual matrix confirms signed-out state makes no calendar/notification request, signed-in state fetches normally, auth-loading does not flash 401/error UI, and sign-out/account switch cannot display stale notifications. Run web typecheck/tests.
 
-- [ ] **Normalize home page section horizontal padding to 16px**
+- [x] **Normalize home page section horizontal padding to 16px**
   - **Files:** `apps/web/src/app/(main)/page.tsx` and only the home section components/wrappers whose rendered horizontal padding conflicts with the page's 16px mobile gutter (identify by inspection, likely under `apps/web/src/components/home/`).
   - **Requirements:** Make home sections align to a consistent 16px mobile horizontal gutter, removing nested/doubled 24–40px padding. Preserve intentional full-bleed hero/artwork and desktop layout; avoid changing vertical spacing or other routes.
   - **Verify:** Inspect home at 320px, 390px, tablet and desktop widths; all non-full-bleed section content aligns to the same 16px mobile edge with no double padding/overflow. Run web typecheck and UI detector on changed files.
 
-- [ ] **Disable the mobile-device recommendation popup**
+- [x] **Disable the mobile-device recommendation popup**
   - **Files:** `apps/web/src/app/layout.tsx`, `apps/web/src/components/warning-modal/MobileViewportGuard.tsx`, and popup component only if needed.
   - **Requirements:** Stop rendering the popup “Sử dụng thiết bị di động để có trải nghiệm tốt nhất!” on desktop while preserving unrelated viewport/layout behavior. Remove dead imports/state only if they become unused; do not remove other warnings.
   - **Verify:** Confirm popup is absent on desktop and mobile and no hydration/runtime warnings occur. Run web typecheck and relevant tests.
 
-- [ ] **Create two structurally distinct `/about` page mockups**
+- [!] **Create two structurally distinct `/about` page mockups**
   - **Files:** New mockup artifacts under `apps/web/design-mockups/about/` (two standalone HTML/CSS mockups or the repository's existing mockup convention); inspect `apps/web/src/app/` and existing design assets before choosing format. Do not replace a production route in this task.
   - **Requirements:** Create at least two meaningfully different page structures and section sequences, not just color variations. Include Vietnamese brand story, trust/quality proof, team/store context, and clear links/CTA; use responsive desktop/mobile layouts and existing NoobStore visual language. Label the files as mockups and document how to preview them.
   - **Verify:** Open both mockups at mobile and desktop sizes; confirm distinct information architecture, usable links/CTA, accessible contrast/heading order, and no horizontal overflow. Keep artifacts isolated from production code.
 
-- [ ] **Create two desktop product-card UI mockups**
+- [x] **Create two desktop product-card UI mockups**
   - **Files:** New mockup artifacts under `apps/web/design-mockups/product-card/` (or existing mockup convention); reference `apps/web/src/modules/products/ui/product/ProductCard.tsx`, `ProductCardDetails.tsx`, and `ProductCardPricing.tsx` without changing them.
   - **Requirements:** Produce two distinct desktop card concepts suitable for the current product data (image, name, price/discount, stock/variant state, rating when real data exists, and action). Keep mobile behavior out of scope; avoid fabricating product claims. Include responsive constraints and preview instructions; do not ship either concept into production.
   - **Verify:** Preview both at common desktop widths and a narrow fallback width; verify readable hierarchy, complete data/action states, accessible controls and no overflow. Confirm production files remain unchanged.

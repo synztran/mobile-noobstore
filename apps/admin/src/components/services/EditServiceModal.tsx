@@ -9,7 +9,7 @@ import { SERVICE_SECTIONS, type AdminService } from "./serviceTypes";
 interface EditServiceModalProps {
 	open: boolean;
 	onClose: () => void;
-	service: AdminService;
+	service: AdminService | null;
 }
 
 export default function EditServiceModal({
@@ -21,54 +21,58 @@ export default function EditServiceModal({
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState("");
 
-	const [name, setName] = useState(service.name);
-	const [slug, setSlug] = useState(service.slug ?? "");
-	const [description, setDescription] = useState(service.description ?? "");
-	const [serviceType, setServiceType] = useState(service.service_type);
-	const [section, setSection] = useState(service.service_section ?? "");
-	const [price, setPrice] = useState<number | null>(service.base_price);
+	const [name, setName] = useState(service?.name ?? "");
+	const [slug, setSlug] = useState(service?.slug ?? "");
+	const [description, setDescription] = useState(service?.description ?? "");
+	const [serviceType, setServiceType] = useState(service?.service_type ?? "repair");
+	const [section, setSection] = useState(service?.service_section ?? "");
+	const [price, setPrice] = useState<number | null>(service?.base_price ?? 0);
 	const [handlingDays, setHandlingDays] = useState<number | null>(
-		service.handling_days,
+		service?.handling_days ?? 0,
 	);
 	const [estimatedDays, setEstimatedDays] = useState<number | null>(
-		service.estimated_days,
+		service?.estimated_days ?? null,
 	);
 	const [maxEntries, setMaxEntries] = useState<number | null>(
-		service.max_entries,
+		service?.max_entries ?? null,
 	);
-	const [isActive, setIsActive] = useState(service.is_active);
+	const [isActive, setIsActive] = useState(service?.is_active ?? true);
 	const [isBookable, setIsBookable] = useState(
-		service.is_bookable_on_services_page,
+		service?.is_bookable_on_services_page ?? false,
 	);
 
 	useEffect(() => {
 		if (!open) return;
-		setName(service.name);
-		setSlug(service.slug ?? "");
-		setDescription(service.description ?? "");
-		setServiceType(service.service_type);
-		setSection(service.service_section ?? "");
-		setPrice(service.base_price);
-		setHandlingDays(service.handling_days);
-		setEstimatedDays(service.estimated_days);
-		setMaxEntries(service.max_entries);
-		setIsActive(service.is_active);
-		setIsBookable(service.is_bookable_on_services_page);
+		setName(service?.name ?? "");
+		setSlug(service?.slug ?? "");
+		setDescription(service?.description ?? "");
+		setServiceType(service?.service_type ?? "repair");
+		setSection(service?.service_section ?? "");
+		setPrice(service?.base_price ?? 0);
+		setHandlingDays(service?.handling_days ?? 0);
+		setEstimatedDays(service?.estimated_days ?? null);
+		setMaxEntries(service?.max_entries ?? null);
+		setIsActive(service?.is_active ?? true);
+		setIsBookable(service?.is_bookable_on_services_page ?? false);
 		setError("");
 	}, [open, service]);
 
 	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
-		if (!name.trim()) {
-			setError("Tên dịch vụ không được để trống.");
+		if (!name.trim() || !slug.trim() || !serviceType.trim()) {
+			setError("Tên, slug và loại dịch vụ là bắt buộc.");
+			return;
+		}
+		if (price == null || price < 0 || handlingDays == null || handlingDays < 0 || (estimatedDays != null && estimatedDays < 0) || (maxEntries != null && maxEntries < 0)) {
+			setError("Giá, thời gian và số lượng phải là số không âm.");
 			return;
 		}
 		setSaving(true);
 		setError("");
 
 		try {
-			const res = await fetch(`/api/services/${service.id}`, {
-				method: "PATCH",
+			const res = await fetch(service ? `/api/services/${service.id}` : "/api/services", {
+				method: service ? "PATCH" : "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					name: name.trim(),
@@ -76,8 +80,8 @@ export default function EditServiceModal({
 					description: description.trim() || null,
 					service_type: serviceType.trim(),
 					service_section: section || null,
-					base_price: price ?? 0,
-					handling_days: handlingDays ?? 0,
+					base_price: price,
+					handling_days: handlingDays,
 					estimated_days: estimatedDays,
 					max_entries: maxEntries,
 					is_active: isActive,
@@ -108,10 +112,10 @@ export default function EditServiceModal({
 				<div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 ">
 					<div>
 						<h2 className="text-lg font-semibold text-slate-900 ">
-							Sửa thông tin dịch vụ
+							{service ? "Sửa thông tin dịch vụ" : "Tạo dịch vụ"}
 						</h2>
 						<p className="text-sm text-slate-500 ">
-							{service.name}
+							{service?.name ?? "Dịch vụ mới"}
 						</p>
 					</div>
 					<button
@@ -262,7 +266,7 @@ export default function EditServiceModal({
 							{saving ? (
 								<span className="loading loading-spinner loading-sm" />
 							) : (
-								"Lưu thay đổi"
+								(service ? "Lưu thay đổi" : "Tạo dịch vụ")
 							)}
 						</button>
 					</div>

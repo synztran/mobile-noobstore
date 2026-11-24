@@ -1,0 +1,3 @@
+ apps/web/src/app/(main)/page.tsx                | 11 ++++++-----
+ apps/web/src/components/home/FlashSaleStrip.tsx |  4 ++--
+ 2 files changed, 8 insertions(+), 7 deletions(-)

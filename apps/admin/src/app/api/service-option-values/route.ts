@@ -1,12 +1,24 @@
 import { logAuditEvent } from "@/lib/audit-log";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+async function authorize() {
+	const session = await createClient();
+	const { data: { user }, error } = await session.auth.getUser();
+	if (error || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	const { data: profile } = await session.from("users").select("role").eq("id", user.id).maybeSingle();
+	if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+	return null;
+}
+
 // POST /api/service-option-values
 // Create a new value under a service option.
 export async function POST(req: NextRequest) {
+	const denied = await authorize();
+	if (denied) return denied;
 	const supabase = getAdminClient();
 
 	const body = (await req.json().catch(() => null)) as {

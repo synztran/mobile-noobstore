@@ -1,0 +1,45 @@
+<h2>Variant list — giữ nút mua dễ thấy</h2>
+<p class="subtitle">So sánh hai cách xử lý khi nhóm có nhiều lựa chọn. Bấm “Xem thêm” để thử trạng thái mở rộng.</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:20px;margin-top:20px">
+  <article style="border:1px solid #ddc1b8;border-radius:16px;background:#fff;padding:18px">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#89726a;text-transform:uppercase">A · CUỘN TRONG DANH SÁCH</div>
+    <h3 style="margin:5px 0 12px;color:#1b1c1a">Kitting <span style="font-size:11px;color:#89726a">Bắt buộc</span></h3>
+    <div style="max-height:210px;overflow:auto;padding:2px 7px 2px 2px;display:grid;gap:8px">
+      <div class="variant selected"><span class="name">Pre-order · Base &amp; Novelties</span><strong>+3.400.000 ₫</strong></div>
+      <div class="variant"><span class="name">Spacebars Kit</span><strong>+750.000 ₫</strong></div>
+      <div class="variant"><span class="name">Base Kit — Latin Alphas</span><strong>+1.250.000 ₫</strong></div>
+      <div class="variant"><span class="name">International Kit — Novelties</span><strong>+980.000 ₫</strong></div>
+      <div class="variant"><span class="name">Spacebar &amp; Accent Kit</span><strong>+420.000 ₫</strong></div>
+      <div class="variant"><span class="name">Deskmat Bundle</span><strong>+650.000 ₫</strong></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px"><button class="buy">＋ Thêm vào giỏ</button><button class="wish">♡ Yêu thích</button></div>
+    <p style="margin:12px 0 0;color:#89726a;font-size:12px">Chiều cao trang gọn, nút mua gần hơn. Danh sách dài cuộn bên trong; có thể cần dấu hiệu cuộn rõ.</p>
+  </article>
+
+  <article style="border:1px solid #ddc1b8;border-radius:16px;background:#fff;padding:18px">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#89726a;text-transform:uppercase">B · THU GỌN CÒN 3 LỰA CHỌN</div>
+    <h3 style="margin:5px 0 12px;color:#1b1c1a">Kitting <span style="font-size:11px;color:#89726a">Bắt buộc</span></h3>
+    <div id="variant-list" style="display:grid;gap:8px">
+      <div class="variant selected"><span class="name">Pre-order · Base &amp; Novelties</span><strong>+3.400.000 ₫</strong></div>
+      <div class="variant"><span class="name">Spacebars Kit</span><strong>+750.000 ₫</strong></div>
+      <div class="variant"><span class="name">Base Kit — Latin Alphas</span><strong>+1.250.000 ₫</strong></div>
+      <div class="variant extra" style="display:none"><span class="name">International Kit — Novelties</span><strong>+980.000 ₫</strong></div>
+      <div class="variant extra" style="display:none"><span class="name">Spacebar &amp; Accent Kit</span><strong>+420.000 ₫</strong></div>
+      <div class="variant extra" style="display:none"><span class="name">Deskmat Bundle</span><strong>+650.000 ₫</strong></div>
+    </div>
+    <button id="show-all" onclick="toggleVariants()" style="margin-top:8px;width:100%;border:0;border-radius:10px;background:#f5f3ef;padding:9px;color:#56423c;font-weight:700;cursor:pointer">Xem tất cả 6 lựa chọn ↓</button>
+    <div style="margin-top:12px;display:flex;gap:8px"><button class="buy">＋ Thêm vào giỏ</button><button class="wish">♡ Yêu thích</button></div>
+    <p style="margin:12px 0 0;color:#89726a;font-size:12px">Nút mua luôn gần danh sách; người dùng thấy thêm lựa chọn qua thao tác chủ động.</p>
+  </article>
+</div>
+
+<style>
+.variant{min-height:54px;padding:10px 12px;border:1px solid #e4e2de;border-radius:12px;display:flex;flex-direction:column;justify-content:center;gap:4px;color:#1b1c1a;font-size:13px}
+.variant strong{align-self:flex-end;color:#52652a;font-size:13px}
+.variant.selected{border:2px solid #9b3f1c;background:#fff8f4}
+.name{font-weight:700}.buy,.wish{border:0;border-radius:999px;padding:11px 14px;font-weight:800;cursor:pointer}.buy{flex:1;background:#9b3f1c;color:white}.wish{background:#f0eeea;color:#1b1c1a;white-space:nowrap}
+</style>
+<script>
+function toggleVariants(){const expanded=document.querySelectorAll('.extra')[0].style.display!=='none';document.querySelectorAll('.extra').forEach(x=>x.style.display=expanded?'none':'flex');document.getElementById('show-all').textContent=expanded?'Xem tất cả 6 lựa chọn ↓':'Thu gọn ↑'}
+</script>
