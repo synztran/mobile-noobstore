@@ -1,0 +1,10 @@
+commit 35f97c0c8d3fca2dbcf8eee79ce8d9671ad2c3d3
+Author: Harry Tran <rapsunl231@gmail.com>
+Date:   Wed Nov 25 01:07:49 2026 +0700
+
+    feat(auto): repair variants search switching and loading feedback
+
+ .../src/components/variants/VariantsHeader.tsx     | 67 +++++++++++++++-------
+ apps/admin/src/lib/variants-search-params.test.ts  | 43 ++++++++++++++
+ apps/admin/src/lib/variants-search-params.ts       | 31 ++++++++++
+ 3 files changed, 120 insertions(+), 21 deletions(-)
