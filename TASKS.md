@@ -9,7 +9,7 @@
   - **Requirements:** Measure/inspect existing Supabase query plans and result sizes before changing them. Remove duplicate selects/order clauses, avoid fetching unbounded product/component data when server-side filtering/pagination can preserve current UI behavior, select only needed columns, and preserve counts, filters, sort order, page links, and order status behavior. Avoid N+1 requests. Report any index/migration recommendation separately; do not add speculative indexes.
   - **Verify:** Add/update tests for filters, pagination and empty/error results; run admin typecheck and relevant unit tests. Compare query count/returned row bounds for representative pages and confirm current filter/sort/pagination behavior.
 
-- [ ] **Repair variants search switching and loading feedback**
+- [x] **Repair variants search switching and loading feedback**
   - **Files:** `apps/admin/src/components/variants/VariantsHeader.tsx`, `apps/admin/src/app/(admin)/products/variants/page.tsx`.
   - **Requirements:** Search by product must query correctly immediately after switching from variant search (and vice versa), including when query text is already present. Reset page to 1 when query or search field changes; keep URL params synchronized. Show an accessible pending/loading indicator while navigation/query is in flight, without losing the entered text or blocking typing. Handle empty query and no-match results.
   - **Verify:** Add a regression test or documented reproducible test for product → variant → product switching with existing text; verify loading state appears during a delayed navigation, URL has the expected `q`/`by`/`page`, and results match the selected field. Run admin typecheck/tests.

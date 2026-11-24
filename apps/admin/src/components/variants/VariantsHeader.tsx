@@ -1,7 +1,8 @@
 "use client";
 
 import CreateVariantModal from "@/components/variants/CreateVariantModal";
-import { Plus, Search } from "lucide-react";
+import { buildVariantsSearchParams } from "@/lib/variants-search-params";
+import { Loader2, Plus, Search } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 
@@ -22,21 +23,21 @@ interface Props {
 
 export default function VariantsHeader({ products, searchBy }: Props) {
 	const [modalOpen, setModalOpen] = useState(false);
+	// Controlled text so entered text is never lost, even while the URL
+	// updates during a transition.
+	const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const [, startTransition] = useTransition();
+	const [isPending, startTransition] = useTransition();
 
 	const handleSearch = useCallback(
 		(value: string, by?: string) => {
-			const params = new URLSearchParams(searchParams.toString());
-			if (value) {
-				params.set("q", value);
-			} else {
-				params.delete("q");
-			}
-			params.set("by", by ?? searchBy);
-			params.delete("page");
+			const params = buildVariantsSearchParams({
+				current: searchParams,
+				q: value,
+				by: by ?? searchBy,
+			});
 			startTransition(() => {
 				router.replace(`${pathname}?${params.toString()}`);
 			});
@@ -50,15 +51,18 @@ export default function VariantsHeader({ products, searchBy }: Props) {
 				<h1 className="text-3xl font-bold text-slate-900 mr-auto">
 					Product Variants
 				</h1>
-				<div className="flex items-center border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+				<div
+					className="flex items-center border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500"
+					aria-busy={isPending}
+				>
+					{/* key={searchBy} remounts both controls when the field
+					    switches, so the query text always matches the selected
+					    field immediately. */}
 					<select
-						defaultValue={searchBy}
-						onChange={(e) =>
-							handleSearch(
-								searchParams.get("q") ?? "",
-								e.target.value,
-							)
-						}
+						key={searchBy}
+						value={searchBy}
+						onChange={(e) => handleSearch(query, e.target.value)}
+						aria-label="Search field"
 						className="border-r border-slate-300 bg-slate-50 text-sm text-slate-600 px-2 py-2 focus:outline-none">
 						<option value="variant">Variant</option>
 						<option value="product">Product</option>
@@ -66,17 +70,38 @@ export default function VariantsHeader({ products, searchBy }: Props) {
 					<div className="relative">
 						<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
 						<input
+							key={searchBy}
 							type="search"
-							defaultValue={searchParams.get("q") ?? ""}
-							onChange={(e) => handleSearch(e.target.value)}
+							value={query}
+							onChange={(e) => {
+								setQuery(e.target.value);
+								handleSearch(e.target.value);
+							}}
 							placeholder={
 								searchBy === "product"
 									? "Search by product…"
 									: "Search by variant…"
 							}
-							className="pl-9 pr-4 py-2 text-sm w-56 focus:outline-none"
+							aria-label={
+								searchBy === "product"
+									? "Search by product"
+									: "Search by variant"
+							}
+							className="pl-9 pr-8 py-2 text-sm w-56 focus:outline-none"
 						/>
+						{isPending && (
+							<Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" aria-hidden="true" />
+						)}
 					</div>
+					{isPending && (
+						<span
+							role="status"
+							aria-live="polite"
+							className="sr-only"
+						>
+							Loading variants…
+						</span>
+					)}
 				</div>
 				<button
 					onClick={() => setModalOpen(true)}
