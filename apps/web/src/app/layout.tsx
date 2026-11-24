@@ -8,15 +8,10 @@ import { GoogleAnalytics } from "@/components/ui/GoogleAnalytics";
 import { BetterStackRUM } from "@/components/ui/BetterStackRUM";
 import { AuthProvider } from "@/modules/user/client/AuthProvider";
 import type { Metadata, Viewport } from "next";
-import dynamic from "next/dynamic";
 import { headers } from "next/headers";
 import "./globals.css";
 import localFont from "next/font/local";
 import { cn } from "@/lib/utils";
-
-const MobileViewportGuard = dynamic(
-  () => import("@/components/warning-modal/MobileViewportGuard")
-);
 
 const manrope = localFont({
   src: "../../public/fonts/manrope/Manrope-VariableFont_wght.woff2",
@@ -111,7 +106,6 @@ export default async function RootLayout({
           <AuthProvider>
             <FlyToCart />
             {children}
-            <MobileViewportGuard />
             <ToastProvider />
             <CookieConsentLazy />
             <StoreHydrator />
