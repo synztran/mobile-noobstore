@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/haritran/source/noobstore/mobile-noobstore/apps/web
+
+
+ Test Files  61 passed (61)
+      Tests  587 passed (587)
+   Start at  02:40:38
+   Duration  2.22s (transform 1.48s, setup 611ms, import 3.06s, tests 1.11s, environment 5ms)
+

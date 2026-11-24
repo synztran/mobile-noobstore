@@ -1,0 +1,186 @@
+apps/web/src/modules/cart/client/hooks/useCartStore.ts:110:          console.log(
+apps/web/src/modules/cart/client/hooks/useCartStore.ts:120:          console.log("isPreOrder", isPreOrder);
+apps/web/src/modules/cart/server/service.ts:510:        console.error("[cart-service] child insert error:", childErr);
+apps/web/src/middleware.ts:206:        console.warn("[middleware] API rate limiter unavailable:", err);
+apps/web/src/middleware.ts:226:    console.error("[middleware] unexpected error:", err);
+apps/web/src/modules/cart/server/reminders.ts:101:		console.error("[cart/GET] stale check error:", err);
+apps/web/src/modules/payments/server/drain-alerts.ts:9:  if (error) { console.error("[payment-security] alert queue unavailable"); return; }
+apps/web/src/modules/payments/server/drain-alerts.ts:18:    } catch { console.error("[payment-security] Telegram unavailable; queued for retry"); }
+apps/web/src/modules/payments/server/security-alerts.ts:8:    if (error) console.error("[payment-security] cannot queue alert", kind);
+apps/web/src/modules/payments/server/security-alerts.ts:9:  } catch { console.error("[payment-security] cannot queue alert", kind); }
+apps/web/src/modules/payments/server/evidence.ts:50:  } catch { console.error("[payment-evidence] Telegram delivery failed", evidence.id); }
+apps/web/src/modules/payments/server/evidence.ts:53:  if (saved.error) console.error("[payment-evidence] delivery audit failed", evidence.id);
+apps/web/src/hooks/useShippingForm.ts:330:          console.warn(
+apps/web/src/hooks/useShippingForm.ts:347:        console.warn(
+apps/web/src/hooks/useShippingForm.ts:656:          console.log("combined", combined, combined.getTime(), Date.now())
+apps/web/src/app/api/reviews/recent/route.ts:65:    console.error("[reviews recent] error:", err);
+apps/web/src/modules/gacha/server/missions.ts:254:    console.error("[mission/progress] rpc error:", error);
+apps/web/src/modules/gacha/server/missions.ts:295:      console.error("[triggerMission] rpc error:", error);
+apps/web/src/modules/gacha/server/missions.ts:306:    console.error("[triggerMission] unexpected error:", err);
+apps/web/src/modules/gacha/server/draw.ts:73:    console.error("[gacha POST] token query error:", tokenError);
+apps/web/src/modules/gacha/server/draw.ts:197:    console.error("[gacha POST] post-draw side-effects failed:", err);
+apps/web/src/modules/gacha/server/draw.ts:209:        console.error("[gacha POST] failed to earn points:", err);
+apps/web/src/modules/gacha/server/draw.ts:219:    console.error("[gacha POST] play_count mission trigger failed:", err);
+apps/web/src/app/api/analytics/collect/route.ts:88:		console.error("[analytics/collect] send failed:", result.error);
+apps/web/src/app/(main)/services/page.tsx:50:    console.error("[services] booking config unavailable:", error);
+apps/web/src/modules/products/server/ssr.ts:71:      console.error("[getBrands] Supabase error:", error.message);
+apps/web/src/modules/products/server/ssr.ts:90:    console.error("[getBrands] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:111:      console.error("[getCategories] Supabase error:", error.message);
+apps/web/src/modules/products/server/ssr.ts:119:    console.error("[getCategories] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:433:    console.error("[getProducts] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:471:      console.error("[getProductSeoData] Supabase error:", error.message);
+apps/web/src/modules/products/server/ssr.ts:479:    console.error("[getProductSeoData] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:511:    console.error("[getNoteworthyProducts] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:553:      console.error("[getRelatedProducts] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:605:        console.error(
+apps/web/src/modules/products/server/ssr.ts:843:          console.error(
+apps/web/src/modules/products/server/ssr.ts:981:    console.error("[getQuickPickData] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:1022:      console.error(`[${cacheKey}] Supabase error:`, error.message);
+apps/web/src/modules/products/server/ssr.ts:1044:    console.error(`[${cacheKey}] Unexpected error:`, err);
+apps/web/src/modules/products/server/ssr.ts:1328:    console.error("[getComponentRules] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:1403:    console.error("[getProductDetail] Unexpected error:", err);
+apps/web/src/modules/products/server/ssr.ts:1488:      console.warn(
+apps/web/src/modules/products/server/ssr.ts:1651:    console.error("[getProductBySlug] Unexpected error:", err);
+apps/web/src/app/api/wishlist/route.ts:29:    console.error("[wishlist] unexpected error:", err);
+apps/web/src/app/api/shipping/distance/route.ts:83:    console.error("geocodeAddress error", { error: err, query });
+apps/web/src/app/api/shipping/distance/route.ts:102:      console.warn(
+apps/web/src/app/api/shipping/distance/route.ts:112:      console.warn(
+apps/web/src/app/api/shipping/distance/route.ts:122:      console.warn("Google Distance Matrix element status", element?.status);
+apps/web/src/app/api/shipping/distance/route.ts:130:    console.error("Google Distance Matrix request failed", err);
+apps/web/src/app/api/shipping/distance/route.ts:150:      console.warn("Mapbox Directions HTTP error", {
+apps/web/src/app/api/shipping/distance/route.ts:159:      console.warn("Mapbox Directions failed", {
+apps/web/src/app/api/shipping/distance/route.ts:181:    console.error("Mapbox Directions request failed", {
+apps/web/src/app/api/shipping/distance/route.ts:252:          console.error("geocode loop error", err, q);
+apps/web/src/app/api/shipping/distance/route.ts:318:            console.warn("Could not geocode store address", storeQuery);
+apps/web/src/app/api/shipping/distance/route.ts:390:    console.error("/api/shipping/distance error", err, { body });
+apps/web/src/app/api/wishlist/add/route.ts:45:    console.error("[wishlist/add] unexpected error:", err);
+apps/web/src/lib/email/email.service.ts:34:  console.warn(`[email] payment reminder not sent for order ${orderNumber}: delivery paused`);
+apps/web/src/lib/email/email.service.ts:58:  console.warn("[email] pickup code email not sent: delivery paused");
+apps/web/src/lib/email/email.service.ts:93:  console.warn("[email] shipping update email not sent: delivery paused");
+apps/web/src/lib/email/email.service.ts:201:  console.warn("[email] order status email not sent: delivery paused");
+apps/web/src/app/api/shipping/v2-distance/route.ts:83:    console.error("geocodeAddress error", { error: err, query });
+apps/web/src/app/api/shipping/v2-distance/route.ts:102:      console.warn(
+apps/web/src/app/api/shipping/v2-distance/route.ts:112:      console.warn(
+apps/web/src/app/api/shipping/v2-distance/route.ts:122:      console.warn("Google Distance Matrix element status", element?.status);
+apps/web/src/app/api/shipping/v2-distance/route.ts:130:    console.error("Google Distance Matrix request failed", err);
+apps/web/src/app/api/shipping/v2-distance/route.ts:198:          console.error("geocode loop error", err, q);
+apps/web/src/app/api/shipping/v2-distance/route.ts:264:            console.warn("Could not geocode store address", storeQuery);
+apps/web/src/app/api/shipping/v2-distance/route.ts:316:    console.error("/api/shipping/distance error", err, { body });
+apps/web/src/app/api/wishlist/remove/route.ts:42:    console.error("[wishlist/remove] unexpected error:", err);
+apps/web/src/modules/products/server/queries.ts:462:    console.warn(
+apps/web/src/modules/products/server/queries.ts:703:      console.warn(
+apps/web/src/lib/betterstack.ts:74:    console.error("[betterstack] BETTERSTACK_TOKEN is not set — skipping.");
+apps/web/src/modules/checkout/server/submit-order.ts:146:      console.error("[submit] checkout idempotency lookup failed", {
+apps/web/src/modules/checkout/server/submit-order.ts:658:      console.error("[submit] checkout database RPC failed", {
+apps/web/src/modules/checkout/server/submit-order.ts:688:      console.error("[submit] failed to invalidate product cache:", cacheErr);
+apps/web/src/modules/checkout/server/submit-order.ts:775:        console.error(
+apps/web/src/modules/checkout/server/submit-order.ts:812:        console.error(
+apps/web/src/modules/checkout/server/submit-order.ts:902:          console.error(
+apps/web/src/modules/checkout/server/submit-order.ts:909:      console.error(
+apps/web/src/modules/checkout/server/submit-order.ts:926:      console.warn(
+apps/web/src/modules/checkout/server/submit-order.ts:982:        console.error("[submit] failed to process gacha missions:", missionErr);
+apps/web/src/modules/checkout/server/submit-order.ts:992:    console.error("[submit] unexpected error:", {
+apps/web/src/app/api/products/[slug]/reviews/upload/route.ts:95:        console.error("[review upload error]:", uploadErr);
+apps/web/src/app/api/products/[slug]/reviews/upload/route.ts:108:    console.error("[review-upload] unexpected error:", err);
+apps/web/src/app/api/cron/health-check/route.ts:22:  try { await drainPaymentSecurityAlerts(); } catch { console.error("[payment-security] alert drain failed"); }
+apps/web/src/app/api/cron/health-check/route.ts:72:    console.error(
+apps/web/src/modules/products/server/sale.ts:85:    console.error("[getSaleProducts] Unexpected error:", err);
+apps/web/src/app/api/user/orders/[id]/route.ts:401:    console.error("[order detail] unexpected error:", err);
+apps/web/src/app/api/products/[slug]/reviews/purchase-check/route.ts:127:    console.error("[purchase-check] unexpected error:", err);
+apps/web/src/modules/user/client/AuthProvider.tsx:122:      console.error("Failed to fetch profile:", err);
+apps/web/src/app/api/user/orders/route.ts:299:    console.error("[orders] unexpected error:", err);
+apps/web/src/app/api/cron/compute-ranks/route.ts:77:        console.error(`[compute-ranks] Failed for user ${user.id}:`, userErr);
+apps/web/src/app/api/cron/compute-ranks/route.ts:83:    console.error("[compute-ranks] Unexpected error:", err);
+apps/web/src/app/api/products/[slug]/reviews/route.ts:154:    console.error("[reviews] unexpected error:", err);
+apps/web/src/app/api/products/[slug]/reviews/route.ts:275:    console.error("[reviews] unexpected error:", err);
+apps/web/src/app/api/admin/points/adjust/route.ts:89:    console.error("[admin/points/adjust] unexpected error:", err);
+apps/web/src/app/api/products/[slug]/configurator/route.ts:28:    console.error("[configurator] unexpected error:", err);
+apps/web/src/app/api/notifications/route.ts:77:		console.error("[notifications] unexpected error:", err);
+apps/web/src/app/api/admin/products/route.ts:130:    if (error) console.error("[admin/products] failed to roll back product", { productId, error });
+apps/web/src/app/api/notifications/subscribe/route.ts:73:		console.error("[notifications/subscribe] unexpected error:", err);
+apps/web/src/app/api/notifications/unsubscribe/route.ts:61:		console.error("[notifications/unsubscribe] unexpected error:", err);
+apps/web/src/app/api/rewards/redeem/route.ts:173:      console.error("[rewards/redeem] atomic redemption failed", {
+apps/web/src/app/api/rewards/redeem/route.ts:300:        console.error("[rewards/redeem] voucher insert failed", insertError);
+apps/web/src/app/api/rewards/redeem/route.ts:381:    console.error("[rewards/redeem] request failed", err);
+apps/web/src/app/api/health/route.ts:12:      console.error("[health] auth probe failed", authError.code);
+apps/web/src/app/api/health/route.ts:24:      console.error("[health] dependency probe failed", {
+apps/web/src/app/api/health/route.ts:33:    console.error(
+apps/web/src/app/api/notifications/push-self/route.ts:129:		console.error("[notifications/push-self] unexpected error:", err);
+apps/web/src/app/api/products/[slug]/route.ts:26:    console.error("Product detail error:", err);
+apps/web/src/app/api/gift-cards/redeem/route.ts:95:    console.error("[gift-cards/redeem] unexpected error:", err);
+apps/web/src/app/api/notifications/read/route.ts:88:		console.error("[notifications/read] unexpected error:", err);
+apps/web/src/app/api/auth/signin/route.ts:26:    console.warn("[signin] rate limiter unavailable:", rateLimitError);
+apps/web/src/app/api/home/hero/route.ts:39:			console.error("[hero] query error:", error);
+apps/web/src/app/api/home/hero/route.ts:56:		console.error("[hero] error:", err);
+apps/web/src/lib/telegram/telegram.service.ts:18:		console.warn(
+apps/web/src/lib/telegram/telegram.service.ts:37:		console.error("[Telegram] Failed to send message:", res.status, body);
+apps/web/src/lib/telegram/telegram.service.ts:350:		console.warn("[Telegram] Rate-limit topic is not configured; warning skipped.");
+apps/web/src/app/api/home/creators/route.ts:45:		console.error("[creators] error:", err);
+apps/web/src/app/api/auth/signup/route.ts:26:    console.warn("[signup] rate limiter unavailable:", rateLimitError);
+apps/web/src/app/api/auth/signup/route.ts:71:      console.error("[signup] Telegram notification failed:", notifyErr);
+apps/web/src/app/api/home/trust-props/route.ts:43:		console.error("[trust props] error:", err);
+apps/web/src/app/api/security/csp-report/route.ts:29:      console.info("[csp-report] violation", { directive: safeDirective });
+apps/web/src/app/api/home/testimonials/route.ts:50:      console.warn("[testimonials] Redis read failed; using Next cache", error);
+apps/web/src/app/api/home/testimonials/route.ts:58:        console.warn(
+apps/web/src/app/api/home/testimonials/route.ts:69:          console.warn("[testimonials] Redis write failed", error);
+apps/web/src/app/api/home/testimonials/route.ts:85:    console.error("[testimonials] error:", err);
+apps/web/src/app/api/home/community-gallery/route.ts:56:		console.error("[community gallery] error:", err);
+apps/web/src/app/api/cart/items/[id]/route.ts:93:    console.error("[cart/items/PATCH] error:", err);
+apps/web/src/app/api/cart/items/[id]/route.ts:121:    console.error("[cart/items/DELETE] error:", err);
+apps/web/src/app/api/support/tickets/[id]/route.ts:99:    console.error("[support] GET detail error:", err);
+apps/web/src/app/api/webhooks/vercel/route.ts:42:    console.error(
+apps/web/src/app/api/cart/items/route.ts:66:    console.error("[cart/items/POST] error:", err);
+apps/web/src/app/api/cart/route.ts:40:    console.error("[cart/GET] error:", err);
+apps/web/src/app/api/cart/route.ts:77:    console.error("[cart/DELETE] error:", err);
+apps/web/src/lib/rank-server.ts:115:    console.error("[computeRank] Failed to update rank:", updateError);
+apps/web/src/lib/rank-server.ts:131:    console.error("[computeRank] Failed to record history:", historyError);
+apps/web/src/app/api/support/tickets/route.ts:91:          console.error("[support] attachment insert error:", attachError);
+apps/web/src/app/api/support/tickets/route.ts:98:    console.error("[support] POST error:", err);
+apps/web/src/app/api/support/tickets/route.ts:152:    console.error("[support] GET error:", err);
+apps/web/src/app/auth/callback/route.ts:32:			console.warn("[auth-callback] skip telegram notify", {
+apps/web/src/app/auth/callback/route.ts:61:				console.error(
+apps/web/src/app/api/points/gift-card/redeem/route.ts:69:    console.error("[gift-card/redeem] unexpected error:", err);
+apps/web/src/app/api/jobs/cancel-expired-orders/route.ts:38:			console.error("[cancel-expired-orders] RPC error:", error.message);
+apps/web/src/app/api/jobs/cancel-expired-orders/route.ts:51:			console.error(
+apps/web/src/app/api/jobs/cancel-expired-orders/route.ts:57:		console.log(
+apps/web/src/app/api/jobs/cancel-expired-orders/route.ts:68:				console.error(
+apps/web/src/app/api/jobs/cancel-expired-orders/route.ts:81:		console.error("[cancel-expired-orders] Unexpected error:", err);
+apps/web/src/app/api/checkin/claim/route.ts:26:    console.error("[checkin/claim] failed", error);
+apps/web/src/app/api/vouchers/eligible/route.ts:86:      console.error("[GET /api/vouchers/eligible] error:", error);
+apps/web/src/app/api/vouchers/eligible/route.ts:215:    console.error("[GET /api/vouchers/eligible] Unexpected error:", err);
+apps/web/src/lib/auth/requireCronSecret.ts:20:    console.error(
+apps/web/src/app/api/jobs/payment-reminders/route.ts:36:			console.error("[payment-reminders] RPC error:", error.message);
+apps/web/src/app/api/jobs/payment-reminders/route.ts:54:			console.error(
+apps/web/src/app/api/jobs/payment-reminders/route.ts:84:				console.error(
+apps/web/src/app/api/jobs/payment-reminders/route.ts:92:		console.log(
+apps/web/src/app/api/jobs/payment-reminders/route.ts:103:		console.error("[payment-reminders] Unexpected error:", err);
+apps/web/src/app/api/vouchers/route.ts:64:      console.error("[GET /api/vouchers] Database error:", error);
+apps/web/src/app/api/vouchers/route.ts:92:    console.error("[GET /api/vouchers] Unexpected error:", err);
+apps/web/src/app/api/checkin/rewards/route.ts:19:    console.error("[checkin/rewards] failed", error);
+apps/web/src/lib/auth/session-cookie.ts:237:    console.warn(
+apps/web/src/app/api/vouchers/remove/route.ts:17:		console.error("[POST /api/vouchers/remove] Unexpected error:", err);
+apps/web/src/app/api/newsletter/subscribe/route.ts:43:    console.error("[newsletter/subscribe] error:", err);
+apps/web/src/app/api/checkin/calendar/route.ts:20:    console.error("[checkin/calendar] failed", error);
+apps/web/src/app/api/orders/[id]/route.ts:44:			console.error(
+apps/web/src/app/api/orders/[id]/route.ts:68:				console.error("[orders by id] query error:", byIdError);
+apps/web/src/app/api/orders/[id]/route.ts:121:		console.error("Error fetching order:", error);
+apps/web/src/app/api/orders/[id]/pickup-code/route.ts:151:      console.error("[pickup-code] update error:", updateError);
+apps/web/src/app/api/orders/[id]/pickup-code/route.ts:164:    console.error("[pickup-code] error:", error);
+apps/web/src/app/api/vouchers/apply/route.ts:510:    console.error("[POST /api/vouchers/apply] Unexpected error:", err);
+apps/web/src/lib/redis/cache.ts:170:  console.warn(
+apps/web/src/lib/redis/cache.ts:208:    console.warn(
+apps/web/src/app/api/orders/[id]/cancel/route.ts:71:      console.error(
+apps/web/src/app/api/orders/[id]/cancel/route.ts:88:      console.error("[cancel order] update error:", updateError);
+apps/web/src/app/api/orders/[id]/cancel/route.ts:100:      console.error("[cancel order] cache invalidation failed:", cacheErr);
+apps/web/src/app/api/orders/[id]/cancel/route.ts:114:      console.error("[cancel order] Telegram notification failed:", notifyErr);
+apps/web/src/app/api/orders/[id]/cancel/route.ts:119:    console.error("[cancel order] error:", error);
+apps/web/src/app/api/orders/[id]/return/route.ts:117:      console.error("[return order] update error:", updateError);
+apps/web/src/app/api/orders/[id]/return/route.ts:135:      console.error("[return order] Telegram notification failed:", notifyErr);
+apps/web/src/app/api/orders/[id]/return/route.ts:194:        console.error("[return order] admin push notification failed:", pushErr);
+apps/web/src/app/api/orders/[id]/return/route.ts:200:    console.error("[return order] error:", error);
+apps/web/src/app/api/orders/[id]/payment/qr/route.ts:26:    after(async () => { try { await deliverEvidence(evidence); } catch { console.error("[payment-evidence] delivery unavailable", evidence.id); } });
+apps/web/src/components/ui/ServiceWorkerRegister.tsx:11:          console.log(
+apps/web/src/components/ui/ServiceWorkerRegister.tsx:17:          console.error("Service Worker registration failed:", error);
+apps/web/src/components/ui/map.tsx:821:          console.error("Error getting location:", error);
+apps/web/src/lib/home-render-data.ts:16:		console.error(`[home] ${label} unavailable; rendering fallback`, error);
+apps/web/src/lib/payment-information.ts:31:		console.error("[getPaymentInformation] Supabase error:", error.message);
