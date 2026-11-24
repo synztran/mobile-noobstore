@@ -2,13 +2,15 @@ import ProductsClient from "@/components/products/ProductsClient";
 import ProductsHeader from "@/components/products/ProductsHeader";
 import type { ProductCardProps } from "@/components/products/ProductCard";
 import { isInStock } from "@/lib/product-utils";
+import {
+  buildProductsListQuery,
+  PRODUCTS_PAGE_SIZE,
+} from "@/lib/products-list-query";
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = {
   title: "Products - NoobStore Admin",
 };
-
-const PAGE_SIZE = 20;
 
 export default async function ProductsPage({
   searchParams,
@@ -21,55 +23,17 @@ export default async function ProductsPage({
   }>;
 }) {
   const { q, page, product_type, exclude_sold_out } = await searchParams;
-  const allowedProductTypes = new Set([
-    "standard",
-    "kit",
-    "component",
-    "gift",
-    "all",
-  ]);
-  const selectedProductType =
-    allowedProductTypes.has(product_type ?? "all") && product_type !== "all"
-      ? product_type
-      : undefined;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10));
-  const from = (currentPage - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
 
   const supabase = getAdminClient();
 
-  let query = supabase
-    .from("products")
-    .select(
-      `
-			id, name, slug, base_price, stock_quantity, max_quantity, product_type, brand, description, is_used, thumbnail, attributes, is_active, parent_product_id, is_pre_order, images, sold_count,
-			categories(id, name),
-			product_variants(
-				id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config
-			),
-			product_components!product_components_parent_product_id_fkey(
-				id, component_group, is_required, max_quantity,
-				component_product:products!product_components_component_product_id_fkey(
-					id, name, thumbnail,
-					product_variants(
-						id, variant_name, price_adjustment, stock_quantity, is_pre_order, pre_order_config
-					)
-				)
-			)
-		`,
-      { count: "exact" }
-    )
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  let categoryQuery = supabase.from("categories").select("id, name");
+  let query = buildProductsListQuery(supabase, {
+    page: currentPage,
+    productType: product_type,
+  });
 
   if (q) {
     query = query.ilike("name", `%${q}%`);
-  }
-
-  if (selectedProductType) {
-    query = query.eq("product_type", selectedProductType);
   }
 
   const { data: rows, error, count } = await query;
@@ -82,9 +46,9 @@ export default async function ProductsPage({
 
   const totalPages = Math.max(
     1,
-    Math.ceil((excludeSoldOut ? products.length : (count ?? 0)) / PAGE_SIZE)
+    Math.ceil((excludeSoldOut ? products.length : (count ?? 0)) / PRODUCTS_PAGE_SIZE)
   );
-  const { data: categories } = await categoryQuery;
+  const { data: categories } = await supabase.from("categories").select("id, name");
 
   if (error) {
     console.error("Error fetching products:", error);
