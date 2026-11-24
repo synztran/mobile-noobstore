@@ -38,7 +38,7 @@ export function PushNotificationPrompt() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-24 left-4 right-4 z-[1000] animate-slide-up">
+    <div className="fixed bottom-24 left-4 right-4 z-[1000] animate-slide-up md:bottom-6 md:left-1/2 md:right-auto md:w-[calc(100%-2rem)] md:max-w-md md:-translate-x-1/2">
       <div className="relative rounded-2xl bg-surface px-4 pb-4 pt-3 shadow-ambient-lg">
         <button
           aria-label="Đóng"
