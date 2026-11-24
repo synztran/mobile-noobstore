@@ -6,15 +6,15 @@ import { Banknote, Check, LayoutGrid, RotateCcw, Store } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface FilterState {
-  category: string | null;
-  brand: string | null;
+  category: string[];
+  brand: string[];
   priceMin: number;
   priceMax: number;
 }
 
 const DEFAULT_FILTER_STATE: FilterState = {
-  category: null,
-  brand: null,
+  category: [],
+  brand: [],
   priceMin: 0,
   priceMax: 0,
 };
@@ -36,12 +36,8 @@ export function FilterOverlay({
   categories = [],
   brands = [],
 }: FilterOverlayProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    initialState?.category ?? null
-  );
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(
-    initialState?.brand ?? null
-  );
+  const [selectedCategory, setSelectedCategory] = useState<string[]>(initialState?.category ?? []);
+  const [selectedBrand, setSelectedBrand] = useState<string[]>(initialState?.brand ?? []);
   const [selectedPriceMin, setSelectedPriceMin] = useState<number>(
     initialState?.priceMin ?? 0
   );
@@ -72,15 +68,14 @@ export function FilterOverlay({
 
   const activeCount = useMemo(() => {
     let n = 0;
-    if (selectedCategory) n++;
-    if (selectedBrand) n++;
+    n += selectedCategory.length + selectedBrand.length;
     if (selectedPriceMin > 0 || selectedPriceMax > 0) n++;
     return n;
   }, [selectedCategory, selectedBrand, selectedPriceMin, selectedPriceMax]);
 
   useEffect(() => {
-    setSelectedCategory(initialState?.category ?? null);
-    setSelectedBrand(initialState?.brand ?? null);
+    setSelectedCategory(initialState?.category ?? []);
+    setSelectedBrand(initialState?.brand ?? []);
     setSelectedPriceMin(initialState?.priceMin ?? 0);
     setSelectedPriceMax(initialState?.priceMax ?? 0);
   }, [
@@ -124,8 +119,8 @@ export function FilterOverlay({
           </div>
           <button
             onClick={() => {
-              setSelectedCategory(null);
-              setSelectedBrand(null);
+              setSelectedCategory([]);
+              setSelectedBrand([]);
               setSelectedPriceMin(0);
               setSelectedPriceMax(0);
             }}
@@ -159,10 +154,10 @@ export function FilterOverlay({
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => setSelectedCategory(null)}
+                  onClick={() => setSelectedCategory([])}
                   className={clsx(
                     "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
-                    selectedCategory === null
+                    selectedCategory.length === 0
                       ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
                       : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
                   )}
@@ -173,18 +168,17 @@ export function FilterOverlay({
                   <button
                     key={cat.id}
                     onClick={() =>
-                      setSelectedCategory(
-                        cat.slug === selectedCategory ? null : cat.slug
-                      )
+                      setSelectedCategory((current) => current.includes(cat.slug) ? current.filter((v) => v !== cat.slug) : [...current, cat.slug])
                     }
                     className={clsx(
                       "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
-                      selectedCategory === cat.slug
+                      selectedCategory.includes(cat.slug)
                         ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
                         : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
                     )}
                   >
                     {cat.name}
+                    {selectedCategory.includes(cat.slug) && <Check className="ml-1 inline h-3 w-3" />}
                   </button>
                 ))}
               </div>
@@ -212,10 +206,10 @@ export function FilterOverlay({
                   className="flex max-h-[130px] flex-wrap gap-2 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]"
                 >
                   <button
-                    onClick={() => setSelectedBrand(null)}
+                    onClick={() => setSelectedBrand([])}
                     className={clsx(
                       "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
-                      selectedBrand === null
+                      selectedBrand.length === 0
                         ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
                         : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
                     )}
@@ -226,16 +220,16 @@ export function FilterOverlay({
                     <button
                       key={b}
                       onClick={() =>
-                        setSelectedBrand(selectedBrand === b ? null : b)
+                        setSelectedBrand((current) => current.includes(b) ? current.filter((v) => v !== b) : [...current, b])
                       }
                       className={clsx(
                         "rounded-full border px-4 py-2 text-sm font-bold transition-all duration-200",
-                        selectedBrand === b
+                        selectedBrand.includes(b)
                           ? "border-primary bg-primary text-on-primary shadow-sm shadow-primary/20"
                           : "border-outline-variant/40 bg-transparent text-on-surface-variant hover:border-outline hover:text-on-surface"
                       )}
                     >
-                      {b}
+                      {b}{selectedBrand.includes(b) && <Check className="ml-1 inline h-3 w-3" />}
                     </button>
                   ))}
                 </div>

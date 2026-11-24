@@ -49,8 +49,8 @@ export async function GET(req: NextRequest) {
 
   // Validate and sanitize input parameters
   const search = sp.get("search")?.trim().slice(0, 100) ?? "";
-  const categorySlug = sp.get("category")?.trim().slice(0, 100) ?? "";
-  const brand = sp.get("brand")?.trim().slice(0, 100) ?? "";
+  const categorySlug = [...new Set(sp.getAll("category").map((v) => v.trim().slice(0, 100)).filter(Boolean))];
+  const brand = [...new Set(sp.getAll("brand").map((v) => v.trim().slice(0, 100)).filter(Boolean))];
   const productTypeParam =
     sp.get("productType")?.trim() ?? "standard,kit,component";
   const productTypes = productTypeParam

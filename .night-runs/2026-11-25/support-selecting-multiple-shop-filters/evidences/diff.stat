@@ -1,0 +1,12 @@
+ apps/web/src/app/(main)/shop/page.tsx              |  8 ++--
+ apps/web/src/app/api/products/route.ts             |  4 +-
+ apps/web/src/lib/redis/cache.ts                    |  8 ++--
+ .../src/modules/products/client/shop-infinite.ts   | 20 +++++----
+ .../src/modules/products/client/useShopControls.ts | 24 +++++------
+ apps/web/src/modules/products/server/queries.ts    | 29 +++++++------
+ .../modules/products/ui/product/FilterOverlay.tsx  | 48 ++++++++++------------
+ .../products/ui/search/SearchPageClient.tsx        |  2 +-
+ .../src/modules/products/ui/shop/ShopControls.tsx  |  6 +--
+ .../modules/products/ui/shop/ShopFilterPanel.tsx   | 37 ++++++++---------
+ .../modules/products/ui/shop/ShopPageClient.tsx    |  2 +-
+ 11 files changed, 91 insertions(+), 97 deletions(-)

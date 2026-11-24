@@ -71,22 +71,22 @@
   - **Requirements:** Produce two distinct desktop card concepts suitable for the current product data (image, name, price/discount, stock/variant state, rating when real data exists, and action). Keep mobile behavior out of scope; avoid fabricating product claims. Include responsive constraints and preview instructions; do not ship either concept into production.
   - **Verify:** Preview both at common desktop widths and a narrow fallback width; verify readable hierarchy, complete data/action states, accessible controls and no overflow. Confirm production files remain unchanged.
 
-- [ ] **Investigate blocked Google Analytics script behavior**
+- [!] **Investigate blocked Google Analytics script behavior**
   - **Files:** `apps/web/src/components/ui/GoogleAnalytics.tsx`, analytics configuration/env references, CSP/header configuration and documentation/tests if needed.
   - **Requirements:** Determine whether `ERR_BLOCKED_BY_CONTENT_BLOCKER` is caused by a browser extension/content blocker or by app configuration using reproducible checks. Do not attempt to bypass blockers. Ensure the app handles blocked script loading without runtime errors and analytics remains consent/configuration compliant. Document what is and is not fixable in application code.
   - **Verify:** Test with script blocked and allowed; app must render without uncaught errors, and GA initializes only under existing consent/config rules. Add a test for failure handling where practical and document the diagnosis.
 
-- [ ] **Trace and diagnose `backendManager.js` renderer error**
+- [!] **Trace and diagnose `backendManager.js` renderer error**
   - **Files:** Identify the package/extension/runtime source from source maps, lockfile and browser stack; likely investigate `apps/web/package.json`, `yarn.lock`, `apps/web/src/app/layout.tsx`, product/configurator renderers and relevant integration tests. Change only the verified source file.
   - **Requirements:** Reproduce `Uncaught TypeError: Cannot read properties of undefined (reading 'has')` at `registerRenderer (backendManager.js:1:13379)`, identify whether it originates in app code, a dependency, browser extension, or injected third-party script, then fix/update configuration only when attributable to this app and compatible without adding/upgrading packages absent approval. If external, document a reproducible isolation result instead of adding speculative guards.
   - **Verify:** Provide reproduction/isolation steps and a regression test or browser check for the affected renderer. Confirm no new console error with extensions disabled and identify behavior with the suspected extension/integration enabled. Run web typecheck/tests if app code changes.
 
-- [ ] **Find and remove only obsolete CSP-warning console logs**
+- [!] **Find and remove only obsolete CSP-warning console logs**
   - **Files:** Search `apps/web/src/**/*.{ts,tsx,js,jsx}` and relevant root/app scripts for `Applying inline style violates the following Content Security Policy directive`; inspect hits and dynamically generated sources before changing.
   - **Requirements:** Trace the exact log source and determine whether it is an intentional diagnostic or production noise. Remove only redundant application-owned `console.log` statements that produce this message; do not suppress CSP violations, remove meaningful error/warning logs, or edit dependencies/vendor code blindly. If the message is browser-generated and no app log exists, document that and make no unrelated cleanup.
   - **Verify:** Search again for the exact message and related logging source; reproduce with current CSP configuration and confirm real CSP violations remain observable. Run web lint/typecheck and tests for changed files.
 
-- [ ] **Support selecting multiple shop filters**
+- [x] **Support selecting multiple shop filters**
   - **Files:** `apps/web/src/modules/products/ui/product/FilterOverlay.tsx`, `apps/web/src/modules/products/ui/shop/ShopFilterPanel.tsx`, `apps/web/src/modules/products/client/` shop query/state helpers, and relevant shop route/page/API tests.
   - **Requirements:** Confirm which filters currently enforce single selection and implement multi-select for the intended category/brand filters consistently on mobile and desktop. Update `FilterState`, URL serialization/parsing, apply/clear behavior and query filtering together. Preserve price range semantics, deep links/back-forward, selected counts, duplicate brand normalization, empty selections and existing single-value URLs as backward-compatible input. Clarify OR-within-group and AND-across-groups semantics in UI/code.
   - **Verify:** Unit tests cover multiple values, URL round-trip, legacy single-value URL, clear/apply, back-forward and correct product result semantics. Manually verify mobile overlay and desktop panel; run web typecheck/tests.

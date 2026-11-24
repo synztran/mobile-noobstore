@@ -195,7 +195,7 @@ export function ShopPageClient({
 
   const listName = useMemo(() => {
     if (filters.search) return `search:${filters.search}`;
-    if (filters.category) return `category:${filters.category}`;
+    if (filters.category?.length) return `category:${(Array.isArray(filters.category) ? filters.category : [filters.category]).join(",")}`;
     return "shop";
   }, [filters]);
 

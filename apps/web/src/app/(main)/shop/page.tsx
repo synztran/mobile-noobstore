@@ -16,8 +16,8 @@ interface ShopPageProps {
   searchParams: Promise<{
     search?: string;
     sort?: string;
-    category?: string;
-    brand?: string;
+    category?: string | string[];
+    brand?: string | string[];
     priceMin?: string;
     priceMax?: string;
   }>;
@@ -54,8 +54,8 @@ async function ShopContent({
   // filtered queries must hydrate from the client to match the URL state.
   const hasFilters = Boolean(
     sp.search?.trim() ||
-    sp.category?.trim() ||
-    sp.brand?.trim() ||
+    (Array.isArray(sp.category) ? sp.category.some((v) => v.trim()) : sp.category?.trim()) ||
+    (Array.isArray(sp.brand) ? sp.brand.some((v) => v.trim()) : sp.brand?.trim()) ||
     sp.priceMin?.trim() ||
     sp.priceMax?.trim() ||
     (sp.sort && sp.sort !== "newest")

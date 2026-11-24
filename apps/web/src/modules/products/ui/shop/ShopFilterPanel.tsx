@@ -7,8 +7,8 @@ import { Banknote, Check, LayoutGrid, RotateCcw, Store } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 const DEFAULT_FILTER_STATE: FilterState = {
-  category: null,
-  brand: null,
+  category: [],
+  brand: [],
   priceMin: 0,
   priceMax: 0,
 };
@@ -43,17 +43,15 @@ export function ShopFilterPanel({
   onClear,
   className,
 }: ShopFilterPanelProps) {
-  const [category, setCategory] = useState<string | null>(
-    initialState?.category ?? null
-  );
-  const [brand, setBrand] = useState<string | null>(initialState?.brand ?? null);
+  const [category, setCategory] = useState<string[]>(initialState?.category ?? []);
+  const [brand, setBrand] = useState<string[]>(initialState?.brand ?? []);
   const [priceMin, setPriceMin] = useState<number>(initialState?.priceMin ?? 0);
   const [priceMax, setPriceMax] = useState<number>(initialState?.priceMax ?? 0);
   const [showAllBrands, setShowAllBrands] = useState(false);
 
   useEffect(() => {
-    setCategory(initialState?.category ?? null);
-    setBrand(initialState?.brand ?? null);
+    setCategory(initialState?.category ?? []);
+    setBrand(initialState?.brand ?? []);
     setPriceMin(initialState?.priceMin ?? 0);
     setPriceMax(initialState?.priceMax ?? 0);
   }, [
@@ -75,19 +73,18 @@ export function ShopFilterPanel({
   }, [brands]);
 
   const activeCount =
-    (category ? 1 : 0) +
-    (brand ? 1 : 0) +
+    category.length + brand.length +
     (priceMin > 0 || priceMax > 0 ? 1 : 0);
 
   const dirty =
-    category !== (initialState?.category ?? null) ||
-    brand !== (initialState?.brand ?? null) ||
+    category.join("\0") !== (initialState?.category ?? []).join("\0") ||
+    brand.join("\0") !== (initialState?.brand ?? []).join("\0") ||
     priceMin !== (initialState?.priceMin ?? 0) ||
     priceMax !== (initialState?.priceMax ?? 0);
 
   const reset = () => {
-    setCategory(null);
-    setBrand(null);
+    setCategory([]);
+    setBrand([]);
     setPriceMin(0);
     setPriceMax(0);
     onClear();
@@ -141,17 +138,17 @@ export function ShopFilterPanel({
                 key={cat.id}
                 type="button"
                 onClick={() =>
-                  setCategory(cat.slug === category ? null : cat.slug)
+                  setCategory((current) => current.includes(cat.slug) ? current.filter((v) => v !== cat.slug) : [...current, cat.slug])
                 }
                 className={clsx(
                   "flex items-center justify-between rounded-lg px-2 py-1.5 text-left text-sm transition-colors",
-                  category === cat.slug
+                  category.includes(cat.slug)
                     ? "font-bold text-primary"
                     : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
                 )}
               >
                 {cat.name}
-                {category === cat.slug && <Check className="h-3.5 w-3.5" />}
+                {category.includes(cat.slug) && <Check className="h-3.5 w-3.5" />}
               </button>
             ))}
           </div>
@@ -172,15 +169,15 @@ export function ShopFilterPanel({
                 <button
                   key={b}
                   type="button"
-                  onClick={() => setBrand(brand === b ? null : b)}
+                  onClick={() => setBrand((current) => current.includes(b) ? current.filter((v) => v !== b) : [...current, b])}
                   className={clsx(
                     "rounded-full border px-3 py-1 text-xs font-bold transition-colors",
-                    brand === b
+                    brand.includes(b)
                       ? "border-primary bg-primary text-on-primary"
                       : "border-outline-variant/40 text-on-surface-variant hover:border-outline hover:text-on-surface"
                   )}
                 >
-                  {b}
+                  {b}{brand.includes(b) && <Check className="ml-1 inline h-3 w-3" />}
                 </button>
               )
             )}

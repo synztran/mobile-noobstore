@@ -524,8 +524,8 @@ function shapeRow(
 
 export interface GetProductListParams {
   search?: string;
-  categorySlug?: string;
-  brand?: string;
+  categorySlug?: string | string[];
+  brand?: string | string[];
   priceMin?: number;
   priceMax?: number;
   sort?: ProductSortOption;
@@ -598,7 +598,7 @@ export async function getProductListByFilters(
   } = params;
 
   const safeSearch = search.trim().slice(0, 100);
-  const safeCategorySlug = categorySlug.trim().slice(0, 100);
+    const safeCategorySlugs = (Array.isArray(categorySlug) ? categorySlug : [categorySlug]).map((v) => v.trim().slice(0, 100)).filter(Boolean);
   const safePriceMin = Math.max(0, Number(priceMin) || 0);
   const safePriceMax = Math.max(0, Number(priceMax) || 0);
   const safeOffset = Math.max(0, Number(offset) || 0);
@@ -611,16 +611,15 @@ export async function getProductListByFilters(
     const supabase = getPublicClient();
 
     // ── Resolve category ──
-    let categoryId: string | null = null;
-    if (safeCategorySlug) {
-      const { data: catRow } = await supabase
+    let categoryIds: string[] | null = null;
+    if (safeCategorySlugs.length > 0) {
+      const { data: catRows } = await supabase
         .from("categories")
         .select("id")
-        .eq("slug", safeCategorySlug)
-        .maybeSingle();
+        .in("slug", safeCategorySlugs);
 
-      if (!catRow) return { products: [], total: 0 };
-      categoryId = catRow?.id ?? null;
+      if (!catRows?.length) return { products: [], total: 0 };
+      categoryIds = catRows.map((row) => row.id);
     }
 
     // ── Build base filter helpers ──
@@ -631,8 +630,8 @@ export async function getProductListByFilters(
         .in("product_type", ["standard", "kit"]);
       if (excludeUncategorized) r = r.not("category_id", "is", null);
       if (safeSearch) r = r.ilike("name", `%${safeSearch}%`);
-      if (categoryId !== null) r = r.eq("category_id", categoryId);
-      if (brand) r = r.eq("brand", brand);
+      if (categoryIds !== null) r = r.in("category_id", categoryIds);
+      if (brand) r = Array.isArray(brand) ? r.in("brand", brand) : r.eq("brand", brand);
       if (safePriceMin > 0) r = r.gte("base_price", safePriceMin);
       if (safePriceMax > 0) r = r.lte("base_price", safePriceMax);
       return r;
@@ -648,9 +647,9 @@ export async function getProductListByFilters(
     if (excludeUncategorized)
       countQuery = countQuery.not("category_id", "is", null);
     if (safeSearch) countQuery = countQuery.ilike("name", `%${safeSearch}%`);
-    if (categoryId !== null)
-      countQuery = countQuery.eq("category_id", categoryId);
-    if (brand) countQuery = countQuery.eq("brand", brand);
+    if (categoryIds !== null)
+      countQuery = countQuery.in("category_id", categoryIds);
+    if (brand) countQuery = Array.isArray(brand) ? countQuery.in("brand", brand) : countQuery.eq("brand", brand);
     if (safePriceMin > 0)
       countQuery = countQuery.gte("base_price", safePriceMin);
     if (safePriceMax > 0)

@@ -82,8 +82,8 @@ export const CACHE_KEYS = {
  */
 export function buildProductListCacheKey(params: {
   search?: string;
-  categorySlug?: string;
-  brand?: string;
+  categorySlug?: string | string[];
+  brand?: string | string[];
   priceMin?: number;
   priceMax?: number;
   sort?: string;
@@ -106,7 +106,9 @@ export function buildProductListCacheKey(params: {
     includeImages = false,
     soldOutLast = false,
   } = params;
-  return `products:${CACHE_VERSION}:${search}:${categorySlug}:${brand}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}:${slim ? "slim" : "full"}:${includeImages ? "images" : "noimages"}:${soldOutLast ? "sol" : "nosol"}`;
+  const categoryKey = Array.isArray(categorySlug) ? [...categorySlug].sort().join(",") : categorySlug;
+  const brandKey = Array.isArray(brand) ? [...brand].sort().join(",") : brand;
+  return `products:${CACHE_VERSION}:${search}:${categoryKey}:${brandKey}:${priceMin}:${priceMax}:standard,kit,component:${sort}:${limit ?? ""}:${offset}:${slim ? "slim" : "full"}:${includeImages ? "images" : "noimages"}:${soldOutLast ? "sol" : "nosol"}`;
 }
 
 /**

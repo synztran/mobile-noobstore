@@ -10,8 +10,8 @@ function readFilters(sp: URLSearchParams) {
     search: sp.get("search") ?? "",
     sort: (sp.get("sort") as SortOption) ?? "newest",
     filterState: {
-      category: sp.get("category") || null,
-      brand: sp.get("brand") || null,
+      category: [...new Set(sp.getAll("category").filter(Boolean))],
+      brand: [...new Set(sp.getAll("brand").filter(Boolean))],
       priceMin: Number(sp.get("priceMin") ?? 0),
       priceMax: Number(sp.get("priceMax") ?? 0),
     } as FilterState,
@@ -26,8 +26,8 @@ function buildQueryString(
   const params = new URLSearchParams();
   if (search) params.set("search", search);
   if (sort !== "newest") params.set("sort", sort);
-  if (filter.category) params.set("category", filter.category);
-  if (filter.brand) params.set("brand", filter.brand);
+  for (const category of filter.category) params.append("category", category);
+  for (const brand of filter.brand) params.append("brand", brand);
   if (filter.priceMin > 0) params.set("priceMin", String(filter.priceMin));
   if (filter.priceMax > 0) params.set("priceMax", String(filter.priceMax));
   const qs = params.toString();
@@ -41,8 +41,8 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortOption>("newest");
   const [filterState, setFilterState] = useState<FilterState>({
-    category: null,
-    brand: null,
+    category: [],
+    brand: [],
     priceMin: 0,
     priceMax: 0,
   });
@@ -124,8 +124,8 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
 
   const handleClearFilters = useCallback(() => {
     const cleared: FilterState = {
-      category: null,
-      brand: null,
+      category: [],
+      brand: [],
       priceMin: 0,
       priceMax: 0,
     };
@@ -138,8 +138,8 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
   // handleClearFilters alone would keep the search that produced zero results.
   const handleClearAll = useCallback(() => {
     const cleared: FilterState = {
-      category: null,
-      brand: null,
+      category: [],
+      brand: [],
       priceMin: 0,
       priceMax: 0,
     };
@@ -149,8 +149,8 @@ export function useShopControls(onSearchCommitted?: (term: string) => void) {
   }, [sort, commit]);
 
   const filterApplied =
-    filterState.category !== null ||
-    filterState.brand !== null ||
+    filterState.category.length > 0 ||
+    filterState.brand.length > 0 ||
     filterState.priceMin > 0 ||
     filterState.priceMax > 0;
 

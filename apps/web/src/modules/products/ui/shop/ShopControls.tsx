@@ -20,8 +20,8 @@ type RecentSearchesState = ReturnType<typeof useRecentSearches>;
 
 function formatFilterPills(filters: FilterState): string[] {
   const pills: string[] = [];
-  if (filters.category) pills.push(filters.category);
-  if (filters.brand) pills.push(filters.brand);
+  if (filters.category.length) pills.push(...filters.category);
+  if (filters.brand.length) pills.push(...filters.brand);
   const hasMin = filters.priceMin > 0;
   const hasMax = filters.priceMax > 0;
   if (hasMin && hasMax) {
@@ -93,7 +93,7 @@ export function ShopControls({
 
   const handleSelectCategory = useCallback(
     (slug: string) => {
-      handleApplyFilter({ ...filterState, category: slug });
+      handleApplyFilter({ ...filterState, category: [slug] });
       setFocused(false);
     },
     [handleApplyFilter, filterState]
