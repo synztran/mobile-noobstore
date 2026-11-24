@@ -24,13 +24,18 @@ export default async function ProductVariantsPage({
 
   const supabase = getAdminClient();
 
+  // Bound the dropdown source. CreateVariantModal filters it client-side, so
+  // a generous cap keeps the UI identical in practice while the query no
+  // longer scans unbounded products tables (this page paginates variants
+  // server-side and the table can grow).
   const { data: products } = await supabase
     .from("products")
     .select(
       "id, name, product_type, base_price, stock_quantity, thumbnail, brand, is_active"
     )
     .eq("product_type", "component")
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .limit(200);
 
   let query = supabase
     .from("product_variants")

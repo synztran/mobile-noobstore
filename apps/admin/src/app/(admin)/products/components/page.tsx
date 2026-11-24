@@ -27,12 +27,17 @@ export default async function ProductComponentsPage({
   const to = from + PAGE_SIZE - 1;
   const supabase = getAdminClient();
 
+  // Bounded: grouping/pagination for this page happens client-side (see the
+  // filteredRows/grouped reduce below), so the DB result is capped to keep the
+  // unbounded scan from growing with the products table.
+  const PRODUCT_OPTIONS_LIMIT = 500;
   const { data: productOptions } = await supabase
     .from("products")
     .select(
       "id, name, product_type, thumbnail, base_price, stock_quantity, brand, is_active"
     )
-    .order("name", { ascending: true });
+    .order("name", { ascending: true })
+    .limit(PRODUCT_OPTIONS_LIMIT);
 
   const { data: components, error } = await supabase
     .from("product_components")
@@ -44,7 +49,7 @@ export default async function ProductComponentsPage({
 		`
     )
     .order("component_group", { ascending: true })
-    .order("component_group", { ascending: true });
+    .limit(1000);
 
   if (error) {
     console.error("Error fetching product components:", error);

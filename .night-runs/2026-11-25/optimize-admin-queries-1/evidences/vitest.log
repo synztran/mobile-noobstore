@@ -1,0 +1,54 @@
+
+ RUN  v4.1.10 /Users/haritran/source/noobstore/mobile-noobstore/apps/admin
+
+ ❯ src/app/api/fees/route.test.ts (2 tests | 1 failed) 20ms
+     × invalidates fees after a successful update without a blocking warm-up 18ms
+ ❯ src/lib/verified-payments.test.ts (7 tests | 7 skipped) 1662ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/verified-payments.test.ts [ src/lib/verified-payments.test.ts ]
+Error: ENOENT: no such file or directory, open '/Users/haritran/source/noobstore/mobile-noobstore/supabase/migrations/158_verified_order_payments.sql'
+ ❯ src/lib/verified-payments.test.ts:29:17
+     27|     INSERT INTO orders(id,total_price,paid_at) VALUES ('00000000-0000-…
+     28|   `);
+     29|   await db.exec(readFileSync(fileURLToPath(new URL("../../../../supaba…
+       |                 ^
+     30|   await db.exec("ALTER TABLE orders ADD COLUMN order_number text DEFAU…
+     31|   await db.exec(readFileSync(fileURLToPath(new URL("../../../../supaba…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/app/api/fees/route.test.ts > PATCH /api/fees > invalidates fees after a successful update without a blocking warm-up
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "unused-warm-up",
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/app/api/fees/route.test.ts:54:27
+     52|   expect(response.status).toBe(200);
+     53|   expect(mocks.invalidated).toEqual(["config:fees"]);
+     54|   expect(mocks.fetch).not.toHaveBeenCalled();
+       |                           ^
+     55|  });
+     56|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 18 passed (20)
+      Tests  1 failed | 145 passed | 7 skipped (153)
+   Start at  01:03:59
+   Duration  1.95s (transform 782ms, setup 0ms, import 1.70s, tests 1.86s, environment 2ms)
+
