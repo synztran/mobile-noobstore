@@ -13,7 +13,7 @@ Thêm mục tài nguyên keyboard vào `/documents`, với liên kết Qwertykey
 ## Kết quả kiểm chứng
 
 - Typecheck: FAIL toàn workspace do lỗi sẵn có ở admin (`apps/admin` gacha/crawling/vendors/warehouse-sync và email service; xem `evidences/typecheck.log`). Web typecheck không báo lỗi trước khi Turbo dừng.
-- Build: đang chạy; log `evidences/build.log`.
+- Build: đang chạy lại sau khi kết quả lần đầu chưa kịp hoàn tất; log `evidences/build.log`.
 - Diff stat: `evidences/diff.stat`.
 - Nguồn: tìm kiếm web xác nhận trang Qwertykeys mô tả NEO firmware/JSON/build guides và trang Singa liệt kê firmware/plate/misc theo model; QMK repository nêu hardware cụ thể cho firmware cộng đồng. Fetch trực tiếp bị lỗi transport nên khả năng truy cập từng URL chưa được kiểm tra bằng HTTP trong môi trường này.
 
