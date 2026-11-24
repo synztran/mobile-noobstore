@@ -49,6 +49,7 @@ import { ShippingInfoSection } from "@/modules/products/ui/product/ShippingInfoS
 import { ProductRatingSection } from "@/modules/products/ui/product/ProductRatingSection";
 import { ShareButton } from "@/modules/products/ui/product/ShareButton";
 import { Star } from "lucide-react";
+import { useReviews } from "@/lib/react-query/review/api/useReviewQueries";
 // import { getKeysetPreviewData } from "@/modules/keyset-preview/constants/mock-colorways";
 
 export function ProductView({
@@ -74,6 +75,7 @@ export function ProductView({
   // the viewer starts at index 0 of viewerImages; otherwise the hero gallery's
   // activeIndex drives it.
   const [viewerStart, setViewerStart] = useState<string | null>(null);
+  const { data: reviewData, isLoading: reviewsLoading, isError: reviewsError } = useReviews(product.slug);
 
   const mediaImages = useMemo(() => {
     const all = [product.thumbnail, ...(product.images ?? [])].filter(
@@ -307,13 +309,13 @@ export function ProductView({
             <section className="px-4 md:rounded-2xl md:bg-surface md:p-4 md:shadow-ambient-sm">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <ProductBadges badges={badges} purchaseCount={purchaseCount} />
-                <a
+                {!reviewsLoading && !reviewsError && reviewData && reviewData.total > 0 && <a
                   href="#product-rating-reviews-section"
                   className="flex items-center gap-1 rounded bg-amber-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700 transition-colors hover:bg-amber-500/20"
                 >
                   <Star size={11} className="fill-amber-400 text-amber-500" />
-                  <span>4.9 (28 đánh giá)</span>
-                </a>
+                  <span>{reviewData.average.toFixed(1)} ({reviewData.total} đánh giá)</span>
+                </a>}
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1">
