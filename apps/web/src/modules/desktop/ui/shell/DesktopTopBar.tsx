@@ -7,6 +7,7 @@ import {
   Bell,
   ShoppingBasket,
   Dices,
+  Gavel,
   Gift,
   Users,
   UserRound,
@@ -29,12 +30,14 @@ import { toast } from "@/lib/toast";
 const ACCOUNT_LINKS = [
   { href: "/profile", label: "Hồ sơ", icon: UserRound },
   { href: "/profile/orders", label: "Đơn hàng", icon: Package },
+  { href: "/profile/auctions", label: "Đấu giá của tôi", icon: Gavel },
   { href: "/wishlist", label: "Yêu thích", icon: Heart },
   { href: "/profile/points", label: "Điểm thưởng", icon: Gift },
 ] as const;
 
 const PRIMARY_NAV = [
   { href: "/shop", icon: ShoppingBasket, label: "Cửa hàng" },
+  { href: "/auctions", icon: Gavel, label: "Đấu giá" },
   { href: "/gacha", icon: Dices, label: "Gacha" },
   { href: "/rewards", icon: Gift, label: "Đổi thưởng" },
   { href: "/community", icon: Users, label: "Cộng đồng" },

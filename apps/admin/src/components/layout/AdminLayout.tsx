@@ -17,6 +17,7 @@ import {
   GitFork,
   FerrisWheel,
   FileText,
+  Gavel,
   Gift,
   ImagePlus,
   LayoutDashboard,
@@ -59,6 +60,7 @@ type NavItem =
 
 const navigation: NavItem[] = [
   { label: "Audit Log", href: "/audit-log", icon: ShieldAlert },
+  { label: "Auctions", href: "/auctions", icon: Gavel },
   { label: "Checkout Error Codes", href: "/checkout-error-codes", icon: AlertTriangle },
   { label: "Blog", href: "/blog", icon: Newspaper },
   {

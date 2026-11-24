@@ -19,8 +19,10 @@ import { voucherQueryKeys } from "./router/voucher";
 import { rankQueryKeys } from "./router/rank";
 import { stockAlertQueryKeys } from "./router/stock-alert";
 import { checkinQueryKeys } from "@/modules/checkin/client/query-keys";
+import { auctionQueryKeys } from "@/modules/auction/client/query-keys";
 
 export const appQueryKeys = mergeQueryKeys(
+  auctionQueryKeys,
   cartQueryKeys,
   communityQueryKeys,
   configQueryKeys,

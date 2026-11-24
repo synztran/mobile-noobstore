@@ -324,6 +324,43 @@ body.hide-bottom-nav nav.glass-nav {
   }
 }
 
+@property --winning-bid-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.winning-bid-badge::before,
+.winning-bid-badge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.winning-bid-badge::before {
+  z-index: -2;
+  background: conic-gradient(from var(--winning-bid-angle), #ec4899, #f59e0b, #84cc16, #06b6d4, #6366f1, #ec4899);
+  animation: winning-bid-border-spin 4s linear infinite;
+}
+
+.winning-bid-badge::after {
+  z-index: -1;
+  inset: 1px;
+  background: #fff;
+}
+
+@keyframes winning-bid-border-spin {
+  to { --winning-bid-angle: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .winning-bid-badge::before {
+    animation: none;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

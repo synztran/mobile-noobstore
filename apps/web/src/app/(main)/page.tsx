@@ -12,6 +12,7 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { HomeTestimonials } from "@/components/home/HomeTestimonials";
 import { NoteworthySection } from "@/components/home/NoteworthySection";
 import { HomeSaleSection } from "@/components/home/SaleSection";
+import { FeaturedAuctionsSection } from "@/components/home/FeaturedAuctionsSection";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { LazyNearViewport } from "@/components/ui/LazyNearViewport";
 import { getHeroCampaigns } from "@/lib/hero-server";
@@ -52,6 +53,9 @@ export default function HomePage() {
         <HomeSaleSection />
         <Suspense fallback={<HomeProductRailFallback />}>
           <HotDropsSection />
+        </Suspense>
+        <Suspense fallback={null}>
+          <FeaturedAuctionsSection />
         </Suspense>
       </div>
       <div className="hidden lg:block">

@@ -19,11 +19,22 @@ export function ProductThumbnailStrip({
   productName,
 }: Props) {
   const [loaded, setLoaded] = useState<Record<number, boolean>>({});
+  const [canScroll, setCanScroll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
   const count = images.length;
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const update = () => setCanScroll(container.scrollWidth > container.clientWidth);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [count]);
 
   const goTo = useCallback(
     (delta: 1 | -1) => {
@@ -69,21 +80,21 @@ export function ProductThumbnailStrip({
   if (count <= 1) return null;
 
   return (
-    <div className="relative flex items-center gap-1 px-4">
+    <div className={`relative flex items-center ${canScroll ? "px-4" : "justify-center"}`}>
       {/* Previous */}
-      <button
+      {canScroll && <button
         type="button"
         aria-label="Ảnh trước"
         onClick={() => goTo(-1)}
         className="absolute left-0 top-1/2 z-10 flex h-8 w-8 shrink-0 !-translate-y-1/2 items-center justify-center rounded-full border bg-surface-container text-on-surface shadow-lg transition-all active:scale-90"
       >
         <ChevronLeft size={14} />
-      </button>
+      </button>}
 
       {/* Scrollable thumbnail strip */}
       <div
         ref={scrollRef}
-        className="hide-scrollbar flex flex-1 gap-2 overflow-x-auto py-0.5"
+        className={`hide-scrollbar flex w-full gap-2 overflow-x-auto py-0.5 ${canScroll ? "flex-1" : "justify-center"}`}
         style={{ touchAction: "pan-y" }}
         onTouchStart={(e) => {
           handleTouchStart(e);
@@ -135,14 +146,14 @@ export function ProductThumbnailStrip({
       </div>
 
       {/* Next */}
-      <button
+      {canScroll && <button
         type="button"
         aria-label="Ảnh tiếp theo"
         onClick={() => goTo(1)}
         className="active:scale-9 absolute right-0 top-1/2 flex h-8 w-8 !-translate-y-1/2 items-center justify-center rounded-full border bg-surface-container text-on-surface shadow-sm transition-all"
       >
         <ChevronRight size={14} />
-      </button>
+      </button>}
     </div>
   );
 }

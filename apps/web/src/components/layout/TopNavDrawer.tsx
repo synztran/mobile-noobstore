@@ -2,6 +2,7 @@
 
 import {
   Bell,
+  Gavel,
   Heart,
   House,
   LogOut,
@@ -32,6 +33,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { icon: <House size={18} />, label: "Trang chủ", href: "/" },
   { icon: <ShoppingBag size={18} />, label: "Cửa hàng", href: "/shop" },
+  { icon: <Gavel size={18} />, label: "Đấu giá", href: "/auctions" },
   // { icon: "forum", label: "Cộng đồng", href: "/community" },
   // { icon: "paper", label: "Tài liệu", href: "/documents" },
   { icon: <User size={18} />, label: "Tài khoản người dùng", href: "/profile" },

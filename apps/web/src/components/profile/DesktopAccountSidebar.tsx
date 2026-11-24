@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CircleHelp, CircleUserRound, Heart, LogOut, MapPin, Package, ShoppingBag } from "lucide-react";
+import { Bell, CircleHelp, CircleUserRound, Gavel, Heart, LogOut, MapPin, Package, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/modules/user/client/AuthProvider";
@@ -9,6 +9,7 @@ import { toast } from "@/lib/toast";
 const NAV_ITEMS = [
   { icon: <CircleUserRound size={20} />, label: "Tổng quan", href: "/profile" },
   { icon: <ShoppingBag size={20} />, label: "Đơn hàng của tôi", href: "/profile/orders" },
+  { icon: <Gavel size={20} />, label: "Đấu giá của tôi", href: "/profile/auctions" },
   { icon: <Heart size={20} />, label: "Sản phẩm yêu thích", href: "/wishlist" },
   { icon: <MapPin size={20} />, label: "Địa chỉ giao hàng", href: "/profile/addresses" },
   { icon: <Bell size={20} />, label: "Thông báo", href: "/profile/notifications" },

@@ -11,6 +11,7 @@ import {
   Bell,
   ChevronRight,
   CircleHelp,
+  Gavel,
   Heart,
   LogOut,
   MapPin,
@@ -34,6 +35,7 @@ import { DesktopAccountSidebar } from "@/components/profile/DesktopAccountSideba
 
 const NAV_ITEMS = [
   { icon: <ShoppingBag size={20} />, label: "Đơn hàng của tôi", href: "/profile/orders" },
+  { icon: <Gavel size={20} />, label: "Đấu giá của tôi", href: "/profile/auctions" },
   { icon: <Heart size={20} />, label: "Sản phẩm yêu thích", href: "/wishlist" },
   { icon: <MapPin size={20} />, label: "Địa chỉ giao hàng", href: "/profile/addresses" },
   { icon: <Bell size={20} />, label: "Thông báo", href: "/profile/notifications" },
