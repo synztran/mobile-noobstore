@@ -141,7 +141,7 @@ export function SelectedConditionSummary({
           return (
             <li
               key={`${r.group}:${r.label}`}
-              className="flex max-w-max items-center gap-2"
+              className="flex max-w-full items-center gap-2"
             >
               {thumb ? (
                 <button
@@ -163,7 +163,7 @@ export function SelectedConditionSummary({
                 </button>
               ) : null}
               <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="truncate text-sm font-semibold leading-tight tracking-wide text-on-surface">
+                <p className="line-clamp-2 break-words text-sm font-semibold leading-tight tracking-wide text-on-surface">
                   {r.group && (countByLabel.get(r.label) ?? 0) > 1
                     ? `${r.group} · `
                     : ""}
