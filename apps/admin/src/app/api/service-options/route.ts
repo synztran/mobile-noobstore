@@ -1,6 +1,7 @@
 import { logAuditEvent } from "@/lib/audit-log";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isDuplicateSiblingLabel } from "@/lib/service-labels";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,12 @@ export async function POST(req: NextRequest) {
 			{ status: 400 },
 		);
 	}
+	if (body?.is_required !== undefined && typeof body.is_required !== "boolean") {
+		return NextResponse.json({ error: "is_required must be a boolean" }, { status: 400 });
+	}
+	if (body?.display_order !== undefined && (!Number.isInteger(Number(body.display_order)) || Number(body.display_order) < 0)) {
+		return NextResponse.json({ error: "display_order must be a non-negative integer" }, { status: 400 });
+	}
 
 	const { data: service } = await supabase
 		.from("services")
@@ -52,6 +59,15 @@ export async function POST(req: NextRequest) {
 		.maybeSingle();
 	if (!service) {
 		return NextResponse.json({ error: "Service not found" }, { status: 404 });
+	}
+
+	const { data: siblingOptions, error: siblingOptionsError } = await supabase
+		.from("service_options")
+		.select("label")
+		.eq("service_id", serviceId);
+	if (siblingOptionsError) return NextResponse.json({ error: "Không thể kiểm tra tuỳ chọn hiện có." }, { status: 500 });
+	if (isDuplicateSiblingLabel(label, siblingOptions ?? [])) {
+		return NextResponse.json({ error: "Tên tuỳ chọn đã tồn tại trong dịch vụ này." }, { status: 409 });
 	}
 
 	let displayOrder = 0;

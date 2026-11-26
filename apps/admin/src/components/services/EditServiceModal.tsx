@@ -156,6 +156,7 @@ export default function EditServiceModal({
 								onChange={(e) => setSlug(e.target.value)}
 								placeholder="vd: svc-clean-keyboard"
 								className="input-base w-full px-3 py-2"
+								required
 							/>
 						</div>
 

@@ -15,6 +15,7 @@ const PAGES = [
   { label: "Products", href: "/products", group: "Pages" },
   { label: "Orders", href: "/orders", group: "Pages" },
   { label: "Quick Order", href: "/orders/quick", group: "Pages" },
+  { label: "Invoices", href: "/invoices", group: "Pages" },
   { label: "Users", href: "/users", group: "Pages" },
   { label: "Categories", href: "/categories", group: "Pages" },
   { label: "Inventory", href: "/inventory", group: "Pages" },

@@ -2,6 +2,7 @@ import { logAuditEvent } from "@/lib/audit-log";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@db-types";
+import { isDuplicateSiblingLabel } from "@/lib/service-labels";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -78,11 +79,21 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
 	const { data: existing } = await supabase
 		.from("service_options")
-		.select("*")
+		.select("id, service_id, label")
 		.eq("id", optionId)
 		.maybeSingle();
 	if (!existing) {
 		return NextResponse.json({ error: "Option not found" }, { status: 404 });
+	}
+	if (sanitized.label) {
+		const { data: siblingOptions, error: siblingOptionsError } = await supabase
+			.from("service_options")
+			.select("id, label")
+			.eq("service_id", existing.service_id);
+		if (siblingOptionsError) return NextResponse.json({ error: "Không thể kiểm tra tuỳ chọn hiện có." }, { status: 500 });
+		if (isDuplicateSiblingLabel(sanitized.label, siblingOptions ?? [], optionId)) {
+			return NextResponse.json({ error: "Tên tuỳ chọn đã tồn tại trong dịch vụ này." }, { status: 409 });
+		}
 	}
 
 	const { data, error } = await supabase

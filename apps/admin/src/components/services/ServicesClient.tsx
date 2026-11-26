@@ -51,7 +51,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 			)}
 
 			{services.length > 0 ? (
-				<div className="space-y-3">
+				<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 					{services.map((service) => {
 						const options = [...(service.service_options ?? [])].sort(
 							(a, b) => a.display_order - b.display_order,

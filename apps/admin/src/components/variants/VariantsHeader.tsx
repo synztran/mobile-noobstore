@@ -23,12 +23,12 @@ interface Props {
 
 export default function VariantsHeader({ products, searchBy }: Props) {
 	const [modalOpen, setModalOpen] = useState(false);
+	const searchParams = useSearchParams();
 	// Controlled text so entered text is never lost, even while the URL
 	// updates during a transition.
 	const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
 	const router = useRouter();
 	const pathname = usePathname();
-	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
 	const handleSearch = useCallback(
@@ -90,7 +90,9 @@ export default function VariantsHeader({ products, searchBy }: Props) {
 							className="pl-9 pr-8 py-2 text-sm w-56 focus:outline-none"
 						/>
 						{isPending && (
-							<Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 animate-spin" aria-hidden="true" />
+							<span className="absolute right-2 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center" aria-hidden="true">
+								<Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+							</span>
 						)}
 					</div>
 					{isPending && (

@@ -2,6 +2,7 @@ import { logAuditEvent } from "@/lib/audit-log";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@db-types";
+import { isDuplicateSiblingLabel } from "@/lib/service-labels";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -67,13 +68,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 	}
 	if (Object.prototype.hasOwnProperty.call(body, "display_order")) {
 		const num = Number(body.display_order);
-		if (!Number.isFinite(num)) {
+		if (!Number.isInteger(num) || num < 0) {
 			return NextResponse.json(
-				{ error: "display_order must be a number" },
+				{ error: "display_order must be a non-negative integer" },
 				{ status: 400 },
 			);
 		}
-		sanitized.display_order = Math.round(num);
+		sanitized.display_order = num;
 	}
 
 	if (Object.keys(sanitized).length === 0) {
@@ -85,7 +86,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
 	const { data: existing } = await supabase
 		.from("service_option_values")
-		.select("*")
+		.select("id, option_id, label")
 		.eq("id", valueId)
 		.maybeSingle();
 	if (!existing) {
@@ -93,6 +94,16 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 			{ error: "Option value not found" },
 			{ status: 404 },
 		);
+	}
+	if (sanitized.label) {
+		const { data: siblingValues, error: siblingValuesError } = await supabase
+			.from("service_option_values")
+			.select("id, label")
+			.eq("option_id", existing.option_id);
+		if (siblingValuesError) return NextResponse.json({ error: "Không thể kiểm tra giá trị hiện có." }, { status: 500 });
+		if (isDuplicateSiblingLabel(sanitized.label, siblingValues ?? [], valueId)) {
+			return NextResponse.json({ error: "Tên giá trị đã tồn tại trong tuỳ chọn này." }, { status: 409 });
+		}
 	}
 
 	const { data, error } = await supabase

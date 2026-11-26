@@ -1,75 +1,38 @@
 "use client";
 
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 interface PaginationProps {
-  page: number;
-  totalPages: number;
-  /** Path to navigate to, e.g. "/users". */
-  basePath: string;
-  /**
-   * Existing query params to carry across page changes, e.g. an active search
-   * term or role filter. Empty values are dropped.
-   */
-  query?: Record<string, string>;
+	page: number;
+	totalPages: number;
+	totalItems?: number;
+	itemLabel?: string;
+	onPageChange?: (page: number) => void;
+	basePath?: string;
+	query?: Record<string, string>;
 }
 
-// Built here rather than passed in as a callback: this component is a Client
-// Component (it needs onClick to block disabled pagination for keyboard users),
-// so a function prop from the server page would not survive the boundary.
-function buildHref(
-  basePath: string,
-  query: Record<string, string> | undefined,
-  page: number
-): string {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(query ?? {})) {
-    if (value) params.set(key, value);
-  }
-  params.set("page", String(page));
-  return `${basePath}?${params.toString()}`;
+function buildHref(basePath: string, query: Record<string, string> | undefined, page: number) {
+	const params = new URLSearchParams();
+	for (const [key, value] of Object.entries(query ?? {})) if (value) params.set(key, value);
+	params.set("page", String(page));
+	return `${basePath}?${params.toString()}`;
 }
 
-export default function Pagination({
-  page,
-  totalPages,
-  basePath,
-  query,
-}: PaginationProps) {
-  if (totalPages <= 1) return null;
+export default function Pagination({ page, totalPages, totalItems, itemLabel = "mục", onPageChange, basePath, query }: PaginationProps) {
+	if (totalPages <= 1) return null;
+	const previousDisabled = page <= 1;
+	const nextDisabled = page >= totalPages;
+	const className = "btn btn-sm btn-outline gap-2";
 
-  const linkBase =
-    "rounded-lg border border-[rgb(var(--admin-border))] bg-[rgb(var(--admin-surface))] px-3 py-1.5 text-[13px] text-[rgb(var(--admin-text-secondary))] transition-colors hover:bg-[rgb(var(--admin-hover))]";
-
-  return (
-    <div className="flex items-center justify-center gap-4">
-      <Link
-        href={buildHref(basePath, query, page - 1)}
-        aria-disabled={page <= 1}
-        onClick={(e) => page <= 1 && e.preventDefault()}
-        className={`${linkBase} ${
-          page <= 1
-            ? "pointer-events-none opacity-50"
-            : ""
-        }`}
-      >
-        Previous
-      </Link>
-      <span className="text-[13px] text-body">
-        Page {page} of {totalPages}
-      </span>
-      <Link
-        href={buildHref(basePath, query, page + 1)}
-        aria-disabled={page >= totalPages}
-        onClick={(e) => page >= totalPages && e.preventDefault()}
-        className={`${linkBase} font-medium ${
-          page >= totalPages
-            ? "pointer-events-none opacity-50"
-            : ""
-        }`}
-      >
-        Next
-      </Link>
-    </div>
-  );
+	return (
+		<nav className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3" aria-label="Phân trang">
+			<p className="text-sm text-slate-600" aria-live="polite">Trang {page} / {totalPages}{totalItems !== undefined ? ` · ${totalItems} ${itemLabel}` : ""}</p>
+			<div className="flex gap-2">
+				{onPageChange ? <button type="button" className={className} disabled={previousDisabled} onClick={() => onPageChange(Math.max(1, page - 1))}><ArrowLeft size={16} /> Trước</button> : <Link className={`${className}${previousDisabled ? " pointer-events-none opacity-50" : ""}`} href={buildHref(basePath ?? "", query, page - 1)} aria-disabled={previousDisabled}><ArrowLeft size={16} /> Trước</Link>}
+				{onPageChange ? <button type="button" className={className} disabled={nextDisabled} onClick={() => onPageChange(Math.min(totalPages, page + 1))}>Sau <ArrowRight size={16} /></button> : <Link className={`${className}${nextDisabled ? " pointer-events-none opacity-50" : ""}`} href={buildHref(basePath ?? "", query, page + 1)} aria-disabled={nextDisabled}>Sau <ArrowRight size={16} /></Link>}
+			</div>
+		</nav>
+	);
 }

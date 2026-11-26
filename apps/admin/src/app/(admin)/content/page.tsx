@@ -11,6 +11,7 @@ interface CampaignRow {
 	title: string;
 	subtitle: string | null;
 	image_url: string | null;
+	image_url_mobile: string | null;
 	cta_text: string | null;
 	cta_link: string | null;
 	is_active: boolean;

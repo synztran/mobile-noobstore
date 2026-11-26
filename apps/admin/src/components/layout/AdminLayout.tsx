@@ -90,6 +90,7 @@ const navigation: NavItem[] = [
     children: [
       { label: "Orders", href: "/orders", icon: ShoppingCart },
       { label: "Quick Order", href: "/orders/quick", icon: Zap },
+      { label: "Invoices", href: "/invoices", icon: FileText },
     ],
   },
   { label: "Points", href: "/points", icon: Coins },

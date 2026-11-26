@@ -10,9 +10,23 @@ export default function OrderAlerts() {
   const [alerts, setAlerts] = useState<OrderAlert[]>([]);
   const [toast, setToast] = useState<OrderAlert | null>(null);
   const [sound, setSound] = useState(false);
+  const [watchOrders, setWatchOrders] = useState(true);
+  const [watchPreferenceReady, setWatchPreferenceReady] = useState(false);
   const [status, setStatus] = useState("Đang kết nối thông báo…");
   const audio = useRef<AudioContext | null>(null);
   const soundEnabled = useRef(false);
+
+  useEffect(() => {
+    setWatchOrders(localStorage.getItem("admin-order-alerts-enabled") !== "false");
+    setWatchPreferenceReady(true);
+  }, []);
+
+  function toggleOrderWatch() {
+    const next = !watchOrders;
+    localStorage.setItem("admin-order-alerts-enabled", String(next));
+    setWatchOrders(next);
+    setStatus(next ? "Đang kết nối thông báo…" : "Đã tắt theo dõi đơn mới");
+  }
 
   function chime() {
     const context = audio.current;
@@ -55,6 +69,7 @@ export default function OrderAlerts() {
   }
 
   useEffect(() => {
+    if (!watchPreferenceReady || !watchOrders) return;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout>;
     let cursor: OrderAlertCursor | null = null;
@@ -111,7 +126,7 @@ export default function OrderAlerts() {
       controller.abort();
       clearTimeout(timer);
     };
-  }, []);
+  }, [watchPreferenceReady, watchOrders]);
 
   useEffect(() => () => { void audio.current?.close(); }, []);
 
@@ -121,6 +136,11 @@ export default function OrderAlerts() {
         aria-pressed={sound} title={status}>
         {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
         <span className="hidden md:inline">{sound ? "Tắt âm" : "Bật âm báo"}</span>
+      </button>
+      <button type="button" className="btn btn-sm btn-ghost" onClick={toggleOrderWatch}
+        aria-pressed={watchOrders} title={watchOrders ? "Tắt theo dõi đơn mới" : "Bật theo dõi đơn mới"}>
+        <Bell size={16} />
+        <span className="hidden md:inline">{watchOrders ? "Theo dõi đơn" : "Đã tắt theo dõi"}</span>
       </button>
       {sound && <button type="button" className="btn btn-xs btn-ghost" onClick={chime}>Thử âm</button>}
       <details className="dropdown dropdown-end">

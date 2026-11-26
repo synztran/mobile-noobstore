@@ -1,6 +1,7 @@
 import { logAuditEvent } from "@/lib/audit-log";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isDuplicateSiblingLabel } from "@/lib/service-labels";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,9 @@ export async function POST(req: NextRequest) {
 	if (!label) {
 		return NextResponse.json({ error: "label is required" }, { status: 400 });
 	}
+	if (body?.display_order !== undefined && (!Number.isInteger(Number(body.display_order)) || Number(body.display_order) < 0)) {
+		return NextResponse.json({ error: "display_order must be a non-negative integer" }, { status: 400 });
+	}
 
 	const { data: option } = await supabase
 		.from("service_options")
@@ -49,6 +53,15 @@ export async function POST(req: NextRequest) {
 		.maybeSingle();
 	if (!option) {
 		return NextResponse.json({ error: "Option not found" }, { status: 404 });
+	}
+
+	const { data: siblingValues, error: siblingValuesError } = await supabase
+		.from("service_option_values")
+		.select("label")
+		.eq("option_id", optionId);
+	if (siblingValuesError) return NextResponse.json({ error: "Không thể kiểm tra giá trị hiện có." }, { status: 500 });
+	if (isDuplicateSiblingLabel(label, siblingValues ?? [])) {
+		return NextResponse.json({ error: "Tên giá trị đã tồn tại trong tuỳ chọn này." }, { status: 409 });
 	}
 
 	let priceAdjustment = 0;
@@ -66,13 +79,13 @@ export async function POST(req: NextRequest) {
 	let displayOrder = 0;
 	if (body?.display_order !== undefined) {
 		const num = Number(body.display_order);
-		if (!Number.isFinite(num)) {
+		if (!Number.isInteger(num) || num < 0) {
 			return NextResponse.json(
-				{ error: "display_order must be a number" },
+				{ error: "display_order must be a non-negative integer" },
 				{ status: 400 },
 			);
 		}
-		displayOrder = Math.round(num);
+		displayOrder = num;
 	} else {
 		const { data: last } = await supabase
 			.from("service_option_values")

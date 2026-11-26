@@ -69,8 +69,8 @@ export default function ServiceValueModal({
 			);
 
 			if (!res.ok) {
-				const body = await res.json();
-				throw new Error(body.error ?? "Failed to save");
+				const body = await res.json().catch(() => null);
+				throw new Error(body?.error ?? "Failed to save");
 			}
 
 			router.refresh();
