@@ -5,12 +5,17 @@ import {
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { BundleProductCard } from "./BundleProductCard";
+import { withHomeDataFallback } from "@/lib/home-render-data";
 
 export async function NewArrivalsSection() {
-  const [newest, featured] = await Promise.all([
-    getNewestProducts(15),
-    getNoteworthyProducts({ limit: 5 }),
-  ]);
+  const [newest, featured] = await withHomeDataFallback(
+    "new arrivals rail",
+    () => Promise.all([
+      getNewestProducts(15),
+      getNoteworthyProducts({ limit: 5 }),
+    ]),
+    [[], { products: [], total: 0 }],
+  );
 
   // The featured rail already shows the newest five; skip them so this rail
   // widens the catalogue instead of repeating the same cards.

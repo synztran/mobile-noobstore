@@ -10,6 +10,7 @@ export interface HeroCampaign {
 	subtitle: string;
 	description: string;
 	image_url: string;
+	image_url_mobile: string | null;
 	cta_text: string;
 	cta_link: string;
 	is_active: boolean;
@@ -29,7 +30,7 @@ export async function GET() {
 		const { data: campaigns, error } = await supabase
 			.from("hero_campaigns")
 			.select(
-				"id, title, subtitle, description, image_url, cta_text, cta_link, is_active, priority",
+				"id, title, subtitle, description, image_url, image_url_mobile, cta_text, cta_link, is_active, priority",
 			)
 			.eq("is_active", true)
 			.order("priority", { ascending: false })

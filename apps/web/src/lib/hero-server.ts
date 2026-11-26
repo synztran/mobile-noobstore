@@ -17,7 +17,7 @@ export async function getHeroCampaigns(): Promise<HeroCampaign[]> {
 	const { data: campaigns, error } = await supabase
 		.from("hero_campaigns")
 		.select(
-			"id, title, subtitle, description, image_url, cta_text, cta_link, is_active, priority",
+			"id, title, subtitle, description, image_url, image_url_mobile, cta_text, cta_link, is_active, priority",
 		)
 		.eq("is_active", true)
 		.order("priority", { ascending: false })

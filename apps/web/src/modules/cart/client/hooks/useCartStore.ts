@@ -40,7 +40,11 @@ interface CartStore {
       quantity: number;
     }>
   ) => { success: boolean; reason?: string };
-  removeItem: (productId: string, variantId: string | null, itemId?: string) => void;
+  removeItem: (
+    productId: string,
+    variantId: string | null,
+    itemId?: string
+  ) => void;
   updateQty: (
     productId: string,
     variantId: string | null,
@@ -107,17 +111,12 @@ export const useCartStore = create<CartStore>()(
             }
             return i.variant?.id === variant?.id;
           });
-          console.log(
-            product.is_pre_order,
-            components?.some((c) => c.is_pre_order)
-          );
           // NOTE: must be `||`, not `??` — the product's flag is a real
           // boolean (false when the product itself isn't pre-order), which
           // would short-circuit `??` and never consult the kit components.
           const isPreOrder =
             product.is_pre_order ||
             (components?.some((c) => c.is_pre_order) ?? false);
-          console.log("isPreOrder", isPreOrder);
           const preOrderConfig =
             product.pre_order_config ??
             components?.find((c) => c.pre_order_config)?.pre_order_config ??

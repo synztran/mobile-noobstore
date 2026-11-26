@@ -653,7 +653,6 @@ export function useShippingForm() {
           }
 
           const combined = new Date(`${pickupDate}T${pickupTime}:00`);
-          console.log("combined", combined, combined.getTime(), Date.now())
           if (
             Number.isNaN(combined.getTime()) ||
             combined.getTime() <= Date.now()

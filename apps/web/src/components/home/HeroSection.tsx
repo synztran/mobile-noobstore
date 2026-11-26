@@ -107,7 +107,9 @@ export function HeroSection({
             i === current ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
         >
-          <Image
+          <picture className="absolute inset-0">
+            {s.image_url_mobile && <source media="(max-width: 767px)" srcSet={s.image_url_mobile} />}
+            <Image
             src={s.image_url || ""}
             alt={s.title}
             fill
@@ -115,7 +117,8 @@ export function HeroSection({
             priority={i === 0}
             fetchPriority={i === 0 ? "high" : "auto"}
             sizes="100vw"
-          />
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/40 to-surface/5 lg:bg-gradient-to-r lg:from-surface lg:via-surface/60 lg:to-transparent" />
           <div className="absolute inset-0 bg-surface/5 lg:bg-transparent" />
         </div>
