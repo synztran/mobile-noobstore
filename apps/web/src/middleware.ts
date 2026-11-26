@@ -72,20 +72,11 @@ function isUiCriticalRead(method: string, pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const nonce = crypto.randomUUID().replaceAll("-", "");
-  const csp = `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:; style-src 'self' 'nonce-${nonce}' https:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https://www.google.com https://*.hcaptcha.com; report-uri /api/security/csp-report`;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy-Report-Only", csp);
   const requestWithNonce = new NextRequest(request, { headers: requestHeaders });
   const response = await handleRequest(requestWithNonce);
   expireDuplicateAuthCookies(response, request);
-  if (
-    !request.nextUrl.pathname.startsWith("/api/") &&
-    response.status >= 200 &&
-    response.status < 300
-  ) {
-    response.headers.set("Content-Security-Policy-Report-Only", csp);
-  }
   return response;
 }
 
@@ -93,15 +84,10 @@ async function handleRequest(request: NextRequest) {
   // Forwarded to server components; the device gate sets x-device-class in
   // the try block below (unmanaged-host/error paths keep the original headers).
   const requestHeaders = new Headers(request.headers);
-  const csp = request.headers.get("Content-Security-Policy");
 
   try {
     const { pathname, hostname } = request.nextUrl;
     requestHeaders.set("x-nonce", request.headers.get("x-nonce") ?? "");
-    requestHeaders.set(
-      "Content-Security-Policy-Report-Only",
-      request.headers.get("Content-Security-Policy-Report-Only") ?? "",
-    );
 
     // ── Device gate (modules/desktop) ──────────────────────────────────
     // Routes phones to m.noobstore.xyz and desktop/tablets to www. Pure
@@ -148,7 +134,6 @@ async function handleRequest(request: NextRequest) {
       const response = NextResponse.rewrite(request.nextUrl, {
         request: { headers: requestHeaders },
       });
-      if (csp) response.headers.set("Content-Security-Policy-Report-Only", csp);
       return response;
     }
 
@@ -227,7 +212,6 @@ async function handleRequest(request: NextRequest) {
   }
 
   requestHeaders.set("x-nonce", request.headers.get("x-nonce") ?? "");
-  requestHeaders.set("Content-Security-Policy-Report-Only", csp ?? "");
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 

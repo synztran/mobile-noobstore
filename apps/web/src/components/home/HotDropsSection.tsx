@@ -2,9 +2,14 @@ import { getBestSellers } from "@/modules/products/server/ssr";
 import { ArrowRight, Flame } from "lucide-react";
 import Link from "next/link";
 import { BundleProductCard } from "./BundleProductCard";
+import { withHomeDataFallback } from "@/lib/home-render-data";
 
 export async function HotDropsSection() {
-  const products = await getBestSellers(5);
+  const products = await withHomeDataFallback(
+    "best-seller rail",
+    () => getBestSellers(5),
+    [],
+  );
 
   if (products.length === 0) return null;
 

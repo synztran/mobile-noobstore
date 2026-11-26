@@ -6,6 +6,7 @@ import {
 import Image from "@/components/ui/AdaptiveImage";
 import Link from "next/link";
 import { SaleCountdown } from "@/modules/products/ui/product/SaleCountdown";
+import { withHomeDataFallback } from "@/lib/home-render-data";
 
 function FlashSaleCard({ product }: { product: FlashSaleProduct }) {
   const discountPercent =
@@ -82,7 +83,7 @@ function FlashSaleCard({ product }: { product: FlashSaleProduct }) {
 
 function FlashSaleTimerHeader({ endsAt }: { endsAt: string }) {
   return (
-    <div className="mb-6 flex items-center justify-between px-6 lg:mb-5 lg:px-0">
+    <div className="mb-6 flex items-center justify-between px-4 lg:mb-5 lg:px-0">
       <div className="flex items-center gap-3">
         <h2 className="text-2xl font-bold uppercase tracking-tight">
           Flash Sale
@@ -214,7 +215,11 @@ function FlashSaleListItem({ product }: { product: FlashSaleProduct }) {
 }
 
 export async function FlashSaleStrip() {
-  const products = await getFlashSaleProducts();
+  const products = await withHomeDataFallback(
+    "flash-sale rail",
+    getFlashSaleProducts,
+    [],
+  );
 
   // Render nothing when no active flash sale — no empty rail on the homepage.
   if (products.length === 0) return null;
@@ -222,7 +227,7 @@ export async function FlashSaleStrip() {
   return (
     <section className="bg-surface py-12 lg:rounded-3xl lg:p-8">
       <FlashSaleTimerHeader endsAt={products[0].sale_ends_at} />
-      <div className="hide-scrollbar flex gap-4 overflow-x-auto px-6 pb-2 lg:hidden">
+      <div className="hide-scrollbar flex gap-4 overflow-x-auto px-4 pb-2 lg:hidden">
         {products.map((product) => (
           <FlashSaleCard key={product.id} product={product} />
         ))}
