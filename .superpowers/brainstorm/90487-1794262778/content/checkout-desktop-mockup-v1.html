@@ -1,0 +1,671 @@
+<div style="max-width:1240px;margin:0 auto;padding:20px 16px 36px;color:#211916;font-family:Manrope,Inter,system-ui,sans-serif">
+  <!-- Mockup Intro Header -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid #e8ddd7">
+    <div>
+      <p style="margin:0 0 4px;color:#9b3f1c;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase">Desktop Checkout Redesign · 2-Column Layout · V1</p>
+      <h2 style="margin:0;font-size:22px;letter-spacing:-.02em">Mockup Giao diện Thanh toán 2 Cột Desktop</h2>
+      <p style="margin:6px 0 0;font-size:13px;color:#6b5a52">Tận dụng bề ngang desktop: Cột trái nhập liệu gọn gàng (62%), Cột phải là Sticky Order Overview (38%) luôn nằm trong tầm mắt.</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;background:#f3ede8;padding:4px;border-radius:10px">
+      <button id="tab-step-1" onclick="switchStep(1)" style="padding:6px 14px;border:none;border-radius:8px;background:#fff;color:#9b3f1c;font-size:11px;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.06);cursor:pointer">Bước 1: Vận chuyển</button>
+      <button id="tab-step-2" onclick="switchStep(2)" style="padding:6px 14px;border:none;border-radius:8px;background:transparent;color:#73645d;font-size:11px;font-weight:700;cursor:pointer">Bước 2: Xác nhận & Đặt cọc</button>
+      <button id="tab-step-3" onclick="switchStep(3)" style="padding:6px 14px;border:none;border-radius:8px;background:transparent;color:#73645d;font-size:11px;font-weight:700;cursor:pointer">Bước 3: Hoàn tất & Thanh toán QR</button>
+    </div>
+  </div>
+
+  <!-- Browser Frame Wrapper -->
+  <div style="border:1px solid #e5dbd4;border-radius:18px;background:#faf7f4;overflow:hidden;box-shadow:0 20px 60px rgba(55,35,24,.08)">
+    
+    <!-- Topbar & Stepper -->
+    <header style="background:#fff;border-bottom:1px solid #ede4de;padding:14px 28px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:12px">
+        <a href="javascript:void(0)" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:#211916">
+          <div style="width:28px;height:28px;border-radius:8px;background:#9b3f1c;color:#fff;display:grid;place-items:center;font-weight:900;font-size:14px">N</div>
+          <span style="font-weight:900;font-size:16px;letter-spacing:-.02em">NoobStore</span>
+        </a>
+        <span style="color:#d8ccc4">|</span>
+        <span style="font-size:13px;font-weight:800;color:#9b3f1c;letter-spacing:.04em;text-transform:uppercase">Thanh toán an toàn</span>
+      </div>
+
+      <!-- Stepper Indicator -->
+      <div style="display:flex;align-items:center;gap:28px">
+        <div id="step-nav-1" style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#9b3f1c">
+          <div style="width:22px;height:22px;border-radius:50%;background:#9b3f1c;color:#fff;display:grid;place-items:center;font-size:11px">1</div>
+          <span>Thông tin giao hàng</span>
+        </div>
+        <div style="width:36px;height:2px;background:#e5dad2"></div>
+        <div id="step-nav-2" style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#91827a">
+          <div id="step-badge-2" style="width:22px;height:22px;border-radius:50%;background:#e8dfd8;color:#71625a;display:grid;place-items:center;font-size:11px">2</div>
+          <span>Kiểm tra & Đặt hàng</span>
+        </div>
+        <div style="width:36px;height:2px;background:#e5dad2"></div>
+        <div id="step-nav-3" style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#b2a49d">
+          <div id="step-badge-3" style="width:22px;height:22px;border-radius:50%;background:#eee7e2;color:#b2a49d;display:grid;place-items:center;font-size:11px">3</div>
+          <span>Hoàn tất</span>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:#776860">
+        <span>Cần hỗ trợ? <strong>0901.xxx.xxx</strong></span>
+      </div>
+    </header>
+
+    <!-- Main 2-Column Content -->
+    <div id="view-checkout-flow" style="padding:28px;display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:28px;align-items:start">
+      
+      <!-- LEFT COLUMN: Form Inputs -->
+      <div style="display:flex;flex-direction:column;gap:20px">
+        
+        <!-- STEP 1 VIEW: SHIPPING -->
+        <div id="view-step-1" style="display:flex;flex-direction:column;gap:20px">
+          
+          <!-- Card 1: Contact Info -->
+          <section style="background:#fff;border:1px solid #ebdcd3;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.02)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <div style="width:28px;height:28px;border-radius:8px;background:#fbede6;color:#9b3f1c;display:grid;place-items:center;font-size:14px">👤</div>
+              <div>
+                <h3 style="margin:0;font-size:15px;font-weight:800">Thông tin người nhận</h3>
+                <p style="margin:2px 0 0;font-size:11px;color:#807067">Thông tin dùng để liên hệ và xác nhận giao hàng</p>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <label style="display:block;margin-bottom:6px;font-size:11px;font-weight:800;color:#554740">HỌ VÀ TÊN *</label>
+                <input type="text" value="Hai Tran Hong" style="width:100%;height:40px;padding:0 12px;border:1px solid #dcd1c9;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none" />
+              </div>
+              <div>
+                <label style="display:block;margin-bottom:6px;font-size:11px;font-weight:800;color:#554740">SỐ ĐIỆN THOẠI *</label>
+                <input type="text" value="0839220900" style="width:100%;height:40px;padding:0 12px;border:1px solid #dcd1c9;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box;outline:none" />
+              </div>
+            </div>
+          </section>
+
+          <!-- Card 2: Delivery Address -->
+          <section style="background:#fff;border:1px solid #ebdcd3;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.02)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:28px;height:28px;border-radius:8px;background:#fbede6;color:#9b3f1c;display:grid;place-items:center;font-size:14px">📍</div>
+                <div>
+                  <h3 style="margin:0;font-size:15px;font-weight:800">Địa chỉ nhận hàng</h3>
+                  <p style="margin:2px 0 0;font-size:11px;color:#807067">Giao hàng tận nơi trên toàn quốc</p>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button style="padding:5px 10px;border:1px solid #9b3f1c;border-radius:8px;background:#fff5f0;color:#9b3f1c;font-size:11px;font-weight:800;cursor:pointer">Giao tận nơi</button>
+                <button style="padding:5px 10px;border:1px solid #e5dad2;border-radius:8px;background:#fff;color:#73645c;font-size:11px;font-weight:700;cursor:pointer">Nhận tại cửa hàng</button>
+              </div>
+            </div>
+
+            <!-- Address Selectors 3 Columns -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+              <div>
+                <label style="display:block;margin-bottom:5px;font-size:11px;font-weight:800;color:#554740">TỈNH / THÀNH PHỐ *</label>
+                <select style="width:100%;height:40px;padding:0 10px;border:1px solid #dcd1c9;border-radius:10px;font-size:12px;font-family:inherit;background:#fff;box-sizing:border-box">
+                  <option selected>TP. Hồ Chí Minh</option>
+                  <option>Hà Nội</option>
+                  <option>Đà Nẵng</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;margin-bottom:5px;font-size:11px;font-weight:800;color:#554740">QUẬN / HUYỆN *</label>
+                <select style="width:100%;height:40px;padding:0 10px;border:1px solid #dcd1c9;border-radius:10px;font-size:12px;font-family:inherit;background:#fff;box-sizing:border-box">
+                  <option selected>Quận 1</option>
+                  <option>Quận 3</option>
+                  <option>Quận 7</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;margin-bottom:5px;font-size:11px;font-weight:800;color:#554740">PHƯỜNG / XÃ *</label>
+                <select style="width:100%;height:40px;padding:0 10px;border:1px solid #dcd1c9;border-radius:10px;font-size:12px;font-family:inherit;background:#fff;box-sizing:border-box">
+                  <option selected>Phường Bến Nghé</option>
+                  <option>Phường Đa Kao</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Detailed Address -->
+            <div style="margin-bottom:14px">
+              <label style="display:block;margin-bottom:5px;font-size:11px;font-weight:800;color:#554740">ĐỊA CHỈ CỤ THỂ / SỐ NHÀ, TÊN ĐƯỜNG *</label>
+              <input type="text" value="90 Pasteur, Tòa nhà The 90th Pasteur" style="width:100%;height:40px;padding:0 12px;border:1px solid #dcd1c9;border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box" />
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <label style="display:block;margin-bottom:5px;font-size:11px;font-weight:800;color:#554740">CĂN HỘ / TẦNG (TÙY CHỌN)</label>
+                <input type="text" value="Tầng 4B" style="width:100%;height:38px;padding:0 12px;border:1px solid #e1d6ce;border-radius:10px;font-size:12px;font-family:inherit;box-sizing:border-box" />
+              </div>
+              <div>
+                <label style="display:block;margin-bottom:5px;font-size:11px;font-weight:800;color:#554740">GHI CHÚ GIAO HÀNG (TÙY CHỌN)</label>
+                <input type="text" placeholder="Gọi trước khi giao 15 phút..." style="width:100%;height:38px;padding:0 12px;border:1px solid #e1d6ce;border-radius:10px;font-size:12px;font-family:inherit;box-sizing:border-box" />
+              </div>
+            </div>
+          </section>
+
+          <!-- Card 3: Delivery Method Selection -->
+          <section style="background:#fff;border:1px solid #ebdcd3;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.02)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:28px;height:28px;border-radius:8px;background:#fbede6;color:#9b3f1c;display:grid;place-items:center;font-size:14px">🚚</div>
+              <div>
+                <h3 style="margin:0;font-size:15px;font-weight:800">Phương thức vận chuyển</h3>
+                <p style="margin:2px 0 0;font-size:11px;color:#807067">Thời gian dự kiến và chi phí tương ứng</p>
+              </div>
+            </div>
+
+            <!-- Delivery Option Cards -->
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:2px solid #9b3f1c;border-radius:12px;background:#fff7f3;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="radio" name="shipping" checked style="accent-color:#9b3f1c" />
+                  <div>
+                    <div style="font-size:13px;font-weight:850">Giao hàng Tiêu chuẩn (Rider NoobStore)</div>
+                    <div style="font-size:11px;color:#78665e">Giao trong 1-2 ngày làm việc · Khoảng cách 4.2 km</div>
+                  </div>
+                </div>
+                <div style="font-size:14px;font-weight:900;color:#9b3f1c">30.000 ₫</div>
+              </label>
+
+              <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid #e8ddd6;border-radius:12px;background:#fff;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="radio" name="shipping" style="accent-color:#9b3f1c" />
+                  <div>
+                    <div style="font-size:13px;font-weight:800">Giao hàng Hỏa tốc 4H</div>
+                    <div style="font-size:11px;color:#78665e">Nhận hàng ngay trong ngày · Tài xế Ahamove / Grab</div>
+                  </div>
+                </div>
+                <div style="font-size:14px;font-weight:800;color:#211916">65.000 ₫</div>
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <!-- STEP 2 VIEW: SUMMARY & PAYMENT (Hidden by default, shown when switchStep(2)) -->
+        <div id="view-step-2" style="display:none;flex-direction:column;gap:20px">
+          
+          <!-- Confirm Destination Summary -->
+          <section style="background:#fff;border:1px solid #ebdcd3;border-radius:16px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+              <div style="width:32px;height:32px;border-radius:10px;background:#e9f6ed;color:#1e8e3e;display:grid;place-items:center;font-size:16px">✓</div>
+              <div>
+                <div style="font-size:14px;font-weight:850">Giao đến: Hai Tran Hong · 0839220900</div>
+                <div style="font-size:12px;color:#6b5a52;margin-top:2px">Tầng 4B, 90 Pasteur, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh</div>
+                <div style="font-size:11px;font-weight:750;color:#9b3f1c;margin-top:4px">Giao tiêu chuẩn (30.000 ₫)</div>
+              </div>
+            </div>
+            <button onclick="switchStep(1)" style="padding:6px 12px;border:1px solid #e1d6ce;border-radius:8px;background:#fff;color:#685850;font-size:11px;font-weight:800;cursor:pointer">Thay đổi</button>
+          </section>
+
+          <!-- Deposit & Payment Method Options -->
+          <section style="background:#fff;border:1px solid #ebdcd3;border-radius:16px;padding:20px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:28px;height:28px;border-radius:8px;background:#fbede6;color:#9b3f1c;display:grid;place-items:center;font-size:14px">💳</div>
+              <div>
+                <h3 style="margin:0;font-size:15px;font-weight:800">Hình thức thanh toán</h3>
+                <p style="margin:2px 0 0;font-size:11px;color:#807067">Chọn phương thức phù hợp với bạn</p>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <label style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:2px solid #9b3f1c;border-radius:12px;background:#fff7f3;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="radio" name="paymentType" checked style="accent-color:#9b3f1c" />
+                  <div>
+                    <div style="font-size:13px;font-weight:850">Chuyển khoản QR ngân hàng (Toàn bộ)</div>
+                    <div style="font-size:11px;color:#78665e">Quét mã QR QRBanking tự động khớp đơn trong 10 giây</div>
+                  </div>
+                </div>
+                <span style="padding:4px 8px;border-radius:6px;background:#eef7ee;color:#1e8e3e;font-size:10px;font-weight:900">KHUYÊN DÙNG</span>
+              </label>
+
+              <label style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1px solid #e8ddd6;border-radius:12px;background:#fff;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="radio" name="paymentType" style="accent-color:#9b3f1c" />
+                  <div>
+                    <div style="font-size:13px;font-weight:850">Đặt cọc 50% + COD khi nhận hàng</div>
+                    <div style="font-size:11px;color:#78665e">Cọc trước 1.475.000 ₫ qua QR, phần còn lại trả khi nhận bưu phẩm</div>
+                  </div>
+                </div>
+              </label>
+
+              <label style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1px solid #e8ddd6;border-radius:12px;background:#fff;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <input type="radio" name="paymentType" style="accent-color:#9b3f1c" />
+                  <div>
+                    <div style="font-size:13px;font-weight:850">COD (Thanh toán khi nhận hàng)</div>
+                    <div style="font-size:11px;color:#78665e">Thanh toán tiền mặt cho nhân viên giao hàng</div>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </section>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Sticky Order Summary Overview -->
+      <aside style="position:sticky;top:20px;display:flex;flex-direction:column;gap:16px">
+        
+        <div style="background:#fff;border:1px solid #ebdcd3;border-radius:18px;padding:22px;box-shadow:0 12px 36px rgba(55,35,24,.06)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0e6e0">
+            <h3 style="margin:0;font-size:15px;font-weight:850">Tóm tắt đơn hàng (2 món)</h3>
+            <a href="/cart" style="font-size:11px;font-weight:800;color:#9b3f1c;text-decoration:none">Sửa giỏ hàng</a>
+          </div>
+
+          <!-- Product Item List Preview -->
+          <div style="display:flex;flex-direction:column;gap:12px;max-height:220px;overflow-y:auto;padding-right:4px;margin-bottom:16px">
+            <!-- Item 1 -->
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:48px;height:48px;border-radius:10px;background:#f3ede8;display:grid;place-items:center;font-size:22px;flex-shrink:0">🎒</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">RAZER ROGUE 16” BACKPACK V3</div>
+                <div style="font-size:10px;color:#7b6b63">Màu: Đen · SL: 1</div>
+              </div>
+              <div style="font-size:13px;font-weight:900;color:#211916">2.450.000 ₫</div>
+            </div>
+
+            <!-- Item 2 -->
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:48px;height:48px;border-radius:10px;background:#f3ede8;display:grid;place-items:center;font-size:22px;flex-shrink:0">👜</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">ROG Ranger BC1002 Crossbody Bag</div>
+                <div style="font-size:10px;color:#9b3f1c;font-weight:750">Mua kèm giảm giá -20% · SL: 1</div>
+              </div>
+              <div style="font-size:13px;font-weight:900;color:#211916">360.000 ₫</div>
+            </div>
+          </div>
+
+          <!-- Voucher Apply Field -->
+          <div style="margin-bottom:16px;padding-top:12px;border-top:1px dashed #e8dfd8">
+            <div style="display:flex;gap:8px">
+              <input type="text" placeholder="Nhập mã voucher..." style="flex:1;height:36px;padding:0 10px;border:1px solid #dcd1c9;border-radius:8px;font-size:12px;font-family:inherit;box-sizing:border-box" />
+              <button style="padding:0 14px;border:none;border-radius:8px;background:#9b3f1c;color:#fff;font-size:11px;font-weight:800;cursor:pointer">ÁP DỤNG</button>
+            </div>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+              <span style="padding:2px 6px;border-radius:4px;background:#fbede6;color:#9b3f1c;font-size:9px;font-weight:800">FREESHIP</span>
+              <span style="font-size:11px;color:#78685f">Đã tự động áp dụng miễn phí vận chuyển</span>
+            </div>
+          </div>
+
+          <!-- Price Calculations -->
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;padding-top:12px;border-top:1px solid #f0e6e0">
+            <div style="display:flex;justify-content:space-between;color:#6b5a52">
+              <span>Tạm tính hàng hóa</span>
+              <span style="font-weight:750;color:#211916">2.810.000 ₫</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;color:#6b5a52">
+              <span>Phí vận chuyển</span>
+              <span style="font-weight:750;color:#211916">30.000 ₫</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;color:#1e8e3e">
+              <span>Giảm giá vận chuyển</span>
+              <span style="font-weight:800">-30.000 ₫</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;color:#1e8e3e">
+              <span>Ưu đãi thành viên (Bạc)</span>
+              <span style="font-weight:800">-50.000 ₫</span>
+            </div>
+            
+            <div style="margin-top:8px;padding-top:12px;border-top:2px solid #ede3dc;display:flex;justify-content:space-between;align-items:baseline">
+              <span style="font-size:14px;font-weight:900">Tổng thanh toán</span>
+              <span style="font-size:22px;font-weight:950;color:#9b3f1c">2.760.000 ₫</span>
+            </div>
+          </div>
+
+          <!-- Action Button CTA -->
+          <div style="margin-top:20px">
+            <button id="main-cta-btn" onclick="handleCtaClick()" style="width:100%;height:46px;border:none;border-radius:12px;background:linear-gradient(100deg,#9b3f1c,#ba5631);color:#fff;font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 6px 20px rgba(155,63,28,.28);transition:transform .1s">
+              Tiếp tục kiểm tra đơn hàng →
+            </button>
+          </div>
+
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:10px;color:#8a7971">
+            <span>🔒 Thanh toán bảo mật với mã hóa SSL 256-bit</span>
+          </div>
+
+        </div>
+
+      </aside>
+
+    </div>
+
+    <!-- STEP 3 VIEW: ORDER CONFIRMATION & QRBanking PAYMENT -->
+    <div id="view-step-3" style="display:none;padding:28px;flex-direction:column;gap:24px">
+      <!-- 1. Hero Order Success Banner -->
+      <section style="background:linear-gradient(135deg,#fff,#fcf8f5);border:1px solid #ebdcd3;border-radius:20px;padding:28px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px;box-shadow:0 12px 36px rgba(55,35,24,.05)">
+        <div style="display:flex;align-items:center;gap:20px">
+          <div style="width:64px;height:64px;border-radius:20px;background:#e8f7ee;color:#1e8e3e;display:grid;place-items:center;font-size:32px;flex-shrink:0;box-shadow:0 6px 16px rgba(30,142,62,.15)">
+            ✓
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+              <span style="padding:2px 8px;border-radius:6px;background:#e8f7ee;color:#1e8e3e;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase">Tiếp nhận thành công</span>
+              <span style="font-size:12px;color:#806f66">10/11/2026 · 17:30</span>
+            </div>
+            <h2 style="margin:0;font-size:22px;font-weight:900;letter-spacing:-.02em;color:#211916">
+              Đặt hàng thành công! Mã đơn: <span style="color:#9b3f1c">#ORD-20261110-8888</span>
+            </h2>
+            <p style="margin:6px 0 0;font-size:13px;color:#6b5a52">
+              Hệ thống đã ghi nhận đơn hàng. Vui lòng quét mã QRBanking bên dưới để tự động hoàn tất thanh toán trong <strong>10–30 giây</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <button onclick="navigator.clipboard && navigator.clipboard.writeText('ORD-20261110-8888');alert('Đã sao chép mã đơn hàng!')" style="padding:8px 16px;border:1px solid #dcd1c9;border-radius:10px;background:#fff;font-size:11px;font-weight:800;color:#211916;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            📋 Sao chép mã đơn
+          </button>
+          <span style="font-size:11px;color:#8a7971">Email xác nhận đã gửi tới: <strong>h***@gmail.com</strong></span>
+        </div>
+      </section>
+
+      <!-- 2. 2-Column Success Layout -->
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:28px;align-items:start">
+        
+        <!-- Left: QRBanking Payment Box & Order Progress -->
+        <div style="display:flex;flex-direction:column;gap:20px">
+          
+          <!-- QRBanking Card -->
+          <div style="background:#fff;border:1px solid #ebdcd3;border-radius:20px;padding:26px;box-shadow:0 12px 36px rgba(55,35,24,.05)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #f0e6e0">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:20px">📱</span>
+                <div>
+                  <h3 style="margin:0;font-size:16px;font-weight:900">Quét mã QRBanking thanh toán tự động</h3>
+                  <p style="margin:2px 0 0;font-size:11px;color:#78665e">Mở ứng dụng ngân hàng bất kỳ để quét mã thanh toán</p>
+                </div>
+              </div>
+              <span style="padding:4px 10px;border-radius:20px;background:#e8f7ee;color:#1e8e3e;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:6px">
+                <span style="width:7px;height:7px;border-radius:50%;background:#1e8e3e"></span> Khớp đơn tự động 24/7
+              </span>
+            </div>
+
+            <!-- QR Container & Instructions Grid -->
+            <div style="display:grid;grid-template-columns:220px minmax(0,1fr);gap:24px;align-items:center">
+              
+              <!-- QR Image Box -->
+              <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;background:#faf7f4;border:1px solid #e8ddd7;border-radius:16px">
+                <div style="width:180px;height:180px;background:#fff;border-radius:12px;padding:8px;box-sizing:border-box;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.04)">
+                  <!-- Simulated QRBanking -->
+                  <div style="width:100%;height:100%;border:2px solid #211916;border-radius:8px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff">
+                    <div style="position:absolute;top:6px;left:6px;width:32px;height:32px;border:4px solid #211916;border-radius:4px;display:grid;place-items:center"><div style="width:14px;height:14px;background:#211916"></div></div>
+                    <div style="position:absolute;top:6px;right:6px;width:32px;height:32px;border:4px solid #211916;border-radius:4px;display:grid;place-items:center"><div style="width:14px;height:14px;background:#211916"></div></div>
+                    <div style="position:absolute;bottom:6px;left:6px;width:32px;height:32px;border:4px solid #211916;border-radius:4px;display:grid;place-items:center"><div style="width:14px;height:14px;background:#211916"></div></div>
+                    <span style="font-size:10px;font-weight:900;letter-spacing:.05em;color:#9b3f1c;padding:3px 6px;background:#fbede6;border-radius:4px">QRBanking · NAPAS</span>
+                    <span style="font-size:8px;font-weight:800;color:#6b5a52;margin-top:4px">ORD-20261110-8888</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#9b3f1c">
+                  <span>⏳ Giữ hàng & mã QR: <strong>14:59</strong></span>
+                </div>
+              </div>
+
+              <!-- Bank Transfer Details Table -->
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#faf7f4;border-radius:10px">
+                  <span style="font-size:12px;color:#6b5a52">Số tiền thanh toán:</span>
+                  <span style="font-size:16px;font-weight:950;color:#9b3f1c">1.480.000 ₫</span>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#faf7f4;border-radius:10px">
+                  <span style="font-size:12px;color:#6b5a52">Ngân hàng thụ hưởng:</span>
+                  <span style="font-size:12px;font-weight:850">MB Bank (Quân Đội)</span>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#faf7f4;border-radius:10px">
+                  <span style="font-size:12px;color:#6b5a52">Số tài khoản:</span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:13px;font-weight:900;font-family:monospace">0839220900</span>
+                    <button onclick="navigator.clipboard && navigator.clipboard.writeText('0839220900');alert('Đã copy số tài khoản!')" style="border:none;background:#ebdcd3;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;cursor:pointer">Copy</button>
+                  </div>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#faf7f4;border-radius:10px">
+                  <span style="font-size:12px;color:#6b5a52">Chủ tài khoản:</span>
+                  <span style="font-size:12px;font-weight:850;text-transform:uppercase">TRAN HONG HAI - NOOBSTORE</span>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#fbede6;border:1px dashed #9b3f1c;border-radius:10px">
+                  <div>
+                    <div style="font-size:10px;font-weight:850;color:#9b3f1c;text-transform:uppercase">NỘI DUNG CHUYỂN KHOẢN (BẮT BUỘC)</div>
+                    <div style="font-size:14px;font-weight:950;font-family:monospace;color:#211916">ORD202611108888</div>
+                  </div>
+                  <button onclick="navigator.clipboard && navigator.clipboard.writeText('ORD202611108888');alert('Đã copy nội dung chuyển khoản!')" style="border:none;background:#9b3f1c;color:#fff;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer">
+                    SAO CHÉP
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Listening Status Box -->
+            <div style="margin-top:18px;padding:12px 16px;border-radius:12px;background:#f0f9f4;border:1px solid #cce8d7;display:flex;align-items:center;gap:12px">
+              <div style="width:20px;height:20px;border-radius:50%;border:2px solid #1e8e3e;border-top-color:transparent;animation:spin 1s linear infinite"></div>
+              <div style="font-size:12px;color:#1e5e2e">
+                <strong>Đang chờ tín hiệu chuyển khoản:</strong> Trang sẽ tự động hoàn tất và gửi thông báo ngay khi hệ thống ngân hàng ghi nhận tiền (thường 5-15 giây).
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Status Timeline -->
+          <div style="background:#fff;border:1px solid #ebdcd3;border-radius:20px;padding:24px;box-shadow:0 12px 36px rgba(55,35,24,.05)">
+            <h3 style="margin:0 0 16px;font-size:15px;font-weight:850">Tiến trình xử lý đơn hàng</h3>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;position:relative">
+              
+              <!-- Step 1 -->
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:24px;height:24px;border-radius:50%;background:#1e8e3e;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900">✓</div>
+                  <div style="flex:1;height:2px;background:#1e8e3e"></div>
+                </div>
+                <div style="font-size:12px;font-weight:850;color:#211916">Tiếp nhận đơn</div>
+                <div style="font-size:10px;color:#1e8e3e">Hoàn thành</div>
+              </div>
+
+              <!-- Step 2 -->
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:24px;height:24px;border-radius:50%;background:#9b3f1c;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900">2</div>
+                  <div style="flex:1;height:2px;background:#e5dad2"></div>
+                </div>
+                <div style="font-size:12px;font-weight:850;color:#9b3f1c">Xác nhận chuyển khoản</div>
+                <div style="font-size:10px;color:#9b3f1c;font-weight:750">Đang chờ quét QR</div>
+              </div>
+
+              <!-- Step 3 -->
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:24px;height:24px;border-radius:50%;background:#eee7e2;color:#a4958d;display:grid;place-items:center;font-size:12px">3</div>
+                  <div style="flex:1;height:2px;background:#e5dad2"></div>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:#78665e">Đóng gói bảo đảm</div>
+                <div style="font-size:10px;color:#a4958d">Chờ thanh toán</div>
+              </div>
+
+              <!-- Step 4 -->
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="width:24px;height:24px;border-radius:50%;background:#eee7e2;color:#a4958d;display:grid;place-items:center;font-size:12px">4</div>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:#78665e">Giao hàng tận tay</div>
+                <div style="font-size:10px;color:#a4958d">Rider NoobStore</div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Order Details Summary & Follow CTA -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          
+          <div style="background:#fff;border:1px solid #ebdcd3;border-radius:20px;padding:22px;box-shadow:0 12px 36px rgba(55,35,24,.05)">
+            <h3 style="margin:0 0 14px;font-size:15px;font-weight:850;padding-bottom:12px;border-bottom:1px solid #f0e6e0">Thông tin giao nhận</h3>
+
+            <div style="display:flex;flex-direction:column;gap:12px;font-size:12px">
+              <div>
+                <span style="color:#78665e">Người nhận:</span>
+                <div style="font-weight:850;color:#211916;font-size:13px;margin-top:2px">Hai Tran Hong · 0839220900</div>
+              </div>
+
+              <div>
+                <span style="color:#78665e">Địa chỉ giao:</span>
+                <div style="font-weight:700;color:#211916;margin-top:2px">testing căn hộ tân, Nguyễn Huệ, Bến Nghé, Quận 1, TP. Hồ Chí Minh</div>
+              </div>
+
+              <div>
+                <span style="color:#78665e">Phương thức vận chuyển:</span>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                  <span style="font-weight:850;color:#9b3f1c">Giao Hỏa tốc</span>
+                  <span style="padding:2px 6px;border-radius:4px;background:#e8f7ee;color:#1e8e3e;font-size:10px;font-weight:800">NoobStore trực tiếp xử lý</span>
+                </div>
+              </div>
+
+              <!-- 3 Ticks Reassurance -->
+              <div style="margin-top:6px;padding:12px;background:#faf7f4;border-radius:12px;display:flex;flex-direction:column;gap:6px;font-size:11px;color:#5a4941">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="color:#1e8e3e;font-weight:900">✓</span> Đảm bảo an toàn 100% trong quá trình vận chuyển
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="color:#1e8e3e;font-weight:900">✓</span> Đóng gói chắc chắn, bọc lót bảo vệ cẩn thận
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="color:#1e8e3e;font-weight:900">✓</span> Rider chủ động liên hệ trước & ưu tiên thời gian người nhận
+                </div>
+              </div>
+            </div>
+
+            <!-- Price Breakdown Summary -->
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0e6e0;display:flex;flex-direction:column;gap:8px;font-size:12px">
+              <div style="display:flex;justify-content:space-between;color:#6b5a52">
+                <span>Tạm tính (3 món)</span>
+                <span style="font-weight:750;color:#211916">2.960.000 ₫</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;color:#6b5a52">
+                <span>Phí vận chuyển</span>
+                <span style="font-weight:750;color:#211916">98.610 ₫</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;color:#1e8e3e">
+                <span>Giảm phí vận chuyển (YF3HQAS6)</span>
+                <span style="font-weight:800">-49.305 ₫</span>
+              </div>
+              
+              <div style="margin-top:6px;padding:10px 12px;background:#fbede6;border-radius:10px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;font-weight:800;color:#9b3f1c">Thanh toán cọc trước 50%</span>
+                <span style="font-size:15px;font-weight:950;color:#9b3f1c">1.480.000 ₫</span>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;color:#6b5a52;padding:0 4px">
+                <span>Còn lại thanh toán COD khi nhận:</span>
+                <span style="font-weight:850;color:#211916">1.529.305 ₫</span>
+              </div>
+            </div>
+
+            <!-- Action CTA Buttons -->
+            <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
+              <button onclick="alert('Chuyển hướng đến /profile/orders để theo dõi đơn!')" style="width:100%;height:44px;border:none;border-radius:12px;background:linear-gradient(100deg,#9b3f1c,#ba5631);color:#fff;font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;box-shadow:0 6px 16px rgba(155,63,28,.25)">
+                Theo dõi đơn hàng tại tài khoản →
+              </button>
+              <button onclick="switchStep(1)" style="width:100%;height:40px;border:1px solid #dcd1c9;border-radius:12px;background:#fff;color:#6b5a52;font-size:12px;font-weight:800;cursor:pointer">
+                Tiếp tục mua sắm
+              </button>
+            </div>
+
+          </div>
+
+          <div style="text-align:center;font-size:11px;color:#8a7971">
+            Cần hỗ trợ đơn hàng? Gọi ngay <strong>0839.220.900</strong>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+
+<script>
+  let currentStep = 1;
+
+  function switchStep(step) {
+    currentStep = step;
+    const checkoutFlow = document.getElementById('view-checkout-flow');
+    const view1 = document.getElementById('view-step-1');
+    const view2 = document.getElementById('view-step-2');
+    const view3 = document.getElementById('view-step-3');
+    const tab1 = document.getElementById('tab-step-1');
+    const tab2 = document.getElementById('tab-step-2');
+    const tab3 = document.getElementById('tab-step-3');
+    const badge2 = document.getElementById('step-badge-2');
+    const badge3 = document.getElementById('step-badge-3');
+    const nav1 = document.getElementById('step-nav-1');
+    const nav2 = document.getElementById('step-nav-2');
+    const nav3 = document.getElementById('step-nav-3');
+    const cta = document.getElementById('main-cta-btn');
+
+    // Reset tabs
+    [tab1, tab2, tab3].forEach(t => {
+      if (t) {
+        t.style.background = 'transparent';
+        t.style.color = '#73645d';
+        t.style.boxShadow = 'none';
+      }
+    });
+
+    if (step === 1) {
+      checkoutFlow.style.display = 'grid';
+      view1.style.display = 'flex';
+      view2.style.display = 'none';
+      view3.style.display = 'none';
+      tab1.style.background = '#fff';
+      tab1.style.color = '#9b3f1c';
+      tab1.style.boxShadow = '0 2px 6px rgba(0,0,0,.06)';
+      badge2.style.background = '#e8dfd8';
+      badge2.style.color = '#71625a';
+      nav2.style.color = '#91827a';
+      badge3.style.background = '#eee7e2';
+      badge3.style.color = '#b2a49d';
+      nav3.style.color = '#b2a49d';
+      if (cta) cta.innerText = 'TIẾP TỤC KIỂM TRA ĐƠN HÀNG →';
+    } else if (step === 2) {
+      checkoutFlow.style.display = 'grid';
+      view1.style.display = 'none';
+      view2.style.display = 'flex';
+      view3.style.display = 'none';
+      tab2.style.background = '#fff';
+      tab2.style.color = '#9b3f1c';
+      tab2.style.boxShadow = '0 2px 6px rgba(0,0,0,.06)';
+      badge2.style.background = '#9b3f1c';
+      badge2.style.color = '#fff';
+      nav2.style.color = '#9b3f1c';
+      badge3.style.background = '#eee7e2';
+      badge3.style.color = '#b2a49d';
+      nav3.style.color = '#b2a49d';
+      if (cta) cta.innerText = 'XÁC NHẬN & ĐẶT HÀNG NGAY →';
+    } else if (step === 3) {
+      checkoutFlow.style.display = 'none';
+      view3.style.display = 'flex';
+      tab3.style.background = '#fff';
+      tab3.style.color = '#9b3f1c';
+      tab3.style.boxShadow = '0 2px 6px rgba(0,0,0,.06)';
+      badge2.style.background = '#9b3f1c';
+      badge2.style.color = '#fff';
+      nav2.style.color = '#9b3f1c';
+      badge3.style.background = '#9b3f1c';
+      badge3.style.color = '#fff';
+      nav3.style.color = '#9b3f1c';
+    }
+  }
+
+  function handleCtaClick() {
+    if (currentStep === 1) {
+      switchStep(2);
+    } else if (currentStep === 2) {
+      switchStep(3);
+    }
+  }
+</script>

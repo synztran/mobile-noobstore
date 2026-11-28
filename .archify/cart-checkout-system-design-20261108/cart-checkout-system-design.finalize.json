@@ -1,0 +1,503 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "explainer",
+  "quality": "showcase",
+  "startedAt": "2026-11-08T06:19:12.777Z",
+  "specification": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/candidate.archify.md",
+    "sha256": "c956690b71ca4e6b49e784aa3950a7890e96ee1c7879e97ed84e0a2feafab07d",
+    "bytes": 8941
+  },
+  "artifact": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.html",
+    "sha256": "705d0c30b07e36442149534857bf2ba7d971e41225f5d7223694c637012bd984",
+    "bytes": 998733
+  },
+  "stages": {
+    "browser-check": {
+      "status": "not-run",
+      "execution": "not-requested"
+    },
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "explainer",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/candidate.archify.md",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/Users/haritran/source/noobstore/mobile-noobstore",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "c956690b71ca4e6b49e784aa3950a7890e96ee1c7879e97ed84e0a2feafab07d",
+          "bytes": 8941
+        },
+        "validation": {
+          "checksPassed": 4,
+          "checkCount": 4,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 965,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "explainer",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/candidate.archify.md",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/Users/haritran/source/noobstore/mobile-noobstore",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "09052815-59cb-4548-aafa-0f79e97501f3",
+        "ok": true,
+        "command": "deliver",
+        "type": "explainer",
+        "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/candidate.archify.md",
+        "output": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.html",
+        "explainer": {
+          "preparedSha256": "e710ee5a55e9c3806686f9c825d29c1979fecff25d5fa11a19c61fe899aab759",
+          "dependencies": [
+            {
+              "kind": "repository",
+              "id": "submit",
+              "path": "apps/web/src/modules/checkout/server/submit-order.ts",
+              "revision": "9c6c17488c50e818b13773b4c0489f4fd5facbe6",
+              "sha256": "3bcf07569c1c0d68577d2a7e65cabf972d806ccc1cdeff2bc004fd423ab89988",
+              "bytes": 31425
+            },
+            {
+              "kind": "repository",
+              "id": "checkout-types",
+              "path": "apps/web/src/modules/checkout/types.ts",
+              "revision": "9c6c17488c50e818b13773b4c0489f4fd5facbe6",
+              "sha256": "55d271dd63e6a367b54ced738918d41583866eb24b9121879e3cf5e20fc6c6f6",
+              "bytes": 2336
+            },
+            {
+              "kind": "diagram-spec",
+              "id": "checkout-atomic",
+              "inline": true,
+              "sha256": "1bfcb8189d2c92d80be72fe8d09f43cb46f6610cb5b8f235ee16a862486aa0ff",
+              "bytes": 1004
+            },
+            {
+              "kind": "diagram-spec",
+              "id": "idempotency",
+              "inline": true,
+              "sha256": "c1964e7556aaf8a19c66d2f6e61747adb4a15a258f34ccb36e68b299c26d8685",
+              "bytes": 1224
+            }
+          ]
+        },
+        "specification": {
+          "sha256": "c956690b71ca4e6b49e784aa3950a7890e96ee1c7879e97ed84e0a2feafab07d",
+          "bytes": 8941
+        },
+        "artifact": {
+          "sha256": "705d0c30b07e36442149534857bf2ba7d971e41225f5d7223694c637012bd984",
+          "bytes": 998733
+        },
+        "validation": {
+          "checksPassed": 4,
+          "checkCount": 4,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 602,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "check",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.html",
+        "family": "explainer",
+        "artifact": {
+          "sha256": "705d0c30b07e36442149534857bf2ba7d971e41225f5d7223694c637012bd984",
+          "bytes": 998733
+        },
+        "checks": [
+          {
+            "name": "explainer_structure",
+            "ok": true,
+            "details": [
+              "75 unique DOM IDs"
+            ]
+          },
+          {
+            "name": "explainer_payload_identity",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "explainer_dependencies",
+            "ok": true,
+            "details": [
+              "4 frozen dependencies"
+            ]
+          },
+          {
+            "name": "explainer_native_diagrams",
+            "ok": true,
+            "details": [
+              "checkout-atomic: pass",
+              "idempotency: pass"
+            ]
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "issues": [],
+          "nativeDiagrams": [
+            {
+              "id": "checkout-atomic",
+              "receipt": {
+                "ok": true,
+                "file": "/var/folders/xg/pdf772c10s7d2qph_ml3t6lh0000gn/T/archify-explainer-check-pGhbj9/child.html",
+                "artifact": {
+                  "sha256": "e150f61bc30428706a95ef79b199a8019e1d02176f6350243d4c1fc90aca1788",
+                  "bytes": 826904
+                },
+                "checks": [
+                  {
+                    "name": "single_svg",
+                    "ok": true,
+                    "details": [
+                      "found 1 <svg> block(s)"
+                    ]
+                  },
+                  {
+                    "name": "finite_svg",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "orthogonal_arrows",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "label_route_clearance",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "relationship_crossings",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "relationship_corridors",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "container_border_runs",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "route_rhythm",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "legend_clearance",
+                    "ok": true,
+                    "details": []
+                  }
+                ],
+                "composition": {
+                  "schemaVersion": 1,
+                  "profile": "showcase",
+                  "status": "pass",
+                  "summary": {
+                    "errors": 0,
+                    "warnings": 0
+                  },
+                  "metrics": {
+                    "properCrossings": 0,
+                    "resolvedCrossovers": 0,
+                    "ambiguousCorridors": 0,
+                    "arrowheadCollisions": 0,
+                    "containerBorderRuns": 0,
+                    "labelRouteClearanceIssues": 0,
+                    "labelCanvasOverflowIssues": 0,
+                    "minLabelRouteClearance": 28,
+                    "desktopReadabilityIssues": 0,
+                    "viewportHeightIssues": 0,
+                    "minProjectedNodeTextPx": 11,
+                    "maxBends": 0,
+                    "routesOverSuggestedBends": 0,
+                    "maxStretch": 1,
+                    "routesOverSuggestedStretch": 0,
+                    "minSegmentPx": 200.3,
+                    "minInteriorSegmentPx": null,
+                    "shortSegmentCount": 0,
+                    "shortEndpointSegmentCount": 0,
+                    "shortInteriorSegmentCount": 0,
+                    "microSegmentCount": 0
+                  },
+                  "suggestedLimits": {
+                    "bendsPerRelationship": 2,
+                    "stretch": 1.35,
+                    "segmentPx": 16,
+                    "microSegmentPx": 8
+                  },
+                  "routeReview": {
+                    "crossings": [],
+                    "detours": []
+                  },
+                  "leadingSpace": {
+                    "measured": false,
+                    "reviewSuggested": false
+                  },
+                  "sequenceColumnSpace": {
+                    "measured": true,
+                    "columnFit": "spread",
+                    "participantCount": 4,
+                    "occupiedRight": 880,
+                    "viewBoxLeft": 0,
+                    "canvasWidth": 920,
+                    "emptyRightPx": 40,
+                    "emptyRightRatio": 0.043,
+                    "typicalParticipantWidth": 175,
+                    "reviewSuggested": false
+                  },
+                  "desktopReadability": {
+                    "budgetBasis": "legacy-930",
+                    "readerContract": "declared-wide-v1",
+                    "availableDiagramWidth": 930,
+                    "actualBudgetPx": 930,
+                    "limit": "legacy",
+                    "requestedTargetPx": null,
+                    "requestedTargetMet": null,
+                    "hardFloorPx": 6,
+                    "hardFloorMet": true,
+                    "minimumOwner": {
+                      "kind": "edge",
+                      "id": "browser-to-api-1",
+                      "from": "browser",
+                      "to": "api"
+                    },
+                    "minimumSourceTextPx": 11,
+                    "minimumProjectedTextPx": 11,
+                    "semanticTextCount": 9
+                  },
+                  "issues": []
+                }
+              }
+            },
+            {
+              "id": "idempotency",
+              "receipt": {
+                "ok": true,
+                "file": "/var/folders/xg/pdf772c10s7d2qph_ml3t6lh0000gn/T/archify-explainer-check-KiA0Or/child.html",
+                "artifact": {
+                  "sha256": "9671d43c3fe3aec922bb2f62ad96890021a66bd369508fc4294efb8223f19bf7",
+                  "bytes": 832105
+                },
+                "checks": [
+                  {
+                    "name": "single_svg",
+                    "ok": true,
+                    "details": [
+                      "found 1 <svg> block(s)"
+                    ]
+                  },
+                  {
+                    "name": "finite_svg",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "orthogonal_arrows",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "label_route_clearance",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "relationship_crossings",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "relationship_corridors",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "container_border_runs",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "route_rhythm",
+                    "ok": true,
+                    "details": []
+                  },
+                  {
+                    "name": "legend_clearance",
+                    "ok": true,
+                    "details": []
+                  }
+                ],
+                "composition": {
+                  "schemaVersion": 1,
+                  "profile": "showcase",
+                  "status": "pass",
+                  "summary": {
+                    "errors": 0,
+                    "warnings": 0
+                  },
+                  "metrics": {
+                    "properCrossings": 0,
+                    "resolvedCrossovers": 0,
+                    "ambiguousCorridors": 0,
+                    "arrowheadCollisions": 0,
+                    "containerBorderRuns": 0,
+                    "labelRouteClearanceIssues": 0,
+                    "labelCanvasOverflowIssues": 0,
+                    "minLabelRouteClearance": 27,
+                    "desktopReadabilityIssues": 0,
+                    "viewportHeightIssues": 0,
+                    "minProjectedNodeTextPx": 6.386266094420601,
+                    "maxBends": 0,
+                    "routesOverSuggestedBends": 0,
+                    "maxStretch": 1,
+                    "routesOverSuggestedStretch": 0,
+                    "minSegmentPx": 13,
+                    "minInteriorSegmentPx": null,
+                    "shortSegmentCount": 1,
+                    "shortEndpointSegmentCount": 1,
+                    "shortInteriorSegmentCount": 0,
+                    "microSegmentCount": 0
+                  },
+                  "suggestedLimits": {
+                    "bendsPerRelationship": 2,
+                    "stretch": 1.35,
+                    "segmentPx": 16,
+                    "microSegmentPx": 8
+                  },
+                  "routeReview": {
+                    "crossings": [],
+                    "detours": []
+                  },
+                  "leadingSpace": {
+                    "measured": false,
+                    "reviewSuggested": false
+                  },
+                  "desktopReadability": {
+                    "budgetBasis": "legacy-930",
+                    "readerContract": "declared-wide-v1",
+                    "availableDiagramWidth": 930,
+                    "actualBudgetPx": 930,
+                    "limit": "legacy",
+                    "requestedTargetPx": null,
+                    "requestedTargetMet": null,
+                    "hardFloorPx": 6,
+                    "hardFloorMet": true,
+                    "minimumOwner": {
+                      "kind": "edge",
+                      "id": "create-to-result-1",
+                      "from": "create",
+                      "to": "result"
+                    },
+                    "minimumSourceTextPx": 8,
+                    "minimumProjectedTextPx": 6.386266094420601,
+                    "semanticTextCount": 10
+                  },
+                  "issues": []
+                }
+              }
+            }
+          ]
+        },
+        "diagnostics": [],
+        "provenance": "current",
+        "deliveryReceiptId": "09052815-59cb-4548-aafa-0f79e97501f3"
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": false,
+    "ran": false
+  },
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.finalize.json",
+    "summaryReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/cart-checkout-system-design-20261108/cart-checkout-system-design.finalize-summary.json"
+  },
+  "visualReview": "not-requested",
+  "finishedAt": "2026-11-08T06:19:14.473Z",
+  "durationMs": 1695,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-08T04:49:18.423Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

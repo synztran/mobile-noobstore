@@ -1,4 +1,5 @@
 import { DocumentFeed } from "@/components/community/DocumentFeed";
+import { KeyboardResources } from "@/components/community/KeyboardResources";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function DocumentsPage() {
         </p>
       </div>
 
+      <KeyboardResources />
       <DocumentFeed />
     </main>
   );

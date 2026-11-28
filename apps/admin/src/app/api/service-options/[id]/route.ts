@@ -1,6 +1,8 @@
 import { logAuditEvent } from "@/lib/audit-log";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@db-types";
+import { isDuplicateSiblingLabel } from "@/lib/service-labels";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -11,8 +13,19 @@ type RouteContext = {
 	params: Promise<{ id: string }>;
 };
 
+async function authorize() {
+	const session = await createClient();
+	const { data: { user }, error } = await session.auth.getUser();
+	if (error || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	const { data: profile } = await session.from("users").select("role").eq("id", user.id).maybeSingle();
+	if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+	return null;
+}
+
 // PATCH /api/service-options/[id]
 export async function PATCH(req: NextRequest, context: RouteContext) {
+	const denied = await authorize();
+	if (denied) return denied;
 	const { id } = await context.params;
 	const supabase = getAdminClient();
 
@@ -43,13 +56,14 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 		sanitized.label = label;
 	}
 	if (Object.prototype.hasOwnProperty.call(body, "is_required")) {
-		sanitized.is_required = Boolean(body.is_required);
+		if (typeof body.is_required !== "boolean") return NextResponse.json({ error: "is_required must be a boolean" }, { status: 400 });
+		sanitized.is_required = body.is_required;
 	}
 	if (Object.prototype.hasOwnProperty.call(body, "display_order")) {
 		const num = Number(body.display_order);
-		if (!Number.isFinite(num)) {
+		if (!Number.isInteger(num) || num < 0) {
 			return NextResponse.json(
-				{ error: "display_order must be a number" },
+				{ error: "display_order must be a non-negative integer" },
 				{ status: 400 },
 			);
 		}
@@ -65,11 +79,21 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
 	const { data: existing } = await supabase
 		.from("service_options")
-		.select("*")
+		.select("id, service_id, label")
 		.eq("id", optionId)
 		.maybeSingle();
 	if (!existing) {
 		return NextResponse.json({ error: "Option not found" }, { status: 404 });
+	}
+	if (sanitized.label) {
+		const { data: siblingOptions, error: siblingOptionsError } = await supabase
+			.from("service_options")
+			.select("id, label")
+			.eq("service_id", existing.service_id);
+		if (siblingOptionsError) return NextResponse.json({ error: "Không thể kiểm tra tuỳ chọn hiện có." }, { status: 500 });
+		if (isDuplicateSiblingLabel(sanitized.label, siblingOptions ?? [], optionId)) {
+			return NextResponse.json({ error: "Tên tuỳ chọn đã tồn tại trong dịch vụ này." }, { status: 409 });
+		}
 	}
 
 	const { data, error } = await supabase
@@ -100,6 +124,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 // DELETE /api/service-options/[id]
 // Deletes the option; its values cascade via FK.
 export async function DELETE(_req: NextRequest, context: RouteContext) {
+	const denied = await authorize();
+	if (denied) return denied;
 	const { id } = await context.params;
 	const supabase = getAdminClient();
 

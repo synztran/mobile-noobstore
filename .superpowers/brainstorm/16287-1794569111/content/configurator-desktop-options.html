@@ -1,0 +1,48 @@
+<h2>Desktop configurator — hướng nào hợp hơn?</h2>
+<p class="subtitle">Mockup dùng đúng ngữ cảnh sản phẩm GMK Cyrillic WoB Beige. Chọn hướng bạn thích hoặc góp ý trực tiếp.</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:22px;margin-top:20px">
+  <article style="border:1px solid #ddc1b8;border-radius:18px;background:#fff;padding:20px;box-shadow:0 8px 24px rgba(80,45,30,.08)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;font-weight:800;letter-spacing:.12em;color:#89726a;text-transform:uppercase">OPTION A · RÕ RÀNG</div>
+        <h3 style="margin:4px 0 0;font-size:20px;color:#1b1c1a">Chọn cấu hình</h3>
+      </div>
+      <span style="border-radius:999px;padding:6px 10px;background:#ffdbcf;color:#9b3f1c;font-size:11px;font-weight:800">BẮT BUỘC</span>
+    </div>
+    <p style="margin:0 0 12px;color:#56423c;font-size:13px">Kitting Base <span style="color:#ba1a1a;font-weight:700">· Bắt buộc</span></p>
+    <button data-choice="option-a" onclick="toggleSelect(this)" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;border:2px solid #9b3f1c;border-radius:14px;background:#fff8f4;text-align:left;cursor:pointer;color:#1b1c1a">
+      <span style="width:20px;height:20px;border-radius:50%;border:6px solid #9b3f1c;box-sizing:border-box;flex:none"></span>
+      <span style="flex:1;min-width:0"><strong style="display:block;font-size:14px">GMK Cyrillic WoB Beige</strong><small style="display:block;margin-top:4px;color:#89726a">Kitting Base</small></span>
+      <span style="text-align:right"><strong style="display:block;color:#9b3f1c;font-size:14px">+3.200.000₫</strong><small style="display:block;margin-top:4px;color:#ba1a1a;font-weight:700">Hết hàng</small></span>
+    </button>
+    <button data-choice="option-a-alt" onclick="toggleSelect(this)" style="width:100%;margin-top:8px;display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #e4e2de;border-radius:14px;background:#fff;text-align:left;cursor:pointer;color:#1b1c1a">
+      <span style="width:20px;height:20px;border-radius:50%;border:1.5px solid #89726a;box-sizing:border-box;flex:none"></span>
+      <span style="flex:1;min-width:0"><strong style="display:block;font-size:14px">Chọn phiên bản khác</strong><small style="display:block;margin-top:4px;color:#89726a">Một dòng thông tin phụ</small></span>
+      <span style="text-align:right"><strong style="display:block;font-size:14px">+0₫</strong><small style="display:block;margin-top:4px;color:#52652a;font-weight:700">Còn hàng</small></span>
+    </button>
+    <p style="margin:14px 0 0;color:#89726a;font-size:12px;line-height:1.5">Một lựa chọn mỗi hàng. Tên, giá và tình trạng nằm trên cùng trục; trạng thái hết hàng vẫn dễ nhận ra.</p>
+  </article>
+
+  <article style="border:1px solid #ddc1b8;border-radius:18px;background:#fff;padding:20px;box-shadow:0 8px 24px rgba(80,45,30,.08)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;font-weight:800;letter-spacing:.12em;color:#89726a;text-transform:uppercase">OPTION B · GỌN</div>
+        <h3 style="margin:4px 0 0;font-size:20px;color:#1b1c1a">Kitting Base</h3>
+      </div>
+      <span style="border-radius:999px;padding:6px 10px;background:#ffdad6;color:#ba1a1a;font-size:11px;font-weight:800">HẾT HÀNG</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid #f0eeea;border-bottom:1px solid #f0eeea">
+      <div style="width:44px;height:44px;border-radius:12px;background:#f5f3ef;display:grid;place-items:center;color:#89726a;font-size:10px;font-weight:800">GMK</div>
+      <div style="flex:1;min-width:0"><strong style="display:block;color:#1b1c1a;font-size:14px">GMK Cyrillic WoB Beige</strong><small style="color:#89726a">Bắt buộc · Kitting Base</small></div>
+      <strong style="color:#9b3f1c;font-size:14px">+3.200.000₫</strong>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px">
+      <span style="color:#ba1a1a;font-size:12px;font-weight:700">Hiện không khả dụng</span>
+      <button disabled style="border:0;border-radius:999px;background:#eae8e4;padding:9px 14px;color:#89726a;font-size:11px;font-weight:800;letter-spacing:.04em">HẾT HÀNG</button>
+    </div>
+    <p style="margin:14px 0 0;color:#89726a;font-size:12px;line-height:1.5">Một dòng tóm tắt nhẹ hơn, ít khung hơn; phù hợp nếu số lựa chọn ít và option dài.</p>
+  </article>
+</div>
+
+<div style="margin-top:18px;padding:14px 16px;border-radius:14px;background:#f5f3ef;color:#56423c;font-size:13px;line-height:1.5"><strong style="color:#1b1c1a">Cả hai hướng đều giữ nguyên:</strong> mobile configurator hiện tại, callback lựa chọn, giá, điều kiện hết hàng, giới hạn cấu hình và luồng thêm giỏ.</div>

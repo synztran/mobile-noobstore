@@ -1,0 +1,178 @@
+   ▲ Next.js 15.5.29
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+
+🌼   daisyUI 4.12.24
+├─ ✔︎ 1 theme added		https://daisyui.com/docs/themes
+╰─ ★ Star daisyUI on GitHub	https://github.com/saadeghi/daisyui
+
+ ✓ Compiled successfully in 4.7s
+   Skipping validation of types
+   Linting ...
+   Collecting page data ...
+   Generating static pages (0/41) ...
+   Generating static pages (10/41) 
+   Generating static pages (20/41) 
+   Generating static pages (30/41) 
+ ✓ Generating static pages (41/41)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                  Size  First Load JS
+┌ ƒ /                                                       385 B         104 kB
+├ ○ /_not-found                                              1 kB         104 kB
+├ ƒ /api/audit-log                                          385 B         104 kB
+├ ƒ /api/blog                                               385 B         104 kB
+├ ƒ /api/blog/[id]                                          385 B         104 kB
+├ ƒ /api/cache                                              385 B         104 kB
+├ ƒ /api/carriers                                           385 B         104 kB
+├ ƒ /api/categories                                         385 B         104 kB
+├ ƒ /api/checkin                                            385 B         104 kB
+├ ƒ /api/checkin/batches                                    385 B         104 kB
+├ ƒ /api/checkin/batches/[id]/retry                         385 B         104 kB
+├ ƒ /api/checkin/events/[id]                                385 B         104 kB
+├ ƒ /api/checkout-error-codes                               385 B         104 kB
+├ ƒ /api/component-rules                                    385 B         104 kB
+├ ƒ /api/component-rules/variant-context                    385 B         104 kB
+├ ƒ /api/content/campaigns                                  385 B         104 kB
+├ ƒ /api/content/campaigns/[id]                             385 B         104 kB
+├ ƒ /api/crawling/detections                                385 B         104 kB
+├ ƒ /api/crawling/detections/[id]                           385 B         104 kB
+├ ƒ /api/crawling/releases                                  385 B         104 kB
+├ ƒ /api/crawling/releases/[id]                             385 B         104 kB
+├ ƒ /api/crawling/sources                                   385 B         104 kB
+├ ƒ /api/crawling/sources/[id]                              385 B         104 kB
+├ ƒ /api/crawling/sources/[id]/run                          385 B         104 kB
+├ ƒ /api/crawling/tick                                      385 B         104 kB
+├ ƒ /api/crawling/webhook                                   385 B         104 kB
+├ ƒ /api/diagrams/[slug]                                    385 B         104 kB
+├ ƒ /api/documents                                          385 B         104 kB
+├ ƒ /api/documents/[id]                                     385 B         104 kB
+├ ƒ /api/documents/upload                                   385 B         104 kB
+├ ƒ /api/fees                                               385 B         104 kB
+├ ƒ /api/gacha/events                                       385 B         104 kB
+├ ƒ /api/gacha/events/[id]                                  385 B         104 kB
+├ ƒ /api/gacha/events/[id]/blocked-users                    385 B         104 kB
+├ ƒ /api/gacha/events/[id]/blocked-users/[userId]           385 B         104 kB
+├ ƒ /api/gacha/events/[id]/missions                         385 B         104 kB
+├ ƒ /api/gacha/events/[id]/missions/[missionId]             385 B         104 kB
+├ ƒ /api/gacha/events/[id]/missions/[missionId]/progress    385 B         104 kB
+├ ƒ /api/gacha/events/[id]/reward-history                   385 B         104 kB
+├ ƒ /api/gacha/events/[id]/reward-history/[userId]          385 B         104 kB
+├ ƒ /api/gacha/events/[id]/rewards                          385 B         104 kB
+├ ƒ /api/gacha/events/[id]/rewards/[rewardId]               385 B         104 kB
+├ ƒ /api/gacha/events/[id]/rewards/[rewardId]/winners       385 B         104 kB
+├ ƒ /api/gift-cards                                         385 B         104 kB
+├ ƒ /api/gift-products                                      385 B         104 kB
+├ ƒ /api/inventory/inbound                                  385 B         104 kB
+├ ƒ /api/invoices/generate                                  385 B         104 kB
+├ ƒ /api/notifications/send                                 385 B         104 kB
+├ ƒ /api/order-statuses                                     385 B         104 kB
+├ ƒ /api/orders                                             385 B         104 kB
+├ ƒ /api/orders/[id]                                        385 B         104 kB
+├ ƒ /api/orders/[id]/payment-evidence                       385 B         104 kB
+├ ƒ /api/orders/[id]/payment-qr                             385 B         104 kB
+├ ƒ /api/orders/[id]/payments                               385 B         104 kB
+├ ƒ /api/orders/[id]/verify-pickup                          385 B         104 kB
+├ ƒ /api/orders/alerts                                      385 B         104 kB
+├ ƒ /api/orders/bulk-status                                 385 B         104 kB
+├ ƒ /api/orders/quick                                       385 B         104 kB
+├ ƒ /api/orders/statuses                                    385 B         104 kB
+├ ƒ /api/photo-settings                                     385 B         104 kB
+├ ƒ /api/points/rules                                       385 B         104 kB
+├ ƒ /api/points/rules/[id]                                  385 B         104 kB
+├ ƒ /api/points/transactions                                385 B         104 kB
+├ ƒ /api/product-components                                 385 B         104 kB
+├ ƒ /api/product-components/[id]                            385 B         104 kB
+├ ƒ /api/products                                           385 B         104 kB
+├ ƒ /api/products/[id]                                      385 B         104 kB
+├ ƒ /api/products/[id]/addons                               385 B         104 kB
+├ ƒ /api/products/[id]/addons/[addonId]                     385 B         104 kB
+├ ƒ /api/products/list                                      385 B         104 kB
+├ ƒ /api/products/ratings                                   385 B         104 kB
+├ ƒ /api/products/search                                    385 B         104 kB
+├ ƒ /api/ranks                                              385 B         104 kB
+├ ƒ /api/ranks/[id]                                         385 B         104 kB
+├ ƒ /api/release-subscribers                                385 B         104 kB
+├ ƒ /api/reviews                                            385 B         104 kB
+├ ƒ /api/reviews/[id]                                       385 B         104 kB
+├ ƒ /api/reviews/sync-google                                385 B         104 kB
+├ ƒ /api/rewards                                            385 B         104 kB
+├ ƒ /api/rewards/[id]                                       385 B         104 kB
+├ ƒ /api/service-configs                                    385 B         104 kB
+├ ƒ /api/service-option-values                              385 B         104 kB
+├ ƒ /api/service-option-values/[id]                         385 B         104 kB
+├ ƒ /api/service-options                                    385 B         104 kB
+├ ƒ /api/service-options/[id]                               385 B         104 kB
+├ ƒ /api/services                                           385 B         104 kB
+├ ƒ /api/services/[id]                                      385 B         104 kB
+├ ƒ /api/stock-alerts                                       385 B         104 kB
+├ ƒ /api/stock-alerts/[id]                                  385 B         104 kB
+├ ƒ /api/support/tickets                                    385 B         104 kB
+├ ƒ /api/support/tickets/[id]                               385 B         104 kB
+├ ƒ /api/testimonials                                       385 B         104 kB
+├ ƒ /api/testimonials/[id]                                  385 B         104 kB
+├ ƒ /api/upload                                             385 B         104 kB
+├ ƒ /api/users                                              385 B         104 kB
+├ ƒ /api/users/[id]                                         385 B         104 kB
+├ ƒ /api/users/[id]/rank                                    385 B         104 kB
+├ ƒ /api/variants                                           385 B         104 kB
+├ ƒ /api/vendors                                            385 B         104 kB
+├ ƒ /api/vendors/[id]                                       385 B         104 kB
+├ ƒ /api/vouchers                                           385 B         104 kB
+├ ƒ /api/vouchers/[id]                                      385 B         104 kB
+├ ƒ /api/warehouse-sync                                     385 B         104 kB
+├ ƒ /api/warehouse-sync/stock                               385 B         104 kB
+├ ƒ /audit-log                                            2.76 kB         115 kB
+├ ƒ /blog                                                 4.94 kB         155 kB
+├ ƒ /carts                                                5.32 kB         112 kB
+├ ƒ /carts/abandoned                                      3.77 kB         107 kB
+├ ƒ /categories                                           3.08 kB         142 kB
+├ ƒ /checkin                                              3.81 kB         107 kB
+├ ƒ /checkout-error-codes                                 1.93 kB         114 kB
+├ ƒ /community/documents                                  5.33 kB         112 kB
+├ ƒ /content                                              3.44 kB         148 kB
+├ ƒ /crawling                                               385 B         104 kB
+├ ƒ /dashboard                                             122 kB         228 kB
+├ ƒ /diagrams                                               172 B         107 kB
+├ ƒ /diagrams/[slug]                                        172 B         107 kB
+├ ƒ /fees                                                 5.87 kB         109 kB
+├ ƒ /gacha                                                14.9 kB         144 kB
+├ ƒ /inventory                                            6.02 kB         109 kB
+├ ƒ /keycap-check                                         13.5 kB         117 kB
+├ ƒ /login                                                7.92 kB         176 kB
+├ ƒ /notifications                                        1.16 kB         104 kB
+├ ƒ /orders                                               26.6 kB         148 kB
+├ ƒ /orders/quick                                         6.41 kB         113 kB
+├ ƒ /points                                               9.42 kB         113 kB
+├ ƒ /products                                             19.1 kB         182 kB
+├ ƒ /products/components                                  2.91 kB         114 kB
+├ ƒ /products/gifts                                       3.56 kB         113 kB
+├ ƒ /products/photo-settings                              2.19 kB         138 kB
+├ ƒ /products/variants                                     9.2 kB         149 kB
+├ ƒ /ranks                                                4.27 kB         140 kB
+├ ƒ /reviews                                               8.2 kB         120 kB
+├ ƒ /rewards                                              5.44 kB         119 kB
+├ ƒ /services                                             7.25 kB         111 kB
+├ ƒ /services/option-values                                 385 B         104 kB
+├ ƒ /services/options                                       385 B         104 kB
+├ ƒ /stock-alerts                                         3.73 kB         119 kB
+├ ƒ /support                                              5.97 kB         129 kB
+├ ○ /unauthorized                                           172 B         107 kB
+├ ƒ /users                                                4.21 kB         111 kB
+├ ƒ /vendors                                              3.19 kB         107 kB
+└ ƒ /vouchers                                             8.68 kB         115 kB
++ First Load JS shared by all                              103 kB
+  ├ chunks/18-9b78004f9e753d46.js                         46.8 kB
+  ├ chunks/87c73c54-09e1ba5c70e60a51.js                   54.2 kB
+  └ other shared chunks (total)                           2.26 kB
+
+
+ƒ Middleware                                              90.5 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

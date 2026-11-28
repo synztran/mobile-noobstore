@@ -38,7 +38,7 @@ export function SearchPageClient({ initialData, query, initialSort }: Props) {
     () => ({
       search: query,
       sort,
-      category,
+      category: category ? [category] : [],
       priceMin: "",
       priceMax: "",
     }),

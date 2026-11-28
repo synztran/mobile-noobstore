@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 	try {
 		const { id } = await params;
 		const body = await req.json();
-		const { title, subtitle, image_url, cta_text, cta_link, is_active, priority } = body;
+		const { title, subtitle, image_url, image_url_mobile, cta_text, cta_link, is_active, priority } = body;
 
 		const supabase = getAdminClient();
 		const updates: Record<string, unknown> = {};
@@ -16,6 +16,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 		if (title !== undefined) updates.title = title.trim();
 		if (subtitle !== undefined) updates.subtitle = subtitle?.trim() ?? null;
 		if (image_url !== undefined) updates.image_url = image_url?.trim() ?? null;
+		if (image_url_mobile !== undefined) updates.image_url_mobile = image_url_mobile?.trim() ?? null;
 		if (cta_text !== undefined) updates.cta_text = cta_text?.trim() ?? null;
 		if (cta_link !== undefined) updates.cta_link = cta_link?.trim() ?? null;
 		if (is_active !== undefined) updates.is_active = is_active;

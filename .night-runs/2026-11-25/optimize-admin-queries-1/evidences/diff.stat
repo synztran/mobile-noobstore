@@ -1,0 +1,6 @@
+ .gitignore                                         |  6 +--
+ .../src/app/(admin)/products/components/page.tsx   |  9 +++-
+ apps/admin/src/app/(admin)/products/page.tsx       | 56 ++++-----------------
+ .../src/app/(admin)/products/variants/page.tsx     |  7 ++-
+ apps/admin/src/app/api/products/list/route.ts      | 57 ++++++++--------------
+ 5 files changed, 45 insertions(+), 90 deletions(-)

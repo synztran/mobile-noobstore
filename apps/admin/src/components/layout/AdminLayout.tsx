@@ -80,6 +80,7 @@ const navigation: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Điểm danh", href: "/checkin", icon: CalendarCheck },
   { label: "Fees", href: "/fees", icon: DollarSign },
+  { label: "Mid-man Tracking", href: "/mid-man", icon: ClipboardList },
   { label: "Gacha", href: "/gacha", icon: FerrisWheel },
   { label: "Inventory", href: "/inventory", icon: ClipboardList },
   { label: "Notifications", href: "/notifications", icon: FileText },
@@ -89,6 +90,7 @@ const navigation: NavItem[] = [
     children: [
       { label: "Orders", href: "/orders", icon: ShoppingCart },
       { label: "Quick Order", href: "/orders/quick", icon: Zap },
+      { label: "Invoices", href: "/invoices", icon: FileText },
     ],
   },
   { label: "Points", href: "/points", icon: Coins },

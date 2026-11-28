@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "skipped",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-11-08T05:12:03.728Z",
+  "specification": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+    "sha256": "f944d90911d26df6c8b78bc526f542e644f95caafcf7cc209279aa96592c3a86",
+    "bytes": 5952
+  },
+  "artifact": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+    "sha256": "5fe742609cd5bdb5a59c9fc857f58d79c06679910627f1918ee316337e81b42d",
+    "bytes": 854609
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/Users/haritran/source/noobstore/mobile-noobstore",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "f944d90911d26df6c8b78bc526f542e644f95caafcf7cc209279aa96592c3a86",
+          "bytes": 5952
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 612,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/Users/haritran/source/noobstore/mobile-noobstore",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "a03a85a9-cd90-4d78-857d-f15fdcb310f5",
+        "ok": true,
+        "command": "deliver",
+        "type": "architecture",
+        "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+        "output": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+        "specification": {
+          "sha256": "f944d90911d26df6c8b78bc526f542e644f95caafcf7cc209279aa96592c3a86",
+          "bytes": 5952
+        },
+        "artifact": {
+          "sha256": "5fe742609cd5bdb5a59c9fc857f58d79c06679910627f1918ee316337e81b42d",
+          "bytes": 854609
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/synztran/mobile-noobstore",
+          "revision": "9c6c17488c50e818b13773b4c0489f4fd5facbe6",
+          "references": 14
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 251,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "check",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+        "artifact": {
+          "sha256": "5fe742609cd5bdb5a59c9fc857f58d79c06679910627f1918ee316337e81b42d",
+          "bytes": 854609
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 0,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 12,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 6.7728662420382175,
+            "maxBends": 3,
+            "routesOverSuggestedBends": 4,
+            "maxStretch": 1.314,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 24,
+            "minInteriorSegmentPx": 56,
+            "shortSegmentCount": 0,
+            "shortEndpointSegmentCount": 0,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [],
+            "detours": [
+              {
+                "relationship": {
+                  "id": "shopper-products",
+                  "from": "shopper",
+                  "to": "product-ui",
+                  "label": "browse / add item",
+                  "collectionIndex": 0,
+                  "artifactIndex": 1
+                },
+                "bends": 3,
+                "stretch": 1.287
+              },
+              {
+                "relationship": {
+                  "id": "product-store",
+                  "from": "product-ui",
+                  "to": "zustand-cart",
+                  "label": "optimistic local add",
+                  "collectionIndex": 1,
+                  "artifactIndex": 2
+                },
+                "bends": 3,
+                "stretch": 1.314
+              },
+              {
+                "relationship": {
+                  "id": "api-service",
+                  "from": "cart-api",
+                  "to": "cart-service",
+                  "label": "validate session · delegate",
+                  "collectionIndex": 5,
+                  "artifactIndex": 6
+                },
+                "bends": 3,
+                "stretch": 1.299
+              },
+              {
+                "relationship": {
+                  "id": "service-db",
+                  "from": "cart-service",
+                  "to": "supabase",
+                  "label": "read / write cart rows",
+                  "collectionIndex": 6,
+                  "artifactIndex": 7
+                },
+                "bends": 3,
+                "stretch": 1.271
+              }
+            ]
+          },
+          "leadingSpace": {
+            "measured": true,
+            "emptyTopPx": 80,
+            "emptyTopRatio": 0.137,
+            "occupiedTop": 80,
+            "viewBoxTop": 0,
+            "canvasHeight": 582,
+            "typicalNodeHeight": 64,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "recognized-declared-wide",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 1346,
+            "actualBudgetPx": 1346,
+            "actualReaderWidth": 1376,
+            "desiredReaderWidth": 1520.506329113924,
+            "viewportCap": 1376,
+            "limit": "viewport-cap",
+            "requestedTargetPx": 7.5,
+            "requestedTargetMet": false,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "cart-drawer-ui"
+            },
+            "minimumSourceTextPx": 7.9,
+            "minimumProjectedTextPx": 6.7728662420382175,
+            "semanticTextCount": 32
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "a03a85a9-cd90-4d78-857d-f15fdcb310f5"
+      }
+    },
+    "browser-check": {
+      "status": "skipped",
+      "exitCode": 2,
+      "durationMs": 28,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "browser-check",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+        "--json",
+        "--require-provenance"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "skipped",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "a03a85a9-cd90-4d78-857d-f15fdcb310f5",
+        "artifact": {
+          "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+          "sha256": "5fe742609cd5bdb5a59c9fc857f58d79c06679910627f1918ee316337e81b42d",
+          "bytes": 854609
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "unavailable",
+          "executable": null
+        },
+        "diagnostics": [
+          {
+            "code": "viewer/chrome-unavailable",
+            "severity": "warning",
+            "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+            "subject": {
+              "artifact": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html"
+            },
+            "evidence": {
+              "executable": null
+            },
+            "supportedFixes": [
+              "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+            ]
+          }
+        ],
+        "containment": {
+          "status": "skipped",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": []
+        },
+        "themeStates": {
+          "status": "skipped",
+          "viewports": []
+        },
+        "readability": {
+          "status": "skipped",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": []
+        },
+        "viewerChrome": {
+          "status": "skipped",
+          "viewports": []
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "receipt": "cart-module.browser-check.json",
+          "files": []
+        },
+        "error": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path."
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-unavailable",
+      "severity": "warning",
+      "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+      "subject": {
+        "artifact": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html"
+      },
+      "evidence": {
+        "executable": null
+      },
+      "supportedFixes": [
+        "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+      ]
+    }
+  ],
+  "evidence": {
+    "receipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.finalize.json",
+    "summaryReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.finalize-summary.json",
+    "browserCheckReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "failedStage": "browser-check",
+  "finishedAt": "2026-11-08T05:12:04.778Z",
+  "durationMs": 1050,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-08T04:49:18.423Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

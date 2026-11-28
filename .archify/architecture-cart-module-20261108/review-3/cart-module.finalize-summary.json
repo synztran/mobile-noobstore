@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "skipped",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+    "sha256": "b27bc73078195dd0f0f3912c7dce7cb227dfe17c3ec4dfe6230e65ac28678728",
+    "bytes": 5986
+  },
+  "artifact": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+    "sha256": "b1bb4779f8a6a53201740b505f2a50ee2443fb9e1c2a60925362997eb195cc8b",
+    "bytes": 854609
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "skipped"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-unavailable",
+      "severity": "warning",
+      "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+      "subject": {
+        "artifact": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html"
+      },
+      "evidence": {
+        "executable": null
+      },
+      "supportedFixes": [
+        "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/review-3/cart-module.finalize.json",
+    "summaryReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/review-3/cart-module.finalize-summary.json",
+    "browserCheckReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/review-3/cart-module.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-08T04:49:18.423Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 938,
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  }
+}

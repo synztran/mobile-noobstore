@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+    "sha256": "327227300cf81a69f3d1dd13c10e2cba5a22d0e8436565992eae658e76c8e820",
+    "bytes": 5493
+  },
+  "artifact": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html"
+  },
+  "gates": {
+    "validate": "fail",
+    "deliver": "not-run",
+    "check": "not-run",
+    "browser-check": "not-run"
+  },
+  "failedStage": "validate",
+  "diagnostics": [
+    {
+      "code": "internal/unclassified",
+      "severity": "error",
+      "message": "Cannot read properties of undefined (reading '0')",
+      "subject": {
+        "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/.archify-delivery-eZZ8Fr/specification.snapshot.json"
+      },
+      "evidence": {
+        "errorName": "TypeError"
+      }
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/review-2/cart-module.finalize.json",
+    "summaryReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/review-2/cart-module.finalize-summary.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-08T04:49:18.423Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 576,
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  },
+  "nextAction": {
+    "action": "edit-in-place",
+    "candidate": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+    "constraint": "Preserve unaffected semantics and geometry; apply each diagnostic's supportedFixes, or the fix its message names, and do not replace the whole candidate.",
+    "then": "finalize-once"
+  }
+}

@@ -133,7 +133,7 @@ export function SingleImageUploader({
       )}
 
       {value ? (
-        <div className="group relative h-40 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+        <div className="group relative h-36 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
           <Image
             src={value}
             alt="thumbnail"

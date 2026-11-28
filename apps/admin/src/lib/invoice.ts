@@ -4,6 +4,7 @@ import PDFDocument from "pdfkit";
 import bwipjs from "bwip-js";
 import fs from "fs";
 import path from "path";
+import { DEFAULT_INVOICE_LAYOUT, normalizeInvoiceLayout, type InvoiceSectionId } from "@/lib/invoices/layout";
 
 interface GenerateInvoiceInput {
   orderNumber: string;
@@ -176,7 +177,7 @@ function formatVND(amount: number): string {
   return `${sign}${formatted} ₫`;
 }
 
-function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
+export function generateInvoicePDF(input: GenerateInvoiceInput, sectionOrder: InvoiceSectionId[] = DEFAULT_INVOICE_LAYOUT): Promise<Buffer> {
   return new Promise(async (resolve, reject) => {
     const paidAmount = Math.min(
       Math.max(
@@ -221,8 +222,16 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       })
       .catch(() => null);
 
-    // ── Header: Logo & Company info (Left) ──────────────────────────────────
     let leftY = 50;
+    let rightY = 130;
+    let currentY = 50;
+    const renderCompany = () => {
+      if (currentY > 50) {
+        doc.addPage();
+        currentY = 50;
+      }
+    // ── Header: Logo & Company info (Left) ──────────────────────────────────
+    leftY = 50;
     if (LOGO_PATH) {
       doc.image(LOGO_PATH, 50, 40, { width: 120 });
       leftY += 60; // Adjust based on your logo's height
@@ -255,7 +264,7 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     }
 
     // ── Invoice Metadata (Right) ────────────────────────────────────────────
-    let rightY = 130;
+    rightY = 130;
     const addMetaLine = (label: string, value: string) => {
       doc
         .fontSize(10)
@@ -306,24 +315,35 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       align: "right",
     });
 
+    currentY = Math.max(leftY, rightY) + 24;
+    };
+
     // ── Customer / Bill To (Left) ───────────────────────────────────────────
-    let currentY = Math.max(leftY, rightY);
+    let y = currentY;
 
-    doc
-      .fontSize(10)
-      .fillColor("#777")
-      .font(fontBold)
-      .text("Gửi đến:", 50, currentY);
-    doc.fontSize(10).fillColor("#111").font(fontBold);
-    doc.text(input.customerName, 50, currentY + 15);
-    if (input.customerAddress) {
-      doc.font(font).fillColor("#666");
-      doc.text(input.customerAddress, 50, currentY + 30, { width: 250 });
-    }
+    const ensureSpace = (height: number) => {
+      if (currentY + height > 770) {
+        doc.addPage();
+        currentY = 50;
+      }
+    };
 
+    const renderCustomer = () => {
+      ensureSpace(70);
+      doc.fontSize(10).fillColor("#777").font(fontBold).text("Gửi đến:", 50, currentY);
+      doc.fontSize(10).fillColor("#111").font(fontBold).text(input.customerName, 50, currentY + 15);
+      let height = 35;
+      if (input.customerAddress) {
+        doc.font(font).fillColor("#666").text(input.customerAddress, 50, currentY + 30, { width: 250 });
+        height += doc.heightOfString(input.customerAddress, { width: 250 });
+      }
+      currentY += height + 20;
+      y = currentY;
+    };
+
+    const renderItems = () => {
     // ── Items Table ────────────────────────────────────────────────────────
-    // Push table further down if customer address wraps
-    const tableTop = Math.max(doc.y + 30, 260);
+    const tableTop = Math.max(currentY, 260);
 
     const cols = [
       { x: 55, w: 220, align: "left" as const, label: "Sản phẩm/Dịch vụ" },
@@ -354,11 +374,20 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
     );
 
     // Body rows
-    let y = tableTop + 26;
+    y = tableTop + 26;
 
     (input?.items ?? []).forEach((item) => {
       if (!item?.name && !item?.quantity && !item?.unit_cost) return;
 
+      if (y > 740) {
+        doc.addPage();
+        currentY = 50;
+        y = currentY + 26;
+        doc.fillColor("#333").rect(50, currentY, 495, 24).fill();
+        doc.fontSize(10).fillColor("#fff").font(fontBold);
+        cols.forEach((column) => doc.text(column.label, column.x, currentY + 6, { width: column.w, align: column.align }));
+        currentY = y;
+      }
       doc.fontSize(12).font(fontBold);
 
       const itemName = item.name || item.gift_name || "";
@@ -414,6 +443,13 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
 
       y = nextY + 12;
     });
+
+    currentY = y + 26;
+    };
+
+    const renderTotals = () => {
+      ensureSpace(150);
+    y = currentY;
 
     // Separator before totals
     y += 10;
@@ -480,9 +516,13 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       doc.text(t.value, 430, y, { width: 105, align: "right" });
       y += t.bold ? 22 : 18;
     });
+    currentY = y + 24;
+    };
 
     // ── Customer Signature (Bottom Right) ──────────────────────────────────
-    const sigY = Math.max(y + 30, 620) + 45;
+    const renderSignature = () => {
+    ensureSpace(100);
+    const sigY = currentY + 30;
     doc
       .fontSize(10)
       .fillColor("#111")
@@ -505,9 +545,13 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       .strokeColor("#ccc")
       .lineWidth(1)
       .stroke();
+    currentY = sigY + 61;
+    };
 
     // ── Footer Notes & Terms (Bottom Left) ─────────────────────────────────
-    let footerY = Math.max(y, 620);
+    const renderNotes = () => {
+    ensureSpace(110);
+    let footerY = currentY;
 
     doc
       .fontSize(10)
@@ -534,6 +578,18 @@ function generateInvoicePDF(input: GenerateInvoiceInput): Promise<Buffer> {
       .text("Điều khoản:", 50, footerY);
     doc.fontSize(9).fillColor("#666").font(font);
     doc.text("Đơn hàng không hỗ trợ hoàn tiền sau 3 ngày.", 50, footerY + 14);
+    currentY = footerY + 108;
+    };
+
+    const renderers: Record<InvoiceSectionId, () => void> = {
+      company: renderCompany,
+      customer: renderCustomer,
+      items: renderItems,
+      totals: renderTotals,
+      signature: renderSignature,
+      notes: renderNotes,
+    };
+    for (const section of normalizeInvoiceLayout(sectionOrder)) renderers[section]();
 
     doc.end();
   });
@@ -563,7 +619,19 @@ export async function generateAndStoreInvoice(
     }
 
     // Generate PDF locally
-    const pdfBuffer = await generateInvoicePDF(input);
+    let sectionOrder = DEFAULT_INVOICE_LAYOUT;
+    try {
+      const db = supabase as unknown as { from: (table: string) => any };
+      const { data: layout } = await db
+        .from("invoice_layout_settings")
+        .select("sections")
+        .eq("id", true)
+        .maybeSingle();
+      if (layout?.sections) sectionOrder = normalizeInvoiceLayout(layout.sections);
+    } catch (layoutError) {
+      console.warn("[invoice] layout unavailable; using default order", layoutError);
+    }
+    const pdfBuffer = await generateInvoicePDF(input, sectionOrder);
 
     // Ensure bucket exists
     const { data: buckets } = await supabase.storage.listBuckets();

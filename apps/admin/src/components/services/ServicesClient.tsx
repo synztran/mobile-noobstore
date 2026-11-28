@@ -20,6 +20,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 	const [editingService, setEditingService] = useState<AdminService | null>(
 		null,
 	);
+	const [creatingService, setCreatingService] = useState(false);
 	const [optionModal, setOptionModal] = useState<{
 		serviceId: string;
 		serviceName: string;
@@ -37,9 +38,10 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 				<h1 className="text-3xl font-bold text-slate-900 ">
 					Services
 				</h1>
-				<span className="text-sm text-slate-500 ">
-					{services.length} service(s)
-				</span>
+				<div className="flex items-center gap-4">
+					<span className="text-sm text-slate-500 ">{services.length} service(s)</span>
+					<button onClick={() => setCreatingService(true)} className="btn btn-primary btn-sm"><Plus className="h-4 w-4" /> Thêm dịch vụ</button>
+				</div>
 			</div>
 
 			{error && (
@@ -49,7 +51,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 			)}
 
 			{services.length > 0 ? (
-				<div className="space-y-3">
+				<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 					{services.map((service) => {
 						const options = [...(service.service_options ?? [])].sort(
 							(a, b) => a.display_order - b.display_order,
@@ -255,6 +257,7 @@ export default function ServicesClient({ services, error }: ServicesClientProps)
 					service={editingService}
 				/>
 			)}
+			{creatingService && <EditServiceModal open onClose={() => setCreatingService(false)} service={null} />}
 			{optionModal && (
 				<ServiceOptionModal
 					open

@@ -42,7 +42,7 @@ export function useReviews(productSlug: string) {
     staleTime: 120_000,
     queryFn: async () => {
       const res = await apiFetch(`/api/products/${productSlug}/reviews`);
-      if (!res.ok) return { reviews: [], average: 0, total: 0 };
+      if (!res.ok) throw new Error("Failed to load product reviews");
       return res.json() as Promise<ReviewsResponse>;
     },
   });

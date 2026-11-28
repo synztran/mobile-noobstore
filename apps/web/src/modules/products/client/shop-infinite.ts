@@ -8,8 +8,8 @@ const PAGE_SIZE = 12;
 
 export interface Filters {
   search?: string;
-  category?: string;
-  brand?: string;
+  category?: string | string[];
+  brand?: string | string[];
   sort?: string;
   priceMin?: string;
   priceMax?: string;
@@ -18,8 +18,8 @@ export interface Filters {
 export function buildShopFilters(sp: URLSearchParams): Filters {
   return {
     search: sp.get("search") ?? "",
-    category: sp.get("category") ?? "",
-    brand: sp.get("brand") ?? "",
+    category: [...new Set(sp.getAll("category").filter(Boolean))],
+    brand: [...new Set(sp.getAll("brand").filter(Boolean))],
     sort: sp.get("sort") ?? "newest",
     priceMin: sp.get("priceMin") ?? "",
     priceMax: sp.get("priceMax") ?? "",
@@ -31,16 +31,18 @@ export function buildShopUrl(offset: number, filters: Filters): string {
   params.set("offset", String(offset));
   params.set("limit", String(PAGE_SIZE));
   if (filters.search) params.set("search", filters.search);
-  if (filters.category) params.set("category", filters.category);
-  if (filters.brand) params.set("brand", filters.brand);
+  for (const category of (Array.isArray(filters.category) ? filters.category : filters.category ? [filters.category] : [])) params.append("category", category);
+  for (const brand of (Array.isArray(filters.brand) ? filters.brand : filters.brand ? [filters.brand] : [])) params.append("brand", brand);
   if (filters.sort && filters.sort !== "newest") params.set("sort", filters.sort);
   if (filters.priceMin) params.set("priceMin", filters.priceMin);
   if (filters.priceMax) params.set("priceMax", filters.priceMax);
   return `/api/products?${params.toString()}`;
 }
 
-function filtersToKey(f: Filters): string {
-  return `${f.search ?? ""}|${f.category ?? ""}|${f.brand ?? ""}|${f.sort ?? ""}|${f.priceMin ?? ""}|${f.priceMax ?? ""}`;
+export function shopFiltersKey(f: Filters): string {
+  const categories = [...new Set(Array.isArray(f.category) ? f.category : f.category ? [f.category] : [])].sort();
+  const brands = [...new Set(Array.isArray(f.brand) ? f.brand : f.brand ? [f.brand] : [])].sort();
+  return `${f.search ?? ""}|${categories.join(",")}|${brands.join(",")}|${f.sort ?? ""}|${f.priceMin ?? ""}|${f.priceMax ?? ""}`;
 }
 
 export function useShopInfiniteQuery(
@@ -48,7 +50,7 @@ export function useShopInfiniteQuery(
   initialData?: ProductsResponse
 ) {
   return useInfiniteQuery<ProductsResponse>({
-    queryKey: appQueryKeys.shop.products(filtersToKey(filters)).queryKey,
+    queryKey: appQueryKeys.shop.products(shopFiltersKey(filters)).queryKey,
     placeholderData: keepPreviousData,
     queryFn: async ({ pageParam, signal }) => {
       const res = await apiFetch(buildShopUrl(pageParam as number, filters), { signal });

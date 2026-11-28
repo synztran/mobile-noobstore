@@ -1,0 +1,337 @@
+   ▲ Next.js 15.5.29
+   - Environments: .env.local
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+
+🌼   daisyUI 4.12.24
+├─ ✔︎ 1 theme added		https://daisyui.com/docs/themes
+╰─ ★ Star daisyUI on GitHub	https://github.com/saadeghi/daisyui
+
+ ✓ Compiled successfully in 8.7s
+   Skipping validation of types
+   Linting ...
+   Collecting page data ...
+   Generating static pages (0/58) ...
+   Generating static pages (14/58) 
+(node:73471) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:73472) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+   Generating static pages (28/58) 
+[cache] getCache("config:fees") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /api/fees couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/fees. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route /api/fees couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/fees. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[cache] getCache("services:booking-config") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /services couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /services. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route /services couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /services. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[cache] getCache("v2:newest-products:15") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route / couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route / couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[cache] getCache("v2:best-sellers:5") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route / couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route / couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (43/58) 
+[cache] getCache("v2:creators") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /api/home/creators couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/home/creators. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route /api/home/creators couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/home/creators. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[cache] getCache("v2:testimonials") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /api/home/testimonials couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/home/testimonials. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route /api/home/testimonials couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/home/testimonials. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[cache] getCache("payment-information") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /api/payment-information couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/payment-information. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route /api/payment-information couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/payment-information. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[cache] getCache("shipping-methods") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /api/shipping-methods couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/shipping-methods. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route /api/shipping-methods couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/shipping-methods. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[cache] getCache("services:booking-config") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /api/services/booking-config couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/services/booking-config. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route /api/services/booking-config couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/services/booking-config. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[cache] getCache("services:list") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /api/services couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/services. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at r (.next/server/chunks/1912.js:19:26466)
+    at <unknown> (.next/server/chunks/1912.js:22:44136)
+    at <unknown> (.next/server/chunks/1912.js:19:4998)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928)
+    at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+    at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+    at <unknown> (.next/server/chunks/1912.js:19:4526)
+    at e.with (.next/server/chunks/1912.js:22:56681)
+    at i.with (.next/server/chunks/1912.js:22:50928) {
+  description: "Route /api/services couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/services. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+ ✓ Generating static pages (58/58)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                         Size  First Load JS
+┌ ƒ /                                              25 kB         269 kB
+├ ƒ /_not-found                                     1 kB         105 kB
+├ ƒ /api/admin/cache                               396 B         105 kB
+├ ƒ /api/admin/points/adjust                       396 B         105 kB
+├ ƒ /api/admin/products                            396 B         105 kB
+├ ƒ /api/analytics/collect                         396 B         105 kB
+├ ƒ /api/auth/signin                               396 B         105 kB
+├ ƒ /api/auth/signup                               396 B         105 kB
+├ ƒ /api/blog                                      396 B         105 kB
+├ ƒ /api/cache/revalidate                          396 B         105 kB
+├ ƒ /api/cart                                      396 B         105 kB
+├ ƒ /api/cart/items                                396 B         105 kB
+├ ƒ /api/cart/items/[id]                           396 B         105 kB
+├ ƒ /api/checkin/calendar                          396 B         105 kB
+├ ƒ /api/checkin/claim                             396 B         105 kB
+├ ƒ /api/checkin/rewards                           396 B         105 kB
+├ ƒ /api/checkout/submit                           396 B         105 kB
+├ ƒ /api/checkout/validate-stock                   396 B         105 kB
+├ ƒ /api/claims                                    396 B         105 kB
+├ ƒ /api/community/config                          396 B         105 kB
+├ ƒ /api/community/posts                           396 B         105 kB
+├ ƒ /api/community/posts/[id]                      396 B         105 kB
+├ ƒ /api/community/posts/finalize                  396 B         105 kB
+├ ƒ /api/cron/compute-ranks                        396 B         105 kB
+├ ƒ /api/cron/health-check                         396 B         105 kB
+├ ƒ /api/cron/warm-cache                           396 B         105 kB
+├ ƒ /api/documents                                 396 B         105 kB
+├ ƒ /api/documents/finalize                        396 B         105 kB
+├ ƒ /api/fees                                      396 B         105 kB
+├ ƒ /api/gacha                                     396 B         105 kB
+├ ƒ /api/gacha/active-event                        396 B         105 kB
+├ ƒ /api/gacha/history                             396 B         105 kB
+├ ƒ /api/gacha/mission                             396 B         105 kB
+├ ƒ /api/gacha/mission/claim                       396 B         105 kB
+├ ƒ /api/gacha/mission/progress                    396 B         105 kB
+├ ƒ /api/gacha/recent-winners                      396 B         105 kB
+├ ƒ /api/geocode                                   396 B         105 kB
+├ ƒ /api/geocode/detail                            396 B         105 kB
+├ ƒ /api/gift-cards/check                          396 B         105 kB
+├ ƒ /api/gift-cards/redeem                         396 B         105 kB
+├ ƒ /api/gift-cards/scratch                        396 B         105 kB
+├ ƒ /api/health                                    396 B         105 kB
+├ ƒ /api/home/community-gallery                    396 B         105 kB
+├ ƒ /api/home/creators                             396 B         105 kB
+├ ƒ /api/home/hero                                 396 B         105 kB
+├ ƒ /api/home/testimonials                         396 B         105 kB
+├ ƒ /api/home/trust-props                          396 B         105 kB
+├ ƒ /api/jobs/cancel-expired-orders                396 B         105 kB
+├ ƒ /api/jobs/payment-reminders                    396 B         105 kB
+├ ƒ /api/location/wards                            396 B         105 kB
+├ ƒ /api/newsletter/subscribe                      396 B         105 kB
+├ ƒ /api/notifications                             396 B         105 kB
+├ ƒ /api/notifications/push-self                   396 B         105 kB
+├ ƒ /api/notifications/read                        396 B         105 kB
+├ ƒ /api/notifications/subscribe                   396 B         105 kB
+├ ƒ /api/notifications/unsubscribe                 396 B         105 kB
+├ ƒ /api/orders/[id]                               396 B         105 kB
+├ ƒ /api/orders/[id]/cancel                        396 B         105 kB
+├ ƒ /api/orders/[id]/payment                       396 B         105 kB
+├ ƒ /api/orders/[id]/payment/qr                    396 B         105 kB
+├ ƒ /api/orders/[id]/pickup-code                   396 B         105 kB
+├ ƒ /api/orders/[id]/return                        396 B         105 kB
+├ ƒ /api/payment-information                       396 B         105 kB
+├ ƒ /api/points/balance                            396 B         105 kB
+├ ƒ /api/points/gift-card/redeem                   396 B         105 kB
+├ ƒ /api/points/history                            396 B         105 kB
+├ ƒ /api/products                                  396 B         105 kB
+├ ƒ /api/products/[slug]                           396 B         105 kB
+├ ƒ /api/products/[slug]/configurator              396 B         105 kB
+├ ƒ /api/products/[slug]/gift                      396 B         105 kB
+├ ƒ /api/products/[slug]/reviews                   396 B         105 kB
+├ ƒ /api/products/[slug]/reviews/purchase-check    396 B         105 kB
+├ ƒ /api/products/[slug]/reviews/upload            396 B         105 kB
+├ ƒ /api/products/noteworthy                       396 B         105 kB
+├ ƒ /api/products/quick-pick                       396 B         105 kB
+├ ƒ /api/products/sale                             396 B         105 kB
+├ ƒ /api/products/search                           396 B         105 kB
+├ ƒ /api/release-subscribers                       396 B         105 kB
+├ ƒ /api/reviews/recent                            396 B         105 kB
+├ ƒ /api/rewards                                   396 B         105 kB
+├ ƒ /api/rewards/redeem                            396 B         105 kB
+├ ƒ /api/security/csp-report                       396 B         105 kB
+├ ƒ /api/service-bookings                          396 B         105 kB
+├ ƒ /api/service-bookings/attachments              396 B         105 kB
+├ ƒ /api/service-orders                            396 B         105 kB
+├ ƒ /api/services                                  396 B         105 kB
+├ ƒ /api/services/[slug]                           396 B         105 kB
+├ ƒ /api/services/booking-config                   396 B         105 kB
+├ ƒ /api/shipping-methods                          396 B         105 kB
+├ ƒ /api/shipping/distance                         396 B         105 kB
+├ ƒ /api/shipping/estimate                         396 B         105 kB
+├ ƒ /api/shipping/v2-distance                      396 B         105 kB
+├ ƒ /api/stock-alerts                              396 B         105 kB
+├ ƒ /api/stock-alerts/check                        396 B         105 kB
+├ ƒ /api/support/tickets                           396 B         105 kB
+├ ƒ /api/support/tickets/[id]                      396 B         105 kB
+├ ƒ /api/user/orders                               396 B         105 kB
+├ ƒ /api/user/orders/[id]                          396 B         105 kB
+├ ƒ /api/user/profile                              396 B         105 kB
+├ ƒ /api/user/rank                                 396 B         105 kB
+├ ƒ /api/user/service-orders/[id]                  396 B         105 kB
+├ ƒ /api/vouchers                                  396 B         105 kB
+├ ƒ /api/vouchers/apply                            396 B         105 kB
+├ ƒ /api/vouchers/eligible                         396 B         105 kB
+├ ƒ /api/vouchers/remove                           396 B         105 kB
+├ ƒ /api/webhooks/vercel                           396 B         105 kB
+├ ƒ /api/wishlist                                  396 B         105 kB
+├ ƒ /api/wishlist/add                              396 B         105 kB
+├ ƒ /api/wishlist/remove                           396 B         105 kB
+├ ƒ /auth/callback                                 396 B         105 kB
+├ ƒ /blogs                                       1.25 kB         114 kB
+├ ƒ /blogs/[slug]                                1.11 kB         108 kB
+├ ƒ /checkin                                     8.23 kB         200 kB
+├ ƒ /checkout/checking                             266 B         145 kB
+├ ƒ /checkout/checking/[order_id]                  483 B         145 kB
+├ ƒ /checkout/payment                              667 B         105 kB
+├ ƒ /checkout/payment/[cart_id]                    712 B         105 kB
+├ ƒ /checkout/shipping                           60.1 kB         277 kB
+├ ƒ /checkout/summary                            17.4 kB         228 kB
+├ ƒ /community                                   5.51 kB         127 kB
+├ ƒ /community/[id]                              5.17 kB         210 kB
+├ ƒ /data-deletion                                 132 B         115 kB
+├ ƒ /delivery-terms                                132 B         115 kB
+├ ƒ /documents                                   6.98 kB         120 kB
+├ ƒ /forgot-password                             3.18 kB         194 kB
+├ ƒ /gacha                                       21.8 kB         191 kB
+├ ƒ /gacha-mega/history                            489 B         108 kB
+├ ƒ /gift-card/[code]                            7.63 kB         241 kB
+├ ƒ /login                                       4.82 kB         203 kB
+├ ○ /manifest.webmanifest                          396 B         105 kB
+├ ƒ /middleman                                   4.56 kB         115 kB
+├ ƒ /new-release                                 1.11 kB         108 kB
+├ ƒ /news                                        1.25 kB         114 kB
+├ ƒ /policy                                        132 B         115 kB
+├ ƒ /profile                                     11.6 kB         215 kB
+├ ƒ /profile/addresses                           9.33 kB         241 kB
+├ ƒ /profile/notifications                       7.66 kB         199 kB
+├ ƒ /profile/orders                              24.5 kB         233 kB
+├ ƒ /profile/orders/[id]                           396 B         105 kB
+├ ƒ /profile/points                               3.1 kB         201 kB
+├ ƒ /profile/stock-alerts                        6.07 kB         122 kB
+├ ƒ /profile/support                             5.08 kB         121 kB
+├ ƒ /profile/support/[id]                        5.39 kB         140 kB
+├ ƒ /profile/support/new                         8.55 kB         133 kB
+├ ƒ /register                                    5.79 kB         271 kB
+├ ƒ /rewards                                     11.1 kB         212 kB
+├ ƒ /rewards/gift-card                           3.06 kB         204 kB
+├ ○ /robots.txt                                      0 B            0 B
+├ ƒ /search                                       7.2 kB         261 kB
+├ ƒ /services                                    27.2 kB         281 kB
+├ ƒ /services/[slug]                             8.05 kB         252 kB
+├ ƒ /shop                                        11.8 kB         272 kB
+├ ƒ /shop/[slug]                                   35 kB         304 kB
+├ ƒ /terms                                         132 B         115 kB
+├ ƒ /update-password                             3.56 kB         188 kB
+├ ƒ /vendor-updates                              1.11 kB         108 kB
+├ ƒ /verified-success                            2.31 kB         106 kB
+└ ƒ /wishlist                                    5.61 kB         210 kB
++ First Load JS shared by all                     104 kB
+  ├ chunks/18-9b78004f9e753d46.js                46.8 kB
+  ├ chunks/87c73c54-09e1ba5c70e60a51.js          54.2 kB
+  └ other shared chunks (total)                  3.05 kB
+
+
+ƒ Middleware                                     62.4 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

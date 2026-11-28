@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-11-08T04:49:52.536Z",
+  "specification": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+    "sha256": "327227300cf81a69f3d1dd13c10e2cba5a22d0e8436565992eae658e76c8e820",
+    "bytes": 5493
+  },
+  "artifact": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html"
+  },
+  "stages": {
+    "validate": {
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": null,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/Users/haritran/source/noobstore/mobile-noobstore",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "deliver",
+        "receiptId": "b1fc9cef-d28b-4952-8ccb-efcc11a3f6f2",
+        "stage": "render",
+        "type": "architecture",
+        "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+        "output": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+        "error": "Cannot read properties of undefined (reading '0')",
+        "diagnostics": [
+          {
+            "code": "internal/unclassified",
+            "severity": "error",
+            "message": "Cannot read properties of undefined (reading '0')",
+            "subject": {
+              "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/.archify-delivery-eZZ8Fr/specification.snapshot.json"
+            },
+            "evidence": {
+              "errorName": "TypeError"
+            },
+            "supportedFixes": []
+          }
+        ],
+        "provenance": "absent",
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      },
+      "execution": "embedded-in-deliver"
+    },
+    "deliver": {
+      "status": "not-run",
+      "execution": "blocked-by-validate"
+    }
+  },
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  },
+  "diagnostics": [
+    {
+      "code": "internal/unclassified",
+      "severity": "error",
+      "message": "Cannot read properties of undefined (reading '0')",
+      "subject": {
+        "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/.archify-delivery-eZZ8Fr/specification.snapshot.json"
+      },
+      "evidence": {
+        "errorName": "TypeError"
+      },
+      "supportedFixes": []
+    }
+  ],
+  "evidence": {
+    "receipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/review-2/cart-module.finalize.json",
+    "summaryReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/review-2/cart-module.finalize-summary.json"
+  },
+  "visualReview": "not-requested",
+  "failedStage": "validate",
+  "finishedAt": "2026-11-08T04:49:53.112Z",
+  "durationMs": 576,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-08T04:49:18.423Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

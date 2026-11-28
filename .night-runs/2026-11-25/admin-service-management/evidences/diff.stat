@@ -1,0 +1,10 @@
+ .gitignore                                         |  6 +-
+ apps/admin/src/app/api/service-configs/route.ts    | 15 ++++-
+ .../app/api/service-option-values/[id]/route.ts    | 14 +++++
+ .../src/app/api/service-option-values/route.ts     | 12 ++++
+ .../src/app/api/service-options/[id]/route.ts      | 21 ++++++-
+ apps/admin/src/app/api/service-options/route.ts    | 16 ++++-
+ apps/admin/src/app/api/services/[id]/route.ts      | 21 ++++++-
+ .../src/components/services/EditServiceModal.tsx   | 68 ++++++++++++----------
+ .../src/components/services/ServicesClient.tsx     |  9 ++-
+ 9 files changed, 136 insertions(+), 46 deletions(-)

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /Users/haritran/source/noobstore/mobile-noobstore/apps/web
+
+No test files found, exiting with code 1
+
+filter: src/app/api/services/route.test.ts
+include: src/**/*.test.ts
+exclude:  **/node_modules/**, **/.git/**
+

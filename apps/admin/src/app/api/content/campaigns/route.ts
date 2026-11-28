@@ -9,6 +9,7 @@ interface CampaignRow {
 	title: string;
 	subtitle: string | null;
 	image_url: string | null;
+	image_url_mobile: string | null;
 	cta_text: string | null;
 	cta_link: string | null;
 	is_active: boolean;
@@ -21,7 +22,7 @@ export async function GET() {
 		const supabase = getAdminClient();
 		const { data, error } = await (supabase
 			.from("hero_campaigns")
-			.select("id, title, subtitle, image_url, cta_text, cta_link, is_active, priority, created_at")
+			.select("id, title, subtitle, image_url, image_url_mobile, cta_text, cta_link, is_active, priority, created_at")
 			.order("priority", { ascending: false })
 			.order("created_at", { ascending: false }) as unknown as PromiseLike<{
 				data: CampaignRow[] | null;
@@ -41,7 +42,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
 	try {
 		const body = await req.json();
-		const { title, subtitle, image_url, cta_text, cta_link, is_active, priority } = body;
+		const { title, subtitle, image_url, image_url_mobile, cta_text, cta_link, is_active, priority } = body;
 
 		if (!title?.trim()) {
 			return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
 				subtitle: subtitle?.trim() ?? null,
 				description: "",
 				image_url: image_url?.trim() ?? "",
+				image_url_mobile: image_url_mobile?.trim() ?? null,
 				cta_text: cta_text?.trim() ?? null,
 				cta_link: cta_link?.trim() ?? null,
 				is_active: is_active ?? true,

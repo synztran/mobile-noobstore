@@ -19,6 +19,7 @@ import { getSoonestFlashSale } from "@/modules/products/server/flash-sale";
 import type { Metadata } from "next";
 import { buildOg } from "@/lib/og";
 import { Suspense } from "react";
+import { withHomeDataFallback } from "@/lib/home-render-data";
 
 export const revalidate = 300;
 
@@ -57,7 +58,7 @@ export default function HomePage() {
       <div className="hidden lg:block">
         <GachaFeatureSlot />
       </div>
-      <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:space-y-0">
+      <div className="space-y-6 px-4 lg:grid lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:space-y-0 lg:px-0">
         <LazyNearViewport className="h-full">
           <OurStrongPoints />
         </LazyNearViewport>
@@ -66,14 +67,14 @@ export default function HomePage() {
         </LazyNearViewport>
       </div>
       <LazyNearViewport>
-        <div className="px-4 md:px-0 lg:px-0">
+        <div className="px-4 lg:px-0">
           <HomeTestimonials />
         </div>
       </LazyNearViewport>
       {/* <Suspense fallback={<HomeBlogFallback />}>
         <HomeBlogSection />
       </Suspense> */}
-      <div className="px-4 md:px-0 lg:px-0">
+      <div className="px-4 lg:px-0">
         <NewsletterCTA />
       </div>
       <HomeFooter />
@@ -82,7 +83,7 @@ export default function HomePage() {
 }
 
 async function HeroSectionInitial() {
-  const heroCampaigns = await getHeroCampaigns();
+	const heroCampaigns = await withHomeDataFallback("hero campaigns", getHeroCampaigns, []);
   return <HeroSection initialSlides={heroCampaigns} />;
 }
 
@@ -91,7 +92,7 @@ async function FlashSaleStripInitial() {
 }
 
 async function AnnouncementBannerInitial() {
-  const sale = await getSoonestFlashSale();
+	const sale = await withHomeDataFallback("flash-sale banner", getSoonestFlashSale, null);
   return (
     <AnnouncementBanner
       flashSale={

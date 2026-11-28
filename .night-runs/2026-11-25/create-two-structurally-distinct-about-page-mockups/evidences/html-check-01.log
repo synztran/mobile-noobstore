@@ -1,0 +1,75 @@
+line 5 column 24 - Warning: replacing invalid character code 128
+line 5 column 25 - Warning: replacing invalid character code 148
+line 5 column 38 - Warning: replacing invalid character code 135
+line 7 column 1479 - Warning: replacing invalid character code 151
+line 7 column 1508 - Warning: replacing invalid character code 145
+line 7 column 1522 - Warning: replacing invalid character code 153
+line 7 column 1535 - Warning: discarding invalid character code 141
+line 12 column 3 - Error: <header> is not recognized!
+line 12 column 3 - Warning: discarding unexpected <header>
+line 12 column 117 - Warning: replacing invalid character code 135
+line 12 column 126 - Warning: replacing invalid character code 153
+line 12 column 131 - Warning: replacing invalid character code 145
+line 12 column 134 - Warning: replacing invalid character code 147
+line 12 column 212 - Warning: discarding unexpected </header>
+line 13 column 3 - Error: <main> is not recognized!
+line 13 column 3 - Warning: discarding unexpected <main>
+line 14 column 5 - Error: <section> is not recognized!
+line 14 column 5 - Warning: discarding unexpected <section>
+line 14 column 50 - Warning: discarding invalid character code 129
+line 14 column 133 - Warning: discarding invalid character code 157
+line 14 column 155 - Warning: discarding invalid character code 141
+line 14 column 185 - Warning: replacing invalid character code 153
+line 14 column 207 - Warning: replacing invalid character code 155
+line 14 column 240 - Warning: replacing invalid character code 155
+line 14 column 246 - Warning: replacing invalid character code 153
+line 14 column 251 - Warning: replacing invalid character code 145
+line 14 column 254 - Warning: replacing invalid character code 147
+line 14 column 395 - Warning: replacing invalid character code 134
+line 14 column 396 - Warning: replacing invalid character code 151
+line 14 column 494 - Warning: replacing invalid character code 153
+line 14 column 509 - Warning: replacing invalid character code 145
+line 14 column 515 - Warning: replacing invalid character code 145
+line 14 column 543 - Warning: discarding unexpected </section>
+line 15 column 5 - Error: <section> is not recognized!
+line 15 column 5 - Warning: discarding unexpected <section>
+line 15 column 56 - Warning: discarding invalid character code 143
+line 15 column 58 - Warning: replacing invalid character code 145
+line 15 column 105 - Warning: replacing invalid character code 153
+line 15 column 138 - Warning: replacing invalid character code 137
+line 15 column 155 - Warning: replacing invalid character code 139
+line 15 column 159 - Warning: discarding invalid character code 144
+line 15 column 203 - Warning: replacing invalid character code 145
+line 15 column 253 - Warning: discarding invalid character code 141
+line 15 column 336 - Warning: replacing invalid character code 153
+line 15 column 340 - Warning: replacing invalid character code 145
+line 15 column 344 - Warning: replacing invalid character code 131
+line 15 column 359 - Warning: replacing invalid character code 145
+line 15 column 362 - Warning: replacing invalid character code 131
+line 15 column 397 - Warning: replacing invalid character code 135
+line 15 column 407 - Warning: replacing invalid character code 139
+line 15 column 419 - Warning: replacing invalid character code 131
+line 15 column 428 - Warning: replacing invalid character code 128
+line 15 column 429 - Warning: replacing invalid character code 148
+line 15 column 434 - Warning: replacing invalid character code 155
+line 15 column 459 - Warning: replacing invalid character code 145
+line 15 column 462 - Warning: replacing invalid character code 131
+line 15 column 467 - Warning: replacing invalid character code 151
+line 15 column 480 - Warning: discarding invalid character code 141
+line 15 column 483 - Warning: replacing invalid character code 145
+line 15 column 486 - Warning: discarding invalid character code 129
+line 15 column 495 - Warning: replacing invalid character code 145
+line 15 column 507 - Warning: replacing invalid character code 145
+line 15 column 511 - Warning: discarding invalid character code 129
+line 15 column 549 - Warning: discarding unexpected </section>
+line 16 column 5 - Error: <section> is not recognized!
+line 16 column 5 - Warning: discarding unexpected <section>
+line 16 column 33 - Warning: replacing invalid character code 128
+line 16 column 34 - Warning: replacing invalid character code 156
+line 16 column 39 - Warning: discarding invalid character code 141
+line 16 column 61 - Warning: replacing invalid character code 147
+line 16 column 67 - Warning: replacing invalid character code 131
+line 16 column 84 - Warning: replacing invalid character code 128
+line 16 column 85 - Warning: discarding invalid character code 157
+line 16 column 85 - Warning: discarding unexpected </section>
+line 17 column 5 - Error: <section> is not recognized!

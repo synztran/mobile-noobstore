@@ -1,0 +1,48 @@
+ M .gitignore
+ M TASKS.md
+ M apps/admin/src/app/api/service-configs/route.ts
+ M apps/admin/src/app/api/service-option-values/[id]/route.ts
+ M apps/admin/src/app/api/service-option-values/route.ts
+ M apps/admin/src/app/api/service-options/[id]/route.ts
+ M apps/admin/src/app/api/service-options/route.ts
+ M apps/admin/src/app/api/services/[id]/route.ts
+ M apps/admin/src/components/layout/AdminLayout.tsx
+ M apps/admin/src/components/services/EditServiceModal.tsx
+ M apps/admin/src/components/services/ServicesClient.tsx
+ M apps/web/src/app/(main)/page.tsx
+ M apps/web/src/components/home/FlashSaleStrip.tsx
+ M apps/web/src/components/notifications/NotificationCenter.tsx
+ M apps/web/src/lib/react-query/notification/api/useNotificationQueries.ts
+ M apps/web/src/modules/checkin/ui/CheckinCalendar.tsx
+ M apps/web/src/modules/checkin/ui/CheckinHomeTeaser.tsx
+ M apps/web/src/modules/desktop/ui/notifications/DesktopNotificationsDrawer.tsx
+?? .archify/
+?? .night-runs/2026-11-25/admin-service-management/
+?? .night-runs/2026-11-25/build-first-mid-man-transaction-workflow-safely/
+?? .night-runs/2026-11-25/configure-home-hero-campaigns/
+?? .night-runs/2026-11-25/create-two-desktop-product-card-ui-mockups/
+?? .night-runs/2026-11-25/create-two-structurally-distinct-about-page-mockups/
+?? .night-runs/2026-11-25/diagnose-home-render-hang/
+?? .night-runs/2026-11-25/disable-mobile-device-recommendation-popup/evidences/TASKS.worktree.backup
+?? .night-runs/2026-11-25/manage-existing-and-generated-invoices-in-admin/
+?? .night-runs/2026-11-25/normalize-home-page-section-horizontal-padding-to-16px/
+?? .night-runs/2026-11-25/optimize-admin-queries-1/evidences/admin-vitest-full.log
+?? .night-runs/2026-11-25/optimize-admin-queries-1/evidences/typecheck-admin-full.log
+?? .night-runs/2026-11-25/skip-authenticated-only-calendar-notification-queries/
+?? .night-runs/run-20261125-0057.log
+?? .night-runs/run-20261125-0112.log
+?? .night-runs/run-20261125-0200.log
+?? .specify/
+?? .superpowers/
+?? apps/admin/src/app/(admin)/mid-man/
+?? apps/admin/src/app/api/mid-man/
+?? apps/admin/src/app/api/services/route.test.ts
+?? apps/admin/src/app/api/services/route.ts
+?? apps/admin/src/components/mid-man/
+?? apps/admin/src/lib/mid-man-workflow.test.ts
+?? apps/admin/src/lib/mid-man-workflow.ts
+?? apps/web/.wrangler/
+?? apps/web/design-mockups/
+?? apps/web/src/lib/home-render-data.test.ts
+?? apps/web/src/lib/home-render-data.ts
+?? supabase/migrations/171_mid_man_case_tracking.sql

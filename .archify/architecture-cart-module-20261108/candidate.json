@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "NoobStore Cart — Committed Architecture",
+    "locale": "en",
+    "output": ".archify/architecture-cart-module-20261108/cart-module.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/synztran/mobile-noobstore.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "9c6c17488c50e818b13773b4c0489f4fd5facbe6"
+    }
+  },
+  "components": [
+    {
+      "id": "shopper",
+      "type": "external",
+      "label": "Shopper",
+      "sublabel": "Storefront browser",
+      "sources": [{ "path": "apps/web/src/modules/products/ui/product/ProductCard.tsx", "line": 72 }],
+      "pos": [40, 260],
+      "size": [150, 64]
+    },
+    {
+      "id": "product-ui",
+      "type": "frontend",
+      "label": "Product UI",
+      "sublabel": "ProductCard · quick pick",
+      "sources": [{ "path": "apps/web/src/modules/products/ui/product/ProductCard.tsx", "line": 72 }],
+      "pos": [240, 260],
+      "size": [160, 64]
+    },
+    {
+      "id": "cart-drawer-ui",
+      "type": "frontend",
+      "label": "Cart drawer UI",
+      "sublabel": "Shared drawer state + interactions",
+      "sources": [{ "path": "apps/web/src/modules/cart/ui/useCartDrawerState.ts", "line": 26 }],
+      "pos": [440, 110],
+      "size": [170, 64]
+    },
+    {
+      "id": "zustand-cart",
+      "type": "frontend",
+      "label": "Zustand cart store",
+      "sublabel": "Optimistic items · persisted state",
+      "sources": [{ "path": "apps/web/src/modules/cart/client/useCartStore.ts", "line": 71 }],
+      "pos": [440, 260],
+      "size": [170, 64]
+    },
+    {
+      "id": "react-query-client",
+      "type": "frontend",
+      "label": "React Query client",
+      "sublabel": "Cart query + mutation hooks",
+      "sources": [{ "path": "apps/web/src/modules/cart/client/queries.ts", "line": 74 }],
+      "pos": [650, 110],
+      "size": [180, 64]
+    },
+    {
+      "id": "cart-api",
+      "type": "backend",
+      "label": "Cart API routes",
+      "sublabel": "GET/DELETE cart · POST/PATCH items",
+      "sources": [{ "path": "apps/web/src/app/api/cart/route.ts", "line": 13 }, { "path": "apps/web/src/app/api/cart/items/route.ts", "line": 17 }],
+      "pos": [1000, 260],
+      "size": [175, 64]
+    },
+    {
+      "id": "cart-service",
+      "type": "backend",
+      "label": "Cart server service",
+      "sublabel": "CRUD · shaping · stock checks",
+      "sources": [{ "path": "apps/web/src/modules/cart/server/service.ts", "line": 61 }, { "path": "apps/web/src/modules/cart/server/service.ts", "line": 203 }, { "path": "apps/web/src/modules/cart/server/service.ts", "line": 392 }],
+      "pos": [1220, 260],
+      "size": [175, 64]
+    },
+    {
+      "id": "availability-rules",
+      "type": "backend",
+      "label": "Availability rules",
+      "sublabel": "Pure rules + snapshot adapter",
+      "sources": [{ "path": "apps/web/src/modules/cart/server/availability.ts", "line": 68 }],
+      "pos": [1220, 110],
+      "size": [185, 64]
+    },
+    {
+      "id": "supabase",
+      "type": "database",
+      "label": "Supabase",
+      "sublabel": "Postgres · RLS-backed cart data",
+      "sources": [{ "path": "apps/web/src/modules/cart/server/service.ts", "line": 66 }, { "path": "apps/web/src/modules/cart/server/service.ts", "line": 208 }],
+      "pos": [1430, 260],
+      "size": [160, 64]
+    },
+    {
+      "id": "query-key-registry",
+      "type": "frontend",
+      "label": "Query-key registry",
+      "sublabel": "cartQueryKeys merged into app keys",
+      "sources": [{ "path": "apps/web/src/modules/cart/client/query-keys.ts", "line": 3 }],
+      "pos": [650, 430],
+      "size": [180, 64]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Browser runtime",
+      "wraps": ["product-ui", "cart-drawer-ui", "zustand-cart", "react-query-client", "query-key-registry"]
+    },
+    {
+      "kind": "region",
+      "label": "Next.js server runtime",
+      "wraps": ["cart-api", "cart-service", "availability-rules"]
+    }
+  ],
+  "connections": [
+    { "id": "shopper-products", "from": "shopper", "to": "product-ui", "label": "browse / add item", "variant": "emphasis" },
+    { "id": "product-store", "from": "product-ui", "to": "zustand-cart", "label": "optimistic local add" },
+    { "id": "store-drawer", "from": "zustand-cart", "to": "cart-drawer-ui", "label": "render cart state" },
+    { "id": "drawer-mutation", "from": "cart-drawer-ui", "to": "react-query-client", "label": "update / remove / clear" },
+    { "id": "react-api", "from": "react-query-client", "to": "cart-api", "label": "fetch /api/cart" },
+    { "id": "api-service", "from": "cart-api", "to": "cart-service", "label": "validate session · delegate" },
+    { "id": "service-db", "from": "cart-service", "to": "supabase", "label": "read / write cart rows" },
+    { "id": "service-availability", "from": "cart-service", "to": "availability-rules", "label": "validate quantity" },
+    { "id": "availability-db", "from": "availability-rules", "to": "supabase", "label": "load stock snapshot" },
+    { "id": "keys-query", "from": "query-key-registry", "to": "react-query-client", "label": "cache identity" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Client state split",
+      "items": [
+        "Zustand holds the responsive, persisted cart presentation state.",
+        "React Query owns server fetch/mutation lifecycle and invalidation.",
+        "CartHydrator loads the server cart and coordinates store hydration."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Stock authority",
+      "items": [
+        "Server cart service revalidates quantity before writes.",
+        "Availability rules distinguish standard, variant, kit, and per-order maximum stock.",
+        "The diagram is pinned to committed revision 9c6c174; working-tree cart layout moves are not represented."
+      ]
+    }
+  ]
+}

@@ -27,8 +27,8 @@ export function DesktopNotificationsDrawer({
   onClose,
 }: DesktopNotificationsDrawerProps) {
   const router = useRouter();
-  const { user } = useAuth();
-  const { data: items, isLoading } = useNotifications();
+  const { user, loading: authLoading } = useAuth();
+  const { data: items, isLoading } = useNotifications(!authLoading && Boolean(user));
   const markOneRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
 

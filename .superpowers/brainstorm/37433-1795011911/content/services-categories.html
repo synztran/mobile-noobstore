@@ -1,0 +1,62 @@
+<style>
+  .svc-board{display:grid;gap:24px;grid-template-columns:1fr 1fr;align-items:start}
+  .svc-page{overflow:hidden;border:1px solid #d9dce4;border-radius:20px;background:#fff;box-shadow:0 12px 32px rgba(25,35,55,.08)}
+  .svc-nav{height:42px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:#f6f7f9;border-bottom:1px solid #e5e7eb;font-size:11px;font-weight:800;letter-spacing:.08em;color:#343b4b}
+  .svc-body{padding:22px}
+  .svc-eyebrow{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#687386}
+  .svc-title{margin:8px 0 5px;font-size:25px;line-height:1.15;font-weight:900;letter-spacing:-.04em;color:#171b24}
+  .svc-desc{margin:0;color:#667085;font-size:12px;line-height:1.55}
+  .svc-cats{display:grid;gap:10px;margin-top:20px}
+  .svc-cat{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid #e4e7ec;border-radius:14px;background:#fff}
+  .svc-icon{width:42px;height:42px;display:grid;place-items:center;flex:none;border-radius:12px;background:#f1f3f8;color:#354f91;font-size:20px}
+  .svc-cat strong{display:block;font-size:13px;color:#202532}
+  .svc-cat small{display:block;margin-top:3px;font-size:10px;line-height:1.4;color:#747d8d}
+  .svc-arrow{margin-left:auto;color:#929aaa;font-size:18px}
+  .svc-callout{margin-top:16px;padding:12px 13px;border-radius:12px;background:#f5f6f8;color:#677184;font-size:10px;line-height:1.5}
+  .svc-detail-head{display:flex;align-items:center;gap:11px;margin-top:16px;padding-bottom:14px;border-bottom:1px solid #eceef2}
+  .svc-back{font-size:10px;font-weight:800;color:#52678e}
+  .svc-list{display:grid;gap:9px;margin-top:14px}
+  .svc-item{padding:12px;border:1px solid #e4e7ec;border-radius:13px}
+  .svc-item-top{display:flex;justify-content:space-between;gap:10px;align-items:start}
+  .svc-item strong{font-size:12px;color:#202532}
+  .svc-price{white-space:nowrap;font-size:11px;font-weight:900;color:#3155a0}
+  .svc-item p{margin:4px 0 0;font-size:10px;line-height:1.45;color:#727b8a}
+  .svc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:9px;color:#7a8290}
+  .svc-cta{display:block;margin-top:15px;padding:12px;border-radius:12px;text-align:center;background:#263f78;color:#fff;font-size:11px;font-weight:900}
+  @media(max-width:760px){.svc-board{grid-template-columns:1fr}.svc-body{padding:17px}.svc-title{font-size:22px}}
+</style>
+
+<h2>Mockup: dịch vụ chia theo nhóm</h2>
+<p class="subtitle">Trang đầu giúp chọn đúng nhóm trước; trang nhóm chỉ liệt kê dịch vụ liên quan. Booking hiện tại vẫn là luồng chung, chưa thay đổi trong mockup này.</p>
+
+<div class="svc-board">
+  <article class="svc-page">
+    <div class="svc-nav"><span>NOOBSTORE</span><span>☰</span></div>
+    <div class="svc-body">
+      <div class="svc-eyebrow">DỊCH VỤ NOOBSTORE</div>
+      <h3 class="svc-title">Bạn cần hỗ trợ gì?</h3>
+      <p class="svc-desc">Chọn nhu cầu của bạn để xem dịch vụ phù hợp, thời gian và chi phí dự kiến.</p>
+      <div class="svc-cats">
+        <div class="svc-cat"><span class="svc-icon">⌁</span><span><strong>Sửa chữa</strong><small>Bàn phím và keycap · Chẩn đoán lỗi, sửa PCB, thay stem…</small></span><span class="svc-arrow">›</span></div>
+        <div class="svc-cat"><span class="svc-icon">⌨</span><span><strong>Assembly</strong><small>Lắp ráp và tinh chỉnh switch, stabilizer, PCB…</small></span><span class="svc-arrow">›</span></div>
+        <div class="svc-cat"><span class="svc-icon">✦</span><span><strong>Vệ sinh</strong><small>Vệ sinh và bảo dưỡng bàn phím cơ</small></span><span class="svc-arrow">›</span></div>
+      </div>
+      <div class="svc-callout">Đã biết mình cần dịch vụ nào? Chọn nhóm để xem chi tiết trước khi đặt lịch.</div>
+    </div>
+  </article>
+
+  <article class="svc-page">
+    <div class="svc-nav"><span>NOOBSTORE</span><span>GIỎ HÀNG　☰</span></div>
+    <div class="svc-body">
+      <div class="svc-back">‹ Tất cả dịch vụ</div>
+      <div class="svc-detail-head"><span class="svc-icon">⌁</span><div><div class="svc-eyebrow">NHÓM DỊCH VỤ</div><h3 class="svc-title" style="font-size:21px;margin:3px 0 0">Sửa chữa</h3></div></div>
+      <p class="svc-desc" style="margin-top:12px">Sửa lỗi bàn phím và keycap. Chọn dịch vụ để xem mô tả, giá và thời gian xử lý.</p>
+      <div class="svc-list">
+        <div class="svc-item"><div class="svc-item-top"><strong>Kiểm tra & sửa lỗi bàn phím</strong><span class="svc-price">Từ 100.000₫</span></div><p>Chẩn đoán tình trạng, sửa lỗi PCB và các vấn đề thường gặp.</p><div class="svc-foot"><span>Thời gian dự kiến: 3–5 ngày</span><span>Chi tiết　›</span></div></div>
+        <div class="svc-item"><div class="svc-item-top"><strong>Sửa / thay stem keycap</strong><span class="svc-price">Từ 20.000₫</span></div><p>Hỗ trợ keycap gãy stem hoặc cần thay thế linh kiện phù hợp.</p><div class="svc-foot"><span>Thời gian dự kiến: 2–3 ngày</span><span>Chi tiết　›</span></div></div>
+        <div class="svc-item"><div class="svc-item-top"><strong>Sửa chữa PCB</strong><span class="svc-price">Từ 150.000₫</span></div><p>Kiểm tra và xử lý lỗi kết nối, socket hotswap và mạch.</p><div class="svc-foot"><span>Thời gian dự kiến: 3–7 ngày</span><span>Chi tiết　›</span></div></div>
+      </div>
+      <a class="svc-cta">Chọn dịch vụ　→</a>
+    </div>
+  </article>
+</div>

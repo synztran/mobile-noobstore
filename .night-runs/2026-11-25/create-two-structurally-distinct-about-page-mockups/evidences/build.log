@@ -1,0 +1,531 @@
+
+> build
+> turbo build
+
+• turbo 2.9.16
+
+   • Packages in scope: @noobstore/admin, @noobstore/warehouse, @noobstore/web
+   • Running build in 3 packages
+   • Remote caching disabled
+
+@noobstore/web:build: cache miss, executing 8010028e38db54a2
+@noobstore/warehouse:build: cache hit, replaying logs b28da4eeedbf6b94
+@noobstore/warehouse:build:    ▲ Next.js 15.5.29
+@noobstore/warehouse:build:    - Environments: .env.local
+@noobstore/warehouse:build: 
+@noobstore/warehouse:build:    Creating an optimized production build ...
+@noobstore/warehouse:build: <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (102kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+@noobstore/warehouse:build: <w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (243kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+@noobstore/warehouse:build:  ⚠ Compiled with warnings in 1250ms
+@noobstore/warehouse:build: 
+@noobstore/warehouse:build: ../../node_modules/@supabase/supabase-js/dist/index.mjs
+@noobstore/warehouse:build: A Node.js API is used (process.version at line: 27) which is not supported in the Edge Runtime.
+@noobstore/warehouse:build: Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+@noobstore/warehouse:build: 
+@noobstore/warehouse:build: Import trace for requested module:
+@noobstore/warehouse:build: ../../node_modules/@supabase/supabase-js/dist/index.mjs
+@noobstore/warehouse:build: ../../node_modules/@supabase/ssr/dist/module/createBrowserClient.js
+@noobstore/warehouse:build: ../../node_modules/@supabase/ssr/dist/module/index.js
+@noobstore/warehouse:build: 
+@noobstore/warehouse:build:  ✓ Compiled successfully in 8.9s
+@noobstore/warehouse:build:    Skipping validation of types
+@noobstore/warehouse:build:    Linting ...
+@noobstore/warehouse:build:    Collecting page data ...
+@noobstore/warehouse:build:    Generating static pages (0/7) ...
+@noobstore/warehouse:build:    Generating static pages (1/7) 
+@noobstore/warehouse:build:    Generating static pages (3/7) 
+@noobstore/warehouse:build:    Generating static pages (5/7) 
+@noobstore/warehouse:build:  ✓ Generating static pages (7/7)
+@noobstore/warehouse:build:    Finalizing page optimization ...
+@noobstore/warehouse:build:    Collecting build traces ...
+@noobstore/warehouse:build: 
+@noobstore/warehouse:build: Route (app)                                 Size  First Load JS
+@noobstore/warehouse:build: ┌ ƒ /                                    4.11 kB         115 kB
+@noobstore/warehouse:build: ├ ○ /_not-found                            991 B         104 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/adjustment              151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/export                  151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/import/preview          151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/inbound                 151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/inbound/template        151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/products                151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/products/[id]           151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/products/[id]/stock     151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/sync                    151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/sync/pull-all           151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /api/warehouse/template                151 B         103 kB
+@noobstore/warehouse:build: ├ ƒ /import                               6.8 kB         118 kB
+@noobstore/warehouse:build: ├ ○ /login                               65.1 kB         168 kB
+@noobstore/warehouse:build: ├ ƒ /products/[id]                       5.88 kB         117 kB
+@noobstore/warehouse:build: ├ ƒ /products/new                         3.7 kB         114 kB
+@noobstore/warehouse:build: ├ ƒ /sync                                2.81 kB         110 kB
+@noobstore/warehouse:build: └ ○ /unauthorized                          164 B         106 kB
+@noobstore/warehouse:build: + First Load JS shared by all             103 kB
+@noobstore/warehouse:build:   ├ chunks/18-7999de002c8e340c.js        46.6 kB
+@noobstore/warehouse:build:   ├ chunks/87c73c54-24122e7b92478d00.js  54.2 kB
+@noobstore/warehouse:build:   └ other shared chunks (total)          1.92 kB
+@noobstore/warehouse:build: 
+@noobstore/warehouse:build: 
+@noobstore/warehouse:build: ƒ Middleware                             90.3 kB
+@noobstore/warehouse:build: 
+@noobstore/warehouse:build: ○  (Static)   prerendered as static content
+@noobstore/warehouse:build: ƒ  (Dynamic)  server-rendered on demand
+@noobstore/warehouse:build: 
+@noobstore/admin:build: cache hit, replaying logs 7f3e86f05100efa7
+@noobstore/admin:build:    ▲ Next.js 15.5.29
+@noobstore/admin:build:    - Environments: .env.local
+@noobstore/admin:build:    - Experiments (use with caution):
+@noobstore/admin:build:      · optimizePackageImports
+@noobstore/admin:build: 
+@noobstore/admin:build:    Creating an optimized production build ...
+@noobstore/admin:build: 
+@noobstore/admin:build: 🌼   daisyUI 4.12.24
+@noobstore/admin:build: ├─ ✔︎ 1 theme added		https://daisyui.com/docs/themes
+@noobstore/admin:build: ╰─ ❤︎ Support daisyUI project:	https://opencollective.com/daisyui
+@noobstore/admin:build: 
+@noobstore/admin:build:  ✓ Compiled successfully in 8.6s
+@noobstore/admin:build:    Skipping validation of types
+@noobstore/admin:build:    Linting ...
+@noobstore/admin:build:    Collecting page data ...
+@noobstore/admin:build:    Generating static pages (0/41) ...
+@noobstore/admin:build:    Generating static pages (10/41) 
+@noobstore/admin:build:    Generating static pages (20/41) 
+@noobstore/admin:build:    Generating static pages (30/41) 
+@noobstore/admin:build:  ✓ Generating static pages (41/41)
+@noobstore/admin:build:    Finalizing page optimization ...
+@noobstore/admin:build:    Collecting build traces ...
+@noobstore/admin:build: 
+@noobstore/admin:build: Route (app)                                                  Size  First Load JS
+@noobstore/admin:build: ┌ ƒ /                                                       393 B         104 kB
+@noobstore/admin:build: ├ ○ /_not-found                                              1 kB         104 kB
+@noobstore/admin:build: ├ ƒ /api/audit-log                                          393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/blog                                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/blog/[id]                                          393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/cache                                              393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/carriers                                           393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/categories                                         393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/checkin                                            393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/checkin/batches                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/checkin/batches/[id]/retry                         393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/checkin/events/[id]                                393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/checkout-error-codes                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/component-rules                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/component-rules/variant-context                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/content/campaigns                                  393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/content/campaigns/[id]                             393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/detections                                393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/detections/[id]                           393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/releases                                  393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/releases/[id]                             393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/sources                                   393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/sources/[id]                              393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/sources/[id]/run                          393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/tick                                      393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/crawling/webhook                                   393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/diagrams/[slug]                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/documents                                          393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/documents/[id]                                     393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/documents/upload                                   393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/fees                                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]                                  393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/blocked-users                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/blocked-users/[userId]           393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/missions                         393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/missions/[missionId]             393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/missions/[missionId]/progress    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/reward-history                   393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/reward-history/[userId]          393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/rewards                          393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/rewards/[rewardId]               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gacha/events/[id]/rewards/[rewardId]/winners       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gift-cards                                         393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/gift-products                                      393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/inventory/inbound                                  393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/invoices/generate                                  393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/mid-man                                            393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/mid-man/[id]                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/notifications/send                                 393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/order-statuses                                     393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders                                             393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/[id]                                        393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/[id]/payment-evidence                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/[id]/payment-qr                             393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/[id]/payments                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/[id]/verify-pickup                          393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/alerts                                      393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/bulk-status                                 393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/quick                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/orders/statuses                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/photo-settings                                     393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/points/rules                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/points/rules/[id]                                  393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/points/transactions                                393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/product-components                                 393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/product-components/[id]                            393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/products                                           393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/products/[id]                                      393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/products/[id]/addons                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/products/[id]/addons/[addonId]                     393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/products/list                                      393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/products/ratings                                   393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/products/search                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/ranks                                              393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/ranks/[id]                                         393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/release-subscribers                                393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/reviews                                            393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/reviews/[id]                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/reviews/sync-google                                393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/rewards                                            393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/rewards/[id]                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/service-configs                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/service-option-values                              393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/service-option-values/[id]                         393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/service-options                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/service-options/[id]                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/services                                           393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/services/[id]                                      393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/stock-alerts                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/stock-alerts/[id]                                  393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/support/tickets                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/support/tickets/[id]                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/testimonials                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/testimonials/[id]                                  393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/upload                                             393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/users                                              393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/users/[id]                                         393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/users/[id]/rank                                    393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/variants                                           393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/vendors                                            393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/vendors/[id]                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/vouchers                                           393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/vouchers/[id]                                      393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/warehouse-sync                                     393 B         104 kB
+@noobstore/admin:build: ├ ƒ /api/warehouse-sync/stock                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /audit-log                                            2.76 kB         115 kB
+@noobstore/admin:build: ├ ƒ /blog                                                 4.94 kB         155 kB
+@noobstore/admin:build: ├ ƒ /carts                                                5.32 kB         112 kB
+@noobstore/admin:build: ├ ƒ /carts/abandoned                                      3.77 kB         107 kB
+@noobstore/admin:build: ├ ƒ /categories                                           3.08 kB         142 kB
+@noobstore/admin:build: ├ ƒ /checkin                                              3.81 kB         107 kB
+@noobstore/admin:build: ├ ƒ /checkout-error-codes                                 1.93 kB         114 kB
+@noobstore/admin:build: ├ ƒ /community/documents                                  5.33 kB         112 kB
+@noobstore/admin:build: ├ ƒ /content                                              3.44 kB         148 kB
+@noobstore/admin:build: ├ ƒ /crawling                                               393 B         104 kB
+@noobstore/admin:build: ├ ƒ /dashboard                                             122 kB         228 kB
+@noobstore/admin:build: ├ ƒ /diagrams                                               172 B         107 kB
+@noobstore/admin:build: ├ ƒ /diagrams/[slug]                                        172 B         107 kB
+@noobstore/admin:build: ├ ƒ /fees                                                 5.87 kB         109 kB
+@noobstore/admin:build: ├ ƒ /gacha                                                14.9 kB         144 kB
+@noobstore/admin:build: ├ ƒ /inventory                                            6.02 kB         109 kB
+@noobstore/admin:build: ├ ƒ /keycap-check                                         13.5 kB         117 kB
+@noobstore/admin:build: ├ ƒ /login                                                7.92 kB         176 kB
+@noobstore/admin:build: ├ ƒ /mid-man                                              2.19 kB         106 kB
+@noobstore/admin:build: ├ ƒ /notifications                                        1.16 kB         104 kB
+@noobstore/admin:build: ├ ƒ /orders                                               26.6 kB         148 kB
+@noobstore/admin:build: ├ ƒ /orders/quick                                         6.41 kB         113 kB
+@noobstore/admin:build: ├ ƒ /points                                               9.42 kB         113 kB
+@noobstore/admin:build: ├ ƒ /products                                             19.1 kB         182 kB
+@noobstore/admin:build: ├ ƒ /products/components                                  2.91 kB         114 kB
+@noobstore/admin:build: ├ ƒ /products/gifts                                       3.56 kB         113 kB
+@noobstore/admin:build: ├ ƒ /products/photo-settings                              2.19 kB         138 kB
+@noobstore/admin:build: ├ ƒ /products/variants                                     9.2 kB         149 kB
+@noobstore/admin:build: ├ ƒ /ranks                                                4.27 kB         140 kB
+@noobstore/admin:build: ├ ƒ /reviews                                               8.2 kB         120 kB
+@noobstore/admin:build: ├ ƒ /rewards                                              5.44 kB         119 kB
+@noobstore/admin:build: ├ ƒ /services                                             7.25 kB         111 kB
+@noobstore/admin:build: ├ ƒ /services/option-values                                 393 B         104 kB
+@noobstore/admin:build: ├ ƒ /services/options                                       393 B         104 kB
+@noobstore/admin:build: ├ ƒ /stock-alerts                                         3.73 kB         119 kB
+@noobstore/admin:build: ├ ƒ /support                                              5.97 kB         129 kB
+@noobstore/admin:build: ├ ○ /unauthorized                                           172 B         107 kB
+@noobstore/admin:build: ├ ƒ /users                                                4.21 kB         111 kB
+@noobstore/admin:build: ├ ƒ /vendors                                              3.19 kB         107 kB
+@noobstore/admin:build: └ ƒ /vouchers                                             8.68 kB         115 kB
+@noobstore/admin:build: + First Load JS shared by all                              103 kB
+@noobstore/admin:build:   ├ chunks/18-9b78004f9e753d46.js                         46.8 kB
+@noobstore/admin:build:   ├ chunks/87c73c54-09e1ba5c70e60a51.js                   54.2 kB
+@noobstore/admin:build:   └ other shared chunks (total)                           2.26 kB
+@noobstore/admin:build: 
+@noobstore/admin:build: 
+@noobstore/admin:build: ƒ Middleware                                              90.5 kB
+@noobstore/admin:build: 
+@noobstore/admin:build: ○  (Static)   prerendered as static content
+@noobstore/admin:build: ƒ  (Dynamic)  server-rendered on demand
+@noobstore/admin:build: 
+@noobstore/web:build:    ▲ Next.js 15.5.29
+@noobstore/web:build:    - Environments: .env.local
+@noobstore/web:build:    - Experiments (use with caution):
+@noobstore/web:build:      · optimizePackageImports
+@noobstore/web:build: 
+@noobstore/web:build:    Creating an optimized production build ...
+@noobstore/web:build:  ✓ Compiled successfully in 5.2s
+@noobstore/web:build:    Skipping validation of types
+@noobstore/web:build:    Linting ...
+@noobstore/web:build:    Collecting page data ...
+@noobstore/web:build:    Generating static pages (0/58) ...
+@noobstore/web:build:    Generating static pages (14/58) 
+@noobstore/web:build: (node:79421) Warning: `--localstorage-file` was provided without a valid path
+@noobstore/web:build: (Use `node --trace-warnings ...` to show where the warning was created)
+@noobstore/web:build: [cache] getCache("services:booking-config") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /services couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /services. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+@noobstore/web:build:     at r (.next/server/chunks/1912.js:19:26466)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:22:44136)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:19:4998)
+@noobstore/web:build:     at e.with (.next/server/chunks/1912.js:22:56681)
+@noobstore/web:build:     at i.with (.next/server/chunks/1912.js:22:50928)
+@noobstore/web:build:     at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+@noobstore/web:build:     at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:19:4526)
+@noobstore/web:build:     at e.with (.next/server/chunks/1912.js:22:56681)
+@noobstore/web:build:     at i.with (.next/server/chunks/1912.js:22:50928) {
+@noobstore/web:build:   description: "Route /services couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /services. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build: [cache] getCache("v2:newest-products:15") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route / couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+@noobstore/web:build:     at r (.next/server/chunks/1912.js:19:26466)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:22:44136)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:19:4998)
+@noobstore/web:build:     at e.with (.next/server/chunks/1912.js:22:56681)
+@noobstore/web:build:     at i.with (.next/server/chunks/1912.js:22:50928)
+@noobstore/web:build:     at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+@noobstore/web:build:     at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:19:4526)
+@noobstore/web:build:     at e.with (.next/server/chunks/1912.js:22:56681)
+@noobstore/web:build:     at i.with (.next/server/chunks/1912.js:22:50928) {
+@noobstore/web:build:   description: "Route / couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build: [cache] getCache("v2:best-sellers:5") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route / couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+@noobstore/web:build:     at r (.next/server/chunks/1912.js:19:26466)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:22:44136)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:19:4998)
+@noobstore/web:build:     at e.with (.next/server/chunks/1912.js:22:56681)
+@noobstore/web:build:     at i.with (.next/server/chunks/1912.js:22:50928)
+@noobstore/web:build:     at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+@noobstore/web:build:     at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:19:4526)
+@noobstore/web:build:     at e.with (.next/server/chunks/1912.js:22:56681)
+@noobstore/web:build:     at i.with (.next/server/chunks/1912.js:22:50928) {
+@noobstore/web:build:   description: "Route / couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build: [cache] getCache("shipping-methods") failed — serving uncached and falling through to the database until Redis recovers: Error: Dynamic server usage: Route /api/shipping-methods couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/shipping-methods. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+@noobstore/web:build:     at r (.next/server/chunks/1912.js:19:26466)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:22:44136)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:19:4998)
+@noobstore/web:build:     at e.with (.next/server/chunks/1912.js:22:56681)
+@noobstore/web:build:     at i.with (.next/server/chunks/1912.js:22:50928)
+@noobstore/web:build:     at i.startActiveSpan (.next/server/chunks/1912.js:22:65894)
+@noobstore/web:build:     at e.startActiveSpan (.next/server/chunks/1912.js:22:66428)
+@noobstore/web:build:     at <unknown> (.next/server/chunks/1912.js:19:4526)
+@noobstore/web:build:     at e.with (.next/server/chunks/1912.js:22:56681)
+@noobstore/web:build:     at i.with (.next/server/chunks/1912.js:22:50928) {
+@noobstore/web:build:   description: "Route /api/shipping-methods couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/shipping-methods. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build: [cache] getCache("config:fees") failed — serving uncached and falling through to the database until Redis recovers: [Error: Dynamic server usage: Route /api/fees couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/fees. See more info here: https://nextjs.org/docs/messages/dynamic-server-error] {
+@noobstore/web:build:   description: "Route /api/fees couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/fees. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build: [cache] getCache("v2:creators") failed — serving uncached and falling through to the database until Redis recovers: [Error: Dynamic server usage: Route /api/home/creators couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/home/creators. See more info here: https://nextjs.org/docs/messages/dynamic-server-error] {
+@noobstore/web:build:   description: "Route /api/home/creators couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/home/creators. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build: [cache] getCache("v2:testimonials") failed — serving uncached and falling through to the database until Redis recovers: [Error: Dynamic server usage: Route /api/home/testimonials couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/home/testimonials. See more info here: https://nextjs.org/docs/messages/dynamic-server-error] {
+@noobstore/web:build:   description: "Route /api/home/testimonials couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/home/testimonials. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build: [cache] getCache("payment-information") failed — serving uncached and falling through to the database until Redis recovers: [Error: Dynamic server usage: Route /api/payment-information couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/payment-information. See more info here: https://nextjs.org/docs/messages/dynamic-server-error] {
+@noobstore/web:build:   description: "Route /api/payment-information couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/payment-information. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build:    Generating static pages (28/58) 
+@noobstore/web:build:    Generating static pages (43/58) 
+@noobstore/web:build: (node:79422) Warning: `--localstorage-file` was provided without a valid path
+@noobstore/web:build: (Use `node --trace-warnings ...` to show where the warning was created)
+@noobstore/web:build: [cache] getCache("services:booking-config") failed — serving uncached and falling through to the database until Redis recovers: [Error: Dynamic server usage: Route /api/services/booking-config couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/services/booking-config. See more info here: https://nextjs.org/docs/messages/dynamic-server-error] {
+@noobstore/web:build:   description: "Route /api/services/booking-config couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/services/booking-config. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build: [cache] getCache("services:list") failed — serving uncached and falling through to the database until Redis recovers: [Error: Dynamic server usage: Route /api/services couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/services. See more info here: https://nextjs.org/docs/messages/dynamic-server-error] {
+@noobstore/web:build:   description: "Route /api/services couldn't be rendered statically because it used no-store fetch https://credible-iguana-80228.upstash.io/pipeline /api/services. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+@noobstore/web:build:   digest: 'DYNAMIC_SERVER_USAGE'
+@noobstore/web:build: }
+@noobstore/web:build:  ✓ Generating static pages (58/58)
+@noobstore/web:build:    Finalizing page optimization ...
+@noobstore/web:build:    Collecting build traces ...
+@noobstore/web:build: 
+@noobstore/web:build: Route (app)                                         Size  First Load JS
+@noobstore/web:build: ┌ ƒ /                                            23.1 kB         269 kB
+@noobstore/web:build: ├ ƒ /_not-found                                     1 kB         105 kB
+@noobstore/web:build: ├ ƒ /api/admin/cache                               396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/admin/points/adjust                       396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/admin/products                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/analytics/collect                         396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/auth/signin                               396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/auth/signup                               396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/blog                                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/cache/revalidate                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/cart                                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/cart/items                                396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/cart/items/[id]                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/checkin/calendar                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/checkin/claim                             396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/checkin/rewards                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/checkout/submit                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/checkout/validate-stock                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/claims                                    396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/community/config                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/community/posts                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/community/posts/[id]                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/community/posts/finalize                  396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/cron/compute-ranks                        396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/cron/health-check                         396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/cron/warm-cache                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/documents                                 396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/documents/finalize                        396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/fees                                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gacha                                     396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gacha/active-event                        396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gacha/history                             396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gacha/mission                             396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gacha/mission/claim                       396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gacha/mission/progress                    396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gacha/recent-winners                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/geocode                                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/geocode/detail                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gift-cards/check                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gift-cards/redeem                         396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/gift-cards/scratch                        396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/health                                    396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/home/community-gallery                    396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/home/creators                             396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/home/hero                                 396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/home/testimonials                         396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/home/trust-props                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/jobs/cancel-expired-orders                396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/jobs/payment-reminders                    396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/location/wards                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/newsletter/subscribe                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/notifications                             396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/notifications/push-self                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/notifications/read                        396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/notifications/subscribe                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/notifications/unsubscribe                 396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/orders/[id]                               396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/orders/[id]/cancel                        396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/orders/[id]/payment                       396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/orders/[id]/payment/qr                    396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/orders/[id]/pickup-code                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/orders/[id]/return                        396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/payment-information                       396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/points/balance                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/points/gift-card/redeem                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/points/history                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products                                  396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/[slug]                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/[slug]/configurator              396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/[slug]/gift                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/[slug]/reviews                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/[slug]/reviews/purchase-check    396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/[slug]/reviews/upload            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/noteworthy                       396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/quick-pick                       396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/sale                             396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/products/search                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/release-subscribers                       396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/reviews/recent                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/rewards                                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/rewards/redeem                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/security/csp-report                       396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/service-bookings                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/service-bookings/attachments              396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/service-orders                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/services                                  396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/services/[slug]                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/services/booking-config                   396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/shipping-methods                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/shipping/distance                         396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/shipping/estimate                         396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/shipping/v2-distance                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/stock-alerts                              396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/stock-alerts/check                        396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/support/tickets                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/support/tickets/[id]                      396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/user/orders                               396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/user/orders/[id]                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/user/profile                              396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/user/rank                                 396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/user/service-orders/[id]                  396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/vouchers                                  396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/vouchers/apply                            396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/vouchers/eligible                         396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/vouchers/remove                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/webhooks/vercel                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/wishlist                                  396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/wishlist/add                              396 B         105 kB
+@noobstore/web:build: ├ ƒ /api/wishlist/remove                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /auth/callback                                 396 B         105 kB
+@noobstore/web:build: ├ ƒ /blogs                                       1.25 kB         114 kB
+@noobstore/web:build: ├ ƒ /blogs/[slug]                                1.11 kB         108 kB
+@noobstore/web:build: ├ ƒ /checkin                                     9.24 kB         200 kB
+@noobstore/web:build: ├ ƒ /checkout/checking                             267 B         145 kB
+@noobstore/web:build: ├ ƒ /checkout/checking/[order_id]                  484 B         145 kB
+@noobstore/web:build: ├ ƒ /checkout/payment                              667 B         105 kB
+@noobstore/web:build: ├ ƒ /checkout/payment/[cart_id]                    712 B         105 kB
+@noobstore/web:build: ├ ƒ /checkout/shipping                           60.8 kB         277 kB
+@noobstore/web:build: ├ ƒ /checkout/summary                            17.4 kB         228 kB
+@noobstore/web:build: ├ ƒ /community                                   5.51 kB         127 kB
+@noobstore/web:build: ├ ƒ /community/[id]                              5.94 kB         210 kB
+@noobstore/web:build: ├ ƒ /data-deletion                                 133 B         116 kB
+@noobstore/web:build: ├ ƒ /delivery-terms                                134 B         116 kB
+@noobstore/web:build: ├ ƒ /documents                                   6.98 kB         120 kB
+@noobstore/web:build: ├ ƒ /forgot-password                             2.42 kB         194 kB
+@noobstore/web:build: ├ ƒ /gacha                                       21.1 kB         191 kB
+@noobstore/web:build: ├ ƒ /gacha-mega/history                            489 B         108 kB
+@noobstore/web:build: ├ ƒ /gift-card/[code]                            7.63 kB         241 kB
+@noobstore/web:build: ├ ƒ /login                                       4.82 kB         203 kB
+@noobstore/web:build: ├ ○ /manifest.webmanifest                          396 B         105 kB
+@noobstore/web:build: ├ ƒ /middleman                                   2.98 kB         115 kB
+@noobstore/web:build: ├ ƒ /new-release                                 1.11 kB         108 kB
+@noobstore/web:build: ├ ƒ /news                                        1.25 kB         114 kB
+@noobstore/web:build: ├ ƒ /policy                                        134 B         116 kB
+@noobstore/web:build: ├ ƒ /profile                                     12.4 kB         215 kB
+@noobstore/web:build: ├ ƒ /profile/addresses                           10.1 kB         241 kB
+@noobstore/web:build: ├ ƒ /profile/notifications                       8.68 kB         199 kB
+@noobstore/web:build: ├ ƒ /profile/orders                              25.6 kB         233 kB
+@noobstore/web:build: ├ ƒ /profile/orders/[id]                           396 B         105 kB
+@noobstore/web:build: ├ ƒ /profile/points                              3.86 kB         201 kB
+@noobstore/web:build: ├ ƒ /profile/stock-alerts                        6.07 kB         122 kB
+@noobstore/web:build: ├ ƒ /profile/support                             2.48 kB         122 kB
+@noobstore/web:build: ├ ƒ /profile/support/[id]                         2.9 kB         140 kB
+@noobstore/web:build: ├ ƒ /profile/support/new                         11.5 kB         133 kB
+@noobstore/web:build: ├ ƒ /register                                    5.78 kB         271 kB
+@noobstore/web:build: ├ ƒ /rewards                                     11.1 kB         212 kB
+@noobstore/web:build: ├ ƒ /rewards/gift-card                           3.06 kB         204 kB
+@noobstore/web:build: ├ ○ /robots.txt                                      0 B            0 B
+@noobstore/web:build: ├ ƒ /search                                      5.61 kB         261 kB
+@noobstore/web:build: ├ ƒ /services                                    27.2 kB         281 kB
+@noobstore/web:build: ├ ƒ /services/[slug]                             6.47 kB         253 kB
+@noobstore/web:build: ├ ƒ /shop                                        11.8 kB         272 kB
+@noobstore/web:build: ├ ƒ /shop/[slug]                                   37 kB         305 kB
+@noobstore/web:build: ├ ƒ /terms                                         133 B         116 kB
+@noobstore/web:build: ├ ƒ /update-password                             3.56 kB         188 kB
+@noobstore/web:build: ├ ƒ /vendor-updates                              1.11 kB         108 kB
+@noobstore/web:build: ├ ƒ /verified-success                            2.31 kB         106 kB
+@noobstore/web:build: └ ƒ /wishlist                                    6.38 kB         209 kB
+@noobstore/web:build: + First Load JS shared by all                     104 kB
+@noobstore/web:build:   ├ chunks/18-9b78004f9e753d46.js                46.8 kB
+@noobstore/web:build:   ├ chunks/87c73c54-09e1ba5c70e60a51.js          54.2 kB
+@noobstore/web:build:   └ other shared chunks (total)                  3.05 kB
+@noobstore/web:build: 
+@noobstore/web:build: 
+@noobstore/web:build: ƒ Middleware                                     62.4 kB
+@noobstore/web:build: 
+@noobstore/web:build: ○  (Static)   prerendered as static content
+@noobstore/web:build: ƒ  (Dynamic)  server-rendered on demand
+@noobstore/web:build: 
+
+ Tasks:    3 successful, 3 total
+Cached:    2 cached, 3 total
+  Time:    34.555s 
+

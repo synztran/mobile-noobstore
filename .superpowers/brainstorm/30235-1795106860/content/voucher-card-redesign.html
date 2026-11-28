@@ -1,0 +1,368 @@
+<style>
+  .preview-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+  }
+  .section-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+  }
+  .section-desc {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+  }
+  .design-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .design-box {
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.25rem;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+  }
+  .design-box:hover {
+    border-color: #b3451e;
+    box-shadow: 0 10px 25px -5px rgba(179, 69, 30, 0.12);
+  }
+  .design-box.selected {
+    border-color: #b3451e;
+    background: #fffbf9;
+    box-shadow: 0 0 0 3px rgba(179, 69, 30, 0.2);
+  }
+  .badge-tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag-a { background: #fee2e2; color: #b91c1c; }
+  .tag-b { background: #ffedd5; color: #c2410c; }
+  .tag-c { background: #e0f2fe; color: #0369a1; }
+
+  /* ===== OPTION A: TICKET NOTCH COUPON ===== */
+  .ticket-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #f1d5ca;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+  }
+  .ticket-top {
+    padding: 1rem;
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 2px dashed #fed7aa;
+    position: relative;
+  }
+  /* Notches */
+  .ticket-top::before, .ticket-top::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    width: 16px;
+    height: 16px;
+    background: #ffffff;
+    border-radius: 50%;
+    border: 1px solid #f1d5ca;
+    z-index: 2;
+  }
+  .ticket-top::before { left: -9px; }
+  .ticket-top::after { right: -9px; }
+  
+  .ticket-val-pill {
+    background: #b3451e;
+    color: #ffffff;
+    font-size: 1.15rem;
+    font-weight: 900;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+  .ticket-body {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    flex: 1;
+  }
+  .ticket-cond-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    width: fit-content;
+  }
+
+  /* ===== OPTION B: DUAL-SEGMENT VOUCHER (SHOPEE/LAZADA PRO) ===== */
+  .dual-voucher {
+    display: flex;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    min-height: 130px;
+  }
+  .dual-left {
+    width: 100px;
+    background: linear-gradient(180deg, #b3451e 0%, #872e0f 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    position: relative;
+    border-right: 2px dashed #ffffff70;
+  }
+  .dual-right {
+    flex: 1;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* ===== OPTION C: MODERN BADGE & PROGRESS TICKET ===== */
+  .badge-card {
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 1rem;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .badge-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .badge-discount {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #b3451e;
+    line-height: 1.1;
+  }
+  .progress-wrap {
+    background: #f1f5f9;
+    height: 6px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 0.25rem;
+  }
+  .progress-bar {
+    background: #b3451e;
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  /* Modal Preview Box */
+  .modal-preview {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+  .cond-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    color: #1e293b;
+    margin-top: 0.35rem;
+  }
+</style>
+
+<div class="preview-wrapper">
+  <h2>Khảo sát & Chọn phong cách Voucher Card</h2>
+  <p class="subtitle">Bấm vào mẫu bạn thích nhất (A, B, hoặc C) để biểu quyết trực tiếp</p>
+
+  <div class="options design-grid" data-choice="voucher-style">
+    <!-- OPTION A -->
+    <div class="option design-box" data-choice="option-a" onclick="toggleSelect(this)">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <span class="badge-tag tag-a">LỰA CHỌN A</span>
+        <strong style="font-size:0.85rem; color:#b91c1c;">Vé Đục Lỗ (Ticket Notch)</strong>
+      </div>
+      <p style="font-size:0.8rem; color:#64748b; margin-bottom:1rem;">
+        Hiệu ứng coupon cổ điển với 2 khuyết bán nguyệt và đường đục lỗ nét đứt. Tạo cảm giác "cầm trên tay chiếc vé ưu đãi".
+      </p>
+
+      <!-- Mockup card A -->
+      <div class="ticket-card">
+        <div class="ticket-top">
+          <div class="ticket-val-pill">GIẢM 50.000₫</div>
+          <div style="min-width:0; flex:1;">
+            <div style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:#b3451e;">ĐƠN HÀNG TỪ 300K</div>
+            <div style="font-size:0.75rem; color:#78350f;">Hạn dùng: 90 ngày</div>
+          </div>
+        </div>
+        <div class="ticket-body">
+          <h4 style="font-size:0.92rem; font-weight:800; color:#1e293b;">Voucher Giảm 50K Tổng Đơn</h4>
+          <div class="ticket-cond-chip">
+            <span>🛡️</span> Áp dụng toàn bộ phụ kiện & phím cơ
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; pt:0.5rem; border-top:1px solid #f1f5f9;">
+            <div>
+              <span style="font-size:0.7rem; color:#64748b;">Chi phí đổi:</span>
+              <div style="font-size:0.95rem; font-weight:900; color:#b3451e;">50.000 NSP</div>
+            </div>
+            <button style="background:#b3451e; color:#fff; border:none; border-radius:8px; padding:0.45rem 0.9rem; font-size:0.78rem; font-weight:800; cursor:pointer;">
+              ĐỔI NGAY
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION B -->
+    <div class="option design-box" data-choice="option-b" onclick="toggleSelect(this)">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <span class="badge-tag tag-b">LỰA CHỌN B</span>
+        <strong style="font-size:0.85rem; color:#c2410c;">Coupon 2 Phân Đoạn (Dual-Segment)</strong>
+      </div>
+      <p style="font-size:0.8rem; color:#64748b; margin-bottom:1rem;">
+        Khối bên trái làm dải nhận diện chính (Freeship/Giảm tiền), khối bên phải là mô tả, điều kiện và hành động đổi.
+      </p>
+
+      <!-- Mockup card B -->
+      <div class="dual-voucher">
+        <div class="dual-left">
+          <div style="font-size:1.4rem;">🚚</div>
+          <div style="font-size:0.85rem; font-weight:900; line-height:1.1; margin-top:0.25rem;">MIỄN PHÍ SHIP</div>
+          <div style="font-size:0.65rem; opacity:0.85; margin-top:0.25rem;">100% Phí</div>
+        </div>
+        <div class="dual-right">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.7rem; font-weight:800; color:#b3451e; background:#ffedd5; padding:0.15rem 0.45rem; border-radius:4px;">FREESHIP</span>
+              <span style="font-size:0.7rem; color:#64748b;">Còn 12 lượt</span>
+            </div>
+            <h4 style="font-size:0.9rem; font-weight:800; color:#1e293b; margin-top:0.35rem;">Miễn phí vận chuyển 200k</h4>
+            <div style="font-size:0.75rem; color:#64748b; margin-top:0.15rem;">Đơn tối thiểu 200.000₫ · HCMC & Toàn quốc</div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:0.5rem;">
+            <div style="font-size:0.9rem; font-weight:900; color:#b3451e;">50.000 NSP</div>
+            <button style="background:#b3451e; color:#fff; border:none; border-radius:20px; padding:0.4rem 0.85rem; font-size:0.75rem; font-weight:800; cursor:pointer;">
+              Đổi ngay
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPTION C -->
+    <div class="option design-box" data-choice="option-c" onclick="toggleSelect(this)">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <span class="badge-tag tag-c">LỰA CHỌN C</span>
+        <strong style="font-size:0.85rem; color:#0369a1;">Modern Badge + Kho Giới Hạn</strong>
+      </div>
+      <p style="font-size:0.8rem; color:#64748b; margin-bottom:1rem;">
+        Thiết kế thương mại điện tử hiện đại, nhấn mạnh số tiền giảm cực lớn, có thanh tiến độ số lượt còn lại trực quan.
+      </p>
+
+      <!-- Mockup card C -->
+      <div class="badge-card">
+        <div class="badge-header">
+          <div>
+            <span style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:#b3451e; background:#fdf2f0; padding:0.2rem 0.5rem; border-radius:4px;">
+              VOUCHER ƯU ĐÃI
+            </span>
+            <div class="badge-discount" style="margin-top:0.4rem;">-100.000 ₫</div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:0.72rem; color:#64748b;">Số lượng</span>
+            <div style="font-size:0.8rem; font-weight:800; color:#047857;">Còn 10 lượt</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="font-size:0.88rem; font-weight:800; color:#1e293b;">Giảm 100k cho đơn từ 500k</h4>
+          <p style="font-size:0.75rem; color:#64748b; margin-top:0.2rem;">Áp dụng mọi sản phẩm khi thanh toán</p>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#64748b;">
+            <span>Tiến độ kho</span>
+            <span>Đã đổi 2/12</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar" style="width: 25%;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f1f5f9; padding-top:0.6rem; margin-top:0.2rem;">
+          <div>
+            <span style="font-size:0.68rem; color:#64748b;">Cần đổi</span>
+            <div style="font-size:0.95rem; font-weight:900; color:#b3451e;">100.000 NSP</div>
+          </div>
+          <button style="background:#b3451e; color:#fff; border:none; border-radius:8px; padding:0.45rem 0.9rem; font-size:0.75rem; font-weight:800; cursor:pointer;">
+            XEM CHI TIẾT
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GIẢI PHÁP TEXT DÀI TRONG MODAL -->
+  <div class="modal-preview">
+    <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+      <span style="background:#10b981; color:#fff; padding:0.2rem 0.5rem; border-radius:6px; font-size:0.75rem; font-weight:800;">GIẢI PHÁP MODAL</span>
+      <h3 style="font-size:1.05rem; font-weight:800; color:#0f172a;">Xử lý Điều kiện áp dụng khi text dài</h3>
+    </div>
+    <p style="font-size:0.85rem; color:#475569; margin-bottom:1rem;">
+      Thay vì ép nhãn bên trái và nội dung dài bên phải trên cùng 1 hàng khiến chữ bị bẻ co cụm, điều kiện áp dụng sẽ chuyển thành <strong>khối danh sách nhiều dòng</strong>, mỗi điều kiện là một chip rõ ràng:
+    </p>
+
+    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:1rem; max-width:500px;">
+      <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#64748b; margin-bottom:0.5rem;">
+        ĐIỀU KIỆN ÁP DỤNG
+      </div>
+      <div class="cond-item">
+        <span style="color:#059669; font-weight:bold;">✓</span>
+        <div><strong>Giá trị đơn hàng:</strong> Tối thiểu từ 300.000 ₫ (chưa gồm phí vận chuyển).</div>
+      </div>
+      <div class="cond-item">
+        <span style="color:#059669; font-weight:bold;">✓</span>
+        <div><strong>Phạm vi giảm trừ:</strong> Trừ trực tiếp vào tổng giá trị sản phẩm đơn hàng.</div>
+      </div>
+      <div class="cond-item">
+        <span style="color:#059669; font-weight:bold;">✓</span>
+        <div><strong>Sản phẩm áp dụng:</strong> Không áp dụng đồng thời với các chương trình Flash Sale hoặc quà tặng đặc biệt.</div>
+      </div>
+    </div>
+  </div>
+</div>

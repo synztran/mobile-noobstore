@@ -1,0 +1,257 @@
+impeccable detect: DEGRADED - HTML parser modules unavailable (htmlparser2, css-select, css-tree, domutils).
+Falling back to regex matching. Custom properties, selector matching and computed contrast are NOT evaluated; findings are an undercount, not a clean bill of health.
+[
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "Undocumented color #e7d6c7 is outside DESIGN.md colors",
+    "ignoreValue": "#e7d6c7"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "Undocumented color #a85e3e is outside DESIGN.md colors",
+    "ignoreValue": "#a85e3e"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "Undocumented color #f2b98c is outside DESIGN.md colors",
+    "ignoreValue": "#f2b98c"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "Undocumented color #59321f30 is outside DESIGN.md colors",
+    "ignoreValue": "#59321f30"
+  },
+  {
+    "antipattern": "design-system-radius",
+    "name": "Radius outside DESIGN.md",
+    "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "border-radius: 18px is outside the DESIGN.md rounded scale",
+    "ignoreValue": "18px"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "font-size: 1.15rem is off the DESIGN.md type ramp",
+    "ignoreValue": "1.15rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "font-size: clamp(2.7rem,6.5vw,6rem) has fluid endpoints 2.7rem and 6rem off the DESIGN.md type ramp",
+    "ignoreValue": "2.7rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "font-size: 1.08rem is off the DESIGN.md type ramp",
+    "ignoreValue": "1.08rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "font-size: clamp(2rem,4vw,3.5rem) has fluid endpoints 2rem and 3.5rem off the DESIGN.md type ramp",
+    "ignoreValue": "2rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 7,
+    "snippet": "font-size: clamp(1.4rem,3vw,2.4rem) has fluid endpoints 1.4rem and 2.4rem off the DESIGN.md type ramp",
+    "ignoreValue": "1.4rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/01-build-bench.html",
+    "line": 8,
+    "snippet": "font-size: clamp(2.6rem,13vw,4rem) has fluid endpoints 2.6rem and 4rem off the DESIGN.md type ramp",
+    "ignoreValue": "2.6rem"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "Undocumented color #e7d6c7 is outside DESIGN.md colors",
+    "ignoreValue": "#e7d6c7"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "Undocumented color #c98760 is outside DESIGN.md colors",
+    "ignoreValue": "#c98760"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "Undocumented color #f0c9a5 is outside DESIGN.md colors",
+    "ignoreValue": "#f0c9a5"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "Undocumented color #f3c493 is outside DESIGN.md colors",
+    "ignoreValue": "#f3c493"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "Undocumented color #59321f30 is outside DESIGN.md colors",
+    "ignoreValue": "#59321f30"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "font-size: 1.15rem is off the DESIGN.md type ramp",
+    "ignoreValue": "1.15rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "font-size: clamp(2.6rem,6vw,5.4rem) has fluid endpoints 2.6rem and 5.4rem off the DESIGN.md type ramp",
+    "ignoreValue": "2.6rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "font-size: 1.12rem is off the DESIGN.md type ramp",
+    "ignoreValue": "1.12rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "font-size: 1.2rem is off the DESIGN.md type ramp",
+    "ignoreValue": "1.2rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "font-size: clamp(2rem,4vw,3.4rem) has fluid endpoints 2rem and 3.4rem off the DESIGN.md type ramp",
+    "ignoreValue": "2rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "font-size: 9rem is off the DESIGN.md type ramp",
+    "ignoreValue": "9rem"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "/Users/haritran/source/noobstore/mobile-noobstore/apps/web/design-mockups/about/02-community-proof.html",
+    "line": 7,
+    "snippet": "font-size: clamp(1.8rem,4vw,3rem) has fluid endpoints 1.8rem and 3rem off the DESIGN.md type ramp",
+    "ignoreValue": "1.8rem"
+  }
+]

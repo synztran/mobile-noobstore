@@ -1,0 +1,32 @@
+apps/web/src/middleware.ts:10:  isCspReportPath,
+apps/web/src/middleware.ts:75:  const csp = `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https:; style-src 'self' 'nonce-${nonce}' https:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src 'self' https://www.google.com https://*.hcaptcha.com; report-uri /api/security/csp-report`;
+apps/web/src/middleware.ts:78:  requestHeaders.set("Content-Security-Policy-Report-Only", csp);
+apps/web/src/middleware.ts:87:    response.headers.set("Content-Security-Policy-Report-Only", csp);
+apps/web/src/middleware.ts:96:  const csp = request.headers.get("Content-Security-Policy");
+apps/web/src/middleware.ts:151:      if (csp) response.headers.set("Content-Security-Policy-Report-Only", csp);
+apps/web/src/middleware.ts:176:      !isCspReportPath(pathname) &&
+apps/web/src/middleware.ts:230:  requestHeaders.set("Content-Security-Policy-Report-Only", csp ?? "");
+apps/web/src/lib/redis/rate-limit-alert.ts:4:export const isCspReportPath = (pathname: string) => pathname === "/api/security/csp-report";
+apps/web/src/lib/redis/rate-limit-alert.test.ts:5:import { fireRateLimitAlert, isCspReportPath } from "./rate-limit-alert";
+apps/web/src/lib/redis/rate-limit-alert.test.ts:13:  it("exempts only exact CSP reporting path", () => {
+apps/web/src/lib/redis/rate-limit-alert.test.ts:14:    expect(isCspReportPath("/api/security/csp-report")).toBe(true);
+apps/web/src/lib/redis/rate-limit-alert.test.ts:15:    expect(isCspReportPath("/api/security/csp-report/other")).toBe(false);
+apps/web/src/lib/redis/rate-limit-alert.test.ts:16:    expect(isCspReportPath("/api/user/profile")).toBe(false);
+apps/web/src/lib/random.test.ts:4:describe("random helpers (CSPRNG)", () => {
+apps/web/src/lib/random.ts:4: * CSPRNG helpers to replace `Math.random` in any place where the output forms
+apps/web/src/lib/random.ts:10: * - `randomInt` from Node's `crypto` uses the OS CSPRNG.
+apps/web/src/lib/random.ts:13:/** Uniform float in [0, 1) from a CSPRNG (48-bit fraction). */
+apps/web/src/app/api/security/csp-report/route.ts:9:    const limited = await getApiLimiter().limit(`csp:${getRateLimitKey(req)}`);
+apps/web/src/app/api/security/csp-report/route.ts:23:    const body = report["csp-report"] ?? report;
+apps/web/src/app/api/security/csp-report/route.ts:29:      console.info("[csp-report] violation", { directive: safeDirective });
+apps/web/src/app/api/security/csp-report/route.test.ts:9:const request = (body: string) => new NextRequest("https://example.com/api/security/csp-report", { method: "POST", body });
+apps/web/src/app/api/security/csp-report/route.test.ts:10:describe("legacy CSP reports", () => {
+apps/web/src/app/api/security/csp-report/route.test.ts:13:    const result = await POST(request(JSON.stringify({ "csp-report": { "effective-directive": "script-src-elem" } })));
+apps/web/src/app/api/security/csp-report/route.test.ts:15:    expect(mocks.limit).toHaveBeenCalledWith("csp:test-ip");
+apps/web/src/app/api/security/csp-report/route.test.ts:17:    expect(log).toHaveBeenCalledWith("[csp-report] violation", { directive: "script-src-elem" });
+apps/web/src/app/api/security/csp-report/route.test.ts:22:    const result = await POST(request(JSON.stringify({ "csp-report": { "effective-directive": "script-src\nforged log" } })));
+apps/web/src/app/api/security/csp-report/route.test.ts:24:    expect(log).toHaveBeenCalledWith("[csp-report] violation", { directive: "unknown" });
+apps/web/src/modules/payments/README.md:10:  protected health-cron Telegram delivery; CSP reports are untrusted telemetry.
+apps/web/src/modules/payments/server/drain-alerts.ts:8:    .is("delivered_at", null).neq("kind", "csp_report").or("kind.in.(recipient_mismatch,bank_config_changed),occurrences.gte.5").order("created_at").limit(20);
+apps/web/src/modules/payments/server/drain-alerts.ts:11:    // CSP buckets remain retained but paused: expected inline-script reports
+apps/web/src/modules/payments/server/drain-alerts.ts:13:    if (item.kind === "csp_report") continue;

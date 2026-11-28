@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup Đấu Giá NoobStore (GooFish Style) - Light Theme</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            primary: {
+              DEFAULT: '#9b3f1c',
+              hover: '#7f2b07',
+              container: '#bb5732',
+              action: '#D46A43',
+              fixed: '#ffdbcf',
+            },
+            surface: {
+              DEFAULT: '#fbf9f5',
+              container: '#f0eeea',
+              'container-low': '#f5f3ef',
+              'container-lowest': '#ffffff',
+              'container-high': '#eae8e4',
+              border: '#e4e2de',
+            },
+            neutral: {
+              text: '#1b1c1a',
+              muted: '#56423c',
+              subtle: '#797672',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #f7f5f0;
+      color: #1b1c1a;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #ddc1b8;
+      border-radius: 9999px;
+    }
+    .light-card {
+      background: #ffffff;
+      border: 1px solid #e4e2de;
+      box-shadow: 0 4px 20px -2px rgba(27, 28, 26, 0.05);
+    }
+    #showcase-frame.max-w-sm #main-card-shell,
+    #showcase-frame.max-w-sm #rules-container-card,
+    #showcase-frame.max-w-sm #product-specs-card,
+    #showcase-frame.max-w-sm #spec-variant-card,
+    #showcase-frame.max-w-sm #spec-condition-card,
+    #showcase-frame.max-w-sm #timer-box,
+    #showcase-frame.max-w-sm #pricing-card {
+      padding: 12px !important;
+    }
+    #showcase-frame.max-w-sm #condition-header-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 6px !important;
+    }
+    #showcase-frame.max-w-sm #condition-attributes-grid {
+      grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    }
+    #showcase-frame.max-w-sm #condition-attributes-grid > div {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 2px !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-neutral-text flex flex-col items-center p-3 sm:p-6 pb-20">
+
+  <!-- Top Controller Bar for Simulation -->
+  <header class="w-full max-w-5xl mb-6 p-4 rounded-2xl bg-white border border-surface-border shadow-sm flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-primary-fixed text-primary flex items-center justify-center font-bold shadow-sm">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/><path d="M16 16l6-6"/><path d="m8 8 2-2"/><path d="m9 11 2-2"/><path d="m13 15 2-2"/><path d="m16 8 5-5"/></svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-extrabold uppercase tracking-wider text-primary">NoobStore Auction</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">GooFish Style</span>
+        </div>
+        <p class="text-xs text-neutral-muted">Light theme chuẩn NoobStore giraffelab • 2 cột Desktop trực quan</p>
+      </div>
+    </div>
+
+    <!-- State Switcher Controls -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <div class="bg-surface-container p-1 rounded-xl flex items-center gap-1 border border-surface-border text-xs">
+        <button id="scenario-normal" onclick="switchScenario('normal')" class="scenario-btn px-3 py-1.5 rounded-lg font-bold bg-primary text-white shadow-sm">
+          Đang diễn ra
+        </button>
+        <button id="scenario-urgent" onclick="switchScenario('urgent')" class="scenario-btn px-3 py-1.5 rounded-lg font-semibold text-neutral-muted hover:text-neutral-text">
+          ⚡ Bù giờ (&lt;5m)
+        </button>
+        <button id="scenario-winner" onclick="switchScenario('winner')" class="scenario-btn px-3 py-1.5 rounded-lg font-semibold text-neutral-muted hover:text-neutral-text">
+          🎉 Thắng cuộc
+        </button>
+        <button id="scenario-ended" onclick="switchScenario('ended')" class="scenario-btn px-3 py-1.5 rounded-lg font-semibold text-neutral-muted hover:text-neutral-text">
+          Đã kết thúc
+        </button>
+      </div>
+
+      <!-- Viewport Mode Toggle -->
+      <div class="bg-surface-container p-1 rounded-xl flex items-center gap-1 border border-surface-border text-xs">
+        <button id="view-mobile" onclick="toggleViewport('mobile')" class="px-3 py-1.5 rounded-lg font-semibold text-neutral-muted hover:text-neutral-text" title="Mobile view">
+          📱 Mobile
+        </button>
+        <button id="view-desktop" onclick="toggleViewport('desktop')" class="px-3 py-1.5 rounded-lg font-bold bg-white text-neutral-text shadow-sm" title="Desktop view">
+          🖥️ Desktop (2 Cột)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Floating Toast Stream on the Right Side -->
+  <div id="toast-container" class="fixed top-24 right-5 sm:right-8 z-50 flex flex-col gap-2 pointer-events-none max-w-xs sm:max-w-sm w-full"></div>
+
+  <!-- MAIN SHOWCASE CONTAINER -->
+  <main id="showcase-frame" class="w-full max-w-5xl transition-all duration-300">
+    
+    <!-- MAIN CARD SHELL (Light Theme) -->
+    <div id="main-card-shell" class="rounded-3xl overflow-hidden light-card p-4 sm:p-6 space-y-6">
+
+      <!-- Header line: Only Product Name & Live Status -->
+      <div class="flex items-center justify-between pb-3 border-b border-surface-border gap-2">
+        <div class="min-w-0">
+          <h2 class="text-xs sm:text-sm text-neutral-text font-bold truncate">
+            Keycult No. 1/65 Rev. 2 (Brass Edition)
+          </h2>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <span class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Real-time Sync
+          </span>
+        </div>
+      </div>
+
+      <!-- Winner Congratulation Banner (Scenario: Winner) -->
+      <div id="winner-banner" class="hidden p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-extrabold text-xl shadow-md flex-shrink-0">
+            🏆
+          </div>
+          <div>
+            <h4 class="text-sm sm:text-base font-extrabold text-amber-950 flex items-center gap-2">
+              <span>Xin chúc mừng, bạn đã chiến thắng phiên đấu giá!</span>
+            </h4>
+            <p class="text-xs text-amber-900 mt-0.5">
+              Mức giá chốt: <strong class="text-primary font-mono font-bold text-sm">14.500.000₫</strong> • Thời hạn thanh toán còn: <strong class="text-amber-800 font-mono font-bold">23:59:45</strong>
+            </p>
+          </div>
+        </div>
+        <button onclick="handleSimulateCheckout()" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span>Tiến hành thanh toán</span>
+        </button>
+      </div>
+
+      <!-- 2-COLUMN GRID WRAPPER -->
+      <div id="auction-grid" class="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+        
+        <!-- LEFT COLUMN: Gallery & Product Specs (7 cols desktop) -->
+        <div id="left-col" class="lg:col-span-7 space-y-4">
+          
+          <!-- Main Hero Gallery Image -->
+          <div class="relative aspect-[4/3] w-full bg-surface-container rounded-2xl overflow-hidden border border-surface-border">
+            <img
+              id="main-product-img"
+              src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1200&q=80"
+              alt="Keyboard"
+              class="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105"
+            />
+
+            <!-- Top Badges Overlay -->
+            <div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+              <div class="flex items-center gap-2 pointer-events-auto">
+                <span id="badge-status" class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white flex items-center gap-1.5 shadow-md">
+                  <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                  Đang đấu giá
+                </span>
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500 text-white flex items-center gap-1 shadow-md">
+                  ✨ Hot Drop
+                </span>
+              </div>
+
+              <div class="flex items-center gap-1.5 pointer-events-auto">
+                <button class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-md border border-surface-border flex items-center justify-center text-neutral-text hover:text-primary shadow-sm transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+                </button>
+                <button class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-md border border-surface-border flex items-center justify-center text-neutral-text hover:text-primary shadow-sm transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Live New Bid Alert Pill (Mobile & Desktop: floats below tags, auto-dismisses after 3s) -->
+            <div id="new-bid-alert-pill" class="absolute top-12 left-3 transition-all duration-300 transform opacity-0 -translate-y-2 pointer-events-none z-10">
+              <div class="px-3 py-1.5 rounded-full bg-neutral-900/90 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1.5 shadow-lg border border-white/20">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span id="new-bid-alert-text">🔥 Giá mới: 14.550.000₫</span>
+              </div>
+            </div>
+
+            <!-- Anti-Snipe Status Pill (Bottom Left overlay) -->
+            <div id="anti-snipe-pill" class="absolute bottom-3 left-3 pointer-events-none">
+              <div class="px-3 py-1.5 rounded-xl bg-white/95 backdrop-blur-md border border-surface-border flex items-center gap-2 text-xs shadow-sm">
+                <span class="text-amber-500">🛡️</span>
+                <span class="text-neutral-text font-semibold text-[11px]">Bù giờ: <strong>+5 phút</strong> nếu có bid cuối</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thumbnails Strip -->
+          <div class="grid grid-cols-4 gap-2">
+            <button onclick="changeHeroImage(0)" class="thumb-btn active relative aspect-video rounded-xl overflow-hidden border-2 border-primary opacity-100 transition-all shadow-sm">
+              <img src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" />
+            </button>
+            <button onclick="changeHeroImage(1)" class="thumb-btn relative aspect-video rounded-xl overflow-hidden border-2 border-transparent opacity-60 hover:opacity-100 transition-all">
+              <img src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" />
+            </button>
+            <button onclick="changeHeroImage(2)" class="thumb-btn relative aspect-video rounded-xl overflow-hidden border-2 border-transparent opacity-60 hover:opacity-100 transition-all">
+              <img src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" />
+            </button>
+            <button onclick="changeHeroImage(3)" class="thumb-btn relative aspect-video rounded-xl overflow-hidden border-2 border-transparent opacity-60 hover:opacity-100 transition-all">
+              <img src="https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover" />
+            </button>
+          </div>
+
+          <!-- Specs & Eligibility Card (Compact & Expandable for Mobile) -->
+          <div id="rules-container-card" class="p-3 sm:p-5 rounded-2xl bg-surface-container-low border border-surface-border space-y-2.5 transition-all">
+            <!-- Header bar with interactive toggle -->
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleRulesExpand()">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xs font-bold text-neutral-text whitespace-nowrap">
+                  Điều kiện tham gia
+                </span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1 flex-shrink-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                  Đủ điều kiện
+                </span>
+              </div>
+              <button id="btn-toggle-rules" type="button" class="text-xs font-semibold text-primary hover:text-primary-hover flex items-center gap-0.5 px-1.5 py-0.5 rounded hover:bg-white/80 transition-colors flex-shrink-0">
+                <span id="rules-toggle-text">Chi tiết</span>
+                <svg id="rules-toggle-icon" class="w-3.5 h-3.5 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+            </div>
+
+            <!-- 1. COMPACT VERSION (Wrapped naturally without horizontal scrolling) -->
+            <div id="rules-compact-view" class="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-surface-border text-neutral-text flex items-center gap-1 shadow-2xs">
+                <span>🏷️</span> New 100% Kit
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-surface-border text-neutral-text flex items-center gap-1 shadow-2xs">
+                <span>🎖️</span> Level 0+ (Tất cả)
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-surface-border text-neutral-text flex items-center gap-1 shadow-2xs">
+                <span>♾️</span> Không giới hạn bid
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-white border border-surface-border text-emerald-700 font-bold flex items-center gap-1 shadow-2xs">
+                <span>⚡</span> Freeship Hỏa tốc
+              </span>
+            </div>
+
+            <!-- 2. EXPANDED VERSION (Detailed 2-column or 4-column grid + notes) -->
+            <div id="rules-expanded-view" class="hidden space-y-2.5 pt-1 border-t border-surface-border/60">
+              <div id="rules-grid" class="grid grid-cols-2 gap-2 text-xs">
+                <div class="p-2.5 rounded-xl bg-white border border-surface-border">
+                  <span class="text-[10px] text-neutral-subtle block">Tình trạng</span>
+                  <span class="font-bold text-neutral-text">New 100% Kit</span>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white border border-surface-border">
+                  <span class="text-[10px] text-neutral-subtle block">Cấp bậc yêu cầu</span>
+                  <span class="font-bold text-neutral-text">Level 0+ (Tất cả)</span>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white border border-surface-border">
+                  <span class="text-[10px] text-neutral-subtle block">Giới hạn bid</span>
+                  <span class="font-bold text-neutral-text">Không giới hạn</span>
+                </div>
+                <div class="p-2.5 rounded-xl bg-white border border-surface-border">
+                  <span class="text-[10px] text-neutral-subtle block">Vận chuyển</span>
+                  <span class="font-bold text-emerald-600">Freeship Hỏa tốc</span>
+                </div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed">
+                <span>💡 <strong class="font-bold">Lưu ý:</strong> Người thắng cần hoàn tất thanh toán trong 24h. Sau thời gian này hệ thống sẽ cascade chuyển lượt cho bidder thứ 2.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- DETAILED PRODUCT & VARIANT SPECIFICATIONS SECTION -->
+          <div id="product-specs-card" class="p-3 rounded-2xl bg-white border border-surface-border space-y-5 shadow-xs">
+            
+            <!-- Section Header -->
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-surface-border">
+              <div class="flex items-center gap-2 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-primary-fixed text-primary flex items-center justify-center font-bold flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                </div>
+                <div class="min-w-0">
+                  <h3 class="text-xs sm:text-sm font-extrabold text-neutral-text uppercase tracking-wider truncate">
+                    Chi tiết sản phẩm & Biến thể
+                  </h3>
+                  <p class="text-[10px] sm:text-[11px] text-neutral-muted truncate">Biến thể duy nhất trong phiên đấu giá</p>
+                </div>
+              </div>
+
+              <!-- Expand/Collapse Icon Button (Replaced Single-Variant Badge) -->
+              <button
+                id="btn-toggle-product-specs"
+                type="button"
+                onclick="toggleProductSpecsSection()"
+                class="w-7 h-7 rounded-lg bg-surface-container hover:bg-surface-container-high border border-surface-border flex items-center justify-center text-neutral-subtle hover:text-neutral-text transition-colors flex-shrink-0"
+                title="Thu gọn / Mở rộng"
+              >
+                <svg id="product-specs-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="transition-transform duration-200"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+            </div>
+
+            <!-- Product Specs Body Container -->
+            <div id="product-specs-body" class="space-y-4">
+              <!-- Variant Highlight Card (2-Line Key-Value Spec Sheet for Mobile & Desktop) -->
+              <div id="spec-variant-card" class="rounded-xl bg-surface-container-low border border-surface-border p-3 sm:p-4 space-y-3">
+                <!-- Variant Header -->
+                <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-surface-border/70">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0"></span>
+                    <div class="min-w-0">
+                      <span class="text-[10px] text-neutral-subtle uppercase tracking-wider font-semibold block">Biến thể duy nhất</span>
+                      <span class="text-xs font-extrabold text-neutral-text truncate block">Brass Edition #04/25 • Dark Gray</span>
+                    </div>
+                  </div>
+                  <span class="font-mono text-[10px] px-2 py-0.5 rounded bg-white border border-surface-border text-neutral-subtle font-semibold flex-shrink-0">
+                    #KC-165-REV2
+                  </span>
+                </div>
+
+                <!-- Technical Specifications (2 Lines per Spec: Label Top, Value Bottom) -->
+                <div class="space-y-1">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-8">
+                    <!-- Column 1: Core Specs (4 items) -->
+                    <div class="space-y-0 text-xs">
+                      <div class="py-2 border-b border-surface-border/60 space-y-0.5">
+                        <span class="text-[11px] text-neutral-subtle font-medium block">Layout / Kích thước</span>
+                        <span class="font-bold text-neutral-text text-xs block leading-snug">65% (68 phím, Blocked Arrow)</span>
+                      </div>
+                      <div class="py-2 border-b border-surface-border/60 space-y-0.5">
+                        <span class="text-[11px] text-neutral-subtle font-medium block">Vỏ Case</span>
+                        <span class="font-bold text-neutral-text text-xs block leading-snug">Nhôm CNC 6063 Dark Gray</span>
+                      </div>
+                      <div class="py-2 border-b border-surface-border/60 space-y-0.5">
+                        <span class="text-[11px] text-neutral-subtle font-medium block">Tạ đáy (Weight)</span>
+                        <span class="font-bold text-amber-900 text-xs block leading-snug">Brass Sandblasted Phủ Nano</span>
+                      </div>
+                      <div class="py-2 border-b border-surface-border/60 sm:border-b-0 space-y-0.5">
+                        <span class="text-[11px] text-neutral-subtle font-medium block">Mạch (PCB)</span>
+                        <span class="font-bold text-neutral-text text-xs block leading-snug">Hotswap 1.6mm (QMK / VIA)</span>
+                      </div>
+                    </div>
+
+                    <!-- Column 2: Secondary Specs (4 items) (Collapsible on Mobile, Expanded on Desktop) -->
+                    <div id="specs-expanded-view" class="hidden sm:block space-y-0 text-xs">
+                      <div class="py-2 border-b border-surface-border/60 space-y-0.5">
+                        <span class="text-[11px] text-neutral-subtle font-medium block">Plate</span>
+                        <span class="font-bold text-neutral-text text-xs block leading-snug">Nhôm Anodized Black 1.5mm</span>
+                      </div>
+                      <div class="py-2 border-b border-surface-border/60 space-y-0.5">
+                        <span class="text-[11px] text-neutral-subtle font-medium block">Trọng lượng build</span>
+                        <span class="font-bold text-neutral-text text-xs block leading-snug">~2.45 kg (Đầm tay)</span>
+                      </div>
+                      <div class="py-2 border-b border-surface-border/60 space-y-0.5">
+                        <span class="text-[11px] text-neutral-subtle font-medium block">Góc nghiêng gõ</span>
+                        <span class="font-bold text-neutral-text text-xs block leading-snug">8 độ • Front height 18.5mm</span>
+                      </div>
+                      <div class="py-2 border-b border-surface-border/60 sm:border-b-0 space-y-0.5">
+                        <span class="text-[11px] text-neutral-subtle font-medium block">Cổng kết nối</span>
+                        <span class="font-bold text-neutral-text text-xs block leading-snug">Type-C Daughterboard ESD</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Mobile Toggle Button -->
+                  <button
+                    id="btn-toggle-specs"
+                    type="button"
+                    onclick="toggleSpecsExpand()"
+                    class="sm:hidden w-full mt-2 py-2 rounded-xl bg-white hover:bg-surface-container border border-surface-border text-primary font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                  >
+                    <span id="specs-toggle-text">Xem thêm 4 thông số chi tiết</span>
+                    <svg id="specs-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="transition-transform duration-200"><path d="m6 9 6 6 6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- DEDICATED PRODUCT CONDITION & ATTACHED INSPECTION PHOTOS (1 Unified Section / Row inside children) -->
+              <div id="spec-condition-card" class="rounded-xl bg-surface-container-low border border-surface-border p-3 sm:p-4 space-y-3.5">
+                <!-- Header (Icon + Title with clickable Grade S badge on same line + Subtitle below) -->
+                <div class="flex items-start gap-2.5 pb-2.5 border-b border-surface-border">
+                  <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-700 flex items-center justify-center flex-shrink-0 font-bold mt-0.5">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div id="condition-header-row" class="flex flex-col sm:flex-row sm:items-center sm:justify-between items-start gap-1.5 sm:gap-2">
+                      <h3 class="text-xs sm:text-sm font-extrabold text-neutral-text uppercase tracking-wider">
+                        Tình trạng thực tế
+                      </h3>
+                      <button
+                        type="button"
+                        onclick="openGradeModal()"
+                        class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 whitespace-nowrap flex items-center gap-1 cursor-pointer transition-colors shadow-2xs group flex-shrink-0"
+                        title="Nhấn để xem quy chuẩn phân cấp Grade từ S đến D"
+                      >
+                        <span>Grade S • New 100%</span>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="opacity-70 group-hover:opacity-100 transition-opacity"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                      </button>
+                    </div>
+                    <p class="text-[10px] sm:text-[11px] text-neutral-muted mt-0.5">
+                      Chụp trực tiếp tại Studio kiểm duyệt NoobStore • Không qua chỉnh sửa
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Condition Assessment (Combined Text Summary + Key-Value Pair Cards, no tabs needed) -->
+                <div class="p-3 rounded-xl bg-white border border-surface-border space-y-2.5 text-xs">
+                  <div class="pb-1 text-[11px] text-neutral-subtle font-semibold uppercase tracking-wider">
+                    Đánh giá chi tiết ngoại quan & tem niêm phong
+                  </div>
+
+                  <!-- 1. Text Summary Description -->
+                  <div class="p-2.5 rounded-lg bg-surface-container-low text-xs space-y-1.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 flex-shrink-0"></span>
+                      <span class="text-neutral-text font-medium text-[11px]">Nguyên bản, không cấn móp, không xước dăm hay đốm anod bề mặt.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 flex-shrink-0"></span>
+                      <span class="text-neutral-text font-medium text-[11px]">Tạ đáy brass phủ nano sáng gương, không oxy hóa, số series #04/25 sắc nét.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 flex-shrink-0"></span>
+                      <span class="text-neutral-text font-medium text-[11px]">Túi phụ kiện, PCB và hộp nguyên tem niêm phong chưa bóc.</span>
+                    </div>
+                  </div>
+
+                  <!-- 2. Structured Key-Value Attribute Cards (2 lines: label top, value bottom) -->
+                  <div id="condition-attributes-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                    <div class="flex flex-col items-start p-2.5 rounded-lg bg-surface-container-low space-y-0.5">
+                      <span class="text-neutral-subtle font-semibold text-[10px] uppercase tracking-wider block">Bề mặt Vỏ Case</span>
+                      <span class="font-bold text-neutral-text text-xs block leading-snug">10/10 • Không cấn móp, không xước</span>
+                    </div>
+                    <div class="flex flex-col items-start p-2.5 rounded-lg bg-surface-container-low space-y-0.5">
+                      <span class="text-neutral-subtle font-semibold text-[10px] uppercase tracking-wider block">Tạ đáy Brass</span>
+                      <span class="font-bold text-neutral-text text-xs block leading-snug">10/10 • Phủ nano sáng, series #04/25</span>
+                    </div>
+                    <div class="flex flex-col items-start p-2.5 rounded-lg bg-surface-container-low space-y-0.5">
+                      <span class="text-neutral-subtle font-semibold text-[10px] uppercase tracking-wider block">Tem niêm phong & PK</span>
+                      <span class="font-bold text-neutral-text text-xs block leading-snug">100% Seal • Nguyên hộp phụ kiện</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Attached Inspection Photos Grid -->
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between text-xs text-neutral-muted">
+                    <span class="font-semibold text-neutral-text text-[11px] flex items-center gap-1.5">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                      Ảnh chụp chi tiết từng góc cạnh thực tế (4 ảnh đính kèm)
+                    </span>
+                  </div>
+
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="group relative rounded-xl overflow-hidden border border-surface-border bg-white aspect-4/3 cursor-pointer shadow-2xs" onclick="changeHeroImage(0)">
+                      <img src="https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=600&q=80" alt="Góc vát chamfer" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-1.5 text-white">
+                        <span class="text-[10px] font-bold block truncate">1. Vỏ case Dark Gray</span>
+                      </div>
+                    </div>
+
+                    <div class="group relative rounded-xl overflow-hidden border border-surface-border bg-white aspect-4/3 cursor-pointer shadow-2xs" onclick="changeHeroImage(1)">
+                      <img src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80" alt="Tạ brass đáy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-1.5 text-white">
+                        <span class="text-[10px] font-bold block truncate">2. Tạ đáy Brass #04/25</span>
+                      </div>
+                    </div>
+
+                    <div class="group relative rounded-xl overflow-hidden border border-surface-border bg-white aspect-4/3 cursor-pointer shadow-2xs" onclick="changeHeroImage(2)">
+                      <img src="https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=600&q=80" alt="PCB và linh kiện seal" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-1.5 text-white">
+                        <span class="text-[10px] font-bold block truncate">3. Túi PCB nguyên seal</span>
+                      </div>
+                    </div>
+
+                    <div class="group relative rounded-xl overflow-hidden border border-surface-border bg-white aspect-4/3 cursor-pointer shadow-2xs" onclick="changeHeroImage(3)">
+                      <img src="https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=600&q=80" alt="Hộp & thẻ chứng thực" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-1.5 text-white">
+                        <span class="text-[10px] font-bold block truncate">4. Thẻ chứng thực Keycult</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Verification Stamp Footer (Flag controlled: default = false, hidden) -->
+                <div id="verification-stamp-footer" class="hidden p-2.5 rounded-lg bg-white border border-surface-border/80 text-[11px] text-neutral-muted space-y-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 flex-shrink-0"></span>
+                    <span>Kiểm định viên: <strong>Hoàng Long (NoobStore QC)</strong></span>
+                  </div>
+                  <div class="font-mono text-[10px] text-neutral-subtle pl-3 border-t border-surface-border/40 pt-1">
+                    Mã tem: #QC-KC165-9921
+                  </div>
+                </div>
+              </div>
+
+              <!-- In the Box / Package Contents (1 Unified Section / Container) -->
+              <div class="space-y-2">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-muted flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                  <span>Bộ phụ kiện đi kèm trong hộp</span>
+                </h4>
+                <div class="rounded-xl bg-surface-container-low border border-surface-border/60 p-3 text-xs space-y-1.5">
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 flex-shrink-0"></span>
+                    <span class="text-neutral-text font-medium">1x Vỏ case Top & Bottom nhôm CNC Dark Gray</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 flex-shrink-0"></span>
+                    <span class="text-neutral-text font-medium">1x Tạ đáy Brass nguyên khối số series #04/25</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 flex-shrink-0"></span>
+                    <span class="text-neutral-text font-medium">1x PCB Hotswap 1.6mm + Daughterboard + Cáp JST</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 flex-shrink-0"></span>
+                    <span class="text-neutral-text font-medium">1x Plate nhôm đen Anodized 1.5mm</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 flex-shrink-0"></span>
+                    <span class="text-neutral-text font-medium">1x Thẻ chứng nhận Authenticity Card từ Keycult</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neutral-400 flex-shrink-0"></span>
+                    <span class="text-neutral-text font-medium">1x Túi đựng custom Keycult + Gioăng & ốc vít titan</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Price, Countdown & Live Action Bidding (5 cols desktop) -->
+        <div id="right-col" class="lg:col-span-5 space-y-4">
+          
+          <!-- Product Title Section -->
+          <div>
+            <div class="flex items-center justify-between text-xs text-neutral-muted mb-1">
+              <span class="uppercase tracking-widest text-primary font-bold">KEYCULT SPECIAL</span>
+              <span class="flex items-center gap-1 font-mono text-[11px] text-neutral-muted">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span id="stat-bidders">18 người tham gia</span>
+              </span>
+            </div>
+            <h1 class="text-[18px] font-extrabold text-neutral-text leading-snug">
+              Keycult No. 1/65 Rev. 2 (Brass Edition #04/25) - Unbuilt Kit
+            </h1>
+          </div>
+
+          <!-- Countdown Banner (Redesigned: Clean, Uncluttered Mobile & Desktop) -->
+          <div id="timer-box" class="p-3 sm:p-3.5 rounded-2xl bg-surface-container-low border border-surface-border space-y-2.5 transition-all">
+            <!-- Header row: Status indicator & End timestamp -->
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-1.5">
+                <span id="timer-indicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="timer-label" class="font-bold text-neutral-text uppercase tracking-wider text-[11px]">
+                  Thời gian còn lại
+                </span>
+              </div>
+              <span id="timer-sublabel" class="text-[11px] text-neutral-muted font-medium">
+                Kết thúc 22:00 hôm nay
+              </span>
+            </div>
+
+            <!-- Countdown Grid (Supports Days, Hours, Minutes, Seconds) -->
+            <div id="timer-grid" class="grid grid-cols-4 gap-1.5 sm:gap-2 text-center">
+              <div id="timer-days-col" class="py-2 px-1 rounded-xl bg-white border border-surface-border shadow-2xs">
+                <span id="timer-days" class="block font-mono text-base sm:text-xl font-extrabold text-neutral-text leading-none">01</span>
+                <span class="block text-[9px] uppercase tracking-wider text-neutral-subtle font-semibold mt-1">Ngày</span>
+              </div>
+              <div class="py-2 px-1 rounded-xl bg-white border border-surface-border shadow-2xs">
+                <span id="timer-hours" class="block font-mono text-base sm:text-xl font-extrabold text-neutral-text leading-none">02</span>
+                <span class="block text-[9px] uppercase tracking-wider text-neutral-subtle font-semibold mt-1">Giờ</span>
+              </div>
+              <div class="py-2 px-1 rounded-xl bg-white border border-surface-border shadow-2xs">
+                <span id="timer-minutes" class="block font-mono text-base sm:text-xl font-extrabold text-neutral-text leading-none">45</span>
+                <span class="block text-[9px] uppercase tracking-wider text-neutral-subtle font-semibold mt-1">Phút</span>
+              </div>
+              <div class="py-2 px-1 rounded-xl bg-primary-fixed border border-primary/20 shadow-2xs">
+                <span id="timer-seconds" class="block font-mono text-base sm:text-xl font-extrabold text-primary leading-none">18</span>
+                <span class="block text-[9px] uppercase tracking-wider text-primary/80 font-bold mt-1">Giây</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- REDESIGNED PRICING CARD: 12px padding on mobile (p-3 sm:p-4) -->
+          <div id="pricing-card" class="p-3 sm:p-4 rounded-2xl bg-surface-container-low border border-surface-border space-y-3">
+            
+            <!-- Row 1: Giá hiện tại header + badge dẫn đầu -->
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-neutral-muted">
+                Giá hiện tại
+              </span>
+              <span id="lead-status-chip" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                Bạn đang dẫn đầu
+              </span>
+            </div>
+
+            <!-- Big Main Price -->
+            <div class="flex items-baseline gap-2">
+              <span id="display-current-price" class="font-mono text-2xl sm:text-[28px] font-extrabold text-primary tracking-tight">
+                14.500.000₫
+              </span>
+            </div>
+
+            <!-- Comparison Grid: Khởi điểm & Bước giá (12px padding: p-3) -->
+            <div class="grid grid-cols-2 gap-3 pt-3 border-t border-surface-border/80">
+              <div class="p-3 rounded-xl bg-white border border-surface-border space-y-1 shadow-2xs">
+                <span class="text-[11px] text-neutral-subtle block font-medium">Giá khởi điểm:</span>
+                <span id="display-starting-price" class="font-mono font-extrabold text-neutral-text text-sm sm:text-base block">
+                  10.000.000₫
+                </span>
+              </div>
+              <div class="p-3 rounded-xl bg-white border border-surface-border space-y-1 shadow-2xs">
+                <span class="text-[11px] text-neutral-subtle block font-medium">Bước giá tối thiểu:</span>
+                <span class="font-mono font-extrabold text-neutral-text text-sm sm:text-base block">
+                  +50.000₫
+                </span>
+              </div>
+            </div>
+
+            <!-- Buy Now (BIN) Row -->
+            <div id="bin-container" class="p-3 rounded-xl bg-amber-50/80 border border-amber-200/90 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">Mua ngay (BIN)</span>
+                <span class="font-mono font-extrabold text-amber-900 text-base">22.000.000₫</span>
+              </div>
+              <button onclick="handleBuyNowPrompt()" class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs transition-all active:scale-95 shadow-sm">
+                Chốt ngay
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Interactive Bidding Form -->
+          <div id="bid-form-container" class="space-y-3 pt-1">
+            <div class="flex items-center justify-between text-xs text-neutral-muted">
+              <span class="font-semibold text-neutral-text">Tăng nhanh mức giá:</span>
+              <span class="text-[11px] text-neutral-subtle font-mono">Tối thiểu: 14.550.000₫</span>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2">
+              <button onclick="applyQuickIncrement(50000)" class="py-2 rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high border border-surface-border text-neutral-text transition-all active:scale-95">
+                +50k
+              </button>
+              <button onclick="applyQuickIncrement(100000)" class="py-2 rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high border border-surface-border text-neutral-text transition-all active:scale-95">
+                +100k
+              </button>
+              <button onclick="applyQuickIncrement(200000)" class="py-2 rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high border border-surface-border text-neutral-text transition-all active:scale-95">
+                +200k
+              </button>
+              <button onclick="applyQuickIncrement(500000)" class="py-2 rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high border border-surface-border text-neutral-text transition-all active:scale-95">
+                +500k
+              </button>
+            </div>
+
+            <!-- Bid Input Field -->
+            <div class="relative">
+              <input
+                id="bid-input"
+                type="text"
+                value="14.550.000"
+                class="w-full h-12 px-4 pr-16 rounded-2xl bg-white border border-surface-border text-neutral-text font-mono font-extrabold text-base focus:border-primary focus:outline-none transition-colors shadow-2xs"
+              />
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-neutral-subtle">
+                VND
+              </span>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              id="btn-place-bid"
+              onclick="handlePlaceBid()"
+              class="w-full h-12 rounded-2xl bg-primary hover:bg-primary-hover text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md active:scale-[0.99] transition-all"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"/><path d="M16 16l6-6"/><path d="m8 8 2-2"/></svg>
+              <span id="btn-bid-label">Xác nhận đặt giá 14.550.000₫</span>
+            </button>
+          </div>
+
+          <!-- Live Bid History Stream (Full display, top 5 most recent) -->
+          <div class="space-y-2 pt-2 border-t border-surface-border">
+            <div class="flex items-center justify-between text-xs text-neutral-muted font-semibold px-1">
+              <span class="flex items-center gap-1.5 text-neutral-text">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span id="bids-header-label">Top 3 lượt đặt giá gần nhất</span>
+              </span>
+              <span id="total-bids-count" class="text-neutral-subtle font-mono text-[11px]">32 lượt đặt</span>
+            </div>
+
+            <div id="bid-stream" class="space-y-2">
+              <!-- Dynamically populated (Full display, Top 5) -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Buy Now Modal Backdrop (NO JUMP ANIMATION, stable fade-in) -->
+  <div id="bin-modal" class="fixed inset-0 bg-neutral-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-white border border-amber-300 p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between pb-3 border-b border-surface-border">
+        <h3 class="text-sm font-extrabold text-amber-900 flex items-center gap-2">
+          <span>⚡ Xác nhận Mua Ngay (BIN)</span>
+        </h3>
+        <button onclick="closeBuyNowModal()" class="text-neutral-subtle hover:text-neutral-text p-1 text-sm font-bold">✕</button>
+      </div>
+      
+      <p class="text-xs text-neutral-muted leading-relaxed">
+        Bạn sắp mua đứt sản phẩm này với mức giá chốt ngay:
+      </p>
+
+      <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-center">
+        <div class="font-mono text-2xl font-extrabold text-amber-900">22.000.000₫</div>
+        <div class="text-[11px] text-amber-700 mt-0.5">Phiên đấu giá sẽ kết thúc ngay lập tức</div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeBuyNowModal()" class="flex-1 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-neutral-text text-xs font-semibold transition-colors">
+          Hủy bỏ
+        </button>
+        <!-- Animation pulse applies ONLY to confirm button -->
+        <button onclick="confirmBuyNow()" class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold shadow-md animate-pulse">
+          Xác nhận mua
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grade S -> D Rubric Modal Backdrop -->
+  <div id="grade-modal" class="fixed inset-0 bg-neutral-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="w-full max-w-lg rounded-3xl bg-white border border-surface-border p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-surface-border">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-primary-fixed text-primary flex items-center justify-center font-bold">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-extrabold text-neutral-text">Tiêu chuẩn phân cấp Grade (S → D)</h3>
+            <p class="text-[11px] text-neutral-muted">Quy chuẩn đánh giá tình trạng minh bạch tại NoobStore</p>
+          </div>
+        </div>
+        <button onclick="closeGradeModal()" class="w-7 h-7 rounded-lg bg-surface-container hover:bg-surface-container-high text-neutral-subtle hover:text-neutral-text flex items-center justify-center text-xs font-bold transition-colors">✕</button>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <!-- Grade S (Current) -->
+        <div class="p-3 rounded-xl bg-emerald-50/80 border-2 border-emerald-500/80 space-y-1 relative">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white">Grade S</span>
+              <span class="font-extrabold text-emerald-950 text-xs">New 100% • Hoàn hảo tuyệt đối</span>
+            </div>
+            <span class="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-300">
+              Sản phẩm hiện tại
+            </span>
+          </div>
+          <p class="text-[11px] text-emerald-900 leading-relaxed">
+            Hàng mới 100%, nguyên hộp, nguyên tem niêm phong nhà sản xuất hoặc seal studio. Chưa từng qua lắp ráp switch/keycap hay gõ thử. Ngoại hình và mạch nguyên vẹn hoàn hảo.
+          </p>
+        </div>
+
+        <!-- Grade A -->
+        <div class="p-3 rounded-xl bg-surface-container-low border border-surface-border space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Grade A</span>
+            <span class="font-bold text-neutral-text text-xs">Like New 98-99% • Gần như mới</span>
+          </div>
+          <p class="text-[11px] text-neutral-muted leading-relaxed">
+            Đã mở hộp để kiểm định hoặc trưng bày trong tủ kính. Không có bất kỳ vết trầy xước nào trên anod hay tạ đồng. Đầy đủ 100% bao bì và phụ kiện đi kèm.
+          </p>
+        </div>
+
+        <!-- Grade B -->
+        <div class="p-3 rounded-xl bg-surface-container-low border border-surface-border space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Grade B</span>
+            <span class="font-bold text-neutral-text text-xs">Excellent 90-95% • Rất tốt</span>
+          </div>
+          <p class="text-[11px] text-neutral-muted leading-relaxed">
+            Đã qua sử dụng lướt nhẹ nhàng. Có thể xuất hiện xước dăm cực nhỏ ở mặt đáy hoặc tạ đồng do ma sát nhẹ, nhưng không thể thấy khi bàn phím đặt trên bàn. Bo mạch hoàn hảo.
+          </p>
+        </div>
+
+        <!-- Grade C -->
+        <div class="p-3 rounded-xl bg-surface-container-low border border-surface-border space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800">Grade C</span>
+            <span class="font-bold text-neutral-text text-xs">Good 80-89% • Khá</span>
+          </div>
+          <p class="text-[11px] text-neutral-muted leading-relaxed">
+            Đã sử dụng một thời gian. Có vết cấn nhẹ ở góc mép, hoặc tạ đồng có dấu hiệu oxy hóa tự nhiên. Mọi chức năng hotswap, LED, Type-C hoạt động chuẩn xác 100%.
+          </p>
+        </div>
+
+        <!-- Grade D -->
+        <div class="p-3 rounded-xl bg-surface-container-low border border-surface-border space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-200 text-neutral-800">Grade D</span>
+            <span class="font-bold text-neutral-text text-xs">Fair &lt; 80% • Cần tân trang</span>
+          </div>
+          <p class="text-[11px] text-neutral-muted leading-relaxed">
+            Ngoại hình có trầy xước hoặc cấn móp rõ rệt, có thể thiếu phụ kiện phụ. Phù hợp cho người mua có kinh nghiệm muốn re-anodize, cerakote hoặc mod lại theo ý thích.
+          </p>
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="closeGradeModal()" class="w-full py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors shadow-sm">
+          Đã hiểu tiêu chuẩn
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    let currentScenario = 'normal';
+    let currentPrice = 14500000;
+    let minIncrement = 50000;
+    let totalBids = 32;
+    let isUrgent = false;
+
+    const galleryImages = [
+      "https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=1200&q=80"
+    ];
+
+    let bids = [
+      { id: 1, name: 'H***i (Bạn)', amount: 14500000, time: 'Vừa xong', isUser: true, isLeading: true },
+      { id: 2, name: 'k***9', amount: 14000000, time: '2 phút trước', isUser: false, isLeading: false },
+      { id: 3, name: 'm***x', amount: 13500000, time: '8 phút trước', isUser: false, isLeading: false },
+      { id: 4, name: 't***4', amount: 12500000, time: '15 phút trước', isUser: false, isLeading: false },
+      { id: 5, name: 'd***8', amount: 11000000, time: '30 phút trước', isUser: false, isLeading: false },
+    ];
+
+    function formatVND(n) {
+      return new Intl.NumberFormat('vi-VN').format(n) + '₫';
+    }
+
+    function changeHeroImage(idx) {
+      document.getElementById('main-product-img').src = galleryImages[idx];
+      document.querySelectorAll('.thumb-btn').forEach((btn, i) => {
+        if (i === idx) {
+          btn.classList.add('border-primary', 'opacity-100');
+          btn.classList.remove('border-transparent', 'opacity-60');
+        } else {
+          btn.classList.remove('border-primary', 'opacity-100');
+          btn.classList.add('border-transparent', 'opacity-60');
+        }
+      });
+    }
+
+    function updateTimerDisplay(d, h, m, s) {
+      const daysCol = document.getElementById('timer-days-col');
+      const timerGrid = document.getElementById('timer-grid');
+      if (d > 0) {
+        if (daysCol) daysCol.classList.remove('hidden');
+        if (timerGrid) {
+          timerGrid.classList.remove('grid-cols-3');
+          timerGrid.classList.add('grid-cols-4');
+        }
+        const daysEl = document.getElementById('timer-days');
+        if (daysEl) daysEl.innerText = String(d).padStart(2, '0');
+      } else {
+        if (daysCol) daysCol.classList.add('hidden');
+        if (timerGrid) {
+          timerGrid.classList.remove('grid-cols-4');
+          timerGrid.classList.add('grid-cols-3');
+        }
+      }
+      document.getElementById('timer-hours').innerText = String(h).padStart(2, '0');
+      document.getElementById('timer-minutes').innerText = String(m).padStart(2, '0');
+      document.getElementById('timer-seconds').innerText = String(s).padStart(2, '0');
+    }
+
+    let currentViewportMode = 'desktop';
+    let newBidAlertTimeout = null;
+
+    function triggerNewBidAlert(amount, bidderName) {
+      const pill = document.getElementById('new-bid-alert-pill');
+      const text = document.getElementById('new-bid-alert-text');
+      if (pill && text) {
+        text.innerText = `🔥 Giá mới: ${formatVND(amount)}${bidderName ? ` • ${bidderName}` : ''}`;
+        pill.classList.remove('opacity-0', '-translate-y-2', 'pointer-events-none');
+        pill.classList.add('opacity-100', 'translate-y-0');
+
+        if (newBidAlertTimeout) clearTimeout(newBidAlertTimeout);
+        newBidAlertTimeout = setTimeout(() => {
+          pill.classList.remove('opacity-100', 'translate-y-0');
+          pill.classList.add('opacity-0', '-translate-y-2', 'pointer-events-none');
+        }, 3000);
+      }
+
+      // Right-side toast notification for live bid awareness
+      showToast(
+        '🔥 Lượt đặt giá mới!',
+        `${bidderName || 'Người tham gia'} vừa đặt giá ${formatVND(amount)}`,
+        'gold'
+      );
+    }
+
+    function renderBids() {
+      const container = document.getElementById('bid-stream');
+      const maxBids = 3;
+      const headerLabel = document.getElementById('bids-header-label');
+      if (headerLabel) {
+        headerLabel.innerText = `Top 3 lượt đặt giá gần nhất`;
+      }
+      container.innerHTML = bids.slice(0, maxBids).map((b, idx) => `
+        <div class="flex items-center justify-between p-2.5 rounded-xl transition-all ${
+          b.isLeading
+            ? 'bg-emerald-50 border border-emerald-200 text-neutral-text'
+            : 'bg-white border border-surface-border text-neutral-muted'
+        }">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full ${b.isLeading ? 'bg-emerald-600 text-white font-bold' : 'bg-surface-container text-neutral-subtle'} flex items-center justify-center text-[10px]">
+              ${idx === 0 ? '👑' : idx + 1}
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold ${b.isUser ? 'text-primary' : 'text-neutral-text'}">${b.name}</span>
+                ${b.isLeading ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">Dẫn đầu</span>' : ''}
+              </div>
+              <div class="text-[10px] text-neutral-subtle">${b.time}</div>
+            </div>
+          </div>
+          <div class="font-mono font-extrabold text-xs ${b.isLeading ? 'text-emerald-700 text-sm' : 'text-neutral-text'}">
+            ${formatVND(b.amount)}
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('total-bids-count').innerText = `${totalBids} lượt đặt`;
+    }
+
+    function updatePriceUI() {
+      document.getElementById('display-current-price').innerText = formatVND(currentPrice);
+      const nextMin = currentPrice + minIncrement;
+      document.getElementById('bid-input').value = new Intl.NumberFormat('vi-VN').format(nextMin);
+      document.getElementById('btn-bid-label').innerText = `Xác nhận đặt giá ${formatVND(nextMin)}`;
+    }
+
+    function applyQuickIncrement(inc) {
+      const currentInputVal = parseInt(document.getElementById('bid-input').value.replace(/[^0-9]/g, '')) || (currentPrice + minIncrement);
+      const newVal = Math.max(currentPrice + minIncrement, currentInputVal + inc);
+      document.getElementById('bid-input').value = new Intl.NumberFormat('vi-VN').format(newVal);
+      document.getElementById('btn-bid-label').innerText = `Xác nhận đặt giá ${formatVND(newVal)}`;
+    }
+
+    function showToast(title, desc, type = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = `p-3.5 rounded-2xl bg-white/95 backdrop-blur-md border shadow-xl flex items-center gap-3 text-xs pointer-events-auto transform transition-all duration-300 animate-in slide-in-from-right ${
+        type === 'urgent'
+          ? 'border-rose-300 text-rose-950'
+          : type === 'gold'
+          ? 'border-amber-300 text-amber-950'
+          : 'border-emerald-300 text-emerald-950'
+      }`;
+      toast.innerHTML = `
+        <div class="w-8 h-8 rounded-xl ${
+          type === 'urgent' ? 'bg-rose-100 text-rose-700' : type === 'gold' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-700'
+        } flex items-center justify-center font-bold text-base flex-shrink-0">
+          ${type === 'urgent' ? '⚡' : type === 'gold' ? '🔥' : '✨'}
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="font-extrabold text-neutral-text">${title}</div>
+          <div class="text-[11px] text-neutral-muted truncate">${desc}</div>
+        </div>
+      `;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-[20px]');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function handlePlaceBid() {
+      const bidVal = parseInt(document.getElementById('bid-input').value.replace(/[^0-9]/g, ''));
+      if (bidVal <= currentPrice) {
+        showToast('Không hợp lệ', 'Giá đặt phải lớn hơn giá hiện tại', 'urgent');
+        return;
+      }
+
+      currentPrice = bidVal;
+      totalBids += 1;
+
+      // Add to bids
+      bids.forEach(b => b.isLeading = false);
+      bids.unshift({
+        id: Date.now(),
+        name: 'H***i (Bạn)',
+        amount: currentPrice,
+        time: 'Vừa xong',
+        isUser: true,
+        isLeading: true
+      });
+
+      renderBids();
+      updatePriceUI();
+      triggerNewBidAlert(currentPrice, 'H***i (Bạn)');
+
+      if (isUrgent) {
+        showToast('Kích hoạt Anti-Snipe (+5 phút)', 'Phiên đấu giá được gia hạn thêm 5 phút để đảm bảo công bằng!', 'urgent');
+        document.getElementById('timer-minutes').innerText = '05';
+        document.getElementById('timer-seconds').innerText = '00';
+      } else {
+        showToast('Đặt giá thành công!', `Bạn đang dẫn đầu với mức giá ${formatVND(currentPrice)}`, 'success');
+      }
+    }
+
+    function switchScenario(s) {
+      currentScenario = s;
+      document.querySelectorAll('.scenario-btn').forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-white', 'shadow-sm');
+        btn.classList.add('text-neutral-muted');
+      });
+      document.getElementById(`scenario-${s}`).classList.add('bg-primary', 'text-white', 'shadow-sm');
+      document.getElementById(`scenario-${s}`).classList.remove('text-neutral-muted');
+
+      const winnerBanner = document.getElementById('winner-banner');
+      const bidForm = document.getElementById('bid-form-container');
+      const timerBox = document.getElementById('timer-box');
+      const timerIndicator = document.getElementById('timer-indicator');
+      const badgeStatus = document.getElementById('badge-status');
+      const binContainer = document.getElementById('bin-container');
+
+      if (s === 'normal') {
+        isUrgent = false;
+        winnerBanner.classList.add('hidden');
+        bidForm.classList.remove('hidden');
+        if (binContainer) binContainer.classList.remove('hidden');
+        timerBox.className = 'p-3 sm:p-3.5 rounded-2xl bg-surface-container-low border border-surface-border space-y-2.5 transition-all';
+        if (timerIndicator) timerIndicator.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        badgeStatus.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white flex items-center gap-1.5 shadow-md';
+        badgeStatus.innerText = 'Đang đấu giá';
+        document.getElementById('timer-label').innerText = 'Thời gian còn lại';
+        document.getElementById('timer-sublabel').innerText = 'Kết thúc 22:00 ngày mai';
+        updateTimerDisplay(1, 2, 45, 18);
+      } else if (s === 'urgent') {
+        isUrgent = true;
+        winnerBanner.classList.add('hidden');
+        bidForm.classList.remove('hidden');
+        if (binContainer) binContainer.classList.remove('hidden');
+        timerBox.className = 'p-3 sm:p-3.5 rounded-2xl bg-rose-50/80 border border-rose-300 space-y-2.5 transition-all shadow-sm';
+        if (timerIndicator) timerIndicator.className = 'w-2 h-2 rounded-full bg-rose-600 animate-ping';
+        badgeStatus.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-rose-600 text-white flex items-center gap-1.5 shadow-md animate-pulse';
+        badgeStatus.innerText = '⚡ Bù giờ (Anti-Snipe)';
+        document.getElementById('timer-label').innerText = '⚡ Bù giờ Anti-Snipe (+5p)';
+        document.getElementById('timer-sublabel').innerText = 'Đang gia hạn';
+        updateTimerDisplay(0, 0, 2, 45);
+        showToast('Khu vực bù giờ Anti-Snipe', 'Bất kỳ lượt đặt giá nào lúc này sẽ tăng thêm 5 phút!', 'urgent');
+      } else if (s === 'winner') {
+        isUrgent = false;
+        winnerBanner.classList.remove('hidden');
+        bidForm.classList.add('hidden');
+        if (binContainer) binContainer.classList.add('hidden');
+        timerBox.className = 'p-3 sm:p-3.5 rounded-2xl bg-surface-container border border-surface-border space-y-2.5 transition-all opacity-80';
+        if (timerIndicator) timerIndicator.className = 'w-2 h-2 rounded-full bg-neutral-400';
+        badgeStatus.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500 text-white flex items-center gap-1.5 shadow-md';
+        badgeStatus.innerText = 'Đã kết thúc';
+        document.getElementById('timer-label').innerText = 'Phiên đấu giá đã kết thúc';
+        document.getElementById('timer-sublabel').innerText = 'Hoàn tất thanh toán';
+        updateTimerDisplay(0, 0, 0, 0);
+        showToast('Bạn đã thắng cuộc!', 'Vui lòng hoàn tất thanh toán trong 24h', 'gold');
+      } else if (s === 'ended') {
+        isUrgent = false;
+        winnerBanner.classList.add('hidden');
+        bidForm.classList.add('hidden');
+        if (binContainer) binContainer.classList.add('hidden');
+        timerBox.className = 'p-3 sm:p-3.5 rounded-2xl bg-surface-container border border-surface-border space-y-2.5 transition-all opacity-80';
+        if (timerIndicator) timerIndicator.className = 'w-2 h-2 rounded-full bg-neutral-400';
+        badgeStatus.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-surface-container-high text-neutral-muted flex items-center gap-1.5';
+        badgeStatus.innerText = 'Đã kết thúc';
+        document.getElementById('timer-label').innerText = 'Phiên đấu giá đã kết thúc';
+        document.getElementById('timer-sublabel').innerText = 'Lúc 22:00 hôm nay';
+        updateTimerDisplay(0, 0, 0, 0);
+      }
+    }
+
+    let isRulesExpanded = false;
+
+    function toggleRulesExpand(forcedState) {
+      if (typeof forcedState === 'boolean') {
+        isRulesExpanded = forcedState;
+      } else {
+        isRulesExpanded = !isRulesExpanded;
+      }
+
+      const compactView = document.getElementById('rules-compact-view');
+      const expandedView = document.getElementById('rules-expanded-view');
+      const toggleText = document.getElementById('rules-toggle-text');
+      const toggleIcon = document.getElementById('rules-toggle-icon');
+
+      if (!compactView || !expandedView) return;
+
+      if (isRulesExpanded) {
+        compactView.classList.add('hidden');
+        expandedView.classList.remove('hidden');
+        if (toggleText) toggleText.innerText = 'Thu gọn';
+        if (toggleIcon) toggleIcon.classList.add('rotate-180');
+      } else {
+        compactView.classList.remove('hidden');
+        expandedView.classList.add('hidden');
+        if (toggleText) toggleText.innerText = 'Chi tiết';
+        if (toggleIcon) toggleIcon.classList.remove('rotate-180');
+      }
+    }
+
+    let isSpecsExpanded = false;
+
+    function toggleSpecsExpand(forcedState) {
+      if (typeof forcedState === 'boolean') {
+        isSpecsExpanded = forcedState;
+      } else {
+        isSpecsExpanded = !isSpecsExpanded;
+      }
+
+      const expandedView = document.getElementById('specs-expanded-view');
+      const toggleText = document.getElementById('specs-toggle-text');
+      const toggleIcon = document.getElementById('specs-toggle-icon');
+
+      if (!expandedView) return;
+
+      if (isSpecsExpanded) {
+        expandedView.classList.remove('hidden');
+        if (toggleText) toggleText.innerText = 'Thu gọn thông số';
+        if (toggleIcon) toggleIcon.classList.add('rotate-180');
+      } else {
+        expandedView.classList.add('hidden');
+        if (toggleText) toggleText.innerText = 'Xem thêm 4 thông số chi tiết';
+        if (toggleIcon) toggleIcon.classList.remove('rotate-180');
+      }
+    }
+
+    let isProductSpecsBodyCollapsed = false;
+
+    function toggleProductSpecsSection() {
+      isProductSpecsBodyCollapsed = !isProductSpecsBodyCollapsed;
+      const body = document.getElementById('product-specs-body');
+      const icon = document.getElementById('product-specs-toggle-icon');
+      if (!body) return;
+      if (isProductSpecsBodyCollapsed) {
+        body.classList.add('hidden');
+        if (icon) icon.classList.add('-rotate-90');
+      } else {
+        body.classList.remove('hidden');
+        if (icon) icon.classList.remove('-rotate-90');
+      }
+    }
+
+    function toggleViewport(mode) {
+      currentViewportMode = mode;
+      renderBids();
+
+      const frame = document.getElementById('showcase-frame');
+      const grid = document.getElementById('auction-grid');
+      const leftCol = document.getElementById('left-col');
+      const rightCol = document.getElementById('right-col');
+      const btnMobile = document.getElementById('view-mobile');
+      const btnDesktop = document.getElementById('view-desktop');
+      const expandedView = document.getElementById('specs-expanded-view');
+      const toggleBtn = document.getElementById('btn-toggle-specs');
+
+      if (mode === 'desktop') {
+        frame.classList.remove('max-w-sm');
+        frame.classList.add('max-w-5xl');
+        grid.className = 'grid grid-cols-1 lg:grid-cols-12 gap-7 items-start';
+        leftCol.className = 'lg:col-span-7 space-y-4';
+        rightCol.className = 'lg:col-span-5 space-y-4';
+
+        btnDesktop.classList.add('bg-white', 'text-neutral-text', 'shadow-sm');
+        btnDesktop.classList.remove('text-neutral-muted');
+        btnMobile.classList.remove('bg-white', 'text-neutral-text', 'shadow-sm');
+        btnMobile.classList.add('text-neutral-muted');
+        toggleRulesExpand(true);
+
+        if (expandedView) expandedView.classList.remove('hidden');
+        if (toggleBtn) toggleBtn.classList.add('hidden');
+      } else {
+        frame.classList.remove('max-w-5xl');
+        frame.classList.add('max-w-sm');
+        grid.className = 'flex flex-col space-y-4';
+        leftCol.className = 'space-y-4';
+        rightCol.className = 'space-y-4';
+
+        btnMobile.classList.add('bg-white', 'text-neutral-text', 'shadow-sm');
+        btnMobile.classList.remove('text-neutral-muted');
+        btnDesktop.classList.remove('bg-white', 'text-neutral-text', 'shadow-sm');
+        btnDesktop.classList.add('text-neutral-muted');
+        toggleRulesExpand(false);
+
+        if (expandedView) expandedView.classList.add('hidden');
+        if (toggleBtn) {
+          toggleBtn.classList.remove('hidden');
+          const toggleText = document.getElementById('specs-toggle-text');
+          const toggleIcon = document.getElementById('specs-toggle-icon');
+          if (toggleText) toggleText.innerText = 'Xem thêm 4 thông số chi tiết';
+          if (toggleIcon) toggleIcon.classList.remove('rotate-180');
+        }
+        isSpecsExpanded = false;
+      }
+    }
+
+    function handleBuyNowPrompt() {
+      document.getElementById('bin-modal').classList.remove('hidden');
+    }
+
+    function closeBuyNowModal() {
+      document.getElementById('bin-modal').classList.add('hidden');
+    }
+
+    function openGradeModal() {
+      document.getElementById('grade-modal').classList.remove('hidden');
+    }
+
+    function closeGradeModal() {
+      document.getElementById('grade-modal').classList.add('hidden');
+    }
+
+    function confirmBuyNow() {
+      closeBuyNowModal();
+      currentPrice = 22000000;
+      updatePriceUI();
+      switchScenario('winner');
+      showToast('Chốt mua ngay thành công!', 'Bạn đã mua thành công sản phẩm với giá BIN 22.000.000₫', 'gold');
+    }
+
+    function handleSimulateCheckout() {
+      showToast('Chuyển hướng thanh toán', 'Đang kết nối cổng thanh toán NoobStore...', 'success');
+      setTimeout(() => {
+        alert('Mô phỏng: Chuyển hướng tới /auctions/KEYCULT-01/checkout thành công!');
+      }, 600);
+    }
+
+    // Init
+    renderBids();
+    updatePriceUI();
+  </script>
+</body>
+</html>

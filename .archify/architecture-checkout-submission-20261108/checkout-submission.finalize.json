@@ -1,0 +1,455 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "skipped",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-11-08T05:25:51.592Z",
+  "specification": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/candidate.json",
+    "sha256": "aa0a568ad4402d9a522e80ec24bdfecf3a491b1d70ea18c5ab768400974f258e",
+    "bytes": 5743
+  },
+  "artifact": {
+    "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+    "sha256": "a8574b6440d45cbd468d2804a52185ea72042c0ff7bb3f78cda7ae766dc9e5df",
+    "bytes": 852570
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/candidate.json",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/Users/haritran/source/noobstore/mobile-noobstore",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "aa0a568ad4402d9a522e80ec24bdfecf3a491b1d70ea18c5ab768400974f258e",
+          "bytes": 5743
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 648,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/candidate.json",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/Users/haritran/source/noobstore/mobile-noobstore",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "4fd379e8-c640-4c0f-880c-c205b7337054",
+        "ok": true,
+        "command": "deliver",
+        "type": "architecture",
+        "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/candidate.json",
+        "output": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+        "specification": {
+          "sha256": "aa0a568ad4402d9a522e80ec24bdfecf3a491b1d70ea18c5ab768400974f258e",
+          "bytes": 5743
+        },
+        "artifact": {
+          "sha256": "a8574b6440d45cbd468d2804a52185ea72042c0ff7bb3f78cda7ae766dc9e5df",
+          "bytes": 852570
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/synztran/mobile-noobstore",
+          "revision": "9c6c17488c50e818b13773b4c0489f4fd5facbe6",
+          "references": 12
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 265,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "check",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+        "artifact": {
+          "sha256": "a8574b6440d45cbd468d2804a52185ea72042c0ff7bb3f78cda7ae766dc9e5df",
+          "bytes": 852570
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 0,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 6.5,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 6.491961414790996,
+            "maxBends": 3,
+            "routesOverSuggestedBends": 6,
+            "maxStretch": 1.279,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 24,
+            "minInteriorSegmentPx": 56,
+            "shortSegmentCount": 0,
+            "shortEndpointSegmentCount": 0,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [],
+            "detours": [
+              {
+                "relationship": {
+                  "id": "customer-submit",
+                  "from": "customer",
+                  "to": "checkout-api",
+                  "label": "submit order",
+                  "collectionIndex": 0,
+                  "artifactIndex": 1
+                },
+                "bends": 3,
+                "stretch": 1.279
+              },
+              {
+                "relationship": {
+                  "id": "api-orchestrate",
+                  "from": "checkout-api",
+                  "to": "submit-order",
+                  "label": "delegate request",
+                  "collectionIndex": 1,
+                  "artifactIndex": 2
+                },
+                "bends": 3,
+                "stretch": 1.27
+              },
+              {
+                "relationship": {
+                  "id": "pricing-voucher",
+                  "from": "price-rules",
+                  "to": "voucher-validation",
+                  "label": "priced items",
+                  "collectionIndex": 3,
+                  "artifactIndex": 4
+                },
+                "bends": 3,
+                "stretch": 1.274
+              },
+              {
+                "relationship": {
+                  "id": "orchestrate-rpc",
+                  "from": "submit-order",
+                  "to": "submit-rpc",
+                  "label": "create order transaction",
+                  "collectionIndex": 5,
+                  "artifactIndex": 6
+                },
+                "bends": 3,
+                "stretch": 1.27
+              },
+              {
+                "relationship": {
+                  "id": "rpc-postgres",
+                  "from": "submit-rpc",
+                  "to": "postgres",
+                  "label": "create order + reserve stock",
+                  "collectionIndex": 6,
+                  "artifactIndex": 7
+                },
+                "bends": 3,
+                "stretch": 1.259
+              },
+              {
+                "relationship": {
+                  "id": "rpc-followups",
+                  "from": "postgres",
+                  "to": "followups",
+                  "label": "created order result",
+                  "collectionIndex": 7,
+                  "artifactIndex": 8
+                },
+                "bends": 3,
+                "stretch": 1.259
+              }
+            ]
+          },
+          "leadingSpace": {
+            "measured": true,
+            "emptyTopPx": 110,
+            "emptyTopRatio": 0.192,
+            "occupiedTop": 110,
+            "viewBoxTop": 0,
+            "canvasHeight": 572,
+            "typicalNodeHeight": 64,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "recognized-declared-wide",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 1346,
+            "actualBudgetPx": 1346,
+            "actualReaderWidth": 1376,
+            "desiredReaderWidth": 1585,
+            "viewportCap": 1376,
+            "limit": "viewport-cap",
+            "requestedTargetPx": 7.5,
+            "requestedTargetMet": false,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "followups"
+            },
+            "minimumSourceTextPx": 7.5,
+            "minimumProjectedTextPx": 6.491961414790996,
+            "semanticTextCount": 30
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "4fd379e8-c640-4c0f-880c-c205b7337054"
+      }
+    },
+    "browser-check": {
+      "status": "skipped",
+      "exitCode": 2,
+      "durationMs": 18,
+      "command": [
+        "/opt/homebrew/Cellar/node/25.9.0_1/bin/node",
+        "/Users/haritran/.agents/skills/archify/bin/archify.mjs",
+        "browser-check",
+        "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+        "--json",
+        "--require-provenance"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "skipped",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "4fd379e8-c640-4c0f-880c-c205b7337054",
+        "artifact": {
+          "path": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html",
+          "sha256": "a8574b6440d45cbd468d2804a52185ea72042c0ff7bb3f78cda7ae766dc9e5df",
+          "bytes": 852570
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "unavailable",
+          "executable": null
+        },
+        "diagnostics": [
+          {
+            "code": "viewer/chrome-unavailable",
+            "severity": "warning",
+            "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+            "subject": {
+              "artifact": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html"
+            },
+            "evidence": {
+              "executable": null
+            },
+            "supportedFixes": [
+              "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+            ]
+          }
+        ],
+        "containment": {
+          "status": "skipped",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": []
+        },
+        "themeStates": {
+          "status": "skipped",
+          "viewports": []
+        },
+        "readability": {
+          "status": "skipped",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": []
+        },
+        "viewerChrome": {
+          "status": "skipped",
+          "viewports": []
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "receipt": "checkout-submission.browser-check.json",
+          "files": []
+        },
+        "error": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path."
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/chrome-unavailable",
+      "severity": "warning",
+      "message": "No supported browser found. Install Chrome/Chromium (or Microsoft Edge), or set ARCHIFY_CHROME to its executable path.",
+      "subject": {
+        "artifact": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.html"
+      },
+      "evidence": {
+        "executable": null
+      },
+      "supportedFixes": [
+        "set ARCHIFY_CHROME to a Chrome/Chromium executable (or Microsoft Edge) and rerun browser-check"
+      ]
+    }
+  ],
+  "evidence": {
+    "receipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.finalize.json",
+    "summaryReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.finalize-summary.json",
+    "browserCheckReceipt": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-checkout-submission-20261108/checkout-submission.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "failedStage": "browser-check",
+  "finishedAt": "2026-11-08T05:25:52.646Z",
+  "durationMs": 1053,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-08T04:49:18.423Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

@@ -11,6 +11,7 @@ interface CampaignData {
 	title: string;
 	subtitle: string | null;
 	image_url: string | null;
+	image_url_mobile: string | null;
 	cta_text: string | null;
 	cta_link: string | null;
 	is_active: boolean;
@@ -40,6 +41,7 @@ export default function CampaignModal(props: Props) {
 	const [title, setTitle] = useState("");
 	const [subtitle, setSubtitle] = useState("");
 	const [imageUrl, setImageUrl] = useState("");
+	const [mobileImageUrl, setMobileImageUrl] = useState("");
 	const [ctaText, setCtaText] = useState("");
 	const [ctaLink, setCtaLink] = useState("");
 	const [isActive, setIsActive] = useState(true);
@@ -56,6 +58,7 @@ export default function CampaignModal(props: Props) {
 			setTitle(c.title);
 			setSubtitle(c.subtitle ?? "");
 			setImageUrl(c.image_url ?? "");
+			setMobileImageUrl(c.image_url_mobile ?? "");
 			setCtaText(c.cta_text ?? "");
 			setCtaLink(c.cta_link ?? "");
 			setIsActive(c.is_active);
@@ -64,6 +67,7 @@ export default function CampaignModal(props: Props) {
 			setTitle("");
 			setSubtitle("");
 			setImageUrl("");
+			setMobileImageUrl("");
 			setCtaText("");
 			setCtaLink("");
 			setIsActive(true);
@@ -89,6 +93,7 @@ export default function CampaignModal(props: Props) {
 			title: title.trim(),
 			subtitle: subtitle.trim() || null,
 			image_url: imageUrl.trim() || null,
+			image_url_mobile: mobileImageUrl.trim() || null,
 			cta_text: ctaText.trim() || null,
 			cta_link: ctaLink.trim() || null,
 			is_active: isActive,
@@ -206,11 +211,11 @@ export default function CampaignModal(props: Props) {
 							</div>
 						</div>
 
-						<SingleImageUploader
-							value={imageUrl}
-							onChange={setImageUrl}
-							label="Image"
-						/>
+		<div className="grid gap-4 sm:grid-cols-2">
+			<SingleImageUploader value={imageUrl} onChange={setImageUrl} label="Desktop image" />
+			<SingleImageUploader value={mobileImageUrl} onChange={setMobileImageUrl} label="Mobile image (optional)" />
+		</div>
+		<p className="text-xs text-slate-500">Mobile uses desktop image when no mobile image is uploaded.</p>
 
 						<div>
 							<label className="mb-1 block text-sm font-medium text-slate-700">

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "5f316caf-280d-4307-a952-7cbaaf124469",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/candidate.json",
+  "output": "/Users/haritran/source/noobstore/mobile-noobstore/.archify/architecture-cart-module-20261108/cart-module.html",
+  "specification": {
+    "sha256": "5883774269ecee1ed06aeeb37ef675e705165b729308683011342708c9fce666",
+    "bytes": 5953
+  },
+  "artifact": {
+    "sha256": "a4b9aebed799e08d7fe12f8a5b786474528cb6ee8d64ece014fa10f86f27225e",
+    "bytes": 854619
+  }
+}
